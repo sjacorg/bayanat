@@ -10,10 +10,12 @@ from flask_security.forms import LoginForm
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
+from enferno.admin.constants import Constants
 from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User, Session
-from flask_security.signals import password_changed, user_authenticated
+from enferno.admin.models.Notification import Notification
+from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
 
 from enferno.utils.http_response import HTTPResponse
 
@@ -206,8 +208,21 @@ def load_settings() -> Response:
 
 @password_changed.connect
 def after_password_change(sender, user) -> None:
-    """Reset the security reset key after password change"""
+    """Reset the security reset key after password change, send notification to user"""
     user.unset_security_reset_key()
+    if user.has_role("Admin"):
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.PASSWORD_CHANGE,
+            "An Admin Changed Their Password",
+            f"An admin {user.username} has changed their password.",
+        )
+    else:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.PASSWORD_CHANGE,
+            user,
+            "Password Changed",
+            "Your password has been changed. If you didn't make this change, please contact your system administrator immediately.",
+        )
 
 
 @bp_user.before_app_request
@@ -219,7 +234,10 @@ def before_app_request() -> Optional[Response]:
         - redirects to the password change page if the user is authenticated and has a security reset key set.
     """
     if current_user.is_authenticated and current_user.security_reset_key:
-        if not any(request.path.startswith(p) for p in ("/change", "/static", "/logout", "/admin/api/password")):
+        if not any(
+            request.path.startswith(p)
+            for p in ("/change", "/static", "/logout", "/admin/api/password")
+        ):
             return redirect("/change")
 
 
@@ -240,6 +258,33 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
     new_session = Session(**session_data)
     new_session.save()
 
+    # Check if logged in from a different IP address
+    if current_user.current_login_ip != current_user.last_login_ip:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.LOGIN_NEW_IP,
+            current_user,
+            "Login from Different IP",
+            f"You have logged in from a different IP address than your last login. If this was you, please ignore this message. If this was not you, please change your password immediately.",
+        )
+    # TODO: Check the login country and send notification to all admins if it's not the same as the user's country
+
     # Check if multiple sessions are disabled
     if current_app.config.get("DISABLE_MULTIPLE_SESSIONS", False):
         user.logout_other_sessions()
+
+
+@tf_profile_changed.connect
+def after_tf_profile_change(sender, user, **extra_args) -> None:
+    if user.has_role("Admin"):
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.TWO_FACTOR_CHANGE,
+            "An Admin Changed Their Two-Factor Profile",
+            f"{user.username} has changed their two-factor authentication options.",
+        )
+
+    Notification.send_notification_for_event(
+        Constants.NotificationEvent.TWO_FACTOR_CHANGE,
+        user,
+        "Two-Factor Profile Changed",
+        "Your two-factor profile has been changed. If you didn't make this change, please contact an administrator immediately.",
+    )
