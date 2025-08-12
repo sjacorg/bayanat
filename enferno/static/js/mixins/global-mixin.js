@@ -11,11 +11,16 @@ const globalMixin = {
 
     rules: {
       dateValidation(value) {
-        // Check if the date is valid
-        if (!value) {
-          return true;
+        if (!value) return true;
+        const d = dayjs(value);
+        if (!d.isValid()) return 'Invalid date';
+
+        if (typeof value === 'string') {
+          const strictParsed = dayjs(value, 'YYYY-MM-DD', true);
+          if (!strictParsed.isValid()) return 'Invalid date';
         }
-        return dayjs(value, 'YYYY-MM-DD', true).isValid() || 'Invalid date';
+
+        return true;
       },
 
       required: (value) => {
