@@ -236,10 +236,6 @@ const EventsSection = Vue.defineComponent({
                             </v-col>
                         </v-row>
                     </v-container>
-
-                    <v-alert density="compact" variant="tonal" type="info" class="my-4">
-                        {{ translations.pleaseFillAtLeaseOneFieldEventSection_ }}
-                    </v-alert>
                 </v-card-text>
             </v-form>
         </v-card>
