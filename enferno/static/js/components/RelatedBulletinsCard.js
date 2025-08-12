@@ -72,7 +72,7 @@ const RelatedBulletinsCard = Vue.defineComponent({
               <v-sheet class="pa-2 border-b d-flex flex-column ga-1">
                 <v-list-item-title variant="flat"  class="text-caption mt-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
                 <div class="mb-2">
-                  <div class="text-caption font-weight-bold mt-2">Probability</div>
+                  <div class="text-caption font-weight-bold mt-2">{{ translations.probability_ }}</div>
                   <v-chip v-if="item.probability !== null" size="small" label class="flex-chip">{{ probability(item) }}</v-chip>
                   <div class="text-caption font-weight-bold mt-2">Related as</div>
                   <div class="flex-chips">
