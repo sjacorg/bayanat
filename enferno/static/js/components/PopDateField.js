@@ -11,7 +11,7 @@ const PopDateField = {
         if (value === '') {
           this.$emit('update:modelValue', null);
         } else {
-          this.$emit('update:modelValue', this.$root.formatDate(value, { iso: true }));
+          this.$emit('update:modelValue', this.$root.formatDate(value, this.$root.dateFormats.isoDatetime) );
         }
       }
     }

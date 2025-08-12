@@ -391,7 +391,7 @@ const BulletinCard = Vue.defineComponent({
               <span class="caption">{{ revision.data['comments'] }} - 
                 <v-chip label size="small"
                 >{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ $root.formatDate(revision.created_at, { local: true }) }}
+                {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 

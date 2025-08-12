@@ -35,15 +35,15 @@
                                         </template>
 
                                         <template v-slot:item.expires_on="{item}">
-                                            ${formatDate(item.expires_on, formatDateOptions)}
+                                            ${formatDate(item.expires_on, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.created_at="{item}">
-                                            ${formatDate(item.created_at, formatDateOptions)}
+                                            ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.imported_at="{item}">
-                                            ${formatDate(item.imported_at, formatDateOptions)}
+                                            ${formatDate(item.imported_at, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.status="{item}">
@@ -144,7 +144,6 @@
             data: () => ({
 
                 translations: translations,
-                formatDateOptions: { local: true },
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
                 q: {},

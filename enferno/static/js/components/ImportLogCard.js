@@ -65,8 +65,8 @@ const ImportLogCard = Vue.defineComponent({
       <!-- Dates fields -->
       <div class="d-flex">
         <uni-field :caption="translations.file_" :english="log.file"></uni-field>
-        <uni-field :caption="translations.createdDate_" :english="$root.formatDate(log.created_at, { local: true })"></uni-field>
-        <uni-field :caption="translations.importDate_" :english="$root.formatDate(log.imported_at, { local: true })"></uni-field>
+        <uni-field :caption="translations.createdDate_" :english="$root.formatDate(log.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local)"></uni-field>
+        <uni-field :caption="translations.importDate_" :english="$root.formatDate(log.imported_at, $root.dateFormats.standardDatetime, $root.dateOptions.local)"></uni-field>
       </div>
 
       <!-- Refs -->

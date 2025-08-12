@@ -42,6 +42,8 @@ const globalMixin = {
       },
     },
     dateFormats: {
+      isoDate: 'YYYY-MM-DD',
+      isoDatetime: 'YYYY-MM-DDTHH:mm',
       standardDate: 'DD/MM/YYYY',
       standardDatetime: 'DD/MM/YYYY h:mm A',
       iso: 'iso',
@@ -49,6 +51,12 @@ const globalMixin = {
       calendar: 'calendar',
       localeDate: 'L',
       localeDatetime: 'LLL'
+    },
+    dateOptions: {
+      local: { local: true },
+      utc: { utc: true },
+      timezone: { timezone: 'UTC' },
+      locale: { locale: 'en' }
     }
   }),
   created () {

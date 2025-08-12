@@ -13,7 +13,7 @@ const ExportCard = Vue.defineComponent({
   },
 
   mounted() {
-    this.exp.expires_on = this.$root.formatDate(this.exp.expires_on, { iso: true, local: true });
+    this.exp.expires_on = this.$root.formatDate(this.exp.expires_on, this.$root.dateFormats.isoDatetime, this.$root.dateOptions.local );
 
     this.loadExportItems();
   },
@@ -50,7 +50,6 @@ const ExportCard = Vue.defineComponent({
 
   data: function () {
     return {
-      formatDateOptions: { local: true },
       translations: window.translations,
       expiryFieldDisabled: true,
       showLoadMore: false,
@@ -120,8 +119,8 @@ const ExportCard = Vue.defineComponent({
 
       <!-- Dates fields -->
       <div class="d-flex">
-        <uni-field :caption="translations.requestedOn_" :english="$root.formatDate(exp.created_at, formatDateOptions)"></uni-field>
-        <uni-field :caption="translations.expiresOn_" :english="$root.formatDate(exp.expires_on, formatDateOptions)"></uni-field>
+        <uni-field :caption="translations.requestedOn_" :english="$root.formatDate(exp.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local)"></uni-field>
+        <uni-field :caption="translations.expiresOn_" :english="$root.formatDate(exp.expires_on, $root.dateFormats.standardDatetime, $root.dateOptions.local)"></uni-field>
       </div>
 
       <!-- Admin actions cards -->

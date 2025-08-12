@@ -34,12 +34,12 @@
                         </template>
 
                         <template v-slot:item.expires_on="{item}">
-                            ${ formatDate(item.expires_on, formatDateOptions) }
+                            ${ formatDate(item.expires_on, dateFormats.standardDatetime, dateOptions.local) }
 
                         </template>
 
                         <template v-slot:item.created_at="{item}">
-                            ${ formatDate(item.created_at, formatDateOptions) }
+                            ${ formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local) }
 
                         </template>
 
@@ -137,7 +137,6 @@
             mixins: [globalMixin, relationsMixin],
 
             data: () => ({
-                formatDateOptions: { local: true },
                 translations: window.translations,
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
