@@ -71,13 +71,16 @@ const globalMixin = {
      * @param {Object} [options] - Optional: timezone, utc, locale.
      * @returns {string} Formatted date or empty string if invalid.
      */
-    formatDate(date, format, options = {}) {
+    formatDate(date, format = this.dateFormats.standardDatetime, options = {}) {
       if (!date) return '';
 
       let d = dayjs(date);
-
+      
       if (options.utc) {
-          d = d.utc();
+        d = d.utc();
+      } else if (options.local) {
+          d = dayjs(date.includes('Z') ? date : date + 'Z');
+          d = d.local();
       } else if (options.timezone) {
           d = d.tz(options.timezone);
       }
