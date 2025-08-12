@@ -41,6 +41,15 @@ const globalMixin = {
         return true;
       },
     },
+    dateFormats: {
+      standardDate: 'DD/MM/YYYY',
+      standardDatetime: 'DD/MM/YYYY HH:mm',
+      iso: 'iso',
+      relative: 'relative',
+      calendar: 'calendar',
+      localeDate: 'L',
+      localeDatetime: 'LLL'
+    }
   }),
   created () {
     document.addEventListener('global-axios-error', this.showSnack);
@@ -55,44 +64,34 @@ const globalMixin = {
     document.removeEventListener('global-axios-error', this.showSnack);
   },
   methods: {
-    // Standarize date formatting
-    formatDate(date, options = {
-        hideTime: false,
-        local: false,
-        timeIfToday: false,
-        iso: false,
-        includeSeconds: false
-    }) {
-        if (!date) return '';
+    /**
+     * Format a date with Day.js supporting timezone, locale, and special formats.
+     * @param {string|number|Date|dayjs.Dayjs} date - Date to format.
+     * @param {string} format - Format string or keyword (e.g. 'iso', 'relative').
+     * @param {Object} [options] - Optional: timezone, utc, locale.
+     * @returns {string} Formatted date or empty string if invalid.
+     */
+    formatDate(date, format, options = {}) {
+      if (!date) return '';
 
-        const { includeSeconds, iso, hideTime, local, timeIfToday } = options;
+      let d = dayjs(date);
 
-        let dateString = date;
-        if (local && !dateString.includes('Z')) {
-            dateString += 'Z';
-        }
+      if (options.utc) {
+          d = d.utc();
+      } else if (options.timezone) {
+          d = d.tz(options.timezone);
+      }
 
-        const dayjsDate = dayjs(dateString);
-        if (!dayjsDate.isValid()) return '';
+      if (options.locale) {
+          d = d.locale(options.locale);
+      }
 
-        let timeFormat = includeSeconds ? 'h:mm:ss A' : 'h:mm A';
-
-        if (iso) {
-            // hideTime just shows the date part in ISO
-            return hideTime
-                ? dayjsDate.format('YYYY-MM-DD')
-                : dayjsDate.format(includeSeconds ? 'YYYY-MM-DDTHH:mm:ss' : 'YYYY-MM-DDTHH:mm');
-        }
-
-        const today = dayjs();
-
-        if (timeIfToday && !hideTime && dayjsDate.isSame(today, 'day')) {
-            return dayjsDate.format(timeFormat);
-        }
-
-        return hideTime
-            ? dayjsDate.format('DD/MM/YYYY')
-            : dayjsDate.format(`DD/MM/YYYY ${timeFormat}`);
+      switch ((format || '').toLowerCase()) {
+        case 'iso': return d.toISOString();
+        case 'relative': return d.fromNow();
+        case 'calendar': return d.calendar();
+        default: return d.format(format);
+      }
     },
     // Snack Bar
     showSnack(message) {
