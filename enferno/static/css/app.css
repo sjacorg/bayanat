@@ -878,3 +878,8 @@ div.jsondiffpatch-child-node-type-array:after {
 .lg-outer {
     z-index: 3000 !important;
 }
+
+/* Line clamp */
+.no-clamp {
+    -webkit-line-clamp: unset !important;
+}

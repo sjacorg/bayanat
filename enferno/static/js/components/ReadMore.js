@@ -2,7 +2,7 @@ const ReadMore = Vue.defineComponent({
   props: {
     previewLines: {
       type: Number,
-      default: 5,
+      default: 15,
     },
   },
   data() {
@@ -51,15 +51,14 @@ const ReadMore = Vue.defineComponent({
         const el = this.$refs.content;
         if (!el) return;
         // Temporarily remove the clamp style to get the full height
-        const originalStyle = el.style.webkitLineClamp;
-        el.style.webkitLineClamp = null;
+        el.classList.add('no-clamp');
 
         const fullHeight = el.scrollHeight;
         const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
         const maxHeight = lineHeight * this.previewLines;
 
         // Restore clamp style
-        el.style.webkitLineClamp = originalStyle;
+        el.classList.remove('no-clamp');
 
         this.isTruncated = fullHeight > maxHeight + 1; // Add 1px for rounding
       });
