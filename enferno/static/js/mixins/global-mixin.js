@@ -43,7 +43,7 @@ const globalMixin = {
     },
     dateFormats: {
       standardDate: 'DD/MM/YYYY',
-      standardDatetime: 'DD/MM/YYYY HH:mm',
+      standardDatetime: 'DD/MM/YYYY h:mm A',
       iso: 'iso',
       relative: 'relative',
       calendar: 'calendar',
