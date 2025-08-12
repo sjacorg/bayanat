@@ -10,6 +10,7 @@ from flask_session import Session
 from flask_redis import FlaskRedis
 from flask_babel import Babel
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_mail import Mail
 
 from enferno.utils.rate_limit_utils import get_real_ip
 from enferno.settings import Config as cfg
@@ -19,6 +20,7 @@ session = Session()
 rds = FlaskRedis()
 babel = Babel()
 debug_toolbar = DebugToolbarExtension()
+mail = Mail()
 limiter = Limiter(
     key_func=get_real_ip,
     strategy="moving-window",
