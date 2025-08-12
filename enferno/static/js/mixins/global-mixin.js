@@ -29,22 +29,6 @@ const globalMixin = {
           return Object.keys(value).length > 0 || 'This field is required.';
         return !!value || 'This field is required.';
       },
-      email: (value) => {
-        const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return pattern.test(value) || 'Invalid e-mail.';
-      },
-      password: (value) => {
-        if (value.length < 8) {
-          return 'Password must be at least 8 characters long.';
-        }
-        return true;
-      },
-      passwordMatch: (value, password) => {
-        if (value !== password) {
-          return 'Passwords do not match.';
-        }
-        return true;
-      },
     },
     dateFormats: {
       isoDate: 'YYYY-MM-DD',
