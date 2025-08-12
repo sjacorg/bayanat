@@ -202,7 +202,7 @@ class TestEmailValidation:
         ]
 
         for email in valid_emails:
-            result = validate_email_format(email)
+            result = validate_email_format(email).normalized
             assert "@" in result
             assert "." in result
 
@@ -233,6 +233,6 @@ class TestEmailValidation:
     def test_email_normalization(self):
         """Test that emails are normalized correctly."""
         email = "  Test.Email@EXAMPLE.COM  "
-        result = validate_email_format(email)
+        result = validate_email_format(email).normalized
         # Should be normalized (email-validator typically lowercases domain)
         assert result.endswith("@example.com")

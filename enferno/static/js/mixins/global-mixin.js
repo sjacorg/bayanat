@@ -1,5 +1,5 @@
 const globalMixin = {
-  mixins: [reauthMixin],
+  mixins: [reauthMixin, notificationMixin],
   data: () => ({
     snackbar: false,
     snackMessage: '',
@@ -133,7 +133,15 @@ const globalMixin = {
             this.showSnack(err.body);
         });
     },
+    toggleUserSettingsDrawer() {
+      // Toggle the settings drawer
+      this.settingsDrawer = !this.settingsDrawer;
 
+      // Close the notifications drawer if the settings drawer is open
+      if (this.settingsDrawer) {
+        this.notifications.ui.drawerVisible = false;
+      }
+    },
     updateLang(l) {
       this.settings.language = l
       this.saveSettings();
