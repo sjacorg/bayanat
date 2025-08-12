@@ -70,18 +70,15 @@ const ReadMore = Vue.defineComponent({
         <slot />
       </div>
 
-      <v-btn
-        v-if="isTruncated"
-        @click="toggle"
-        variant="plain"
-        :ripple="false"
-        class="pa-0 mt-1"
-        height="fit-content"
-        width="fit-content"
-        color="primary"
-      >
-        {{ toggleText }}
-      </v-btn>
+      <div class="pa-4 d-flex justify-center" v-if="isTruncated">
+        <v-btn
+          @click="toggle"
+          color="primary"
+          variant="text"
+        >
+          {{ toggleText }}
+        </v-btn>
+      </div>
     </div>
   `,
 });
