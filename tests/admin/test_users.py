@@ -4,6 +4,7 @@ import uuid
 import pytest
 from flask import current_app
 from enferno.admin.models import Activity
+from enferno.admin.models.Notification import Notification
 from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.user.models import User, Session, WebAuthn
 
@@ -27,6 +28,7 @@ from tests.models.admin import (
 @pytest.fixture(scope="function")
 def clean_slate_users(session):
     session.query(Activity).delete(synchronize_session=False)
+    session.query(Notification).delete(synchronize_session=False)
     session.query(User).delete(synchronize_session=False)
     session.commit()
     yield
@@ -160,6 +162,95 @@ def test_post_user_endpoint(clean_slate_users, request, client_fixture, expected
         assert found_user is None
 
 
+post_user_endpoint_invalid_email_roles = [
+    ("admin_client", 400),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", post_user_endpoint_invalid_email_roles)
+def test_post_user_endpoint_invalid_email(
+    clean_slate_users, request, client_fixture, expected_status
+):
+    from enferno.settings import Config as cfg
+
+    with patch.object(cfg, "MAIL_ENABLED", True), patch.object(
+        cfg, "MAIL_ALLOWED_DOMAINS", ["valid_domain.com"]
+    ):
+        client_ = request.getfixturevalue(client_fixture)
+        user = UserFactory()
+        data = user_to_dict(user)
+        data["email"] = "email@invalid-domain.com"
+        response = client_.post(
+            "/admin/api/user/",
+            headers={"Content-Type": "application/json"},
+            json={"item": data},
+        )
+        assert response.status_code == expected_status
+        print(response.json)  # Debugging output
+        if expected_status == 400:
+            assert (
+                f"Email domain is not allowed. Allowed domains are: valid_domain.com"
+                in response.json["errors"]["item.email"]
+            )
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", post_user_endpoint_roles)
+def test_post_user_endpoint_allow_all_domains(
+    clean_slate_users, request, client_fixture, expected_status
+):
+    from enferno.settings import Config as cfg
+
+    with patch.object(cfg, "MAIL_ENABLED", True), patch.object(cfg, "MAIL_ALLOWED_DOMAINS", ["*"]):
+        client_ = request.getfixturevalue(client_fixture)
+        user = UserFactory()
+        data = user_to_dict(user)
+        data["email"] = "email@invalid-domain.com"
+        response = client_.post(
+            "/admin/api/user/",
+            headers={"Content-Type": "application/json"},
+            json={"item": data},
+        )
+        assert response.status_code == expected_status
+
+
+post_user_conflict_endpoint_roles = [
+    ("admin_client", 409),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", post_user_conflict_endpoint_roles)
+def test_post_user_conflicts_endpoint(
+    clean_slate_users, create_user, request, client_fixture, expected_status
+):
+    client_ = request.getfixturevalue(client_fixture)
+    user = UserFactory()
+    user.username = create_user.username
+    response = client_.post(
+        "/admin/api/user/",
+        headers={"Content-Type": "application/json"},
+        json={"item": user_to_dict(user)},
+    )
+    assert response.status_code == expected_status
+    found_user = User.query.filter(User.username == user.username).first()
+    assert found_user.id == create_user.id
+    user = UserFactory()
+    user.email = create_user.email
+    response = client_.post(
+        "/admin/api/user/",
+        headers={"Content-Type": "application/json"},
+        json={"item": user_to_dict(user)},
+    )
+    assert response.status_code == expected_status
+    found_user = User.query.filter(User.email == user.email).first()
+    assert found_user.id == create_user.id
+
+
 ##### POST /admin/api/checkuser #####
 
 post_checkuser_endpoint_roles = [
@@ -226,6 +317,52 @@ def test_put_user_endpoint(
         assert found_user.username == u.username
     else:
         assert found_user.username != u.username
+
+
+put_user_conflict_endpoint_roles = [
+    ("admin_client", 409),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", put_user_conflict_endpoint_roles)
+def test_put_user_conflicts_endpoint(
+    clean_slate_users, create_user, session, request, client_fixture, expected_status
+):
+    client_ = request.getfixturevalue(client_fixture)
+    user_to_be_updated = UserFactory()
+    user_to_be_updated.fs_uniquifier = uuid.uuid4().hex
+    session.add(user_to_be_updated)
+    session.commit()
+    new_username = create_user.username
+    new_user_data = UserFactory()
+    new_user_data.username = new_username
+    new_user_data = user_to_dict(new_user_data)
+    new_user_data["id"] = user_to_be_updated.id
+    del new_user_data["password"]
+    response = client_.put(
+        f"/admin/api/user/",
+        headers={"Content-Type": "application/json"},
+        json={"item": new_user_data},
+    )
+    assert response.status_code == expected_status
+    found_user = User.query.filter(User.username == new_username).first()
+    assert found_user.id == create_user.id
+    new_user_data = UserFactory()
+    new_user_data = user_to_dict(new_user_data)
+    new_user_data["id"] = user_to_be_updated.id
+    del new_user_data["password"]
+    new_user_data["email"] = create_user.email
+    response = client_.put(
+        f"/admin/api/user/",
+        headers={"Content-Type": "application/json"},
+        json={"item": new_user_data},
+    )
+    assert response.status_code == expected_status
+    found_user = User.query.filter(User.email == new_user_data["email"]).first()
+    assert found_user.id == create_user.id
 
 
 ##### POST /admin/api/password #####
@@ -371,7 +508,6 @@ def test_user_sessions(
         f"/admin/api/user/{u.id}/sessions",
         headers={"Content-Type": "application/json"},
     )
-    print(response.json)
     assert response.status_code == expected_status
     if expected_status == 200:
         conform_to_schema_or_fail(

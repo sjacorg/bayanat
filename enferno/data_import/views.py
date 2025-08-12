@@ -14,6 +14,7 @@ from werkzeug.utils import safe_join
 from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Media
+from enferno.admin.models.Notification import Notification
 from enferno.data_import.models import DataImport, Mapping
 from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.tasks import process_row, process_files
@@ -184,6 +185,13 @@ def etl_process() -> Response:
     batch_id = shortuuid.uuid()[:9]
 
     process_files.delay(files=files, meta=meta, user_id=current_user.id, batch_id=batch_id)
+
+    # Notify admins
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.NEW_BATCH,
+        "New Import Request",
+        f"Import batch {batch_id} has been created by {current_user.username} successfully.",
+    )
 
     return HTTPResponse.success(data=batch_id)
 
@@ -444,6 +452,13 @@ def api_process_sheet() -> Response:
                 lang,
                 roles,
             )
+
+    # Notify admins
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.NEW_BATCH,
+        "New Import Request",
+        f"Import batch {batch_id} has been created by {current_user.username} successfully.",
+    )
 
     return HTTPResponse.success(data=batch_id)
 
