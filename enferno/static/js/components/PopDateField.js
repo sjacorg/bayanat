@@ -11,18 +11,11 @@ const PopDateField = {
         if (value === '') {
           this.$emit('update:modelValue', null);
         } else {
-          this.$emit('update:modelValue', this.formatDate(value));
+          this.$emit('update:modelValue', this.$root.formatDate(value, this.$root.dateFormats.isoDatetime) );
         }
       }
     }
   },
-
-  methods: {
-    formatDate(date) {
-      return date ? dayjs(date).format('YYYY-MM-DDTHH:mm') : '';
-    }
-  },
-
   template: `
     <v-date-input class="flex-fill" :label="label" v-bind="$attrs" :rules="[$root.rules.dateValidation]" variant="outlined" hide-actions v-model="date" @click:clear="$emit('update:modelValue', null)" clearable></v-date-input>
   `

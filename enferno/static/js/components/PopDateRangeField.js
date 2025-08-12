@@ -16,16 +16,13 @@ const PopDateRangeField = {
         } else {
           const sortedDates = values.sort((a, b) => a - b);
           const limitedDates = sortedDates.length > 1 ? [sortedDates[0], sortedDates[sortedDates.length - 1]] : sortedDates;
-          this.$emit('update:modelValue', limitedDates.map(date => this.formatDate(date)));
+          this.$emit('update:modelValue', limitedDates.map(date => this.$root.formatDate(date, this.$root.dateFormats.isoDate)) );
         }
       }
     }
   },
 
   methods: {
-    formatDate(date) {
-      return date ? dayjs(date).format('YYYY-MM-DD') : '';
-    },
     parseDate(dateStr) {
       return dateStr ? dayjs(dateStr).toDate() : null;
     }
