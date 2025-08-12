@@ -55,6 +55,45 @@ const globalMixin = {
     document.removeEventListener('global-axios-error', this.showSnack);
   },
   methods: {
+    // Standarize date formatting
+    formatDate(date, options = {
+        hideTime: false,
+        local: false,
+        timeIfToday: false,
+        iso: false,
+        includeSeconds: false
+    }) {
+        if (!date) return '';
+
+        const { includeSeconds, iso, hideTime, local, timeIfToday } = options;
+
+        let dateString = date;
+        if (local && !dateString.includes('Z')) {
+            dateString += 'Z';
+        }
+
+        const dayjsDate = dayjs(dateString);
+        if (!dayjsDate.isValid()) return '';
+
+        let timeFormat = includeSeconds ? 'h:mm:ss A' : 'h:mm A';
+
+        if (iso) {
+            // hideTime just shows the date part in ISO
+            return hideTime
+                ? dayjsDate.format('YYYY-MM-DD')
+                : dayjsDate.format(includeSeconds ? 'YYYY-MM-DDTHH:mm:ss' : 'YYYY-MM-DDTHH:mm');
+        }
+
+        const today = dayjs();
+
+        if (timeIfToday && !hideTime && dayjsDate.isSame(today, 'day')) {
+            return dayjsDate.format(timeFormat);
+        }
+
+        return hideTime
+            ? dayjsDate.format('DD/MM/YYYY')
+            : dayjsDate.format(`DD/MM/YYYY ${timeFormat}`);
+    },
     // Snack Bar
     showSnack(message) {
       if (typeof message === 'string') {

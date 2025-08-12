@@ -19,7 +19,6 @@ const ActorProfiles = Vue.defineComponent({
   },
 
   methods: {
-    formatDate: formatDate,
     fetchProfiles() {
       axios
         .get(`/admin/api/actor/${this.actorId}/profiles`)
@@ -106,8 +105,8 @@ const ActorProfiles = Vue.defineComponent({
 
               <mp-card v-if="profile.mode === 3" :profile-id="profile.id"></mp-card>
 
-              <uni-field :caption="translations.publishDate_" :english="formatDate(profile.publish_date)"></uni-field>
-              <uni-field :caption="translations.documentationDate_" :english="formatDate(profile.documentation_date)"></uni-field>
+              <uni-field :caption="translations.publishDate_" :english="$root.formatDate(profile.publish_date)"></uni-field>
+              <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(profile.documentation_date)"></uni-field>
 
             </v-card>
           </v-window-item>

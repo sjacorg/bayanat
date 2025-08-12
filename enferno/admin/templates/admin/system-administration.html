@@ -954,7 +954,6 @@
             },
 
             methods: {
-                formatDate: formatDate,
                 loadWhisperModels(){
                     api.get('/import/api/whisper/models/').then(res => {
                         this.whisperModels = res.data.models;

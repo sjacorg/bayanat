@@ -42,7 +42,6 @@ const UserCard = Vue.defineComponent({
   },
 
   methods: {
-    formatDate: formatDate,
     resetSessions() {
       this.sessions = [];
       this.page = 1;
@@ -302,7 +301,7 @@ const UserCard = Vue.defineComponent({
                 <td class="text-caption">
                   {{ session.meta.device }}
                 </td>
-                <td class="text-caption">{{ formatDate(session.created_at, { local: true }) }}</td>
+                <td class="text-caption">{{ $root.formatDate(session.created_at, { local: true }) }}</td>
                 <td>
                   <v-btn icon="mdi-logout" variant="plain" v-if="session.details?._fresh"
                          @click.once="logoutSession(session.id)" :disabled="!session.is_active"

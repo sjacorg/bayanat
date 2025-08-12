@@ -16,7 +16,6 @@ const BulletinCard = Vue.defineComponent({
   },
 
   methods: {
-    formatDate: formatDate,
     translate_status(status) {
       return translate_status(status);
     },
@@ -357,8 +356,8 @@ const BulletinCard = Vue.defineComponent({
 
       <!-- Pub/Doc Dates -->
       <v-sheet class="d-flex">
-        <uni-field :caption="translations.publishDate_" :english="formatDate(bulletin.publish_date)"></uni-field>
-        <uni-field :caption="translations.documentationDate_" :english="formatDate(bulletin.documentation_date)"></uni-field>
+        <uni-field :caption="translations.publishDate_" :english="$root.formatDate(bulletin.publish_date)"></uni-field>
+        <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(bulletin.documentation_date)"></uni-field>
       </v-sheet>
 
       <!-- Review -->
@@ -392,7 +391,7 @@ const BulletinCard = Vue.defineComponent({
               <span class="caption">{{ revision.data['comments'] }} - 
                 <v-chip label size="small"
                 >{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ formatDate(revision.created_at, { local: true }) }}
+                {{ $root.formatDate(revision.created_at, { local: true }) }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 

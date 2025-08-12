@@ -16,14 +16,13 @@ const PopDateRangeField = {
         } else {
           const sortedDates = values.sort((a, b) => a - b);
           const limitedDates = sortedDates.length > 1 ? [sortedDates[0], sortedDates[sortedDates.length - 1]] : sortedDates;
-          this.$emit('update:modelValue', limitedDates.map(date => this.formatDate(date, { iso: true, hideTime: true })));
+          this.$emit('update:modelValue', limitedDates.map(date => this.$root.formatDate(date, { iso: true, hideTime: true })));
         }
       }
     }
   },
 
   methods: {
-    formatDate: formatDate,
     parseDate(dateStr) {
       return dateStr ? dayjs(dateStr).toDate() : null;
     }
