@@ -22,7 +22,7 @@ const RelatedIncidentsCard = Vue.defineComponent({
       handler(newVal, oldVal) {
       if (newVal && newVal !== oldVal && newVal.id) {
 
-          this.bulletinPage = 1; // Reset page
+          this.incidentPage = 1; // Reset page
           this.entity.incident_relations = []; // Clear current relations
           this.loadIncidentRelations();
         }

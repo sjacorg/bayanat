@@ -21,7 +21,7 @@ const RelatedActorsCard = Vue.defineComponent({
     entity: {
       handler(newVal, oldVal) {
         if (newVal && newVal !== oldVal && newVal.id) {
-          this.bulletinPage = 1; // Reset page
+          this.actorPage = 1; // Reset page
           this.entity.actor_relations = []; // Clear current relations
           this.loadActorRelations();
         }
