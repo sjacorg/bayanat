@@ -372,10 +372,8 @@ const ActorCard = Vue.defineComponent({
         <v-card v-if="actor.status==='Peer Reviewed'" variant="outlined" elevation="0" class="ma-2" color="teal-lighten-2">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.review_ }}</div>
-            <div v-html="actor.review" class="pa-1 my-2  ">
-
-            </div>
-            <v-chip size="small" label color="lime">{{ actor.review_action }}</v-chip>
+            <read-more><div v-html="actor.review" class="pa-1 my-2  "></div></read-more>
+            <v-chip class="mt-4" size="small" label color="lime">{{ actor.review_action }}</v-chip>
           </v-card-text>
         </v-card>
 
@@ -390,8 +388,8 @@ const ActorCard = Vue.defineComponent({
 
             <template v-for="(revision,index) in revisions">
               <v-card color="grey" dense flat class="my-1 pa-2 d-flex align-center">
-              <span class="caption">{{ revision.data['comments'] }} - <v-chip size="small" label
-                                                                              color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
+              <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
+              <v-chip size="small" label color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
                 {{ revision.created_at }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
                 <v-spacer></v-spacer>

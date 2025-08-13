@@ -161,6 +161,11 @@
 
                                     </v-toolbar>
                                 </template>
+
+                                <template #['item.comments']="{ item }">
+                                    <read-more class="my-2" :preview-lines="3">${item.comments}</read-more>
+                                </template>
+
                                 <template v-slot:item.action="{ item }">
                                     <v-icon small class="mr-2" @click="editItem(item)">
                                         mdi-pencil
@@ -181,6 +186,7 @@
     </v-main>
 
 {% endblock %} {% block js %}
+    <script src="/static/js/components/ReadMore.js"></script>
     <script>
 
         const {createApp} = Vue;
@@ -321,6 +327,7 @@
                 }
             }
         });
+        app.component('ReadMore', ReadMore);
         app.use(vuetify).mount("#app")
     </script>
 {% endblock %}
