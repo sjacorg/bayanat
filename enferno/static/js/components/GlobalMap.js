@@ -121,6 +121,7 @@ const GlobalMap = Vue.defineComponent({
       );
 
       this.fitMarkers();
+      this.updateMapBounds();
     },
     updateMapBounds() {
       // Fit map of bounds of clusterLayer
