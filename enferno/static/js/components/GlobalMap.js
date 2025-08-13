@@ -49,20 +49,18 @@ const GlobalMap = Vue.defineComponent({
 
       if (val?.length || val !== old) {
         this.locations = val;
-        this.fitMarkers();
         this.selectedLocations = [...this.uniqueEventTypes];
+        this.fitMarkers();
+        this.updateMapBounds();
       }
       if (val.length === 0) {
         this.map.setView([this.lat, this.lng]);
       }
     },
-
     selectedLocations(val) {
       this.fitMarkers();
     },
-
     locations() {
-
       this.$emit('update:modelValue', this.locations);
     },
   },
@@ -124,43 +122,44 @@ const GlobalMap = Vue.defineComponent({
 
       this.fitMarkers();
     },
-
-    fsHandler() {
-      //allow some time for the map to enter/exit fullscreen
-      setTimeout(() => this.fitMarkers(), 500);
-    },
-
-    redraw() {
-      this.map.invalidateSize();
-    },
-
-    fitMarkers() {
-      if (!this.map) return;
-
-      // ensure markerGroup exists
-      if (!this.markerGroup) {
-        this.markerGroup = L.markerClusterGroup({ maxClusterRadius: 20 });
-        // don't add to map here — we'll add after filling it
-      } else {
-        // remove existing event route links (we'll rebuild below)
-        if (this.eventLinks) {
-          this.map.removeLayer(this.eventLinks);
-          this.eventLinks = null;
-        }
-        // clear markers in existing group (preserves cluster internals)
-        this.markerGroup.clearLayers();
+    updateMapBounds() {
+      // Fit map of bounds of clusterLayer
+      let bounds = this.markerGroup.getBounds();
+      if (bounds.isValid()){
+        this.map.fitBounds(bounds, { padding: [20, 20] });
       }
 
-      const visible = this.filteredLocations || [];
-      if (visible.length) {
-        const locationsWithCoordinates = visible.filter(loc => loc.lat && loc.lng);
+
+      if (this.map.getZoom() > 14) {
+        // flyout of center when map is zoomed in too much (single marker or many dense markers)
+        this.map.flyTo(this.map.getCenter(), 10, { duration: 1 });
+      }
+    },
+    fitMarkers() {
+      // construct a list of markers to build a feature group
+      if (this.markerGroup) {
+        this.map.removeLayer(this.markerGroup);
+      }
+
+      this.markerGroup = L.markerClusterGroup({
+        maxClusterRadius: 20,
+      });
+
+      const visibleLocations = this.filteredLocations || [];
+      if (visibleLocations?.length) {
         let eventLocations = [];
 
+        const locationsWithCoordinates = visibleLocations.filter(loc => loc.lat && loc.lng);
+
         for (const loc of locationsWithCoordinates) {
+
           if (loc.main) {
+            mainStr = this.translations.mainIncident_;
             loc.color = '#000000';
           }
-          const marker = L.circleMarker([loc.lat, loc.lng], {
+
+
+          let marker = L.circleMarker([loc.lat, loc.lng], {
             color: 'white',
             fillColor: loc.color,
             fillOpacity: 0.65,
@@ -170,63 +169,47 @@ const GlobalMap = Vue.defineComponent({
           });
 
           if (loc.type === 'Event') {
+            // Add the events latlng to the latlngs array
             eventLocations.push(loc);
           }
 
           marker.bindPopup(this.generatePopupContent(loc));
+
           this.markerGroup.addLayer(marker);
         }
 
-        // Add event route links if needed
+        // Add event linestring links if any available
         if (eventLocations.length > 1) {
           this.addEventRouteLinks(eventLocations);
         }
 
-        // Ensure markerGroup is added to the map
-        if (!this.map.hasLayer(this.markerGroup)) {
-          this.markerGroup.addTo(this.map);
-        }
-
-        // Fit bounds only if it changed (avoid refit flicker)
-        const bounds = this.markerGroup.getBounds();
-        if (bounds && bounds.isValid()) {
-          const boundsStr = bounds.toBBoxString();
-          if (this.lastBounds !== boundsStr) {
-            this.lastBounds = boundsStr;
-            // limit maxZoom so a single marker doesn't zoom crazy
-            this.map.fitBounds(bounds, { padding: [20, 20], maxZoom: 14 });
-          }
-        }
-
-        // If the map is zoomed in too far after fitBounds, nudge it out
-        if (this.map.getZoom && this.map.getZoom() > 14) {
-          this.map.flyTo(this.map.getCenter(), 10, { duration: 0.8 });
-        }
-
-        // add measureControls if not present
         if (!this.measureControls) {
           this.measureControls = L.control.polylineMeasure({
             position: 'topleft',
             unit: 'kilometres',
-            fixedLine: { color: 'rgba(67,157,146,0.77)', weight: 2 },
-            arrow: { color: 'rgba(67,157,146,0.77)' },
+            fixedLine: {
+              // Styling for the solid line
+              color: 'rgba(67,157,146,0.77)', // Solid line color
+              weight: 2, // Solid line weight
+            },
+
+            arrow: {
+              // Styling of the midway arrow
+              color: 'rgba(67,157,146,0.77)', // Color of the arrow
+            },
             showBearings: false,
             clearMeasurementsOnStop: false,
             showClearControl: true,
             showUnitControl: true,
-          }).addTo(this.map);
+          });
+
+          this.measureControls.addTo(this.map);
         }
-      } else {
-        // no visible markers — clear group from map
-        if (this.map.hasLayer && this.map.hasLayer(this.markerGroup)) {
-          this.map.removeLayer(this.markerGroup);
-        }
-        this.lastBounds = null;
+
+        this.markerGroup.addTo(this.map);
       }
 
-      // Only invalidate once (needed if container changed); can be removed if not needed
-      // small timeout helps Leaflet recalc right after DOM changes
-      setTimeout(() => this.map.invalidateSize(), 50);
+      // this.map.invalidateSize();
     },
 
     addEventRouteLinks(eventLocations) {
