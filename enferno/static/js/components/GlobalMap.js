@@ -179,10 +179,8 @@ const GlobalMap = Vue.defineComponent({
           this.markerGroup.addLayer(marker);
         }
 
-        // Add event linestring links if any available
-        if (eventLocations.length > 1) {
-          this.addEventRouteLinks(eventLocations);
-        }
+        // Add event linestring links
+        this.addEventRouteLinks(eventLocations);
 
         if (!this.measureControls) {
           this.measureControls = L.control.polylineMeasure({
@@ -209,8 +207,6 @@ const GlobalMap = Vue.defineComponent({
 
         this.markerGroup.addTo(this.map);
       }
-
-      // this.map.invalidateSize();
     },
 
     addEventRouteLinks(eventLocations) {
@@ -314,7 +310,7 @@ const GlobalMap = Vue.defineComponent({
                 </div>
               </div>
 
-              <v-menu v-if="uniqueEventTypes.length > 1">
+              <v-menu v-if="uniqueEventTypes.length > 1" :close-on-content-click="false">
                 <template v-slot:activator="{ props: menuProps }">
                   <v-tooltip location="bottom">
                     <template v-slot:activator="{ props: tooltipProps }">
