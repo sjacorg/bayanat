@@ -474,7 +474,9 @@
 
                     valid: false,
                     leftDialogProps: {
-                        width: "60%",
+                        'content-props': {
+                            style: { width: '60%' },
+                        },
                         'content-class': 'absolute left-0',
                         fullscreen: true,
                         persistent: true,
@@ -482,7 +484,9 @@
                         scrim: false,
                     },
                     rightDialogProps: {
-                        width: "60%",
+                        'content-props': {
+                            style: { width: '60%' },
+                        },
                         'content-class': 'absolute right-0 left-auto',
                         fullscreen: true,
                         persistent: true,

@@ -72,7 +72,7 @@
             >
 
             <v-card-text class="pa-0" style="height: calc(100vh - 64px);">
-                    <split-view ref="bulletinDialogSplitViewRef" @left-width-changed="leftDialogProps.width = $event" @right-width-changed="rightDialogProps.width = $event">
+                    <split-view ref="bulletinDialogSplitViewRef" @left-width-changed="leftDialogProps['content-props'].style.width = $event" @right-width-changed="rightDialogProps['content-props'].style.width = $event">
                         <template #left>
                             <div class="mx-4 mb-4 mt-8">
                                 {% include 'admin/partials/media_dialog.html' %}
