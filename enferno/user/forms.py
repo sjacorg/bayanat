@@ -1,8 +1,11 @@
 from flask_security.forms import RegisterForm, LoginForm, ChangePasswordForm
+from flask_security import MfRecoveryCodesForm
+from flask_security.decorators import current_user
 from flask_security.webauthn import WebAuthnRegisterForm
 from wtforms import StringField
 from wtforms.validators import ValidationError
-
+from enferno.admin.models import Notification
+from enferno.admin.constants import Constants
 from flask_wtf import RecaptchaField
 from enferno.utils.validation_utils import validate_password_policy, validate_webauthn_device_name
 
@@ -32,6 +35,20 @@ class SanitizedWebAuthnRegisterForm(WebAuthnRegisterForm):
 
 class UserInfoForm:
     pass
+
+
+class ExtendedMfRecoveryCodesForm(MfRecoveryCodesForm):
+    def validate(self, **kwargs):
+        if super().validate(**kwargs):
+            Notification.send_notification_for_event(
+                user=current_user,
+                event=Constants.NotificationEvent.RECOVERY_CODES_CHANGE,
+                title="Multi-Factor Recovery Codes Changed",
+                message="Your multi-factor recovery codes have been generated.",
+                category="security",
+            )
+            return True
+        return False
 
 
 class ExtendedChangePasswordForm(ChangePasswordForm):

@@ -4,7 +4,9 @@ from typing import Literal, Optional
 from flask import current_app, request, Response, Blueprint, json, send_from_directory
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
+from enferno.admin.constants import Constants
 from enferno.admin.models import Activity
+from enferno.admin.models.Notification import Notification
 from enferno.export.models import Export
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
@@ -69,6 +71,12 @@ def export_bulletins() -> Response:
             export_request.to_mini(),
             Export.__table__.name,
         )
+        # Notify admins
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
+        )
 
         return HTTPResponse.created(
             message=f"Export request created successfully, id:  {export_request.id} ",
@@ -97,6 +105,13 @@ def export_actors() -> Response:
             export_request.to_mini(),
             Export.__table__.name,
         )
+        # Notify admins
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
+        )
+
         return HTTPResponse.created(
             message=f"Export request created successfully, id:  {export_request.id} ",
             data={"item": export_request.to_dict()},
@@ -123,6 +138,12 @@ def export_incidents() -> Response:
             Activity.STATUS_SUCCESS,
             export_request.to_mini(),
             Export.__table__.name,
+        )
+        # Notify admins
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
         )
         return HTTPResponse.created(
             message=f"Export request created successfully, id:  {export_request.id} ",
@@ -222,6 +243,13 @@ def change_export_status() -> Response:
             # store export background task id, to be used for fetching progress
             export_request.uuid = res.id
             export_request.save()
+
+            # Notify admins
+            Notification.send_admin_notification_for_event(
+                Constants.NotificationEvent.APPROVE_EXPORT,
+                "Export Request Approved",
+                f"Export request {export_request.id} has been approved by {current_user.username} successfully.",
+            )
 
             return HTTPResponse.success(
                 message="Export request approval will be processed shortly."

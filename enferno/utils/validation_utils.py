@@ -145,7 +145,7 @@ def validate_email_format(email: str) -> str:
     try:
         # Use email-validator library for unicode/IDN support
         validated_email = validate_email(email.strip(), check_deliverability=False)
-        return validated_email.normalized
+        return validated_email
     except EmailNotValidError as e:
         raise WTFormsValidationError(f"Invalid email format: {str(e)}")
 

@@ -71,6 +71,8 @@ tags:
     description: Operations related to saved searches
   - name: Graph Management
     description: Operations related to graph data
+  - name: Notification Management
+    description: Operations related to notifications
   - name: Configuration Management
     description: Operations related to configuration settings
 paths:
@@ -6685,6 +6687,114 @@ paths:
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '404':
           $ref: '#/components/responses/NotFoundJsonResponse'
+  /admin/api/notifications:
+    get:
+      operationId: getNotifications
+      tags:
+        - Protected
+        - Notification Management
+      summary: Get paginated notifications for the current user
+      description: |
+        Get a paginated list of notifications for the current user.
+        
+        Roles accepted:
+        - Admin
+        - Mod
+        - DA
+      security:
+        - SessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: status
+          required: false
+          description: Status of the notifications to filter by (default: all, can be "read" or "unread". Case insensitive)
+          schema:
+            type: string
+            enum:
+              - read
+              - unread
+              - all
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  currentPage:
+                    type: integer
+                  perPage:
+                    type: integer
+                  total:
+                    type: integer
+                  hasMore:
+                    type: boolean
+                  unreadCount:
+                    type: integer
+  /admin/api/notifications/unread/count:
+    get:
+      operationId: getUnreadNotificationsCount
+      tags:
+        - Protected
+        - Notification Management
+      summary: Get the count of unread notifications for the current user
+      description: |
+        Get the count of unread notifications for the current user.
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread_count:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/UnauthenticatedResponse'
+  /admin/api/notifications/<int:notification_id>/read:
+    post:
+      operationId: markNotificationAsRead
+      tags:
+        - Protected
+        - Notification Management
+      summary: Mark a notification as read
+      description: |
+        Mark a notification as read.
+
+        Roles accepted:
+        - Admin
+        - Mod
+        - DA
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  notification:
+                    $ref: '#/components/schemas/Notification'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundTextResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
   /admin/api/appconfig:
     get:
       operationId: getAppConfig
@@ -9936,6 +10046,30 @@ components:
               items:
                 type: string
               example: ['You do not have permission to view this resource.']
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+        read_status:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+        is_urgent:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     BaseItemCreateResponse:
       type: object
       properties:
