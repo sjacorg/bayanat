@@ -1,30 +1,158 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bayanat"
+version = "2.9.0"
+description = "Open source data management solution for processing human rights violations and war crimes data"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+authors = [
+    {name = "Syria Justice and Accountability Centre", email = "tech@syriaaccountability.org"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+requires-python = ">=3.12"
+
+dependencies = [
+    "amqp==5.3.1",
+    "appnope==0.1.4",
+    "arrow==1.3.0",
+    "Babel==2.17.0",
+    "backcall==0.2.0",
+    "bcrypt==4.3.0",
+    "bleach==6.2.0",
+    "blinker==1.9.0",
+    "boto3==1.38.27",
+    "botocore==1.38.27",
+    "celery==5.5.2",
+    "certifi==2025.4.26",
+    "cffi==1.17.1",
+    "chardet==5.2.0",
+    "click==8.2.1",
+    "cryptography==45.0.3",
+    "decorator==5.2.1",
+    "dnspython==2.7.0",
+    "docutils==0.21.2",
+    "email-validator==2.2.0",
+    "Flask-Babel==4.0.0",
+    "Flask-Limiter>=3.0",
+    "Flask-Login==0.6.3",
+    "Flask-Mail==0.10.0",
+    "Flask-Principal==0.4.0",
+    "flask-redis==0.4.0",
+    "Flask-Script==2.0.6",
+    "flask-security-too==5.6.2",
+    "Flask-Session==0.8.0",
+    "flask-shell-ipython==0.5.3",
+    "Flask-SQLAlchemy==3.1.1",
+    "Flask-WTF==1.2.2",
+    "Flask==3.1.1",
+    "Flask-DebugToolbar==0.16.0",
+    "GeoAlchemy2==0.17.1",
+    "greenlet==3.2.2",
+    "idna==3.10",
+    "importlib-metadata==8.7.0",
+    "itsdangerous==2.2.0",
+    "jedi==0.19.2",
+    "Jinja2==3.1.6",
+    "jmespath==1.0.1",
+    "kombu==5.5.3",
+    "Mako==1.3.10",
+    "MarkupSafe==3.0.2",
+    "more-itertools==10.7.0",
+    "oauthlib==3.2.2",
+    "openpyxl==3.1.5",
+    "packaging==25.0",
+    "pandas==2.2.3",
+    "parso==0.8.4",
+    "passlib==1.7.4",
+    "pdf2image==1.17.0",
+    "pexpect==4.9.0",
+    "pickleshare==0.7.5",
+    "Pillow==11.3.0",
+    "prompt-toolkit==3.0.51",
+    "psycopg2==2.9.10",
+    "ptyprocess==0.7.0",
+    "pycparser==2.22",
+    "pydantic==2.11.5",
+    "pyexifinfo==0.4.0",
+    "Pygments==2.19.1",
+    "pyparsing==3.2.3",
+    "pypdf==5.5.0",
+    "PyQRCode==1.2.1",
+    "python-dateutil==2.9.0.post0",
+    "python-docx==1.1.2",
+    "python-dotenv==1.1.0",
+    "python-editor==1.0.4",
+    "pytz==2025.2",
+    "qrcode==8.2",
+    "redis==6.2.0",
+    "requests==2.32.4",
+    "s3transfer==0.13.0",
+    "Shapely==2.1.1",
+    "shortuuid==1.0.13",
+    "six==1.17.0",
+    "speaklater==1.3",
+    "SQLAlchemy==2.0.41",
+    "traitlets==5.14.3",
+    "Unidecode==1.4.0",
+    "urllib3==2.5.0",
+    "uWSGI==2.0.29",
+    "vine==5.1.0",
+    "wcwidth==0.2.13",
+    "weasyprint==65.1",
+    "webencodings==0.5.1",
+    "webauthn==2.5.2",
+    "Werkzeug==3.1.3",
+    "WTForms==3.2.1",
+    "yt-dlp==2025.5.22",
+    "zipp==3.22.0",
+    "zxcvbn==4.5.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.5",
+    "flask_pydantic==0.13.1",
+    "SQLAlchemy-Utils==0.41.2",
+    "pre-commit==4.2.0",
+    "black==25.1.0",
+    "factory-boy==3.3.3",
+    "pytest-sugar==1.0.0"
+]
+
+ai = [
+    "pytesseract==0.3.13",
+    "openai-whisper==20240930",
+    "torch==2.8.0"
+]
+
+[project.urls]
+Homepage = "https://bayanat.org/"
+Documentation = "https://docs.bayanat.org/"
+Repository = "https://github.com/sjacorg/bayanat"
+"Bug Tracker" = "https://github.com/sjacorg/bayanat/issues"
+
+[tool.setuptools]
+packages = ["enferno"]
+
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312"]
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.nox
-  | \.pants.d
-  | \.pytype
-  | \.ruff_cache
-  | \.svn
-  | \.tox
-  | \.venv
-  | \.env
-  | __pypackages__
-  | _build
-  | buck-out
-  | build
-  | dist
-  | node_modules
-  | venv
-)/
-'''
+target-version = ["py312", "py313"]
+include = "\\.pyi?$"
+exclude = "/(\n    \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.nox\n  | \\.pants.d\n  | \\.pytype\n  | \\.ruff_cache\n  | \\.svn\n  | \\.tox\n  | \\.venv\n  | \\.env\n  | __pypackages__\n  | _build\n  | buck-out\n  | build\n  | dist\n  | node_modules\n  | venv\n)/\n"
 
 [tool.black.format]
 color = true
