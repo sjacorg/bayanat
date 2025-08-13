@@ -73,8 +73,7 @@ const ReadMore = Vue.defineComponent({
       <div class="pa-4 d-flex justify-center" v-if="isTruncated">
         <v-btn
           @click="toggle"
-          color="primary"
-          variant="text"
+          variant="tonal" :append-icon="expanded ? 'mdi-chevron-up' : 'mdi-chevron-down'" color="grey" elevation="0"
         >
           {{ toggleText }}
         </v-btn>
