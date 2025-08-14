@@ -58,6 +58,7 @@ const GlobalMap = Vue.defineComponent({
       }
     },
     selectedLocations(val) {
+      this.clearAllLayers();
       this.fitMarkers();
     },
     locations() {
@@ -83,7 +84,6 @@ const GlobalMap = Vue.defineComponent({
     },
 
     initMap() {
-
       this.map = L.map(this.mapId, {
         center: [this.lat, this.lng],
         zoom: this.zoom,
@@ -121,7 +121,6 @@ const GlobalMap = Vue.defineComponent({
       );
 
       this.fitMarkers();
-      this.updateMapBounds();
     },
     updateMapBounds() {
       // Fit map of bounds of clusterLayer
@@ -135,6 +134,13 @@ const GlobalMap = Vue.defineComponent({
         // flyout of center when map is zoomed in too much (single marker or many dense markers)
         this.map.flyTo(this.map.getCenter(), 10, { duration: 1 });
       }
+    },
+    clearAllLayers() {
+      // Remove marker cluster group
+      this.markerGroup.clearLayers();
+
+      // Remove event links group
+      this.eventLinks.clearLayers();
     },
     fitMarkers() {
       // construct a list of markers to build a feature group
@@ -214,7 +220,7 @@ const GlobalMap = Vue.defineComponent({
       if (this.eventLinks) {
         this.map.removeLayer(this.eventLinks);
       }
-      this.eventLinks = L.layerGroup({}).addTo(this.map);
+      this.eventLinks = L.layerGroup().addTo(this.map);
 
       for (let i = 0; i < eventLocations.length - 1; i++) {
         const startCoord = [eventLocations[i].lat, eventLocations[i].lng];
