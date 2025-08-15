@@ -27,7 +27,7 @@
             @click="isFieldBuilderDrawerOpen = true"
             >{{ _('Add new field') }}</v-btn
           >
-          <v-btn @click="save()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="loading"
+          <v-btn @click="save()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="loading" :disabled="!hasChanges"
             >{{ _('Save changes') }}</v-btn
           >
         </template>
@@ -59,6 +59,7 @@
             </v-col>
           </template>
         </draggable>
+        <v-btn prepend-icon="mdi-plus" class="mr-2" variant="outlined" @click="isFieldBuilderDrawerOpen = true">{{ _('Add new field') }}</v-btn>
       </v-card-text>
     </v-card>
   </v-container>
@@ -94,13 +95,24 @@
         dynamicFields: [],
         searchQuery: '',
         loading: false,
+        originalFields: [],
       }),
       mounted() {
         this.fetchDynamicFields();
       },
+      computed: {
+        hasChanges() {
+          const changes = this.computeChanges();
+          return changes.create.length || changes.update.length || changes.delete.length;
+        }
+      },
       methods: {
         sortDynamicFields() {
-          this.dynamicFields = this.dynamicFields.sort((a, b) => a?.ui_config?.sort_order - b?.ui_config?.sort_order)
+          this.dynamicFields = this.dynamicFields.sort((a, b) => {
+            if (a.sort_order === 0 && b.sort_order !== 0) return 1;  // a goes last
+            if (b.sort_order === 0 && a.sort_order !== 0) return -1; // b goes last
+            return a.sort_order - b.sort_order; // normal sort
+          });
         },
         matchesSearch(field) {
           return !this.search || field.title?.toLowerCase().includes(this.search.toLowerCase());
@@ -127,6 +139,8 @@
           try {
             const response = await axios.get('/admin/api/dynamic-fields/?entity_type=bulletin');
             this.dynamicFields = response.data.data;
+            this.reindexZeroSortFields();
+            this.sortDynamicFields();
             this.originalFields = JSON.parse(JSON.stringify(this.dynamicFields)); // deep clone
           } catch (err) {
             console.error(err);
@@ -163,6 +177,7 @@
         },
 
         computeChanges() {
+
           const changes = { create: [], update: [], delete: [] };
           const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
 
@@ -222,7 +237,24 @@
           this.reindexFields()
         },
         reindexFields() {
-          this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, ui_config: { ...field.ui_config, sort_order: index+1 } }))
+          this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, sort_order: index+1 }))
+        },
+        reindexZeroSortFields() {
+          // Find max sort_order before first zero
+          let maxOrder = 0;
+          for (const field of this.dynamicFields) {
+            if (field.sort_order === 0) break;
+            if (field.sort_order > maxOrder) maxOrder = field.sort_order;
+          }
+
+          let counter = maxOrder + 1;
+
+          this.dynamicFields = this.dynamicFields.map(field => {
+            if (field.sort_order === 0) {
+              return { ...field, sort_order: counter++ };
+            }
+            return field;
+          });
         },
         async deleteField(field) {
           try {
