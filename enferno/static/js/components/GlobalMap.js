@@ -88,6 +88,7 @@ const GlobalMap = Vue.defineComponent({
         center: [this.lat, this.lng],
         zoom: this.zoom,
         scrollWheelZoom: false,
+        zoomAnimation: false,
       });
 
       // Add the default tile layer
@@ -326,6 +327,7 @@ const GlobalMap = Vue.defineComponent({
                         variant="outlined"
                         density="compact"
                         class="ml-2 mb-4"
+                        @click="this.map.closePopup()"
                       />
                     </template>
                     {{ translations.showOrHideEventTypes_ }}
