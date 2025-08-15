@@ -10,7 +10,7 @@ const FieldListItem = Vue.defineComponent({
         </div>
 
         <div v-if="!componentProps?.readonly" class="flex-shrink-0 mt-2">
-            <v-btn icon @click="$emit('edit', componentProps)" size="small"><v-icon>mdi-pencil</v-icon></v-btn>
+            <v-btn :disabled="field.core" icon @click="$emit('edit', componentProps)" size="small"><v-icon>mdi-pencil</v-icon></v-btn>
             <v-menu>
                 <template v-slot:activator="{ props }">
                     <v-btn v-bind="props" icon="mdi-dots-vertical" size="small"></v-btn>
