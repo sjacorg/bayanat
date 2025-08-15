@@ -21,6 +21,9 @@ const ExportCard = Vue.defineComponent({
 
   methods: {
     loadExportItems() {
+      const SUPPORTED_TABLES = ['bulletin', 'actor', 'incident'];
+      if (!SUPPORTED_TABLES.includes(this.exp.table)) return;
+
       const q = [{ ids: this.exp.items }];
       const requestData = {
           q,
@@ -29,7 +32,7 @@ const ExportCard = Vue.defineComponent({
       };
 
       axios
-        .post(`/admin/api/bulletins/`, requestData)
+        .post(`/admin/api/${this.exp.table}s/`, requestData)
         .then((response) => {
           this.items = [...this.items, ...response.data.items];
           this.hasMore = response.data.meta.hasMore;
