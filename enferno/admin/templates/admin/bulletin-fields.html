@@ -1,7 +1,7 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
 <!-- Field Creation Modal -->
-<field-builder-drawer :model-value="isFieldBuilderDrawerOpen" @update:model-value="closeDrawer" @save="saveField" :item="editedItem" entityType="bulletin"></field-builder-drawer>
+<field-builder-drawer :model-value="isFieldBuilderDrawerOpen" @update:model-value="closeDrawer" @save="saveField" :item="editedItem" entity-type="bulletin"></field-builder-drawer>
 
 <v-main>
   <v-container fluid>
@@ -36,7 +36,7 @@
       <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 165px);">
         <span class="text-h6 font-weight-bold">Core fields</span>
         <draggable
-          v-model="coreFields"
+          v-model="dynamicFields"
           :item-key="'id'"
           tag="v-row"
           handle=".drag-handle"
@@ -48,7 +48,8 @@
               <v-row>
                 <v-col cols="12" lg="6">
                   <field-list-item
-                    :field="mapFieldToComponent(field)"
+                    :field="field"
+                    :component-props="mapFieldToComponent(field)"
                     @edit="edit"
                     @toggle-visibility="toggleFieldVisibility"
                     @delete="deleteField"
@@ -90,205 +91,7 @@
         isFieldBuilderDrawerOpen: false,
         editedItem: {},
         search: '',
-        coreFields: [
-          {
-            id: 101,
-            name: 'title',
-            title: 'Original Title',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input',
-            schema_config: { required: true, max_length: 255 },
-            ui_config: { sort_order: 1, help_text: 'Original title of the bulletin' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 102,
-            name: 'sjac_title',
-            title: 'Title',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input',
-            schema_config: { required: false, max_length: 255 },
-            ui_config: { sort_order: 2, help_text: 'Alternate or translated title' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 103,
-            name: 'tags',
-            title: 'Tags',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input', // v-combobox maps to input/multi input
-            schema_config: { required: false },
-            ui_config: { sort_order: 3, help_text: 'Tag the bulletin for search/filtering' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 104,
-            name: 'sources',
-            title: 'Sources',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input', // search-field mapped as custom input
-            schema_config: { required: false },
-            ui_config: { sort_order: 4, help_text: 'Linked sources for this bulletin' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 1025,
-            name: 'description',
-            title: 'Description',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'editor',
-            schema_config: { required: false },
-            ui_config: { sort_order: 5, help_text: 'Tag with general labels' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 105,
-            name: 'labels',
-            title: 'Labels',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input',
-            schema_config: { required: false },
-            ui_config: { sort_order: 5, help_text: 'Tag with general labels' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 106,
-            name: 'verLabels',
-            title: 'Verified Labels',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input',
-            schema_config: { required: false },
-            ui_config: { sort_order: 6, help_text: 'Use labels verified by the team' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 107,
-            name: 'locations',
-            title: 'Locations',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input',
-            schema_config: { required: false },
-            ui_config: { sort_order: 7, help_text: 'Affected locations' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 108,
-            name: 'source_link',
-            title: 'Source Link',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'input',
-            schema_config: { required: false, max_length: 255 },
-            ui_config: { sort_order: 8, help_text: 'Link to original source' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 109,
-            name: 'source_link_na',
-            title: 'Source Not Available',
-            entity_type: 'bulletin',
-            field_type: 'boolean',
-            ui_component: 'checkbox',
-            schema_config: { required: false },
-            ui_config: { sort_order: 9, help_text: 'Check if source is not available' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 110,
-            name: 'source_link_type',
-            title: 'Source Link Private',
-            entity_type: 'bulletin',
-            field_type: 'boolean',
-            ui_component: 'switch',
-            schema_config: { required: false },
-            ui_config: { sort_order: 10, help_text: 'Toggle to keep source private' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 111,
-            name: 'publish_date',
-            title: 'Publish Date',
-            entity_type: 'bulletin',
-            field_type: 'datetime',
-            ui_component: 'date',
-            schema_config: { required: false },
-            ui_config: { sort_order: 11, help_text: 'When should this be published?' },
-            validation_config: { format: 'YYYY-MM-DD' },
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 112,
-            name: 'documentation_date',
-            title: 'Documentation Date',
-            entity_type: 'bulletin',
-            field_type: 'datetime',
-            ui_component: 'date',
-            schema_config: { required: false },
-            ui_config: { sort_order: 12, help_text: 'When was this documented?' },
-            validation_config: { format: 'YYYY-MM-DD' },
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 113,
-            name: 'comments',
-            title: 'Comments',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'textarea',
-            schema_config: { required: true },
-            ui_config: { sort_order: 13, help_text: 'Add reviewer or system comments' },
-            validation_config: {},
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          },
-          {
-            id: 114,
-            name: 'status',
-            title: 'Status',
-            entity_type: 'bulletin',
-            field_type: 'string',
-            ui_component: 'dropdown',
-            options: [{label: 'Draft', value: 'draft'}, { label: 'Published', value: 'published' }, {label: 'Archived', value: 'archived'}],
-            schema_config: { required: false },
-            ui_config: { sort_order: 14, help_text: 'Bulletin status' },
-            validation_config: { allowed_values: ['Draft', 'Published', 'Archived'] },
-            active: true,
-            created_at: '2025-01-01T00:00:00Z'
-          }
-        ]
-  ,
+        dynamicFields: [],
         searchQuery: '',
         loading: false,
       }),
@@ -296,47 +99,102 @@
         this.fetchDynamicFields();
       },
       methods: {
-        sortCoreFields() {
-          this.coreFields = this.coreFields.sort((a, b) => a?.ui_config?.sort_order - b?.ui_config?.sort_order)
+        sortDynamicFields() {
+          this.dynamicFields = this.dynamicFields.sort((a, b) => a?.ui_config?.sort_order - b?.ui_config?.sort_order)
         },
         matchesSearch(field) {
           return !this.search || field.title?.toLowerCase().includes(this.search.toLowerCase());
         },
         edit(field) {
-          const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.fieldId))
+          const matchingField = this.dynamicFields.find(coreField => coreField.id === Number(field.fieldId))
           this.editedItem = matchingField;
           this.isFieldBuilderDrawerOpen = true;
         },
         saveField(evt) {
-          const index = this.coreFields.findIndex(coreField => coreField.id === evt.id)
+          const index = this.dynamicFields.findIndex(coreField => coreField.id === evt.id)
 
           if (index !== -1) {
             // Update existing field
-            this.coreFields[index] = { ...evt } // or use Object.assign if you want to preserve the reference
+            this.dynamicFields[index] = { ...evt } // or use Object.assign if you want to preserve the reference
           } else {
             // Add new field
-            this.coreFields.push(evt)
+            this.dynamicFields.push(evt)
           }
 
-          this.sortCoreFields()
-        },
-        save() {
-          this.loading = true;
-          setTimeout(() => {
-            this.loading = false;
-          }, 1000);
+          this.sortDynamicFields()
         },
         async fetchDynamicFields() {
           try {
-            return await axios.get('/admin/api/dynamic-fields');
+            const response = await axios.get('/admin/api/dynamic-fields/?entity_type=bulletin');
+            this.dynamicFields = response.data.data;
+            this.originalFields = JSON.parse(JSON.stringify(this.dynamicFields)); // deep clone
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
           }
         },
+
+        async save() {
+          this.loading = true;
+          try {
+            const changes = this.computeChanges();
+
+            // Create
+            for (const f of changes.create) {
+              await axios.post(`/admin/api/dynamic-fields/`, { item: f });
+            }
+            // Update (full object)
+            for (const { id, item } of changes.update) {
+              await axios.put(`/admin/api/dynamic-fields/${id}`, { item });
+            }
+            // Delete
+            for (const id of changes.delete) {
+              await axios.delete(`/admin/api/dynamic-fields/${id}`);
+            }
+
+            this.showSnack('{{ _("Fields saved successfully") }}');
+            await this.fetchDynamicFields();
+          } catch (err) {
+            console.error(err);
+            this.showSnack(handleRequestError(err));
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        computeChanges() {
+          const changes = { create: [], update: [], delete: [] };
+          const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
+
+          for (const field of this.dynamicFields) {
+            if (!field.id) {
+              // New dynamic field
+              changes.create.push(field);
+            } else {
+              const orig = originalMap.get(field.id);
+              if (orig) {
+                // If anything at all changed, send full field object
+                if (JSON.stringify(field) !== JSON.stringify(orig)) {
+                  changes.update.push({ id: field.id, item: field });
+                }
+                originalMap.delete(field.id);
+              }
+            }
+          }
+
+          // Remaining originals are deleted (dynamic only)
+          for (const field of originalMap.values()) {
+            if (!field.core) {
+              changes.delete.push(field.id);
+            }
+          }
+
+          return changes;
+        },
+        
         mapFieldToComponent(coreField) {
           const baseProps = {
-            fieldId: coreField.id.toString(),
+            fieldId: coreField.id,
             label: coreField.title,
             name: coreField.name,
             variant: 'filled',
@@ -345,13 +203,14 @@
           };
 
           const componentMap = {
-            input: { component: 'v-text-field', ...baseProps },
+            text_input: { component: 'v-text-field', ...baseProps },
+            multi_select: { component: 'v-select', ...baseProps, items: coreField.options, multiple: coreField.field_type === 'array' },
             dropdown: { component: 'v-select', ...baseProps, items: coreField.options, multiple: coreField.field_type === 'array' },
-            textarea: { component: 'v-textarea', ...baseProps },
+            text_area: { component: 'v-textarea', ...baseProps },
             checkbox: { component: 'v-checkbox', ...baseProps },
             switch: { component: 'v-switch', ...baseProps },
-            date: { component: 'pop-date-time-field' },
-            editor: { component: 'tinymce-editor', init: tinyConfig, disabled: !coreField.active, fieldId: coreField.id.toString() },
+            date_picker: { component: 'pop-date-time-field' },
+            editor: { component: 'tinymce-editor', init: tinyConfig, disabled: !coreField.active, fieldId: coreField.id },
           };
 
           const config = componentMap[coreField.ui_component];
@@ -363,27 +222,21 @@
           this.reindexFields()
         },
         reindexFields() {
-          this.coreFields = this.coreFields.map((field, index) => ({ ...field, ui_config: { ...field.ui_config, sort_order: index+1 } }))
+          this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, ui_config: { ...field.ui_config, sort_order: index+1 } }))
         },
         async deleteField(field) {
-          if (confirm('{{ _('Are you sure?') }}')) {
-            try {
-              this.coreFields = this.coreFields.filter(coreField => Number(coreField.id) !== Number(field.fieldId))
-              // return await axios.delete(`/admin/api/dynamic-fields/${field.fieldId}`);
-            } catch (err) {
-              console.error(err);
-              this.showSnack(handleRequestError(err));
-            }
+          try {
+            const matchingField = this.dynamicFields.find(coreField => coreField.id === Number(field.fieldId))
+            matchingField.active = false
+          } catch (err) {
+            console.error(err);
+            this.showSnack(handleRequestError(err));
           }
         },
         async toggleFieldVisibility(field) {
           try {
-            const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.fieldId))
+            const matchingField = this.dynamicFields.find(coreField => coreField.id === Number(field.fieldId))
             matchingField.active = !matchingField.active
-            // return await axios.put(`/admin/api/dynamic-fields/${field.fieldId}`, {
-            //   ...matchingField,
-            //   active: !matchingField.active
-            // });
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));

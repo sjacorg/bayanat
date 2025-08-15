@@ -23,30 +23,15 @@ const FieldBuilderDrawer = Vue.defineComponent({
       form: {
         name: '',
         title: '',
-        description: '',
+        entity_type: this.entityType,
         field_type: '',
         ui_component: '',
-        options: [{ label: '', value: '' }],
-        schema_config: {
-          required: false,
-          searchable: false,
-          default: null,
-          max_length: null,
-        },
-        ui_config: {
-          help_text: '',
-          sort_order: 1,
-          readonly: false,
-          hidden: false,
-        },
-        validation_config: {
-          max_length: '',
-          min: '',
-          max: '',
-          precision: '',
-          scale: '',
-          format: '',
-        },
+        schema_config: { required: false },
+        ui_config: { help_text: 'Enter value' },
+        validation_config: {},
+        options: [],
+        active: true,
+        searchable: false,
       },
       tabs: [
         { id: 'details', label: 'Field Details', icon: 'mdi-form-textbox' },
@@ -54,55 +39,47 @@ const FieldBuilderDrawer = Vue.defineComponent({
         { id: 'validation', label: 'Validation', icon: 'mdi-check-circle' },
       ],
       fieldTypes: [
-        {
-          value: 'string',
-          label: 'Short Text',
-          description: 'Single-line text input',
-          interfaces: ['input', 'dropdown'],
-        },
-        {
-          value: 'text',
-          label: 'Long Text',
-          description: 'Multi-line text or rich content',
-          interfaces: ['textarea', 'editor'],
-        },
-        {
-          value: 'integer',
-          label: 'Integer Number',
-          description: 'Whole number values',
-          interfaces: ['input'],
-        },
-        {
-          value: 'float',
-          label: 'Decimal Number',
-          description: 'Numbers with decimals',
-          interfaces: ['input'],
-        },
-        {
-          value: 'datetime',
-          label: 'Date & Time',
-          description: 'Select date and time',
-          interfaces: ['date'],
-        },
-        {
-          value: 'boolean',
-          label: 'Boolean',
-          description: 'True or false',
-          interfaces: ['checkbox', 'switch'],
-        },
-        {
-          value: 'array',
-          label: 'Multiple Choice',
-          description: 'Select one or more options',
-          interfaces: ['dropdown'],
-        },
-        {
-          value: 'json',
-          label: 'JSON Data',
-          description: 'Structured JSON content',
-          interfaces: ['textarea'],
-        },
-      ],
+  {
+    value: 'string',
+    label: 'Short Text',
+    interfaces: ['text_input', 'dropdown']
+  },
+  {
+    value: 'text', 
+    label: 'Long Text',
+    interfaces: ['text_area', 'editor']
+  },
+  {
+    value: 'integer',
+    label: 'Number (Integer)',
+    interfaces: ['number']
+  },
+  {
+    value: 'float',
+    label: 'Number (Decimal)', 
+    interfaces: ['number']
+  },
+  {
+    value: 'datetime',
+    label: 'Date & Time',
+    interfaces: ['date_picker']
+  },
+  {
+    value: 'boolean',
+    label: 'True/False',
+    interfaces: ['checkbox']
+  },
+  {
+    value: 'array',
+    label: 'Multiple Selection',
+    interfaces: ['multi_select']
+  },
+  {
+    value: 'json',
+    label: 'JSON Data',
+    interfaces: ['text_area']
+  }
+]
     };
   },
   computed: {
@@ -146,52 +123,26 @@ const FieldBuilderDrawer = Vue.defineComponent({
         description: item.description || '',
         field_type: item.field_type || '',
         ui_component: item.ui_component || '',
-        options: item.options?.length ? item.options : [{ label: null, value: null }],
-        schema_config: {
-          required: item.schema_config?.required ?? false,
-          searchable: item.schema_config?.searchable ?? false,
-          default: item.schema_config?.default ?? null,
-          max_length: item.schema_config?.max_length ?? null,
-        },
-        ui_config: {
-          help_text: item.ui_config?.help_text || '',
-          sort_order: item.ui_config?.sort_order ?? 1,
-          readonly: item.ui_config?.readonly ?? false,
-          hidden: item.ui_config?.hidden ?? false,
-        },
-        validation_config: {
-          max_length: item.validation_config?.max_length ?? null,
-          min: item.validation_config?.min ?? null,
-          max: item.validation_config?.max ?? null,
-          precision: item.validation_config?.precision ?? null,
-          scale: item.validation_config?.scale ?? null,
-          format: item.validation_config?.format ?? '',
-        },
+        options: item.options?.length ? item.options : [],
+        schema_config: {},
+        ui_config: {},
+        validation_config: {},
       };
     },
     async saveField() {
       try {
         const field = {
-          id: this.item?.id ?? Date.now(),
+          id: this.item?.id,
+          backupId: Date.now(),
           name: this.form.name,
           title: this.form.title,
           entity_type: this.entityType,
           field_type: this.form.field_type,
           ui_component: this.form.ui_component,
           options: this.form.options?.length ? this.form.options : undefined,
-          schema_config: {
-            required: this.form.schema_config.required,
-            searchable: this.form.schema_config.searchable,
-            max_length: this.form.schema_config.max_length ?? undefined,
-            default: this.form.schema_config.default ?? undefined,
-          },
-          ui_config: {
-            sort_order: this.form.ui_config.sort_order,
-            help_text: this.form.ui_config.help_text,
-            readonly: this.form.ui_config.readonly,
-            hidden: this.form.ui_config.hidden,
-          },
-          validation_config: { ...this.form.validation_config },
+          schema_config: {},
+          ui_config: {},
+          validation_config: {},
           active: true,
           created_at: this.item?.created_at ?? new Date().toISOString(),
         };
@@ -282,7 +233,6 @@ const FieldBuilderDrawer = Vue.defineComponent({
                         :items="fieldTypes"
                         item-title="label"
                         item-value="value"
-                        :hint="selectedFieldType?.description"
                         :rules="[validationRules.required()]"
                       ></v-select>
                     </v-col>
