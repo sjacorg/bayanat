@@ -110,7 +110,7 @@
                         </v-select>
                     </v-sheet>
 
-                    <v-card class="pa-3" style="height: calc(100% - 90px);">
+                    <v-card class="pa-3 overflow-y-auto" style="height: calc(100% - 90px);">
                         <v-row class="align-stretch h-100">
                             <v-col cols="12" md="3" class="h-100">
 
@@ -163,7 +163,7 @@
                             </v-col>
 
                             <v-col cols="12" md="9" class="h-100">
-                                <v-sheet class="overflow-y-auto h-100 pa-5">
+                                <v-sheet :class="[`overflow-y-auto pa-5`, { 'h-100': $vuetify.display.mdAndUp }]">
                                     <div class="d-flex align-center">
                                         <h3 class="my-3">
                                             {{ _('Actor Fields') }}
