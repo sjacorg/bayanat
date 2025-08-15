@@ -61,7 +61,7 @@
                                 :options="dzOpts"
                                 @vdropzone-error="showError"
                                 @vdropzone-success="uploadSuccess"
-                                @vdropzone-removed-file="removedFile"
+                                @vdropzone-removed-file="removeFile"
                             ></vue-dropzone>
 
                             <v-select label="{{ _('Select Sheet to continue') }}" v-model="selectedSheet"
@@ -85,16 +85,10 @@
                                 item-title="name"
                                 item-value="id"
                                 :return-object="true"
-                                @update:model-value="selectMap"
-                                @click:clear="resetFields"
+                                :model-value="mapid"
+                                @update:model-value="selectMap($event); step = '3';"
                         >
                         </v-autocomplete>
-
-                        <template v-if="selectedMap">
-                            <v-btn @click="step = '2'" class=" mx-2" color="primary" elevation="0">
-                                {{ _('Continue') }}
-                            </v-btn>
-                        </template>
                     </v-sheet>
                 </v-stepper-window-item>
 
@@ -102,7 +96,7 @@
                     <v-sheet class=" pa-3 align-center d-flex">
                         <v-spacer></v-spacer>
                         <v-select density="compact"
-                                @click:clear="resetFields"
+                                @click:clear="confirmResetFields()"
                                 class="mt-2 mx-2"
                                 label="{{ _('Load existing map') }}"
                                 :items="maps"
@@ -125,7 +119,7 @@
                                         <v-toolbar-title class="d-flex">
                                             {{ _('Sheet Fields') }}
 
-                                            <v-btn @click="resetFields" size="small"
+                                            <v-btn @click="confirmResetFields" size="small"
                                                    variant="text"
 
                                             >{{ _('Reset') }}
@@ -981,8 +975,10 @@
                 nextButtonProps() {
                     const commonProps = { text: 'Next', 'append-icon': 'mdi-chevron-right', color: 'primary' }
                     switch (this.step) {
-                        case '1':
-                            return { ...commonProps, disabled: !this.files.length || !this.selectedSheet, onclick: () => this.step = '2' }
+                        case '1':{
+                            const isEnabled = (this.files.length && this.selectedSheet) || this.selectedMap
+                            return { ...commonProps, disabled: !isEnabled, onclick: () => this.step = '2' }
+                        }
                         case '2':
                             return { ...commonProps, onclick: () => { this.selectedMap = this.map; this.step = '3'; } }
                         case '3':
@@ -1003,7 +999,7 @@
                         case '3':
                             return { ...commonProps, onclick: () => this.step = '2' }
                         case '4':
-                            return { ...commonProps, onclick: () => this.step = '3' }
+                            return { ...commonProps, disabled: true }
                         default:
                             return commonProps
                     }
@@ -1097,12 +1093,11 @@
 
                 },
 
-                removedFile(dzfile) {
+                removeFile(dzfile) {
                     this.sheets = [];
                     this.backup = [];
                     this.structure = null;
                     this.fields = null;
-                    this.selectedMap = null;
                     this.selectedSheet = null;
                     this.map = deepClone(this.defaultMap);
                     this.mapName = "{{ _('New Map')}}";
@@ -1127,6 +1122,7 @@
                         file: this.files[0],
                         sheet: this.selectedSheet
                     }).then(res => {
+                        this.resetFields();
                         this.structure = res.data;
                         this.fields = this.structure.columns;
                         this.backup = this.fields.slice();
@@ -1136,10 +1132,6 @@
                     }).catch(
                         err => {
                             console.log(err.response.data)
-                        }
-                    ).finally(
-                        () => {
-
                         }
                     );
                 },
@@ -1180,15 +1172,18 @@
                     this.dynamicEtype = !this.dynamicEtype;
                 },
 
-                resetFields() {
+                confirmResetFields() {
                     if (confirm("{{ _('Are you sure you want to reset this mapping?')}}")) {
-                        this.fields = this.backup;
-                        // hack to bypass js passing vars by reference
-                        this.map = deepClone(this.defaultMap);
-                        this.mapName = "{{ _('New Map')}}";
-                        this.mapid = null;
-                        this.vmap = {};
+                        this.resetFields();
                     }
+                },
+                resetFields() {
+                    this.fields = this.backup;
+                    // hack to bypass js passing vars by reference
+                    this.map = deepClone(this.defaultMap);
+                    this.mapName = "{{ _('New Map')}}";
+                    this.mapid = null;
+                    this.vmap = {};
                 },
 
 
@@ -1297,7 +1292,6 @@
 
                 selectMap(m) {
                     this.loadMap(m);
-
                     this.selectedMap = m.data;
                     this.mapName = m.name;
                 },
