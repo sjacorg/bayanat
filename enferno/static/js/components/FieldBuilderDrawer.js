@@ -126,6 +126,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
         description: item.description || '',
         field_type: item.field_type || '',
         ui_component: item.ui_component || '',
+        sort_order: item.sort_order || '',
         options: item.options?.length ? item.options : [],
         schema_config: {},
         ui_config: {},
@@ -141,6 +142,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
           entity_type: this.entityType,
           field_type: this.form.field_type,
           ui_component: this.form.ui_component,
+          sort_order: Number(this.form.sort_order || 0),
           options: this.form.options?.length ? this.form.options : undefined,
           schema_config: {},
           ui_config: {},
@@ -265,7 +267,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                       md="6"
                     >
                       <v-text-field
-                        v-model="form.ui_config.sort_order"
+                        v-model="form.sort_order"
                         label="Sort order"
                         type="number"
                       ></v-text-field>
