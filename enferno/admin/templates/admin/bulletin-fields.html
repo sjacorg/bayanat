@@ -205,7 +205,7 @@
           const componentMap = {
             text_input: { component: 'v-text-field', ...baseProps },
             multi_select: { component: 'v-select', ...baseProps, items: coreField.options, multiple: coreField.field_type === 'array' },
-            dropdown: { component: 'v-select', ...baseProps, items: coreField.options, multiple: coreField.field_type === 'array' },
+            dropdown: { component: 'v-select', ...baseProps, items: coreField.options, 'item-title': 'label', 'item-value': 'value', multiple: coreField.field_type === 'array' },
             text_area: { component: 'v-textarea', ...baseProps },
             checkbox: { component: 'v-checkbox', ...baseProps },
             switch: { component: 'v-switch', ...baseProps },
