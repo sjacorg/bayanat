@@ -53,26 +53,30 @@
 
                         </v-card>
 
-                        <vue-dropzone
-                            ref="dropzone"
-                            id="dropzone"
-                            class="ma-auto"
-                            :options="dzOpts"
-                            @vdropzone-error="showError"
-                            @vdropzone-success="uploadSuccess"
-                            @vdropzone-removed-file="removedFile"
-                        ></vue-dropzone>
+                        <div v-show="firstAction === 0">
+                            <vue-dropzone
+                                ref="dropzone"
+                                id="dropzone"
+                                class="ma-auto"
+                                :options="dzOpts"
+                                @vdropzone-error="showError"
+                                @vdropzone-success="uploadSuccess"
+                                @vdropzone-removed-file="removedFile"
+                            ></vue-dropzone>
 
-                        <v-select label="{{ _('Select Sheet to continue') }}" v-model="selectedSheet"
-                                  @update:model-value="sheetSelected" v-if="sheets.length && files.length"
-                                  class="my-3" :items="sheets">
-                        </v-select>
+                            <v-select label="{{ _('Select Sheet to continue') }}" v-model="selectedSheet"
+                                        @update:model-value="sheetSelected" v-if="sheets.length && files.length"
+                                        class="my-3" :items="sheets">
+                            </v-select>
 
 
+                            <v-img style="margin:auto"
+                                    src="/static/img/csv-tool-bg.jpg">
+                        </div>
                     </v-sheet>
 
 
-                    <v-sheet max-width="800" class="pa-4 my-8 mx-auto" v-show="firstAction==1">
+                    <v-sheet max-width="800" class="pa-4 my-8 mx-auto" v-show="firstAction === 1">
                         <v-autocomplete
                                 class="mt-2 mx-2"
                                 label="{{ _('Load existing map') }}"
@@ -87,19 +91,11 @@
                         </v-autocomplete>
 
                         <template v-if="selectedMap">
-                            <v-btn @click="step='three'" class=" mx-2" color="primary" elevation="0">
+                            <v-btn @click="step = '2'" class=" mx-2" color="primary" elevation="0">
                                 {{ _('Continue') }}
                             </v-btn>
                         </template>
-
                     </v-sheet>
-
-                    <v-sheet max-height="calc(100vh - 560px)">
-                        <v-img v-show="firstAction!=1" style="max-width: 75%; margin:auto"
-                               src="/static/img/csv-tool-bg.jpg">
-                        </v-img>
-                    </v-sheet>
-
                 </v-stepper-window-item>
 
                 <v-stepper-window-item value="2" class="h-100">
@@ -744,38 +740,33 @@
                 </v-stepper-window-item>
 
                 <v-stepper-window-item value="3">
-                    <v-card class="pa-5">
+                    <v-card class="pa-5" elevation="0">
 
                         <v-card-text>
-                            <v-sheet>
-                                <v-list color="yellow lighten-4" density="compact">
-                                    <v-list-item> {{ _('Sheet file:') }}
-                                        <v-chip small dark class="mx-2"
-                                                color="green">{{ _('Selected') }}
-                                            <v-icon right>mdi-check</v-icon>
-                                        </v-chip>
-                                    </v-list-item>
-                                    <v-list-item> {{ _('Map:') }}
-                                        <v-tooltip location="top">
-                                            <template v-slot:activator="{props}">
-                                                <v-chip :="props" small dark class="mx-2"
-                                                        color="green">{{ _('Selected') }}
-                                                    <v-icon right>mdi-check</v-icon>
-                                                </v-chip>
-                                            </template>
-                                            <span>
-                                                                    ${this.selectedMap}
-                                                                </span>
-                                        </v-tooltip>
+                            <v-list color="yellow lighten-4" density="compact">
+                                <v-list-item> {{ _('Sheet file:') }}
+                                    <v-chip small dark class="mx-2"
+                                            color="green">{{ _('Selected') }}
+                                        <v-icon right>mdi-check</v-icon>
+                                    </v-chip>
+                                </v-list-item>
+                                <v-list-item> {{ _('Map:') }}
+                                    <v-tooltip location="top">
+                                        <template v-slot:activator="{props}">
+                                            <v-chip :="props" small dark class="mx-2"
+                                                    color="green">{{ _('Selected') }}
+                                                <v-icon right>mdi-check</v-icon>
+                                            </v-chip>
+                                        </template>
+                                        <span>
+                                            ${this.selectedMap}
+                                        </span>
+                                    </v-tooltip>
 
 
-                                    </v-list-item>
+                                </v-list-item>
 
-                                </v-list>
-
-
-                            </v-sheet>
-
+                            </v-list>
                         </v-card-text>
 
                         <v-card-title>
@@ -805,9 +796,21 @@
 
 
                 <v-stepper-window-item value="4">
-                    <v-card class="pa-5">
+                    <v-card class="pa-5" elevation="0">
                         <v-card-text>
-                            ${ status }
+                            <v-empty-state :icon="processResult?.type === 'error' ? 'mdi-alert-circle' : 'mdi-check-circle'">
+                                <template v-slot:headline>
+                                    <div class="text-h5">
+                                        ${processResult?.title}
+                                    </div>
+                                </template>
+                        
+                                <template v-slot:text>
+                                    <div class="text-medium-emphasis text-caption">
+                                        ${processResult?.description}
+                                    </div>
+                                </template>
+                            </v-empty-state>
                         </v-card-text>
                     </v-card>
                 </v-stepper-window-item>
@@ -868,8 +871,7 @@
                 drawer: drawer,
                 mode: null,
                 loading: false,
-                isProcessSheetSuccess: false,
-                status: '',
+                processResult: {},
                 batch_id: '',
                 firstAction: 0,
 
@@ -986,7 +988,7 @@
                         case '3':
                             return { ...commonProps, disabled: this.processDisabled, text: 'Process File(s)', onclick: () => {this.step = '4'; this.process();} }
                         case '4':
-                            return { ...commonProps, text: 'Check import progress', disabled: !this.isProcessSheetSuccess, href: `/import/log/?batch_id=${this.batch_id}` }
+                            return { ...commonProps, text: 'Check import progress', disabled: this.processResult?.type !== 'success', href: `/import/log/?batch_id=${this.batch_id}` }
                         default:
                             return commonProps
                     }
@@ -1223,21 +1225,24 @@
                         lang: this.lang,
                         files: files,
                         actorConfig: config
-                    }).then(
-                        res => {
-                            this.isProcessSheetSuccess = true;
-                            this.status = "{{ _('Rows from file were added to queue successfully and will be imported in turn.') }}"
-                            this.batch_id = res.data.data
-                        }
-                    ).catch(err => {
+                    }).then(res => {
+                        this.processResult = {
+                            title: "{{ _('Success') }}",
+                            description: "{{ _('Rows from file were added to queue successfully and will be imported in turn.') }}",
+                            type: 'success'
+                        };
+                        console.log(res.data);
+                        this.batch_id = res.data.data;
+                    }).catch(err => {
                         console.log(err.response.data);
-                        this.isProcessSheetSuccess = false;
-                        this.status = "{{ _('Error importing rows. Check logs for more information.') }}"
-                    }).finally(
-                        () => {
-
-                        }
-                    );
+                        this.processResult = {
+                            title: "{{ _('Error') }}",
+                            description: "{{ _('Error importing rows. Check logs for more information.') }}",
+                            type: 'error'
+                        };
+                    }).finally(() => {
+                        // any cleanup if needed
+                    });
 
                 },
 
@@ -1291,7 +1296,7 @@
                 },
 
                 selectMap(m) {
-
+                    this.loadMap(m);
 
                     this.selectedMap = m.data;
                     this.mapName = m.name;
