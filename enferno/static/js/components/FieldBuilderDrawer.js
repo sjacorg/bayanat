@@ -83,6 +83,9 @@ const FieldBuilderDrawer = Vue.defineComponent({
     };
   },
   computed: {
+    isNewField() {
+      return !Boolean(this.item?.id)
+    },
     selectedFieldType() {
       const type = this.fieldTypes.find((t) => t.value === this.form.field_type);
       return type;
@@ -133,7 +136,6 @@ const FieldBuilderDrawer = Vue.defineComponent({
       try {
         const field = {
           id: this.item?.id,
-          backupId: Date.now(),
           name: this.form.name,
           title: this.form.title,
           entity_type: this.entityType,
@@ -217,6 +219,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                       md="6"
                     >
                       <v-text-field
+                        :disabled="!isNewField"
                         v-model="form.name"
                         label="Field name*"
                         required
