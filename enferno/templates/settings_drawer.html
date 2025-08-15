@@ -15,10 +15,10 @@
             </template>
         </v-toolbar>
 
-        <v-divider></v-divider>
+        <v-divider class="mb-4"></v-divider>
 
         <v-container class="pa-3">
-            <v-label class="mb-2 ">
+            <v-label class="mb-2 ml-2 ">
                 {{ _('Theme') }}
             </v-label>
 
@@ -39,7 +39,6 @@
                 </v-radio>
                 <v-radio
                         :value="1"
-
                         true-icon="mdi-check-circle"
                 >
                     <template #label>
@@ -49,22 +48,23 @@
 
                 </v-radio>
             </v-radio-group>
+        </v-container>
 
-            <v-divider class="mb-4"></v-divider>
-
+        <v-divider class="mb-4"></v-divider>
+        
+        <v-container class="pa-3">
             <v-label class="mb-2 ml-2 ">
                 {{ _('Security') }}
             </v-label>
-
+            
             <v-list density="compact" nav>
-
+                
                 <v-list-item href="/change">{{ _('Change Password') }}</v-list-item>
                 <v-list-item href="/tf-setup">{{ _('Two-Factor Authentication') }}</v-list-item>
                 <v-list-item href="/mf-recovery-codes">{{ _('Recovery Codes') }}</v-list-item>
                 <v-list-item href="/wan-register">{{ _('Security Keys/Passkeys') }}</v-list-item>
 
             </v-list>
-
-        </v-container>
+        </v-container>            
     </v-card>
 </v-navigation-drawer>
