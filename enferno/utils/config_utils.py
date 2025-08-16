@@ -14,7 +14,7 @@ logger = logging.getLogger("app_logger")
 
 
 class ConfigManager:
-    CONFIG_FILE_PATH = "config.json"
+    CONFIG_FILE_PATH = os.environ.get("BAYANAT_CONFIG_FILE", "config.json")
     MASK_STRING = "**********"
     config = {}
 
