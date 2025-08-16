@@ -20,6 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
       - name: Install dependencies
         run: uv sync --extra dev
       - name: Security audit
