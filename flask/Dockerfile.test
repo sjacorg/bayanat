@@ -22,7 +22,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 COPY . /app
 RUN echo "Building Bayanat container."
-RUN uv sync --extra dev --extra ai --frozen
+RUN uv sync --extra dev --frozen
 ENV PATH="/app/.venv/bin:$PATH"
 RUN ls -la /app/.venv/bin/
 
