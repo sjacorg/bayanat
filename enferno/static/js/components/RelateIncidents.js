@@ -10,17 +10,16 @@ const RelateIncidents = Vue.defineComponent({
     }
   },
   emits: ['relate'],
-  data: () => {
+  data() {
     return {
       translations: window.translations,
       q: {},
       loading: true,
       results: [],
       visible: false,
-      page: 1,
       perPage: 10,
-      total: 0,
       hasMore: false,
+      nextCursor: null,
     };
   },
   methods: {
@@ -31,20 +30,24 @@ const RelateIncidents = Vue.defineComponent({
       this.visible = false;
     },
     reSearch() {
-      this.page = 1;
       this.results = [];
+      this.nextCursor = null;
       this.search();
     },
 
     search() {
       this.loading = true;
-      axios
-        .post(`/admin/api/incidents/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
+
+      const requestData = {
           q: [this.q],
-        })
+          per_page: this.perPage,
+          cursor: this.nextCursor,
+      };
+
+      axios
+        .post(`/admin/api/incidents/?mode=2`, requestData)
         .then((response) => {
           this.loading = false;
-          this.total = response.data.total;
 
           // exclude ids of item and related items
           const ex_arr = this.exids || [];
@@ -52,7 +55,8 @@ const RelateIncidents = Vue.defineComponent({
             response.data.items.filter((x) => !ex_arr.includes(x.id)),
           );
 
-          this.moreItems = this.page * this.perPage < this.total;
+          this.hasMore = response.data.meta.hasMore;
+          this.nextCursor = response.data.nextCursor || null;
         })
         .catch((err) => {
           console.log(err.response.data);

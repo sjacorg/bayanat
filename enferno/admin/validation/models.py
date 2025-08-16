@@ -1327,6 +1327,7 @@ class ActorQueryLocTypes(Enum):
 
 class ActorQueryModel(QueryBaseModel):
     op: Optional[str] = "or"
+    ids: list[int] = Field(default_factory=list)
     nickname: Optional[str] = None
     first_name: Optional[str] = None
     middle_name: Optional[str] = None
@@ -1495,6 +1496,7 @@ class RoleRequestModel(BaseValidationModel):
 
 
 class IncidentQueryModel(QueryBaseModel):
+    ids: list[int] = Field(default_factory=list)
     potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
     claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
 
