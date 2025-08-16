@@ -156,3 +156,8 @@ exclude = "/(\n    \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.nox
 
 [tool.black.format]
 color = true
+
+[dependency-groups]
+dev = [
+    "pip-audit>=2.9.0",
+]
