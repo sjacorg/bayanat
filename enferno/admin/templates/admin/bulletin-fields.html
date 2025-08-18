@@ -202,13 +202,15 @@
 
         showSaveDialog() {
           this.changes = this.computeChanges();
-          const dynamicFieldsWithoutBackupId = this.dynamicFields.map(field => {
+          const fieldsForDiff = this.dynamicFields.map(field => {
             if (field.id?.startsWith?.('backup-')) {
-              delete field.id; // Remove backup ID for diff
+              // Return a copy of the field without the backup id
+              const { id, ...rest } = field;
+              return rest;
             }
             return field;
           });
-          this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, dynamicFieldsWithoutBackupId);
+          this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, fieldsForDiff);
           this.saveChangesDialog = true;
         },
 
@@ -287,6 +289,7 @@
             fieldId: coreField.id,
             label: coreField.title,
             name: coreField.name,
+            modelValue: coreField.schema_config?.default || null,
             variant: 'filled',
             disabled: !coreField.active,
             hint: coreField?.ui_config?.help_text,

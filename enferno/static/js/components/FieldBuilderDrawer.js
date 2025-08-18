@@ -26,10 +26,10 @@ const FieldBuilderDrawer = Vue.defineComponent({
         entity_type: this.entityType,
         field_type: '',
         ui_component: '',
-        schema_config: { required: false },
+        schema_config: {},
         ui_config: { help_text: 'Enter value' },
         validation_config: {},
-        options: [],
+        options: [{ label: '', value: '' }],
         active: true,
         searchable: false,
       },
@@ -127,10 +127,13 @@ const FieldBuilderDrawer = Vue.defineComponent({
         field_type: item.field_type || '',
         ui_component: item.ui_component || '',
         sort_order: item.sort_order || '',
-        options: item.options?.length ? item.options : [],
-        schema_config: {},
-        ui_config: {},
-        validation_config: {},
+        required: item.required ?? false,
+        options: item.options?.length ? item.options : [{ label: '', value: '' }],
+        schema_config: { ...item.schema_config },       // preserve existing schema config
+        ui_config: { ...item.ui_config },               // preserve existing UI config
+        validation_config: { ...item.validation_config }, // preserve existing validation config
+        active: item.active ?? true,
+        searchable: item.schema_config?.searchable ?? false,
       };
     },
     async saveField() {
@@ -143,14 +146,15 @@ const FieldBuilderDrawer = Vue.defineComponent({
           field_type: this.form.field_type,
           ui_component: this.form.ui_component,
           sort_order: Number(this.form.sort_order || 0),
-          options: this.form.options?.length ? this.form.options : [],
+          required: this.form.required ?? false,
+          options: (this.form.options ?? []).filter(opt => opt?.label && opt?.value),
           schema_config: { ...this.form.schema_config },
           ui_config: { ...this.form.ui_config },
           validation_config: { ...this.form.validation_config },
           active: this.form.active ?? true,
           searchable: this.form.schema_config?.searchable ?? false,
           core: this.item?.core ?? false,
-          created_at: this.item?.created_at ?? new Date().toISOString(),
+          created_at: this.item?.created_at,
         };
 
 
@@ -332,7 +336,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                       cols="12"
                       md="6"
                     >
-                      <v-switch v-model="form.schema_config.required" color="primary" label="Mark as required"></v-switch>
+                      <v-switch v-model="form.required" color="primary" label="Mark as required"></v-switch>
                     </v-col>
                     <v-col
                       cols="12"
