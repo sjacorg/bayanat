@@ -10,17 +10,20 @@ const FieldListItem = Vue.defineComponent({
         </div>
 
         <div v-if="!componentProps?.readonly" class="flex-shrink-0 mt-2">
-            <v-btn :disabled="field.core" icon @click="$emit('edit', componentProps)" size="small"><v-icon>mdi-pencil</v-icon></v-btn>
+            <v-btn :disabled="field.core" icon @click="$emit('edit', { field, componentProps })" size="small"><v-icon>mdi-pencil</v-icon></v-btn>
             <v-menu>
                 <template v-slot:activator="{ props }">
                     <v-btn v-bind="props" icon="mdi-dots-vertical" size="small"></v-btn>
                 </template>
                 <v-list>
-                    <v-list-item @click="$emit('toggle-visibility', componentProps)">
+                    <v-list-item @click="$emit('toggle-visibility', { field, componentProps })">
                         <v-list-item-title><v-icon class="mr-2">{{ componentProps.disabled ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon> {{ componentProps.disabled ? 'Show' : 'Hide' }}</v-list-item-title>
                     </v-list-item>
-                    <v-list-item @click="$emit('delete', componentProps)" :disabled="field.core">
+                    <v-list-item v-if="field.active" @click="$emit('delete', { field, componentProps })" :disabled="field.core">
                         <v-list-item-title><v-icon class="mr-2">mdi-delete</v-icon> Delete</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item v-else @click="$emit('delete', { field, componentProps, force: true })" :disabled="field.core">
+                        <v-list-item-title><v-icon class="mr-2">mdi-delete</v-icon> Delete permanently</v-list-item-title>
                     </v-list-item>
                 </v-list>
             </v-menu>

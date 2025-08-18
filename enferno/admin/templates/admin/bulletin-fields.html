@@ -44,7 +44,7 @@
           class="flex-0-0"
         >
           <template #item="{ element: field }">
-            <v-col v-if="matchesSearch(field)" cols="12">
+            <v-col v-if="matchesSearch(field) && !field._force_deleted" cols="12">
               <v-row>
                 <v-col cols="12" lg="6">
                   <field-list-item
@@ -161,8 +161,8 @@
         matchesSearch(field) {
           return !this.search || field.title?.toLowerCase().includes(this.search.toLowerCase());
         },
-        edit(field) {
-          const matchingField = this.dynamicFields.find(coreField => coreField.id === Number(field.fieldId))
+        edit({ field }) {
+          const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
           this.editedItem = matchingField;
           this.isFieldBuilderDrawerOpen = true;
         },
@@ -203,20 +203,22 @@
             const changes = this.computeChanges();
 
             // Create
-            for (const f of changes.create) {
-              await axios.post(`/admin/api/dynamic-fields/`, { item: f });
+            for (const { item } of changes.create) {
+              await axios.post(`/admin/api/dynamic-fields/`, { item });
             }
             // Update (full object)
             for (const { id, item } of changes.update) {
               await axios.put(`/admin/api/dynamic-fields/${id}`, { item });
             }
             // Delete
-            for (const id of changes.delete) {
-              await axios.delete(`/admin/api/dynamic-fields/${id}`);
+            for (const { id, item } of changes.delete) {
+              await axios.delete(`/admin/api/dynamic-fields/${id}?${item._force_deleted ? 'force=true' : ''}`);
             }
 
             this.showSnack('{{ _("Fields saved successfully") }}');
             await this.fetchDynamicFields();
+            this.saveChangesDialog = false;
+            this.configDiff = '';
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
@@ -226,18 +228,22 @@
         },
 
         computeChanges() {
-
           const changes = { create: [], update: [], delete: [] };
           const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
 
           for (const field of this.dynamicFields) {
+            if (field._force_deleted) {
+              // Fully delete on save
+              changes.delete.push({ id: field.id, item: field });
+              originalMap.delete(field.id);
+              continue;
+            }
+
             if (!field.id) {
-              // New dynamic field
-              changes.create.push(field);
+              changes.create.push({ item: field });
             } else {
               const orig = originalMap.get(field.id);
               if (orig) {
-                // If anything at all changed, send full field object
                 if (JSON.stringify(field) !== JSON.stringify(orig)) {
                   changes.update.push({ id: field.id, item: field });
                 }
@@ -249,7 +255,7 @@
           // Remaining originals are deleted (dynamic only)
           for (const field of originalMap.values()) {
             if (!field.core) {
-              changes.delete.push(field.id);
+              changes.delete.push({ id: field.id, item: field });
             }
           }
 
@@ -305,18 +311,26 @@
             return field;
           });
         },
-        async deleteField(field) {
+        async deleteField({ field, force = false }) {
           try {
-            const matchingField = this.dynamicFields.find(coreField => coreField.id === Number(field.fieldId))
-            matchingField.active = false
+            const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
+            
+            if (force) {
+              // Remove from the array immediately (frontend only)
+              matchingField.active = matchingField.active !== field.active ? field.active : true;
+              matchingField._force_deleted = true;
+            } else {
+              // Soft delete
+              matchingField.active = false;
+            }
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
           }
         },
-        async toggleFieldVisibility(field) {
+        async toggleFieldVisibility({ field }) {
           try {
-            const matchingField = this.dynamicFields.find(coreField => coreField.id === Number(field.fieldId))
+            const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
             matchingField.active = !matchingField.active
           } catch (err) {
             console.error(err);
