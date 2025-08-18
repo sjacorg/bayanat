@@ -175,12 +175,11 @@
           this.isFieldBuilderDrawerOpen = true;
         },
         saveField(evt) {
-          console.log('Saving field:', evt);
-          const matchingField = this.dynamicFields.find(coreField => coreField.id === evt.id)
+          let idx = this.dynamicFields.findIndex(coreField => coreField.id === evt.id)
 
-          if (matchingField && evt.id) {
+          if (this.dynamicFields[idx] && evt.id) {
             // Update existing field
-            matchingField = { ...evt } // or use Object.assign if you want to preserve the reference
+            this.dynamicFields[idx] = { ...evt }
           } else {
             // Add new field
             this.dynamicFields.push(evt)

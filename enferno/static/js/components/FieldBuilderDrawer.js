@@ -47,7 +47,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
   {
     value: 'text', 
     label: 'Long Text',
-    interfaces: ['text_area', 'editor']
+    interfaces: ['text_area']
   },
   {
     value: 'integer',
@@ -136,20 +136,23 @@ const FieldBuilderDrawer = Vue.defineComponent({
     async saveField() {
       try {
         const field = {
-          id: this.item?.id ?? `backup-${Date.now()}`,
+          id: this.item?.id ?? `backup-${Date.now()}`, // temp ID if new
           name: this.form.name,
           title: this.form.title,
           entity_type: this.entityType,
           field_type: this.form.field_type,
           ui_component: this.form.ui_component,
           sort_order: Number(this.form.sort_order || 0),
-          options: this.form.options?.length ? this.form.options : undefined,
-          schema_config: {},
-          ui_config: {},
-          validation_config: {},
-          active: true,
+          options: this.form.options?.length ? this.form.options : [],
+          schema_config: { ...this.form.schema_config },
+          ui_config: { ...this.form.ui_config },
+          validation_config: { ...this.form.validation_config },
+          active: this.form.active ?? true,
+          searchable: this.form.schema_config?.searchable ?? false,
+          core: this.item?.core ?? false,
           created_at: this.item?.created_at ?? new Date().toISOString(),
         };
+
 
         this.$emit('save', field);
         this.$emit('update:modelValue', false);
@@ -157,8 +160,23 @@ const FieldBuilderDrawer = Vue.defineComponent({
         console.error('Error saving field:', err);
       }
     },
+    slugify(text) {
+      return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '_')       // Replace spaces with underscores
+        .replace(/[^\w\-]+/g, '')   // Remove non-word characters
+        .replace(/\_\_+/g, '_');    // Replace multiple underscores
+    },
   },
   watch: {
+    'form.title'(newTitle) {
+      // Only auto-fill name if it's a new field
+      if (this.isNewField) {
+        this.form.name = this.slugify(newTitle);
+      }
+    },
     'form.field_type'() {
       this.autoSelectInterface();
     },
