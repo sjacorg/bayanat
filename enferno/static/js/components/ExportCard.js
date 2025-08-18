@@ -254,12 +254,10 @@ const ExportCard = Vue.defineComponent({
 
         <v-card-actions>
           <v-btn
-              size="small"
               class="ma-auto caption"
-              elevation="0"
               @click="loadExportItems"
               v-if="hasMore"
-              append-icon="mdi-chevron-down"
+              append-icon="mdi-chevron-down" size="small" variant="tonal" color="grey"
           >
             {{ translations.loadMore_ }}
           </v-btn>
