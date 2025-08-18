@@ -85,11 +85,18 @@
         <div v-if="configDiff">
           <diff-renderer :diff="configDiff"></diff-renderer>
         </div>
-  
         <v-sheet v-else class=" text-center mt-3 align-center">
           <v-icon left>mdi-alert</v-icon>
           {{ _('No changes detected') }}
         </v-sheet>
+
+        <v-alert v-if="changes.delete.length" type="warning" variant="tonal" class="mt-4">
+          <div v-for="(change, index) in changes.delete" :key="index" class="d-flex align-center">
+            <div class="d-flex align-center">
+              {{ _('Field') }} <strong>&nbsp;${change.item.title}&nbsp;</strong> {{ _('will be deleted permanently') }}
+            </div>
+          </div>
+        </v-alert>
   
       </v-card-text>
       <v-divider></v-divider>
@@ -139,6 +146,7 @@
         loading: false,
         originalFields: [],
         configDiff: '',
+        changes: '',
         saveChangesDialog: false,
       }),
       mounted() {
@@ -167,11 +175,12 @@
           this.isFieldBuilderDrawerOpen = true;
         },
         saveField(evt) {
-          const index = this.dynamicFields.findIndex(coreField => coreField.id === evt.id)
+          console.log('Saving field:', evt);
+          const matchingField = this.dynamicFields.find(coreField => coreField.id === evt.id)
 
-          if (index !== -1) {
+          if (matchingField && evt.id) {
             // Update existing field
-            this.dynamicFields[index] = { ...evt } // or use Object.assign if you want to preserve the reference
+            matchingField = { ...evt } // or use Object.assign if you want to preserve the reference
           } else {
             // Add new field
             this.dynamicFields.push(evt)
@@ -193,7 +202,14 @@
         },
 
         showSaveDialog() {
-          this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, this.dynamicFields);
+          this.changes = this.computeChanges();
+          const dynamicFieldsWithoutBackupId = this.dynamicFields.map(field => {
+            if (field.id?.startsWith?.('backup-')) {
+              delete field.id; // Remove backup ID for diff
+            }
+            return field;
+          });
+          this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, dynamicFieldsWithoutBackupId);
           this.saveChangesDialog = true;
         },
 
@@ -212,6 +228,11 @@
             }
             // Delete
             for (const { id, item } of changes.delete) {
+              if (!id || id?.startsWith?.('backup-')) {
+                // Skip backup IDs
+                continue;
+              }
+
               await axios.delete(`/admin/api/dynamic-fields/${id}?${item._force_deleted ? 'force=true' : ''}`);
             }
 
@@ -239,7 +260,7 @@
               continue;
             }
 
-            if (!field.id) {
+            if (!field.id || field.id?.startsWith?.('backup-')) {
               changes.create.push({ item: field });
             } else {
               const orig = originalMap.get(field.id);
@@ -339,10 +360,7 @@
         },
         closeDrawer(open) {
           this.isFieldBuilderDrawerOpen = open;
-
-          if (!open) {
-            this.editedItem = {}
-          }
+          this.editedItem = {}
         }
       },
     });

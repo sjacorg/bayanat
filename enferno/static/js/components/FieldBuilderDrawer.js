@@ -84,7 +84,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
   },
   computed: {
     isNewField() {
-      return !Boolean(this.item?.id)
+      return !this.item?.id || this.item.id?.startsWith?.('backup-');
     },
     selectedFieldType() {
       const type = this.fieldTypes.find((t) => t.value === this.form.field_type);
@@ -136,7 +136,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
     async saveField() {
       try {
         const field = {
-          id: this.item?.id,
+          id: this.item?.id ?? `backup-${Date.now()}`,
           name: this.form.name,
           title: this.form.title,
           entity_type: this.entityType,

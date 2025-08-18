@@ -72,7 +72,7 @@ const DiffTool = {
                     .map(([key, val], index) => {
                         const isLast = index === childEntries.length - 1
                         const indentClass = options?.hasParent ? 'ml-2' : '';
-                        const marginClass = options?.hasParent || isLast ? '' : 'mb-2';
+                        const marginClass = options?.hasParent || isLast ? '' : 'mb-1';
 
                         return `<li class="${[indentClass, marginClass].filter(Boolean).join(' ')}">${key.toUpperCase()}: ${formatValue(val, { hasParent: true })}</li>`
                     })
