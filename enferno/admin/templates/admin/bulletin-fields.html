@@ -27,7 +27,7 @@
             @click="isFieldBuilderDrawerOpen = true"
             >{{ _('Add new field') }}</v-btn
           >
-          <v-btn @click="save()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="loading" :disabled="!hasChanges"
+          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="loading" :disabled="!hasChanges"
             >{{ _('Save changes') }}</v-btn
           >
         </template>
@@ -63,20 +63,62 @@
       </v-card-text>
     </v-card>
   </v-container>
+
+  <v-dialog v-model="saveChangesDialog" max-width="900">
+    <v-card>
+      <v-card-title class="d-flex justify-space-between align-center">
+        {{ _('Review and confirm your changes') }}
+        <v-btn icon="mdi-close" variant="text" @click="saveChangesDialog = false"></v-btn>
+      </v-card-title>
+      <v-card-text class="d-flex pb-2 pt-2">
+        <div class="d-flex align-center body-2">
+          <v-avatar class="mr-2" size="18" color="red lighten-3"></v-avatar>
+          {{ _('Old Value') }}
+        </div>
+      
+        <div class="d-flex align-center ml-4 body-2">
+          <v-avatar class="mr-2" size="18" color="green lighten-2"></v-avatar>
+          {{ _('New Value') }}
+        </div>
+      </v-card-text>
+      <v-card-text class="pa-4">
+        <div v-if="configDiff">
+          <diff-renderer :diff="configDiff"></diff-renderer>
+        </div>
+  
+        <v-sheet v-else class=" text-center mt-3 align-center">
+          <v-icon left>mdi-alert</v-icon>
+          {{ _('No changes detected') }}
+        </v-sheet>
+  
+      </v-card-text>
+      <v-divider></v-divider>
+      <v-card-actions class="pa-4 justify-end">
+        <v-btn @click.stop="saveChangesDialog = false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
+        </v-btn>
+        <v-btn variant="elevated" color="primary" :loading="loading" :disabled="!configDiff" @click.stop="save()" class="ml-4">
+          {{ _('Confirm') }}
+        </v-btn>
+      </v-card-actions>
+  
+    </v-card>
+  </v-dialog>
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
 <script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
 <script src="/static/js/tinymce-vue.min.js"></script>
+<script src="/static/js/diff-tool.js"></script>
+<script src="/static/js/Sortable.min.js"></script>
+<script src="/static/js/vuedraggable.umd.js"></script>
+<script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
 <script src="/static/js/components/FieldListItem.js"></script>
 <script src="/static/js/components/FieldBuilderDrawer.js"></script>
 <script src="/static/js/components/PopDateField.js"></script>
 <script src="/static/js/components/PopDateTimeField.js"></script>
 <script src="/static/js/components/PopDateRangeField.js"></script>
-
-<script src="/static/js/Sortable.min.js"></script>
-<script src="/static/js/vuedraggable.umd.js"></script>
+<script src="/static/js/components/DiffRenderer.js"></script>
 
 <script>
     const { createApp } = Vue;
@@ -96,6 +138,8 @@
         searchQuery: '',
         loading: false,
         originalFields: [],
+        configDiff: '',
+        saveChangesDialog: false,
       }),
       mounted() {
         this.fetchDynamicFields();
@@ -146,6 +190,11 @@
             console.error(err);
             this.showSnack(handleRequestError(err));
           }
+        },
+
+        showSaveDialog() {
+          this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, this.dynamicFields);
+          this.saveChangesDialog = true;
         },
 
         async save() {
@@ -291,6 +340,7 @@
     app.component('PopDateField', PopDateField);
     app.component('PopDateRangeField', PopDateRangeField);
     app.component('PopDateTimeField', PopDateTimeField);
+    app.component('DiffRenderer', DiffRenderer);
 
     app.use(router);
     app.use(vuetify).mount('#app');
