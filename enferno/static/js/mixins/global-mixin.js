@@ -30,6 +30,7 @@ const globalMixin = {
       isoDatetime: 'YYYY-MM-DDTHH:mm',
       standardDate: 'DD/MM/YYYY',
       standardDatetime: 'DD/MM/YYYY h:mm A',
+      standardTime: 'h:mm A',
       iso: 'iso',
       relative: 'relative',
       calendar: 'calendar',
