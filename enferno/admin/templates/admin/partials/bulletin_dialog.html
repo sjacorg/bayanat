@@ -11,7 +11,6 @@
     :parent-item="editedItem"
     :can-restrict-view="{% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}true{% else %}false{% endif %}"
     @create-actor="relateCreatedActor"
-    :dialog-props="rightDialogProps"
 >
 </short-actor-dialog>
 
@@ -190,7 +189,7 @@
     
                                 <v-row class="w-100 ma-0">
                                     <v-col col="12">
-                                        <events-section :edited-item="editedItem" :dialog-props="rightDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                                        <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                                     </v-col>
                                 </v-row>
     
@@ -198,7 +197,7 @@
                                     <v-col col="12">
                                         <geo-locations ref="geolocs" @locations-updated="geoLocationsUpdated"
                                                     :others="editedItem.geoLocations"
-                                                    v-model="editedItem.geoLocations" :dialog-props="rightDialogProps"></geo-locations>
+                                                    v-model="editedItem.geoLocations" :dialog-props="commonDialogProps"></geo-locations>
     
     
                                     </v-col>

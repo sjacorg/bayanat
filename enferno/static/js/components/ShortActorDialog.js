@@ -36,10 +36,6 @@ const ShortActorDialog = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
-    dialogProps: {
-      type: Object,
-      default: () => ({}),
-    },
     eventParams: {
       type: Object,
       default: () => ({}),
@@ -219,7 +215,7 @@ const ShortActorDialog = Vue.defineComponent({
     <v-dialog
         v-if="open"
         :modelValue="open"
-        v-bind="dialogProps"
+        v-bind="$root.rightDialogProps"
     >
       <v-toolbar color="dark-primary">
         <v-toolbar-title>{{ formTitle }}</v-toolbar-title>
@@ -432,7 +428,7 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
-                            <events-section :edited-item="editedItem" :dialog-props="dialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                            <events-section :edited-item="editedItem" :dialog-props="$root.commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
