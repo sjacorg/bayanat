@@ -296,7 +296,7 @@
           };
 
           const componentMap = {
-            number: { component: 'v-number-input', ...baseProps, precision: field.field_type === 'float' ? 2 : 0 },
+            number: { component: 'v-number-input', ...baseProps, precision: field.field_type === 'float' ? null : 0 },
             text_input: { component: 'v-text-field', ...baseProps },
             multi_select: { component: 'v-select', ...baseProps, items: field.options, 'item-title': 'label', 'item-value': 'value', multiple: field.field_type === 'array' },
             dropdown: { component: 'v-select', ...baseProps, items: field.options, 'item-title': 'label', 'item-value': 'value', multiple: field.field_type === 'array' },
