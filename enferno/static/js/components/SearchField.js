@@ -118,11 +118,14 @@ const SearchField = Vue.defineComponent({
       if (val === null || this.isValid(val)) {
         this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue]);
       } else {
-        this.$emit('update:model-value', this.modelValue);
+        this.searchInput = '';
       }
     },
-    search: debounce(function () {
-      this.loading = true;
+    startSearch() {
+      this.loading = true       // immediate
+      this.debouncedSearch()    // delayed API call
+    },
+    debouncedSearch: debounce(function () {
       api
         .get(this.api, {
           params: {
@@ -132,14 +135,12 @@ const SearchField = Vue.defineComponent({
           },
         })
         .then((response) => {
-          this.items = response.data.items;
+          this.items = response.data.items
         })
-        .catch((error) => {
-          console.error('Error fetching data:', error);
-        })
+        .catch(console.error)
         .finally(() => {
-          this.loading = false;
-        });
+          this.loading = false
+        })
     }, 350),
     copyValue() {
       let textToCopy = '';
@@ -168,7 +169,7 @@ const SearchField = Vue.defineComponent({
       ref="fld"
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
-      :auto-select-first="true"
+      :auto-select-first="!loading"
       :model-value="checkValue"
       @update:model-value="updateValue"
       :hide-no-data="true"
@@ -183,12 +184,12 @@ const SearchField = Vue.defineComponent({
       :chips="true"
       :closable-chips="true"
       :clearable="true"
-      @click:input="search"
-      @update:focused="search"
+      @click:input="startSearch"
+      @update:focused="(focused) => { focused ? startSearch() : loading = false }"
       :return-object="returnObject"
       @click:clear="clearValue"
       v-model:search="searchInput"
-      @update:search="search"
+      @update:search="startSearch"
       v-bind="$attrs"
       :loading="loading"
       :rules="rules"
@@ -204,7 +205,9 @@ const SearchField = Vue.defineComponent({
 const LocationSearchField = Vue.defineComponent({
   extends: SearchField,
   methods: {
-    search: debounce(function (evt) {
+    debouncedSearch: debounce(function (evt) {
+      this.loading = true;
+      this.items = []; // clear previous items to avoid old selection
       api
         .post(this.api, {
           q: {
@@ -215,6 +218,8 @@ const LocationSearchField = Vue.defineComponent({
         })
         .then((response) => {
           this.items = response.data.items;
+        }).finally(() => {
+          this.loading = false;
         });
     }, 350),
   },
