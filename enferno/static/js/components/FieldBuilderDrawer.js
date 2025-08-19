@@ -104,6 +104,14 @@ const FieldBuilderDrawer = Vue.defineComponent({
         if (valid) {
           this.saveField();
         } else {
+          // special case: dropdown with invalid options
+          if (
+            this.form.ui_component === 'dropdown' &&
+            (this.form.options || []).some(opt => !opt.label || !opt.value)
+          ) {
+            this.currentTab = 'validation'; // jump to tab 3
+          }
+          
           this.$root.showSnack(translations.pleaseReviewFormForErrors_);
           scrollToFirstError(errors);
         }
@@ -223,7 +231,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
               <v-tab :value="tab.id" v-for="(tab, index) in tabs" :key="tab.id"><v-icon class="mr-2">{{ tab.icon }}</v-icon>{{ tab.label }}</v-tab>
             </v-tabs>
     
-            <v-tabs-window v-model="currentTab">
+            <v-tabs-window v-model="currentTab" eager>
               <v-tabs-window-item value="details">
                 <v-card-text>
                   <v-row dense>
@@ -310,7 +318,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                 </v-card-text>
               </v-tabs-window-item>
 
-              <v-tabs-window-item value="schema">
+              <v-tabs-window-item value="schema" eager>
                 <v-card-text>
                   <v-row dense>
                     <v-col
@@ -348,7 +356,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                 </v-card-text>
               </v-tabs-window-item>
 
-              <v-tabs-window-item value="validation">
+              <v-tabs-window-item value="validation" eager>
                 <v-card-text>
                   <v-row dense>
                     <v-col
@@ -434,6 +442,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                               <v-text-field
                                 v-model="option.label"
                                 label="Label"
+                                :rules="[validationRules.required()]"
                               ></v-text-field>
                             </v-col>
                             <v-col
@@ -443,6 +452,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                               <v-text-field
                                 v-model="option.value"
                                 label="Value"
+                                :rules="[validationRules.required()]"
                               ></v-text-field>
                             </v-col>
                           </v-row>
