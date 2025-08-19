@@ -17,7 +17,15 @@ from enferno.admin.constants import Constants
 from enferno.settings import Config as cfg
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
-from enferno.utils.validation_utils import validate_password_policy
+from enferno.utils.validation_utils import (
+    SanitizedField,
+    one_must_exist,
+    validate_email_format,
+    validate_password_policy,
+    validate_username,
+    validate_username_constraints,
+)
+from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
@@ -1388,7 +1396,7 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 class UserValidationModel(StrictValidationModel):
     email: Optional[str] = None
-    username: str = Field(min_length=1)
+    username: str = Field(min_length=4, max_length=32)
     password: Optional[str] = None  # Optional on PUT, required on POST
     name: str = Field(min_length=1)
     roles: list[PartialRoleModel] = Field(default_factory=list)
@@ -1405,6 +1413,42 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
+    @field_validator("username", mode="before")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        return validate_username_constraints(v)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_field(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validates the email format and returns the validated email.
+
+        Args:
+            v: The email to validate
+
+        Returns:
+            Optional[str]: The validated email or None
+
+        Raises:
+            ValueError: If the email format is invalid
+        """
+        if not v:
+            return v
+
+        try:
+            v = validate_email_format(v)
+        except ValidationError as e:
+            raise ValueError("Invalid email format")
+
+        if cfg.MAIL_ALLOWED_DOMAINS and "*" not in cfg.MAIL_ALLOWED_DOMAINS:
+            if v.domain not in cfg.MAIL_ALLOWED_DOMAINS:
+                raise ValueError(
+                    f"Email domain is not allowed. Allowed domains are: {', '.join(cfg.MAIL_ALLOWED_DOMAINS)}"
+                )
+
+        return v.normalized
+
     @field_validator("password")
     def validate_password(cls, v):
         if not v:
@@ -1417,7 +1461,14 @@ class UserRequestModel(BaseValidationModel):
 
 
 class UserNameCheckValidationModel(BaseValidationModel):
-    item: str = Field(min_length=1)
+    item: str = Field(min_length=4, max_length=32)
+
+    @field_validator("item", mode="before")
+    @classmethod
+    def validate_username_check(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Username cannot be empty")
+        return validate_username_constraints(v)
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
@@ -1498,6 +1549,12 @@ class ActivitiesModel(BaseModel):
     UPDATE: bool = Field(default=False)
     UPLOAD: bool = Field(default=False)
     VIEW: bool = Field(default=False)
+
+
+class NotificationConfigModel(BaseValidationModel):
+    email_enabled: Optional[bool] = None
+    in_app_enabled: Optional[bool] = None
+    category: Optional[str] = None
 
 
 class ConfigValidationModel(StrictValidationModel):
@@ -1763,15 +1820,44 @@ class FullConfigValidationModel(ConfigValidationModel):
     ADV_ANALYSIS: bool
     SETUP_COMPLETE: bool = Field(default=True)
     LOCATIONS_INCLUDE_POSTAL_CODE: bool
+    MAIL_ENABLED: bool
+    MAIL_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
+    MAIL_SERVER: Optional[str] = None
+    MAIL_PORT: Optional[int] = None
+    MAIL_USE_TLS: Optional[bool] = None
+    MAIL_USE_SSL: Optional[bool] = None
+    MAIL_USERNAME: Optional[str] = None
+    MAIL_PASSWORD: Optional[str] = None
+    MAIL_DEFAULT_SENDER: Optional[str] = None
     TRANSCRIPTION_ENABLED: bool
     WHISPER_MODEL: Optional[str] = None
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
+    NOTIFICATIONS: dict[str, NotificationConfigModel] = Field(default_factory=dict)
 
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        return values
+
+    @model_validator(mode="before")
+    def validate_mail_settings(cls, values):
+        if values.get("MAIL_ENABLED"):
+            if (
+                not values.get("MAIL_SERVER")
+                or not values.get("MAIL_PORT")
+                or not values.get("MAIL_USERNAME")
+                or not values.get("MAIL_PASSWORD")
+                or not values.get("MAIL_DEFAULT_SENDER")
+            ):
+                raise ValueError(
+                    "MAIL_SERVER, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD must be provided if MAIL_ENABLED is True"
+                )
+            if not values.get("MAIL_ALLOWED_DOMAINS"):
+                raise ValueError(
+                    "MAIL_ALLOWED_DOMAINS must be provided and not empty if MAIL_ENABLED is True"
+                )
         return values
 
     @model_validator(mode="before")

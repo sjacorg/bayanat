@@ -64,6 +64,7 @@ def test_setup_wizard_create_admin_user(uninitialized_app, session_uninitialized
     response = client.post(
         "/api/create-admin", json={"username": "testAdmin", "password": "password"}
     )
+
     assert response.status_code == 201
     assert response.json["message"] == "Admin user installed successfully"
     assert response.json["data"]["item"]["username"] == "testAdmin"
