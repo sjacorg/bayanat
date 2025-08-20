@@ -8,16 +8,23 @@
     <v-main class="align-start ma-3">
         <v-stepper v-model="step">
             <v-stepper-header class="elevation-0">
-                <v-stepper-item color="primary" title="{{ _('Upload Sheet / Select Map') }}" value="1" :complete="step > 1"></v-stepper-item>
+                <v-stepper-item class="cursor-default" color="primary" title="{{ _('Upload or Select') }}" value="1" :complete="step > 1"></v-stepper-item>
                 <v-divider></v-divider>
-
-                <v-stepper-item color="primary" title="{{ _('Fields Map') }}" value="2" :complete="step > 2"></v-stepper-item>
+                <v-stepper-item class="cursor-default" color="primary" title="{{ _('Map') }}" value="2" :complete="step > 2"></v-stepper-item>
                 <v-divider></v-divider>
-                <v-stepper-item color="primary" title="{{ _('Bulk Upload \& Import') }}" value="3" :complete="step > 3"></v-stepper-item>
+                <v-stepper-item class="cursor-default" color="primary" title="{{ _('Upload More') }}" value="3" :complete="step > 3"></v-stepper-item>
                 <v-divider></v-divider>
-                <v-stepper-item color="primary" title="{{ _('Status') }}" value="4" :complete="step > 4"></v-stepper-item>
+                <v-stepper-item class="cursor-default" color="primary" title="{{ _('Status') }}" value="4" :complete="step > 4"></v-stepper-item>
             </v-stepper-header>
 
+            <v-stepper-actions>
+                <template #next>
+                    <v-btn v-bind="nextButtonProps"></v-btn>
+                </template>
+                <template #prev>
+                    <v-btn v-bind="prevButtonProps"></v-btn>
+                </template>
+            </v-stepper-actions>
 
             <v-stepper-window style="height: calc(100vh - 212px);">
                 <v-stepper-window-item value="1">
@@ -93,23 +100,6 @@
                 </v-stepper-window-item>
 
                 <v-stepper-window-item value="2" class="h-100">
-                    <v-sheet class=" pa-3 align-center d-flex">
-                        <v-spacer></v-spacer>
-                        <v-select density="compact"
-                                @click:clear="confirmResetFields()"
-                                class="mt-2 mx-2"
-                                label="{{ _('Load existing map') }}"
-                                :items="maps"
-                                item-title="name"
-                                item-value="id"
-                                return-object
-                                :model-value="mapid"
-                                @update:model-value="loadMap"
-                                clearable
-                        >
-                        </v-select>
-                    </v-sheet>
-
                     <v-card class="pa-3 overflow-y-auto" style="height: calc(100% - 90px);">
                         <v-row class="align-stretch h-100">
                             <v-col cols="12" md="3" class="h-100">
@@ -164,27 +154,32 @@
 
                             <v-col cols="12" md="9" class="h-100">
                                 <v-sheet :class="[`overflow-y-auto pa-5`, { 'h-100': $vuetify.display.mdAndUp }]">
-                                    <div class="d-flex align-center">
+                                    <div class="d-flex flex-wrap align-center pb-2">
                                         <h3 class="my-3">
                                             {{ _('Actor Fields') }}
-
                                         </h3>
                                         <v-divider vertical class="mx-3"></v-divider>
                                         <v-text-field
-                                                label="{{ _('Map Name') }}"
-                                                v-model="mapName"
-                                                class="ml-5 "
-                                        >
+                                            density="compact"
+                                            label="{{ _('Map Name') }}"
+                                            v-model="mapName"
+                                            class="mx-5"
+                                            hide-details
+                                        ></v-text-field>
 
-                                        </v-text-field>
+                                        <v-select density="compact" @click:clear="confirmResetFields()" label="{{ _('Load existing map') }}"
+                                            :items="maps" item-title="name" item-value="id" return-object :model-value="mapid" @update:model-value="loadMap"
+                                            clearable hide-details>
+                                        </v-select>
+
                                         <v-spacer></v-spacer>
-                                        <v-btn v-if="mapid" @click="updateMap" color="primary" variant="outlined"
-                                               class="mx-2">{{ _('Update map') }}</v-btn>
-                                        <v-btn @click="createMap" color="primary" variant="outlined"
-                                               class="mx-2">{{ _('Create a new map') }}
+                                        <v-btn v-if="mapid" @click="deleteMap" prepend-icon="mdi-delete" color="error" variant="outlined"
+                                           class="mx-2">{{ _('Delete') }}</v-btn>
+                                        <v-btn v-if="mapid" @click="updateMap" prepend-icon="mdi-pencil" variant="outlined"
+                                               class="mx-2">{{ _('Update') }}</v-btn>
+                                        <v-btn @click="createMap" color="primary" prepend-icon="mdi-plus"
+                                                class="mx-2">{{ _('Create new') }}
                                         </v-btn>
-                                        <v-btn v-if="mapid" @click="deleteMap" color="error" variant="outlined"
-                                               class="mx-2">{{ _('Delete') }}</v-btn>
                                     </div>
 
                                     <v-divider class="mb-2"></v-divider>
@@ -809,15 +804,6 @@
                     </v-card>
                 </v-stepper-window-item>
             </v-stepper-window>
-
-            <v-stepper-actions>
-                <template #next>
-                    <v-btn v-bind="nextButtonProps"></v-btn>
-                </template>
-                <template #prev>
-                    <v-btn v-bind="prevButtonProps"></v-btn>
-                </template>
-            </v-stepper-actions>
         </v-stepper>
 
 
@@ -976,7 +962,9 @@
                     const commonProps = { text: 'Next', 'append-icon': 'mdi-chevron-right', color: 'primary' }
                     switch (this.step) {
                         case '1':{
-                            const isEnabled = (this.files.length && this.selectedSheet) || this.selectedMap
+                            const isFileSelected = this.structure
+                            const isExistingMap = this.selectedMap
+                            const isEnabled = isFileSelected || isExistingMap
                             return { ...commonProps, disabled: !isEnabled, onclick: () => this.step = '2' }
                         }
                         case '2':
@@ -1062,6 +1050,7 @@
                     if (ext === 'csv') {
 
                         api.post('/import/api/csv/analyze', {file: file}).then(res => {
+                            this.resetFields();
                             this.structure = res.data;
                             this.fields = this.structure.columns;
                             this.backup = this.fields.slice();
