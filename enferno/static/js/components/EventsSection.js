@@ -1,8 +1,8 @@
 const getDefaultEvent = () => ({
-  title: "",
+  title: '',
   from_date: '',
-  to_date: ''
-})
+  to_date: '',
+});
 
 const EventsSection = Vue.defineComponent({
   props: {
@@ -38,8 +38,27 @@ const EventsSection = Vue.defineComponent({
     },
   },
   methods: {
+    validateEventForm() {
+      const e = this.editedEvent;
+
+      const hasDateOrLocation = !!(e.location || e.from_date || e.to_date);
+      const hasTitleOrType = !!(e.title || e.title_ar || e.eventtype);
+
+      const missing = [];
+      if (!hasDateOrLocation) missing.push(this.translations.locationOrDateRequired_);
+      if (!hasTitleOrType) missing.push(this.translations.titleOrTypeRequired_);
+
+      if (missing.length > 0) {
+        this.$root.showSnack(missing.join('<br />'));
+        return false;
+      }
+
+      return true;
+    },
     validateForm() {
       this.$refs.form.validate().then(({ valid, errors }) => {
+        if (!this.validateEventForm()) return
+
         if (valid) {
           this.saveEvent();
         } else {
@@ -49,11 +68,6 @@ const EventsSection = Vue.defineComponent({
       });
     },
     saveEvent() {
-      if (!this.valid) {
-        this.$root.showSnack(translations.pleaseReviewFormForErrors_);
-        return;
-      }
-
       if (this.editedEventIndex > -1) {
         Object.assign(this.editedItem.events[this.editedEventIndex], this.editedEvent);
         //update record
@@ -145,12 +159,12 @@ const EventsSection = Vue.defineComponent({
                 <v-spacer></v-spacer>
             
                 <template #append>
-                    <v-btn variant="elevated" @click="saveEvent" class="mx-2">{{ translations.save_ }}</v-btn>
+                    <v-btn variant="elevated" @click="validateForm" class="mx-2">{{ translations.save_ }}</v-btn>
                     <v-btn icon="mdi-close" @click="closeEvent"></v-btn>
                 </template>
             </v-toolbar>
 
-            <v-form @submit.prevent="saveEvent" ref="form" v-model="valid">
+            <v-form @submit.prevent="validateForm" ref="form" v-model="valid">
                 <v-card-text>
                     <v-container>
                         <v-row>
@@ -160,7 +174,7 @@ const EventsSection = Vue.defineComponent({
                                             :label-original="translations.title_"
                                             :label-translation="translations.titleAr_"
                                             :rules="[
-                                                validationRules.maxLength(255),
+                                              validationRules.maxLength(255),
                                             ]">
                                 </dual-field>
                             </v-col>
@@ -212,7 +226,7 @@ const EventsSection = Vue.defineComponent({
                                 <pop-date-time-field :allowed-dates="allowedDateFrom" :time-label="translations.time_" :label="translations.from_" v-model="editedEvent.from_date"></pop-date-time-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <pop-date-time-field :allowed-dates="allowedDateTo" :time-label="translations.time_" :label="translations.to_" v-model="editedEvent.to_date" ></pop-date-time-field>
+                                <pop-date-time-field :allowed-dates="allowedDateTo" :time-label="translations.time_" :label="translations.to_" v-model="editedEvent.to_date"></pop-date-time-field>
                             </v-col>
                         </v-row>
                         <v-row>
@@ -224,8 +238,6 @@ const EventsSection = Vue.defineComponent({
                                 ></v-switch>
                             </v-col>
                         </v-row>
-
-
                     </v-container>
                 </v-card-text>
             </v-form>
