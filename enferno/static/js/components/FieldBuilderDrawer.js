@@ -263,6 +263,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                       md="6"
                     >
                       <v-select
+                        :disabled="!isNewField"
                         v-model="form.field_type"
                         label="Field type*"
                         :items="fieldTypes"
@@ -278,7 +279,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                       <v-select
                         v-model="form.ui_component"
                         label="UI Component*"
-                        :disabled="availableInterfaces.length <= 1"
+                        :disabled="availableInterfaces.length <= 1 || !isNewField"
                         :items="availableInterfaces"
                         :rules="[validationRules.required()]"
                       ></v-select>
