@@ -25,13 +25,6 @@ const FieldListItem = Vue.defineComponent({
                             <span class="red--text">Delete</span>
                         </v-list-item-title>
                     </v-list-item>
-
-                    <v-list-item v-else @click="$emit('delete', { field, componentProps, force: true })" :disabled="field.core">
-                        <v-list-item-title>
-                            <v-icon class="mr-2" color="red">mdi-trash-can</v-icon> 
-                            <span class="red--text">Delete permanently</span>
-                        </v-list-item-title>
-                    </v-list-item>
                 </v-list>
             </v-menu>
         </div>

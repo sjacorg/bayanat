@@ -44,7 +44,7 @@
           class="flex-0-0"
         >
           <template #item="{ element: field }">
-            <v-col v-if="matchesSearch(field) && !field._force_deleted" cols="12">
+            <v-col v-if="matchesSearch(field)" cols="12">
               <v-row>
                 <v-col cols="12" lg="6">
                   <field-list-item
@@ -253,7 +253,7 @@
               if (!id || id?.startsWith?.('backup-')) continue;
 
               requests.push(
-                axios.delete(`/admin/api/dynamic-fields/${id}?${item._force_deleted ? 'force=true' : ''}`)
+                axios.delete(`/admin/api/dynamic-fields/${id}}`)
                   .then(() => {
                     // ✅ remove from originalFields
                     this.originalFields = this.originalFields.filter(f => f.id !== id);
@@ -290,13 +290,6 @@
           const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
 
           for (const field of this.dynamicFields) {
-            if (field._force_deleted) {
-              // Fully delete on save
-              changes.delete.push({ id: field.id, item: field });
-              originalMap.delete(field.id);
-              continue;
-            }
-
             if (!field.id || field.id?.startsWith?.('backup-')) {
               changes.create.push({ item: field });
             } else {
@@ -396,18 +389,11 @@
             return field;
           });
         },
-        async deleteField({ field, force = false }) {
+        async deleteField({ field }) {
           try {
             const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
-            
-            if (force) {
-              // Remove from the array immediately (frontend only)
-              matchingField.active = matchingField.active !== field.active ? field.active : true;
-              matchingField._force_deleted = true;
-            } else {
-              // Soft delete
-              matchingField.active = false;
-            }
+            // Soft delete
+            matchingField.active = false;
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
