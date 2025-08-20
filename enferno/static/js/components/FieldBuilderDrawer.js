@@ -201,11 +201,13 @@ const FieldBuilderDrawer = Vue.defineComponent({
           this.populateForm({}); // clear form
         }
       }
+      this.$nextTick(() => {
+        this.$refs.form.resetValidation();
+      });
     },
   },
   template: `
         <v-navigation-drawer
-          v-if="modelValue"
           :model-value="modelValue"
           @update:model-value="$emit('update:modelValue', $event)"
           clipped
