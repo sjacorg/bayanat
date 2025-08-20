@@ -103,24 +103,21 @@
                     <v-card class="pa-3 overflow-y-auto" style="height: calc(100% - 90px);">
                         <v-row class="align-stretch h-100">
                             <v-col cols="12" md="3" class="h-100">
-
-                                <v-card class="overflow-y-auto h-100">
+                                <v-card class="mt-4 overflow-y-auto h-100">
                                     <v-toolbar>
                                         <v-toolbar-title class="d-flex">
                                             {{ _('Sheet Fields') }}
 
                                             <v-btn @click="confirmResetFields" size="small"
-                                                   variant="text"
-
-                                            >{{ _('Reset') }}
+                                                   variant="outlined" prepend-icon="mdi-refresh" class="ml-2">
+                                                   {{ _('Reset') }}
                                             </v-btn>
                                         </v-toolbar-title>
-
-
                                     </v-toolbar>
+
                                     <v-text-field @keydown.enter="filterFields"
                                                   label="{{ _('Search Fields') }}" v-model="ffilter"
-                                                  clearable></v-text-field>
+                                                  clearable class="px-4"></v-text-field>
 
                                     <draggable
                                             class="list-group"
@@ -155,9 +152,9 @@
                             <v-col cols="12" md="9" class="h-100">
                                 <v-sheet :class="[`overflow-y-auto pa-5`, { 'h-100': $vuetify.display.mdAndUp }]">
                                     <div class="d-flex flex-wrap align-center pb-2">
-                                        <h3 class="my-3">
+                                        <div class="v-toolbar-title my-3">
                                             {{ _('Actor Fields') }}
-                                        </h3>
+                                        </div>
                                         <v-divider vertical class="mx-3"></v-divider>
                                         <v-text-field
                                             density="compact"
