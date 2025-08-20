@@ -27,14 +27,14 @@
             @click="isFieldBuilderDrawerOpen = true"
             >{{ _('Add new field') }}</v-btn
           >
-          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="loading" :disabled="!hasChanges"
+          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="saving" :disabled="!hasChanges"
             >{{ _('Save changes') }}</v-btn
           >
         </template>
       </v-toolbar>
 
       <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 165px);">
-        <span class="text-h6 font-weight-bold">Core fields</span>
+        <div class="d-flex justify-center w-100"><v-progress-circular indeterminate v-if="loading"></v-progress-circular></div>
         <draggable
           v-model="dynamicFields"
           :item-key="'id'"
@@ -103,7 +103,7 @@
       <v-card-actions class="pa-4 justify-end">
         <v-btn @click.stop="saveChangesDialog = false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
         </v-btn>
-        <v-btn variant="elevated" color="primary" :loading="loading" :disabled="!configDiff" @click.stop="save()" class="ml-4">
+        <v-btn variant="elevated" color="primary" :loading="saving" :disabled="!configDiff" @click.stop="save()" class="ml-4">
           {{ _('Confirm') }}
         </v-btn>
       </v-card-actions>
@@ -144,6 +144,7 @@
         dynamicFields: [],
         searchQuery: '',
         loading: false,
+        saving: false,
         originalFields: [],
         configDiff: '',
         changes: '',
@@ -189,6 +190,7 @@
         },
         async fetchDynamicFields() {
           try {
+            this.loading = true;
             const response = await axios.get('/admin/api/dynamic-fields/?entity_type=bulletin');
             this.dynamicFields = response.data.data;
             this.reindexZeroSortFields();
@@ -197,6 +199,8 @@
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
+          } finally {
+            this.loading = false;
           }
         },
 
@@ -215,7 +219,7 @@
         },
 
         async save() {
-          this.loading = true;
+          this.saving = true;
           try {
             const changes = this.computeChanges();
 
@@ -245,7 +249,7 @@
             console.error(err);
             this.showSnack(handleRequestError(err));
           } finally {
-            this.loading = false;
+            this.saving = false;
           }
         },
 
