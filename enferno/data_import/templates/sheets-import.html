@@ -115,9 +115,11 @@
                                         </v-toolbar-title>
                                     </v-toolbar>
 
-                                    <v-text-field @keydown.enter="filterFields"
+                                    <v-divider class="mb-2"></v-divider>
+
+                                    <v-text-field @input="filterFields"
                                                   label="{{ _('Search Fields') }}" v-model="ffilter"
-                                                  clearable class="px-4"></v-text-field>
+                                                  clearable class="px-4 mt-4" density="compact" prepend-inner-icon="mdi-magnify"></v-text-field>
 
                                     <draggable
                                             class="list-group"
