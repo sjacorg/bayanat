@@ -223,28 +223,60 @@
           try {
             const changes = this.computeChanges();
 
+            const requests = [];
+
             // Create
             for (const { item } of changes.create) {
-              await axios.post(`/admin/api/dynamic-fields/`, { item });
+              requests.push(
+                axios.post(`/admin/api/dynamic-fields/`, { item })
+                  .then(res => {
+                    // ✅ mark as saved
+                    this.originalFields.push(res.data.item);
+                  })
+              );
             }
-            // Update (full object)
+
+            // Update
             for (const { id, item } of changes.update) {
-              await axios.put(`/admin/api/dynamic-fields/${id}`, { item });
+              requests.push(
+                axios.put(`/admin/api/dynamic-fields/${id}`, { item })
+                  .then(res => {
+                    // ✅ replace in originalFields
+                    const idx = this.originalFields.findIndex(f => f.id === id);
+                    if (idx !== -1) this.originalFields[idx] = res.data.item;
+                  })
+              );
             }
+
             // Delete
             for (const { id, item } of changes.delete) {
-              if (!id || id?.startsWith?.('backup-')) {
-                // Skip backup IDs
-                continue;
-              }
+              if (!id || id?.startsWith?.('backup-')) continue;
 
-              await axios.delete(`/admin/api/dynamic-fields/${id}?${item._force_deleted ? 'force=true' : ''}`);
+              requests.push(
+                axios.delete(`/admin/api/dynamic-fields/${id}?${item._force_deleted ? 'force=true' : ''}`)
+                  .then(() => {
+                    // ✅ remove from originalFields
+                    this.originalFields = this.originalFields.filter(f => f.id !== id);
+                  })
+              );
             }
 
-            this.showSnack('{{ _("Fields saved successfully") }}');
-            await this.fetchDynamicFields();
-            this.saveChangesDialog = false;
-            this.configDiff = '';
+            // Run all in parallel, but don’t throw
+            const results = await Promise.allSettled(requests);
+
+            const failed = results.filter(r => r.status === 'rejected');
+            if (failed.length > 0) {
+              console.log('Some requests failed:', failed);
+              this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
+              // recompute changes so dialog only shows unsaved
+              this.changes = this.computeChanges();
+              this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, this.dynamicFields);
+            } else {
+              this.showSnack('{{ _("Fields saved successfully") }}');
+              await this.fetchDynamicFields(); // reload fresh
+              this.saveChangesDialog = false;
+              this.configDiff = '';
+            }
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
