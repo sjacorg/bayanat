@@ -1289,7 +1289,7 @@ def check_for_updates() -> Optional[dict]:
         rds.set(REDIS_KEY, json.dumps(update_info))
 
         logger.info(
-            f"Update check completed. Current version: {current_version}, Latest version: {latest_version}, Update available: {update_available}"
+            f"Update check completed. Current version: {current_version}, Latest version: {latest_version}, Update available: {update_available} [TEST MODE]"
         )
         return update_info
     except requests.RequestException as e:
