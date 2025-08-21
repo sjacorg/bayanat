@@ -47,3 +47,4 @@ If you like our work please consider making a donation at [donate.syriaaccountab
 License
 -------------
 This system is distributed WITHOUT ANY WARRANTY under the GNU Affero General Public License v3.0.
+# [TEST MODE - Round 2] Thu Aug 21 19:12:13 CEST 2025
