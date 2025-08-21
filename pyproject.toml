@@ -135,7 +135,7 @@ dev = [
 
 ai = [
     "pytesseract>=0.3.13",
-    "openai-whisper>=20240930",
+    "faster-whisper>=1.1.0",
     "torch>=2.8.0"
 ]
 
