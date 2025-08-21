@@ -18,7 +18,7 @@
 
         {% include'admin/partials/export_drawer.html' %}
         <v-container fluid>
-            <!-- <v-tooltip text="{{ _('Visualize Results') }}">
+            <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
                             elevation="16"
@@ -34,7 +34,7 @@
                             style="right: 30px; bottom: 90px; z-index: 1000;"
                     ></v-btn>
                 </template>
-            </v-tooltip> -->
+            </v-tooltip>
 
             <v-card>
 
@@ -922,7 +922,7 @@
                     },
 
 
-                    checkGraphStatus: function () {
+                    checkGraphStatus() {
                         api.get('/admin/api/graph/status', {
                             params: {
                                 type: 'bulletin'
@@ -933,16 +933,20 @@
                                     clearInterval(this.graphTimer);
                                     this.visualizeLoading = false;
                                     this.$refs.viz.visualizeQuery();
-
-
+                                } else if (res.data.status === 'failed') {
+                                    clearInterval(this.graphTimer);
+                                    this.visualizeLoading = false;
+                                    this.showSnack("{{ _('Failed to generate graph')}}");
                                 }
 
                             })
                             .catch(error => {
+                                clearInterval(this.graphTimer);
+                                this.visualizeLoading = false;
                                 console.error('API check failed:', error);
-                            });
-                    }
-                    ,
+                                this.showSnack("{{ _('Failed to generate graph')}}");
+                            })
+                    },
 
                     visualizeResults() {
                         this.visualizeLoading = true;
