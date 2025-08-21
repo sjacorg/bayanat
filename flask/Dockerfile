@@ -21,9 +21,8 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 COPY pyproject.toml uv.lock /app/
-COPY enferno /app/enferno/
 
-RUN uv sync --frozen
+RUN uv sync --frozen --no-install-project
 
 # ----------------- main container -------------------------
 
