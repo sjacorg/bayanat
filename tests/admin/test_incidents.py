@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from flask import current_app
 from enferno.admin.models import Incident, Itoi
 from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import Config as cfg
@@ -186,7 +187,7 @@ def test_incident_endpoint_no_role_restricted(
     """
     incident = create_full_incident
     client_ = request.getfixturevalue(client_fixture)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
         )
@@ -208,7 +209,7 @@ def test_incident_endpoint_roled_restricted(
     """
     incident = restrict_to_roles(create_full_incident, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
         )

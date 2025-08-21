@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from flask import current_app
 from enferno.admin.models import Activity, Bulletin, Btob, GeoLocation, Location
 from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.user.models import User
@@ -193,7 +194,7 @@ def test_bulletin_endpoint_no_roles_restricted(
 
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
         )
@@ -223,7 +224,7 @@ def test_bulletin_endpoint_roled_restricted(
     bulletin = restrict_to_roles(create_full_bulletin, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
         )

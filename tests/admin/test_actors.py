@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from flask import current_app
 from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import Config as cfg
 from enferno.admin.models import Actor, ActorProfile, Atoa
@@ -211,7 +212,7 @@ def test_actor_endpoint_no_roles_restricted(
 
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_actor_or_fail()
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/actor/{actor.id}?mode=3", headers={"Content-Type": "application/json"}
         )
@@ -241,7 +242,7 @@ def test_actor_endpoint_roled_restricted(
 
     actor = restrict_to_roles(create_full_actor, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/actor/{actor.id}?mode=3", headers={"Content-Type": "application/json"}
         )

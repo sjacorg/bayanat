@@ -3,7 +3,7 @@ from typing import Any, Dict
 from datetime import datetime
 from uuid import uuid4
 
-from flask import current_app, session
+from flask import current_app, session, has_app_context
 from flask_security import UserMixin, RoleMixin
 from flask_security import current_user
 from flask_security.utils import hash_password
@@ -321,7 +321,14 @@ class User(UserMixin, db.Model, BaseMixin):
             if set(self.roles) & set(obj.roles):
                 return True
 
-            if not cfg.ACCESS_CONTROL_RESTRICTIVE and not obj.roles:
+            # Use current_app.config if available (during requests), fallback to cfg
+            restrictive = (
+                current_app.config.get("ACCESS_CONTROL_RESTRICTIVE")
+                if has_app_context()
+                else cfg.ACCESS_CONTROL_RESTRICTIVE
+            )
+
+            if not restrictive and not obj.roles:
                 return True
 
         # handle media access
@@ -334,7 +341,12 @@ class User(UserMixin, db.Model, BaseMixin):
             if parent:
                 if set(self.roles) & set(parent.roles):
                     return True
-                if not cfg.ACCESS_CONTROL_RESTRICTIVE and not parent.roles:
+                restrictive = (
+                    current_app.config.get("ACCESS_CONTROL_RESTRICTIVE")
+                    if has_app_context()
+                    else cfg.ACCESS_CONTROL_RESTRICTIVE
+                )
+                if not restrictive and not parent.roles:
                     return True
 
         return False
