@@ -22,7 +22,7 @@ const RelatedIncidentsCard = Vue.defineComponent({
       handler(newVal, oldVal) {
       if (newVal && newVal !== oldVal && newVal.id) {
 
-          this.bulletinPage = 1; // Reset page
+          this.incidentPage = 1; // Reset page
           this.entity.incident_relations = []; // Clear current relations
           this.loadIncidentRelations();
         }
@@ -71,10 +71,15 @@ const RelatedIncidentsCard = Vue.defineComponent({
           <template v-slot:header>
             <v-sheet class="pa-2 border-b d-flex flex-column ga-1">
               <v-list-item-title variant="flat"  class="text-caption mt-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
-              <div class="mb-2 flex-chips">
+              <div class="mb-2">
+                <div class="text-caption font-weight-bold mt-2">{{ translations.probability_ }}</div>
                 <v-chip v-if="item.probability !== null" size="small" label class="flex-chip">{{ probability(item) }}</v-chip>
-                <v-chip v-if="item?.related_as" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')" class="flex-chip" size="small" label>{{ r }}</v-chip>
-                <v-chip v-if="item.comment" size="small" label class="flex-chip">{{ item.comment }}</v-chip>
+                <div class="text-caption font-weight-bold mt-2">Related as</div>
+                <div class="flex-chips">
+                  <v-chip v-if="item?.related_as" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')" class="flex-chip" size="small" label>{{ r }}</v-chip>
+                </div>
+                <div class="text-caption font-weight-bold mt-2">Comments</div>
+                <div v-if="item.comment" class="text-caption"><read-more>{{ item.comment }}</read-more></div>
               </div>
             </v-sheet>
           </template>
