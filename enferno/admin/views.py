@@ -6264,12 +6264,18 @@ def check_graph_status() -> Response:
     user_id = current_user.id
 
     status_key = f"user{user_id}:graph:status"
+    error_key = f"user{user_id}:graph:error"
     status = rds.get(status_key)
+    error = rds.get(error_key)
 
     if not status:
         return HTTPResponse.not_found("Graph status not found")
 
-    return HTTPResponse.success(data={"status": status.decode("utf-8")})
+    response_data = {"status": status.decode("utf-8")}
+    if error:
+        response_data["error"] = error.decode("utf-8")
+
+    return HTTPResponse.success(data=response_data)
 
 
 @admin.get("/system-administration/")
