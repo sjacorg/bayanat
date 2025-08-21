@@ -1242,16 +1242,17 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
     return graph
 
 
-GITHUB_API_URL = "https://api.github.com/repos/sjacorg/bayanat/releases/latest"
+REPO_NAME = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
+GITHUB_API_URL = f"https://api.github.com/repos/{REPO_NAME}/tags"
 REDIS_KEY = "bayanat:update_info"
 
 
 @celery.task
 def check_for_updates() -> Optional[dict]:
     """
-    Check for Bayanat updates using the GitHub API.
+    Check for Bayanat updates using the GitHub Tags API.
 
-    This task fetches the latest release information from the Bayanat GitHub repository,
+    This task fetches the latest tag information from the Bayanat GitHub repository,
     compares it with the current version, and stores the update information in Redis.
 
     Returns:
@@ -1260,9 +1261,15 @@ def check_for_updates() -> Optional[dict]:
     try:
         response = requests.get(GITHUB_API_URL)
         response.raise_for_status()  # Raise an exception for bad responses
-        latest_release = response.json()
+        tags = response.json()
 
-        latest_version = latest_release["tag_name"].lstrip("v")
+        if not tags:
+            logger.warning("No tags found in repository")
+            return None
+
+        # Get latest tag (first in the list)
+        latest_tag = tags[0]
+        latest_version = latest_tag["name"].lstrip("v")
         current_version = cfg.VERSION
         print(current_version)
 
@@ -1273,9 +1280,9 @@ def check_for_updates() -> Optional[dict]:
             "current_version": current_version,
             "latest_version": latest_version,
             "update_available": update_available,
-            "release_notes": latest_release["body"],
-            "download_url": latest_release["zipball_url"],
-            "published_at": latest_release["published_at"],
+            "tag_name": latest_tag["name"],
+            "commit_sha": latest_tag["commit"]["sha"],
+            "commit_url": latest_tag["commit"]["url"],
         }
 
         # Store update info in Redis
