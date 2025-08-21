@@ -801,3 +801,59 @@ def disable_maintenance():
     else:
         click.echo("Failed to disable maintenance mode.")
         logger.error("Failed to disable maintenance mode via CLI.")
+
+
+@click.command()
+@click.option("--skip-backup", is_flag=True, help="Skip database backup")
+@with_appcontext
+def update_system(skip_backup: bool = False) -> None:
+    """
+    Update system: git pull, dependencies, migrations, and restart services.
+    """
+    import subprocess
+    import requests
+    from pathlib import Path
+
+    logger.info("Starting system update")
+
+    try:
+        # 1. Backup database
+        if not skip_backup:
+            click.echo("Creating database backup...")
+            if not backup_db(timeout=300):
+                click.echo("Backup failed")
+                return
+
+        # 2. Git pull
+        click.echo("Pulling code updates...")
+        result = subprocess.run(
+            ["git", "pull"], capture_output=True, text=True, check=True, timeout=60
+        )
+
+        if "Already up to date" in result.stdout:
+            click.echo("Already up to date")
+            return
+
+        # 3. Install dependencies
+        click.echo("Installing dependencies...")
+        venv_pip = Path(current_app.root_path).parent / "env" / "bin" / "pip"
+        requirements = Path(current_app.root_path).parent / "requirements" / "main.txt"
+        subprocess.run([str(venv_pip), "install", "-r", str(requirements)], check=True, timeout=300)
+
+        # 4. Apply migrations
+        click.echo("Applying migrations...")
+        apply_migrations()
+
+        # 5. Restart service
+        click.echo("Restarting service...")
+        response = requests.post(
+            "http://localhost:8080/restart-service", json={"service": "bayanat"}, timeout=30
+        )
+        response.raise_for_status()
+
+        click.echo("Update completed successfully")
+        logger.info("System update completed")
+
+    except Exception as e:
+        click.echo(f"Update failed: {str(e)}")
+        logger.error(f"Update failed: {str(e)}")
