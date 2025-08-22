@@ -363,8 +363,8 @@ const ActorCard = Vue.defineComponent({
                                 :relationInfo="$root.itoaInfo"></related-incidents-card>
 
         <div class="d-flex">
-          <uni-field :caption="translations.publishDate_" :english="actor.publish_date"></uni-field>
-          <uni-field :caption="translations.documentationDate_" :english="actor.documentation_date"></uni-field>
+          <uni-field :caption="translations.publishDate_" :english="$root.formatDate(actor.publish_date)"></uni-field>
+          <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(actor.documentation_date)"></uni-field>
         </div>
         <uni-field :caption="translations.sourceLink_" :english="actor.source_link"></uni-field>
 
@@ -390,7 +390,7 @@ const ActorCard = Vue.defineComponent({
               <v-card color="grey" dense flat class="my-1 pa-2 d-flex align-center">
               <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
               <v-chip size="small" label color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ revision.created_at }}
+                {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
                 <v-spacer></v-spacer>
 

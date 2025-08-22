@@ -31,6 +31,10 @@
               </v-toolbar>
             </template>
 
+            <template v-slot:item.created_at="{ item }">
+              ${ formatDate(item.created_at) }
+            </template>
+
             <template v-slot:item.user_id="{ item }">
               ${ getUsername(item.user_id) }
             </template>
@@ -221,7 +225,6 @@
     mixins: [globalMixin],
     data: () => ({
       translations: window.translations,
-
       itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
         itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
         itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
@@ -306,7 +309,6 @@
     },
 
     methods: {
-
          has_role(user, role) {
           for (r of user.roles) {
               if (r.name == role) {
