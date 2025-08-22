@@ -428,7 +428,7 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
-                            <events-section :edited-item="editedItem" :dialog-props="$root.commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                            <events-section ref="events" :edited-item="editedItem" :dialog-props="$root.rightContainedDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">

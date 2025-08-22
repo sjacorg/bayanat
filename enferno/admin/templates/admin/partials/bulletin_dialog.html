@@ -71,13 +71,14 @@
             >
 
             <v-card-text class="pa-0" style="height: calc(100vh - 64px);">
-                    <split-view ref="bulletinDialogSplitViewRef" @left-width-changed="leftDialogProps['content-props'].style.width = $event" @right-width-changed="rightDialogProps['content-props'].style.width = $event">
+                    <split-view ref="bulletinDialogSplitViewRef" :disable-right-scroll="Boolean($refs?.events?.eventDialog || $refs?.geolocs?.addDlg)" @left-width-changed="leftDialogProps['content-props'].style.width = $event" @right-width-changed="rightDialogProps['content-props'].style.width = $event">
                         <template #left>
                             <div class="mx-4 mb-4 mt-8">
                                 {% include 'admin/partials/media_dialog.html' %}
                             </div>
                         </template>
                         <template #right>
+                            <div class="position-relative">
                                 <v-row class="w-100 mx-0 mb-0 mt-6">
                                     <v-col cols="12" md="4">
                                         <dual-field v-model:original="editedItem.title"
@@ -189,7 +190,7 @@
     
                                 <v-row class="w-100 ma-0">
                                     <v-col col="12">
-                                        <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                                        <events-section ref="events" :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                                     </v-col>
                                 </v-row>
     
@@ -197,7 +198,7 @@
                                     <v-col col="12">
                                         <geo-locations ref="geolocs" @locations-updated="geoLocationsUpdated"
                                                     :others="editedItem.geoLocations"
-                                                    v-model="editedItem.geoLocations" :dialog-props="commonDialogProps"></geo-locations>
+                                                    v-model="editedItem.geoLocations" :dialog-props="rightContainedDialogProps"></geo-locations>
     
     
                                     </v-col>
@@ -335,6 +336,7 @@
     
                                     </v-col>
                                 </v-row>
+                            </div>
                         </template>
                     </split-view>
             </v-card-text>
