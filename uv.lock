@@ -204,6 +204,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "fakeredis" },
     { name = "pip-audit" },
 ]
 
@@ -317,7 +318,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pip-audit", specifier = ">=2.9.0" }]
+dev = [
+    { name = "fakeredis", specifier = ">=2.31.0" },
+    { name = "pip-audit", specifier = ">=2.9.0" },
+]
 
 [[package]]
 name = "bcrypt"
@@ -927,6 +931,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ce/5d/7797a74e8e31fa227f0303239802c5f09b6722bdb6638359e7b6c8f30004/faker-37.5.3.tar.gz", hash = "sha256:8315d8ff4d6f4f588bd42ffe63abd599886c785073e26a44707e10eeba5713dc", size = 1907147 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4b/bf/d06dd96e7afa72069dbdd26ed0853b5e8bd7941e2c0819a9b21d6e6fc052/faker-37.5.3-py3-none-any.whl", hash = "sha256:386fe9d5e6132a915984bf887fcebcc72d6366a25dd5952905b31b141a17016d", size = 1949261 },
+]
+
+[[package]]
+name = "fakeredis"
+version = "2.31.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "redis" },
+    { name = "sortedcontainers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0b/10/c829c3475a26005ebf177057fdf54e2a29025ffc2232d02fb1ae8ac1de68/fakeredis-2.31.0.tar.gz", hash = "sha256:2942a7e7900fd9076ff9e608b9190a87315ac5a325a9ab8bfe288a2d985ecd23", size = 170163 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/ef/25639beb5d93188b4b6502f601d8f97db77e362774f0183a48e995353c58/fakeredis-2.31.0-py3-none-any.whl", hash = "sha256:2584e57d93df4eb8e87931b29279902826d3caf77d06911106df4e066c2ad198", size = 117666 },
 ]
 
 [[package]]

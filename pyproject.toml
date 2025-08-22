@@ -160,5 +160,6 @@ color = true
 
 [dependency-groups]
 dev = [
+    "fakeredis>=2.31.0",
     "pip-audit>=2.9.0",
 ]
