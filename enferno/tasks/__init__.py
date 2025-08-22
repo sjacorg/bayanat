@@ -1292,8 +1292,6 @@ def daily_backup_cron():
 
 
 ## Query graph visualization tasks
-
-
 @celery.task
 def generate_graph(query_json: Any, entity_type: str, user_id: t.id) -> Optional[str]:
     """
@@ -1320,26 +1318,38 @@ def generate_graph(query_json: Any, entity_type: str, user_id: t.id) -> Optional
         raise ValueError(f"Unsupported entity type: {entity_type}")
 
     query_key = create_query_key(query_json, entity_type, user_id)
+    error_key = f"user{user_id}:graph:error"
+    status_key = f"user{user_id}:graph:status"
+    rds.set(status_key, "pending")
 
     # Redis hash key for the user
     user_hash_key = f"user:{user_id}"
 
     # Retrieve the current query key for the user
     existing_query_key = rds.hget(user_hash_key, "query_key")
-
     if existing_query_key and existing_query_key.decode() == query_key:
         # Return the existing graph data if query keys match
         existing_graph_data = rds.hget(user_hash_key, "graph_data")
+        rds.set(status_key, "done")
+        rds.delete(error_key)
         return existing_graph_data.decode()
 
-    # Generate the graph if no cache hit
-    graph_data = process_graph_generation(query_json, entity_type_lower, user_id, query_key)
+    try:
+        graph_data = process_graph_generation(query_json, entity_type_lower, user_id, query_key)
 
-    # Update the hash with the new query key and graph data
-    rds.hset(user_hash_key, "query_key", query_key)
-    rds.hset(user_hash_key, "graph_data", graph_data)
+        rds.set(status_key, "done")
+        rds.delete(error_key)
 
-    return graph_data
+        # Update the hash with the new query key and graph data
+        rds.hset(user_hash_key, "query_key", query_key)
+        rds.hset(user_hash_key, "graph_data", graph_data)
+
+        return graph_data
+
+    except Exception as e:
+        rds.set(status_key, "failed")
+        rds.set(error_key, str(e))
+        return None
 
 
 def create_query_key(query_json: Any, entity_type: str, user_id: t.id) -> str:
@@ -1375,7 +1385,6 @@ def process_graph_generation(
         - Graph data.
     """
     result_set = get_result_set(query_json, entity_type, type_map)
-    rds.set(f"user{user_id}:graph:status", "pending")
     user = User.query.get(user_id)
     graph_utils = GraphUtils(user)
     graph = merge_graphs(result_set, entity_type, graph_utils)
@@ -1383,7 +1392,6 @@ def process_graph_generation(
     # Cache the generated graph with the unique query key
     rds.set(query_key, graph)
     rds.set(f"user{user_id}:graph:data", graph)
-    rds.set(f"user{user_id}:graph:status", "done")
     return graph
 
 
@@ -1391,23 +1399,16 @@ def get_result_set(query_json: Any, entity_type: str, type_map: dict) -> Any:
     """
     Retrieve the result set based on the query JSON and entity type.
 
-    Args:
-        - query_json: Query JSON.
-        - entity_type: Entity type.
-        - type_map: Type map.
-
-    Returns:
-        - Result set.
+    Returns SQLAlchemy model instances like your endpoints.
     """
-    search_util = SearchUtils(query_json, cls=entity_type)
-    if entity_type == "incident":
-        query = search_util.get_query()
-    else:
-        queries, operations = search_util.get_query()
-        query = queries.pop(0)
+    search = SearchUtils(query_json, cls=entity_type)
+    base_query = search.get_query()  # already a Select statement
     model = type_map[entity_type]
-    return model.query.filter(*query)
 
+    result = db.session.execute(base_query)
+    items = result.scalars().unique()
+
+    return items
 
 def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> Optional[str]:
     """
