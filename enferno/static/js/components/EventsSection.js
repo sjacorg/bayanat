@@ -184,6 +184,9 @@ const EventsSection = Vue.defineComponent({
                                             v-model:translation="editedEvent.comments_ar"
                                             :label-original="translations.comments_"
                                             :label-translation="translations.commentsAr_"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                 ></dual-field>
                             </v-col>
                         </v-row>
