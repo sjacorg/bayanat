@@ -155,7 +155,7 @@ const LocationCard = Vue.defineComponent({
           </h3>
           <template v-for="(revision,index) in revisions">
             <v-card  dense flat class="my-1 pa-3 d-flex align-center">
-              <span class="caption"> {{ revision.created_at }} - {{ translations.by_ }} {{ revision.user.username }}</span>
+              <span class="caption"> {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }} - {{ translations.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
               <v-btn v-if="localDiff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
                      class="mx-1"
