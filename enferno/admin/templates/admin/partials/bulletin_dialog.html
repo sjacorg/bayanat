@@ -189,13 +189,13 @@
     
                                 <v-row class="w-100 ma-0">
                                     <v-col col="12">
-                                        <events-section ref="events" :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                                        <events-section :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                                     </v-col>
                                 </v-row>
     
                                 <v-row class="w-100 ma-0">
                                     <v-col col="12">
-                                        <geo-locations ref="geolocs" @locations-updated="geoLocationsUpdated"
+                                        <geo-locations @locations-updated="geoLocationsUpdated"
                                                     :others="editedItem.geoLocations"
                                                     v-model="editedItem.geoLocations" :dialog-props="rightContainedDialogProps"></geo-locations>
     
