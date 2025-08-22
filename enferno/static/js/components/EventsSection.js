@@ -82,8 +82,22 @@ const EventsSection = Vue.defineComponent({
         this.editedItem.events.splice(index, 1);
       }
     },
-    editEvent(evt, item, index) {
+    openDialog() {
       this.eventDialog = true;
+
+      this.$nextTick(() => {
+        this.$refs.dialogContent.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        })
+      })
+    },
+    closeDialog() {
+      this.eventDialog = false;
+    },
+    editEvent(evt, item, index) {
+      this.openDialog();
 
       this.$nextTick(() => {
         this.editedEvent = Object.assign({}, item);
@@ -92,7 +106,7 @@ const EventsSection = Vue.defineComponent({
       });
     },
     closeEvent() {
-      this.eventDialog = false;
+      this.closeDialog();
       setTimeout(() => {
         this.editedEvent = getDefaultEvent();
         this.editedEventIndex = -1;
@@ -106,7 +120,7 @@ const EventsSection = Vue.defineComponent({
             <v-spacer></v-spacer>
             <v-btn
                     color="primary"
-                    @click="eventDialog = true"
+                    @click="openDialog()"
                     icon="mdi-plus-circle"
             ></v-btn>
 
@@ -153,11 +167,12 @@ const EventsSection = Vue.defineComponent({
 
 
     <v-dialog v-model="eventDialog" v-bind="dialogProps || { 'max-width': '880px' }">
+      <div ref="dialogContent">
         <v-card>
             <v-toolbar color="dark-primary">
                 <v-toolbar-title>{{ translations.event_ }}</v-toolbar-title>
                 <v-spacer></v-spacer>
-            
+
                 <template #append>
                     <v-btn variant="elevated" @click="validateForm" class="mx-2">{{ translations.save_ }}</v-btn>
                     <v-btn icon="mdi-close" @click="closeEvent"></v-btn>
@@ -242,6 +257,7 @@ const EventsSection = Vue.defineComponent({
                 </v-card-text>
             </v-form>
         </v-card>
+      </div>
     </v-dialog>
     `,
 });

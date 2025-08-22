@@ -48,10 +48,24 @@ const GeoLocations = Vue.defineComponent({
   },
 
   methods: {
+    openDialog() {
+      this.addDlg = true;
+
+      this.$nextTick(() => {
+        this.$refs.dialogContent.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        })
+      })
+    },
+    closeDialog() {
+      this.addDlg = false;
+    },
     newLocation() {
       this.e = { latlng: { lat: geoMapDefaultCenter.lat, lng: geoMapDefaultCenter.lng } };
 
-      this.addDlg = true;
+      this.openDialog();
     },
     saveLocation() {
       if (this.e.mode === 'edit') {
@@ -85,11 +99,11 @@ const GeoLocations = Vue.defineComponent({
       this.e = { ...item, mode: 'edit' };
 
       this.eindex = index;
-      this.addDlg = true;
+      this.openDialog();
       this.e.mode = 'edit';
     },
     resetLocationEditor() {
-      this.addDlg = false;
+      this.closeDialog();
       this.e = {};
     },
 
@@ -171,6 +185,7 @@ const GeoLocations = Vue.defineComponent({
           </v-card-text>
         </v-card>
         <v-dialog v-if="addDlg" v-model="addDlg" v-bind="dialogProps || { 'max-width': '770px' }">
+          <div ref="dialogContent">
           <v-card>
             <v-toolbar color="dark-primary">
                 <v-toolbar-title>{{ translations.addGeoMarker_ }}</v-toolbar-title>
@@ -207,7 +222,7 @@ const GeoLocations = Vue.defineComponent({
               <geo-map :radius-controls="false" :others="others" v-model="e.latlng" :map-height="300"></geo-map>
             </v-card-text>
           </v-card>
-
+          </div>
         </v-dialog>
       </div>
     `,
