@@ -143,7 +143,7 @@ const LocationCard = Vue.defineComponent({
       <!-- Description -->
       <v-card variant="flat"  v-if="location.description" class="my-2 px-4">
         <div>{{ translations.location_ }}</div>
-        <div class="rich-description" v-html="location.description"></div>
+        <read-more><div class="rich-description" v-html="location.description"></div></read-more>
       </v-card>
       <!-- Log -->
       <v-card v-if="log" outline elevation="0" class="ma-2">
@@ -155,7 +155,7 @@ const LocationCard = Vue.defineComponent({
           </h3>
           <template v-for="(revision,index) in revisions">
             <v-card  dense flat class="my-1 pa-3 d-flex align-center">
-              <span class="caption"> {{ revision.created_at }} - {{ translations.by_ }} {{ revision.user.username }}</span>
+              <span class="caption"> {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }} - {{ translations.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
               <v-btn v-if="localDiff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
                      class="mx-1"
@@ -169,7 +169,7 @@ const LocationCard = Vue.defineComponent({
           </template>
         </v-card-text>
       </v-card>
-      <v-dialog v-model="diffDialog" class="log-dialog">
+      <v-dialog v-model="diffDialog" max-width="770px">
         <v-card class="pa-5">
           <v-card-text>
             <div v-html="diffResult">

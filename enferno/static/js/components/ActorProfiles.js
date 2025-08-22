@@ -100,13 +100,15 @@ const ActorProfiles = Vue.defineComponent({
                   <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
                 </v-toolbar>
 
-                <v-card-text class="text-body-2 " v-html="profile.description"></v-card-text>
+                <v-card-text class="text-body-2 ">
+                  <read-more><div v-html="profile.description"></div></read-more>
+                </v-card-text>
               </v-card>
 
               <mp-card v-if="profile.mode === 3" :profile-id="profile.id"></mp-card>
 
-              <uni-field :caption="translations.publishDate_" :english="profile.publish_date"></uni-field>
-              <uni-field :caption="translations.documentationDate_" :english="profile.documentation_date"></uni-field>
+              <uni-field :caption="translations.publishDate_" :english="$root.formatDate(profile.publish_date)"></uni-field>
+              <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(profile.documentation_date)"></uni-field>
 
             </v-card>
           </v-window-item>

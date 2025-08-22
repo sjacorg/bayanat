@@ -60,7 +60,7 @@ pydantic==2.11.5
 pyexifinfo==0.4.0
 Pygments==2.19.1
 pyparsing==3.2.3
-pypdf==5.5.0
+pypdf==6.0.0
 PyQRCode==1.2.1
 python-dateutil==2.9.0.post0
 python-docx==1.1.2
