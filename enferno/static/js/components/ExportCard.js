@@ -21,14 +21,22 @@ const ExportCard = Vue.defineComponent({
 
   methods: {
     loadExportItems() {
+      const SUPPORTED_TABLES = ['bulletin', 'actor', 'incident'];
+      if (!SUPPORTED_TABLES.includes(this.exp.table)) return;
+
       const q = [{ ids: this.exp.items }];
+      const requestData = {
+          q,
+          per_page: this.perPage,
+          cursor: this.nextCursor,
+      };
 
       axios
-        .post(`/admin/api/bulletins/?page=${this.page}&per_page=${this.per_page}`, { q: q })
-        .then((res) => {
-          this.items = [...this.items, ...res.data.items];
-          this.showLoadMore = this.per_page * this.page < res.data.total;
-          this.page += 1;
+        .post(`/admin/api/${this.exp.table}s/`, requestData)
+        .then((response) => {
+          this.items = [...this.items, ...response.data.items];
+          this.hasMore = response.data.meta.hasMore;
+          this.nextCursor = response.data.nextCursor || null;
         });
     },
 
@@ -71,10 +79,10 @@ const ExportCard = Vue.defineComponent({
     return {
       translations: window.translations,
       expiryFieldDisabled: true,
-      showLoadMore: false,
-      per_page: 5,
-      page: 1,
+      hasMore: false,
+      perPage: 10,
       items: [],
+      nextCursor: null,
     };
   },
 
@@ -246,12 +254,10 @@ const ExportCard = Vue.defineComponent({
 
         <v-card-actions>
           <v-btn
-              size="small"
               class="ma-auto caption"
-              elevation="0"
               @click="loadExportItems"
-              v-if="showLoadMore"
-              append-icon="mdi-chevron-down"
+              v-if="hasMore"
+              append-icon="mdi-chevron-down" size="small" variant="tonal" color="grey"
           >
             {{ translations.loadMore_ }}
           </v-btn>
