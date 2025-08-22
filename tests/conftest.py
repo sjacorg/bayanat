@@ -163,26 +163,44 @@ def setup_db_uninitialized(uninitialized_app):
 
 @pytest.fixture(scope="function")
 def session(setup_db, app):
-    """Create a new database session for a test."""
+    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
     from enferno.extensions import db
 
     with app.app_context():
-        with db.engine.begin() as conn:
-            trans = conn.begin_nested()
-            yield db.session
-            trans.rollback()
+        # Create connection and transaction with context managers for automatic cleanup
+        with db.engine.connect() as connection:
+            with connection.begin() as transaction:
+                # Configure session to use this connection
+                db.session.configure(bind=connection)
+
+                # Create nested transaction (savepoint) for test isolation
+                with connection.begin_nested() as savepoint:
+                    try:
+                        yield db.session
+                    finally:
+                        # Explicit rollback and session cleanup
+                        db.session.remove()
 
 
 @pytest.fixture(scope="function")
 def session_uninitialized(setup_db_uninitialized, uninitialized_app):
-    """Create a new database session for a test."""
+    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
     from enferno.extensions import db
 
     with uninitialized_app.app_context():
-        with db.engine.begin() as conn:
-            trans = conn.begin_nested()
-            yield db.session
-            trans.rollback()
+        # Create connection and transaction with context managers for automatic cleanup
+        with db.engine.connect() as connection:
+            with connection.begin() as transaction:
+                # Configure session to use this connection
+                db.session.configure(bind=connection)
+
+                # Create nested transaction (savepoint) for test isolation
+                with connection.begin_nested() as savepoint:
+                    try:
+                        yield db.session
+                    finally:
+                        # Explicit rollback and session cleanup
+                        db.session.remove()
 
 
 @pytest.fixture(scope="function")
