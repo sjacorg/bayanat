@@ -82,22 +82,8 @@ const EventsSection = Vue.defineComponent({
         this.editedItem.events.splice(index, 1);
       }
     },
-    openDialog() {
-      this.eventDialog = true;
-
-      this.$nextTick(() => {
-        this.$refs.dialogContent.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        })
-      })
-    },
-    closeDialog() {
-      this.eventDialog = false;
-    },
     editEvent(evt, item, index) {
-      this.openDialog();
+      this.eventDialog = true;
 
       this.$nextTick(() => {
         this.editedEvent = Object.assign({}, item);
@@ -106,7 +92,7 @@ const EventsSection = Vue.defineComponent({
       });
     },
     closeEvent() {
-      this.closeDialog();
+      this.eventDialog = false;
       setTimeout(() => {
         this.editedEvent = getDefaultEvent();
         this.editedEventIndex = -1;
@@ -120,7 +106,7 @@ const EventsSection = Vue.defineComponent({
             <v-spacer></v-spacer>
             <v-btn
                     color="primary"
-                    @click="openDialog()"
+                    @click="eventDialog = true"
                     icon="mdi-plus-circle"
             ></v-btn>
 
@@ -169,7 +155,6 @@ const EventsSection = Vue.defineComponent({
     <div :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !eventDialog }]" :style="$root?.rightDialogProps?.['content-props']?.style">
     <div class="position-relative h-100 w-100">
     <v-dialog v-model="eventDialog" v-bind="dialogProps || { 'max-width': '880px' }">
-      <div ref="dialogContent">
         <v-card elevation="4">
             <v-toolbar color="dark-primary">
                 <v-toolbar-title>{{ translations.event_ }}</v-toolbar-title>
@@ -259,7 +244,6 @@ const EventsSection = Vue.defineComponent({
                 </v-card-text>
             </v-form>
         </v-card>
-      </div>
     </v-dialog>
     </div>
     </div>
