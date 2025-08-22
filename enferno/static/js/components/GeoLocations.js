@@ -186,7 +186,7 @@ const GeoLocations = Vue.defineComponent({
         </v-card>
 
         <div :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !addDlg }]" :style="$root?.rightDialogProps?.['content-props']?.style">
-        <div :class="['position-relative h-100 w-100', { 'pointer-events-none': !addDlg }]">
+        <div class="position-relative h-100 w-100">
         <v-dialog v-model="addDlg" v-bind="dialogProps || { 'max-width': '770px' }">
           <div ref="dialogContent">
           <v-card elevation="4">
