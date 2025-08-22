@@ -230,7 +230,7 @@ const BulletinCard = Vue.defineComponent({
           <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
         </v-toolbar>
 
-        <v-card-text class="text-body-2 " v-html="bulletin.description"></v-card-text>
+        <v-card-text class="text-body-2 "><read-more><div v-html="bulletin.description"></div></read-more></v-card-text>
       </v-card>
 
 
@@ -364,10 +364,11 @@ const BulletinCard = Vue.defineComponent({
       <v-card v-if="showReview(bulletin)" variant="outlined" elevation="0" class="ma-3" color="teal-lighten-2">
         <v-card-text>
           <div class="px-1">{{ translations.review_ }}</div>
-          <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
-
-          </div>
-          <v-chip  color="primary">{{ bulletin.review_action }}</v-chip>
+          <read-more>
+            <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
+            </div>
+          </read-more>
+          <v-chip class="mt-4" color="primary">{{ bulletin.review_action }}</v-chip>
         </v-card-text>
       </v-card>
 
@@ -388,7 +389,7 @@ const BulletinCard = Vue.defineComponent({
 
           <template v-for="(revision,index) in revisions">
             <v-sheet class="my-1 pa-3  align-center d-flex">
-              <span class="caption">{{ revision.data['comments'] }} - 
+              <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
                 <v-chip label size="small"
                 >{{ translate_status(revision.data.status) }}</v-chip> -
                 {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}
