@@ -174,10 +174,10 @@
                                         <v-spacer></v-spacer>
                                         <v-btn v-if="mapid" @click="deleteMap" prepend-icon="mdi-delete" color="error" variant="outlined"
                                            class="mx-2">{{ _('Delete') }}</v-btn>
-                                        <v-btn v-if="mapid" @click="updateMap" prepend-icon="mdi-pencil" variant="outlined"
+                                        <v-btn v-if="mapid" :disabled="!isMapPopulated" @click="updateMap" prepend-icon="mdi-pencil" variant="outlined"
                                                class="mx-2">{{ _('Update') }}</v-btn>
-                                        <v-btn @click="createMap" color="primary" prepend-icon="mdi-plus"
-                                                class="mx-2">{{ _('Create new') }}
+                                        <v-btn :disabled="!isMapPopulated" @click="createMap" color="primary" prepend-icon="mdi-plus"
+                                                class="mx-2">{{ _('New map') }}
                                         </v-btn>
                                     </div>
 
@@ -967,7 +967,7 @@
                             return { ...commonProps, disabled: !isEnabled, onclick: () => this.step = '2' }
                         }
                         case '2':
-                            return { ...commonProps, onclick: () => { this.selectedMap = this.map; this.step = '3'; } }
+                            return { ...commonProps, disabled: !this.isMapPopulated, onclick: () => { this.selectedMap = this.map; this.step = '3'; } }
                         case '3':
                             return { ...commonProps, disabled: this.processDisabled, text: 'Process File(s)', onclick: () => {this.step = '4'; this.process();} }
                         case '4':
@@ -991,6 +991,49 @@
                             return commonProps
                     }
                 },
+                isMapPopulated() {
+                    return Object.values(this.map).some((value) => {
+                        // Case 1: direct string
+                        if (typeof value === "string") {
+                            return value.trim() !== "";
+                        }
+
+                        // Case 2: direct number or boolean
+                        if (typeof value === "number" || typeof value === "boolean") {
+                            return true; // counts as data
+                        }
+
+                        // Case 3: array
+                        if (Array.isArray(value)) {
+                            return value.some((item) => {
+                                if (typeof item === "string") {
+                                    return item.trim() !== "";
+                                }
+                                if (typeof item === "number" || typeof item === "boolean") {
+                                    return true;
+                                }
+                                if (typeof item === "object" && item !== null) {
+                                    return Object.values(item).some(
+                                        (val) =>
+                                            (typeof val === "string" ? val.trim() !== "" : val != null)
+                                    );
+                                }
+                                return item != null;
+                            });
+                        }
+
+                        // Case 4: object (non-null)
+                        if (typeof value === "object" && value !== null) {
+                            return Object.values(value).some(
+                                (val) =>
+                                    (typeof val === "string" ? val.trim() !== "" : val != null)
+                            );
+                        }
+
+                        return false;
+                    });
+                    
+                }
             },
 
 
@@ -1292,17 +1335,19 @@
                 deleteMap() {
                     if (!this.mapid) return
                     if (!confirm("{{ _('Are you sure you want to delete this mapping?')}}")) return
-
+                    
                     const backupMaps = [...this.maps]; // Backup
                     const backupMapId = this.mapid; // Backup
                     const backupSelectedMap = this.maps.find(map => map.id === this.mapid); // Backup
 
+                    console.log(this.map, this.vmap)
+
                     // Optimistic update
                     this.maps = this.maps.filter(map => map.id !== this.mapid);
-                    this.resetFields();
-                    this.selectedMap = null;
                     const deleteMapId = this.mapid;
+                    this.selectedMap = null;
                     this.mapid = null
+                    this.resetFields();
 
                     api.delete(`/import/api/mapping/${deleteMapId}`)
                         .then(res => {
