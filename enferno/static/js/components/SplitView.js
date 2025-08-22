@@ -16,10 +16,6 @@ const SplitView = Vue.defineComponent({
       type: String,
       default: '',
     },
-    disableRightScroll: {
-      type: Boolean,
-      default: false,
-    },
   },
   emits: ['leftWidthChanged', 'rightWidthChanged'],
   data() {
@@ -197,7 +193,7 @@ const SplitView = Vue.defineComponent({
       </div>
 
       <div
-        :class="['flex-shrink-0', { 'overflow-y-hidden': disableRightScroll, 'overflow-y-auto': !disableRightScroll }]"
+        class="flex-shrink-0 overflow-y-auto"
         :style="{ width: leftSlotVisible ? 'calc(100% - ' + (leftWidth + halfDividerWidth) + 'px)' : '100%' }"
       > 
         <slot name="right" />

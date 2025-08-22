@@ -166,9 +166,11 @@ const EventsSection = Vue.defineComponent({
     </v-card>
 
 
+    <div :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !eventDialog }]" :style="$root?.rightDialogProps?.['content-props']?.style">
+    <div :class="['position-relative h-100 w-100', { 'pointer-events-none': !eventDialog }]">
     <v-dialog v-model="eventDialog" v-bind="dialogProps || { 'max-width': '880px' }">
       <div ref="dialogContent">
-        <v-card>
+        <v-card elevation="4">
             <v-toolbar color="dark-primary">
                 <v-toolbar-title>{{ translations.event_ }}</v-toolbar-title>
                 <v-spacer></v-spacer>
@@ -259,5 +261,7 @@ const EventsSection = Vue.defineComponent({
         </v-card>
       </div>
     </v-dialog>
+    </div>
+    </div>
     `,
 });
