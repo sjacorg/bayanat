@@ -307,25 +307,27 @@ class TestConfig(Config):
     """Test configuration."""
 
     TESTING = True
-    POSTGRES_USER = os.environ.get("POSTGRES_USER", "")
-    POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
-    POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-    if (POSTGRES_USER and POSTGRES_PASSWORD) or POSTGRES_HOST != "localhost":
-        SQLALCHEMY_DATABASE_URI = (
-            f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/bayanat_test"
-        )
-    else:
-        SQLALCHEMY_DATABASE_URI = "postgresql:///bayanat_test"
-    # Redis
-    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
-    REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
-    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
+
+    # Test-specific overrides - independent of .env file
+    SECRET_KEY = "test-secret-key-not-for-production"
+
+    # Database - always use local for tests
+    SQLALCHEMY_DATABASE_URI = "postgresql:///bayanat_test"
+
+    # Redis - always use local for tests
+    REDIS_HOST = "localhost"
+    REDIS_PORT = 6379
+    REDIS_PASSWORD = ""
     REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/15"
-    # Celery
-    # Has to be in small case
-    celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/14"
-    result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/13"
-    SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/12")
+
+    # Celery - use in-memory for tests to avoid Redis dependency
+    celery_broker_url = "memory://"
+    result_backend = "cache+memory://"
+
+    # Session Redis - use fakeredis for tests
+    import fakeredis
+
+    SESSION_REDIS = fakeredis.FakeRedis()
 
     # Add missing keys with dummy values
     ACCESS_CONTROL_RESTRICTIVE = False
