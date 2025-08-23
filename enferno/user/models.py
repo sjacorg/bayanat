@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import Mutable
 
 from enferno.extensions import db, rds
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
@@ -325,7 +325,7 @@ class User(UserMixin, db.Model, BaseMixin):
             restrictive = (
                 current_app.config.get("ACCESS_CONTROL_RESTRICTIVE")
                 if has_app_context()
-                else cfg.ACCESS_CONTROL_RESTRICTIVE
+                else Config.get("ACCESS_CONTROL_RESTRICTIVE")
             )
 
             if not restrictive and not obj.roles:
@@ -344,7 +344,7 @@ class User(UserMixin, db.Model, BaseMixin):
                 restrictive = (
                     current_app.config.get("ACCESS_CONTROL_RESTRICTIVE")
                     if has_app_context()
-                    else cfg.ACCESS_CONTROL_RESTRICTIVE
+                    else Config.get("ACCESS_CONTROL_RESTRICTIVE")
                 )
                 if not restrictive and not parent.roles:
                     return True

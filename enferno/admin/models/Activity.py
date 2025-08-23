@@ -4,7 +4,7 @@ from sqlalchemy import JSON
 
 import enferno.utils.typing as t
 from enferno.extensions import db
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.user.models import User
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
@@ -98,7 +98,7 @@ class Activity(db.Model, BaseMixin):
         # enabled in system settings
         # if disabled the activity will not be logged
         # denied actions will be always logged
-        if not status == Activity.STATUS_DENIED and not action in cfg.activities:
+        if not status == Activity.STATUS_DENIED and not action in Config.get("activities"):
             return
 
         try:
