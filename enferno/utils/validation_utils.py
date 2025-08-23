@@ -18,7 +18,6 @@ import bleach
 from bleach.css_sanitizer import CSSSanitizer, ALLOWED_CSS_PROPERTIES
 import pydantic_core
 from wtforms.validators import ValidationError as WTFormsValidationError
-from flask import current_app, has_app_context
 
 
 # =============================================================================
@@ -161,23 +160,15 @@ def validate_password_zxcvbn(password: str, minimum_score: int = 3) -> tuple[boo
 
 
 def validate_password_policy(p: str) -> str:
-    from enferno.utils.config_utils import ConfigManager
+    from enferno.settings import Config
 
     if not (p := p.strip()):
         raise ValueError("Password cannot be empty!")
 
-    # Get configuration values with proper fallback
-    if has_app_context():
-        min_length = current_app.config.get("SECURITY_PASSWORD_LENGTH_MIN")
-        complexity_checker = current_app.config.get(
-            "SECURITY_PASSWORD_COMPLEXITY_CHECKER", "zxcvbn"
-        )
-        min_score = current_app.config.get("SECURITY_ZXCVBN_MINIMUM_SCORE")
-    else:
-        # Fallback to ConfigManager defaults when no app context (e.g., CLI)
-        min_length = ConfigManager.get_default_config("SECURITY_PASSWORD_LENGTH_MIN")
-        complexity_checker = "zxcvbn"
-        min_score = ConfigManager.get_default_config("SECURITY_ZXCVBN_MINIMUM_SCORE")
+    # Use smart config getter that handles app context automatically
+    min_length = Config.get("SECURITY_PASSWORD_LENGTH_MIN")
+    complexity_checker = Config.get("SECURITY_PASSWORD_COMPLEXITY_CHECKER", "zxcvbn")
+    min_score = Config.get("SECURITY_ZXCVBN_MINIMUM_SCORE")
 
     # validate length
     if len(p) < min_length:

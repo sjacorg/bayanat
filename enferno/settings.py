@@ -5,6 +5,7 @@ from datetime import timedelta
 import bleach
 import redis
 from dotenv import load_dotenv, find_dotenv
+from flask import current_app, has_app_context
 
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.dep_utils import dep_utils
@@ -301,6 +302,26 @@ class Config(object):
     # Dependency Flags
     HAS_WHISPER = dep_utils.has_whisper
     HAS_TESSERACT = dep_utils.has_tesseract
+
+    @classmethod
+    def get(cls, key, default=None):
+        """
+        Smart config getter that automatically uses Flask app context when available.
+
+        In Flask app context (requests/tests): uses current_app.config
+        Outside app context (CLI/standalone): uses Config class attributes
+
+        Args:
+            key: Configuration key name
+            default: Default value if not found
+
+        Returns:
+            Configuration value
+        """
+        if has_app_context():
+            return current_app.config.get(key, default)
+        else:
+            return getattr(cls, key, default)
 
 
 class TestConfig(Config):
