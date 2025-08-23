@@ -324,16 +324,22 @@ class Config(object):
             return getattr(cls, key, default)
 
 
-class TestConfig(Config):
-    """Test configuration."""
+class TestConfig:
+    """Completely isolated test configuration - no external dependencies."""
 
     TESTING = True
 
-    # Test-specific overrides - independent of .env file
+    # Flask Core Settings
     SECRET_KEY = "test-secret-key-not-for-production"
+    BASE_URL = "http://127.0.0.1:5000/"
+    APP_DIR = os.path.abspath(os.path.dirname(__file__))
+    PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
+    DEBUG_TB_ENABLED = 0
+    DEBUG_TB_INTERCEPT_REDIRECTS = False
 
     # Database - always use local for tests
     SQLALCHEMY_DATABASE_URI = "postgresql:///bayanat_test"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Redis - always use local for tests
     REDIS_HOST = "localhost"
@@ -348,10 +354,67 @@ class TestConfig(Config):
     # Session Redis - use fakeredis for tests
     import fakeredis
 
+    SESSION_TYPE = "redis"
     SESSION_REDIS = fakeredis.FakeRedis()
+    PERMANENT_SESSION_LIFETIME = 3600
 
-    # Add missing keys with dummy values
+    # Security Settings
+    SECURITY_REGISTERABLE = False
+    SECURITY_RECOVERABLE = False
+    SECURITY_CONFIRMABLE = False
+    SECURITY_CHANGEABLE = True
+    SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
+    SECURITY_TRACKABLE = True
+    SECURITY_PASSWORD_HASH = "bcrypt"
+    SECURITY_PASSWORD_SALT = os.environ.get("SECURITY_PASSWORD_SALT", "test-salt")
+    SECURITY_POST_LOGIN_VIEW = "/dashboard/"
+    SECURITY_POST_CONFIRM_VIEW = "/dashboard/"
+    SECURITY_USER_IDENTITY_ATTRIBUTES = [
+        {"username": {"mapper": uia_username_mapper, "case_insensitive": True}}
+    ]
+    SECURITY_USERNAME_ENABLE = True
+    SECURITY_MULTI_FACTOR_RECOVERY_CODES = True
+    SECURITY_MULTI_FACTOR_RECOVERY_CODES_N = 3
+    SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS = None
+    SECURITY_MULTI_FACTOR_RECOVERY_CODE_TTL = None
+    SECURITY_TWO_FACTOR_ENABLED_METHODS = ["authenticator"]
+    SECURITY_TWO_FACTOR = True
+    SECURITY_TWO_FACTOR_RESCUE_MAIL = "test@example.com"
+    SECURITY_API_ENABLED_METHODS = ["session"]
+    SECURITY_FRESHNESS = timedelta(minutes=30)
+    SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=30)
+    SECURITY_TWO_FACTOR_REQUIRED = False
+    SECURITY_PASSWORD_LENGTH_MIN = 8  # Minimum required by validation
+    SECURITY_PASSWORD_COMPLEXITY_CHECKER = "zxcvbn"
+    SECURITY_ZXCVBN_MINIMUM_SCORE = 3  # Required for password validation tests
+    SESSION_PROTECTION = "strong"
+    SECURITY_TOTP_SECRETS = {"1": "test-totp-secret"}
+    SECURITY_TOTP_ISSUER = "Bayanat"
+    SECURITY_WEBAUTHN = True
+    SECURITY_WAN_ALLOW_AS_FIRST_FACTOR = False
+    SECURITY_WAN_ALLOW_AS_MULTI_FACTOR = True
+    SECURITY_WAN_ALLOW_AS_VERIFY = ["first", "secondary"]
+    SECURITY_WAN_ALLOW_USER_HINTS = True
+
+    # Session & User Settings
+    DISABLE_MULTIPLE_SESSIONS = True
+    SESSION_RETENTION_PERIOD = 30
+
+    # Access Control & Security
     ACCESS_CONTROL_RESTRICTIVE = False
+    AC_USERS_CAN_RESTRICT_NEW = False
+    RECAPTCHA_ENABLED = False
+    RECAPTCHA_PUBLIC_KEY = "dummy_recaptcha_public_key"
+    RECAPTCHA_PRIVATE_KEY = "dummy_recaptcha_private_key"
+
+    # OAuth & External Auth
+    GOOGLE_OAUTH_ENABLED = False
+    GOOGLE_CLIENT_ID = "dummy_client_id"
+    GOOGLE_CLIENT_SECRET = "dummy_client_secret"
+    GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+    GOOGLE_CLIENT_ALLOWED_DOMAIN = False
+
+    # Activities & Logging
     ACTIVITIES = {
         "APPROVE": True,
         "BULK": True,
@@ -371,18 +434,31 @@ class TestConfig(Config):
     }
     ACTIVITIES_RETENTION = timedelta(days=90)
     ACTIVITIES_LIST = [x for x, value in ACTIVITIES.items() if value]
-    AC_USERS_CAN_RESTRICT_NEW = False
+
+    # File Storage & AWS
+    FILESYSTEM_LOCAL = 1
     AWS_ACCESS_KEY_ID = "dummy_access_key"
-    AWS_REGION = "dummy_region"
     AWS_SECRET_ACCESS_KEY = "dummy_secret_key"
-    BABEL_DEFAULT_LOCALE = "en"
-    DEDUP_BATCH_SIZE = 30
-    DEDUP_INTERVAL = 3
+    S3_BUCKET = "dummy_bucket"
+    AWS_REGION = "dummy_region"
+
+    # Media & File Upload
+    MEDIA_ALLOWED_EXTENSIONS = ["mp4", "webm", "jpg", "gif", "png", "pdf", "doc", "txt"]
+    MEDIA_UPLOAD_MAX_FILE_SIZE = 1000
+    SHEETS_ALLOWED_EXTENSIONS = ["csv", "xls", "xlsx"]
+
+    # Data Tools
+    ETL_TOOL = True
+    ETL_PATH_IMPORT = True
+    ETL_ALLOWED_PATH = None
+    EXPORT_TOOL = False
+    EXPORT_DEFAULT_EXPIRY = timedelta(hours=2)
+    DEDUP_TOOL = False
     DEDUP_LOW_DISTANCE = 0.3
     DEDUP_MAX_DISTANCE = 0.5
-    DEDUP_TOOL = False
-    ETL_PATH_IMPORT = True
-    ETL_TOOL = True
+    DEDUP_BATCH_SIZE = 30
+    DEDUP_INTERVAL = 3
+    SHEET_IMPORT = True
     ETL_VID_EXT = [
         "webm",
         "mkv",
@@ -409,7 +485,6 @@ class TestConfig(Config):
         "mpeg",
         "mpe",
         "mpv",
-        "m4v",
         "svi",
         "3gp",
         "3g2",
@@ -424,17 +499,32 @@ class TestConfig(Config):
         "mts",
         "lvr",
         "m2ts",
+        "png",
+        "jpeg",
+        "jpg",
+        "gif",
+        "webp",
+        "pdf",
     ]
-    EXPORT_DEFAULT_EXPIRY = timedelta(hours=2)
-    EXPORT_TOOL = False
-    FILESYSTEM_LOCAL = 1
-    GEO_MAP_DEFAULT_CENTER = {"lat": 33.510414, "lng": 36.278336}
-    GOOGLE_CLIENT_ID = "dummy_client_id"
-    GOOGLE_CLIENT_SECRET = "dummy_client_secret"
-    GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+
+    # OCR Settings
+    OCR_ENABLED = False
+    OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"]
+    TESSERACT_CMD = "/usr/bin/tesseract"
+
+    # Geo & Maps
+    GEO_MAP_DEFAULT_CENTER_LAT = 33.510414
+    GEO_MAP_DEFAULT_CENTER_LNG = 36.278336
+    GEO_MAP_DEFAULT_CENTER_RADIUS = 1000
+    GEO_MAP_DEFAULT_CENTER = {"lat": 33.510414, "lng": 36.278336, "radius": 1000}
+    MAPS_API_ENDPOINT = "https://{s}.tile.osm.org/{z}/{x}/{y}.png"
     GOOGLE_MAPS_API_KEY = "dummy_maps_api_key_for_testing"
-    GOOGLE_OAUTH_ENABLED = False
+
+    # UI Settings
     ITEMS_PER_PAGE_OPTIONS = [10, 30, 100]
+    VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]
+
+    # Internationalization
     LANGUAGES = {
         "ar": "العربية",
         "en": "English",
@@ -443,30 +533,17 @@ class TestConfig(Config):
         "fr": "français",
         "ru": "русский",
         "uk": "українська",
+        "zh_Hans": "简体中文",
+        "zh_Hant": "繁體中文",
     }
-    MAPS_API_ENDPOINT = "https://{s}.tile.osm.org/{z}/{x}/{y}.png"
-    MEDIA_ALLOWED_EXTENSIONS = ["mp4", "webm", "jpg", "gif", "png", "pdf", "doc", "txt"]
-    MEDIA_UPLOAD_MAX_FILE_SIZE = 1000
-    OCR_ENABLED = False
-    OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"]
-    RECAPTCHA_ENABLED = False
-    RECAPTCHA_PRIVATE_KEY = "dummy_recaptcha_private_key"
-    RECAPTCHA_PUBLIC_KEY = "dummy_recaptcha_public_key"
-    S3_BUCKET = "dummy_bucket"
-    SECURITY_FRESHNESS = timedelta(minutes=30)
-    SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=30)
-    SECURITY_PASSWORD_LENGTH_MIN = 10
-    SECURITY_TWO_FACTOR_REQUIRED = False
-    SECURITY_WEBAUTHN = True
-    SECURITY_ZXCVBN_MINIMUM_SCORE = 3
-    SHEETS_ALLOWED_EXTENSIONS = ["csv", "xls", "xlsx"]
-    SHEET_IMPORT = True
-    VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]
-    SETUP_COMPLETE = False
-    IMPORT_DIR = "tests/imports"
+    BABEL_DEFAULT_LOCALE = "en"
+
+    # Location Settings
     LOCATIONS_INCLUDE_POSTAL_CODE = False
 
-    # Email test settings
+    # Email Settings
+    MAIL_ENABLED = False
+    MAIL_ALLOWED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"]
     MAIL_SERVER = "dummy-smtp-server"
     MAIL_PORT = 587
     MAIL_USE_TLS = True
@@ -474,8 +551,74 @@ class TestConfig(Config):
     MAIL_USERNAME = "dummy-username"
     MAIL_PASSWORD = "dummy-password"
     MAIL_DEFAULT_SENDER = "dummy-sender@example.com"
-    MAIL_ALLOWED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"]
+
+    # AI/ML Features
+    TRANSCRIPTION_ENABLED = False
+    WEB_IMPORT = False
+    WHISPER_MODEL = "base"
+    ADV_ANALYSIS = False
+
+    # YTDLP Settings
+    YTDLP_PROXY = ""
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
-    YTDLP_PROXY = ""
+
+    # Notifications
     NOTIFICATIONS = NOTIFICATIONS_DEFAULT_CONFIG
+
+    # Dependencies (from dep_utils)
+    HAS_WHISPER = False  # Hardcoded for tests
+    HAS_TESSERACT = False  # Hardcoded for tests
+
+    # Setup & System
+    SETUP_COMPLETE = True  # Mark as complete to bypass setup wizard in tests
+    IMPORT_DIR = "tests/imports"
+
+    # Cookies & Security
+    SESSION_COOKIE_SECURE = False  # Disabled for test HTTP
+    REMEMBER_COOKIE_SECURE = False  # Disabled for test HTTP
+    SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SECURITY_CSRF_COOKIE = {
+        "samesite": "Strict",
+        "httponly": False,
+        "secure": False,  # Disabled for test HTTP
+    }
+
+    # Logging
+    APP_LOG_ENABLED = False  # Disabled for tests
+    CELERY_LOG_ENABLED = False  # Disabled for tests
+    LOG_LEVEL = "INFO"
+    LOG_DIR = "logs"
+    LOG_FILE = "bayanat.log"
+    LOG_BACKUP_COUNT = 5
+
+    # Backups (disabled for tests)
+    BACKUPS = False
+    BACKUP_INTERVAL = 1
+    BACKUPS_LOCAL_PATH = "backups/"
+    BACKUPS_S3_BUCKET = None
+    BACKUPS_AWS_ACCESS_KEY_ID = None
+    BACKUPS_AWS_SECRET_ACCESS_KEY = None
+    BACKUPS_AWS_REGION = None
+
+    @classmethod
+    def get(cls, key, default=None):
+        """
+        Smart config getter that automatically uses Flask app context when available.
+
+        In Flask app context (requests/tests): uses current_app.config
+        Outside app context (CLI/standalone): uses TestConfig class attributes
+
+        Args:
+            key: Configuration key name
+            default: Default value if not found
+
+        Returns:
+            Configuration value
+        """
+        if has_app_context():
+            return current_app.config.get(key, default)
+        else:
+            return getattr(cls, key, default)
