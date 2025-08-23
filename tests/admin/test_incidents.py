@@ -70,7 +70,7 @@ def test_incidents_endpoint(
     """
     Test the POST incidents endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         response = client_.post(
             "/admin/api/incidents",
@@ -108,7 +108,7 @@ def test_incident_endpoint(
     """
     Test the GET incident endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         incident = get_first_or_fail(Incident)
         response = client_.get(
@@ -302,7 +302,7 @@ def test_put_incident_assigned_endpoint(
     Test the PUT incident endpoint in non-restrictive mode with no roles specified.
     The incident is assigned to the user who made the request.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         incident = get_first_or_fail(Incident)
         uid = get_uid_from_client(users, client_fixture)
@@ -346,7 +346,7 @@ def test_put_incident_assign_endpoint(
     Test the PUT incident assign endpoint in non-restrictive mode with no roles specified.
     Users without self-assign permissions cannot assign incidents to themselves.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         incident = get_first_or_fail(Incident)
         incident_id = incident.id
@@ -378,7 +378,7 @@ def test_put_incident_review_endpoint(
     """
     Test the PUT incident review endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         i = IncidentFactory()
         incident = get_first_or_fail(Incident)
