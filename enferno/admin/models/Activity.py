@@ -98,7 +98,7 @@ class Activity(db.Model, BaseMixin):
         # enabled in system settings
         # if disabled the activity will not be logged
         # denied actions will be always logged
-        if not status == Activity.STATUS_DENIED and not action in Config.get("activities"):
+        if not status == Activity.STATUS_DENIED and not action in Config.get("ACTIVITIES_LIST"):
             return
 
         try:

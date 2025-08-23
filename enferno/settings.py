@@ -152,7 +152,7 @@ class Config(object):
 
     # Activities
     ACTIVITIES = manager.get_config("ACTIVITIES")
-    activities = [x for x, value in ACTIVITIES.items() if value]
+    ACTIVITIES_LIST = [x for x, value in ACTIVITIES.items() if value]
     # minimum retention for 90 days
     activities_retention = max(90, int(manager.get_config("ACTIVITIES_RETENTION")))
     ACTIVITIES_RETENTION = timedelta(days=activities_retention)
@@ -370,6 +370,7 @@ class TestConfig(Config):
         "VIEW": True,
     }
     ACTIVITIES_RETENTION = timedelta(days=90)
+    ACTIVITIES_LIST = [x for x, value in ACTIVITIES.items() if value]
     AC_USERS_CAN_RESTRICT_NEW = False
     AWS_ACCESS_KEY_ID = "dummy_access_key"
     AWS_REGION = "dummy_region"
