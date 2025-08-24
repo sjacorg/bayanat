@@ -337,24 +337,34 @@ class TestConfig:
     DEBUG_TB_ENABLED = 0
     DEBUG_TB_INTERCEPT_REDIRECTS = False
 
-    # Database - always use local for tests
-    SQLALCHEMY_DATABASE_URI = "postgresql:///bayanat_test"
+    # Database - use Docker config if available, otherwise local
+    POSTGRES_USER = os.environ.get("POSTGRES_USER", "")
+    POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
+    POSTGRES_DB = os.environ.get("POSTGRES_DB", "bayanat_test")
+    POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+
+    if (POSTGRES_USER and POSTGRES_PASSWORD) or POSTGRES_HOST != "localhost":
+        SQLALCHEMY_DATABASE_URI = (
+            f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}"
+        )
+    else:
+        SQLALCHEMY_DATABASE_URI = "postgresql:///bayanat_test"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Redis - always use local for tests
+    # Redis - use fakeredis for all test scenarios to avoid external dependencies
     REDIS_HOST = "localhost"
     REDIS_PORT = 6379
     REDIS_PASSWORD = ""
-    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/15"
+    REDIS_URL = "redis://localhost:6379/15"
 
     # Celery - use in-memory for tests to avoid Redis dependency
     celery_broker_url = "memory://"
     result_backend = "cache+memory://"
 
-    # Session Redis - use fakeredis for tests
+    # Session Redis - always use fakeredis for tests
+    SESSION_TYPE = "redis"
     import fakeredis
 
-    SESSION_TYPE = "redis"
     SESSION_REDIS = fakeredis.FakeRedis()
     PERMANENT_SESSION_LIFETIME = 3600
 
