@@ -314,17 +314,20 @@ const ActorCard = Vue.defineComponent({
         <actor-profiles v-if="actor.id" :actor-id="actor.id"></actor-profiles>
 
         <!-- Map -->
-        <v-card outlined class="ma-2 pa-2" color="grey">
-          <global-map :model-value="mapLocations"></global-map>
+        <v-divider></v-divider>
+        <v-card variant="flat" >
+        
+          <global-map v-model="mapLocations"></global-map>
         </v-card>
 
 
-        <v-card  outlined class="rounded-0 mt-4" variant="text" v-if="actor.events?.length">
-          <v-toolbar density="compact" >
-            <v-toolbar-title  class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
+        <!-- Events -->
+        <v-card class="ma-2" v-if="actor.events && actor.events.length">
+          <v-toolbar density="compact">
+            <v-toolbar-title class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
           </v-toolbar>
-          <v-card-text>
-            <div class="px-1">{{ translations.events_ }}</div>
+
+          <v-card-text class="pa-2">
             <event-card v-for="(event, index) in actor.events" :key="event.id" :event="event" :number="index+1"></event-card>
           </v-card-text>
         </v-card>
