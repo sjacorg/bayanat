@@ -351,11 +351,11 @@ class TestConfig:
         SQLALCHEMY_DATABASE_URI = "postgresql:///bayanat_test"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Redis - use fakeredis for all test scenarios to avoid external dependencies
-    REDIS_HOST = "localhost"
-    REDIS_PORT = 6379
-    REDIS_PASSWORD = ""
-    REDIS_URL = "redis://localhost:6379/15"
+    # Redis - use Docker Redis for main Redis, fakeredis only for sessions
+    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
+    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
 
     # Celery - use in-memory for tests to avoid Redis dependency
     celery_broker_url = "memory://"
