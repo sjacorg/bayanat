@@ -36,10 +36,6 @@ const ShortActorDialog = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
-    dialogProps: {
-      type: Object,
-      default: () => ({}),
-    },
     eventParams: {
       type: Object,
       default: () => ({}),
@@ -219,7 +215,7 @@ const ShortActorDialog = Vue.defineComponent({
     <v-dialog
         v-if="open"
         :modelValue="open"
-        v-bind="dialogProps"
+        v-bind="$root.rightDialogProps"
     >
       <v-toolbar color="dark-primary">
         <v-toolbar-title>{{ formTitle }}</v-toolbar-title>
@@ -233,7 +229,7 @@ const ShortActorDialog = Vue.defineComponent({
         </template>
       </v-toolbar>
       <v-form @submit.prevent="save" ref="form" v-model="valid">
-          <v-card class="overflow-hidden">
+          <v-card class="overflow-hidden position-static">
               <v-sheet id="card-content" class="overflow-y-auto">
                   <v-card-text>
                       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start;">
@@ -399,7 +395,7 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
 
-                          <div v-if="editedItem.actor_profiles?.length" class="position-relative" style="grid-column: 1 / -1; min-width: 0;">
+                          <div v-if="editedItem.actor_profiles?.length" style="grid-column: 1 / -1; min-width: 0;">
                               <v-window class="w-100 border" v-model="tab">
                                   <v-window-item v-for="(profile, index) in editedItem.actor_profiles" :key="index">
                                       <v-card class="pa-3" variant="text">
@@ -432,7 +428,7 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
-                            <events-section :edited-item="editedItem" :dialog-props="dialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                            <events-section :edited-item="editedItem" :dialog-props="$root.rightContainedDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">

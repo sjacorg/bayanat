@@ -40,7 +40,6 @@ from enferno.admin.models.Notification import Notification
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
-from enferno.settings import Config as cfg
 from enferno.user.models import Role, User, Session
 from enferno.utils.csv_utils import convert_list_attributes
 from enferno.data_import.models import DataImport
@@ -54,6 +53,18 @@ from enferno.utils.graph_utils import GraphUtils
 import enferno.utils.typing as t
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
+
+# Simple test detection - use TestConfig if in test environment
+import os
+
+if os.environ.get("BAYANAT_CONFIG_FILE") == "config.test.json":
+    from enferno.settings import TestConfig
+
+    cfg = TestConfig()
+else:
+    from enferno.settings import Config
+
+    cfg = Config()
 
 celery = Celery("tasks", broker=cfg.celery_broker_url)
 # remove deprecated warning

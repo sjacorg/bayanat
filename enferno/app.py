@@ -118,6 +118,9 @@ def register_extensions(app):
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
     mail.init_app(app)
+
+    # Configure limiter storage with the correct config
+    limiter.storage_uri = app.config["REDIS_URL"]
     limiter.init_app(app)
 
 

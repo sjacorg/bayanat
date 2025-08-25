@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from enferno.user.models import Role, User
 from enferno.admin.constants import Constants
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
@@ -131,7 +131,7 @@ class Notification(db.Model, BaseMixin):
     ):
         """Create notification for a specific user"""
         # Determine if email should be enabled
-        email_enabled = send_email and bool(user.email) and cfg.MAIL_ENABLED
+        email_enabled = send_email and bool(user.email) and Config.get("MAIL_ENABLED")
 
         notification = Notification(
             user=user,
@@ -214,7 +214,7 @@ def get_notification_config(event):
         event = event.upper()
 
     # Get dynamic notifications config from Flask Config (includes config.json values)
-    notifications_config = cfg.NOTIFICATIONS
+    notifications_config = Config.get("NOTIFICATIONS")
 
     # Check always-on security events first, then configurable events
     config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(event)

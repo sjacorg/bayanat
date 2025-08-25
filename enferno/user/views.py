@@ -11,7 +11,7 @@ from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.admin.constants import Constants
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User, Session
 from enferno.admin.models.Notification import Notification
@@ -21,7 +21,16 @@ from enferno.utils.http_response import HTTPResponse
 
 bp_user = Blueprint("users", __name__, static_folder="../static")
 
-client = WebApplicationClient(cfg.GOOGLE_CLIENT_ID)
+# OAuth client - lazy initialization to handle config properly
+_oauth_client = None
+
+
+def get_oauth_client():
+    """Get OAuth client with proper config handling"""
+    global _oauth_client
+    if _oauth_client is None:
+        _oauth_client = WebApplicationClient(Config.get("GOOGLE_CLIENT_ID"))
+    return _oauth_client
 
 
 @bp_user.before_app_request
@@ -31,7 +40,7 @@ def before_request() -> None:
     """
     g.user = current_user
 
-    if session.get("failed", 0) > 1 and cfg.RECAPTCHA_ENABLED:
+    if session.get("failed", 0) > 1 and Config.get("RECAPTCHA_ENABLED"):
         current_app.extensions["security"].login_form = ExtendedLoginForm
     else:
         current_app.extensions["security"].login_form = LoginForm
@@ -57,7 +66,7 @@ def get_google_provider_cfg() -> Any:
     Returns:
         - returns openid json configurations
     """
-    return requests.get(cfg.GOOGLE_DISCOVERY_URL).json()
+    return requests.get(Config.get("GOOGLE_DISCOVERY_URL")).json()
 
 
 @bp_user.route("/auth")
@@ -68,7 +77,7 @@ def auth() -> Response:
     Returns:
         - redirects to Google's authorization endpoint, if Google Auth is enabled and configured properly.
     """
-    if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
+    if not Config.get("GOOGLE_OAUTH_ENABLED") or not Config.get("GOOGLE_CLIENT_ALLOWED_DOMAIN"):
         return HTTPResponse.error("Google Auth is not enabled or configured properly", status=417)
 
     google_provider_cfg = get_google_provider_cfg()
@@ -76,7 +85,7 @@ def auth() -> Response:
 
     # Use library to construct the request for Google login and provide
     # scopes that let you retrieve user's profile from Google
-    request_uri = client.prepare_request_uri(
+    request_uri = get_oauth_client().prepare_request_uri(
         authorization_endpoint,
         redirect_uri=request.base_url + "/callback",
         scope=["openid", "email", "profile"],
@@ -89,7 +98,7 @@ def auth_callback() -> Response:
     """
     Open ID callback endpoint.
     """
-    if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
+    if not Config.get("GOOGLE_OAUTH_ENABLED") or not Config.get("GOOGLE_CLIENT_ALLOWED_DOMAIN"):
         return HTTPResponse.error("Google Auth is not enabled or configured properly", status=417)
 
     code = request.args.get("code")
@@ -99,7 +108,7 @@ def auth_callback() -> Response:
     token_endpoint = google_provider_cfg["token_endpoint"]
 
     # Prepare and send request to get tokens! Yay tokens!
-    token_url, headers, body = client.prepare_token_request(
+    token_url, headers, body = get_oauth_client().prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
         redirect_url=request.base_url,
@@ -109,17 +118,17 @@ def auth_callback() -> Response:
         token_url,
         headers=headers,
         data=body,
-        auth=(cfg.GOOGLE_CLIENT_ID, cfg.GOOGLE_CLIENT_SECRET),
+        auth=(Config.get("GOOGLE_CLIENT_ID"), Config.get("GOOGLE_CLIENT_SECRET")),
     )
 
     # Parse the tokens!
-    client.parse_request_body_response(json.dumps(token_response.json()))
+    get_oauth_client().parse_request_body_response(json.dumps(token_response.json()))
 
     # Now that we have tokens (yay) let's find and hit URL
     # from Google that gives you user's profile information,
     # including their Google Profile Image and Email
     userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = client.add_token(userinfo_endpoint)
+    uri, headers, body = get_oauth_client().add_token(userinfo_endpoint)
     userinfo_response = requests.get(uri, headers=headers, data=body)
 
     # We want to make sure their email is verified.
@@ -134,7 +143,7 @@ def auth_callback() -> Response:
         return HTTPResponse.error("User email not available or not verified by Google.")
 
     # check if email belongs to the allowed domain
-    if not users_email.split("@")[-1] == cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
+    if not users_email.split("@")[-1] == Config.get("GOOGLE_CLIENT_ALLOWED_DOMAIN"):
         return HTTPResponse.forbidden("User email rejected!")
 
     # secure login by restricting access to only matching users who already have an account
@@ -152,7 +161,7 @@ def auth_callback() -> Response:
         u.save()
 
     login_user(u)
-    return redirect(cfg.SECURITY_POST_LOGIN_VIEW)
+    return redirect(Config.get("SECURITY_POST_LOGIN_VIEW"))
 
 
 @bp_user.route("/dashboard/")

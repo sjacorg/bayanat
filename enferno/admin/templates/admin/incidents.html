@@ -261,11 +261,11 @@
                     </v-overlay>
 
                     <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
-                                      ref="relateBulletins"></relate-bulletins>
+                                      ref="relateBulletins" :dialog-props="commonDialogProps"></relate-bulletins>
                     <relate-actors @relate="relateActor" :exids="exActors"
-                                   ref="relateActors"></relate-actors>
+                                   ref="relateActors" :dialog-props="commonDialogProps"></relate-actors>
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
-                                      ref="relateIncidents"></relate-incidents>
+                                      ref="relateIncidents" :dialog-props="commonDialogProps"></relate-incidents>
 
 
                     <v-dialog width="600" v-model="selfAssignDialog">
@@ -388,6 +388,7 @@
             },
             mixins: [globalMixin, relationsMixin],
             data: () => ({
+                commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
                 rightDialogProps: null,
