@@ -14,7 +14,7 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
 from enferno.utils.validation_utils import (
@@ -32,7 +32,7 @@ DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
-PER_PAGE = int(cfg.ITEMS_PER_PAGE_OPTIONS[0])
+PER_PAGE = int(Config.get("ITEMS_PER_PAGE_OPTIONS")[0])
 
 
 class BaseValidationModel(BaseModel):
@@ -1227,7 +1227,7 @@ class BulletinQueryRequestModel(BaseValidationModel):
 
     @field_validator("per_page")
     def validate_per_page(cls, v):
-        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        valid_values = [int(x) for x in Config.get("ITEMS_PER_PAGE_OPTIONS")]
         if v not in valid_values:
             raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
         return v
@@ -1327,6 +1327,7 @@ class ActorQueryLocTypes(Enum):
 
 class ActorQueryModel(QueryBaseModel):
     op: Optional[str] = "or"
+    ids: list[int] = Field(default_factory=list)
     nickname: Optional[str] = None
     first_name: Optional[str] = None
     middle_name: Optional[str] = None
@@ -1384,7 +1385,7 @@ class ActorQueryRequestModel(BaseValidationModel):
 
     @field_validator("per_page")
     def validate_per_page(cls, v):
-        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        valid_values = [int(x) for x in Config.get("ITEMS_PER_PAGE_OPTIONS")]
         if v not in valid_values:
             raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
         return v
@@ -1441,10 +1442,10 @@ class UserValidationModel(StrictValidationModel):
         except ValidationError as e:
             raise ValueError("Invalid email format")
 
-        if cfg.MAIL_ALLOWED_DOMAINS and "*" not in cfg.MAIL_ALLOWED_DOMAINS:
-            if v.domain not in cfg.MAIL_ALLOWED_DOMAINS:
+        if Config.get("MAIL_ALLOWED_DOMAINS") and "*" not in Config.get("MAIL_ALLOWED_DOMAINS"):
+            if v.domain not in Config.get("MAIL_ALLOWED_DOMAINS"):
                 raise ValueError(
-                    f"Email domain is not allowed. Allowed domains are: {', '.join(cfg.MAIL_ALLOWED_DOMAINS)}"
+                    f"Email domain is not allowed. Allowed domains are: {', '.join(Config.get('MAIL_ALLOWED_DOMAINS'))}"
                 )
 
         return v.normalized
@@ -1495,6 +1496,7 @@ class RoleRequestModel(BaseValidationModel):
 
 
 class IncidentQueryModel(QueryBaseModel):
+    ids: list[int] = Field(default_factory=list)
     potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
     claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
 
@@ -1507,7 +1509,7 @@ class IncidentQueryRequestModel(BaseValidationModel):
 
     @field_validator("per_page")
     def validate_per_page(cls, v):
-        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        valid_values = [int(x) for x in Config.get("ITEMS_PER_PAGE_OPTIONS")]
         if v not in valid_values:
             raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
         return v
@@ -1968,7 +1970,7 @@ class WebImportValidationModel(StrictValidationModel):
         domain = v._url.host
         if domain.startswith("www."):
             domain = domain[4:]
-        allowed_domains = cfg.YTDLP_ALLOWED_DOMAINS
+        allowed_domains = Config.get("YTDLP_ALLOWED_DOMAINS")
         if not any(domain.endswith(allowed) for allowed in allowed_domains):
             raise ValueError(f"Imports not allowed from {domain}")
 

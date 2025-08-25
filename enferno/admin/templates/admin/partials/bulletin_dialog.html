@@ -11,7 +11,6 @@
     :parent-item="editedItem"
     :can-restrict-view="{% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}true{% else %}false{% endif %}"
     @create-actor="relateCreatedActor"
-    :dialog-props="rightDialogProps"
 >
 </short-actor-dialog>
 
@@ -72,7 +71,7 @@
             >
 
             <v-card-text class="pa-0" style="height: calc(100vh - 64px);">
-                    <split-view ref="bulletinDialogSplitViewRef" @left-width-changed="leftDialogProps.width = $event" @right-width-changed="rightDialogProps.width = $event">
+                    <split-view ref="bulletinDialogSplitViewRef" @left-width-changed="leftDialogProps['content-props'].style.width = $event" @right-width-changed="rightDialogProps['content-props'].style.width = $event">
                         <template #left>
                             <div class="mx-4 mb-4 mt-8">
                                 {% include 'admin/partials/media_dialog.html' %}
@@ -190,15 +189,15 @@
     
                                 <v-row class="w-100 ma-0">
                                     <v-col col="12">
-                                        <events-section :edited-item="editedItem" :dialog-props="rightDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                                        <events-section :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                                     </v-col>
                                 </v-row>
     
                                 <v-row class="w-100 ma-0">
                                     <v-col col="12">
-                                        <geo-locations ref="geolocs" @locations-updated="geoLocationsUpdated"
+                                        <geo-locations @locations-updated="geoLocationsUpdated"
                                                     :others="editedItem.geoLocations"
-                                                    v-model="editedItem.geoLocations" :dialog-props="rightDialogProps"></geo-locations>
+                                                    v-model="editedItem.geoLocations" :dialog-props="rightContainedDialogProps"></geo-locations>
     
     
                                     </v-col>
@@ -329,9 +328,7 @@
                                         <v-card outlined color="gray " elevation="0">
                                             <v-card-title class="subtitle-2 black--text">{{ _('Review') }}</v-card-title>
                                             <v-card-text>
-                                                <p class="pa-1 my-2 grey--text text--darken-2" v-html="editedItem.review">
-    
-                                                </p>
+                                                <read-more><p class="pa-1 my-2 grey--text text--darken-2" v-html="editedItem.review"></p></read-more>
                                             </v-card-text>
     
                                         </v-card>

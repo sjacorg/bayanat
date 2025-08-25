@@ -366,8 +366,8 @@ const ActorCard = Vue.defineComponent({
                                 :relationInfo="$root.itoaInfo"></related-incidents-card>
 
         <div class="d-flex">
-          <uni-field :caption="translations.publishDate_" :english="actor.publish_date"></uni-field>
-          <uni-field :caption="translations.documentationDate_" :english="actor.documentation_date"></uni-field>
+          <uni-field :caption="translations.publishDate_" :english="$root.formatDate(actor.publish_date)"></uni-field>
+          <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(actor.documentation_date)"></uni-field>
         </div>
         <uni-field :caption="translations.sourceLink_" :english="actor.source_link"></uni-field>
 
@@ -375,10 +375,8 @@ const ActorCard = Vue.defineComponent({
         <v-card v-if="actor.status==='Peer Reviewed'" variant="outlined" elevation="0" class="ma-2" color="teal-lighten-2">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.review_ }}</div>
-            <div v-html="actor.review" class="pa-1 my-2  ">
-
-            </div>
-            <v-chip size="small" label color="lime">{{ actor.review_action }}</v-chip>
+            <read-more><div v-html="actor.review" class="pa-1 my-2  "></div></read-more>
+            <v-chip class="mt-4" size="small" label color="lime">{{ actor.review_action }}</v-chip>
           </v-card-text>
         </v-card>
 
@@ -393,9 +391,9 @@ const ActorCard = Vue.defineComponent({
 
             <template v-for="(revision,index) in revisions">
               <v-card color="grey" dense flat class="my-1 pa-2 d-flex align-center">
-              <span class="caption">{{ revision.data['comments'] }} - <v-chip size="small" label
-                                                                              color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ revision.created_at }}
+              <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
+              <v-chip size="small" label color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
+                {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
                 <v-spacer></v-spacer>
 

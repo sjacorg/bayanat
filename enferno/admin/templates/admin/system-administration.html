@@ -993,7 +993,7 @@
                     <v-timeline density="compact" side="end" align="start">
                         <v-timeline-item v-for="(item, index) in revisionsState.items" :key="index" dot-color="primary" size="10">
                             <div class="mt-n1">
-                                <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Current settings)') }}</b> <span class="text-muted">{{ _('at') }} ${getFormattedDate(item.created_at)}</span></div>
+                                <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Current settings)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
                                 <div v-if="index > 0 && !DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('No changes in this configuration') }}</div>
                                 <show-details v-else-if="DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
                                     <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionsState?.items?.[index + 1]?.config, item?.config, configLabels)"></diff-renderer>
@@ -1062,7 +1062,7 @@
             </v-card-title>
             <v-card-text class="pa-4">
                 <div class="mb-5">
-                    {{ _('Version settings changed by') }} <b>@${defaultConfig?.user?.username}</b> {{ _('at') }} ${getFormattedDate(defaultConfig?.created_at)}
+                    {{ _('Version settings changed by') }} <b>@${defaultConfig?.user?.username}</b> - ${formatDate(defaultConfig?.created_at, dateFormats.standardDatetime, dateOptions.local)}.
                 </div>
 
                 <show-details v-if="configDiff" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}" side="end">
@@ -1420,21 +1420,6 @@
                     }).finally(() => {
                         this.closeSaveDialog()
                     })
-                },
-
-                getFormattedDate(dateString) {
-                    const nextDateString = dateString?.includes('Z') ? dateString : `${dateString}Z`
-                    const date = dayjs(nextDateString);
-                    const today = dayjs();
-
-                    // Check if the date is today
-                    if(date.isSame(today, 'day')) {
-                        // If it's today, show time
-                        return date.format('hh:mm A');
-                    } else {
-                        // Otherwise, include full date and time
-                        return date.format('DD MMM YYYY, hh:mm A');
-                    }
                 },
 
                 closeSaveDialog() {
