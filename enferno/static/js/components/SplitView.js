@@ -195,7 +195,7 @@ const SplitView = Vue.defineComponent({
       <div
         class="flex-shrink-0 overflow-y-auto"
         :style="{ width: leftSlotVisible ? 'calc(100% - ' + (leftWidth + halfDividerWidth) + 'px)' : '100%' }"
-      >
+      > 
         <slot name="right" />
       </div>
     </div>

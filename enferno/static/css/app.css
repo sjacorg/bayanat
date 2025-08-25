@@ -849,11 +849,17 @@ div.jsondiffpatch-child-node-type-array:after {
 .z-1 {
     z-index: 1;
 }
+.z-100 {
+    z-index: 100;
+}
 .left-auto {
     left: auto !important;
 }
 .h-fit {
     height: fit-content;
+}
+.pointer-events-none {
+    pointer-events: none !important;
 }
 
 /* wrap chips */
