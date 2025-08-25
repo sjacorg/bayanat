@@ -340,7 +340,7 @@ class TestConfig:
     # Database - use Docker config if available, otherwise local
     POSTGRES_USER = os.environ.get("POSTGRES_USER", "")
     POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
-    POSTGRES_DB = os.environ.get("POSTGRES_DB", "bayanat_test")
+    POSTGRES_DB = "bayanat_test"
     POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
 
     if (POSTGRES_USER and POSTGRES_PASSWORD) or POSTGRES_HOST != "localhost":
