@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from flask import current_app
 from enferno.admin.models import Activity, Bulletin, Btob, GeoLocation, Location
 from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.user.models import User
@@ -71,7 +72,7 @@ def test_bulletins_endpoint(
     """
     Test the GET bulletins endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         response = client_.get(
             "/admin/api/bulletins",
@@ -102,7 +103,7 @@ def test_bulletin_endpoint(
     """
     Test the GET bulletin endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         bulletin = get_first_or_fail(Bulletin)
         response = client_.get(
@@ -193,7 +194,7 @@ def test_bulletin_endpoint_no_roles_restricted(
 
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
         )
@@ -223,7 +224,7 @@ def test_bulletin_endpoint_roled_restricted(
     bulletin = restrict_to_roles(create_full_bulletin, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
         )
@@ -324,7 +325,7 @@ def test_put_bulletin_assigned_endpoint(
     # - Admin: Full access
     # - DA: Full access
     # - Mod: No access
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         bulletin = get_first_or_fail(Bulletin)
         uid = get_uid_from_client(users, client_fixture)
@@ -364,7 +365,7 @@ def test_put_bulletin_review_endpoint(
     """
     Test the PUT bulletin review endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         nb = BulletinFactory()
         bulletin = get_first_or_fail(Bulletin)
@@ -468,7 +469,7 @@ def test_put_bulletin_assign_endpoint(
     Test the PUT bulletin assign endpoint in non-restrictive mode with no roles specified.
     Users without self-assign permissions will not be able to assign the bulletin to themselves.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         bulletin = get_first_or_fail(Bulletin)
         bulletin_id = bulletin.id
