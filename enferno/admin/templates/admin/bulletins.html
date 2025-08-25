@@ -1520,21 +1520,6 @@
 
                     },
 
-                    adjustDates() {
-
-
-                        if (this.editedItem.publish_date) {
-                            this.editedItem.publish_time = dateFns.format(this.editedItem.publish_date, 'HH:mm');
-                            this.editedItem.publish_date = dateFns.format(this.editedItem.publish_date, 'YYYY-MM-DD')
-                        }
-
-                        if (this.editedItem.documentation_date) {
-                            this.editedItem.documentation_time = dateFns.format(this.editedItem.documentation_date, 'HH:mm');
-                            this.editedItem.documentation_date = dateFns.format(this.editedItem.documentation_date, 'YYYY-MM-DD');
-                        }
-                    },
-
-
                     editItem(item) {
 
                         this.bulletinDrawer = false;
