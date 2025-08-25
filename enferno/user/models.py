@@ -321,14 +321,7 @@ class User(UserMixin, db.Model, BaseMixin):
             if set(self.roles) & set(obj.roles):
                 return True
 
-            # Use current_app.config if available (during requests), fallback to cfg
-            restrictive = (
-                current_app.config.get("ACCESS_CONTROL_RESTRICTIVE")
-                if has_app_context()
-                else Config.get("ACCESS_CONTROL_RESTRICTIVE")
-            )
-
-            if not restrictive and not obj.roles:
+            if not Config.get("ACCESS_CONTROL_RESTRICTIVE") and not obj.roles:
                 return True
 
         # handle media access
