@@ -1,8 +1,12 @@
 import pytest
+from enferno.extensions import limiter
 
 
 def test_csrf_rate_limiting(session, anonymous_client):
     """Test rate limiting on the CSRF endpoint."""
+    # Clear any existing rate limit state
+    limiter.reset()
+
     # Make 15 requests (within the per-minute limit)
     responses = []
     for _ in range(15):

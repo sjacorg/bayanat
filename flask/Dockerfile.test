@@ -30,8 +30,6 @@ COPY ./flask/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod 550 /usr/local/bin/entrypoint.sh
 
-ENV PATH="/opt/venv/bin:$PATH"
-
 ARG ROLE
 ENV ROLE=${ROLE}
 

@@ -160,18 +160,22 @@ def validate_password_zxcvbn(password: str, minimum_score: int = 3) -> tuple[boo
 
 
 def validate_password_policy(p: str) -> str:
-    from enferno.settings import Config as cfg
+    from enferno.settings import Config
 
     if not (p := p.strip()):
         raise ValueError("Password cannot be empty!")
+
+    # Use smart config getter that handles app context automatically
+    min_length = Config.get("SECURITY_PASSWORD_LENGTH_MIN")
+    complexity_checker = Config.get("SECURITY_PASSWORD_COMPLEXITY_CHECKER", "zxcvbn")
+    min_score = Config.get("SECURITY_ZXCVBN_MINIMUM_SCORE")
+
     # validate length
-    min_length = getattr(cfg, "SECURITY_PASSWORD_LENGTH_MIN")
     if len(p) < min_length:
         raise ValueError(f"Password should be at least {min_length} characters long!")
 
-    if getattr(cfg, "SECURITY_PASSWORD_COMPLEXITY_CHECKER", "zxcvbn").lower() == "zxcvbn":
+    if complexity_checker.lower() == "zxcvbn":
         # validate complexity using zxcvbn
-        min_score = getattr(cfg, "SECURITY_ZXCVBN_MINIMUM_SCORE", 3)
         valid, score = validate_password_zxcvbn(p, min_score)
         if not valid:
             raise ValueError(

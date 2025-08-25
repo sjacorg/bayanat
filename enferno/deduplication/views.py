@@ -16,7 +16,7 @@ from enferno.deduplication.models import DedupRelation
 from enferno.extensions import db, rds
 from enferno.tasks import start_dedup
 
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.utils.http_response import HTTPResponse
 
 deduplication = Blueprint(
@@ -130,7 +130,7 @@ def dedup_import(file: str, remove: bool, distance: float) -> None:
     # create pandas data frame
     click.echo("Reading CSV file...")
     df = pd.read_csv(file)
-    exts = ["." + ext for ext in cfg.ETL_VID_EXT]
+    exts = ["." + ext for ext in Config.get("ETL_VID_EXT")]
     click.echo("Cleaning up...")
     df["match_video"] = df["match_video"].replace(r"_.{64}_vgg_features", "", regex=True)
     df["match_video"] = df["match_video"].replace("_vgg_features", "", regex=True)

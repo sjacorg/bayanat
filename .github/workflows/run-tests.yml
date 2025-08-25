@@ -22,10 +22,10 @@ jobs:
       - name: Create .env file
         run: |
           ./gen-env.sh -d -e .env.test
-      - name: Create config.json file, add allowed path to .env.test file
+          sed -i 's/POSTGRES_DB=bayanat$/POSTGRES_DB=bayanat_test/' .env.test
+      - name: Create config.test.json file, add allowed path to .env.test file  
         run: |
-          touch config.json
-          echo '{"ETL_PATH_IMPORT": true, "ETL_ALLOWED_PATH": "/app"}' > config.json
+          echo '{"ETL_PATH_IMPORT": true, "ETL_ALLOWED_PATH": "/app"}' > config.test.json
           echo "ETL_PATH_IMPORT=True" >> .env.test
           echo "ETL_ALLOWED_PATH=/app" >> .env.test
       - name: Bayanat Tests

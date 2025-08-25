@@ -12,7 +12,7 @@ from enferno.user.models import User, Role
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 import subprocess
 
 from enferno.utils.base import DatabaseException
@@ -30,12 +30,12 @@ def now() -> str:
     return str(arrow.utcnow())
 
 
-if cfg.OCR_ENABLED:
-    if cfg.HAS_TESSERACT:
+if Config.get("OCR_ENABLED"):
+    if Config.get("HAS_TESSERACT"):
         from pytesseract import image_to_string, pytesseract
 
         try:
-            pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
+            pytesseract.tesseract_cmd = Config.get("TESSERACT_CMD")
             tesseract_langs = "+".join(pytesseract.get_languages(config=""))
         except Exception as e:
             logger.error(
@@ -57,10 +57,14 @@ class MediaImport:
 
     @classmethod
     def get_whisper_model(cls):
-        if not cls._whisper_model and cfg.HAS_WHISPER and cfg.TRANSCRIPTION_ENABLED:
+        if (
+            not cls._whisper_model
+            and Config.get("HAS_WHISPER")
+            and Config.get("TRANSCRIPTION_ENABLED")
+        ):
             import whisper
 
-            cls._whisper_model = whisper.load_model(cfg.WHISPER_MODEL)
+            cls._whisper_model = whisper.load_model(Config.get("WHISPER_MODEL"))
         return cls._whisper_model
 
     # file: Filestorage class
@@ -82,7 +86,7 @@ class MediaImport:
             - True if successful, False otherwise.
         """
 
-        if cfg.FILESYSTEM_LOCAL:
+        if Config.get("FILESYSTEM_LOCAL"):
             try:
                 shutil.copy(filepath, target)
                 self.data_import.add_to_log(f"File saved as {target}.")
@@ -92,16 +96,16 @@ class MediaImport:
                 self.data_import.add_to_log(str(e))
                 return False
 
-        elif cfg.S3_BUCKET:
+        elif Config.get("S3_BUCKET"):
             target = os.path.basename(target)
             s3 = boto3.resource(
                 "s3",
-                aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
-                region_name=cfg.AWS_REGION,
+                aws_access_key_id=Config.get("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=Config.get("AWS_SECRET_ACCESS_KEY"),
+                region_name=Config.get("AWS_REGION"),
             )
             try:
-                s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(filepath, "rb"))
+                s3.Bucket(Config.get("S3_BUCKET")).put_object(Key=target, Body=open(filepath, "rb"))
                 self.data_import.add_to_log(f"File uploaded to S3 bucket.")
                 return True
             except Exception as e:
@@ -189,7 +193,7 @@ class MediaImport:
             # if no text contect recognize
             # attempt to use Tesseract OCR
             if not text_content and attempt_ocr:
-                if not cfg.HAS_TESSERACT:
+                if not Config.get("HAS_TESSERACT"):
                     logger.warning("pytesseract not available, skipping OCR.")
                     # Raise the error so it is logged in data_import as well
                     raise ModuleNotFoundError(name="pytesseract")
@@ -314,7 +318,11 @@ class MediaImport:
             - Transcribed text if successful, None otherwise
         """
         whisper_model = self.get_whisper_model()
-        if not cfg.TRANSCRIPTION_ENABLED or not cfg.HAS_WHISPER or not whisper_model:
+        if (
+            not Config.get("TRANSCRIPTION_ENABLED")
+            or not Config.get("HAS_WHISPER")
+            or not whisper_model
+        ):
             return None
 
         try:
@@ -380,7 +388,7 @@ class MediaImport:
             self.data_import.add_format(info["file_ext"])
 
         # Upload to S3 if needed
-        if not cfg.FILESYSTEM_LOCAL:
+        if not Config.get("FILESYSTEM_LOCAL"):
             self.upload(filepath, os.path.basename(filepath))
 
         # Bundle info for bulletin creation
@@ -439,7 +447,7 @@ class MediaImport:
         info = exiflib.get_json(filepath)[0]
         info["originalFilename"] = file.get("original_filename")
 
-        if not cfg.FILESYSTEM_LOCAL:
+        if not Config.get("FILESYSTEM_LOCAL"):
             self.upload(filepath, os.path.basename(filepath))
 
         # get file extension and duration
@@ -501,7 +509,11 @@ class MediaImport:
                 )
 
         # ocr pictures
-        elif cfg.OCR_ENABLED and self.meta.get("ocr") and info["file_ext"] in cfg.OCR_EXT:
+        elif (
+            Config.get("OCR_ENABLED")
+            and self.meta.get("ocr")
+            and info["file_ext"] in Config.get("OCR_EXT")
+        ):
             parsed_text = self.parse_pic(info["filepath"])
             if parsed_text:
                 text_content = parsed_text
@@ -514,7 +526,7 @@ class MediaImport:
 
         # scan pdf for text
         elif self.meta.get("parse") and info["file_ext"] == "pdf":
-            attempt_ocr = cfg.OCR_ENABLED and self.meta.get("ocr")
+            attempt_ocr = Config.get("OCR_ENABLED") and self.meta.get("ocr")
             parsed_text = self.parse_pdf(info["filepath"], attempt_ocr)
 
             if parsed_text:

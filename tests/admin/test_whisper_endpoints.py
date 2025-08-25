@@ -31,6 +31,9 @@ get_whisper_languages_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", get_whisper_languages_endpoint_roles)
 def test_get_whisper_languages_endpoint(request, client_fixture, expected_status):
+    # Skip test if whisper not available
+    pytest.importorskip("whisper", reason="whisper not installed - run with AI extras")
+
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get("/import/api/whisper/languages/")
     assert response.status_code == expected_status
