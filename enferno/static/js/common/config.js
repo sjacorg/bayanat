@@ -668,3 +668,14 @@ function deepClone(value) {
         return JSON.parse(JSON.stringify(value));
     }
 }
+
+// Turn text to slug
+function slugify(text) {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '_')       // Replace spaces with underscores
+        .replace(/[^\w\-]+/g, '')   // Remove non-word characters
+        .replace(/\_\_+/g, '_');    // Replace multiple underscores
+}

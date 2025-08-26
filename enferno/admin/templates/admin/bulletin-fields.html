@@ -5,88 +5,60 @@
   :item="editedItem" entity-type="bulletin"></field-builder-drawer>
 
 <v-main>
-  <v-sheet class="d-flex ga-4" style="height: calc(100vh - 64px)">
-    <v-card class="h-fit">
-      <v-card-text>{{ _('Media') }}</v-card-text>
-    </v-card>
-    <v-divider vertical></v-divider>
-    <v-card variant="flat" class="w-100">
-      <div class="d-flex justify-space-between ga-6 pa-4">
-        <div class="font-weight-bold text-h4 text-no-wrap" style="font-size: 30px;">{{ _('Bulletin Fields Configuration') }}</div>
-
-        <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}"
-          prepend-inner-icon="mdi-magnify" hide-details v-model="search"></v-text-field>
-
-        <div class="d-flex ga-4 align-center">
-          <v-menu>
-            <template v-slot:activator="{ props }">
-              <v-btn v-bind="props" prepend-icon="mdi-plus" append-icon="mdi-menu-down" variant="flat"
-                color="primary">{{ _('Add New') }}</v-btn>
-            </template>
-
-            <v-list>
-              <v-list-item>
-                <v-list-item-title>Field</v-list-item-title>
-              </v-list-item>
-              <v-divider></v-divider>
-              <v-list-item>
-                <v-list-item-title>Section</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-
-          <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="isFieldBuilderDrawerOpen = true" color="red">{{
-            _('Discard Changes') }}</v-btn>
-          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" color="primary" variant="outlined" :loading="saving"
-            :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
-        </div>
+  <v-sheet>
+    <div class="d-flex justify-space-between ga-6 pa-6">
+      <div class="font-weight-bold text-h4 text-no-wrap" style="font-size: 30px;">{{ _('Bulletin Fields Configuration') }}
       </div>
-
-      <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 136px);">
-        <div class="d-flex justify-center w-100"><v-progress-circular indeterminate
-            v-if="loading"></v-progress-circular></div>
-
-        <!-- <draggable v-model="dynamicFields" :item-key="'id'" tag="v-row" handle=".drag-handle" @end="onDragEnd"
-          class="flex-0-0">
-          <template #item="{ element: field }">
-            <v-col v-if="matchesSearch(field)" cols="12">
-              <v-row>
-                <v-col cols="12" lg="6">
-                  <field-list-item :field="field" :component-props="mapFieldToComponent(field)" @edit="edit"
-                    @toggle-visibility="toggleFieldVisibility" @delete="deleteField" />
-                </v-col>
-              </v-row>
-            </v-col>
+    
+      <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
+        hide-details v-model="search"></v-text-field>
+    
+      <div class="d-flex ga-4 align-center">
+        <v-menu>
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" prepend-icon="mdi-plus" append-icon="mdi-menu-down" variant="flat" color="primary">{{
+              _('Add New') }}</v-btn>
           </template>
-        </draggable> -->
+    
+          <v-list>
+            <v-list-item @click="isFieldBuilderDrawerOpen = true">
+              <v-list-item-title>Field</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+    
+        <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="isFieldBuilderDrawerOpen = true"
+          color="red">{{
+          _('Discard Changes') }}</v-btn>
+        <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" color="primary" variant="outlined" :loading="saving"
+          :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
+      </div>
+    </div>
 
-        <div ref="mainList">
-          <v-col cols="12" v-for="field in dynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="{
-              'drop-line': dropLine.id == field.id,
-              [dropLine.cls]: dropLine.id == field.id
-            }">
-            <field-list-item :field="field" :component-props="mapFieldToComponent(field)" @edit="edit"
-              @toggle-visibility="toggleFieldVisibility" @delete="deleteField" />
-          </v-col>
+    <div class="d-flex">
+      <v-card class="h-fit ma-3 flex-shrink-0">
+        <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
+      </v-card>
+      <v-divider vertical></v-divider>
+      <v-card variant="flat" class="ml-3 w-100">
+        <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 152px);">
+          <div class="d-flex justify-center w-100"><v-progress-circular indeterminate
+              v-if="loading"></v-progress-circular></div>
 
-          <!-- Sections -->
-          <!-- <v-col cols="12" v-for="section in sections" :key="section.id">
-              <v-card class="mb-4" outlined>
-                <div class="section-header">${section.title}</div>
-                <div ref="getSectionRef(section.id)" class="sortable-list" :data-section-id="section.id">
-                  <div v-for="field in section.fields" :key="field.id" class="sortable-item" :data-id="field.id"
-                    :class="{'drop-line': field.id === dragOverId, [dropClass]: field.id === dragOverId}">
-                    <field-list-item :field="field" />
-                  </div>
-                </div>
-              </v-card>
-            </v-col> -->
-        </div>
+          <div ref="mainList" class="d-flex flex-wrap">
+            <div v-for="field in dynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="['w-50',{
+                'drop-line': dropLine.id == field.id,
+                [dropLine.cls]: dropLine.id == field.id
+              }]">
+              <field-list-item :field="field" @edit="edit"
+                @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(draggingId)" />
+            </div>
+          </div>
 
-      </v-card-text>
-    </v-card>
+        </v-card-text>
+      </v-card>
+    </div>
   </v-sheet>
-
 
   <v-dialog v-model="saveChangesDialog" max-width="900">
     <v-card>
@@ -164,6 +136,9 @@
       tinyConfig: tinyConfig,
       drawer: drawer,
       isFieldBuilderDrawerOpen: false,
+      ui: {
+        pickerDialog: false
+      }, 
       editedItem: {},
       search: '',
       dynamicFields: [],
@@ -190,10 +165,6 @@
       }
     },
     methods: {
-      getSectionRef(id) {
-        // return a ref for the section container
-        return `section-${id}`;
-      },
       sortDynamicFields() {
         this.dynamicFields = this.dynamicFields.sort((a, b) => {
           if (a.sort_order === 0 && b.sort_order !== 0) return 1;  // a goes last
@@ -345,59 +316,6 @@
         }
 
         return changes;
-      },
-
-      mapFieldToComponent(field) {
-        const baseProps = {
-          fieldId: field.id,
-          label: field.title,
-          name: field.name,
-          modelValue: field.schema_config?.default ?? null,
-          variant: 'filled',
-          disabled: !field.active,
-          hint: field?.ui_config?.help_text,
-        };
-
-        const numberProps = {
-          precision: field.field_type === 'float'
-            ? Number(field?.validation_config?.precision) || null
-            : 0,
-          min: field?.validation_config?.min,
-          max: field?.validation_config?.max,
-        };
-
-        const componentMap = {
-          number: { component: 'v-number-input', ...baseProps, ...numberProps },
-          text_input: { component: 'v-text-field', ...baseProps },
-          multi_select: {
-            component: 'v-select',
-            ...baseProps,
-            items: field.options,
-            'item-title': 'label',
-            'item-value': 'value',
-            multiple: field.field_type === 'array'
-          },
-          dropdown: {
-            component: 'v-select',
-            ...baseProps,
-            items: field.options,
-            'item-title': 'label',
-            'item-value': 'value',
-            multiple: field.field_type === 'array'
-          },
-          text_area: { component: 'v-textarea', ...baseProps },
-          checkbox: { component: 'v-checkbox', ...baseProps },
-          switch: { component: 'v-switch', ...baseProps },
-          date_picker: { component: 'pop-date-time-field' },
-          editor: {
-            component: 'tinymce-editor',
-            init: tinyConfig,
-            disabled: !field.active,
-            fieldId: field.id
-          },
-        };
-
-        return componentMap[field.ui_component] || null;
       },
 
       isHorizontalLayout(el) {
