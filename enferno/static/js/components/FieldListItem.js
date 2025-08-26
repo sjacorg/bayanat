@@ -9,7 +9,10 @@ const iconMap = {
 
 const FieldListItem = Vue.defineComponent({
     props: ['field', 'dragging'],
-    emits: ['edit', 'delete', 'toggle-visibility'],
+    emits: ['delete', 'toggle-visibility'],
+    data: () => ({
+        translations: window.translations
+    }),
     computed: {
         componentProps() {
             return this.mapFieldToComponent(this.field)
@@ -92,10 +95,30 @@ const FieldListItem = Vue.defineComponent({
                     <v-icon class="drag-handle cursor-grab" size="large">mdi-drag-horizontal</v-icon>
 
                     <div v-if="!componentProps?.readonly" class="d-flex ga-4">
-                        <v-btn density="comfortable" :disabled="field.core" icon @click="$emit('edit', { field, componentProps })" size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
-                        <v-btn density="comfortable" :disabled="field.core" icon @click="$emit('edit', { field, componentProps })" size="small"><v-icon>mdi-magnify</v-icon></v-btn>
-                        <v-btn density="comfortable" icon @click="$emit('toggle-visibility', { field, componentProps })" size="small"><v-icon>{{ componentProps.disabled ? 'mdi-eye-outline' : 'mdi-eye-off-outline' }}</v-icon></v-btn>
-                        <v-btn density="comfortable" :disabled="field.core" icon @click="$emit('delete', { field, componentProps })" size="small"><v-icon>mdi-trash-can-outline</v-icon></v-btn>
+                        <v-tooltip location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn v-bind="props" density="comfortable" variant="flat" icon @click="$emit('edit', { field, componentProps })" size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
+                            </template>
+                            {{ translations.markFieldAsRequired_ }}
+                        </v-tooltip>
+                        <v-tooltip location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn v-bind="props" density="comfortable" variant="flat" icon @click="$emit('edit', { field, componentProps })" size="small"><v-icon>mdi-magnify</v-icon></v-btn>
+                            </template>
+                            {{ translations.markFieldAsSearchable_ }}
+                        </v-tooltip>
+                        <v-tooltip location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn v-bind="props" density="comfortable" variant="flat" icon @click="$emit('toggle-visibility', { field, componentProps })" size="small"><v-icon>{{ componentProps.disabled ? 'mdi-eye-outline' : 'mdi-eye-off-outline' }}</v-icon></v-btn>
+                            </template>
+                            {{ field.active ? translations.hideField_ : translations.showField_ }}
+                        </v-tooltip>
+                        <v-tooltip location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn v-bind="props" density="comfortable" variant="flat" :disabled="field.core" icon @click="$emit('delete', { field, componentProps })" size="small"><v-icon>mdi-trash-can-outline</v-icon></v-btn>
+                            </template>
+                            {{ translations.deleteField_ }}
+                        </v-tooltip>
                     </div>
                 </div>
 
