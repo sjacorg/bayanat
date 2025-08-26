@@ -5,10 +5,14 @@
   :item="editedItem" entity-type="bulletin"></field-builder-drawer>
 
 <v-main>
-  <v-container fluid>
-    <v-card style="height: calc(100vh - 100px)">
-      <div class="d-flex flex-lg-row flex-column justify-space-between ga-6 pa-4">
-        <div class="font-weight-bold text-h4 text-no-wrap">{{ _('Bulletin Fields Configuration') }}</div>
+  <v-sheet class="d-flex ga-4" style="height: calc(100vh - 64px)">
+    <v-card class="h-fit">
+      <v-card-text>{{ _('Media') }}</v-card-text>
+    </v-card>
+    <v-divider vertical></v-divider>
+    <v-card variant="flat" class="w-100">
+      <div class="d-flex justify-space-between ga-6 pa-4">
+        <div class="font-weight-bold text-h4 text-no-wrap" style="font-size: 30px;">{{ _('Bulletin Fields Configuration') }}</div>
 
         <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}"
           prepend-inner-icon="mdi-magnify" hide-details v-model="search"></v-text-field>
@@ -38,7 +42,7 @@
         </div>
       </div>
 
-      <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 165px);">
+      <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 136px);">
         <div class="d-flex justify-center w-100"><v-progress-circular indeterminate
             v-if="loading"></v-progress-circular></div>
 
@@ -81,7 +85,8 @@
 
       </v-card-text>
     </v-card>
-  </v-container>
+  </v-sheet>
+
 
   <v-dialog v-model="saveChangesDialog" max-width="900">
     <v-card>
