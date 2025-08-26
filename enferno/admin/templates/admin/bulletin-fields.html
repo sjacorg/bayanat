@@ -1,65 +1,84 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
 <!-- Field Creation Modal -->
-<field-builder-drawer :model-value="isFieldBuilderDrawerOpen" @update:model-value="closeDrawer" @save="saveField" :item="editedItem" entity-type="bulletin"></field-builder-drawer>
+<field-builder-drawer :model-value="isFieldBuilderDrawerOpen" @update:model-value="closeDrawer" @save="saveField"
+  :item="editedItem" entity-type="bulletin"></field-builder-drawer>
 
 <v-main>
   <v-container fluid>
     <v-card style="height: calc(100vh - 100px)">
-      <v-toolbar class="flex-md-column">
-        <v-toolbar-title>{{ _('Bulletin Fields Configuration') }}</v-toolbar-title>
+      <div class="d-flex flex-lg-row flex-column justify-space-between ga-6 pa-4">
+        <div class="font-weight-bold text-h4 text-no-wrap">{{ _('Bulletin Fields Configuration') }}</div>
 
-        <template #append>
-          <v-text-field
-            density="compact"
-            class="mr-2"
-            placeholder="{{ _('Search') }}"
-            prepend-inner-icon="mdi-magnify"
-            max-width="300px"
-            width="200px"
-            hide-details
-            v-model="search"
-          ></v-text-field>
-          <v-btn
-            prepend-icon="mdi-plus"
-            class="mr-2"
-            variant="outlined"
-            @click="isFieldBuilderDrawerOpen = true"
-            >{{ _('Add new field') }}</v-btn
-          >
-          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="saving" :disabled="!hasChanges"
-            >{{ _('Save changes') }}</v-btn
-          >
-        </template>
-      </v-toolbar>
+        <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}"
+          prepend-inner-icon="mdi-magnify" hide-details v-model="search"></v-text-field>
+
+        <div class="d-flex ga-4 align-center">
+          <v-menu>
+            <template v-slot:activator="{ props }">
+              <v-btn v-bind="props" prepend-icon="mdi-plus" append-icon="mdi-menu-down" variant="flat"
+                color="primary">{{ _('Add New') }}</v-btn>
+            </template>
+
+            <v-list>
+              <v-list-item>
+                <v-list-item-title>Field</v-list-item-title>
+              </v-list-item>
+              <v-divider></v-divider>
+              <v-list-item>
+                <v-list-item-title>Section</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+
+          <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="isFieldBuilderDrawerOpen = true" color="red">{{
+            _('Discard Changes') }}</v-btn>
+          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" color="primary" variant="outlined" :loading="saving"
+            :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
+        </div>
+      </div>
 
       <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 165px);">
-        <div class="d-flex justify-center w-100"><v-progress-circular indeterminate v-if="loading"></v-progress-circular></div>
-        <draggable
-          v-model="dynamicFields"
-          :item-key="'id'"
-          tag="v-row"
-          handle=".drag-handle"
-          @end="onDragEnd"
-          class="flex-0-0"
-        >
+        <div class="d-flex justify-center w-100"><v-progress-circular indeterminate
+            v-if="loading"></v-progress-circular></div>
+
+        <!-- <draggable v-model="dynamicFields" :item-key="'id'" tag="v-row" handle=".drag-handle" @end="onDragEnd"
+          class="flex-0-0">
           <template #item="{ element: field }">
             <v-col v-if="matchesSearch(field)" cols="12">
               <v-row>
                 <v-col cols="12" lg="6">
-                  <field-list-item
-                    :field="field"
-                    :component-props="mapFieldToComponent(field)"
-                    @edit="edit"
-                    @toggle-visibility="toggleFieldVisibility"
-                    @delete="deleteField"
-                  />
+                  <field-list-item :field="field" :component-props="mapFieldToComponent(field)" @edit="edit"
+                    @toggle-visibility="toggleFieldVisibility" @delete="deleteField" />
                 </v-col>
               </v-row>
             </v-col>
           </template>
-        </draggable>
-        <v-btn prepend-icon="mdi-plus" class="mr-2" variant="outlined" @click="isFieldBuilderDrawerOpen = true">{{ _('Add new field') }}</v-btn>
+        </draggable> -->
+
+        <div ref="mainList">
+          <v-col cols="12" v-for="field in dynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="{
+              'drop-line': dropLine.id == field.id,
+              [dropLine.cls]: dropLine.id == field.id
+            }">
+            <field-list-item :field="field" :component-props="mapFieldToComponent(field)" @edit="edit"
+              @toggle-visibility="toggleFieldVisibility" @delete="deleteField" />
+          </v-col>
+
+          <!-- Sections -->
+          <!-- <v-col cols="12" v-for="section in sections" :key="section.id">
+              <v-card class="mb-4" outlined>
+                <div class="section-header">${section.title}</div>
+                <div ref="getSectionRef(section.id)" class="sortable-list" :data-section-id="section.id">
+                  <div v-for="field in section.fields" :key="field.id" class="sortable-item" :data-id="field.id"
+                    :class="{'drop-line': field.id === dragOverId, [dropClass]: field.id === dragOverId}">
+                    <field-list-item :field="field" />
+                  </div>
+                </div>
+              </v-card>
+            </v-col> -->
+        </div>
+
       </v-card-text>
     </v-card>
   </v-container>
@@ -75,7 +94,7 @@
           <v-avatar class="mr-2" size="18" color="red lighten-3"></v-avatar>
           {{ _('Old Value') }}
         </div>
-      
+
         <div class="d-flex align-center ml-4 body-2">
           <v-avatar class="mr-2" size="18" color="green lighten-2"></v-avatar>
           {{ _('New Value') }}
@@ -97,17 +116,18 @@
             </div>
           </div>
         </v-alert>
-  
+
       </v-card-text>
       <v-divider></v-divider>
       <v-card-actions class="pa-4 justify-end">
         <v-btn @click.stop="saveChangesDialog = false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
         </v-btn>
-        <v-btn variant="elevated" color="primary" :loading="saving" :disabled="!configDiff" @click.stop="save()" class="ml-4">
+        <v-btn variant="elevated" color="primary" :loading="saving" :disabled="!configDiff" @click.stop="save()"
+          class="ml-4">
           {{ _('Confirm') }}
         </v-btn>
       </v-card-actions>
-  
+
     </v-card>
   </v-dialog>
 </v-main>
@@ -128,305 +148,431 @@
 <script src="/static/js/components/DiffRenderer.js"></script>
 
 <script>
-    const { createApp } = Vue;
-    const { createVuetify } = Vuetify;
-    const vuetify = createVuetify(vuetifyConfig);
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
+  const vuetify = createVuetify(vuetifyConfig);
 
-    const app = createApp({
-      delimiters: delimiters,
-      mixins: [globalMixin],
-      data: () => ({
-        tinyConfig: tinyConfig,
-        drawer: drawer,
-        isFieldBuilderDrawerOpen: false,
-        editedItem: {},
-        search: '',
-        dynamicFields: [],
-        searchQuery: '',
-        loading: false,
-        saving: false,
-        originalFields: [],
-        configDiff: '',
-        changes: '',
-        saveChangesDialog: false,
-      }),
-      mounted() {
-        this.fetchDynamicFields();
+  const app = createApp({
+    delimiters: delimiters,
+    mixins: [globalMixin],
+    data: () => ({
+      tinyConfig: tinyConfig,
+      drawer: drawer,
+      isFieldBuilderDrawerOpen: false,
+      editedItem: {},
+      search: '',
+      dynamicFields: [],
+      searchQuery: '',
+      loading: false,
+      saving: false,
+      originalFields: [],
+      configDiff: '',
+      changes: '',
+      saveChangesDialog: false,
+      dropLine: { id: null, cls: "" },
+      draggingId: null,
+      sortables: {},
+    }),
+    async mounted() {
+      await this.fetchDynamicFields();
+
+      this.initSortable(this.$refs.mainList);
+    },
+    computed: {
+      hasChanges() {
+        const changes = this.computeChanges();
+        return changes.create.length || changes.update.length || changes.delete.length;
+      }
+    },
+    methods: {
+      getSectionRef(id) {
+        // return a ref for the section container
+        return `section-${id}`;
       },
-      computed: {
-        hasChanges() {
-          const changes = this.computeChanges();
-          return changes.create.length || changes.update.length || changes.delete.length;
+      sortDynamicFields() {
+        this.dynamicFields = this.dynamicFields.sort((a, b) => {
+          if (a.sort_order === 0 && b.sort_order !== 0) return 1;  // a goes last
+          if (b.sort_order === 0 && a.sort_order !== 0) return -1; // b goes last
+          return a.sort_order - b.sort_order; // normal sort
+        });
+      },
+      matchesSearch(field) {
+        return !this.search || field.title?.toLowerCase().includes(this.search.toLowerCase());
+      },
+      edit({ field }) {
+        const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
+        this.editedItem = matchingField;
+        this.isFieldBuilderDrawerOpen = true;
+      },
+      saveField(evt) {
+        let idx = this.dynamicFields.findIndex(coreField => coreField.id === evt.id)
+
+        if (this.dynamicFields[idx] && evt.id) {
+          // Update existing field
+          this.dynamicFields[idx] = { ...evt }
+        } else {
+          // Add new field
+          this.dynamicFields.push(evt)
+        }
+
+        this.sortDynamicFields()
+      },
+      async fetchDynamicFields() {
+        try {
+          this.loading = true;
+          const response = await axios.get('/admin/api/dynamic-fields/?entity_type=bulletin');
+          this.dynamicFields = response.data.data;
+          this.reindexZeroSortFields();
+          this.sortDynamicFields();
+          this.originalFields = JSON.parse(JSON.stringify(this.dynamicFields)); // deep clone
+        } catch (err) {
+          console.error(err);
+          this.showSnack(handleRequestError(err));
+        } finally {
+          this.loading = false;
         }
       },
-      methods: {
-        sortDynamicFields() {
-          this.dynamicFields = this.dynamicFields.sort((a, b) => {
-            if (a.sort_order === 0 && b.sort_order !== 0) return 1;  // a goes last
-            if (b.sort_order === 0 && a.sort_order !== 0) return -1; // b goes last
-            return a.sort_order - b.sort_order; // normal sort
-          });
-        },
-        matchesSearch(field) {
-          return !this.search || field.title?.toLowerCase().includes(this.search.toLowerCase());
-        },
-        edit({ field }) {
-          const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
-          this.editedItem = matchingField;
-          this.isFieldBuilderDrawerOpen = true;
-        },
-        saveField(evt) {
-          let idx = this.dynamicFields.findIndex(coreField => coreField.id === evt.id)
 
-          if (this.dynamicFields[idx] && evt.id) {
-            // Update existing field
-            this.dynamicFields[idx] = { ...evt }
+      showSaveDialog() {
+        this.changes = this.computeChanges();
+        const fieldsForDiff = this.dynamicFields.map(field => {
+          if (field.id?.startsWith?.('backup-')) {
+            // Return a copy of the field without the backup id
+            const { id, ...rest } = field;
+            return rest;
+          }
+          return field;
+        });
+        this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, fieldsForDiff);
+        this.saveChangesDialog = true;
+      },
+
+      async save() {
+        this.saving = true;
+        try {
+          const changes = this.computeChanges();
+
+          const requests = [];
+
+          // Create
+          for (const { item } of changes.create) {
+            requests.push(
+              axios.post(`/admin/api/dynamic-fields/`, { item })
+                .then(res => {
+                  // ✅ mark as saved
+                  this.originalFields.push(res.data.item);
+                })
+            );
+          }
+
+          // Update
+          for (const { id, item } of changes.update) {
+            requests.push(
+              axios.put(`/admin/api/dynamic-fields/${id}`, { item })
+                .then(res => {
+                  // ✅ replace in originalFields
+                  const idx = this.originalFields.findIndex(f => f.id === id);
+                  if (idx !== -1) this.originalFields[idx] = res.data.item;
+                })
+            );
+          }
+
+          // Delete
+          for (const { id, item } of changes.delete) {
+            if (!id || id?.startsWith?.('backup-')) continue;
+
+            requests.push(
+              axios.delete(`/admin/api/dynamic-fields/${id}}`)
+                .then(() => {
+                  // ✅ remove from originalFields
+                  this.originalFields = this.originalFields.filter(f => f.id !== id);
+                })
+            );
+          }
+
+          // Run all in parallel, but don’t throw
+          const results = await Promise.allSettled(requests);
+
+          const failed = results.filter(r => r.status === 'rejected');
+          if (failed.length > 0) {
+            console.log('Some requests failed:', failed);
+            this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
+            // recompute changes so dialog only shows unsaved
+            this.changes = this.computeChanges();
+            this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, this.dynamicFields);
           } else {
-            // Add new field
-            this.dynamicFields.push(evt)
+            this.showSnack('{{ _("Fields saved successfully") }}');
+            await this.fetchDynamicFields(); // reload fresh
+            this.saveChangesDialog = false;
+            this.configDiff = '';
           }
+        } catch (err) {
+          console.error(err);
+          this.showSnack(handleRequestError(err));
+        } finally {
+          this.saving = false;
+        }
+      },
 
-          this.sortDynamicFields()
-        },
-        async fetchDynamicFields() {
-          try {
-            this.loading = true;
-            const response = await axios.get('/admin/api/dynamic-fields/?entity_type=bulletin');
-            this.dynamicFields = response.data.data;
-            this.reindexZeroSortFields();
-            this.sortDynamicFields();
-            this.originalFields = JSON.parse(JSON.stringify(this.dynamicFields)); // deep clone
-          } catch (err) {
-            console.error(err);
-            this.showSnack(handleRequestError(err));
-          } finally {
-            this.loading = false;
+      computeChanges() {
+        const changes = { create: [], update: [], delete: [] };
+        const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
+
+        for (const field of this.dynamicFields) {
+          if (!field.id || field.id?.startsWith?.('backup-')) {
+            changes.create.push({ item: field });
+          } else {
+            const orig = originalMap.get(field.id);
+            if (orig) {
+              if (JSON.stringify(field) !== JSON.stringify(orig)) {
+                changes.update.push({ id: field.id, item: field });
+              }
+              originalMap.delete(field.id);
+            }
           }
-        },
+        }
 
-        showSaveDialog() {
-          this.changes = this.computeChanges();
-          const fieldsForDiff = this.dynamicFields.map(field => {
-            if (field.id?.startsWith?.('backup-')) {
-              // Return a copy of the field without the backup id
-              const { id, ...rest } = field;
-              return rest;
+        // Remaining originals are deleted (dynamic only)
+        for (const field of originalMap.values()) {
+          if (!field.core) {
+            changes.delete.push({ id: field.id, item: field });
+          }
+        }
+
+        return changes;
+      },
+
+      mapFieldToComponent(field) {
+        const baseProps = {
+          fieldId: field.id,
+          label: field.title,
+          name: field.name,
+          modelValue: field.schema_config?.default ?? null,
+          variant: 'filled',
+          disabled: !field.active,
+          hint: field?.ui_config?.help_text,
+        };
+
+        const numberProps = {
+          precision: field.field_type === 'float'
+            ? Number(field?.validation_config?.precision) || null
+            : 0,
+          min: field?.validation_config?.min,
+          max: field?.validation_config?.max,
+        };
+
+        const componentMap = {
+          number: { component: 'v-number-input', ...baseProps, ...numberProps },
+          text_input: { component: 'v-text-field', ...baseProps },
+          multi_select: {
+            component: 'v-select',
+            ...baseProps,
+            items: field.options,
+            'item-title': 'label',
+            'item-value': 'value',
+            multiple: field.field_type === 'array'
+          },
+          dropdown: {
+            component: 'v-select',
+            ...baseProps,
+            items: field.options,
+            'item-title': 'label',
+            'item-value': 'value',
+            multiple: field.field_type === 'array'
+          },
+          text_area: { component: 'v-textarea', ...baseProps },
+          checkbox: { component: 'v-checkbox', ...baseProps },
+          switch: { component: 'v-switch', ...baseProps },
+          date_picker: { component: 'pop-date-time-field' },
+          editor: {
+            component: 'tinymce-editor',
+            init: tinyConfig,
+            disabled: !field.active,
+            fieldId: field.id
+          },
+        };
+
+        return componentMap[field.ui_component] || null;
+      },
+
+      isHorizontalLayout(el) {
+        const parent = el?.parentElement;
+        if (!parent) return false;
+        const style = window.getComputedStyle(parent);
+        return style.display.startsWith("flex") && style.flexDirection.startsWith("row");
+      },
+
+      initSortable(el) {
+        if (!el) return;
+
+        const sortable = new Sortable(el, {
+          group: "fields",
+          draggable: ".sortable-item",   // <- important
+          sort: true,                    // allow hit testing
+          animation: 150,
+          handle: ".drag-handle",        // ensure your items have this
+          ghostClass: "sortable-ghost",
+          scroll: true,
+          bubbleScroll: true,
+          forceAutoScrollFallback: true,
+          forceFallback: true,
+          scrollSensitivity: 100,
+
+          onStart: (evt) => {
+            this.draggingId = evt.item?.dataset?.id ?? null;
+          },
+
+          onMove: (evt, originalEvent) => {
+            // make sure we’re targeting your wrapper
+            const target = evt.related?.closest?.('.sortable-item');
+            if (!target) {
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
+              return false; // keep DOM intact
             }
-            return field;
-          });
-          this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, fieldsForDiff);
-          this.saveChangesDialog = true;
-        },
-
-        async save() {
-          this.saving = true;
-          try {
-            const changes = this.computeChanges();
-
-            const requests = [];
-
-            // Create
-            for (const { item } of changes.create) {
-              requests.push(
-                axios.post(`/admin/api/dynamic-fields/`, { item })
-                  .then(res => {
-                    // ✅ mark as saved
-                    this.originalFields.push(res.data.item);
-                  })
-              );
+            const overId = target.dataset?.id;
+            if (!overId || overId == this.draggingId) {
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
+              return false;
             }
 
-            // Update
-            for (const { id, item } of changes.update) {
-              requests.push(
-                axios.put(`/admin/api/dynamic-fields/${id}`, { item })
-                  .then(res => {
-                    // ✅ replace in originalFields
-                    const idx = this.originalFields.findIndex(f => f.id === id);
-                    if (idx !== -1) this.originalFields[idx] = res.data.item;
-                  })
-              );
-            }
+            const rect = target.getBoundingClientRect();
+            const isHorizontal = this.isHorizontalLayout(target);
+            const threshold = 4;
+            let cls = "";
 
-            // Delete
-            for (const { id, item } of changes.delete) {
-              if (!id || id?.startsWith?.('backup-')) continue;
-
-              requests.push(
-                axios.delete(`/admin/api/dynamic-fields/${id}}`)
-                  .then(() => {
-                    // ✅ remove from originalFields
-                    this.originalFields = this.originalFields.filter(f => f.id !== id);
-                  })
-              );
-            }
-
-            // Run all in parallel, but don’t throw
-            const results = await Promise.allSettled(requests);
-
-            const failed = results.filter(r => r.status === 'rejected');
-            if (failed.length > 0) {
-              console.log('Some requests failed:', failed);
-              this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
-              // recompute changes so dialog only shows unsaved
-              this.changes = this.computeChanges();
-              this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, this.dynamicFields);
+            if (isHorizontal) {
+              const midX = rect.left + rect.width / 2;
+              if (originalEvent.clientX < midX - threshold) cls = "drop-line-left";
+              else if (originalEvent.clientX > midX + threshold) cls = "drop-line-right";
             } else {
-              this.showSnack('{{ _("Fields saved successfully") }}');
-              await this.fetchDynamicFields(); // reload fresh
-              this.saveChangesDialog = false;
-              this.configDiff = '';
-            }
-          } catch (err) {
-            console.error(err);
-            this.showSnack(handleRequestError(err));
-          } finally {
-            this.saving = false;
-          }
-        },
+              const midY = rect.top + rect.height / 2;
+              const offset = originalEvent.clientY - rect.top;
 
-        computeChanges() {
-          const changes = { create: [], update: [], delete: [] };
-          const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
-
-          for (const field of this.dynamicFields) {
-            if (!field.id || field.id?.startsWith?.('backup-')) {
-              changes.create.push({ item: field });
-            } else {
-              const orig = originalMap.get(field.id);
-              if (orig) {
-                if (JSON.stringify(field) !== JSON.stringify(orig)) {
-                  changes.update.push({ id: field.id, item: field });
-                }
-                originalMap.delete(field.id);
+              if (offset < rect.height / 2) {
+                // top half → only ABOVE
+                cls = "drop-line-above";
+              } else {
+                // bottom half → only BELOW
+                cls = "drop-line-below";
               }
             }
-          }
 
-          // Remaining originals are deleted (dynamic only)
-          for (const field of originalMap.values()) {
-            if (!field.core) {
-              changes.delete.push({ id: field.id, item: field });
+            // update single state (only one line is ever visible)
+            if (cls) {
+              this.dropLine.id = overId;
+              this.dropLine.cls = cls;
+            } else {
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
             }
-          }
 
-          return changes;
-        },
-        
-        mapFieldToComponent(field) {
-          const baseProps = {
-            fieldId: field.id,
-            label: field.title,
-            name: field.name,
-            modelValue: field.schema_config?.default ?? null,
-            variant: 'filled',
-            disabled: !field.active,
-            hint: field?.ui_config?.help_text,
-          };
+            return false; // cancel DOM swap; we’ll apply onEnd
+          },
 
-          const numberProps = {
-            precision: field.field_type === 'float'
-              ? Number(field?.validation_config?.precision) || null
-              : 0,
-            min: field?.validation_config?.min,
-            max: field?.validation_config?.max,
-          };
+          onEnd: (evt) => {
+            const overId = this.dropLine.id;
+            const cls = this.dropLine.cls;
 
-          const componentMap = {
-            number: { component: 'v-number-input', ...baseProps, ...numberProps },
-            text_input: { component: 'v-text-field', ...baseProps },
-            multi_select: {
-              component: 'v-select',
-              ...baseProps,
-              items: field.options,
-              'item-title': 'label',
-              'item-value': 'value',
-              multiple: field.field_type === 'array'
-            },
-            dropdown: {
-              component: 'v-select',
-              ...baseProps,
-              items: field.options,
-              'item-title': 'label',
-              'item-value': 'value',
-              multiple: field.field_type === 'array'
-            },
-            text_area: { component: 'v-textarea', ...baseProps },
-            checkbox: { component: 'v-checkbox', ...baseProps },
-            switch: { component: 'v-switch', ...baseProps },
-            date_picker: { component: 'pop-date-time-field' },
-            editor: {
-              component: 'tinymce-editor',
-              init: tinyConfig,
-              disabled: !field.active,
-              fieldId: field.id
-            },
-          };
+            // reset UI state regardless
+            const resetUI = () => {
+              this.draggingId = null;
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
+            };
 
-          return componentMap[field.ui_component] || null;
+            if (!overId || !cls || !this.draggingId) {
+              resetUI();
+              return;
+            }
+
+            const arr = this.dynamicFields; // main list only (no sections right now)
+
+            const fromIdx = arr.findIndex(i => i.id == this.draggingId);
+            let tgtIdx = arr.findIndex(i => i.id == overId);
+
+            if (fromIdx === -1 || tgtIdx === -1) {
+              resetUI();
+              return;
+            }
+
+            // below/right => insert after target; above/left => before
+            const after = cls === 'drop-line-below' || cls === 'drop-line-right';
+            let insertIndex = tgtIdx + (after ? 1 : 0);
+
+            // moving within same array: adjust for removal if dragging from before the insert point
+            if (fromIdx < insertIndex) insertIndex -= 1;
+
+            const [moved] = arr.splice(fromIdx, 1);
+            arr.splice(insertIndex, 0, moved);
+
+            resetUI();
+            this.reindexFields(); // keep sort_order consistent
+          },
+        });
+
+        this.sortables.main = sortable;
+      },
+
+      reindexFields() {
+        this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, sort_order: index + 1 }))
+      },
+      reindexZeroSortFields() {
+        // Find max sort_order before first zero
+        let maxOrder = 0;
+        for (const field of this.dynamicFields) {
+          if (field.sort_order === 0) break;
+          if (field.sort_order > maxOrder) maxOrder = field.sort_order;
         }
-,
-        onDragEnd() {
-          this.reindexFields()
-        },
-        reindexFields() {
-          this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, sort_order: index+1 }))
-        },
-        reindexZeroSortFields() {
-          // Find max sort_order before first zero
-          let maxOrder = 0;
-          for (const field of this.dynamicFields) {
-            if (field.sort_order === 0) break;
-            if (field.sort_order > maxOrder) maxOrder = field.sort_order;
-          }
 
-          let counter = maxOrder + 1;
+        let counter = maxOrder + 1;
 
-          this.dynamicFields = this.dynamicFields.map(field => {
-            if (field.sort_order === 0) {
-              return { ...field, sort_order: counter++ };
-            }
-            return field;
-          });
-        },
-        async deleteField({ field }) {
-          try {
-            const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
-            // Soft delete
-            matchingField.active = false;
-          } catch (err) {
-            console.error(err);
-            this.showSnack(handleRequestError(err));
+        this.dynamicFields = this.dynamicFields.map(field => {
+          if (field.sort_order === 0) {
+            return { ...field, sort_order: counter++ };
           }
-        },
-        async toggleFieldVisibility({ field }) {
-          try {
-            const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
-            matchingField.active = !matchingField.active
-          } catch (err) {
-            console.error(err);
-            this.showSnack(handleRequestError(err));
-          }
-        },
-        closeDrawer(open) {
-          this.isFieldBuilderDrawerOpen = open;
-          this.editedItem = {}
+          return field;
+        });
+      },
+      async deleteField({ field }) {
+        try {
+          const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
+          // Soft delete
+          matchingField.active = false;
+        } catch (err) {
+          console.error(err);
+          this.showSnack(handleRequestError(err));
         }
       },
-    });
+      async toggleFieldVisibility({ field }) {
+        try {
+          const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
+          matchingField.active = !matchingField.active
+        } catch (err) {
+          console.error(err);
+          this.showSnack(handleRequestError(err));
+        }
+      },
+      closeDrawer(open) {
+        this.isFieldBuilderDrawerOpen = open;
+        this.editedItem = {}
+      }
+    },
+  });
 
-    app.component('FieldListItem', FieldListItem);
-    app.component('FieldBuilderDrawer', FieldBuilderDrawer);
-    app.component('draggable', vuedraggable);
-    app.component('tinymce-editor', Editor);
-    app.component('PopDateField', PopDateField);
-    app.component('PopDateRangeField', PopDateRangeField);
-    app.component('PopDateTimeField', PopDateTimeField);
-    app.component('DiffRenderer', DiffRenderer);
+  app.component('FieldListItem', FieldListItem);
+  app.component('FieldBuilderDrawer', FieldBuilderDrawer);
+  app.component('draggable', vuedraggable);
+  app.component('tinymce-editor', Editor);
+  app.component('PopDateField', PopDateField);
+  app.component('PopDateRangeField', PopDateRangeField);
+  app.component('PopDateTimeField', PopDateTimeField);
+  app.component('DiffRenderer', DiffRenderer);
 
-    app.use(router);
-    app.use(vuetify).mount('#app');
+  app.use(router);
+  app.use(vuetify).mount('#app');
 
-    window.app = app;
+  window.app = app;
 </script>
 {% endblock %}

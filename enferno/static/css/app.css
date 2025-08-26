@@ -878,3 +878,44 @@ div.jsondiffpatch-child-node-type-array:after {
 .lg-outer {
     z-index: 3000 !important;
 }
+
+/* Form builder drag-n-drop */
+.drop-line {
+    position: relative;
+}
+
+.drop-line-above::before,
+.drop-line-below::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: dodgerblue;
+}
+
+.drop-line-above::before {
+    top: 0;
+}
+
+.drop-line-below::before {
+    bottom: 0;
+}
+
+.drop-line-left::before,
+.drop-line-right::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: dodgerblue;
+}
+
+.drop-line-left::before {
+    left: 0;
+}
+
+.drop-line-right::before {
+    right: 0;
+}
