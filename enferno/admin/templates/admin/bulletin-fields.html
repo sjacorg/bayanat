@@ -41,12 +41,12 @@
       </v-card>
       <v-divider vertical></v-divider>
       <v-card variant="flat" class="ml-3 w-100">
-        <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 152px);">
+        <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0" style="height: calc(100vh - 152px);">
           <div class="d-flex justify-center w-100"><v-progress-circular indeterminate
               v-if="loading"></v-progress-circular></div>
 
           <div ref="mainList" class="d-flex flex-wrap">
-            <div v-for="field in dynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="['w-50',{
+            <div v-for="(field, index) in dynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="['w-100' ,{
                 'drop-line': dropLine.id == field.id,
                 [dropLine.cls]: dropLine.id == field.id
               }]">
@@ -318,11 +318,12 @@
         return changes;
       },
 
-      isHorizontalLayout(el) {
-        const parent = el?.parentElement;
-        if (!parent) return false;
-        const style = window.getComputedStyle(parent);
-        return style.display.startsWith("flex") && style.flexDirection.startsWith("row");
+      areInSameRow(a, b) {
+        if (!a || !b) return false;
+        const rectA = a.getBoundingClientRect();
+        const rectB = b.getBoundingClientRect();
+        // if tops are within ~half height, treat them as same row
+        return Math.abs(rectA.top - rectB.top) < (rectA.height / 2);
       },
 
       initSortable(el) {
@@ -361,25 +362,20 @@
             }
 
             const rect = target.getBoundingClientRect();
-            const isHorizontal = this.isHorizontalLayout(target);
-            const threshold = 4;
             let cls = "";
 
-            if (isHorizontal) {
-              const midX = rect.left + rect.width / 2;
-              if (originalEvent.clientX < midX - threshold) cls = "drop-line-left";
-              else if (originalEvent.clientX > midX + threshold) cls = "drop-line-right";
-            } else {
-              const midY = rect.top + rect.height / 2;
-              const offset = originalEvent.clientY - rect.top;
+            const sameRow = this.areInSameRow(evt.dragged, target);
 
-              if (offset < rect.height / 2) {
-                // top half → only ABOVE
-                cls = "drop-line-above";
-              } else {
-                // bottom half → only BELOW
-                cls = "drop-line-below";
-              }
+            if (sameRow) {
+              // Horizontal logic
+              const midX = rect.left + rect.width / 2;
+              if (originalEvent.clientX < midX) cls = "drop-line-left";
+              else cls = "drop-line-right";
+            } else {
+              // Vertical logic
+              const midY = rect.top + rect.height / 2;
+              if (originalEvent.clientY < midY) cls = "drop-line-above";
+              else cls = "drop-line-below";
             }
 
             // update single state (only one line is ever visible)
