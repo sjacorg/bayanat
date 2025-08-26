@@ -100,10 +100,10 @@
                 </v-stepper-window-item>
 
                 <v-stepper-window-item value="2" class="h-100">
-                    <v-card class="pa-3 overflow-y-auto" style="height: calc(100% - 90px);">
+                    <v-card elevation="0" class="pa-3 overflow-y-auto h-100">
                         <v-row class="align-stretch h-100">
                             <v-col cols="12" md="3" class="h-100">
-                                <v-card class="mt-4 overflow-y-auto h-100">
+                                <div class="mt-4 px-4 overflow-y-auto h-100">
                                     <v-toolbar>
                                         <v-toolbar-title class="d-flex">
                                             {{ _('Sheet Fields') }}
@@ -117,15 +117,16 @@
 
                                     <v-divider class="mb-2"></v-divider>
 
-                                    <v-text-field @input="filterFields"
+                                    <v-text-field
                                                   label="{{ _('Search Fields') }}" v-model="ffilter"
-                                                  clearable class="px-4 mt-4" density="compact" prepend-inner-icon="mdi-magnify"></v-text-field>
+                                                  clearable class="mt-4" density="compact" prepend-inner-icon="mdi-magnify" @click:clear="ffilter = ''"></v-text-field>
 
                                     <draggable
                                             class="list-group"
                                             :clone="clone"
                                             :group="{ name: 'columns', pull: customPull , animation: 100, ghostClass: 'ghost' }"
-                                            v-model="fields"
+                                            :model-value="filteredFields"
+                                            @update:model-value="fields = $event"
                                             @start="start"
                                             item-key="id"
                                     >
@@ -147,9 +148,10 @@
                                             </v-chip>
                                         </template>
                                     </draggable>
-                                </v-card>
-
+                                </div>
                             </v-col>
+
+                            <v-divider vertical></v-divider>
 
                             <v-col cols="12" md="9" class="h-100">
                                 <v-sheet :class="[`overflow-y-auto pa-5`, { 'h-100': $vuetify.display.mdAndUp }]">
@@ -957,6 +959,11 @@
                 allFiles() {
                     return this.files.concat(this.extra);
                 },
+                filteredFields() {
+                    if (!this.ffilter) return this.fields
+
+                    return this.fields.filter(x => x.toLowerCase().includes(this.ffilter.toLowerCase()))
+                },
                 nextButtonProps() {
                     const commonProps = { text: 'Next', 'append-icon': 'mdi-chevron-right', color: 'primary' }
                     switch (this.step) {
@@ -1135,17 +1142,6 @@
                     this.mapid = null;
                     this.vmap = {};
                     this.files = [];
-                },
-
-
-                filterFields() {
-                    if (this.ffilter) {
-                        this.fields = this.structure.columns.filter(x => x.toLowerCase().includes(this.ffilter.toLowerCase()));
-                    } else {
-                        this.fields = this.structure.columns;
-                    }
-
-
                 },
 
                 sheetSelected() {
