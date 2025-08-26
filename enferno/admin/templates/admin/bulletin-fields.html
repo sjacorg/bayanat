@@ -326,15 +326,26 @@
         return Math.abs(rectA.top - rectB.top) < (rectA.height / 2);
       },
 
+      wouldMove(fromIdx, tgtIdx, cls) {
+        if (fromIdx === tgtIdx) return false;
+
+        if (cls === 'drop-line-above' || cls === 'drop-line-left') {
+          return fromIdx !== tgtIdx - 1; // moving above a next neighbor → no-op
+        } else if (cls === 'drop-line-below' || cls === 'drop-line-right') {
+          return fromIdx !== tgtIdx + 1; // moving below a previous neighbor → no-op
+        }
+        return true;
+      },
+
       initSortable(el) {
         if (!el) return;
 
         const sortable = new Sortable(el, {
           group: "fields",
-          draggable: ".sortable-item",   // <- important
-          sort: true,                    // allow hit testing
+          draggable: ".sortable-item",
+          sort: true,
           animation: 150,
-          handle: ".drag-handle",        // ensure your items have this
+          handle: ".drag-handle",
           ghostClass: "sortable-ghost",
           scroll: true,
           bubbleScroll: true,
@@ -347,13 +358,13 @@
           },
 
           onMove: (evt, originalEvent) => {
-            // make sure we’re targeting your wrapper
             const target = evt.related?.closest?.('.sortable-item');
             if (!target) {
               this.dropLine.id = null;
               this.dropLine.cls = "";
-              return false; // keep DOM intact
+              return false;
             }
+
             const overId = target.dataset?.id;
             if (!overId || overId == this.draggingId) {
               this.dropLine.id = null;
@@ -369,16 +380,19 @@
             if (sameRow) {
               // Horizontal logic
               const midX = rect.left + rect.width / 2;
-              if (originalEvent.clientX < midX) cls = "drop-line-left";
-              else cls = "drop-line-right";
+              cls = originalEvent.clientX < midX ? "drop-line-left" : "drop-line-right";
             } else {
               // Vertical logic
               const midY = rect.top + rect.height / 2;
-              if (originalEvent.clientY < midY) cls = "drop-line-above";
-              else cls = "drop-line-below";
+              cls = originalEvent.clientY < midY ? "drop-line-above" : "drop-line-below";
             }
 
-            // update single state (only one line is ever visible)
+            // 🔍 Hide drop line if dropping wouldn't move the item
+            const fromIdx = this.dynamicFields.findIndex(i => i.id == this.draggingId);
+            const tgtIdx = this.dynamicFields.findIndex(i => i.id == overId);
+            if (!this.wouldMove(fromIdx, tgtIdx, cls)) cls = "";
+
+            // Update drop line state
             if (cls) {
               this.dropLine.id = overId;
               this.dropLine.cls = cls;
@@ -387,14 +401,13 @@
               this.dropLine.cls = "";
             }
 
-            return false; // cancel DOM swap; we’ll apply onEnd
+            return false; // cancel DOM swap
           },
 
           onEnd: (evt) => {
             const overId = this.dropLine.id;
             const cls = this.dropLine.cls;
 
-            // reset UI state regardless
             const resetUI = () => {
               this.draggingId = null;
               this.dropLine.id = null;
@@ -406,33 +419,38 @@
               return;
             }
 
-            const arr = this.dynamicFields; // main list only (no sections right now)
+            const arr = this.dynamicFields;
 
             const fromIdx = arr.findIndex(i => i.id == this.draggingId);
-            let tgtIdx = arr.findIndex(i => i.id == overId);
+            const tgtIdx = arr.findIndex(i => i.id == overId);
 
             if (fromIdx === -1 || tgtIdx === -1) {
               resetUI();
               return;
             }
 
-            // below/right => insert after target; above/left => before
+            // No-op check: don't move if drop wouldn't change anything
+            if (!this.wouldMove(fromIdx, tgtIdx, cls)) {
+              resetUI();
+              return;
+            }
+
             const after = cls === 'drop-line-below' || cls === 'drop-line-right';
             let insertIndex = tgtIdx + (after ? 1 : 0);
 
-            // moving within same array: adjust for removal if dragging from before the insert point
             if (fromIdx < insertIndex) insertIndex -= 1;
 
             const [moved] = arr.splice(fromIdx, 1);
             arr.splice(insertIndex, 0, moved);
 
             resetUI();
-            this.reindexFields(); // keep sort_order consistent
+            this.reindexFields();
           },
         });
 
         this.sortables.main = sortable;
       },
+
 
       reindexFields() {
         this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, sort_order: index + 1 }))
