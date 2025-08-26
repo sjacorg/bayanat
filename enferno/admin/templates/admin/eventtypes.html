@@ -161,6 +161,11 @@
 
                                     </v-toolbar>
                                 </template>
+
+                                <template #['item.comments']="{ item }">
+                                    <div class="line-clamp-1">${item.comments}</div>
+                                </template>
+
                                 <template v-slot:item.action="{ item }">
                                     <v-icon small class="mr-2" @click="editItem(item)">
                                         mdi-pencil

@@ -395,7 +395,7 @@ class UserFactory(factory.Factory):
 
     username = factory.Sequence(lambda n: f"Uniqueuser{n}")
     password = factory.Sequence(lambda n: f"SecurePassword{n}!")
-    email = factory.Faker("email")
+    email = factory.Sequence(lambda n: f"testuser{n}@gmail.com")
     active = True
     name = factory.Sequence(lambda n: f"Name {n}")
     fs_uniquifier = uuid4().hex
