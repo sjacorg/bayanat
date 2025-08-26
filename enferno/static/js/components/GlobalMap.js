@@ -12,6 +12,8 @@ const GlobalMap = Vue.defineComponent({
       return [...new Set(this.locations.map(loc => loc.eventtype).filter(Boolean))];
     },
     filteredLocations() {
+      if (!this.selectedLocations.length) return this.locations
+
       return this.locations.filter(loc => this.selectedLocations.includes(loc.eventtype));
     }
   },
@@ -158,7 +160,6 @@ const GlobalMap = Vue.defineComponent({
         let eventLocations = [];
 
         const locationsWithCoordinates = visibleLocations.filter(loc => loc.lat && loc.lng);
-
         for (const loc of locationsWithCoordinates) {
 
           if (loc.main) {
