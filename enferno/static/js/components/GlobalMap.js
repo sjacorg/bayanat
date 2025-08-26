@@ -138,10 +138,10 @@ const GlobalMap = Vue.defineComponent({
     },
     clearAllLayers() {
       // Remove marker cluster group
-      this.markerGroup.clearLayers();
+      this.markerGroup?.clearLayers?.();
 
       // Remove event links group
-      this.eventLinks.clearLayers();
+      this.eventLinks?.clearLayers?.();
     },
     fitMarkers() {
       // construct a list of markers to build a feature group
@@ -162,10 +162,8 @@ const GlobalMap = Vue.defineComponent({
         for (const loc of locationsWithCoordinates) {
 
           if (loc.main) {
-            mainStr = this.translations.mainIncident_;
             loc.color = '#000000';
           }
-
 
           let marker = L.circleMarker([loc.lat, loc.lng], {
             color: 'white',
