@@ -12,9 +12,7 @@ const GlobalMap = Vue.defineComponent({
       return [...new Set(this.locations.map(loc => loc.eventtype).filter(Boolean))];
     },
     filteredLocations() {
-      if (!this.selectedLocations.length) return this.locations
-
-      return this.locations.filter(loc => this.selectedLocations.includes(loc.eventtype));
+      return this.locations.filter(loc => this.selectedLocations.includes(loc.eventtype) || !('eventtype' in loc));
     }
   },
 
