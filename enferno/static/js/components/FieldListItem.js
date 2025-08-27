@@ -84,6 +84,13 @@ const FieldListItem = Vue.defineComponent({
         width(nextWidth) {
             // Ensure ui_config exists (without overwriting existing properties), then update width property
             (this.field.ui_config ??= {}).width = nextWidth ?? 'w-100'
+        },
+        'field.title'(nextTitle) {
+            const originalField = this.$root.originalFields.find(of => of.id === this.field.id)
+            if (!originalField?.name) {
+                const slugTitle = this.$root.slugify(nextTitle)
+                this.field.name = slugTitle
+            }
         }
     },
     template: /*html*/`
