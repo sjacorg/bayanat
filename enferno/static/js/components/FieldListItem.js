@@ -11,7 +11,8 @@ const FieldListItem = Vue.defineComponent({
     props: ['field', 'dragging'],
     emits: ['delete', 'toggle-visibility'],
     data: () => ({
-        translations: window.translations
+        translations: window.translations,
+        editingMode: false
     }),
     computed: {
         componentProps() {
@@ -22,14 +23,18 @@ const FieldListItem = Vue.defineComponent({
         mapFieldToComponent(field) {
             const baseProps = {
                 fieldId: field.id,
-                label: field.title,
+                label: field.title || 'New Field',
                 name: field.name,
                 modelValue: field.schema_config?.default ?? null,
                 variant: 'filled',
                 disabled: !field.active,
                 hint: field?.ui_config?.help_text,
                 hideDetails: true,
-                prependInnerIcon: iconMap[field.ui_component]
+                prependInnerIcon: iconMap[field.ui_component],
+                appendInner: 'ok',
+                'data-field-id': field.id,
+                readonly: true,
+                bgColor: !this.$vuetify.theme.global.current.dark && field.core ? 'core-field-accent' : undefined
             };
 
             const numberProps = {
@@ -74,11 +79,15 @@ const FieldListItem = Vue.defineComponent({
             return componentMap[field.ui_component] || null;
         },
     },
-    template: /*html*/ `
+    template: /*html*/`
     <v-hover v-if="componentProps">
         <template v-slot:default="{ isHovering, props }">
-            <div v-bind="props" class="d-flex flex-column ga-1 px-6 pb-6">
-                <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': isHovering && !dragging }]">
+            <div v-bind="props" class="d-flex flex-column ga-1 px-6 pb-6 position-relative rounded-16 overflow-hidden">
+                <v-slide-x-transition>
+                    <div v-if="editingMode" class="position-absolute top-0 left-0 h-100 bg-primary" style="width: 10px;"></div>
+                </v-slide-x-transition>
+
+                <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging) }]">
                     <div>
                         Width:
                         <v-btn-toggle color="primary" mandatory density="compact" variant="outlined" divided rounded>
@@ -94,16 +103,16 @@ const FieldListItem = Vue.defineComponent({
 
                     <v-icon class="drag-handle cursor-grab" size="large">mdi-drag-horizontal</v-icon>
 
-                    <div v-if="!componentProps?.readonly" class="d-flex ga-4">
+                    <div class="d-flex ga-4">
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" density="comfortable" variant="flat" icon @click="$emit('edit', { field, componentProps })" size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
+                                <v-btn v-bind="props" density="comfortable" variant="flat" icon size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsRequired_ }}
                         </v-tooltip>
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" density="comfortable" variant="flat" icon @click="$emit('edit', { field, componentProps })" size="small"><v-icon>mdi-magnify</v-icon></v-btn>
+                                <v-btn v-bind="props" density="comfortable" variant="flat" icon size="small"><v-icon>mdi-magnify</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsSearchable_ }}
                         </v-tooltip>
@@ -115,14 +124,43 @@ const FieldListItem = Vue.defineComponent({
                         </v-tooltip>
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" density="comfortable" variant="flat" :disabled="field.core" icon @click="$emit('delete', { field, componentProps })" size="small"><v-icon>mdi-trash-can-outline</v-icon></v-btn>
+                                <span v-bind="props">
+                                    <v-btn density="comfortable" variant="flat" :disabled="field.core" icon @click="$emit('delete', { field, componentProps })" size="small"><v-icon>mdi-trash-can-outline</v-icon></v-btn>
+                                </span>
                             </template>
-                            {{ translations.deleteField_ }}
+                            {{ field.core ? translations.deletionRestricted_ : translations.deleteField_ }}
                         </v-tooltip>
                     </div>
                 </div>
 
-                <component :is="componentProps.component" v-bind="componentProps" />
+                <div v-if="!editingMode" class="cursor-pointer" @click="editingMode = true">
+                    <div class="pointer-events-none">
+                        <component :is="componentProps.component" v-bind="componentProps">
+                            <template #append-inner>
+                                <v-chip v-if="field.core" variant="outlined" color="purple-lighten-1" class="rounded">
+                                    DEFAULT
+                                </v-chip>
+                                <v-chip v-else variant="outlined" class="rounded">
+                                    CUSTOM
+                                </v-chip>
+                            </template>
+                        </component>
+                    </div>
+                </div>
+                <div v-else v-click-outside="() => this.editingMode = false">
+                    <v-text-field variant="filled" label="Field label" v-model="field.title"></v-text-field>
+
+                    <v-row>
+                        <v-col v-if="field.ui_component === 'dropdown'" cols="12" md="6">
+                            <div class="d-flex align-center">
+                                <div class="text-h6 text-primary">Field Options</div>
+                            </div>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <div class="text-h6 text-primary">Field Properties</div>
+                        </v-col>
+                    </v-row>
+                </div>
             </div>
         </template>
     </v-hover>
