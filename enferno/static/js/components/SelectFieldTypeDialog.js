@@ -61,7 +61,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           required: false,
           options: ui_component === 'dropdown' ? [] : null,
           schema_config: {},
-          ui_config: { width: 'w-100' },
+          ui_config: { width: 'w-100', help_text: '' },
           validation_config: {},
           active: true,
           searchable: false,
