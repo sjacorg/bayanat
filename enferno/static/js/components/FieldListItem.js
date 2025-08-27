@@ -9,10 +9,11 @@ const iconMap = {
 
 const FieldListItem = Vue.defineComponent({
     props: ['field', 'dragging'],
-    emits: ['delete', 'toggle-visibility'],
+    emits: ['delete', 'toggle-visibility', 'width'],
     data: () => ({
         translations: window.translations,
-        editingMode: false
+        editingMode: false,
+        width: this.field?.ui_config?.width || 'w-100'
     }),
     computed: {
         componentProps() {
@@ -79,6 +80,12 @@ const FieldListItem = Vue.defineComponent({
             return componentMap[field.ui_component] || null;
         },
     },
+    watch: {
+        width(nextWidth) {
+            // Ensure ui_config exists (without overwriting existing properties), then update width property
+            (this.field.ui_config ??= {}).width = nextWidth ?? 'w-100'
+        }
+    },
     template: /*html*/`
     <v-hover v-if="componentProps">
         <template v-slot:default="{ isHovering, props }">
@@ -90,12 +97,11 @@ const FieldListItem = Vue.defineComponent({
                 <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging), 'pointer-events-none': dragging }]">
                     <div>
                         Width:
-                        <v-btn-toggle color="primary" mandatory density="compact" variant="outlined" divided rounded>
-                            <v-btn>
+                        <v-btn-toggle v-model="width" color="primary" mandatory density="compact" variant="outlined" divided rounded>
+                            <v-btn value="w-100">
                                 Full
                             </v-btn>
-
-                            <v-btn>
+                            <v-btn value="w-50">
                                 Half
                             </v-btn>
                         </v-btn-toggle>
