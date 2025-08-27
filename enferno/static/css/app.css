@@ -845,6 +845,7 @@ div.jsondiffpatch-child-node-type-array:after {
 .left-auto { left: var(--v-left-auto) !important; }
 .h-fit { height: var(--v-h-fit); }
 .pointer-events-none { pointer-events: var(--v-pointer-events-none) !important; }
+.pointer-events-auto { pointer-events: var(--v-pointer-events-auto) !important; }
 .rounded-16 { border-radius: var(--v-rounded-16) !important; }
 .rounded-12 { border-radius: var(--v-rounded-12) !important; }
 .rounded-10 { border-radius: var(--v-rounded-10) !important; }

@@ -125,6 +125,7 @@ const variables = {
 
     // Pointer events
     'pointer-events-none': 'none',
+    'pointer-events-auto': 'auto',
 }
 const vuetifyConfig = {
     defaults: {

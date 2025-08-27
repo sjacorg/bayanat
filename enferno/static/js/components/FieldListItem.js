@@ -87,7 +87,7 @@ const FieldListItem = Vue.defineComponent({
                     <div v-if="editingMode" class="position-absolute top-0 left-0 h-100 bg-primary" style="width: 10px;"></div>
                 </v-slide-x-transition>
 
-                <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging) }]">
+                <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging), 'pointer-events-none': dragging }]">
                     <div>
                         Width:
                         <v-btn-toggle color="primary" mandatory density="compact" variant="outlined" divided rounded>
@@ -133,7 +133,7 @@ const FieldListItem = Vue.defineComponent({
                     </div>
                 </div>
 
-                <div v-if="!editingMode" class="cursor-pointer" @click="editingMode = true">
+                <div v-if="!editingMode" :class="{'cursor-pointer': !dragging }" @click="editingMode = true">
                     <div class="pointer-events-none">
                         <component :is="componentProps.component" v-bind="componentProps">
                             <template #append-inner>

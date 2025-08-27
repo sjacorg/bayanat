@@ -358,6 +358,7 @@
 
           onStart: (evt) => {
             this.draggingId = evt.item?.dataset?.id ?? null;
+            document.body.classList.add('cursor-grabbing');
           },
 
           onMove: (evt, originalEvent) => {
@@ -408,6 +409,7 @@
           },
 
           onEnd: (evt) => {
+            document.body.classList.remove('cursor-grabbing');
             const overId = this.dropLine.id;
             const cls = this.dropLine.cls;
 
