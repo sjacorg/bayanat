@@ -321,12 +321,9 @@
         return changes;
       },
 
-      areInSameRow(a, b) {
-        if (!a || !b) return false;
-        const rectA = a.getBoundingClientRect();
-        const rectB = b.getBoundingClientRect();
-        // if tops are within ~half height, treat them as same row
-        return Math.abs(rectA.top - rectB.top) < (rectA.height / 2);
+      isTargetRowHorizontal(target) {
+        if (!target) return false;
+        return target.classList.contains('w-50') || target.classList.contains('w-33') || target.classList.contains('w-25');
       },
 
       wouldMove(fromIdx, tgtIdx, cls) {
@@ -379,7 +376,7 @@
             const rect = target.getBoundingClientRect();
             let cls = "";
 
-            const sameRow = this.areInSameRow(evt.dragged, target);
+            const sameRow = this.isTargetRowHorizontal(target);
 
             if (sameRow) {
               // Horizontal logic
