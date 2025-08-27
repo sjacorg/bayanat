@@ -3,24 +3,36 @@ import os
 import boto3
 import gnupg
 import hashlib
-import pandas as pd
 import pyexifinfo as exiflib
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 from pypdf import PdfReader
 from pdf2image import convert_from_path
-from pytesseract import image_to_string, pytesseract  
 from PIL import Image      
 
 from enferno.extensions import db
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.admin.models import Bulletin, Media, Activity
 from enferno.user.models import User, Role
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.utils.base import DatabaseException
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.date_helper import DateHelper
+from enferno.utils.logging_utils import get_logger
 
-pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
+logger = get_logger()
+
+if Config.get("OCR_ENABLED"):
+    if Config.get("HAS_TESSERACT"):
+        from pytesseract import image_to_string, pytesseract
+
+        try:
+            pytesseract.tesseract_cmd = Config.get("TESSERACT_CMD")
+        except Exception as e:
+            logger.error(
+                f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
+            )
+    else:
+        logger.warning("pytesseract not available. OCR functionality will be unavailable.")
 
 class DocImport(MediaImport):
 
@@ -33,11 +45,11 @@ class DocImport(MediaImport):
     def download_file(self):
         s3 = boto3.client(
             "s3",
-            aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+            aws_access_key_id=Config.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=Config.get("AWS_SECRET_ACCESS_KEY"),
         )
 
-        download_path = os.path.join(cfg.IMPORT_DIR, self.file_path.split("/")[-1]) + ".gpg"
+        download_path = os.path.join(Config.get("IMPORT_DIR"), self.file_path.split("/")[-1]) + ".gpg"
 
         try:
             with open(download_path, "wb") as f:
@@ -136,12 +148,12 @@ class DocImport(MediaImport):
         target = os.path.basename(target)
         s3 = boto3.resource(
             "s3",
-            aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
-            region_name=cfg.AWS_REGION,
+            aws_access_key_id=Config.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=Config.get("AWS_SECRET_ACCESS_KEY"),
+            region_name=Config.get("AWS_REGION"),
         )
         try:
-            s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(filepath, "rb"))
+            s3.Bucket(Config.get("S3_BUCKET")).put_object(Key=target, Body=open(filepath, "rb"))
             self.data_import.add_to_log(f"File uploaded to S3 bucket.")
             return True
         except Exception as e:
@@ -226,7 +238,7 @@ class DocImport(MediaImport):
         rotated = False
         text_content = None
         # ocr pictures
-        if ext[1:] in cfg.OCR_EXT:
+        if ext[1:] in Config.get("OCR_EXT"):
             parsed_text = self.parse_pic(decrypted_path) or ""
              
             if info.get('EXIF:Orientation') == 'Rotate 270 CW':
