@@ -3,11 +3,6 @@
         <v-list-item prepend-icon="mdi-file-document-multiple" title="{{ _('Bulletins') }}" href="/admin/bulletins/"
                      key="bulletins"></v-list-item>
 
-        {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
-            <v-list-item prepend-icon="mdi-form-textbox" title="{{ _('Bulletin Fields') }}" href="/admin/bulletin-fields/"
-                         key="bulletin-fields"></v-list-item>
-        {% endif %}
-
         <v-list-item prepend-icon="mdi-account-multiple" title="{{ _('Actors') }}" href="/admin/actors/"
                      key="actors"></v-list-item>
 
@@ -98,6 +93,8 @@
                                 title="{{ _('System Administration') }}"></v-list-item>
                 </template>
 
+                <v-list-item prepend-icon="mdi-form-textbox" title="{{ _('Bulletin Fields') }}" href="/admin/bulletin-fields/"
+                    key="bulletin-fields"></v-list-item>
                 <v-list-item prepend-icon="mdi-cog" title="{{ _('System Settings') }}" href="/admin/system-administration/"
                             key="sysadmin"></v-list-item>
                 <v-list-item prepend-icon="mdi-clipboard-text" title="{{ _('System Logs') }}" href="/admin/logs/"
