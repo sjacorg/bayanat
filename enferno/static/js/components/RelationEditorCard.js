@@ -8,7 +8,7 @@ const RelationEditorCard = Vue.defineComponent({
       required: true,
       default: () => ({
         probability: null,
-        related_as: [],
+        related_as: null,
         comment: '',
       }),
     },

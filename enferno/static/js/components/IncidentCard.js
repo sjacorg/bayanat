@@ -18,7 +18,6 @@ const IncidentCard = Vue.defineComponent({
           if (relatedBulletins && relatedBulletins.length) {
             getBulletinLocations(relatedBulletins.map((x) => x.bulletin.id)).then((res) => {
               this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
-              this.geoMapLoading = false;
               this.geoMapOn = true;
             });
           } else {
@@ -28,7 +27,9 @@ const IncidentCard = Vue.defineComponent({
         })
         .catch((err) => {
           console.log(err.toJSON());
-        });
+        }).finally(() => {
+          this.geoMapLoading = false;
+        })
     },
 
     translate_status(status) {
