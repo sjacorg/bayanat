@@ -89,7 +89,7 @@ const FieldListItem = Vue.defineComponent({
     template: /*html*/`
     <v-hover v-if="componentProps">
         <template v-slot:default="{ isHovering, props }">
-            <div v-bind="props" class="d-flex flex-column ga-1 px-6 pb-6 position-relative rounded-16 overflow-hidden">
+            <div v-bind="props" v-click-outside="() => this.editingMode = false" class="d-flex flex-column ga-1 px-6 pb-6 position-relative rounded-16 overflow-hidden">
                 <v-slide-x-transition>
                     <div v-if="editingMode" class="position-absolute top-0 left-0 h-100 bg-primary" style="width: 10px;"></div>
                 </v-slide-x-transition>
@@ -153,7 +153,7 @@ const FieldListItem = Vue.defineComponent({
                         </component>
                     </div>
                 </div>
-                <div v-else v-click-outside="() => this.editingMode = false">
+                <div v-else>
                     <v-text-field variant="filled" label="Field label" v-model="field.title"></v-text-field>
 
                     <v-row>
