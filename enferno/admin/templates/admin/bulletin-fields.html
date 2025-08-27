@@ -27,7 +27,7 @@
           </v-list>
         </v-menu>
     
-        <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="ui.selectFieldTypeDialog = true"
+        <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="discardChanges"
           color="red">{{
           _('Discard Changes') }}</v-btn>
         <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" color="primary" variant="outlined" :loading="saving"
@@ -164,6 +164,11 @@
       }
     },
     methods: {
+      discardChanges() {
+        if (confirm( "{{ _('Are you sure you want to discard changes?') }}" )) {
+          this.dynamicFields = this.originalFields
+        }
+      },
       sortDynamicFields() {
         this.dynamicFields = this.dynamicFields.sort((a, b) => {
           if (a.sort_order === 0 && b.sort_order !== 0) return 1;  // a goes last
