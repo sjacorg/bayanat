@@ -163,16 +163,19 @@ const FieldListItem = Vue.defineComponent({
                 <div v-else>
                     <v-text-field variant="filled" label="Field label" v-model="field.title"></v-text-field>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                    <div class="d-flex flex-wrap">
                         <!-- First column (conditional) -->
-                        <div v-if="field.ui_component === 'dropdown'">
+                        <div
+                            v-if="field.ui_component === 'dropdown'"
+                            class="w-100 w-md-50"
+                        >
                             <div class="d-flex align-center">
-                            <div class="text-h6 text-primary">Field Options</div>
+                                <div class="text-h6 text-primary">Field Options</div>
                             </div>
                         </div>
 
                         <!-- Second column -->
-                        <div>
+                        <div class="w-100 w-md-50">
                             <div class="text-h6 text-primary">Field Properties</div>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 8px;">
                                 <v-text-field
@@ -182,7 +185,7 @@ const FieldListItem = Vue.defineComponent({
                                 ></v-text-field>
                             </div>
                         </div>
-                    </div>
+                        </div>
                 </div>
             </div>
         </template>
