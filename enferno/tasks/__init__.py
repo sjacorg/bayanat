@@ -7,6 +7,8 @@ import tempfile
 import time
 from collections import namedtuple
 from pathlib import Path
+import random
+from psycopg2.errors import OperationalError
 
 from typing import Any, Generator, Literal, Optional
 from datetime import datetime, timedelta, date, timezone
@@ -55,8 +57,6 @@ import enferno.utils.typing as t
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
 
 # Simple test detection - use TestConfig if in test environment
-import os
-
 if os.environ.get("BAYANAT_CONFIG_FILE") == "config.test.json":
     from enferno.settings import TestConfig
 
@@ -1651,3 +1651,76 @@ def _start_etl_process(
         user_id=user_id,
         data_import_id=import_id,
     )
+
+
+from enferno.data_import.utils.docs_import import DocImport
+
+
+@celery.task(bind=True, max_retries=5)
+def process_doc(
+    self, batch_id: t.id, file_path: str, meta: Any, user_id: t.id, data_import_id: t.id
+) -> None:
+    try:
+        di = DocImport(
+            batch_id, meta, user_id=user_id, data_import_id=data_import_id, file_path=file_path
+        )
+        di.process()
+        return "done"
+    except OperationalError as e:
+        logger.error(f"Encountered an error while processing {file_path}. Retrying...")
+        self.retry(exc=e, countdown=random.randrange(40, 80))
+    except Exception as e:
+        logger.error(f"{e}")
+        log = DataImport.query.get(data_import_id)
+        log.fail(e)
+
+
+from enferno.data_import.utils.youtube_import import YouTubeImport
+
+
+@celery.task(bind=True, max_retries=5)
+def process_etl(self, batch_id: t.id, meta: str, data_import_id: t.id) -> None:
+    """
+    Process YT S3 ETL task.
+    """
+
+    # check if video already exists
+    if Bulletin.query.filter(Bulletin.originid == meta.get("id")).first():
+        # log duplicate and fail
+        data_import = DataImport.query.get(data_import_id)
+        data_import.add_to_log(f"Video already exists in database.")
+        data_import.fail()
+        return
+
+    try:
+        yt = YouTubeImport(batch_id=batch_id, data_import_id=data_import_id, meta=meta)
+        yt.process()
+        return "done"
+    except OperationalError as e:
+        logger.error(f"Encountered an error while processing {meta.get("meta_file")}. Retrying...")
+        self.retry(exc=e, countdown=random.randrange(40, 80))
+    except Exception as e:
+        logger.error(f"{e}")
+        log = DataImport.query.get(data_import_id)
+        log.fail(e)
+
+
+from enferno.data_import.utils.telegram_import import TelegramImport
+
+@celery.task(bind=True, max_retries=5)
+def process_telegram_media(self, data_imports: list) -> None:
+    try:
+        di = TelegramImport(
+            data_imports=data_imports,
+        )
+        di.process()
+        return "done"
+    except OperationalError as e:
+        logger.error(f"Encountered an error while processing Telegram Imports {data_imports}. Retrying...")
+        self.retry(exc=e, countdown=random.randrange(40, 80))
+    except Exception as e:
+        logger.error(f"Encountered an error while processing Telegram Imports {data_imports}: {e}")
+        for log_id in data_imports:
+            log = DataImport.query.get(log_id)
+            log.fail(e)
+            logger.error(f"Stacktrace: {e}", exc_info=True)

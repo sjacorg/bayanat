@@ -1,0 +1,296 @@
+import mimetypes
+
+import boto3
+from botocore.exceptions import ClientError
+
+from sqlalchemy import and_, or_
+
+from enferno.admin.models import Bulletin, Activity, Source, Media, BtobInfo, Btob
+from enferno.user.models import User
+from enferno.data_import.models import DataImport
+from enferno.utils.data_helpers import media_check_duplicates
+from enferno.utils.base import DatabaseException
+
+from enferno.settings import Config as cfg
+
+
+class TelegramImport:
+    """
+    A class to handle Telegram bot interactions.
+    """
+
+    def __init__(self, data_imports):
+        """
+        Initialize the TelegramUtils class.
+
+        Args:
+            batch_id (str): The batch ID.
+            meta (dict): Metadata for the batch.
+            user_id (str): The user ID.
+            data_import_id (str): The data import ID.
+            file_path (str): The file path for the batch.
+        """
+        self.data_imports = [DataImport.query.get(log_id) for log_id in data_imports]
+
+        self.batch_id = self.data_imports[0].batch_id
+
+        self.info = self.data_imports[0].data.get("info")
+
+        self.channel_metadata = self.info.get("channel_metadata")
+        self.bucket = self.data_imports[0].data.get("bucket")
+        self.folder = self.data_imports[0].data.get("folder")
+
+        self.medias = []
+        self.related_medias = []
+        self.related_bulletins = []
+        self.related_data_imports = []
+
+    def check_file(self, data_import, s3_path):
+        """
+        Check if the file exists in S3.
+
+        Args:
+            s3_path (str): The S3 path to the file.
+
+        Returns:
+            bool: True if the file exists, False otherwise.
+        """
+        etag, mime_type = None, None
+        try:
+            s3 = boto3.client(
+                "s3",
+                aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+                region_name=cfg.AWS_REGION,
+            )
+            request = s3.head_object(Bucket=self.bucket, Key=s3_path)
+            etag = request["ETag"].strip('"')
+            mime_type = request["ContentType"]
+
+            # Check if mime type is not correctly set
+            if mime_type == "binary/octet-stream":
+                mime_type = mimetypes.guess_type(s3_path)[0]
+
+            return etag, mime_type
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                data_import.add_to_log(f"File not found: {s3_path}")
+            else:
+                data_import.add_to_log(f"Error checking file: {e}")
+            return False, False
+
+    def copy_file(self, data_import, s3_path, filename):
+        try:
+            s3 = boto3.client(
+                "s3",
+                aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+                region_name=cfg.AWS_REGION,
+            )
+
+            data_import.add_to_log(
+                f"Copying video file to {cfg.S3_BUCKET}/{filename} from {self.bucket + '/' + s3_path}"
+            )
+            s3.copy_object(
+                Bucket=cfg.S3_BUCKET,
+                CopySource=self.bucket + "/" + s3_path,
+                Key=filename,
+            )
+            return True
+        except ClientError as e:
+            data_import.add_to_log(f"Failed to copy {s3_path}. {e}")
+            return False
+
+    def create_bulletin(self):
+        """
+        Create a bulletin from the data.
+        """
+        message = self.info.get("message")
+        self.data_imports[0].add_to_log(f"Creating bulletin from {message.get("id")}...")
+
+        bulletin = Bulletin()
+        message_text = message.get("text") if message.get("text") else ""
+        bulletin.title = message_text[:255]
+        bulletin.description = message_text
+        bulletin.publish_date = message.get("date")
+        bulletin.comments = f"Created via Telegram import - Batch: {self.batch_id}"
+        bulletin.status = "Machine Created"
+
+        bulletin.source_link = (
+            f"https://t.me/{self.channel_metadata.get('username')}/{message.get('id')}"
+        )
+        bulletin.originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
+
+        parent = Source.query.filter(Source.title == "Telegram").first()
+        if not parent:
+            parent = Source()
+            parent.title = "Telegram"
+            parent.save()
+        source = Source.query.filter(Source.etl_id == str(self.channel_metadata.get("id"))).first()
+
+        if not source:
+            source = Source()
+            source.etl_id = self.channel_metadata.get("id")
+
+            source.parent = parent
+
+            source.title = self.channel_metadata.get("title")
+            source.comments = f"""username: {self.channel_metadata.get("username")} \n\n
+                                    date_created: {self.channel_metadata.get("date_created")} \n\n
+                                    participants_count: {self.channel_metadata.get("participants_count")} \n\n       
+                                    Description: {self.channel_metadata.get('description')}"""
+            # source.meta = self.channel_metadata
+            source.save()
+
+        bulletin.sources.append(parent)
+        bulletin.sources.append(source)
+
+        for m in self.medias:
+            media = Media()
+            media.main = True
+            media.title = m.get("filename")
+            media.media_file = m.get("new_filename")
+            media.etag = m.get("etag")
+            media.media_file_type = m.get("mime_type")
+
+            bulletin.medias.append(media)
+
+        bulletin.meta = self.info
+        bulletin.meta["medias"] = self.medias
+        bulletin.meta["related_bulletins"] = [x.id for x in self.related_bulletins]
+        bulletin.meta["related_data_imports"] = [x.id for x in self.related_data_imports]
+
+        # Check for any related bulletins
+        for data_import in self.related_data_imports:
+            if data_import.item_id:
+                self.related_bulletins.append(Bulletin.query.get(data_import.item_id))
+            else:
+                bulletin.description += f"\n\nMedia in this Bulletin is duplicated by another Bulletin being imported by DataImport #{data_import.id}."
+
+        if self.related_bulletins:
+            dup = BtobInfo.query.filter(BtobInfo.title == "Duplicate").first()
+            
+            # save the bulletin first to get the id
+            try:
+                bulletin.save(raise_exception=True)
+            except DatabaseException as e:
+                for data_import in self.data_imports:
+                    data_import.add_to_log(f"Failed to create Bulletin: {e}")
+                return
+
+            for rb in self.related_bulletins:
+                if not Btob.are_related(bulletin.id, rb.id):
+                    new_relation = Btob.relate(bulletin, rb)
+                    new_relation.related_as = [dup.id]
+
+                    i = self.related_bulletins.index(rb)
+                    try:
+                        new_relation.comment = (
+                            f"Media {self.related_medias[i].id} is duplicated in this Bulletin"
+                        )
+                    except IndexError:
+                        new_relation.comment = (
+                            f"Media in this Bulletin is duplicated by the related Bulletin"
+                        )
+
+                    new_relation.save()
+
+                    rb.comments = f"Automatically related to Bulletin"
+                    rb.create_revision(user_id=1)
+
+        try:
+            bulletin.save(raise_exception=True)
+            bulletin.create_revision(user_id=1)
+            user = User.query.get(1)
+            # Record bulletin creation activity
+            Activity.create(
+                user,
+                Activity.ACTION_CREATE,
+                Activity.STATUS_SUCCESS,
+                bulletin.to_mini(),
+                "bulletin",
+            )
+            for data_import in self.data_imports:
+                data_import.add_to_log(f"Created Bulletin {bulletin.id} successfully.")
+                data_import.add_item(bulletin.id)
+                data_import.success()
+        except DatabaseException as e:
+            for data_import in self.data_imports:
+                data_import.add_to_log(f"Failed to create Bulletin: {e}")
+                data_import.fail()
+
+    def process(self):
+        """
+        Process the batch by copying the file and updating the database.
+        """
+        message = self.info.get("message")
+        originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
+
+        if bulletin_exists := Bulletin.query.filter(Bulletin.originid == originid).first():
+            for data_import in self.data_imports:
+                data_import.add_to_log(f"Bulletin already imported: #{bulletin_exists.id}.")
+                data_import.fail()
+            return
+
+        for data_import in self.data_imports:
+            data_import.processing()
+            if len(self.data_imports) > 1:
+                data_import.add_to_log(
+                    f"Main Telegram group import ID: {self.data_imports[0].id}..."
+                )
+
+        for data_import in self.data_imports:
+            message = data_import.data.get("info").get("message")
+            data_import.add_to_log(f"Processing Telegram media {message.get('id')}...")
+
+            filename = data_import.file.split("/")[-1]
+            s3_path = data_import.file.replace(f"{self.bucket}/", "")
+
+            data_import.add_to_log(f"Checking file {s3_path}...")
+
+            etag, mime_type = self.check_file(data_import, s3_path)
+            data_import.etag = etag
+            data_import.save()
+
+            if etag and mime_type:
+                if media_exists := Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
+                    data_import.add_to_log(f"File already imported Media {media_exists.id}.")
+                    self.related_medias.append(media_exists)
+                    self.related_bulletins.append(media_exists.bulletin)
+                    continue
+
+                if di_exists := DataImport.query.filter(
+                    and_(
+                        DataImport.id != data_import.id,
+                        DataImport.file_hash == etag,
+                        or_(DataImport.status == "Pending", DataImport.status == "Processing"),
+                    )
+                ).all():
+                    data_import.add_to_log(
+                        f"File is being imported in DataImport(s) {[x.id for x in di_exists]}."
+                    )
+                    self.related_data_imports.extend(di_exists)
+                    continue
+
+            else:
+                data_import.fail(f"File {s3_path} not found.")
+                continue
+
+            new_filename = Media.generate_file_name(filename)
+            copied = self.copy_file(data_import, s3_path, new_filename)
+
+            if not copied:
+                data_import.fail(f"Failed to copy {s3_path}.")
+                continue
+
+            self.medias.append(
+                {
+                    "s3_path": s3_path,
+                    "filename": filename,
+                    "new_filename": new_filename,
+                    "etag": etag,
+                    "mime_type": mime_type,
+                }
+            )
+
+        self.create_bulletin()
