@@ -577,8 +577,8 @@ class TestConfig:
     NOTIFICATIONS = NOTIFICATIONS_DEFAULT_CONFIG
 
     # Dependencies (from dep_utils)
-    HAS_WHISPER = False  # Hardcoded for tests
-    HAS_TESSERACT = False  # Hardcoded for tests
+    HAS_WHISPER = dep_utils.has_whisper  # Use actual dependency detection
+    HAS_TESSERACT = dep_utils.has_tesseract  # Use actual dependency detection
 
     # Setup & System
     SETUP_COMPLETE = True  # Mark as complete to bypass setup wizard in tests
