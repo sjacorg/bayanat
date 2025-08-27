@@ -315,6 +315,7 @@ By implementing the above Access Control Model, Bayanat system ensures that diff
 - Storage: Postgres DB, Disk Storage.
 - Transmission:
 	- User browser -> Nginx -> SQLAlchemy -> Database.
+	- User browser -> Nginx -> Celery -> Disk Storage.
 - Execution Environment: Memory
 - Input:
 	- User’s uploaded media files.
