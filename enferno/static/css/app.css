@@ -823,10 +823,6 @@ div.jsondiffpatch-child-node-type-array:after {
     background-color: #00000000 !important;
 }
 
-.chip-container {
-    position: relative;
-}
-
 .drop-indicator {
     position: absolute;
     width: 2px;  /* Changed from height to width */
@@ -843,24 +839,15 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 /* CSS Helpers */
-.overflow-unset {
-    overflow: unset;
-}
-.z-1 {
-    z-index: 1;
-}
-.z-100 {
-    z-index: 100;
-}
-.left-auto {
-    left: auto !important;
-}
-.h-fit {
-    height: fit-content;
-}
-.pointer-events-none {
-    pointer-events: none !important;
-}
+.overflow-unset { overflow: var(--v-overflow-unset); }
+.z-1 { z-index: var(--v-z-1); }
+.z-100 { z-index: var(--v-z-100); }
+.left-auto { left: var(--v-left-auto) !important; }
+.h-fit { height: var(--v-h-fit); }
+.pointer-events-none { pointer-events: var(--v-pointer-events-none) !important; }
+.rounded-16 { border-radius: var(--v-rounded-16) !important; }
+.rounded-12 { border-radius: var(--v-rounded-12) !important; }
+.rounded-10 { border-radius: var(--v-rounded-10) !important; }
 
 /* wrap chips */
 .flex-chips {
