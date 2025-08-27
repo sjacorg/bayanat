@@ -1,8 +1,8 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
 <!-- Field Creation Modal -->
-<field-builder-drawer :model-value="isFieldBuilderDrawerOpen" @update:model-value="closeDrawer" @save="saveField"
-  :item="editedItem" entity-type="bulletin"></field-builder-drawer>
+<select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
+  :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
 
 <v-main>
   <v-sheet>
@@ -21,13 +21,13 @@
           </template>
     
           <v-list>
-            <v-list-item @click="isFieldBuilderDrawerOpen = true">
+            <v-list-item @click="ui.selectFieldTypeDialog = true">
               <v-list-item-title>Field</v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
     
-        <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="isFieldBuilderDrawerOpen = true"
+        <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="ui.selectFieldTypeDialog = true"
           color="red">{{
           _('Discard Changes') }}</v-btn>
         <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" color="primary" variant="outlined" :loading="saving"
@@ -50,7 +50,7 @@
                 'drop-line': dropLine.id == field.id,
                 [dropLine.cls]: dropLine.id == field.id
               }]">
-              <field-list-item :field="field" @edit="edit"
+              <field-list-item :field="field"
                 @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(draggingId)" />
             </div>
           </div>
@@ -118,7 +118,7 @@
 <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
 <script src="/static/js/components/FieldListItem.js"></script>
-<script src="/static/js/components/FieldBuilderDrawer.js"></script>
+<script src="/static/js/components/SelectFieldTypeDialog.js"></script>
 <script src="/static/js/components/PopDateField.js"></script>
 <script src="/static/js/components/PopDateTimeField.js"></script>
 <script src="/static/js/components/PopDateRangeField.js"></script>
@@ -135,9 +135,8 @@
     data: () => ({
       tinyConfig: tinyConfig,
       drawer: drawer,
-      isFieldBuilderDrawerOpen: false,
       ui: {
-        pickerDialog: false
+        selectFieldTypeDialog: false
       }, 
       editedItem: {},
       search: '',
@@ -178,7 +177,7 @@
       edit({ field }) {
         const matchingField = this.dynamicFields.find(coreField => coreField.id === field.id)
         this.editedItem = matchingField;
-        this.isFieldBuilderDrawerOpen = true;
+        this.ui.selectFieldTypeDialog = true;
       },
       saveField(evt) {
         let idx = this.dynamicFields.findIndex(coreField => coreField.id === evt.id)
@@ -189,6 +188,10 @@
         } else {
           // Add new field
           this.dynamicFields.push(evt)
+          this.$nextTick(() => {
+            const el = document.querySelector(`[data-field-id="${evt.id}"]`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          })
         }
 
         this.sortDynamicFields()
@@ -492,14 +495,14 @@
         }
       },
       closeDrawer(open) {
-        this.isFieldBuilderDrawerOpen = open;
+        this.ui.selectFieldTypeDialog = open;
         this.editedItem = {}
       }
     },
   });
 
   app.component('FieldListItem', FieldListItem);
-  app.component('FieldBuilderDrawer', FieldBuilderDrawer);
+  app.component('SelectFieldTypeDialog', SelectFieldTypeDialog);
   app.component('draggable', vuedraggable);
   app.component('tinymce-editor', Editor);
   app.component('PopDateField', PopDateField);
