@@ -3,7 +3,7 @@ from typing import Any, Dict
 from datetime import datetime
 from uuid import uuid4
 
-from flask import current_app, session
+from flask import current_app, session, has_app_context
 from flask_security import UserMixin, RoleMixin
 from flask_security import current_user
 from flask_security.utils import hash_password
@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import Mutable
 
 from enferno.extensions import db, rds
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
@@ -257,7 +257,8 @@ class User(UserMixin, db.Model, BaseMixin):
                 if rds.exists(session_key):
                     rds.delete(session_key)
             except Exception as e:
-                errors.append(f"Failed to delete session {s.session_token}: {str(e)}")
+                logger.error(f"Failed to delete session {s.id}: {str(e)}", exc_info=True)
+                errors.append(f"Failed to delete session {s.id}")
         if errors:
             logger.error("Failed to delete some sessions: %s", errors)
 
@@ -320,7 +321,7 @@ class User(UserMixin, db.Model, BaseMixin):
             if set(self.roles) & set(obj.roles):
                 return True
 
-            if not cfg.ACCESS_CONTROL_RESTRICTIVE and not obj.roles:
+            if not Config.get("ACCESS_CONTROL_RESTRICTIVE") and not obj.roles:
                 return True
 
         # handle media access
@@ -333,7 +334,12 @@ class User(UserMixin, db.Model, BaseMixin):
             if parent:
                 if set(self.roles) & set(parent.roles):
                     return True
-                if not cfg.ACCESS_CONTROL_RESTRICTIVE and not parent.roles:
+                restrictive = (
+                    current_app.config.get("ACCESS_CONTROL_RESTRICTIVE")
+                    if has_app_context()
+                    else Config.get("ACCESS_CONTROL_RESTRICTIVE")
+                )
+                if not restrictive and not parent.roles:
                     return True
 
         return False

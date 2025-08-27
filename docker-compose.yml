@@ -89,9 +89,9 @@ services:
   nginx:
     container_name: nginx
     restart: always
-    image: nginx
     build:
       context: ./nginx
+      target: prod
     ports:
       - '80:80'
     volumes:
@@ -103,6 +103,7 @@ services:
       - no-new-privileges:true
     tmpfs:
       - /opt/bitnami/nginx/tmp/
+      - /opt/bitnami/nginx/logs/
       - /opt/bitnami/nginx/conf/bitnami/certs/
     healthcheck:
       test: [ "CMD", "service", "nginx", "status" ]

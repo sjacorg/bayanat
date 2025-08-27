@@ -3,7 +3,7 @@ FROM ubuntu:24.04 as base
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && \
-    apt-get install -yq python3.12 python3.12-dev python3.12-venv python3-pip \
+    apt-get install -yq python3.12 python3.12-dev python3.12-venv python3-pip curl \
     libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev \
     libmysqlclient-dev libncurses5-dev libpq-dev \
     libimage-exiftool-perl
@@ -16,16 +16,13 @@ ENV LANG=C.UTF-8
 ENV PYTHONDONTWRITEBYTECODE=1
 # Seems to speed things up
 ENV PYTHONUNBUFFERED=1
-# The `--copies` option tells `venv` to copy libs and binaries
-RUN python3.12 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Install UV
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
-COPY ./requirements/main.txt  /app/requirements.txt
+COPY pyproject.toml uv.lock /app/
 
-RUN . /opt/venv/bin/activate
-
-RUN pip install --no-cache-dir -Ur requirements.txt
-RUN ls -la /opt/venv/bin/
+RUN uv sync --frozen --no-install-project
 
 # ----------------- main container -------------------------
 
@@ -57,14 +54,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 COPY --chown=ubuntu:ubuntu . /app
-# copy compiled virtualenv
-COPY --from=base /opt/venv /opt/venv
+# copy UV-built virtualenv
+COPY --from=base /app/.venv /app/.venv
 
 COPY --chown=ubuntu:ubuntu ./flask/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod 550 /usr/local/bin/entrypoint.sh
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH"
 
 USER ubuntu
 

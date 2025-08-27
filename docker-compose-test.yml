@@ -54,7 +54,7 @@ services:
       - 'bayanat_test_media:/app/enferno/media:rw'
       - 'bayanat_test_imports:/app/tests/imports:rw'
       - 'bayanat_test_logs:/app/logs:rw'
-    command: [ "pytest" ]
+    command: [ "uv", "run", "pytest" ]
 
 volumes:
   redis_test_data:
