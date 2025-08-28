@@ -3,6 +3,8 @@
 <!-- Field Creation Modal -->
 <select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
   :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
+<!-- Discard changes confirmation modal -->
+<confirm-dialog v-model="" confirm-text="{{ _('Discard Changes') }}"></confirm-dialog>
 
 <v-main>
   <v-sheet>
