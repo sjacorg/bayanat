@@ -32,6 +32,7 @@ const SearchField = Vue.defineComponent({
     return {
       loading: false,
       items: [],
+      uniqueItems: new Set(),
       searchInput: '',
     };
   },
@@ -75,12 +76,8 @@ const SearchField = Vue.defineComponent({
       this.searchInput = '';
       this.$emit('update:model-value', this.multiple ? [] : null);
     },
-    isValid(v) {
-      return this.items.some(item =>
-        this.returnObject
-          ? item[this.itemValue] === v?.[this.itemValue]
-          : item[this.itemValue] === v
-      );
+    isValid(newItem) {
+      return this.uniqueItems.has(this.returnObject ? newItem[this.itemValue] : newItem)
     },
     updateValue(val) {
       if (this.multiple) {
@@ -90,13 +87,10 @@ const SearchField = Vue.defineComponent({
       }
     },
     handleMultipleUpdate(val) {
-      const validItems = (val || []).filter(this.isValid);
+      // Only keep items that exist in current items OR were already selected
+      const validSelections = val.filter(newItem => this.isValid(newItem));
 
-      const output = this.returnObject
-        ? validItems
-        : validItems.map(item => item[this.itemValue]);
-
-      this.$emit('update:model-value', output);
+      this.$emit('update:model-value', validSelections);
     },
     handleSingleUpdate(val) {
       if (val === null || this.isValid(val)) {
@@ -120,6 +114,7 @@ const SearchField = Vue.defineComponent({
         })
         .then((response) => {
           this.items = response.data.items
+          this.items.forEach(item => this.uniqueItems.add(item[this.itemValue]));
         })
         .catch(console.error)
         .finally(() => {
@@ -202,6 +197,7 @@ const LocationSearchField = Vue.defineComponent({
         })
         .then((response) => {
           this.items = response.data.items;
+          this.items.forEach(item => this.uniqueItems.add(item[this.itemValue]));
         }).finally(() => {
           this.loading = false;
         });
