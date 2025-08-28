@@ -90,29 +90,13 @@ const SearchField = Vue.defineComponent({
       }
     },
     handleMultipleUpdate(val) {
-      const current = this.modelValue || [];
+      const validItems = (val || []).filter(this.isValid);
 
-      const validNew = (val || []).filter(v => this.isValid(v));
+      const output = this.returnObject
+        ? validItems
+        : validItems.map(item => item[this.itemValue]);
 
-      if (validNew.length === 0) {
-        this.$emit('update:model-value', current);
-        return;
-      }
-
-      const combined = [...current];
-      for (const v of validNew) {
-        const exists = combined.some(c =>
-          this.returnObject
-            ? c[this.itemValue] === v[this.itemValue]
-            : c === v
-        );
-        if (!exists) combined.push(v);
-      }
-
-      this.$emit(
-        'update:model-value',
-        this.returnObject ? combined : combined.map(v => v[this.itemValue])
-      );
+      this.$emit('update:model-value', output);
     },
     handleSingleUpdate(val) {
       if (val === null || this.isValid(val)) {
