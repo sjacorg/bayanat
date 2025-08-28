@@ -187,7 +187,10 @@ const FieldListItem = Vue.defineComponent({
                             style="flex: 1 1 calc(50% - 16px)"
                         >
                             <div class="d-flex flex-column">
-                                <div class="text-h6 text-primary">Field Options</div>
+                                <div class="d-flex justify-space-between align-center">
+                                    <div class="text-h6 text-primary">Field Options</div>
+                                    <v-checkbox class="text-medium-emphasis" label="One selection only" hide-details :model-value="field.field_type === 'array'" @update:model-value="field.field_type === 'array' ? field.field_type = 'string' : field.field_type = 'array'"></v-checkbox>
+                                </div>
 
                                 <div class="mt-2">
                                     <v-text-field
