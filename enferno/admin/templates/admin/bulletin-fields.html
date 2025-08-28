@@ -164,7 +164,6 @@
       }
     },
     methods: {
-      slugify: slugify,
       discardChanges() {
         if (confirm( "{{ _('Are you sure you want to discard changes?') }}" )) {
           this.dynamicFields = this.originalFields
@@ -209,7 +208,7 @@
           this.dynamicFields = response.data.data;
           this.reindexZeroSortFields();
           this.sortDynamicFields();
-          this.originalFields = JSON.parse(JSON.stringify(this.dynamicFields)); // deep clone
+          this.originalFields = deepClone(this.dynamicFields); // deep clone
         } catch (err) {
           console.error(err);
           this.showSnack(handleRequestError(err));

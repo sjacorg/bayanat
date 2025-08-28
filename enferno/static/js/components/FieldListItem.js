@@ -88,7 +88,7 @@ const FieldListItem = Vue.defineComponent({
 
             option.label = nextValue;
             if (!originalOption?.value) {
-                option.value = this.$root.slugify(nextValue);
+                option.value = slugify(nextValue);
             }
         },
     },
@@ -104,7 +104,7 @@ const FieldListItem = Vue.defineComponent({
         'field.title'(nextTitle) {
             const originalField = this.$root.originalFields.find(of => of.id === this.field.id)
             if (!originalField?.name) {
-                const slugTitle = this.$root.slugify(nextTitle)
+                const slugTitle = slugify(nextTitle)
                 this.field.name = slugTitle
             }
         }
