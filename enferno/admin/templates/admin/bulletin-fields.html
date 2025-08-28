@@ -42,11 +42,14 @@
       <v-divider vertical></v-divider>
       <v-card variant="flat" class="ml-3 w-100">
         <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0" style="height: calc(100vh - 152px);">
-          <div class="d-flex justify-center w-100"><v-progress-circular indeterminate
-              v-if="loading"></v-progress-circular></div>
+          <v-container v-if="loading" height="130px" class="d-flex justify-center align-center">
+            <v-progress-circular indeterminate ></v-progress-circular>
+          </v-container>
+          
+          <div class="d-flex justify-center w-100"></div>
 
-          <div ref="mainList" class="d-flex flex-wrap">
-            <div v-for="(field, index) in dynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
+          <div v-if="filteredDynamicFields.length && !loading" ref="mainList" class="d-flex flex-wrap">
+            <div v-for="(field, index) in filteredDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
                 'drop-line': dropLine.id == field.id,
                 [dropLine.cls]: dropLine.id == field.id
               }]">
@@ -54,6 +57,12 @@
                 @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(draggingId)" />
             </div>
           </div>
+          <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && !search">
+            {{ _("No fields yet. Start by creating your first field to get started!") }}
+          </v-container>
+          <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && search">
+            {{ _("We couldn't find any fields for that search. Try another keyword.") }}
+          </v-container>
 
         </v-card-text>
       </v-card>
@@ -161,6 +170,11 @@
       hasChanges() {
         const changes = this.computeChanges();
         return changes.create.length || changes.update.length || changes.delete.length;
+      },
+      filteredDynamicFields() {
+        if (!this.search) return this.dynamicFields
+
+        return this.dynamicFields.filter(field => field.title?.toLowerCase().includes(this.search.toLowerCase()))
       }
     },
     methods: {
@@ -175,9 +189,6 @@
           if (b.sort_order === 0 && a.sort_order !== 0) return -1; // b goes last
           return a.sort_order - b.sort_order; // normal sort
         });
-      },
-      matchesSearch(field) {
-        return !this.search || field.title?.toLowerCase().includes(this.search.toLowerCase());
       },
       edit({ field }) {
         const matchingField = this.dynamicFields.find(dynamicField => dynamicField.id === field.id)
