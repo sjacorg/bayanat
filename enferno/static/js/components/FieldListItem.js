@@ -27,7 +27,7 @@ const FieldListItem = Vue.defineComponent({
         mapFieldToComponent(field) {
             const baseProps = {
                 fieldId: field.id,
-                label: field.title || 'New Field',
+                label: field.title || this.translations.newField_,
                 name: field.name,
                 modelValue: field.schema_config?.default ?? null,
                 variant: 'filled',
@@ -35,7 +35,6 @@ const FieldListItem = Vue.defineComponent({
                 hint: field?.ui_config?.help_text,
                 hideDetails: true,
                 prependInnerIcon: iconMap[field.ui_component],
-                appendInner: 'ok',
                 'data-field-id': field.id,
                 readonly: true,
                 bgColor: !this.$vuetify.theme.global.current.dark && field.core ? 'core-field-accent' : undefined
@@ -119,13 +118,13 @@ const FieldListItem = Vue.defineComponent({
 
                 <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging), 'pointer-events-none': dragging }]">
                     <div>
-                        Width:
+                        <span class="text-caption">{{ translations.width_ }}</span>:
                         <v-btn-toggle v-model="width" color="primary" mandatory density="compact" variant="outlined" divided rounded>
                             <v-btn value="w-100">
-                                Full
+                                {{ translations.full_ }}
                             </v-btn>
                             <v-btn value="w-50">
-                                Half
+                                {{ translations.half_ }}
                             </v-btn>
                         </v-btn-toggle>
                     </div>
@@ -167,20 +166,19 @@ const FieldListItem = Vue.defineComponent({
                         <component :is="componentProps.component" v-bind="componentProps">
                             <template #append-inner>
                                 <v-chip v-if="field.core" variant="outlined" color="purple-lighten-1" class="rounded">
-                                    DEFAULT
+                                    {{ translations.default_ }}
                                 </v-chip>
                                 <v-chip v-else variant="outlined" class="rounded">
-                                    CUSTOM
+                                    {{ translations.custom_ }}
                                 </v-chip>
                             </template>
                         </component>
                     </div>
                 </div>
                 <div v-else>
-                    <v-text-field variant="filled" label="Field label" v-model="field.title"></v-text-field>
+                    <v-text-field variant="filled" :label="translations.fieldLabel_" v-model="field.title"></v-text-field>
 
                     <div class="d-flex flex-wrap ga-4">
-                        <!-- First column (conditional) -->
                         <div
                             v-if="field.ui_component === 'dropdown'"
                             class="w-100 w-md-50"
@@ -188,38 +186,37 @@ const FieldListItem = Vue.defineComponent({
                         >
                             <div class="d-flex flex-column">
                                 <div class="d-flex justify-space-between align-center">
-                                    <div class="text-h6 text-primary">Field Options</div>
-                                    <v-checkbox class="text-medium-emphasis" label="One selection only" hide-details :model-value="field.field_type === 'array'" @update:model-value="field.field_type === 'array' ? field.field_type = 'string' : field.field_type = 'array'"></v-checkbox>
+                                    <div class="text-h6 text-primary">{{ translations.fieldOptions_ }}</div>
+                                    <v-checkbox class="text-medium-emphasis" :label="translations.oneSelectionOnly_" hide-details :model-value="field.field_type === 'array'" @update:model-value="field.field_type === 'array' ? field.field_type = 'string' : field.field_type = 'array'"></v-checkbox>
                                 </div>
 
                                 <div class="mt-2">
                                     <v-text-field
                                         v-for="(option, index) in dropdownOptions"
-                                        :label="'Option ' + (index + 1)"
+                                        :label="translations.optionN_(index + 1)"
                                         :model-value="option.label"
                                         @update:model-value="updateDropdownOption($event, option, index)"
                                         variant="filled"
                                     ></v-text-field>
 
-                                    <v-btn @click="dropdownOptions.push({ label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">Add another option</v-btn>
+                                    <v-btn @click="dropdownOptions.push({ label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
                                 </div>
 
                             </div>
                         </div>
 
-                        <!-- Second column -->
                         <div class="w-100 w-md-50" style="flex: 1 1 calc(50% - 16px)">
-                            <div class="text-h6 text-primary">Field Properties</div>
+                            <div class="text-h6 text-primary">{{ translations.fieldProperties_ }}</div>
                             <div class="mt-2 ga-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
                                 <v-text-field
                                     variant="filled"
-                                    label="Help Text"
+                                    :label="translations.helpText_"
                                     v-model="field.ui_config.help_text"
                                 ></v-text-field>
                                 <v-text-field
                                     v-if="field.ui_component === 'text_input'"
                                     variant="filled"
-                                    label="Max Length"
+                                    :label="translations.maxLength_"
                                     v-model="field.validation_config.max_length"
                                 ></v-text-field>
                             </div>
@@ -230,6 +227,6 @@ const FieldListItem = Vue.defineComponent({
         </template>
     </v-hover>
 
-    <div v-else>Field data not provided</div>
+    <div v-else>{{ translations.noUiComponentMappedForThisField_ }}</div>
     `,
 });
