@@ -13,7 +13,8 @@ const FieldListItem = Vue.defineComponent({
     data: () => ({
         translations: window.translations,
         editingMode: false,
-        width: this.field?.ui_config?.width || 'w-100'
+        width: this.field?.ui_config?.width || 'w-100',
+        dropdownOptions: this.field?.ui_component === 'dropdown' ? this.field?.options || [{ label: '', value: '' }] : null
     }),
     computed: {
         componentProps() {
@@ -84,6 +85,10 @@ const FieldListItem = Vue.defineComponent({
         width(nextWidth) {
             // Ensure ui_config exists (without overwriting existing properties), then update width property
             (this.field.ui_config ??= {}).width = nextWidth ?? 'w-100'
+        },
+        dropdownOptions(nextDropdownOptions) {
+            // Ensure ui_config exists (without overwriting existing properties), then update width property
+            this.field.options = nextDropdownOptions
         },
         'field.title'(nextTitle) {
             const originalField = this.$root.originalFields.find(of => of.id === this.field.id)
@@ -174,9 +179,9 @@ const FieldListItem = Vue.defineComponent({
                                 <div class="text-h6 text-primary">Field Options</div>
 
                                 <div class="mt-2">
-                                    <v-text-field label="Option 1" variant="filled"></v-text-field>
+                                    <v-text-field v-for="(option, index) in field.options" :label="'Option ' + (index + 1)" :model-value="option.label" variant="filled"></v-text-field>
 
-                                    <v-btn prepend-icon="mdi-plus-circle" color="primary" variant="text">Add another option</v-btn>
+                                    <v-btn @click="field.options.push({ label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">Add another option</v-btn>
                                 </div>
 
                             </div>
