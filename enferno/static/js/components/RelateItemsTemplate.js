@@ -7,7 +7,7 @@ const RelateItemsTemplate = Vue.defineComponent({
         showSearch: true,
         relation: {
           probability: null,
-          related_as: [],
+          related_as: null,
           comment: '',
         }
       };
@@ -15,7 +15,7 @@ const RelateItemsTemplate = Vue.defineComponent({
     watch: {
       '$root.isConfirmRelationDialogOpen'(isOpen) {
         if (!isOpen) {
-          this.relation = { probability: null, related_as: [], comment: '' }
+          this.relation = { probability: null, related_as: null, comment: '' }
           this.$root.relationToConfirm = null
         }
       }

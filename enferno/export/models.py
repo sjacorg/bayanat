@@ -10,7 +10,7 @@ from sqlalchemy import ARRAY
 from flask_security.decorators import current_user
 
 from enferno.extensions import db
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
@@ -24,7 +24,7 @@ logger = get_logger()
 class Export(db.Model, BaseMixin):
     export_dir = Path("enferno/exports")
     export_file_name = "export"
-    signer = URLSafeSerializer(cfg.SECRET_KEY)
+    signer = URLSafeSerializer(Config.get("SECRET_KEY"))
     """
     SQL Alchemy model for export table.
     """
@@ -127,7 +127,7 @@ class Export(db.Model, BaseMixin):
         """
         self.status = "Processing"
         # set download expiry
-        self.expires_on = dt.utcnow() + cfg.EXPORT_DEFAULT_EXPIRY
+        self.expires_on = dt.utcnow() + Config.get("EXPORT_DEFAULT_EXPIRY")
         self.approver = current_user
 
         return self

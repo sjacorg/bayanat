@@ -1,6 +1,6 @@
 const getDefaultRelation = () => ({
   probability: null,
-  related_as: [],
+  related_as: null,
   comment: '',
 });
 

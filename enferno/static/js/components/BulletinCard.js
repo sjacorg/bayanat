@@ -237,7 +237,6 @@ const BulletinCard = Vue.defineComponent({
       <!-- Map -->
       <v-divider></v-divider>
       <v-card variant="flat" >
-       
         <global-map v-model="mapLocations"></global-map>
       </v-card>
 
