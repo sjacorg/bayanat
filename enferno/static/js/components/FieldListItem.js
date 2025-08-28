@@ -213,8 +213,14 @@ const FieldListItem = Vue.defineComponent({
                             <div class="mt-2 ga-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
                                 <v-text-field
                                     variant="filled"
-                                    label="Help text"
+                                    label="Help Text"
                                     v-model="field.ui_config.help_text"
+                                ></v-text-field>
+                                <v-text-field
+                                    v-if="field.ui_component === 'text_input'"
+                                    variant="filled"
+                                    label="Max Length"
+                                    v-model="field.validation_config.max_length"
                                 ></v-text-field>
                             </div>
                         </div>
