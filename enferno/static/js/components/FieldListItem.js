@@ -135,13 +135,13 @@ const FieldListItem = Vue.defineComponent({
                     <div class="d-flex ga-4">
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" density="comfortable" variant="flat" icon size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
+                                <v-btn v-bind="props" @click="field.required = !field.required" density="comfortable" :color="field.required ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsRequired_ }}
                         </v-tooltip>
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" density="comfortable" variant="flat" icon size="small"><v-icon>mdi-magnify</v-icon></v-btn>
+                                <v-btn v-bind="props" @click="field.searchable = !field.searchable" density="comfortable" :color="field.searchable ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-magnify</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsSearchable_ }}
                         </v-tooltip>
