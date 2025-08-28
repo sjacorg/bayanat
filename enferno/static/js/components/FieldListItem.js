@@ -191,15 +191,26 @@ const FieldListItem = Vue.defineComponent({
                                 </div>
 
                                 <div class="mt-2">
-                                    <v-text-field
-                                        v-for="(option, index) in dropdownOptions"
-                                        :label="translations.optionN_(index + 1)"
-                                        :model-value="option.label"
-                                        @update:model-value="updateDropdownOption($event, option, index)"
-                                        variant="filled"
-                                    ></v-text-field>
+                                    <draggable v-model="dropdownOptions" :item-key="'id'"
+                                            @end="onDragEnd" class="d-flex flex-column ga-1">
+                                            <template #item="{ element: option, index }">
+                                                <div class="d-flex align-center ga-2">
+                                                    <v-icon>mdi-drag</v-icon>
+                                                    <div>{{ option.id || index + 1 }}</div>
+                                                    <v-text-field
+                                                        :label="translations.optionN_(index + 1)"
+                                                        :model-value="option.label"
+                                                        @update:model-value="updateDropdownOption($event, option, index)"
+                                                        variant="filled"
+                                                        hide-details
+                                                    ></v-text-field>
+                                                    <v-btn icon="mdi-eye-outline" density="comfortable" variant="text"></v-btn>
+                                                </div>
+                                            </template>
+                                    </draggable>
 
-                                    <v-btn @click="dropdownOptions.push({ label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
+
+                                    <v-btn class="mt-4" @click="dropdownOptions.push({ id: dropdownOptions.length + 1, label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
                                 </div>
 
                             </div>
@@ -221,7 +232,7 @@ const FieldListItem = Vue.defineComponent({
                                 ></v-text-field>
                             </div>
                         </div>
-                        </div>
+                    </div>
                 </div>
             </div>
         </template>
