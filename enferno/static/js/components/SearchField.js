@@ -87,7 +87,7 @@ const SearchField = Vue.defineComponent({
       }
     },
     handleMultipleUpdate(val) {
-      // Only keep items that exist in current items OR were already selected
+      // Only keep items that exist
       const validSelections = val.filter(newItem => this.isValid(newItem));
 
       this.$emit('update:model-value', validSelections);
