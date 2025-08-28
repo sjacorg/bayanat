@@ -10,12 +10,14 @@ const iconMap = {
 const FieldListItem = Vue.defineComponent({
     props: ['field', 'dragging'],
     emits: ['delete', 'toggle-visibility', 'width'],
-    data: () => ({
-        translations: window.translations,
-        editingMode: false,
-        width: this.field?.ui_config?.width || 'w-100',
-        dropdownOptions: this.field?.ui_component === 'dropdown' ? this.field?.options || [{ label: '', value: '' }] : null
-    }),
+    data() {
+        return {
+            translations: window.translations,
+            editingMode: false,
+            width: this.field?.ui_config?.width || 'w-100',
+            dropdownOptions: this.field?.ui_component === 'dropdown' ? this.field?.options || [{ label: '', value: '' }] : null
+        }
+    },
     computed: {
         componentProps() {
             return this.mapFieldToComponent(this.field)
@@ -79,6 +81,15 @@ const FieldListItem = Vue.defineComponent({
             };
 
             return componentMap[field.ui_component] || null;
+        },
+        updateDropdownOption(nextValue, option, index) {
+            const originalField = this.$root.originalFields.find(of => of.id === this.field.id)
+            const originalOption = originalField?.options?.[index]
+
+            option.label = nextValue;
+            if (!originalOption?.value) {
+                option.value = this.$root.slugify(nextValue);
+            }
         },
     },
     watch: {
@@ -179,9 +190,15 @@ const FieldListItem = Vue.defineComponent({
                                 <div class="text-h6 text-primary">Field Options</div>
 
                                 <div class="mt-2">
-                                    <v-text-field v-for="(option, index) in field.options" :label="'Option ' + (index + 1)" :model-value="option.label" variant="filled"></v-text-field>
+                                    <v-text-field
+                                        v-for="(option, index) in dropdownOptions"
+                                        :label="'Option ' + (index + 1)"
+                                        :model-value="option.label"
+                                        @update:model-value="updateDropdownOption($event, option, index)"
+                                        variant="filled"
+                                    ></v-text-field>
 
-                                    <v-btn @click="field.options.push({ label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">Add another option</v-btn>
+                                    <v-btn @click="dropdownOptions.push({ label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">Add another option</v-btn>
                                 </div>
 
                             </div>
