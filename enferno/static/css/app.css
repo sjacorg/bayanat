@@ -924,3 +924,39 @@ div.jsondiffpatch-child-node-type-array:after {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/* Compact UI Modifications */
+/* Uniform scaling for more compact interface while maintaining harmony */
+.v-application {
+  transform: scale(0.8);
+  transform-origin: top left;
+  width: calc(100% / 0.8);
+  height: calc(100% / 0.8);
+}
+
+/* Extra scaling for form fields */
+.v-field,
+.v-input,
+.v-text-field,
+.v-select,
+.v-textarea,
+.v-autocomplete {
+  transform: scale(0.85);
+  transform-origin: top left;
+}
+
+/* Make tables utilize more height with the saved space */
+.v-data-table {
+  height: calc(100vh + 65px) !important;
+  max-height: calc(100vh + 65px) !important;
+}
+
+.v-data-table .v-data-table__wrapper {
+  height: calc(100vh - 180px) !important;
+  max-height: calc(100vh - 180px) !important;
+}
+
+/* Navigation drawer rail mode width fix */
+.v-navigation-drawer--rail {
+  width: 56px !important;
+}
