@@ -94,7 +94,7 @@ const SearchField = Vue.defineComponent({
     },
     handleSingleUpdate(val) {
       if (val === null || this.isValid(val)) {
-        this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue]);
+        this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue] || val);
       } else {
         this.searchInput = '';
       }
