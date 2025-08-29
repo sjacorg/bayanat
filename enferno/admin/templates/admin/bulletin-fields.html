@@ -1,0 +1,540 @@
+{% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
+
+<!-- Field Creation Modal -->
+<select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
+  :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
+<confirm-dialog ref="reviewAndConfirmDialog">
+  <div class="mb-4">{{ _('Please review your updates before applying them to the form.') }}</div>
+  <v-data-table hide-default-footer :items="changesTable" :headers="[
+      { title: 'Field Name', value: 'title' },
+      { title: 'Change Type', value: 'type' },
+    ]"
+  >
+    <template #[`item.type`]="{ item }">
+      <span v-if="item.key === 'create'" class="text-green">${item.type}</span>
+      <span v-if="item.key === 'update'" class="text-orange">${item.type}</span>
+      <span v-if="item.key === 'delete'" class="text-red">${item.type}</span>
+    </template>
+  </v-data-table>
+</confirm-dialog>
+
+<v-main>
+  <v-sheet>
+    <div class="d-flex justify-space-between ga-6 pa-6">
+      <div class="font-weight-bold text-h4 text-no-wrap" style="font-size: 30px;">{{ _('Bulletin Fields Configuration') }}
+      </div>
+    
+      <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
+        hide-details v-model="search"></v-text-field>
+    
+      <div class="d-flex ga-4 align-center">
+        <v-menu>
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" prepend-icon="mdi-plus" append-icon="mdi-menu-down" variant="flat" color="primary">{{
+              _('Add New') }}</v-btn>
+          </template>
+    
+          <v-list>
+            <v-list-item @click="ui.selectFieldTypeDialog = true">
+              <v-list-item-title>{{ _('Field') }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+    
+        <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="discardChanges"
+          color="red">{{
+          _('Discard Changes') }}</v-btn>
+        <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" color="primary" variant="outlined" :loading="saving"
+          :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
+      </div>
+    </div>
+
+    <div class="d-flex">
+      <v-card class="h-fit ma-3 flex-shrink-0 rounded-10 border border-opacity-25">
+        <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
+      </v-card>
+      <v-divider vertical></v-divider>
+      <v-card variant="flat" class="ml-3 w-100">
+        <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0" style="height: calc(100vh - 152px);">
+          <v-container v-if="loading" height="130px" class="d-flex justify-center align-center">
+            <v-progress-circular indeterminate ></v-progress-circular>
+          </v-container>
+          
+          <div class="d-flex justify-center w-100"></div>
+
+          <div v-if="filteredDynamicFields.length && !loading" ref="mainList" class="d-flex flex-wrap">
+            <div v-for="(field, index) in filteredDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
+                'drop-line': dropLine.id == field.id,
+                [dropLine.cls]: dropLine.id == field.id
+              }]">
+              <field-list-item :field="field"
+                @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(draggingId)" />
+            </div>
+          </div>
+          <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && !search">
+            {{ _("No fields yet. Start by creating your first field to get started!") }}
+          </v-container>
+          <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && search">
+            {{ _("We couldn't find any fields for that search. Try another keyword.") }}
+          </v-container>
+
+        </v-card-text>
+      </v-card>
+    </div>
+  </v-sheet>
+</v-main>
+
+{% endblock %} {% block outside %} {% endblock %} {% block js %}
+<script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="/static/js/tinymce-vue.min.js"></script>
+<script src="/static/js/diff-tool.js"></script>
+<script src="/static/js/Sortable.min.js"></script>
+<script src="/static/js/vuedraggable.umd.js"></script>
+<script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
+
+<script src="/static/js/components/FieldListItem.js"></script>
+<script src="/static/js/components/SelectFieldTypeDialog.js"></script>
+<script src="/static/js/components/PopDateField.js"></script>
+<script src="/static/js/components/PopDateTimeField.js"></script>
+<script src="/static/js/components/PopDateRangeField.js"></script>
+<script src="/static/js/components/DiffRenderer.js"></script>
+
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
+  const vuetify = createVuetify(vuetifyConfig);
+
+  const app = createApp({
+    delimiters: delimiters,
+    mixins: [globalMixin],
+    data: () => ({
+      tinyConfig: tinyConfig,
+      drawer: drawer,
+      ui: {
+        selectFieldTypeDialog: false
+      }, 
+      editedItem: {},
+      search: '',
+      dynamicFields: [],
+      searchQuery: '',
+      loading: false,
+      saving: false,
+      originalFields: [],
+      changes: '',
+      dropLine: { id: null, cls: "" },
+      draggingId: null,
+      sortables: {},
+      changesTable: []
+    }),
+    async mounted() {
+      await this.fetchDynamicFields();
+
+      this.initSortable(this.$refs.mainList);
+    },
+    computed: {
+      hasChanges() {
+        const changes = this.computeChanges();
+        return changes.create.length || changes.update.length || changes.delete.length;
+      },
+      filteredDynamicFields() {
+        if (!this.search) return this.dynamicFields
+
+        return this.dynamicFields.filter(field => field.title?.toLowerCase().includes(this.search.toLowerCase()))
+      }
+    },
+    methods: {
+      discardChanges() {
+        this.$confirm({
+          title: "You\'re about to discard changes",
+          message: "Discarding will remove all unsaved edits you've made to this form.\r\n\r\nDo you want to continue?",
+          acceptProps: {
+            text: 'Discard Changes',
+            color: 'red'
+          },
+          dialogProps: { width: 780 },
+          onAccept: () => {
+            this.dynamicFields = deepClone(this.originalFields)
+            this.$toast({
+              message: `All unsaved edits in Bulletin Form have been discarded.`,
+              hideActions: true,
+              snackbarProps: {
+                color: 'green-lighten-5',
+                contentClass: 'border'
+              },
+              iconProps: {
+                icon: 'mdi-check-circle',
+                color: 'green'
+              }
+            })
+          }
+        })
+      },
+      sortDynamicFields() {
+        this.dynamicFields = this.dynamicFields.sort((a, b) => {
+          if (a.sort_order === 0 && b.sort_order !== 0) return 1;  // a goes last
+          if (b.sort_order === 0 && a.sort_order !== 0) return -1; // b goes last
+          return a.sort_order - b.sort_order; // normal sort
+        });
+      },
+      edit({ field }) {
+        const matchingField = this.dynamicFields.find(dynamicField => dynamicField.id === field.id)
+        this.editedItem = matchingField;
+        this.ui.selectFieldTypeDialog = true;
+      },
+      saveField(evt) {
+        let idx = this.dynamicFields.findIndex(dynamicField => dynamicField.id === evt.id)
+
+        if (this.dynamicFields[idx] && evt.id) {
+          // Update existing field
+          this.dynamicFields[idx] = { ...evt }
+        } else {
+          // Add new field
+          this.dynamicFields.push(evt)
+          this.$nextTick(() => {
+            const el = document.querySelector(`[data-field-id="${evt.id}"]`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          })
+        }
+
+        this.sortDynamicFields()
+      },
+      async fetchDynamicFields() {
+        try {
+          this.loading = true;
+          const response = await axios.get('/admin/api/dynamic-fields/?entity_type=bulletin');
+          this.dynamicFields = response.data.data;
+          this.reindexZeroSortFields();
+          this.sortDynamicFields();
+          this.originalFields = deepClone(this.dynamicFields); // deep clone
+        } catch (err) {
+          console.error(err);
+          this.showSnack(handleRequestError(err));
+        } finally {
+          this.loading = false;
+        }
+      },
+
+      buildChangesTable() {
+        const changeTypeTranslations = {
+          create: translations.added_,
+          update: translations.modified_,
+          delete: translations.deleted_,
+        }
+
+        this.changesTable = Object.entries(this.changes).flatMap(([changeType, change]) =>
+          change.map(item => ({ title: item.item.title || 'New Field', type: changeTypeTranslations[changeType], key: changeType }))
+        )
+      },
+
+      showSaveDialog() {
+        this.changes = this.computeChanges();
+        this.buildChangesTable()
+
+        this.$refs.reviewAndConfirmDialog.show({
+          title: "{{ _('Review & Confirm Changes') }}",
+          dialogProps: { width: 780 },
+          onAccept: async () => {
+            await this.save()
+          }
+        })
+      },
+
+      async save() {
+        this.saving = true;
+        try {
+          const changes = this.computeChanges();
+
+          const requests = [];
+
+          // Create
+          for (const { item } of changes.create) {
+            const { id, ...payload } = item
+
+            requests.push(
+              axios.post(`/admin/api/dynamic-fields/`, { item: payload })
+                .then(res => {
+                  // ✅ mark as saved
+                  this.originalFields.push(res.data.item);
+                })
+            );
+          }
+
+          // Update
+          for (const { id, item } of changes.update) {
+            requests.push(
+              axios.put(`/admin/api/dynamic-fields/${id}`, { item })
+                .then(res => {
+                  // ✅ replace in originalFields
+                  const idx = this.originalFields.findIndex(f => f.id === id);
+                  if (idx !== -1) this.originalFields[idx] = res.data.item;
+                })
+            );
+          }
+
+          // Delete
+          for (const { id, item } of changes.delete) {
+            if (!id || id?.startsWith?.('backup-')) continue;
+
+            requests.push(
+              axios.delete(`/admin/api/dynamic-fields/${id}`)
+                .then(() => {
+                  // ✅ remove from originalFields
+                  this.originalFields = this.originalFields.filter(f => f.id !== id);
+                })
+            );
+          }
+
+          // Run all in parallel, but don’t throw
+          const results = await Promise.allSettled(requests);
+
+          const failed = results.filter(r => r.status === 'rejected');
+          if (failed.length > 0) {
+            console.log('Some requests failed:', failed);
+            this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
+            // recompute changes so dialog only shows unsaved
+            this.changes = this.computeChanges();
+            this.buildChangesTable();
+            throw failed?.[0]?.reason
+          } else {
+            this.showSnack('{{ _("Fields saved successfully") }}');
+            await this.fetchDynamicFields(); // reload fresh
+          }
+        } catch (err) {
+          console.error(err);
+          this.showSnack(handleRequestError(err));
+          throw err
+        } finally {
+          this.saving = false;
+        }
+      },
+
+      computeChanges() {
+        const changes = { create: [], update: [], delete: [] };
+        const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
+
+        for (const field of this.dynamicFields) {
+          if (!field.id || field.id?.startsWith?.('backup-')) {
+            changes.create.push({ item: field });
+          } else {
+            const orig = originalMap.get(field.id);
+            if (orig) {
+              if (JSON.stringify(field) !== JSON.stringify(orig)) {
+                changes.update.push({ id: field.id, item: field });
+              }
+              originalMap.delete(field.id);
+            }
+          }
+        }
+
+        // Remaining originals are deleted (dynamic only)
+        for (const field of originalMap.values()) {
+          if (!field.core) {
+            changes.delete.push({ id: field.id, item: field });
+          }
+        }
+
+        return changes;
+      },
+
+      isTargetRowHorizontal(target) {
+        if (!target) return false;
+        return target.classList.contains('w-50') || target.classList.contains('w-33') || target.classList.contains('w-25');
+      },
+
+      wouldMove(fromIdx, tgtIdx, cls) {
+        if (fromIdx === tgtIdx) return false;
+
+        if (cls === 'drop-line-above' || cls === 'drop-line-left') {
+          return fromIdx !== tgtIdx - 1; // moving above a next neighbor → no-op
+        } else if (cls === 'drop-line-below' || cls === 'drop-line-right') {
+          return fromIdx !== tgtIdx + 1; // moving below a previous neighbor → no-op
+        }
+        return true;
+      },
+
+      initSortable(el) {
+        if (!el) return;
+
+        const sortable = new Sortable(el, {
+          group: "fields",
+          draggable: ".sortable-item",
+          sort: true,
+          animation: 150,
+          handle: ".drag-handle",
+          ghostClass: "sortable-ghost",
+          scroll: true,
+          bubbleScroll: true,
+          forceAutoScrollFallback: true,
+          forceFallback: true,
+          scrollSensitivity: 100,
+
+          onStart: (evt) => {
+            this.draggingId = evt.item?.dataset?.id ?? null;
+            document.body.classList.add('cursor-grabbing');
+          },
+
+          onMove: (evt, originalEvent) => {
+            const target = evt.related?.closest?.('.sortable-item');
+            if (!target) {
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
+              return false;
+            }
+
+            const overId = target.dataset?.id;
+            if (!overId || overId == this.draggingId) {
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
+              return false;
+            }
+
+            const rect = target.getBoundingClientRect();
+            let cls = "";
+
+            const sameRow = this.isTargetRowHorizontal(target);
+
+            if (sameRow) {
+              // Horizontal logic
+              const midX = rect.left + rect.width / 2;
+              cls = originalEvent.clientX < midX ? "drop-line-left" : "drop-line-right";
+            } else {
+              // Vertical logic
+              const midY = rect.top + rect.height / 2;
+              cls = originalEvent.clientY < midY ? "drop-line-above" : "drop-line-below";
+            }
+
+            // 🔍 Hide drop line if dropping wouldn't move the item
+            const fromIdx = this.dynamicFields.findIndex(i => i.id == this.draggingId);
+            const tgtIdx = this.dynamicFields.findIndex(i => i.id == overId);
+            if (!this.wouldMove(fromIdx, tgtIdx, cls)) cls = "";
+
+            // Update drop line state
+            if (cls) {
+              this.dropLine.id = overId;
+              this.dropLine.cls = cls;
+            } else {
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
+            }
+
+            return false; // cancel DOM swap
+          },
+
+          onEnd: (evt) => {
+            document.body.classList.remove('cursor-grabbing');
+            const overId = this.dropLine.id;
+            const cls = this.dropLine.cls;
+
+            const resetUI = () => {
+              this.draggingId = null;
+              this.dropLine.id = null;
+              this.dropLine.cls = "";
+            };
+
+            if (!overId || !cls || !this.draggingId) {
+              resetUI();
+              return;
+            }
+
+            const arr = this.dynamicFields;
+
+            const fromIdx = arr.findIndex(i => i.id == this.draggingId);
+            const tgtIdx = arr.findIndex(i => i.id == overId);
+
+            if (fromIdx === -1 || tgtIdx === -1) {
+              resetUI();
+              return;
+            }
+
+            // No-op check: don't move if drop wouldn't change anything
+            if (!this.wouldMove(fromIdx, tgtIdx, cls)) {
+              resetUI();
+              return;
+            }
+
+            const after = cls === 'drop-line-below' || cls === 'drop-line-right';
+            let insertIndex = tgtIdx + (after ? 1 : 0);
+
+            if (fromIdx < insertIndex) insertIndex -= 1;
+
+            const [moved] = arr.splice(fromIdx, 1);
+            arr.splice(insertIndex, 0, moved);
+
+            resetUI();
+            this.reindexFields();
+          },
+        });
+
+        this.sortables.main = sortable;
+      },
+
+
+      reindexFields() {
+        this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, sort_order: index + 1 }))
+      },
+      reindexZeroSortFields() {
+        // Find max sort_order before first zero
+        let maxOrder = 0;
+        for (const field of this.dynamicFields) {
+          if (field.sort_order === 0) break;
+          if (field.sort_order > maxOrder) maxOrder = field.sort_order;
+        }
+
+        let counter = maxOrder + 1;
+
+        this.dynamicFields = this.dynamicFields.map(field => {
+          if (field.sort_order === 0) {
+            return { ...field, sort_order: counter++ };
+          }
+          return field;
+        });
+      },
+      async deleteField({ field }) {
+        this.$confirm({
+          title: "You're about to delete a field",
+          message: `Deleting the field '${field.title || 'New Field'}' will remove it from your form.\r\n\r\nDo you want to continue?`,
+          acceptProps: { text: 'Delete Field', color: 'red' },
+          dialogProps: { width: 780 },
+          onAccept: () => {
+            this.dynamicFields = this.dynamicFields.filter(dynamicField => dynamicField.id !== field.id)
+            this.$toast({
+              message: `Field "${field.title || 'New Field'}" has been deleted successfully.`,
+              hideActions: true,
+              snackbarProps: {
+                color: 'green-lighten-5',
+                contentClass: 'border'
+              },
+              iconProps: {
+                icon: 'mdi-check-circle',
+                color: 'green'
+              }
+            })
+          }
+        })
+      },
+      async toggleFieldVisibility({ field }) {
+          const matchingField = this.dynamicFields.find(dynamicField => dynamicField.id === field.id)
+          matchingField.active = !matchingField.active
+      },
+      closeDrawer(open) {
+        this.ui.selectFieldTypeDialog = open;
+        this.editedItem = {}
+      }
+    },
+  });
+
+  app.component('FieldListItem', FieldListItem);
+  app.component('SelectFieldTypeDialog', SelectFieldTypeDialog);
+  app.component('draggable', vuedraggable);
+  app.component('tinymce-editor', Editor);
+  app.component('PopDateField', PopDateField);
+  app.component('PopDateRangeField', PopDateRangeField);
+  app.component('PopDateTimeField', PopDateTimeField);
+  app.component('DiffRenderer', DiffRenderer);
+
+  app.use(router);
+  app.use(vuetify).mount('#app');
+
+  window.app = app;
+</script>
+{% endblock %}
