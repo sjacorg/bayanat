@@ -188,7 +188,7 @@
           },
           dialogProps: { width: 780 },
           onAccept: () => {
-            this.dynamicFields = this.originalFields
+            this.dynamicFields = deepClone(this.originalFields)
             this.$toast({
               message: `All unsaved edits in Bulletin Form have been discarded.`,
               hideActions: true,

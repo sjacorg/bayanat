@@ -14,13 +14,29 @@ const FieldListItem = Vue.defineComponent({
         return {
             translations: window.translations,
             editingMode: false,
-            width: this.field?.ui_config?.width || 'w-100',
-            dropdownOptions: this.field?.ui_component === 'dropdown' ? this.field?.options || [{ label: '', value: '' }] : null
         }
     },
     computed: {
         componentProps() {
             return this.mapFieldToComponent(this.field)
+        },
+        widthProxy: {
+            get() {
+                return this.field?.ui_config?.width || 'w-100'
+            },
+            set(val) {
+                (this.field.ui_config ??= {}).width = val
+            }
+        },
+        dropdownOptionsProxy: {
+            get() {
+                return this.field?.ui_component === 'dropdown'
+                    ? this.field?.options || [{ label: '', value: '' }]
+                    : null
+            },
+            set(val) {
+                this.field.options = val
+            }
         }
     },
     methods: {
@@ -95,17 +111,9 @@ const FieldListItem = Vue.defineComponent({
             if (this.field.core) return
 
             this.editingMode = true
-        }
+        },
     },
     watch: {
-        width(nextWidth) {
-            // Ensure ui_config exists (without overwriting existing properties), then update width property
-            (this.field.ui_config ??= {}).width = nextWidth ?? 'w-100'
-        },
-        dropdownOptions(nextDropdownOptions) {
-            // Ensure ui_config exists (without overwriting existing properties), then update width property
-            this.field.options = nextDropdownOptions
-        },
         'field.title'(nextTitle) {
             const originalField = this.$root.originalFields.find(of => of.id === this.field.id)
             if (!originalField?.name) {
@@ -125,7 +133,7 @@ const FieldListItem = Vue.defineComponent({
                 <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging), 'pointer-events-none': dragging }]">
                     <div>
                         <span class="text-caption">{{ translations.width_ }}</span>:
-                        <v-btn-toggle v-model="width" :disabled="field.core" color="primary" mandatory density="compact" variant="outlined" divided rounded>
+                        <v-btn-toggle v-model="widthProxy" :disabled="field.core" color="primary" mandatory density="compact" variant="outlined" divided rounded>
                             <v-btn value="w-100">
                                 {{ translations.full_ }}
                             </v-btn>
@@ -197,8 +205,7 @@ const FieldListItem = Vue.defineComponent({
                                 </div>
 
                                 <div class="mt-2">
-                                    <draggable v-model="dropdownOptions" :item-key="'id'"
-                                            @end="onDragEnd" class="d-flex flex-column ga-1" handle=".drag-handle">
+                                    <draggable v-model="dropdownOptionsProxy" :item-key="'id'" class="d-flex flex-column ga-1" handle=".drag-handle">
                                             <template #item="{ element: option, index }">
                                                 <div class="d-flex align-center ga-2">
                                                     <v-icon class="drag-handle cursor-grab">mdi-drag</v-icon>
@@ -209,14 +216,21 @@ const FieldListItem = Vue.defineComponent({
                                                         @update:model-value="updateDropdownOption($event, option, index)"
                                                         variant="filled"
                                                         hide-details
+                                                        :disabled="option.hidden"
                                                     ></v-text-field>
-                                                    <v-btn icon="mdi-eye-outline" density="comfortable" variant="text"></v-btn>
+
+                                                    <v-tooltip location="top">
+                                                        <template v-slot:activator="{ props }">
+                                                            <v-btn v-bind="props" :icon="option.hidden ? 'mdi-eye-outline' : 'mdi-eye-off-outline'" density="comfortable" variant="text" @click="option.hidden = !option?.hidden"></v-btn>
+                                                        </template>
+                                                        {{ option.hidden ? translations.showOption_ : translations.hideOption_ }}
+                                                    </v-tooltip>
                                                 </div>
                                             </template>
                                     </draggable>
 
 
-                                    <v-btn class="mt-4" @click="dropdownOptions.push({ id: dropdownOptions.length + 1, label: '', value: '' })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
+                                    <v-btn class="mt-4" @click="dropdownOptionsProxy.push({ id: dropdownOptionsProxy.length + 1, label: '', value: '', hidden: true })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
                                 </div>
 
                             </div>
