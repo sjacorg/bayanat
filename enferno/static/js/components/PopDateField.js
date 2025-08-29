@@ -17,6 +17,6 @@ const PopDateField = {
     }
   },
   template: `
-    <v-date-input :placeholder="$root.dateFormats.standardDate" :display-format="(date) => $root.formatDate(date, $root.dateFormats.standardDate)" class="flex-fill" :label="label" v-bind="$attrs" :rules="[$root.rules.dateValidation]" variant="outlined" hide-actions v-model="date" @click:clear="$emit('update:modelValue', null)" clearable></v-date-input>
+    <v-date-input :placeholder="$root.dateFormats.standardDate" :display-format="(date) => $root.formatDate(date, $root.dateFormats.standardDate)" :input-format="$root.dateFormats.standardDate" class="flex-fill" :label="label" v-bind="$attrs" :rules="[$root.rules.dateValidation]" variant="outlined" hide-actions v-model="date" @click:clear="$emit('update:modelValue', null)" clearable></v-date-input>
   `
 };
