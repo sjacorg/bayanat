@@ -90,6 +90,12 @@ const FieldListItem = Vue.defineComponent({
                 option.value = slugify(nextValue);
             }
         },
+        openEditMode() {
+            // If it's a core field dont allow editing
+            if (this.field.core) return
+
+            this.editingMode = true
+        }
     },
     watch: {
         width(nextWidth) {
@@ -119,7 +125,7 @@ const FieldListItem = Vue.defineComponent({
                 <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging), 'pointer-events-none': dragging }]">
                     <div>
                         <span class="text-caption">{{ translations.width_ }}</span>:
-                        <v-btn-toggle v-model="width" color="primary" mandatory density="compact" variant="outlined" divided rounded>
+                        <v-btn-toggle v-model="width" :disabled="field.core" color="primary" mandatory density="compact" variant="outlined" divided rounded>
                             <v-btn value="w-100">
                                 {{ translations.full_ }}
                             </v-btn>
@@ -134,13 +140,13 @@ const FieldListItem = Vue.defineComponent({
                     <div class="d-flex ga-4">
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" @click="field.required = !field.required" density="comfortable" :color="field.required ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
+                                <v-btn v-bind="props" :disabled="field.core" @click="field.required = !field.required" density="comfortable" :color="field.required ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-asterisk</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsRequired_ }}
                         </v-tooltip>
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" @click="field.searchable = !field.searchable" density="comfortable" :color="field.searchable ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-magnify</v-icon></v-btn>
+                                <v-btn v-bind="props" :disabled="field.core" @click="field.searchable = !field.searchable" density="comfortable" :color="field.searchable ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-magnify</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsSearchable_ }}
                         </v-tooltip>
@@ -161,7 +167,7 @@ const FieldListItem = Vue.defineComponent({
                     </div>
                 </div>
 
-                <div v-if="!editingMode" :class="{'cursor-pointer': !dragging }" @click="editingMode = true">
+                <div v-if="!editingMode" :class="{'cursor-pointer': !dragging }" @click="openEditMode">
                     <div class="pointer-events-none">
                         <component :is="componentProps.component" v-bind="componentProps">
                             <template #append-inner>
