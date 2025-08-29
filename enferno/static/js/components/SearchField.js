@@ -87,11 +87,35 @@ const SearchField = Vue.defineComponent({
       }
     },
     handleMultipleUpdate(val) {
-      // Only keep items that exist
-      const validSelections = val.filter(newItem => this.isValid(newItem));
+      const oldSelections = Array.isArray(this.modelValue) ? this.modelValue : [];
 
-      this.$emit('update:model-value', validSelections);
-    },
+      const getKey = (item) =>
+        this.returnObject ? item?.[this.itemValue] : item;
+
+      const valKeys = val.map(getKey);
+
+      // Step 1: Keep only the ones that are still present in `val`
+      const preserved = oldSelections.filter(
+        (oldItem) => valKeys.includes(getKey(oldItem))
+      );
+
+      // Step 2: Add new selections that are valid
+      const validNew = val.filter((newItem) => this.isValid(newItem));
+
+      // Step 3: Merge both (no duplicates)
+      const merged = [
+        ...preserved,
+        ...validNew.filter(
+          (newItem) =>
+            !preserved.some(
+              (oldItem) => getKey(oldItem) === getKey(newItem)
+            )
+        ),
+      ];
+
+      this.$emit("update:model-value", merged);
+    }
+,
     handleSingleUpdate(val) {
       if (val === null || this.isValid(val)) {
         this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue] || val);
