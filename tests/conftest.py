@@ -4,12 +4,8 @@ from uuid import uuid4
 
 import pytest
 from enferno.admin.models.Notification import Notification
-from enferno.utils.config_utils import ConfigManager
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
-
-# Force test config before any imports
-os.environ["BAYANAT_CONFIG_FILE"] = "config.test.json"
 
 from enferno.settings import TestConfig as cfg
 
