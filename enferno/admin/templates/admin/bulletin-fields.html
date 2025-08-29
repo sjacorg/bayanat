@@ -3,6 +3,9 @@
 <!-- Field Creation Modal -->
 <select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
   :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
+<confirm-dialog ref="reviewAndConfirmDialog">
+  <v-data-table hide-default-footer :items="changesTable"></v-data-table>
+</confirm-dialog>
 
 <v-main>
   <v-sheet>
@@ -68,54 +71,6 @@
       </v-card>
     </div>
   </v-sheet>
-
-  <v-dialog v-model="saveChangesDialog" max-width="900">
-    <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
-        {{ _('Review and confirm your changes') }}
-        <v-btn icon="mdi-close" variant="text" @click="saveChangesDialog = false"></v-btn>
-      </v-card-title>
-      <v-card-text class="d-flex pb-2 pt-2">
-        <div class="d-flex align-center body-2">
-          <v-avatar class="mr-2" size="18" color="red lighten-3"></v-avatar>
-          {{ _('Old Value') }}
-        </div>
-
-        <div class="d-flex align-center ml-4 body-2">
-          <v-avatar class="mr-2" size="18" color="green lighten-2"></v-avatar>
-          {{ _('New Value') }}
-        </div>
-      </v-card-text>
-      <v-card-text class="pa-4">
-        <div v-if="configDiff">
-          <diff-renderer :diff="configDiff"></diff-renderer>
-        </div>
-        <v-sheet v-else class=" text-center mt-3 align-center">
-          <v-icon left>mdi-alert</v-icon>
-          {{ _('No changes detected') }}
-        </v-sheet>
-
-        <v-alert v-if="changes.delete.length" type="warning" variant="tonal" class="mt-4">
-          <div v-for="(change, index) in changes.delete" :key="index" class="d-flex align-center">
-            <div class="d-flex align-center">
-              {{ _('Field') }} <strong>&nbsp;${change.item.title}&nbsp;</strong> {{ _('will be deleted') }}
-            </div>
-          </div>
-        </v-alert>
-
-      </v-card-text>
-      <v-divider></v-divider>
-      <v-card-actions class="pa-4 justify-end">
-        <v-btn @click.stop="saveChangesDialog = false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
-        </v-btn>
-        <v-btn variant="elevated" color="primary" :loading="saving" :disabled="!configDiff" @click.stop="save()"
-          class="ml-4">
-          {{ _('Confirm') }}
-        </v-btn>
-      </v-card-actions>
-
-    </v-card>
-  </v-dialog>
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
@@ -154,12 +109,11 @@
       loading: false,
       saving: false,
       originalFields: [],
-      configDiff: '',
       changes: '',
-      saveChangesDialog: false,
       dropLine: { id: null, cls: "" },
       draggingId: null,
       sortables: {},
+      changesTable: []
     }),
     async mounted() {
       await this.fetchDynamicFields();
@@ -249,18 +203,22 @@
         }
       },
 
+      buildChangesTable() {
+        this.changesTable = Object.entries(this.changes).flatMap(([changeType, change]) =>
+          change.map(item => ({ 'Field Name': item.item.title, 'Change Type': changeType.toUpperCase() }))
+        )
+      },
+
       showSaveDialog() {
         this.changes = this.computeChanges();
-        const fieldsForDiff = this.dynamicFields.map(field => {
-          if (field.id?.startsWith?.('backup-')) {
-            // Return a copy of the field without the backup id
-            const { id, ...rest } = field;
-            return rest;
+        this.buildChangesTable()
+
+        this.$refs.reviewAndConfirmDialog.show({
+          title: "{{ _('Review & Confirm Changes') }}",
+          onAccept: async () => {
+            await this.save()
           }
-          return field;
-        });
-        this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, fieldsForDiff);
-        this.saveChangesDialog = true;
+        })
       },
 
       async save() {
@@ -317,16 +275,16 @@
             this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
             // recompute changes so dialog only shows unsaved
             this.changes = this.computeChanges();
-            this.configDiff = DiffTool.getAndRenderDiff(this.originalFields, this.dynamicFields);
+            this.buildChangesTable();
+            throw failed?.[0]?.reason
           } else {
             this.showSnack('{{ _("Fields saved successfully") }}');
             await this.fetchDynamicFields(); // reload fresh
-            this.saveChangesDialog = false;
-            this.configDiff = '';
           }
         } catch (err) {
           console.error(err);
           this.showSnack(handleRequestError(err));
+          throw err
         } finally {
           this.saving = false;
         }

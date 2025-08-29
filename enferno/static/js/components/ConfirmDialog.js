@@ -46,18 +46,25 @@ const ConfirmDialog = Vue.defineComponent({
     },
 
     async cancel() {
+      await this.onReject?.();
       this.open = false;
-      if (this.onReject) await this.onReject();
       this.resolvePromise?.(false);
       this.cleanup();
     },
 
     async ok() {
       this.loading = true;
-      this.open = false;
-      if (this.onAccept) await this.onAccept();
-      this.resolvePromise?.(true);
-      this.cleanup();
+      
+      try {
+        await this.onAccept?.(); // if this throws, code below won't run
+        this.open = false;
+        this.resolvePromise?.(true);
+        this.cleanup();
+      } catch (error) {
+        console.log('Something failed when confirming dialog', error)
+      } finally {
+        this.loading = false;
+      }
     },
 
     cleanup() {
@@ -81,7 +88,7 @@ const ConfirmDialog = Vue.defineComponent({
         </v-card-title>
 
         <v-card-text class="px-7 pb-7 pt-2 text-pre-wrap">
-          <slot name="message">{{ message }}</slot>
+          <slot>{{ message }}</slot>
         </v-card-text>
 
         <v-card-actions class="justify-end pb-7 px-7 pt-0">
