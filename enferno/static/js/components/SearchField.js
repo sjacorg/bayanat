@@ -32,6 +32,7 @@ const SearchField = Vue.defineComponent({
     return {
       loading: false,
       items: [],
+      uniqueItems: new Set(),
       searchInput: '',
     };
   },
@@ -75,12 +76,8 @@ const SearchField = Vue.defineComponent({
       this.searchInput = '';
       this.$emit('update:model-value', this.multiple ? [] : null);
     },
-    isValid(v) {
-      return this.items.some(item =>
-        this.returnObject
-          ? item[this.itemValue] === v?.[this.itemValue]
-          : item[this.itemValue] === v
-      );
+    isValid(newItem) {
+      return this.uniqueItems.has(this.returnObject ? newItem[this.itemValue] : newItem)
     },
     updateValue(val) {
       if (this.multiple) {
@@ -90,33 +87,38 @@ const SearchField = Vue.defineComponent({
       }
     },
     handleMultipleUpdate(val) {
-      const current = this.modelValue || [];
+      const oldSelections = Array.isArray(this.modelValue) ? this.modelValue : [];
 
-      const validNew = (val || []).filter(v => this.isValid(v));
+      const getKey = (item) =>
+        this.returnObject ? item?.[this.itemValue] : item;
 
-      if (validNew.length === 0) {
-        this.$emit('update:model-value', current);
-        return;
-      }
+      const valKeys = val.map(getKey);
 
-      const combined = [...current];
-      for (const v of validNew) {
-        const exists = combined.some(c =>
-          this.returnObject
-            ? c[this.itemValue] === v[this.itemValue]
-            : c === v
-        );
-        if (!exists) combined.push(v);
-      }
-
-      this.$emit(
-        'update:model-value',
-        this.returnObject ? combined : combined.map(v => v[this.itemValue])
+      // Step 1: Keep only the ones that are still present in `val`
+      const preserved = oldSelections.filter(
+        (oldItem) => valKeys.includes(getKey(oldItem))
       );
-    },
+
+      // Step 2: Add new selections that are valid
+      const validNew = val.filter((newItem) => this.isValid(newItem));
+
+      // Step 3: Merge both (no duplicates)
+      const merged = [
+        ...preserved,
+        ...validNew.filter(
+          (newItem) =>
+            !preserved.some(
+              (oldItem) => getKey(oldItem) === getKey(newItem)
+            )
+        ),
+      ];
+
+      this.$emit("update:model-value", merged);
+    }
+,
     handleSingleUpdate(val) {
       if (val === null || this.isValid(val)) {
-        this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue]);
+        this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue] || val);
       } else {
         this.searchInput = '';
       }
@@ -136,6 +138,7 @@ const SearchField = Vue.defineComponent({
         })
         .then((response) => {
           this.items = response.data.items
+          this.items.forEach(item => this.uniqueItems.add(item[this.itemValue]));
         })
         .catch(console.error)
         .finally(() => {
@@ -218,6 +221,7 @@ const LocationSearchField = Vue.defineComponent({
         })
         .then((response) => {
           this.items = response.data.items;
+          this.items.forEach(item => this.uniqueItems.add(item[this.itemValue]));
         }).finally(() => {
           this.loading = false;
         });
