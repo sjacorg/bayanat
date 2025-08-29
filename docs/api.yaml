@@ -71,6 +71,8 @@ tags:
     description: Operations related to saved searches
   - name: Graph Management
     description: Operations related to graph data
+  - name: Notification Management
+    description: Operations related to notifications
   - name: Configuration Management
     description: Operations related to configuration settings
 paths:
@@ -96,7 +98,7 @@ paths:
                 type: string
                 example: "Reloaded Bayanat"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
 
@@ -110,20 +112,28 @@ paths:
         Check if admin user was created.
       responses:
         '200':
-          description: Result of the check
+          description: Query successful
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - not_found
-                      - exists
-                  message:
-                    type: string
-                    description: Message from the check
+                $ref: '#/components/schemas/StandardSuccessResponse'
+              examples:
+                admin_exists:
+                    value:
+                      message: "Admin user exists"
+                      data:
+                        status: "exists"
+                    summary: Admin user exists
+                admin_not_exists:
+                    value:
+                      message: "Admin user does not exist"
+                      data: 
+                        status: "not_found"
+                    summary: Admin user does not exist
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
   /api/create-admin:
     post:
       tags:
@@ -152,13 +162,21 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Message from the installation
+                $ref: '#/components/schemas/StandardCreateResponse'
+              example:
+                message: "Admin user installed successfully"
+                data:
+                  item:
+                    id: 1
+                    username: "admin"
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardErrorResponse'
+              example:
+                message: "Bad request"
 
   /api/check-data-imported:
     get:
@@ -179,16 +197,22 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - not_imported
-                      - imported
-                  message:
-                    type: string
-                    description: Message from the check
+                $ref: '#/components/schemas/StandardSuccessResponse'
+              examples:
+                data_imported:
+                  value:
+                    message: "Default data imported successfully"
+                    data:
+                      status: "imported"
+                data_not_imported:
+                  value:
+                    message: "Default data not imported"
+                    data:
+                      status: "not_imported"
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
   /api/import-data:
     post:
       tags:
@@ -205,8 +229,14 @@ paths:
       responses:
         '200':
           description: Default data imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardSuccessResponse'
+              example:
+                message: "Default data imported successfully"
         '500':
-          description: Internal server error
+          $ref: '#/components/responses/InternalServerJsonError'
 
   /api/default-config:
     get:
@@ -227,17 +257,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  key:
-                    type: string
-                    description: Key of the configuration
-                  value:
-                    type: string
-                    description: Value of the configuration
-
+                $ref: '#/components/schemas/StandardSuccessResponse'
+              example:
+                message: "Default configuration retrieved successfully"
+                data:
+                  "key": "value"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         
@@ -271,10 +297,22 @@ paths:
       responses:
         '200':
           description: Setup completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardSuccessResponse'
+              example:
+                message: "Setup completed successfully"
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardErrorResponse'
+              example:
+                message: "Bad request"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
 
@@ -364,7 +402,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LabelsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/label:
     post:
       tags:
@@ -388,15 +426,20 @@ paths:
       security:
         - SessionCookieAuth: []
       responses:
-        '200':
-          description: OK
+        '201':
+          description: Label created successfully
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created label #{id}"
-        '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+                $ref: '#/components/schemas/StandardCreateResponse'
+              example:
+                message: "Label created successfully"
+                data:
+                  item:
+                    id: 123
+                    title: "Human Rights"
+        '400':
+          $ref: '#/components/responses/SaveFailedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -438,7 +481,7 @@ paths:
                 type: string
                 example: "Created label #{id}"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -471,7 +514,7 @@ paths:
                 type: string
                 example: "Deleted Label #{id}"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/label/import:
     post:
       operationId: importLabels
@@ -507,7 +550,7 @@ paths:
                 type: string
                 example: Success
         '400':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -547,7 +590,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EventtypesResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/eventtype:
     post:
       operationId: createEventtype
@@ -579,7 +622,7 @@ paths:
                 type: string
                 example: "Created Event #{id}"
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -621,7 +664,7 @@ paths:
                 type: string
                 example: "Saved Event #{id}"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -654,7 +697,7 @@ paths:
                 type: string
                 example: "Deleted Event Type #{id}"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/eventtype/import:
     post:
       operationId: importEventtypes
@@ -690,7 +733,7 @@ paths:
                 type: string
                 example: Success
         '400':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -722,7 +765,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PotentialViolationsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/potentialviolations/{page}:
     get:
       operationId: getPotentialViolationsPaginated
@@ -759,7 +802,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PotentialViolationsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/potentialviolation:
     post:
       operationId: createPotentialViolation
@@ -790,7 +833,7 @@ paths:
                 type: string
                 example: "Created Potential Violation #{id}"
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -828,7 +871,7 @@ paths:
                 type: string
                 example: "Saved Potential Violation #{id}"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -862,7 +905,7 @@ paths:
                 type: string
                 example: "Deleted Potential Violation #{id}"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -902,7 +945,7 @@ paths:
                 type: string
                 example: Success
         '400':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -934,7 +977,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ClaimedViolationsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/claimedviolations/{page}:
     get:
       operationId: getClaimedViolationsPaginated
@@ -976,7 +1019,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ClaimedViolationsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/claimedviolation:
     post:
       operationId: createClaimedViolation
@@ -1007,7 +1050,7 @@ paths:
                 type: string
                 example: "Created Claimed Violation #{id}"
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -1045,7 +1088,7 @@ paths:
                 type: string
                 example: "Saved Claimed Violation #{id}"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -1079,7 +1122,7 @@ paths:
                 type: string
                 example: "Deleted Claimed Violation #{id}"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -1119,7 +1162,7 @@ paths:
                 type: string
                 example: Success
         '400':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -1152,7 +1195,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SourcesResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/source:
     post:
       operationId: newSource
@@ -1183,7 +1226,7 @@ paths:
                 type: string
                 example: "Created Source #{id}"
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '401':
@@ -1223,7 +1266,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
     delete:
       operationId: deleteSource
       tags:
@@ -1257,7 +1300,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/source/import:
     post:
       operationId: importSources
@@ -1293,7 +1336,7 @@ paths:
                 type: string
                 example: Success
         '400':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -1322,7 +1365,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LocationsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
     post:
       operationId: getLocationsQuery
       tags:
@@ -1380,7 +1423,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LocationsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/location:
     post:
       operationId: createLocation
@@ -1446,9 +1489,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/LocationItem'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
     put:
       operationId: updateLocation
       tags:
@@ -1490,9 +1533,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteLocation
       tags:
@@ -1526,7 +1569,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/location/import:
     post:
       operationId: importLocations
@@ -1562,7 +1605,7 @@ paths:
                 type: string
                 example: Success
         '400':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -1625,7 +1668,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LocationAdminLevelsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/location-admin-level:
     post:
       operationId: createLocationAdminLevel
@@ -1648,13 +1691,13 @@ paths:
               $ref: '#/components/schemas/CreateLocationAdminLevelRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/location-admin-level/{id}:
     put:
       operationId: updateLocationAdminLevel
@@ -1695,9 +1738,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteLocationAdminLevel
       tags:
@@ -1814,7 +1857,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LocationTypesResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/location-type:
     post:
       operationId: createLocationType
@@ -1837,13 +1880,13 @@ paths:
               $ref: '#/components/schemas/CreateLocationTypeRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/location-type/{id}:
     put:
       operationId: updateLocationType
@@ -1884,9 +1927,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteLocationType
       tags:
@@ -1954,7 +1997,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComponentsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/country:
     post:
       operationId: createCountry
@@ -1977,13 +2020,13 @@ paths:
               $ref: '#/components/schemas/CreateComponentRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/country/{id}:
     put:
       operationId: updateCountry
@@ -2024,9 +2067,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteCountry
       tags:
@@ -2060,7 +2103,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/ethnographies:
     get:
       operationId: getEthnographies
@@ -2089,7 +2132,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComponentsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/ethnography:
     post:
       operationId: createEthnography
@@ -2112,13 +2155,13 @@ paths:
               $ref: '#/components/schemas/CreateComponentRequest'
       responses:
         '200':
-          $ref: "#/components/responses/ItemCreatedResponse"
+          $ref: "#/components/responses/ItemCreatedJsonResponse"
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/ethnography/{id}:
     put:
       operationId: updateEthnography
@@ -2159,9 +2202,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteEthnography
       tags:
@@ -2229,7 +2272,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComponentsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/dialect:
     post:
       operationId: createDialect
@@ -2252,13 +2295,13 @@ paths:
               $ref: '#/components/schemas/CreateComponentRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/dialect/{id}:
     put:
       operationId: updateDialect
@@ -2299,9 +2342,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteDialect
       tags:
@@ -2369,7 +2412,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComponentsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/idnumbertype:
     post:
       operationId: createIDNumberType
@@ -2392,13 +2435,13 @@ paths:
               $ref: '#/components/schemas/CreateComponentRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/idnumbertype/{id}:
     put:
       operationId: updateIDNumberType
@@ -2439,9 +2482,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteIDNumberType
       tags:
@@ -2508,7 +2551,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinTableInfosResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/atoainfo:
     post:
       operationId: createAtoaInfo
@@ -2531,13 +2574,13 @@ paths:
               $ref: '#/components/schemas/CreateJoinTableInfoRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/RelationInfoSaveFailedResponse'
+          $ref: '#/components/responses/RelationInfoSaveFailedJsonResponse'
   /admin/api/atoainfo/{id}:
     put:
       operationId: updateAtoaInfo
@@ -2578,7 +2621,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteAtoaInfo
       tags:
@@ -2645,7 +2688,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinTableInfosResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/atobinfo:
     post:
       operationId: createAtobInfo
@@ -2668,13 +2711,13 @@ paths:
               $ref: '#/components/schemas/CreateJoinTableInfoRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/RelationInfoSaveFailedResponse'
+          $ref: '#/components/responses/RelationInfoSaveFailedJsonResponse'
   /admin/api/atobinfo/{id}:
     put:
       operationId: updateAtobInfo
@@ -2715,7 +2758,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteAtobInfo
       tags:
@@ -2782,7 +2825,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinTableInfosResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/btobinfo:
     post:
       operationId: createBtobInfo
@@ -2805,13 +2848,13 @@ paths:
               $ref: '#/components/schemas/CreateJoinTableInfoRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/RelationInfoSaveFailedResponse'
+          $ref: '#/components/responses/RelationInfoSaveFailedJsonResponse'
   /admin/api/btobinfo/{id}:
     put:
       operationId: updateBtobInfo
@@ -2852,7 +2895,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteBtobInfo
       tags:
@@ -2919,7 +2962,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinTableInfosResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/itoainfo:
     post:
       operationId: createItoaInfo
@@ -2942,13 +2985,13 @@ paths:
               $ref: '#/components/schemas/CreateJoinTableInfoRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/RelationInfoSaveFailedResponse'
+          $ref: '#/components/responses/RelationInfoSaveFailedJsonResponse'
   /admin/api/itoainfo/{id}:
     put:
       operationId: updateItoaInfo
@@ -2989,7 +3032,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteItoaInfo
       tags:
@@ -3056,7 +3099,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinTableInfosResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/itobinfo:
     post:
       operationId: createItobInfo
@@ -3079,13 +3122,13 @@ paths:
               $ref: '#/components/schemas/CreateJoinTableInfoRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/RelationInfoSaveFailedResponse'
+          $ref: '#/components/responses/RelationInfoSaveFailedJsonResponse'
   /admin/api/itobinfo/{id}:
     put:
       operationId: updateItobInfo
@@ -3126,7 +3169,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteItobInfo
       tags:
@@ -3193,7 +3236,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinTableInfosResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/itoiinfo:
     post:
       operationId: createItoiInfo
@@ -3216,13 +3259,13 @@ paths:
               $ref: '#/components/schemas/CreateJoinTableInfoRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/RelationInfoSaveFailedResponse'
+          $ref: '#/components/responses/RelationInfoSaveFailedJsonResponse'
   /admin/api/itoiinfo/{id}:
     put:
       operationId: updateItoiInfo
@@ -3263,7 +3306,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteItoiInfo
       tags:
@@ -3330,7 +3373,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComponentsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/mediacategory:
     post:
       operationId: createMediaCategory
@@ -3353,13 +3396,13 @@ paths:
               $ref: '#/components/schemas/CreateComponentRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/mediacategory/{id}:
     put:
       operationId: updateMediaCategory
@@ -3401,9 +3444,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteMediaCategory
       tags:
@@ -3470,7 +3513,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComponentsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/geolocationtype:
     post:
       operationId: createGeoLocationType
@@ -3493,13 +3536,13 @@ paths:
               $ref: '#/components/schemas/CreateComponentRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ItemCreatedResponse'
+          $ref: '#/components/responses/ItemCreatedJsonResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/geolocationtype/{id}:
     put:
       operationId: updateGeoLocationType
@@ -3541,9 +3584,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteGeoLocationType
       tags:
@@ -3617,7 +3660,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulletinsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
     post:
       operationId: getBulletinsQuery
       tags:
@@ -3663,7 +3706,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulletinsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/bulletin:
     post:
       operationId: createBulletin
@@ -3706,7 +3749,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/bulletin/{id}:
     get:
       operationId: getBulletin
@@ -3748,7 +3791,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
     put:
       operationId: updateBulletin
       tags:
@@ -3789,7 +3832,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/bulletin/review/{id}:
     put:
       operationId: reviewBulletin
@@ -3847,9 +3890,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/bulletin/bulk:
     put:
       operationId: bulkUpdateBulletins
@@ -3967,7 +4010,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/bulletin/assign/{id}:
     put:
       operationId: selfAssignBulletin
@@ -4022,7 +4065,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/bulletin/web:
     post:
       operationId: importBulletinFromWeb
@@ -4128,7 +4171,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/incident/assign/{id}:
     put:
       operationId: selfAssignIncident
@@ -4179,7 +4222,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/media/chunk:
     post:
       operationId: chunkUploadMedia
@@ -4342,7 +4385,7 @@ paths:
                 format: url
                 example: "https://example.com/media/filename"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           description: Forbidden. Access to the media file is restricted or not allowed.
           content:
@@ -4403,7 +4446,7 @@ paths:
                 type: string
                 format: binary
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           description: Forbidden. Access to the media file is restricted or not allowed.
           content:
@@ -4494,7 +4537,7 @@ paths:
                 type: string
                 format: binary
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/media/{id}:
     put:
       operationId: updateMedia
@@ -4540,43 +4583,17 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/actors:
-    get:
-      operationId: getActors
-      tags:
-        - Protected
-        - Actor Management
-      summary: Get a paginated list of all Actors
-      description: |
-        Returns a paginated list of all actors.
-        
-        Roles accepted:
-        - Admin
-        - Mod
-        - DA
-      security:
-        - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActorsResponse'
-        '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
     post:
       operationId: getActorsQuery
       tags:
         - Protected
         - Actor Management
-      summary: Get a paginated list of all Actors with optional advanced search
+      summary: Get a cursor-paginated list of Actors with optional advanced search
       description: |
-        Returns a paginated list of all actors, (optionally) satisfying search queries.
+        Returns a cursor-paginated list of all actors, (optionally) satisfying search queries.
+        Uses cursor-based pagination for better performance with large datasets.
         
         Roles accepted:
         - Admin
@@ -4584,21 +4601,13 @@ paths:
         - DA
       security:
         - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
       requestBody:
-        required: false
-        description: Search query object.
+        required: true
+        description: Cursor-based pagination and search query object.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                q:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/QueryActorObject'              
+              $ref: '#/components/schemas/ActorQueryRequest'              
       responses:
         '200':
           description: OK
@@ -4607,7 +4616,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ActorsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/actor:
     post:
       operationId: createActor
@@ -4691,7 +4700,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
     put:
       operationId: updateActor
       tags:
@@ -4732,9 +4741,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/actor/review/{id}:
     put:
       operationId: reviewActor
@@ -4787,9 +4796,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/actor/bulk:
     put:
       operationId: bulkUpdateActors
@@ -4872,7 +4881,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ActorProfileItem'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/actor/relations/{id}:
     get:
       operationId: getActorRelations
@@ -4932,7 +4941,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/actormp/{id}:
     get:
       operationId: getActorMp
@@ -4968,7 +4977,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/bulletinhistory/{bulletinid}:
     get:
       operationId: getBulletinHistory
@@ -5010,7 +5019,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/actorhistory/{actorid}:
     get:
       operationId: getActorHistory
@@ -5052,7 +5061,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/incidenthistory/{incidentid}:
     get:
       operationId: getIncidentHistory
@@ -5094,7 +5103,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/locationhistory/{locationid}:
     get:
       operationId: getLocationHistory
@@ -5136,7 +5145,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/users:
     get:
       operationId: getUsers
@@ -5164,7 +5173,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UsersResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
   /admin/api/user:
@@ -5200,7 +5209,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/checkuser:
     post:
       operationId: checkUser
@@ -5285,9 +5294,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteUser
       tags:
@@ -5329,9 +5338,9 @@ paths:
                 type: string
                 example: "User is active, make inactive before deleting."
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/password:
     post:
       operationId: checkPasswordStrength
@@ -5429,7 +5438,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/user/force-reset-all:
     post:
       operationId: forcePasswordResetAll
@@ -5563,7 +5572,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/role/{id}:
     put:
       operationId: updateRole
@@ -5612,9 +5621,9 @@ paths:
                 type: string
                 example: "Cannot edit System Roles"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     delete:
       operationId: deleteRole
       tags:
@@ -5662,9 +5671,9 @@ paths:
               schema:
                 type: string
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/role/import:
     post:
       operationId: importRoles
@@ -5700,52 +5709,19 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '400':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
   /admin/api/incidents:
-    get:
-      operationId: getIncidents
-      tags:
-        - Protected
-        - Incident Management
-      summary: Get a paginated list of all Incidents
-      description: |
-        Returns a paginated list of all incidents.
-        
-        Roles accepted:
-        - Admin
-        - Mod
-        - DA
-      security:
-        - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
-        - in: query
-          name: mode
-          required: false
-          description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
-          schema:
-            type: integer
-            default: 1
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IncidentsResponse'
-        '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
     post:
       operationId: getIncidentsQuery
       tags:
         - Protected
         - Incident Management
-      summary: Get a paginated list of all Incidents satisfying a search query
+      summary: Get a cursor-paginated list of Incidents with optional advanced search
       description: |
-        Returns a paginated list of all incidents satisfying the search query.
+        Returns a cursor-paginated list of all incidents, (optionally) satisfying search queries.
+        Uses cursor-based pagination for better performance with large datasets.
         
         Roles accepted:
         - Admin
@@ -5753,25 +5729,13 @@ paths:
         - DA
       security:
         - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
-        - in: query
-          name: mode
-          required: false
-          description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
-          schema:
-            type: integer
-            default: 1
       requestBody:
-        required: false
+        required: true
+        description: Cursor-based pagination and search query object.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                q:
-                  $ref: '#/components/schemas/QueryIncidentObject'
+              $ref: '#/components/schemas/IncidentQueryRequest'
       responses:
         '200':
           description: OK
@@ -5780,7 +5744,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/IncidentsResponse'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/incident:
     post:
       operationId: createIncident
@@ -5823,7 +5787,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerJsonError'
   /admin/api/incident/{id}:
     put:
       operationId: updateIncident
@@ -5865,9 +5829,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
     get:
       operationId: getIncident
       tags:
@@ -5898,7 +5862,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/IncidentItem'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           description: Restricted access
           content:
@@ -5907,7 +5871,7 @@ paths:
                 type: string
                 example: "Restricted access"
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/incident/review/{id}:
     put:
       operationId: updateIncidentReview
@@ -5958,9 +5922,9 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+          $ref: '#/components/responses/SaveFailedJsonResponse'
   /admin/api/incident/bulk:
     put:
       operationId: updateIncidents
@@ -6067,9 +6031,9 @@ paths:
                   more:
                     type: boolean
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/incident/import:
     post:
       operationId: importIncidents
@@ -6107,7 +6071,7 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
-          $ref: '#/components/responses/MissingCsvResponse'
+          $ref: '#/components/responses/MissingCsvJsonResponse'
   /admin/api/activity:
     get:
       operationId: getActivity
@@ -6215,7 +6179,7 @@ paths:
                     status:
                       type: string
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '404':
           description: Unsupported `type` parameter.
           content:
@@ -6260,7 +6224,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/QueryItem'
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '400':
@@ -6302,7 +6266,7 @@ paths:
                 type: string
                 example: "Query name is available"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '409':
           description: Query name is already in use.
           content:
@@ -6355,7 +6319,7 @@ paths:
                 type: string
                 example: "Query successfully saved!"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '400':
           description: Bad request.
           content:
@@ -6412,9 +6376,9 @@ paths:
                 type: string
                 example: "Query {name} updated!"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '417':
           description: Error parsing query object
           content:
@@ -6460,9 +6424,9 @@ paths:
                 type: string
                 example: "Query {name} deleted!"
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
         '409':
           description: Query deletion failed.
           content:
@@ -6524,7 +6488,7 @@ paths:
                 example:
                   { "error": "Invalid request" }
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
 
   /admin/api/graph/json:
     get:
@@ -6605,7 +6569,7 @@ paths:
                         type:
                           type: string
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
   /admin/api/graph/visualize:
     post:
       operationId: visualizeGraph
@@ -6657,7 +6621,7 @@ paths:
                   task_id:
                     type: integer
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '400':
           description: Bad request.
           content:
@@ -6690,9 +6654,9 @@ paths:
                 type: object
                 description: Graph data in JSON format.                  
         '401':
-          $ref: '#/components/responses/UnauthenticatedResponse'
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '404':
-          $ref: '#/components/responses/NotFoundTextResponse'
+          $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/graph/status:
     get:
       operationId: getGraphStatus
@@ -6720,9 +6684,117 @@ paths:
                   status:
                     type: string
         '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundJsonResponse'
+  /admin/api/notifications:
+    get:
+      operationId: getNotifications
+      tags:
+        - Protected
+        - Notification Management
+      summary: Get paginated notifications for the current user
+      description: |
+        Get a paginated list of notifications for the current user.
+        
+        Roles accepted:
+        - Admin
+        - Mod
+        - DA
+      security:
+        - SessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: status
+          required: false
+          description: Status of the notifications to filter by (default: all, can be "read" or "unread". Case insensitive)
+          schema:
+            type: string
+            enum:
+              - read
+              - unread
+              - all
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  currentPage:
+                    type: integer
+                  perPage:
+                    type: integer
+                  total:
+                    type: integer
+                  hasMore:
+                    type: boolean
+                  unreadCount:
+                    type: integer
+  /admin/api/notifications/unread/count:
+    get:
+      operationId: getUnreadNotificationsCount
+      tags:
+        - Protected
+        - Notification Management
+      summary: Get the count of unread notifications for the current user
+      description: |
+        Get the count of unread notifications for the current user.
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread_count:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/UnauthenticatedResponse'
+  /admin/api/notifications/<int:notification_id>/read:
+    post:
+      operationId: markNotificationAsRead
+      tags:
+        - Protected
+        - Notification Management
+      summary: Mark a notification as read
+      description: |
+        Mark a notification as read.
+
+        Roles accepted:
+        - Admin
+        - Mod
+        - DA
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  notification:
+                    $ref: '#/components/schemas/Notification'
+        '401':
           $ref: '#/components/responses/UnauthenticatedResponse'
         '404':
           $ref: '#/components/responses/NotFoundTextResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
   /admin/api/appconfig:
     get:
       operationId: getAppConfig
@@ -6874,88 +6946,111 @@ components:
         type: string
         example: human rights
   responses:
-    UnauthenticatedResponse:
-      description: Unauthenticated access attempt will return the login page in text/html.
-      content:
-        text/html:
-          schema:
-            type: string
-            example: "<html><body>Login Page...</body></html>"
-    SaveFailedResponse:
+    SaveFailedJsonResponse:
       description: There was an error while saving the entity.
       content:
-        text/plain:
+        application/json:
           schema:
-            type: string
-            example: Save Failed
+            $ref: '#/components/schemas/StandardErrorResponse'
+          example:
+            message: "There was an error while saving the entity."
+            errors:
+              - "Title and Reverse Title are required."
     UnauthenticatedJsonResponse:
       description: User must sign in to view this resource.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/HTTPErrorResponse'
-          example: |
-                {
-                  "meta": {
-                    "code": 401
-                  },
-                  "response": {
-                    "errors": [
-                    "You must sign in to view this resource"
-                    ]
-                  }
-                }
+            $ref: '#/components/schemas/StandardErrorResponse'
+          example:
+            message: "You must sign in to view this resource"
     UnauthorizedJsonResponse:
       description: User doesn't have permission to create this entity.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/HTTPErrorResponse'
-    NotFoundTextResponse:
+            $ref: '#/components/schemas/StandardErrorResponse'
+          example:
+            message: "You don't have permission to access this resource"
+    NotFoundJsonResponse:
       description: Resource with `{id}` was not found.
       content:
-        text/plain:
+        application/json:
           schema:
-            type: string
-            example: "Not Found"
-    MissingCsvResponse:
+            $ref: '#/components/schemas/StandardErrorResponse'
+          example:
+            message: "Resource with `{id}` was not found."
+    MissingCsvJsonResponse:
       description: Bad request, possibly due to missing CSV file in the request.
       content:
-        text/plain:
+        application/json:
           schema:
-            type: string
-            example: Error
-    InternalServerError:
+            $ref: '#/components/schemas/StandardErrorResponse'
+          example:
+            message: "Bad request, possibly due to missing CSV file in the request."
+    InternalServerJsonError:
       description: Something went wrong, the entity could not be deleted
       content:
-        text/html:
+        application/json:
           schema:
-            type: string
-            example: "<html><body>... Sorry, something went wrong on our system. Don't panic, we are fixing it! Please try again later. ...</body></html>"
-    RelationInfoSaveFailedResponse:
+            $ref: '#/components/schemas/StandardErrorResponse'
+          example:
+            message: "Something went wrong, the entity could not be deleted"
+    RelationInfoSaveFailedJsonResponse:
       description: |
-            Failure in creation due to missing required fields or other internal issues.
-            - "Title and Reverse Title are required." when the title or reverse title is not provided.
-            - "Creation failed." for other issues preventing item creation.
-      content:
-        text/plain:
+        application/json:
           schema:
-            type: string
-          examples:
-            missingRequiredFields:
-              summary: Title and Reverse Title missing
-              value: "Title and Reverse Title are required."
-            creationFailed:
-              summary: Other creation failure
-              value: "Creation failed."
-    ItemCreatedResponse:
-      description: OK
+            $ref: '#/components/schemas/StandardErrorResponse'
+          example:
+            message: "There was an error while saving the entity."
+            errors:
+              - "Title and Reverse Title are required."
+    ItemCreatedJsonResponse:
+      description: Item created successfully
       content:
-        text/plain:
+        application/json:
           schema:
-            type: string
-            example: "Item created successfully ID #{id} !"
+            $ref: '#/components/schemas/StandardCreateResponse'
+          example:
+            message: "Item created successfully ID #{id} !"
+            data:
+              item:
+                id: 123
+                title: "Human Rights"
   schemas:
+    # Standard Response Schemas
+    StandardSuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+        data:
+          type: object
+          description: Response data (optional)
+    StandardErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+        errors:
+          type: array
+          items:
+            type: string
+          description: Additional error details (optional)
+    StandardCreateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+        data:
+          type: object
+          properties:
+            item:
+              type: object
+              description: The created item
     QueryLocationObject:
       type: object
       properties:
@@ -7371,6 +7466,81 @@ components:
         total:
           type: integer
           description: Total number of items.
+    CursorPaginationResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+          description: Entity-specific items will be defined in the actual endpoint.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for the next page of results. Null if no more results.
+        meta:
+          type: object
+          properties:
+            currentPageSize:
+              type: integer
+              description: Number of items in the current page.
+            hasMore:
+              type: boolean
+              description: Whether there are more items available.
+            isFirstPage:
+              type: boolean
+              description: Whether this is the first page of results.
+        total:
+          type: integer
+          nullable: true
+          description: Total number of items (only included when include_count is true).
+        totalType:
+          type: string
+          nullable: true
+          description: Type of total count calculation (e.g., "approximate", "exact").
+    ActorQueryRequest:
+      type: object
+      properties:
+        q:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryActorObject'
+          description: Array of search query objects.
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of items per page.
+        cursor:
+          type: string
+          nullable: true
+          description: Cursor for pagination (ID of the last item in the previous page).
+        include_count:
+          type: boolean
+          default: false
+          description: Whether to include total count in the response.
+    IncidentQueryRequest:
+      type: object
+      properties:
+        q:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryIncidentObject'
+          description: Array of search query objects.
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of items per page.
+        cursor:
+          type: string
+          nullable: true
+          description: Cursor for pagination (ID of the last item in the previous page).
+        include_count:
+          type: boolean
+          default: false
+          description: Whether to include total count in the response.
     LoginRequest:
       type: object
       required: 
@@ -7420,12 +7590,16 @@ components:
           $ref: '#/components/schemas/LabelMinItem'
     LabelsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/LabelItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/LabelItem'
     LabelItem:
       type: object
       required:
@@ -7472,12 +7646,16 @@ components:
           type: string
     EventtypesResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items: 
-                $ref: '#/components/schemas/EventtypeItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items: 
+                        $ref: '#/components/schemas/EventtypeItem'
     CreateEventtypeRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7523,12 +7701,16 @@ components:
           example: "2024-03-26T09:15"
     PotentialViolationsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items: 
-                $ref: '#/components/schemas/PotentialViolationItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items: 
+                        $ref: '#/components/schemas/PotentialViolationItem'
     CreatePotentialViolationRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7554,12 +7736,16 @@ components:
           type: string
     ClaimedViolationsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/ClaimedViolationItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ClaimedViolationItem'
     CreateClaimedViolationRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7585,12 +7771,16 @@ components:
           type: string
     SourcesResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/SourceItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SourceItem'
     CreateSourceRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7643,12 +7833,16 @@ components:
           type: string
     LocationAdminLevelsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/LocationAdminLevelItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/LocationAdminLevelItem'
     CreateLocationAdminLevelRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7679,12 +7873,16 @@ components:
           type: string
     LocationTypesResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/LocationTypeItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/LocationTypeItem'
     CreateLocationTypeRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7715,12 +7913,16 @@ components:
           type: string
     ComponentsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/ComponentDataItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ComponentDataItem'
     CreateComponentRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7764,12 +7966,16 @@ components:
           example: '2022-12-23T12:02:00'
     LocationsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/LocationItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/LocationItem'
     CreateLocationRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -7912,12 +8118,16 @@ components:
           type: string
     JoinTableInfosResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/JoinTableInfoItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/JoinTableInfoItem'
     JoinTableInfoItem:
       type: object
       required:
@@ -7976,12 +8186,16 @@ components:
           type: boolean
     UsersResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/StandardSuccessResponse'
         - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/UserItem'
+            data:
+              allOf:
+                - $ref: '#/components/schemas/GenericListResponse'
+                - properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/UserItem'
     UserItem:
       oneOf:
         - $ref: '#/components/schemas/UserCompactItem'
@@ -8382,14 +8596,45 @@ components:
           format: date-time
         comments:
           type: string
+    BulletinResponseMeta:
+      type: object
+      required:
+        - currentPageSize
+        - hasMore
+        - isFirstPage
+      properties:
+        currentPageSize:
+          type: integer
+          description: Number of items in the current page
+        hasMore:
+          type: boolean
+          description: Whether there are more items available
+        isFirstPage:
+          type: boolean
+          description: Whether this is the first page of results
     BulletinsResponse:
-      allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
-        - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/BulletinItem'
+      type: object
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulletinItem'
+          description: List of bulletin items
+        nextCursor:
+          type: string
+          description: Next cursor for pagination (optional)
+        meta:
+          $ref: '#/components/schemas/BulletinResponseMeta'
+          description: Metadata about the current page
+        total:
+          type: integer
+          description: Total number of items (optional)
+        totalType:
+          type: string
+          description: Type of total count (optional)
     BaseMinItem:
       type: object
       properties:
@@ -9123,7 +9368,7 @@ components:
         - $ref: '#/components/schemas/ActorMode4Item'
     ActorsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/CursorPaginationResponse'
         - properties:
             items:
               type: array
@@ -9725,7 +9970,7 @@ components:
               $ref: '#/components/schemas/NewIncident'
     IncidentsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/CursorPaginationResponse'
         - properties:
             items:
               type: array
@@ -9801,6 +10046,30 @@ components:
               items:
                 type: string
               example: ['You do not have permission to view this resource.']
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+        read_status:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+        is_urgent:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     BaseItemCreateResponse:
       type: object
       properties:

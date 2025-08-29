@@ -1,536 +1,488 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-<v-main style="overflow: scroll;">
-    <v-card class="ma-5 pa-2">
-        <v-card-title>
-            <div class="flex-grow-1">{{ _('Component Data Management') }}</div>
-        </v-card-title>
+<v-main class="overflow-y-auto">
+    <div class="pa-4">
+        <v-card class="pa-4" elevation="2">
+            <h1 class="text-h6 mb-5">{{ _('Component Data Management') }}</h1>
 
-        <v-container fluid>
-            <v-row>
-
-                <v-col cols="12" sm="6" md="3">
-                    <v-tabs v-model="selectedTab" direction="vertical">
-                        <v-tab value="location-admin-levels" class="justify-start">
-                            {{ _('Location Administrative Levels') }}
-                        </v-tab>
-                        <v-tab value="location-types" class="justify-start">
-                            {{ _('Location Types') }}
-                        </v-tab>
-                        <v-tab value="countries" class="justify-start">
-                            {{ _('Countries') }}
-                        </v-tab>
-                        <v-tab value="ethnographic-info" class="justify-start">
-                            {{ _('Ethnographic Information') }}
-                        </v-tab>
-                        <v-tab value="dialects" class="justify-start">
-                            {{ _('Dialects') }}
-                        </v-tab>
-                        <v-tab value="id-number-types" class="justify-start">
-                            {{ _('ID Number Types') }}
-                        </v-tab>
-                        <v-tab value="actor-actor-relations" class="justify-start">
-                            {{ _('Actor to Actor Relations') }}
-                        </v-tab>
-                        <v-tab value="actor-bulletin-relations" class="justify-start">
-                            {{ _('Actor to Bulletin Relations') }}
-                        </v-tab>
-                        <v-tab value="bulletin-bulletin-relations" class="justify-start">
-                            {{ _('Bulletin to Bulletin Relations') }}
-                        </v-tab>
-                        <v-tab value="incident-bulletin-relations" class="justify-start">
-                            {{ _('Incident to Bulletin Relations') }}
-                        </v-tab>
-                        <v-tab value="incident-actor-relations" class="justify-start">
-                            {{ _('Incident to Actor Relations') }}
-                        </v-tab>
-                        <v-tab value="incident-incident-relations" class="justify-start">
-                            {{ _('Incident to Incident Relations') }}
-                        </v-tab>
-                        <v-tab value="media-categories" class="justify-start">
-                            {{ _('Media Categories') }}
-                        </v-tab>
-                        <v-tab value="geo-location-types" class="justify-start">
-                            {{ _('Geo Location Types') }}
-                        </v-tab>
-                        <v-tab value="potential-violation-categories" class="justify-start">
-                            {{ _('Potential Violation Categories') }}
-                        </v-tab>
-                        <v-tab value="claimed-violation-categories" class="justify-start">
-                            {{ _('Claimed Violation Categories') }}
+            <div class="d-flex flex-column flex-md-row ga-4">
+                <v-card class="py-5 overflow-y-auto h-fit" elevation="2" style="min-width: 255px;">
+                    <v-tabs mandatory height="40" v-model="tabState.main" selected-class="bg-surface-light" direction="vertical">
+                        <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
+                            class="px-7 justify-start text-none text-subtitle-2">
+                            ${tab.text}
                         </v-tab>
                     </v-tabs>
-                </v-col>
+                </v-card>
+                <v-card elevation="2" class="w-100">
+                    <div>
+                        <div v-if="tabState.main === 'location'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
+                                    :value="key">
+                                    ${childTab.text}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
 
-                <v-col>
-                    <v-window v-model="selectedTab">
-
-                        <v-window-item value="location-admin-levels" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table ref="locationAdminLevelsTable" title="{{ _('Location Administrative Levels') }}"
-                                                    :item-headers="alHeaders"
-                                                    :editable-columns="['title']"
-                                                    :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
-                                                    delete-endpoint="/admin/api/location-admin-level"
-                                                    save-endpoint="/admin/api/location-admin-level"
-                                                    load-endpoint="/admin/api/location-admin-levels/?per_page=1000"
-                                                    @items-updated="onLocationAdminLevelsUpdated">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'administrative-levels'">
+                                    <editable-table :height="`calc(100vh - ${showLalWarning ? '701px' : '628px'})`" title="{{ _('Location Administrative Levels') }}"
+                                        :item-headers="alHeaders" :editable-columns="['code', 'title']"
+                                        :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
+                                        delete-endpoint="/admin/api/location-admin-level"
+                                        save-endpoint="/admin/api/location-admin-level"
+                                        load-endpoint="/admin/api/location-admin-levels/?per_page=1000"
+                                        @items-updated="onLocationAdminLevelsUpdated">
                                     </editable-table>
                                     <v-divider class="my-4"></v-divider>
                                     <!-- Add toolbar template -->
-                                    <v-toolbar flat>
-                                        <h3 class="text-h6 mb-2">{{ _('Full Location Text Format') }}</h3>
-                                    </v-toolbar>
-                                    <div class="text-caption">{{ _('These settings control how the full location text of each Location is formatted and generated from its title and its parents. You can customize this order to match the address system of the country you\'re working on.') }}</div>
-                                    <draggable 
-                                        v-model="lalChips"
-                                        :item-key="'id'"
-                                        class="d-flex flex-wrap"
-                                        @end="onDragEnd">
-                                        <template #item="{element}">
-                                            <v-chip class="ma-2">
-                                                <v-icon left small>mdi-drag</v-icon>
-                                                <span v-text="element.title"></span>
-                                            </v-chip>
-                                        </template>
-                                    </draggable>
-                                    <div class="text-caption">
-                                        {{ _('You can change the option to include postal codes in format of the full location text in the system settings.') }}
-                                    </div>
-                                    <div class="d-flex align-center justify-end mt-4">
-                                        <div v-if="isOrderChanged" class="me-2">
-                                            <v-btn 
-                                                color="secondary"
-                                                variant="elevated"
-                                                size="small"
-                                                @click="revertOrder"
-                                                prepend-icon="mdi-undo"
-                                                class="me-2">
-                                                {{ _('Revert Changes') }}
+                                    <v-card flat class="px-5 pb-5 pt-1">
+                                        <h3 class="text-subtitle-1 mb-2">{{ _('Full Location text format') }}
+                                        </h3>
+                                        <div class="text-caption text-muted" style="max-width: 716px;">{{
+                                            _('These settings control how the Full Location text of each
+                                            Location is
+                                            formatted and generated from its title and its parents. You can
+                                            customize this order to match the
+                                            address system of the country you\'re working on.') }}</div>
+                                        <draggable v-model="lalChips" :item-key="'id'" class="d-flex flex-wrap ga-2 mt-4 mb-8"
+                                            @end="onDragEnd">
+                                            <template #item="{element}">
+                                                <v-chip border variant="text" size="default">
+                                                    <v-icon left size="x-large">mdi-drag</v-icon>
+                                                    <span class="text-body-2 ml-2" v-text="element.title"></span>
+                                                </v-chip>
+                                            </template>
+                                        </draggable>
+
+                                        <div class="d-flex justify-end align-center ga-4 mt-4">
+                                            <div class="text-caption text-right text-muted mr-2" style="max-width: 400px;">
+                                                {{ _('You can change the option to include postal codes in
+                                                format of the Full Location text in the system settings.') }}
+                                            </div>
+                                            <v-btn v-if="isOrderChanged" variant="outlined" @click="revertOrder" class="outlined-btn"
+                                                prepend-icon="mdi-history">
+                                                {{ _('Revert changes') }}
                                             </v-btn>
-                                            <v-btn 
-                                                color="primary"
-                                                variant="elevated"
-                                                size="small"
-                                                prepend-icon="mdi-check"
+                                            <v-btn color="primary" variant="outlined" prepend-icon="mdi-refresh" class="outlined-btn"
+                                                @click="regenerateLocations">
+                                                {{ _('Regenerate') }}
+                                            </v-btn>
+                                            <v-btn v-if="isOrderChanged" color="primary" prepend-icon="mdi-check"
                                                 @click="reorderLocationAdminLevels">
-                                                {{ _('Save Order') }}
+                                                {{ _('Save order') }}
                                             </v-btn>
                                         </div>
                                         <div>
-                                            <v-btn
-                                                color="warning"
-                                                variant="elevated"
-                                                size="small"
-                                                prepend-icon="mdi-refresh"
-                                                @click="regenerateLocations">
-                                                {{ _('Regenerate Full Location Texts') }}
-                                            </v-btn>
+                                            <v-card class="mt-5" color="info" v-if="showLalWarning">
+                                                <v-card-text class="d-flex align-center ga-2" style="line-height: 1;">
+                                                    <v-icon>mdi-information</v-icon>
+                                                    {{ _('You must re-generate Full Location texts for the new format to take effect.') }}
+                                                </v-card-text>
+                                            </v-card>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <v-card class="pa-2 mt-2 mb-3" color="info" v-if="showLalWarning">
-                                            <v-card-text>
-                                                <v-icon>mdi-information</v-icon>
-                                                {{ _('You must Re-generate Full Location Texts for the new format to take effect.') }}
-                                            </v-card-text>
-                                        </v-card>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                    </v-card>
+                                </div>
 
-                        <v-window-item value="location-types" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Location Types') }}" :item-headers="ltHeaders"
-                                                    :no-action-ids="[1,2]"
-                                                    delete-endpoint="/admin/api/location-type"
-                                                    save-endpoint="/admin/api/location-type"
-                                                    load-endpoint="/admin/api/location-types/?per_page=1000">
+                                <div v-if="tabState.child === 'location-types'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Location Types') }}"
+                                        :item-headers="ltHeaders" :no-action-ids="[1,2]" delete-endpoint="/admin/api/location-type"
+                                        save-endpoint="/admin/api/location-type"
+                                        load-endpoint="/admin/api/location-types/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
+                            </div>
+                        </div>
 
-                        <v-window-item value="countries" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Countries') }}" :item-headers="countryHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/country"
-                                                    save-endpoint="/admin/api/country"
-                                                    load-endpoint="/admin/api/countries/?per_page=1000">
-                                    </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                        <div v-if="tabState.main === 'countries'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
+                                    :value="key">
+                                    ${childTab.text}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
 
-                        <v-window-item value="ethnographic-info" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Ethnographic Information') }}"
-                                                    :item-headers="ethnoHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/ethnography"
-                                                    save-endpoint="/admin/api/ethnography"
-                                                    load-endpoint="/admin/api/ethnographies/?per_page=1000">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'countries'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Countries') }}"
+                                        :item-headers="countryHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/country" save-endpoint="/admin/api/country"
+                                        load-endpoint="/admin/api/countries/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="dialects" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Dialects') }}"
-                                                    :item-headers="dialectHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/dialect"
-                                                    save-endpoint="/admin/api/dialect"
-                                                    load-endpoint="/admin/api/dialects/?per_page=1000">
+                                <div v-if="tabState.child === 'ethnographic-info'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Ethnographic Information') }}"
+                                        :item-headers="ethnoHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/ethnography" save-endpoint="/admin/api/ethnography"
+                                        load-endpoint="/admin/api/ethnographies/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="id-number-types" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('ID Number Types') }}"
-                                                    :item-headers="idNumberTypeHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/idnumbertype"
-                                                    save-endpoint="/admin/api/idnumbertype"
-                                                    load-endpoint="/admin/api/idnumbertypes/?per_page=1000">
+                                <div v-if="tabState.child === 'dialects'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Dialects') }}"
+                                        :item-headers="dialectHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/dialect" save-endpoint="/admin/api/dialect"
+                                        load-endpoint="/admin/api/dialects/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
+                            </div>
+                        </div>
 
-                        <v-window-item value="actor-actor-relations" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Actor to Actor Relations') }}"
-                                                    :item-headers="revRelationHeaders"
-                                                    :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
-                                                    delete-endpoint="/admin/api/atoainfo"
-                                                    save-endpoint="/admin/api/atoainfo"
-                                                    load-endpoint="/admin/api/atoainfos/?per_page=1000">
-                                    </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                        <div v-if="tabState.main === 'relations'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
+                                    :value="key">
+                                    ${childTab.text}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
 
-                        <v-window-item value="actor-bulletin-relations" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Actor to Bulletin Relations') }}"
-                                                    :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/atobinfo"
-                                                    save-endpoint="/admin/api/atobinfo"
-                                                    load-endpoint="/admin/api/atobinfos/?per_page=1000">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'actor-to-actor'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Actor Relations') }}"
+                                        :item-headers="revRelationHeaders"
+                                        :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
+                                        delete-endpoint="/admin/api/atoainfo" save-endpoint="/admin/api/atoainfo"
+                                        load-endpoint="/admin/api/atoainfos/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="bulletin-bulletin-relations" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Bulletin to Bulletin Relations') }}"
-                                                    :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/btobinfo"
-                                                    save-endpoint="/admin/api/btobinfo"
-                                                    load-endpoint="/admin/api/btobinfos/?per_page=1000">
+                                <div v-if="tabState.child === 'actor-to-bulletin'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Bulletin Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/atobinfo" save-endpoint="/admin/api/atobinfo"
+                                        load-endpoint="/admin/api/atobinfos/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="incident-bulletin-relations" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Incident to Bulletin Relations') }}"
-                                                    :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/itobinfo"
-                                                    save-endpoint="/admin/api/itobinfo"
-                                                    load-endpoint="/admin/api/itobinfos/?per_page=1000">
+                                <div v-if="tabState.child === 'bulletin-to-bulletin'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Bulletin to Bulletin Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/btobinfo" save-endpoint="/admin/api/btobinfo"
+                                        load-endpoint="/admin/api/btobinfos/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="incident-actor-relations" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Incident to Actor Relations') }}"
-                                                    :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/itoainfo"
-                                                    save-endpoint="/admin/api/itoainfo"
-                                                    load-endpoint="/admin/api/itoainfos/?per_page=1000">
+                                <div v-if="tabState.child === 'incident-to-bulletin'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Bulletin Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/itobinfo" save-endpoint="/admin/api/itobinfo"
+                                        load-endpoint="/admin/api/itobinfos/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="incident-incident-relations" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Incident to Incident Relations') }}"
-                                                    :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/itoiinfo"
-                                                    save-endpoint="/admin/api/itoiinfo"
-                                                    load-endpoint="/admin/api/itoiinfos/?per_page=1000">
+                                <div v-if="tabState.child === 'incident-to-actor'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Actor Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/itoainfo" save-endpoint="/admin/api/itoainfo"
+                                        load-endpoint="/admin/api/itoainfos/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="media-categories" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/mediacategory"
-                                                    save-endpoint="/admin/api/mediacategory"
-                                                    load-endpoint="/admin/api/mediacategories/?per_page=1000">
+                                <div v-if="tabState.child === 'incident-to-incident'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Incident Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/itoiinfo" save-endpoint="/admin/api/itoiinfo"
+                                        load-endpoint="/admin/api/itoiinfos/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="tabState.main === 'media'">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
+                                <editable-table height="calc(100vh - 307px)" title="{{ _('Media Categories') }}"
+                                    :item-headers="mediaHeaders" :editable-columns="['title','title_tr']"
+                                    delete-endpoint="/admin/api/mediacategory" save-endpoint="/admin/api/mediacategory"
+                                    load-endpoint="/admin/api/mediacategories/?per_page=1000">
+                                </editable-table>
+                            </div>
+                        </div>
+                        <div v-if="tabState.main === 'geolocation'">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
+                                <editable-table height="calc(100vh - 307px)" title="{{ _('Geo Location Types') }}"
+                                    :item-headers="geoHeaders" :editable-columns="['title','title_tr']"
+                                    delete-endpoint="/admin/api/geolocationtype" save-endpoint="/admin/api/geolocationtype"
+                                    load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
+                                </editable-table>
+                            </div>
+                        </div>
+                        <div v-if="tabState.main === 'identification'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
+                                    ${childTab.text}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
+                        
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'id-number-types'">
+                                    <editable-table title="{{ _('ID Number Types') }}" :item-headers="idNumberTypeHeaders"
+                                        :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/idnumbertype"
+                                        save-endpoint="/admin/api/idnumbertype" load-endpoint="/admin/api/idnumbertypes/?per_page=1000">
+                                    </editable-table>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="tabState.main === 'violation'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab class="px-7" value="potential-violation">
+                                    {{ _('Potential Violation') }}
+                                </v-tab>
+                                <v-tab class="px-7" value="claimed-violation">
+                                    {{ _('Claimed Violation') }}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
 
-                        <v-window-item value="geo-location-types" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/geolocationtype"
-                                                    save-endpoint="/admin/api/geolocationtype"
-                                                    load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'potential-violation'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Potential Violation Categories') }}"
+                                        :item-headers="potentialHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/potentialviolation" save-endpoint="/admin/api/potentialviolation"
+                                        load-endpoint="/admin/api/potentialviolation/?per_page=1000">
                                     </editable-table>
-                                </v-card-text>
-                            </v-card>
-                        </v-window-item>
+                                </div>
 
-                        <v-window-item value="potential-violation-categories" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/potentialviolation"
-                                                    save-endpoint="/admin/api/potentialviolation"
-                                                    load-endpoint="/admin/api/potentialviolation/?per_page=1000">
+                                <div v-if="tabState.child === 'claimed-violation'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Claimed Violation Categories') }}"
+                                        :item-headers="claimedHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/claimedviolation" save-endpoint="/admin/api/claimedviolation"
+                                        load-endpoint="/admin/api/claimedviolation/?per_page=1000">
                                     </editable-table>
-                        </v-window-item>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </v-card>
+            </div>
+                        
 
-                        <v-window-item value="claimed-violation-categories" class="pa-1">
-                            <v-card>
-                                <v-card-text>
-                                    <editable-table title="{{ _('Claimed Violation Categories') }}" :item-headers="claimedHeaders"
-                                                    :editable-columns="['title','title_tr']"
-                                                    delete-endpoint="/admin/api/claimedviolation"
-                                                    save-endpoint="/admin/api/claimedviolation"
-                                                    load-endpoint="/admin/api/claimedviolation/?per_page=1000">
-                                    </editable-table>
-                    </v-window>
-                </v-col>
-                
-            </v-row>
-        </v-container>
-    </v-card>
+        </v-card>
+    </div>
 </v-main>
 
 {% endblock %} {% block js %}
 
 
-    {% if config.GOOGLE_MAPS_API_KEY %}
-        {{ '
-<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async
-        defer></script>'|safe }}
+{% if config.GOOGLE_MAPS_API_KEY %}
+{{ '
+<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>
+'|safe }}
+{% endif %}
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
+<script src="/static/js/components/EditableTable.js"></script>
+<script src="/static/js/Sortable.min.js"></script>
+<script src="/static/js/vuedraggable.umd.js"></script>
 
-    {% endif %}
-    <script src="/static/js/Leaflet.GoogleMutant.js"></script>
-    <script src="/static/js/components/EditableTable.js"></script>
-    <script src="/static/js/Sortable.min.js"></script>
-    <script src="/static/js/vuedraggable.umd.js"></script>
+<script>
+    window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
-    <script>
-        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+    const draggable = vuedraggable;
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+    const vuetify = createVuetify(vuetifyConfig);
 
-        const draggable = vuedraggable;
-        const {createApp} = Vue;
-        const {createVuetify} = Vuetify;
-        const vuetify = createVuetify(vuetifyConfig);
+    const app = createApp({
+        delimiters: delimiters,
+        mixins: [globalMixin],
 
-        const app = createApp({
-            delimiters: delimiters,
-            mixins: [globalMixin],
-            
-            components: {
-                EditableTable
-            },
-            data: () => ({
+        components: {
+            EditableTable
+        },
+        mounted() {
+            this.setInitialTabStateKey()
+
+            this.$router.afterEach((to) => {
+                const [main, child] = to.hash.slice(1).split('/');
+
+                const mainKey = main && main in this.tabsMap ? main : Object.keys(this.tabsMap)[0];
+                const nested = this.tabsMap[mainKey]?.nestedTabsMap || {};
+                const childKey = child && child in nested ? child : Object.keys(nested)[0] || null;
+
+                this.tabState.main = mainKey;
+                this.tabState.child = Object.keys(nested).length ? childKey : null;
+            });
+        },
+        data() {
+            return {
                 translations: window.translations,
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 drawer: drawer,
-                selectedTab: null,
-                alHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Code')}}", value: "code"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Actions')}}", value: "actions"},
+                tabState: {
+                    main: 'location',
+                    child: 'administrative-levels',
+                },
+                tabsMap: {
+                    location: {
+                        text: "{{ _('Location') }}",
+                        nestedTabsMap: {
+                            ['administrative-levels']: { text: "{{ _('Administrative Levels') }}" },
+                            ['location-types']: { text: "{{ _('Location Types') }}" }
+                        }
+                    },
+                    countries: {
+                        text: "{{ _('Countries and Languages') }}",
+                        nestedTabsMap: {
+                            countries: { text: "{{ _('Countries') }}" },
+                            ['ethnographic-info']: { text: "{{ _('Ethnographic Information') }}" },
+                            dialects: { text: "{{ _('Dialects') }}" },
+                        }
+                    },
+                    relations: {
+                        text: "{{ _('Relations') }}",
+                        nestedTabsMap: {
+                            ['actor-to-actor']: { text: "{{ _('Actor to Actor') }}" },
+                            ['actor-to-bulletin']: { text: "{{ _('Actor to Bulletin') }}" },
+                            ['bulletin-to-bulletin']: { text: "{{ _('Bulletin to Bulletin') }}" },
+                            ['incident-to-bulletin']: { text: "{{ _('Incident to Bulletin') }}" },
+                            ['incident-to-actor']: { text: "{{ _('Incident to Actor') }}" },
+                            ['incident-to-incident']: { text: "{{ _('Incident to Incident') }}" },
+                        }
+                    },
+                    media: { text: "{{ _('Media Categories') }}" },
+                    geolocation: { text: "{{ _('Geo Location') }}" },
+                    identification: {
+                        text: "{{ _('Identification') }}",
+                            nestedTabsMap: {
+                            ['id-number-types']: { text: "{{ _('ID Number Types') }}" }
+                        }
+                    },
+                    violation: {
+                        text: "{{ _('Violation Categories') }}",
+                        nestedTabsMap: {
+                            ['potential-violation']: { text: "{{ _('Potential Violation') }}" },
+                            ['claimed-violation']: { text: "{{ _('Claimed Violation') }}" }
+                        }
+                    },
+                },
 
-                ],
-
-                ltHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                countryHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                ethnoHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                dialectHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                idNumberTypeHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                relationHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-                revRelationHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Reverse Title')}}", value: "reverse_title"},
-                    {title: "{{_('Reverse Title (tr)')}}", value: "reverse_title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                mediaHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-                geoHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                potentialHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
-
-                claimedHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions"},
-                ],
+                alHeaders: this.createHeaders('codeAndTitle'),
+                ltHeaders: this.createHeaders('basicTitle'),
+                countryHeaders: this.createHeaders('titleLocalized'),
+                ethnoHeaders: this.createHeaders('titleLocalized'),
+                dialectHeaders: this.createHeaders('titleLocalized'),
+                relationHeaders: this.createHeaders('titleLocalized'),
+                idNumberTypeHeaders: this.createHeaders('titleLocalized'),
+                revRelationHeaders: this.createHeaders('titleWithReverseLocalized'),
+                mediaHeaders: this.createHeaders('titleLocalized'),
+                geoHeaders: this.createHeaders('titleLocalized'),
+                potentialHeaders: this.createHeaders('titleLocalized'),
+                claimedHeaders: this.createHeaders('titleLocalized'),
 
                 noDeleteIdsForLocationAdminLevels: [],
                 locationAdminLevels: [],
                 lalChips: [],
                 showLalWarning: false,
                 cachedOrder: [],
-            }),
-
-            watch: {
-                locationAdminLevels: {
-                    handler(items) {
-                        this.updateLalChips(items);
-                        this.updateCachedOrder();
-                    },
-                    deep: true
-                },
-            },
-
-            computed: {
-                isOrderChanged() {
-                    return JSON.stringify(this.cachedOrder) !== JSON.stringify(this.lalChips.map(chip => chip.id));
-                }
-            },
-
-            methods: {
-                onDragEnd() {
-                    if (this.isOrderChanged) {
-                        this.showLalWarning = true;
-                    }
-                },
-                revertOrder() {
-                    this.lalChips = this.cachedOrder.map(id => this.locationAdminLevels.find(item => item.id === id));
-                },
-                updateCachedOrder() {
-                    this.cachedOrder = this.lalChips.map(chip => chip.id);
-                },
-                onLocationAdminLevelsUpdated(items) {
-                    this.locationAdminLevels = items;
-                    this.updateNoActionIdsForLocationAdminLevels(items);
-                },
-                updateNoActionIdsForLocationAdminLevels(items) {
-                    const maxCode = Math.max(...items.map(item => item.code));
-                    this.noDeleteIdsForLocationAdminLevels = items.filter(item => item.code !== maxCode).map(item => item.id);
-                },
-                updateLalChips(items) {
-                    this.lalChips = items.map(item => ({id: item.id, title: item.title, display_order: item.display_order})).sort((a, b) => a.display_order - b.display_order);
-                },
-                reorderLocationAdminLevels() {
-                    axios.post("/admin/api/location-admin-levels/reorder", {order: this.lalChips.map(chip => chip.id)}).then(response => {
-                        if(response.status === 200) {
-                            this.updateCachedOrder();
-                            this.showLalWarning = true;
-                            this.$root.showSnack("Order updated");
-                        }
-                    });
-                },
-                regenerateLocations() {
-                    axios.post("/admin/api/location/regenerate/").then(response => {
-                        this.$root.showSnack(response.data);
-                        this.showLalWarning = false;
-                    });
-                }
             }
-        });
-        app.component('draggable', draggable);
-        app.use(vuetify).mount('#app');
-    </script>
-{% endblock %}
+        },
 
+        watch: {
+            locationAdminLevels: {
+                handler(items) {
+                    this.updateLalChips(items);
+                    this.updateCachedOrder();
+                },
+                deep: true
+            },
+            'tabState.main'(mainKey) {
+                const nested = this.tabsMap?.[mainKey]?.nestedTabsMap;
+
+                this.tabState.main = mainKey;
+                this.tabState.child = nested
+                    ? nested[this.tabState.child]
+                        ? this.tabState.child
+                        : Object.keys(nested)[0]
+                    : null;
+
+                this.updateHash();
+            },
+
+            'tabState.child'() {
+                this.updateHash();
+            }
+        },
+
+        computed: {
+            isOrderChanged() {
+                return JSON.stringify(this.cachedOrder) !== JSON.stringify(this.lalChips.map(chip => chip.id));
+            }
+        },
+
+        methods: {
+            createHeaders(type, customFields = []) {
+                const base = [{ title: "{{ _('ID') }}", value: 'id' }];
+
+                const fieldMaps = {
+                    codeAndTitle: [{ title: "{{ _('Code') }}", value: 'code' }, { title: "{{ _('Title') }}", value: 'title' }],
+                    basicTitle: [{ title: "{{ _('Title') }}", value: 'title' }],
+                    titleLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Title (tr)') }}", value: 'title_tr' }],
+                    titleWithReverseLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Title (tr)') }}", value: 'title_tr' }, { title: "{{ _('Reverse Title') }}", value: 'reverse_title' }, { title: "{{ _('Reverse Title (tr)') }}", value: 'reverse_title_tr' }],
+                };
+
+                return [...base, ...(fieldMaps[type] || customFields), { title: "{{ _('Actions') }}", value: 'actions', align: 'end' }];
+            },
+            updateHash() {
+                const { main, child } = this.tabState;
+                const hash = [main, child].filter(Boolean).join('/');
+                this.$router.push({ name: 'component-data', hash: `#${hash}` });
+            },
+            setInitialTabStateKey() {
+                const main = this.tabState.main || Object.keys(this.tabsMap)[0];
+                const nested = this.tabsMap[main]?.nestedTabsMap || {};
+                const child = this.tabState.child || Object.keys(nested)[0] || null;
+
+                const hash = [main, child].filter(Boolean).join('/');
+
+                this.$router.replace({
+                    name: 'component-data',
+                    hash: `#${hash}` 
+                });
+            },
+            onDragEnd() {
+                if (this.isOrderChanged) {
+                    this.showLalWarning = true;
+                }
+            },
+            revertOrder() {
+                this.lalChips = this.cachedOrder.map(id => this.locationAdminLevels.find(item => item.id === id));
+            },
+            updateCachedOrder() {
+                this.cachedOrder = this.lalChips.map(chip => chip.id);
+            },
+            onLocationAdminLevelsUpdated(items) {
+                this.locationAdminLevels = items;
+                this.updateNoActionIdsForLocationAdminLevels(items);
+            },
+            updateNoActionIdsForLocationAdminLevels(items) {
+                const maxCode = Math.max(...items.map(item => item.code));
+                this.noDeleteIdsForLocationAdminLevels = items.filter(item => item.code !== maxCode).map(item => item.id);
+            },
+            updateLalChips(items) {
+                this.lalChips = items.map(item => ({ id: item.id, title: item.title, display_order: item.display_order })).sort((a, b) => a.display_order - b.display_order);
+            },
+            reorderLocationAdminLevels() {
+                api.post("/admin/api/location-admin-levels/reorder", { order: this.lalChips.map(chip => chip.id) }).then(response => {
+                    if (response.status === 200) {
+                        this.updateCachedOrder();
+                        this.showLalWarning = true;
+                        this.$root.showSnack("Order updated");
+                    }
+                });
+            },
+            regenerateLocations() {
+                api.post("/admin/api/location/regenerate/").then(response => {
+                    this.$root.showSnack(response.data);
+                    this.showLalWarning = false;
+                });
+            }
+        }
+    });
+    app.component('draggable', draggable);
+    app.use(router).use(vuetify).mount('#app');
+</script>
+{% endblock %}

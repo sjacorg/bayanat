@@ -34,11 +34,6 @@ const ActorCard = Vue.defineComponent({
       }
       return false;
     },
-
-    viewThumb(s3url) {
-      this.$emit('thumb-click', s3url);
-    },
-
     loadRevisions() {
       this.hloading = true;
       axios
@@ -302,7 +297,7 @@ const ActorCard = Vue.defineComponent({
         </v-card>
 
         <!-- ID Numbers - only show if there are any -->
-        <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-8 my-2">
+        <v-card v-if="actor.id_number && actor.id_number?.length > 0" variant="flat" class="mx-8 my-2">
           <div class="d-flex flex-column">
             <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumbers_ }}</div>
             <div class="flex-chips">
@@ -319,17 +314,20 @@ const ActorCard = Vue.defineComponent({
         <actor-profiles v-if="actor.id" :actor-id="actor.id"></actor-profiles>
 
         <!-- Map -->
-        <v-card outlined class="ma-2 pa-2" color="grey">
-          <global-map :model-value="mapLocations"></global-map>
+        <v-divider></v-divider>
+        <v-card variant="flat" >
+        
+          <global-map v-model="mapLocations"></global-map>
         </v-card>
 
 
-        <v-card  outlined class="rounded-0 mt-4" variant="text" v-if="actor.events?.length">
-          <v-toolbar density="compact" >
-            <v-toolbar-title  class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
+        <!-- Events -->
+        <v-card class="ma-2" v-if="actor.events && actor.events.length">
+          <v-toolbar density="compact">
+            <v-toolbar-title class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
           </v-toolbar>
-          <v-card-text>
-            <div class="px-1">{{ translations.events_ }}</div>
+
+          <v-card-text class="pa-2">
             <event-card v-for="(event, index) in actor.events" :key="event.id" :event="event" :number="index+1"></event-card>
           </v-card-text>
         </v-card>
@@ -342,10 +340,16 @@ const ActorCard = Vue.defineComponent({
               <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
           </v-toolbar>
 
-          <div ref="playerContainer" class="px-2 my-3"></div>
+          <inline-media-renderer
+            :media="expandedMedia"
+            :media-type="expandedMediaType"
+            ref="inlineMediaRendererRef"
+            @fullscreen="handleFullscreen"
+            @close="closeExpandedMedia"
+          ></inline-media-renderer>
           
           <v-card-text>
-            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
+            <media-grid prioritize-videos :medias="actor.medias" @media-click="handleExpandedMedia"></media-grid>
           </v-card-text>
         </v-card>
 
@@ -362,8 +366,8 @@ const ActorCard = Vue.defineComponent({
                                 :relationInfo="$root.itoaInfo"></related-incidents-card>
 
         <div class="d-flex">
-          <uni-field :caption="translations.publishDate_" :english="actor.publish_date"></uni-field>
-          <uni-field :caption="translations.documentationDate_" :english="actor.documentation_date"></uni-field>
+          <uni-field :caption="translations.publishDate_" :english="$root.formatDate(actor.publish_date)"></uni-field>
+          <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(actor.documentation_date)"></uni-field>
         </div>
         <uni-field :caption="translations.sourceLink_" :english="actor.source_link"></uni-field>
 
@@ -371,10 +375,8 @@ const ActorCard = Vue.defineComponent({
         <v-card v-if="actor.status==='Peer Reviewed'" variant="outlined" elevation="0" class="ma-2" color="teal-lighten-2">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.review_ }}</div>
-            <div v-html="actor.review" class="pa-1 my-2  ">
-
-            </div>
-            <v-chip size="small" label color="lime">{{ actor.review_action }}</v-chip>
+            <read-more><div v-html="actor.review" class="pa-1 my-2  "></div></read-more>
+            <v-chip class="mt-4" size="small" label color="lime">{{ actor.review_action }}</v-chip>
           </v-card-text>
         </v-card>
 
@@ -389,9 +391,9 @@ const ActorCard = Vue.defineComponent({
 
             <template v-for="(revision,index) in revisions">
               <v-card color="grey" dense flat class="my-1 pa-2 d-flex align-center">
-              <span class="caption">{{ revision.data['comments'] }} - <v-chip size="small" label
-                                                                              color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ revision.created_at }}
+              <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
+              <v-chip size="small" label color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
+                {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
                 <v-spacer></v-spacer>
 

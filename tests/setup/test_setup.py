@@ -54,7 +54,8 @@ def test_setup_wizard_admin_user_check(uninitialized_app, setup_db_uninitialized
     client = uninitialized_app.test_client()
     response = client.get("/api/check-admin")
     assert response.status_code == 200
-    assert response.json == {"status": "not_found", "message": "No admin user found"}
+    assert response.json["data"] == {"status": "not_found"}
+    assert response.json["message"] == "No admin user found"
 
 
 def test_setup_wizard_create_admin_user(uninitialized_app, session_uninitialized):
@@ -63,8 +64,10 @@ def test_setup_wizard_create_admin_user(uninitialized_app, session_uninitialized
     response = client.post(
         "/api/create-admin", json={"username": "testAdmin", "password": "password"}
     )
+
     assert response.status_code == 201
-    assert response.json == {"message": "Admin user installed successfully"}
+    assert response.json["message"] == "Admin user installed successfully"
+    assert response.json["data"]["item"]["username"] == "testAdmin"
 
     admin = User.query.filter(User.username == "testAdmin").first()
     assert admin is not None
@@ -86,10 +89,8 @@ def test_setup_wizard_check_data_imported(
     response = client.get("/api/check-data-imported")
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert response.json == {
-            "status": "not_imported",
-            "message": "Default data has not been imported",
-        }
+        assert response.json["data"] == {"status": "not_imported"}
+        assert response.json["message"] == "Default data has not been imported"
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", test_roles)
@@ -142,7 +143,7 @@ def test_setup_wizard_get_default_config(
     response = client.get("/api/default-config")
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert set(response.json.keys()) == set(required_keys)
+        assert set(response.json["data"].keys()) == set(required_keys)
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", test_roles)
@@ -181,7 +182,7 @@ def test_setup_wizard_complete_setup(
             response = client.put("/api/complete-setup/", json={"conf": config})
             assert response.status_code == expected_status
             if expected_status == 200:
-                assert response.text == "Configuration Saved Successfully"
+                assert response.json["message"] == "Configuration Saved Successfully"
     finally:
         import os
 

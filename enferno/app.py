@@ -31,11 +31,13 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import db, session, babel, rds, debug_toolbar, limiter
+from enferno.extensions import db, session, babel, rds, debug_toolbar, mail, limiter
 from enferno.public.views import bp_public
 from enferno.setup.views import bp_setup
 from enferno.settings import Config
 from enferno.user.forms import (
+    ExtendedMfRecoveryCodesForm,
+    ExtendedChangePasswordForm,
     ExtendedRegisterForm,
     ExtendedLoginForm,
     SanitizedWebAuthnRegisterForm,
@@ -104,6 +106,8 @@ def register_extensions(app):
     security_options = {
         "register_form": ExtendedRegisterForm,
         "wan_register_form": SanitizedWebAuthnRegisterForm,
+        "mf_recovery_codes_form": ExtendedMfRecoveryCodesForm,
+        "change_password_form": ExtendedChangePasswordForm,
     }
 
     # Add the login form to the security options if reCAPTCHA is enabled
@@ -116,6 +120,10 @@ def register_extensions(app):
     session.init_app(app)
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
+    mail.init_app(app)
+
+    # Configure limiter storage with the correct config
+    limiter.storage_uri = app.config["REDIS_URL"]
     limiter.init_app(app)
 
 

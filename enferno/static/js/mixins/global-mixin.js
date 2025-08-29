@@ -1,21 +1,5 @@
 const globalMixin = {
-  mixins: [reauthMixin],
-  computed: {
-    allowedDateFrom() {
-      if (this.editedEvent?.to_date){
-        // ensure date is not after the to_date
-        return (current) => current <= dayjs(this.editedEvent.to_date).toDate();
-      }
-      return () => true;
-    },
-    allowedDateTo() {
-      if (this.editedEvent?.from_date){
-        // ensure date is not before the from_date
-        return (current) => current >= dayjs(this.editedEvent.from_date).toDate();
-      }
-      return () => true;
-    },
-  },
+  mixins: [reauthMixin, notificationMixin],
   data: () => ({
     snackbar: false,
     snackMessage: '',
@@ -31,7 +15,7 @@ const globalMixin = {
         if (!value) {
           return true;
         }
-        return dayjs(value, 'YYYY-MM-DD', true).isValid() || 'Invalid date';
+        return dayjs(value).isValid() || 'Invalid date';
       },
 
       required: (value) => {
@@ -40,30 +24,32 @@ const globalMixin = {
           return Object.keys(value).length > 0 || 'This field is required.';
         return !!value || 'This field is required.';
       },
-      email: (value) => {
-        const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return pattern.test(value) || 'Invalid e-mail.';
-      },
-      password: (value) => {
-        if (value.length < 8) {
-          return 'Password must be at least 8 characters long.';
-        }
-        return true;
-      },
-      passwordMatch: (value, password) => {
-        if (value !== password) {
-          return 'Passwords do not match.';
-        }
-        return true;
-      },
     },
+    dateFormats: {
+      isoDate: 'YYYY-MM-DD',
+      isoDatetime: 'YYYY-MM-DDTHH:mm',
+      standardDate: 'DD/MM/YYYY',
+      standardDatetime: 'DD/MM/YYYY h:mm A',
+      standardTime: 'h:mm A',
+      iso: 'iso',
+      relative: 'relative',
+      calendar: 'calendar',
+      localeDate: 'L',
+      localeDatetime: 'LLL'
+    },
+    dateOptions: {
+      local: { local: true },
+      utc: { utc: true },
+      timezone: { timezone: 'UTC' },
+      locale: { locale: 'en' }
+    }
   }),
   created () {
     document.addEventListener('global-axios-error', this.showSnack);
 
     if (!window.__username__) return;
 
-    axios.get('/settings/load').then(res => {
+    api.get('/settings/load').then(res => {
       this.settings = res.data;
     });
   },
@@ -71,14 +57,37 @@ const globalMixin = {
     document.removeEventListener('global-axios-error', this.showSnack);
   },
   methods: {
-    localDate: function (dt) {
-      if (dt === null || dt === '') {
-        return '';
+    /**
+     * Format a date with Day.js supporting timezone, locale, and special formats.
+     * @param {string|number|Date|dayjs.Dayjs} date - Date to format.
+     * @param {string} format - Format string or keyword (e.g. 'iso', 'relative').
+     * @param {Object} [options] - Optional: timezone, utc, locale.
+     * @returns {string} Formatted date or empty string if invalid.
+     */
+    formatDate(date, format = this.dateFormats.standardDatetime, options = {}) {
+      if (!date) return '';
+
+      let d = dayjs(date);
+      
+      if (options.utc) {
+        d = d.utc();
+      } else if (options.local) {
+          d = dayjs(date.includes('Z') ? date : date + 'Z');
+          d = d.local();
+      } else if (options.timezone) {
+          d = d.tz(options.timezone);
       }
-      // Z tells it's a UTC time
-      const utcDate = new Date(`${dt}Z`);
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return utcDate.toLocaleString('en-US', { timeZone: userTimezone });
+
+      if (options.locale) {
+          d = d.locale(options.locale);
+      }
+
+      switch ((format || '').toLowerCase()) {
+        case 'iso': return d.toISOString();
+        case 'relative': return d.fromNow();
+        case 'calendar': return d.calendar();
+        default: return d.format(format);
+      }
     },
     // Snack Bar
     showSnack(message) {
@@ -118,14 +127,22 @@ const globalMixin = {
         },
 
     saveSettings() {
-        axios.put('/settings/save', { settings: this.settings }).then(res => {
+        api.put('/settings/save', { settings: this.settings }).then(res => {
             this.$vuetify.theme.name = this.settings.dark ? 'dark' : 'light';
             this.showSnack('Settings have been saved!');
         }).catch(err => {
             this.showSnack(err.body);
         });
     },
+    toggleUserSettingsDrawer() {
+      // Toggle the settings drawer
+      this.settingsDrawer = !this.settingsDrawer;
 
+      // Close the notifications drawer if the settings drawer is open
+      if (this.settingsDrawer) {
+        this.notifications.ui.drawerVisible = false;
+      }
+    },
     updateLang(l) {
       this.settings.language = l
       this.saveSettings();

@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import Ethnography
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import EthnographyFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import EthnographiesResponseModel
+from tests.models.admin import EthnographiesResponseModel, EthnographyCreatedResponseModel
 
 ##### FIXTURES #####
 
@@ -67,7 +67,7 @@ def test_ethnographies_endpoint(
 ##### POST /admin/api/ethnography #####
 
 post_ethnography_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -85,7 +85,10 @@ def test_post_ethnography(clean_slate_ethnographies, request, client_fixture, ex
     )
     assert response.status_code == expected_status
     found_ethnography = Ethnography.query.filter(Ethnography.title == ethnography.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), EthnographyCreatedResponseModel
+        )
         assert found_ethnography
     else:
         assert found_ethnography is None

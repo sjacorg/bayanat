@@ -5,7 +5,7 @@ import pytest
 
 from enferno.admin.models import AppConfig
 from enferno.admin.validation.models import FullConfigValidationModel
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import TestConfig
 from enferno.utils.config_utils import ConfigManager
 from tests.factories import AppConfigFactory
@@ -91,6 +91,8 @@ def test_put_configuration(request, client_fixture, expected_status):
         updated_conf = {
             **current_conf,
             "ETL_VID_EXT": updated_etl_vid_ext,
+            "YTDLP_COOKIES": "domain\tflag\tpath\tsecure\texpiry\tname\tvalue",
+            "YTDLP_PROXY": "socks5://localhost:9050",
         }
         with patch.object(ConfigManager, "write_config", return_value=True) as mock_write_config:
             response = client_.put(
@@ -100,7 +102,7 @@ def test_put_configuration(request, client_fixture, expected_status):
             )
             assert response.status_code == expected_status
             if expected_status == 200:
-                called_conf_write_argument = FullConfigValidationModel(
-                    **convert_empty_strings_to_none(updated_conf)
-                ).model_dump(by_alias=True)
+                called_conf_write_argument = FullConfigValidationModel(**updated_conf).model_dump(
+                    by_alias=True, exclude_none=True
+                )
                 mock_write_config.assert_called_once_with(called_conf_write_argument)

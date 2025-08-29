@@ -16,7 +16,7 @@ from enferno.deduplication.models import DedupRelation
 from enferno.extensions import db, rds
 from enferno.tasks import start_dedup
 
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.utils.http_response import HTTPResponse
 
 deduplication = Blueprint(
@@ -78,7 +78,7 @@ def api_deduplication() -> Response:
         "total": data.total,
         "pending": pending,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @deduplication.route("/api/process", methods=["POST"])
@@ -88,7 +88,7 @@ def api_process() -> Response:
     Endpoint used to process all deduplication data.
     """
     start_dedup.delay(current_user.id)
-    return "Processing will start shortly.", 200
+    return HTTPResponse.success(message="Processing will start shortly.")
 
 
 @deduplication.route("/api/stop", methods=["POST"])
@@ -100,7 +100,7 @@ def api_process_stop() -> Response:
     # just remove the redis flag
     rds.set("dedup", 0)
 
-    return "Processing will stop shortly.", 200
+    return HTTPResponse.success(message="Processing will stop shortly.")
 
 
 @deduplication.cli.command()
@@ -130,7 +130,7 @@ def dedup_import(file: str, remove: bool, distance: float) -> None:
     # create pandas data frame
     click.echo("Reading CSV file...")
     df = pd.read_csv(file)
-    exts = ["." + ext for ext in cfg.ETL_VID_EXT]
+    exts = ["." + ext for ext in Config.get("ETL_VID_EXT")]
     click.echo("Cleaning up...")
     df["match_video"] = df["match_video"].replace(r"_.{64}_vgg_features", "", regex=True)
     df["match_video"] = df["match_video"].replace("_vgg_features", "", regex=True)
@@ -200,6 +200,6 @@ def status() -> Response:
     """
     if status := rds.get("dedup"):
         response = {"status": status.decode()}
-        return Response(json.dumps(response), content_type="application/json"), 200
+        return HTTPResponse.success(data=response)
 
-    return "Background tasks are not running correctly", 503
+    return HTTPResponse.error("Background tasks are not running correctly", status=503)

@@ -16,7 +16,7 @@ def test_get_whisper_models_endpoint(request, client_fixture, expected_status):
     response = client_.get("/import/api/whisper/models/")
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert response.json == {"models": Constants.WHISPER_MODEL_OPTS}
+        assert response.json["data"] == {"models": Constants.WHISPER_MODEL_OPTS}
     elif expected_status == 302:
         assert response.headers["Location"].startswith("/login")
 
@@ -31,11 +31,14 @@ get_whisper_languages_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", get_whisper_languages_endpoint_roles)
 def test_get_whisper_languages_endpoint(request, client_fixture, expected_status):
+    # Skip test if whisper not available
+    pytest.importorskip("whisper", reason="whisper not installed - run with AI extras")
+
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get("/import/api/whisper/languages/")
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert "languages" in response.json
-        assert len(response.json["languages"]) > 0
+        assert "languages" in response.json["data"]
+        assert len(response.json["data"]["languages"]) > 0
     elif expected_status == 302:
         assert response.headers["Location"].startswith("/login")

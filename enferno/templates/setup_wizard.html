@@ -258,8 +258,9 @@
                                                             v-model="cfg.SECURITY_ZXCVBN_MINIMUM_SCORE"
                                                             min="2"
                                                             max="4"
-                                                            hint="{{ _('') }}"
-                                                            persistent-hint
+                                                            :tick-size="4"
+                                                            :thumb-size="14"
+                                                            :track-size="4"
                                                             color="primary"
                                                             show-ticks="always"
                                                             :ticks="{
@@ -447,36 +448,36 @@
     </v-app>
 </div>
 
+<div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
+
 {% if config.DEBUG %}
     <script src="/static/js/vue.global.js"></script>
 {% else %}
     <script src="/static/js/vue.global.prod.js"></script>
 {% endif %}
+<script>
+    window.__settings__ = {};
+    window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
+</script>
+<script>
+    {% include 'admin/jsapi.jinja2' %}
+</script>
 
+<script src="/static/js/components/NotificationsList.js"></script>
 <script src="/static/js/vuetify.min.js"></script>
 <script src="/static/js/axios.min.js"></script>
+<script src="/static/js/mixins/notification-mixin.js"></script>
 <script src="/static/js/mixins/reauth-mixin.js"></script>
 <script src="/static/js/mixins/global-mixin.js"></script>
 <script src="/static/js/vue-router.global.js"></script>
 <script src="/static/js/leaflet.js"></script>
 <script src="/static/js/vue2-leaflet.min.js"></script>
+<script src="/static/js/common/config.js"></script>
 
 <script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
 
 <script src="/static/js/components/GeoMap.js"></script>
 <script src="/static/js/components/EditableTable.js"></script>
-<script>
-    {%  include 'admin/jsapi.jinja2' %}
-</script>
-
-
-<div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
-<script>
-    window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
-    const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
-</script>
-
-
 
 {% block js %}
     <script type="module">
@@ -551,8 +552,8 @@
                 checkProgress() {
                     this.loading = true;
                     Promise.all([
-                        axios.get('/api/check-admin'),
-                        axios.get('/api/check-data-imported')
+                        api.get('/api/check-admin'),
+                        api.get('/api/check-data-imported')
                     ]).then(([adminResponse, dataResponse]) => {
                         this.adminCreated = adminResponse.data.status === 'exists';
                         this.dataImported = dataResponse.data.status === 'imported';
@@ -569,9 +570,9 @@
                 },
 
                 fetchDefaultSettings() {
-                    axios.get('/api/default-config')
+                    api.get('/api/default-config', { skipFlattening: true })
                         .then(response => {
-                            this.defaultSettings = response.data;
+                            this.defaultSettings = response?.data?.data || {};
                             this.cfg = {...this.cfg, ...this.defaultSettings};
                         })
                         .catch(error => {
@@ -581,7 +582,7 @@
 
                 importDefaultData() {
                     this.loading = true;
-                    axios.post('/api/import-data')
+                    api.post('/api/import-data')
                         .then(response => {
                             this.dataImported = true;
                             this.step = 5; // Move to the next step only if import is successful
@@ -603,7 +604,7 @@
                     this.loading = true;
                     this.error = '';
 
-                    axios.post('/api/create-admin', {
+                    api.post('/api/create-admin', {
                         username: this.username,
                         password: this.password
                     })
@@ -625,27 +626,27 @@
                         });
                 },
 
-                waitForRelaod() {
+                waitForReload() {
                     setTimeout(() => {
-                        axios.get('/').then(res => {
+                        api.get('/').then(res => {
                             this.showSnack("{{_('Bayanat reloaded successfully.')}}");
                             this.overlay = false;
                             this.step = 11;
                         }).catch(err => {
-                            this.waitForRelaod();
+                            this.waitForReload();
                         });
                     }, 5000)
                 },
 
                 reloadApp() {
                     this.overlay = true;
-                    axios.post('/admin/api/reload/')
-                    this.waitForRelaod();
+                    api.post('/admin/api/reload/')
+                    this.waitForReload();
                 },
 
                 finishSetup() {
                     this.loading = true;
-                    axios.put('/api/complete-setup/', {
+                    api.put('/api/complete-setup/', {
                         conf: this.cfg
                     })
                     .then(response => {

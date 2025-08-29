@@ -2,7 +2,7 @@ import logging
 from typing import Any
 from sqlalchemy import create_engine, MetaData, inspect
 from sqlalchemy.engine import Engine
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.extensions import db
 import enferno.utils.typing as t
 from enferno.utils.logging_utils import get_logger
@@ -16,7 +16,7 @@ class DBAlignmentChecker:
     """Class to check the alignment of the database with the models."""
 
     def __init__(self):
-        self.engine: Engine = create_engine(cfg.SQLALCHEMY_DATABASE_URI)
+        self.engine: Engine = create_engine(Config.get("SQLALCHEMY_DATABASE_URI"))
         self.metadata = MetaData()
         self.metadata.reflect(self.engine)
         self.inspector = inspect(self.engine)

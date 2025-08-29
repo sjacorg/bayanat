@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import patch
+from flask import current_app
 from enferno.admin.models import Incident, Itoi
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import Config as cfg
 from enferno.user.models import User
 from tests.factories import (
@@ -24,13 +25,13 @@ from tests.admin.data.generators import (
 from tests.test_utils import (
     conform_to_schema_or_fail,
     get_first_or_fail,
-    load_data,
     get_uid_from_client,
 )
 
 ##### PYDANTIC MODELS #####
 
 from tests.models.admin import (
+    IncidentCreatedResponseModel,
     IncidentsResponseModel,
     IncidentItemMode3PlusModel,
     IncidentItemMode3Model,
@@ -67,20 +68,27 @@ def test_incidents_endpoint(
     clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
 ):
     """
-    Test the GET incidents endpoint in non-restrictive mode with no roles specified.
+    Test the POST incidents endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
-        response = client_.get(
+        response = client_.post(
             "/admin/api/incidents",
-            json={"q": {}},
+            json={"q": [{}], "per_page": 30, "include_count": True},
             headers={"content-type": "application/json"},
             follow_redirects=True,
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            data = convert_empty_strings_to_none(load_data(response))
-            conform_to_schema_or_fail(data, IncidentsResponseModel)
+            data = response.json["data"]
+            assert "items" in data
+            assert "meta" in data
+            assert "total" in data
+            assert "totalType" in data
+            # Validate response conforms to updated schema
+            conform_to_schema_or_fail(
+                convert_empty_strings_to_none(response.json), IncidentsResponseModel
+            )
 
 
 ##### GET /admin/api/incident/<int:id> #####
@@ -100,7 +108,7 @@ def test_incident_endpoint(
     """
     Test the GET incident endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         incident = get_first_or_fail(Incident)
         response = client_.get(
@@ -108,26 +116,26 @@ def test_incident_endpoint(
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMode3PlusModel)
             assert "bulletin_relations" in dict.keys(data)
             # Mode 1
             response = client_.get(
                 f"/admin/api/incident/{incident.id}?mode=1", headers={"Accept": "application/json"}
             )
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMinModel)
             # Mode 2
             response = client_.get(
                 f"/admin/api/incident/{incident.id}?mode=2", headers={"Accept": "application/json"}
             )
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMode2Model)
             # Mode 3
             response = client_.get(
                 f"/admin/api/incident/{incident.id}?mode=3", headers={"Accept": "application/json"}
             )
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMode3Model)
 
 
@@ -179,7 +187,7 @@ def test_incident_endpoint_no_role_restricted(
     """
     incident = create_full_incident
     client_ = request.getfixturevalue(client_fixture)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
         )
@@ -201,7 +209,7 @@ def test_incident_endpoint_roled_restricted(
     """
     incident = restrict_to_roles(create_full_incident, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
         )
@@ -234,6 +242,9 @@ def test_post_incident_endpoint(clean_slate_incidents, request, client_fixture, 
     assert response.status_code == expected_status
     found_incident = Incident.query.filter(Incident.title == incident.title).first()
     if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), IncidentCreatedResponseModel
+        )
         assert found_incident
     else:
         assert found_incident is None
@@ -291,7 +302,7 @@ def test_put_incident_assigned_endpoint(
     Test the PUT incident endpoint in non-restrictive mode with no roles specified.
     The incident is assigned to the user who made the request.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         incident = get_first_or_fail(Incident)
         uid = get_uid_from_client(users, client_fixture)
@@ -335,7 +346,7 @@ def test_put_incident_assign_endpoint(
     Test the PUT incident assign endpoint in non-restrictive mode with no roles specified.
     Users without self-assign permissions cannot assign incidents to themselves.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         incident = get_first_or_fail(Incident)
         incident_id = incident.id
@@ -367,7 +378,7 @@ def test_put_incident_review_endpoint(
     """
     Test the PUT incident review endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         i = IncidentFactory()
         incident = get_first_or_fail(Incident)
@@ -442,4 +453,9 @@ def test_get_incident_relations_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert all([x["incident"]["id"] in [i2.id, i3.id] for x in load_data(response)["items"]])
+        assert all(
+            [
+                x["incident"]["id"] in [i2.id, i3.id]
+                for x in convert_empty_strings_to_none(response.json)["data"]["items"]
+            ]
+        )

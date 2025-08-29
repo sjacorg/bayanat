@@ -207,7 +207,7 @@
                 },
 
                 async fetchFiles() {
-                    return axios.get('/admin/api/logfiles/').then(response => {
+                    return api.get('/admin/api/logfiles/').then(response => {
                         this.logFiles = this.parseFiles(response?.data);
                         this.logCount = this.logFiles.length;
                         this.availableDates = this.logFiles.map(file => file.label); // Extract available dates
@@ -250,7 +250,7 @@
                         this.loading = false;
                         return;
                     }
-                    axios.get(`/admin/api/logs/`,
+                    api.get(`/admin/api/logs/`,
                         {
                             params: {
                                 filename: this.currentLogFile
@@ -273,7 +273,7 @@
                         if (!item) return null;
 
                         item = JSON.parse(item);
-                        item.timestampFmt = dayjs(item.timestamp * 1000).format('MM/DD/YYYY HH:mm:ss');
+                        item.timestampFmt = formatDate(item.timestamp * 1000, `${dateFormats.standardDate} h:mm:ss A`);
 
                         if (item.message.includes("endpoint:")) {
                             const parts = item.message.split(" ");

@@ -7,6 +7,10 @@ const GeoLocations = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
+    dialogProps: {
+      type: Object,
+      default: null,
+    },
   },
   emits: ['update:modelValue', 'locations-updated'],
 
@@ -166,13 +170,21 @@ const GeoLocations = Vue.defineComponent({
 
           </v-card-text>
         </v-card>
-        <v-dialog v-if="addDlg" max-width="770" v-model="addDlg">
-          <v-card>
-            <v-toolbar :title="translations.addGeoMarker_">
-              <template #append>
-                <v-btn @click="addDlg=false" icon="mdi-close"></v-btn>
-              </template>
 
+        <div :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !addDlg }]" :style="$root?.rightDialogProps?.['content-props']?.style">
+        <div class="position-relative h-100 w-100">
+        <v-dialog v-model="addDlg" v-bind="dialogProps || { 'max-width': '770px' }">
+          <v-card elevation="4">
+            <v-toolbar color="dark-primary">
+                <v-toolbar-title>{{ translations.addGeoMarker_ }}</v-toolbar-title>
+                <v-spacer></v-spacer>
+            
+                <template #append>
+                  <v-btn :disabled="!eformValid" @click="saveLocation" variant="elevated" class="mx-2">
+                    {{ translations.save_ }}
+                  </v-btn>
+                    <v-btn icon="mdi-close" @click="addDlg=false"></v-btn>
+                </template>
             </v-toolbar>
 
 
@@ -195,20 +207,12 @@ const GeoLocations = Vue.defineComponent({
                 <v-checkbox :label="translations.mainIncident_" v-model="e.main"></v-checkbox>
               </div>
 
-            </v-card-text>
-            <v-card-text>
               <geo-map :radius-controls="false" :others="others" v-model="e.latlng" :map-height="300"></geo-map>
             </v-card-text>
-            <v-card-actions class="pa-4">
-              <v-spacer></v-spacer>
-              <v-btn :disabled="!eformValid" @click="saveLocation" variant="elevated" width="220" color="primary">
-                {{ translations.save_ }}
-              </v-btn>
-              <v-spacer></v-spacer>
-            </v-card-actions>
           </v-card>
-
         </v-dialog>
+        </div>
+        </div>
       </div>
     `,
 });

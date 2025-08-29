@@ -894,9 +894,7 @@
 
                         <v-row>
                             <v-col col="12">
-
-                                {% include 'admin/partials/event_dialog.html' %}
-
+                                <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                             </v-col>
 
                         </v-row>

@@ -1,9 +1,9 @@
 import pytest
 
 from enferno.admin.models import Eventtype
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import EventtypeFactory
-from tests.models.admin import EventtypesResponseModel
+from tests.models.admin import EventtypeCreatedResponseModel, EventtypesResponseModel
 from tests.test_utils import (
     conform_to_schema_or_fail,
     get_first_or_fail,
@@ -66,7 +66,7 @@ def test_eventtypes_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) > 0
+        assert len(response.json["data"]["items"]) > 0
         conform_to_schema_or_fail(
             convert_empty_strings_to_none(response.json), EventtypesResponseModel
         )
@@ -75,9 +75,9 @@ def test_eventtypes_endpoint(
 ##### POST /admin/api/eventtype  #####
 
 post_eventtype_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
-    ("mod_client", 200),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -97,7 +97,10 @@ def test_post_eventtype_endpoint(clean_slate_eventtypes, request, client_fixture
     )
     assert response.status_code == expected_status
     found_evt = Eventtype.query.filter(Eventtype.title == evt.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), EventtypeCreatedResponseModel
+        )
         assert found_evt
     else:
         assert found_evt is None

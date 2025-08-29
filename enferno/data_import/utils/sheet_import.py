@@ -1,10 +1,12 @@
 import re
 import time
+from functools import cached_property
 from typing import Any, Iterable, Optional, Union
 
 import pandas as pd
 import gettext
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy import select
 
 from enferno.admin.models import (
     Actor,
@@ -18,8 +20,10 @@ from enferno.admin.models import (
     Ethnography,
     Dialect,
     Activity,
+    IDNumberType,
 )
 from enferno.data_import.models import DataImport
+from enferno.extensions import db
 
 from enferno.utils.base import DatabaseException
 from enferno.utils.date_helper import DateHelper
@@ -115,6 +119,18 @@ class SheetImport:
             self.translator.install()
         else:
             self.translator = None
+
+    @cached_property
+    def id_number_types(self) -> set[str]:
+        """
+        Get all ID number type IDs from the database once per import.
+
+        Returns:
+            set[str]: Set of ID number type IDs as strings
+        """
+        stmt = select(IDNumberType.id)
+        result = db.session.execute(stmt)
+        return {str(row[0]) for row in result}
 
     @staticmethod
     def parse_csv(filepath: str) -> dict:
@@ -628,6 +644,33 @@ class SheetImport:
                     self.data_import.add_to_log(f"Event: {event}")
                     self.handle_mismatch("event", event)
 
+    def set_idnumbers(self, map_item: Any) -> None:
+        """
+        Method to set idnumbers.
+        """
+        if self.actor.id_number is None:
+            self.actor.id_number = []
+
+        for idnumber in map_item:
+            idn_type = idnumber.get("type")
+            idn_number_col = idnumber.get("number")
+            idn_number = self.row.get(idn_number_col) if idn_number_col else None
+
+            # Skip if number is empty/null/whitespace
+            if not idn_number or not idn_number.strip():
+                continue
+
+            # Handle mismatch if type is not valid/missing
+            if not idn_type or idn_type not in self.id_number_types:
+                self.handle_mismatch("idnumber_type", idn_type)
+                continue
+
+            # Create valid ID number entry
+            idn = {"type": idn_type, "number": idn_number.strip()}
+
+            self.actor.id_number.append(idn)
+            self.data_import.add_to_log(f"Processed idnumber")
+
     def set_reporters(self, map_item: Any) -> None:
         """
         Method to set location columns.
@@ -718,6 +761,10 @@ class SheetImport:
             self.set_details(field, value)
             return
 
+        elif field == "id_number":
+            self.set_idnumbers(map_item)
+            return
+
         # basic form : directly mapped value
         elif len(map_item) == 1:
             if not value:
@@ -768,7 +815,8 @@ class SheetImport:
 
         for field in self.map:
             # loop only selected mapped columns
-            if len(self.map.get(field)) > 0:
+            field_value = self.map.get(field)
+            if field_value and len(field_value) > 0:
                 try:
                     self.gen_value(field)
                 except Exception as e:
@@ -781,13 +829,31 @@ class SheetImport:
         if self.vmap:
             for field in list(self.vmap.keys()):
                 # check if csv row actually has a value for this
-                csv_value = getattr(self.actor, field)
-                if csv_value:
-                    if Actor.query.filter(getattr(Actor, field) == str(csv_value)).first():
-                        self.data_import.fail(
-                            f"Existing Actor with the same {field} detected. Skipping..."
-                        )
-                        return
+                if field in ActorProfile.__table__.columns:
+                    # Field is in ActorProfile, check against actor profile
+                    csv_value = getattr(self.actor_profile, field)
+                    if csv_value:
+                        existing_profile = ActorProfile.query.filter(
+                            getattr(ActorProfile, field) == str(csv_value)
+                        ).first()
+                        if existing_profile:
+                            existing_actor = existing_profile.actor
+                            self.data_import.fail(
+                                f"Existing Actor Profile with the same {field} detected. Actor ID: {existing_actor.id}. Skipping..."
+                            )
+                            return
+                else:
+                    # Field is in Actor, check against actor
+                    csv_value = getattr(self.actor, field)
+                    if csv_value:
+                        existing_actor = Actor.query.filter(
+                            getattr(Actor, field) == str(csv_value)
+                        ).first()
+                        if existing_actor:
+                            self.data_import.fail(
+                                f"Existing Actor with the same {field} detected. Actor ID: {existing_actor.id}. Skipping..."
+                            )
+                            return
 
         self.actor.comments = f"Created via Sheet Import - Batch: {self.batch_id}"
         self.actor.status = "Machine Created"

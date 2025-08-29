@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import Label
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import LabelFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -11,7 +11,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import LabelsResponseModel
+from tests.models.admin import LabelCreatedResponseModel, LabelsResponseModel
 
 ##### FIXTURES #####
 
@@ -80,13 +80,13 @@ def test_labels_endpoint(
     assert response.status_code == expected_status
     if expected_status == 200:
         if create_label.verified:
-            assert len(response.json["items"]) == 0
+            assert len(response.json["data"]["items"]) == 0
             response = client_.get(
                 "/admin/api/labels?fltr=all",
                 headers={"Content-Type": "application/json"},
                 follow_redirects=True,
             )
-        label = response.json["items"][0]
+        label = response.json["data"]["items"][0]
         assert label
         if create_label.for_bulletin:
             assert label["for_bulletin"]
@@ -98,9 +98,9 @@ def test_labels_endpoint(
 ##### POST /admin/api/label #####
 
 post_label_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
-    ("mod_client", 200),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -119,9 +119,12 @@ def test_post_label_endpoint(clean_slate_labels, request, client_fixture, expect
         follow_redirects=True,
     )
     assert response.status_code == expected_status
-    if expected_status == 200:
+    if expected_status == 201:
         found_label = Label.query.filter(Label.title == label.title).first()
         assert found_label
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), LabelCreatedResponseModel
+        )
 
 
 ##### PUT /admin/api/label/<int:id> #####

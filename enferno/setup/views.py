@@ -19,7 +19,7 @@ from enferno.utils.data_helpers import import_default_data
 from enferno.utils.http_response import HTTPResponse
 
 from enferno.admin.validation.models import WizardConfigRequestModel
-from enferno.admin.validation.util import validate_with
+from enferno.utils.validation_utils import validate_with
 
 bp_setup = Blueprint("setup", __name__, static_folder="../static")
 
@@ -78,17 +78,17 @@ def create_admin() -> Any:
     admin_role = Role.query.filter(Role.name == "Admin").first()
 
     if admin_role.users.all():
-        return HTTPResponse.BAD_REQUEST
+        return HTTPResponse.error("Admin user already exists")
 
     data = request.json
     username = data.get("username")
     password = data.get("password")
 
     if not username or not password:
-        return HTTPResponse.BAD_REQUEST
+        return HTTPResponse.error("Username and password are required")
 
     if User.query.filter(User.username == username.lower()).first():
-        return HTTPResponse.BAD_REQUEST
+        return HTTPResponse.error("Username already exists")
 
     new_admin = User(username=username, password=hash_password(password), active=1, name="Admin")
     new_admin.roles.append(admin_role)
@@ -97,10 +97,13 @@ def create_admin() -> Any:
     try:
         db.session.commit()
         login_user(new_admin)
-        return {"message": "Admin user installed successfully"}, 201
+        return HTTPResponse.created(
+            message="Admin user installed successfully",
+            data={"item": new_admin.to_dict()},
+        )
     except Exception as e:
         db.session.rollback()
-        return HTTPResponse.INTERNAL_SERVER_ERROR
+        return HTTPResponse.error("Failed to create admin user", status=500)
 
 
 @bp_setup.get("/api/check-admin")
@@ -108,9 +111,9 @@ def check_admin() -> Dict[str, str]:
     """Check if an admin user exists."""
     admin_role = Role.query.filter(Role.name == "Admin").first()
     if admin_role and admin_role.users.first():
-        return {"status": "exists", "message": "Admin user already exists"}
+        return HTTPResponse.success(data={"status": "exists"}, message="Admin user already exists")
     else:
-        return {"status": "not_found", "message": "No admin user found"}
+        return HTTPResponse.success(data={"status": "not_found"}, message="No admin user found")
 
 
 @bp_setup.post("/api/import-data")
@@ -119,9 +122,9 @@ def import_data() -> Response:
     """Import default data into the database."""
     try:
         import_default_data()
-        return HTTPResponse.OK
+        return HTTPResponse.success(message="Default data imported successfully")
     except Exception as e:
-        return HTTPResponse.INTERNAL_SERVER_ERROR
+        return HTTPResponse.error("Failed to import default data", status=500)
 
 
 @bp_setup.get("/api/check-data-imported")
@@ -129,7 +132,7 @@ def check_data_imported() -> Dict[str, str]:
     """Check if default data has been imported."""
     if User.query.first() is not None:
         if not current_user.has_role("Admin"):
-            return HTTPResponse.FORBIDDEN
+            return HTTPResponse.forbidden()
 
     data_exists = (
         Eventtype.query.first() is not None
@@ -137,9 +140,14 @@ def check_data_imported() -> Dict[str, str]:
         and ClaimedViolation.query.first() is not None
     )
     if data_exists:
-        return {"status": "imported", "message": "Default data has been imported"}
+        return HTTPResponse.success(
+            data={"status": "imported"}, message="Default data has been imported"
+        )
     else:
-        return {"status": "not_imported", "message": "Default data has not been imported"}
+        return HTTPResponse.success(
+            data={"status": "not_imported"},
+            message="Default data has not been imported",
+        )
 
 
 @bp_setup.get("/api/default-config")
@@ -147,7 +155,7 @@ def get_default_config() -> Dict[str, Any]:
     """Retrieve the default configuration for specific keys."""
     if User.query.first() is not None:
         if not current_user.has_role("Admin"):
-            return HTTPResponse.FORBIDDEN
+            return HTTPResponse.forbidden()
 
     required_keys = [
         "FILESYSTEM_LOCAL",
@@ -175,7 +183,9 @@ def get_default_config() -> Dict[str, Any]:
 
     default_config = ConfigManager.DEFAULT_CONFIG
     filtered_config = {key: default_config[key] for key in required_keys if key in default_config}
-    return filtered_config
+    return HTTPResponse.success(
+        data=filtered_config, message="Default configuration retrieved successfully"
+    )
 
 
 @bp_setup.put("/api/complete-setup/")
@@ -198,6 +208,6 @@ def api_config_write(
     conf["SETUP_COMPLETE"] = True
 
     if ConfigManager.write_config(conf):
-        return "Configuration Saved Successfully", 200
+        return HTTPResponse.success(message="Configuration Saved Successfully")
     else:
-        return "Unable to Save Configuration", 417
+        return HTTPResponse.error("Unable to Save Configuration", status=417)

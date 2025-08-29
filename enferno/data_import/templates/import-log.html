@@ -35,15 +35,15 @@
                                         </template>
 
                                         <template v-slot:item.expires_on="{item}">
-                                            ${localDate(item.expires_on)}
+                                            ${formatDate(item.expires_on, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.created_at="{item}">
-                                            ${localDate(item.created_at)}
+                                            ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.imported_at="{item}">
-                                            ${localDate(item.imported_at)}
+                                            ${formatDate(item.imported_at, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.status="{item}">
@@ -95,9 +95,11 @@
 {% block js %}
 
 <script src="/static/js/mixins/media-mixin.js"></script>
+<script src="/static/js/mixins/relations-mixin.js"></script>
 <script src="/static/js/components/BulletinCard.js"></script>
 <script src="/static/js/components/ActorProfiles.js"></script>
 <script src="/static/js/components/ActorCard.js"></script>
+<script src="/static/js/components/ReadMore.js"></script>
 <script src="/static/js/components/IncidentCard.js"></script>
 <script src="/static/js/components/EventCard.js"></script>
 
@@ -112,6 +114,8 @@
 <script src="/static/js/components/RelatedIncidentsCard.js"></script>
 
 <script src="/static/js/components/PdfViewer.js"></script>
+<script src="/static/js/components/ImageViewer.js"></script>
+<script src="/static/js/components/InlineMediaRenderer.js"></script>
 <script src="/static/js/components/GlobalMap.js"></script>
 <script src="/static/js/components/Visualization.js"></script>
 <script src="/static/js/videojs/video.min.js"></script>
@@ -121,7 +125,7 @@
 <script src="/static/js/components/ImportLogStatus.js"></script>
 <script src="/static/js/components/ImportLogCard.js"></script>
 <script src="/static/js/components/MPCard.js"></script>
-<script src="/static/js/components/ImageGallery.js"></script>
+<script src="/static/js/components/MediaGrid.js"></script>
 
 {% if config.GOOGLE_MAPS_API_KEY %}
     {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -137,18 +141,10 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [globalMixin, mediaMixin],
+            mixins: [globalMixin, mediaMixin, relationsMixin],
             data: () => ({
 
                 translations: translations,
-
-                itobInfo: [],
-                itoaInfo: [],
-                itoiInfo: [],
-                atobInfo: [],
-                btobInfo: [],
-                atoaInfo: [],
-
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
                 q: {},
@@ -215,33 +211,13 @@
                 }
             })
         },
-        created() {
-            this.fetchRelationInfo();
-        },
         methods: {
-            fetchRelationInfo() {
-                axios.get('/admin/api/relation/info')
-                    .then(response => {
-                        this.itobInfo = response.data.itobInfo;
-                        this.itoaInfo = response.data.itoaInfo;
-                        this.atobInfo = response.data.atobInfo;
-                        this.atoaInfo = response.data.atoaInfo;
-                        this.btobInfo = response.data.btobInfo;
-                        this.itoiInfo = response.data.itoiInfo;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching relation info:', error);
-                        this.showSnack('Error fetching relation info');
-                    });
-            },
-
-
             refresh(options) {
                 this.options = options || { ...this.options, page: 1 };
                 this.loading = true;
                 let url = `/import/api/imports/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
 
-                axios.post(url, {
+                api.post(url, {
                     q: this.q,
                     options: this.options
                 }).then(response => {
@@ -268,7 +244,7 @@
 
                 this.logLoader = true;
                 this.logDialog = true;
-                axios.get(`/import/api/imports/${item.id}`).then(response => {
+                api.get(`/import/api/imports/${item.id}`).then(response => {
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
@@ -282,7 +258,7 @@
             showLog(id) {
                 this.logLoader = true;
                 this.logDialog = true;
-                axios.get(`/import/api/imports/${id}`).then(response => {
+                api.get(`/import/api/imports/${id}`).then(response => {
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
@@ -297,7 +273,7 @@
             },
 
             previewItem(endpoint) {
-                axios.get(endpoint).then(res => {
+                api.get(endpoint).then(res => {
                     this.pitem = res.data;
                     this.preview = true;
                 })
@@ -324,6 +300,8 @@
         app.component('incident-result', IncidentResult);
         app.component('uni-field', UniField);
         app.component('pdf-viewer', PdfViewer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('global-map', GlobalMap);
         app.component('visualization', Visualization);
         app.component('preview-card', PreviewCard);
@@ -331,9 +309,10 @@
         app.component('bulletin-card', BulletinCard);
         app.component('actor-profiles', ActorProfiles);
         app.component('actor-card', ActorCard);
+        app.component('ReadMore', ReadMore);
         app.component('incident-card', IncidentCard);
         app.component('event-card', EventCard);
-        app.component('image-gallery', ImageGallery);
+        app.component('media-grid', MediaGrid);
 
         app.component('related-incidents-card', RelatedBulletinsCard);
         app.component('related-actors-card', RelatedActorsCard);

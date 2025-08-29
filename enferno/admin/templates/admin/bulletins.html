@@ -18,7 +18,7 @@
 
         {% include'admin/partials/export_drawer.html' %}
         <v-container fluid>
-            <v-tooltip text="{{ _('Visualize Results') }}">
+            <!-- <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
                             elevation="16"
@@ -30,41 +30,34 @@
                             v-if="showVisualize"
                             :loading="visualizeLoading"
                             variant="elevated"
-                            class="mb-5 mr-5 position-absolute "
+                            class="mb-5 mr-5 position-absolute"
                             style="right: 30px; bottom: 90px; z-index: 1000;"
-                    >
-
-
-                    </v-btn>
+                    ></v-btn>
                 </template>
-            </v-tooltip>
+            </v-tooltip> -->
 
             <v-card>
 
                 <v-card-text>
-
-
                     <v-data-table-server
                             fixed-header
-                            height="calc(100vh - 328px)"
+                            height="calc(100vh - 331px)"
                             id="bulletins-dt"
                             v-model="selected"
                             hover
                             :headers="headers"
                             @click:row="rowClick"
                             :items="items"
-                            @update:options="refresh"
-                            :page="options.page"
                             :loading="loading"
-                            :items-length="itemsLength"
                             :row-props="rowClass"
+                            :items-length="totalCount"
                             show-select
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
                             class="elevation-1"
+                            hide-default-footer
                     >
-
                         <template #top>
                             <v-sheet class="ma-3 d-flex align-center">
                                 <v-btn variant="text" class="hidden-sm-and-down" @click="allBulletins"
@@ -94,8 +87,10 @@
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                         :bg-color="searchBg"
-                                ></v-text-field>
+                                        
+                                        
 
+                                ></v-text-field>
 
                                 <v-spacer></v-spacer>
                                 {% if current_user.roles_in(['Admin','DA']) %}
@@ -126,12 +121,13 @@
                                 <template v-if="bulkIcons">
                                     <v-tooltip location="top" text="{{ _('Unselect all') }}">
                                         <template #activator="{props}">
-                                            <v-btn icon="mdi-checkbox-blank-outline"
-                                                   @click="selected=[]"
-                                                   class="mr-3 ml-1"
-                                                   density="compact"
-                                                   :="props">
-                                            </v-btn>
+                                            <v-btn
+                                                icon="mdi-checkbox-blank-outline"
+                                                @click="selected=[]"
+                                                class="mr-3 ml-1"
+                                                density="compact"
+                                                v-bind="props"
+                                            ></v-btn>
                                         </template>
                                     </v-tooltip>
 
@@ -181,23 +177,41 @@
 
                         </template>
 
-                        <template #footer.prepend>
-                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }}
-                                ${searchTime} {{ _('seconds') }}</div>
+                        <template #bottom>
+                            <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
+                                <div>{{ _('Search time: ') }}
+                                    ${searchTime} {{ _('seconds') }}</div>
+                                <div>
+                                
+                                <div class="d-flex flex-row align-center ga-2">
+                                    <div class="d-flex flex-row align-center ga-2">
+                                        {{ _('Items per page:') }}
+                                        <v-select :model-value="perPage" @update:model-value="setNextPerPageValue" hide-details density="compact" :items="itemsPerPageOptions"
+                                            variant="outlined"></v-select>
+
+                                    </div>
+                                    <div>
+                                        <span>${rangeStart.toLocaleString('en-US')}-${rangeEnd.toLocaleString('en-US')} of ${totalCount.toLocaleString('en-US')}</span>
+                                        <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text" icon="mdi-page-first"></v-btn>
+                                        <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text" icon="mdi-chevron-left"></v-btn>
+                                        <v-btn :disabled="loading || !nextCursor" @click="goToNextPage()" variant="text" icon="mdi-chevron-right"></v-btn>
+                                    </div>
+                                </div>
+                            </div>
                         </template>
+
+                        <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
                         <template #item.roles="{item}">
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
 
                                 <template #activator="{props}">
                                     <v-icon
-                                            :="props"
-                                            size="small"
-                                            :color="role.color || 'grey-lighten-1'"
-                                            icon="mdi-shield-lock"
-                                    >
-                                    </v-icon>
-
+                                        v-bind="props"
+                                        size="small"
+                                        :color="role.color || 'grey-lighten-1'"
+                                        icon="mdi-shield-lock"
+                                    ></v-icon>
                                 </template>
 
                             </v-tooltip>
@@ -252,9 +266,6 @@
                             </v-btn>
 
                         </template>
-
-
-                        <template v-slot:no-data></template>
                     </v-data-table-server>
 
                     <v-overlay :value="loading">
@@ -264,15 +275,22 @@
                         ></v-progress-circular>
                     </v-overlay>
                     <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
-                                      ref="relateBulletins"></relate-bulletins>
-                    <relate-actors @relate="relateActor" :exids="exActors"
-                                   ref="relateActors"></relate-actors>
+                                      ref="relateBulletins" :dialog-props="rightDialogProps"></relate-bulletins>
+                    <relate-actors
+                        @relate="relateActor"
+                        @change-query="relateActorSearchTerms = $event"
+                        :exids="exActors"
+                        ref="relateActors"
+                        :dialog-props="rightDialogProps"
+                    >
+                        <template #actions>
+                            <v-btn variant="outlined" @click="this.actorDialog = true">
+                                {{ _('Create Related Actor') }}
+                            </v-btn>            
+                        </template>
+                    </relate-actors>
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
-                                      ref="relateIncidents"></relate-incidents>
-
-
-                    {% include 'admin/partials/video_player_dialog.html' %}
-                    {% include 'admin/partials/audio_player_dialog.html' %}
+                                      ref="relateIncidents" :dialog-props="rightDialogProps"></relate-incidents>
 
 
                     <v-dialog width="600" v-model="selfAssignDialog">
@@ -357,11 +375,14 @@
 
     <script src="/static/js/tinymce-vue.min.js"></script>
 
+    <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/SplitView.js"></script>
 
     <script src="/static/js/components/RelatedBulletinsCard.js"></script>
     <script src="/static/js/components/RelatedActorsCard.js"></script>
@@ -375,6 +396,7 @@
     <script src="/static/js/components/BulletinSearchBox.js"></script>
     <script src="/static/js/components/ActorSearchBox.js"></script>
     <script src="/static/js/components/IncidentSearchBox.js"></script>
+    <script src="/static/js/components/ShortActorDialog.js"></script>
 
 
 
@@ -385,6 +407,7 @@
     <script src="/static/js/components/RelateBulletins.js"></script>
     <script src="/static/js/components/RelateActors.js"></script>
     <script src="/static/js/components/RelateIncidents.js"></script>
+    <script src="/static/js/components/RelateItemsTemplate.js"></script>
 
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
@@ -392,17 +415,24 @@
     <script src="/static/js/components/PopDateTimeField.js"></script>
     <script src="/static/js/components/PopDateRangeField.js"></script>
     <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
-
+    <script src="/static/js/components/RelationEditorCard.js"></script>
+    
     <script src="/static/js/actorConfig.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/SnapshotDialog.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
     <script src="/static/js/dropzone.min.js"></script>
     <script src="/static/js/components/VueDropzone.js"></script>
+    <script src="/static/js/components/IdNumberDynamicField.js"></script>
+    <script src="/static/js/components/EventsSection.js"></script>
+    <script src="/static/js/components/ReadMore.js"></script>
 
 
     <script src="/static/js/components/MPCard.js"></script>
@@ -438,33 +468,50 @@
         const app = createApp({
                 delimiters: delimiters,
 
-
-                mixins: [mediaMixin, globalMixin],
-
-
-                components: {
-
-                    "tinymce-editor": Editor, // <- Important part,
-                },
-
+                mixins: [mediaMixin, globalMixin, relationsMixin],
 
                 data: () => ({
-
+                    itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
 
                     valid: false,
-
+                    leftDialogProps: {
+                        'content-props': {
+                            style: { width: '60%' },
+                        },
+                        'content-class': 'absolute left-0',
+                        fullscreen: true,
+                        persistent: true,
+                        'no-click-animation': true,
+                        scrim: false,
+                    },
+                    rightDialogProps: {
+                        'content-props': {
+                            style: { width: '60%', contain: 'none' },
+                        },
+                        'content-class': 'absolute right-0 left-auto',
+                        fullscreen: true,
+                        persistent: true,
+                        'no-click-animation': true,
+                        scrim: false,
+                    },
+                    rightContainedDialogProps: {
+                        contained: true,
+                        persistent: true,
+                        'no-click-animation': true,
+                        scrim: false,
+                    },
                     translations: translations,
                     validationRules: validationRules,
                     advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
-                    itobInfo: [],
-                    itoaInfo: [],
-                    atobInfo: [],
-                    atoaInfo: [],
-                    btobInfo: [],
-                    itoiInfo: [],
-
+                    cursorPage: 1,
+                    currentCursor: null,          // the current request's cursor
+                    nextCursor: null,             // the next cursor from the API
+                    cursorHistory: [null],        // page 1 starts at null
+                    perPage: window.itemsPerPageOptions?.[0] ?? 20,
+                    items: [],
+                    selected: [],
 
                     dzOpts: {
                         url: '/admin/api/media/chunk',
@@ -481,7 +528,6 @@
 
 
                     },
-
 
                     assignBulletin: {},
                     selfAssignDialog: false,
@@ -513,9 +559,10 @@
                     graphTimer: null,
 
 
-                    fsloading: true,
+                    fsloading: false,
 
 
+                    actorDialog: false,
                     dialog: dialog,
                     saving: false,
                     eventDialog: false,
@@ -526,24 +573,15 @@
 
 
                     // search and relate bulletin dialog vars
-
-
                     relateBulletinTerm: "",
-                    relateBulletinResults: [],
-                    selectedRelatedBulletins: [],
 
                     // search and relate actor dialog vars
                     relateActorTerm: "",
-                    relateActorResults: [],
-                    selectedRelatedActors: [],
-
 
                     // search and relate incident dialog vars
                     relateIncidentDialog: false,
                     relateIncidentLoader: true,
                     relateIncidentTerm: "",
-                    relateIncidentResults: [],
-                    selectedRelatedIncidents: [],
 
 
                     drawer: drawer,
@@ -585,7 +623,7 @@
                     tinyConfig: tinyConfig,
 
 
-                    loading: true,
+                    loading: false,
                     parentLoading: false,
                     csvFile: null,
                     options: {},
@@ -666,28 +704,44 @@
                     jobs: [],
                     bulkTimer: 0,
 
-
-                    //events
-                    editedEventIndex: -1,
-                    editedEvent: {
-                        title: ""
-                    },
-                    defaultEvent: {
-                        title: "",
-                        from_date: '',
-                        to_date: ''
-                    },
-
-
                     bulletin: {},
                     bulletinLoader: false,
 
                     webImportDlg: false,
                     webUrl: '',
-                    webImportLoading: false
+                    webImportLoading: false,
+
+                    fetchingRecordsError: false,
+                    
+                    // Count functionality  
+                    totalCount: 0,
+
+                    relateActorSearchTerms: {},
                 }),
 
                 computed: {
+                    rangeStart() {
+                        return this.totalCount === 0 ? 0 : (this.cursorPage - 1) * this.perPage + 1;
+                    },
+                    rangeEnd() {
+                        return this.totalCount === 0 ? 0 : this.rangeStart + this.items.length - 1;
+                    },
+                    actorFormPrefillData() {
+                        const prefillKeys = ['first_name', 'middle_name', 'last_name', 'nickname', 'father_name', 'mother_name', 'id_number'];
+
+                        // Clone only the needed keys
+                        const searchTerms = Object.fromEntries(
+                            prefillKeys
+                                .filter(key => key in this.relateActorSearchTerms)
+                                .map(key => [key, this.relateActorSearchTerms[key]])
+                        );
+
+                        if ('id_number' in searchTerms) {
+                            searchTerms.id_number = [searchTerms.id_number];
+                        }
+
+                        return searchTerms;
+                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)
@@ -717,55 +771,16 @@
                         return aggregateBulletinLocations(this.editedItem);
                     },
 
-
                     exBulletins() {
-                        let ids = [];
-
-                        if (this.editedItem?.id) {
-                            ids.push(this.editedItem.id);
-                            if (this.editedItem.bulletin_relations) {
-                                ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
-                            }
-                        } else if (this.reviewItem?.id) {
-                            ids.push(this.reviewItem.id);
-                            if (this.reviewItem.bulletin_relations) {
-                                ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
-                            }
-                        }
-
-                        return ids;
+                        return this.getExcludedIds({ type: 'bulletin', includeSelf: true, editedItem: this.editedItem, reviewItem: this.reviewItem });
                     },
-
+                    
                     exActors() {
-                        let ids = [];
-
-                        if (this.editedItem?.id) {
-                            if (this.editedItem.actor_relations) {
-                                ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
-                            }
-                        } else if (this.reviewItem?.id) {
-                            if (this.reviewItem.actor_relations) {
-                                ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
-                            }
-                        }
-
-                        return ids;
+                        return this.getExcludedIds({ type: 'actor', editedItem: this.editedItem, reviewItem: this.reviewItem });
                     },
-
+                    
                     exIncidents() {
-                        let ids = [];
-
-                        if (this.editedItem?.id) {
-                            if (this.editedItem.incident_relations) {
-                                ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
-                            }
-                        } else if (this.reviewItem?.id) {
-                            if (this.reviewItem.incident_relations) {
-                                ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
-                            }
-                        }
-
-                        return ids;
+                        return this.getExcludedIds({ type: 'incident', editedItem: this.editedItem, reviewItem: this.reviewItem });
                     },
 
 
@@ -787,6 +802,9 @@
                         return this.currentUser.roles;
                     },
 
+                    showingItemsOfText() {
+                        return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
+                    }
                 },
 
 
@@ -834,18 +852,18 @@
                 },
                 mounted: function () {
 
-
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
-                        axios.get('/admin/api/roles/').then(res => {
+                        api.get('/admin/api/roles/').then(res => {
                             this.roles = res.data.items;
                         }).catch(e => {
                             this.roles = [];
                             console.error(e.message);
                         });
                     {% endif  %}
-
-
+                    
+                    // Load initial data
+                    this.refresh();
 
                     // display confirmation alert if edit dialog is open.
                     let self = this;
@@ -901,32 +919,9 @@
                         }
 
                     })
-
-
-                },
-
-                created() {
-                    this.fetchRelationInfo();
-
                 },
 
                 methods: {
-                    fetchRelationInfo() {
-                        axios.get('/admin/api/relation/info')
-                            .then(response => {
-                                this.itobInfo = response.data.itobInfo;
-                                this.itoaInfo = response.data.itoaInfo;
-                                this.atobInfo = response.data.atobInfo;
-                                this.atoaInfo = response.data.atoaInfo;
-                                this.btobInfo = response.data.btobInfo;
-                                this.itoiInfo = response.data.itoiInfo;
-                            })
-                            .catch(error => {
-                                console.error('Error fetching relation info:', error);
-                                this.showSnack('Error fetching relation info');
-                            });
-                    },
-
                     validateForm() {
                         this.$refs.form.validate().then(({ valid, errors }) => {
                             if (valid) {
@@ -940,7 +935,7 @@
 
 
                     checkGraphStatus: function () {
-                        axios.get('/admin/api/graph/status', {
+                        api.get('/admin/api/graph/status', {
                             params: {
                                 type: 'bulletin'
                             }
@@ -963,7 +958,7 @@
 
                     visualizeResults() {
                         this.visualizeLoading = true;
-                        axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                        api.post('/admin/api/graph/visualize', {q: this.search}, {
                             params: {
                                 type: 'bulletin'
                             }
@@ -975,14 +970,13 @@
                             console.error(e.message);
                         }).finally(() => {
                         });
-                    }
-                    ,
+                    },
 
 
                     exportRequest() {
 
                         this.loading = true;
-                        axios.post(`/export/api/bulletin/export`, {
+                        api.post(`/export/api/bulletin/export`, {
                             items: this.selected,
                             config: this.exportConfig
                         }).then(response => {
@@ -1018,7 +1012,7 @@
                     selfAssign() {
 
 
-                        axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
+                        api.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
                             this.showSnack("{{ _('Bulletin assigned successfully.')}}")
                             this.refresh();
 
@@ -1033,24 +1027,24 @@
                     filter_related_to_bulletin(id) {
                         this.bulletinDrawer = false;
                         this.search = [{rel_to_bulletin: id}];
-                        this.refresh();
+                        this.goToFirstPage();
                     },
 
                     filter_related_to_actor(id) {
                         this.bulletinDrawer = false;
                         this.search = [{rel_to_actor: id}];
-                        this.refresh();
+                        this.goToFirstPage();
                     },
 
                     filter_related_to_incident(id) {
                         this.bulletinDrawer = false;
                         this.search = [{rel_to_incident: id}];
-                        this.refresh();
+                        this.goToFirstPage();
                     },
 
                     previewItem(endpoint) {
 
-                        axios.get(endpoint).then(res => {
+                        api.get(endpoint).then(res => {
                             this.pitem = res.data;
                             this.preview = true;
 
@@ -1070,15 +1064,15 @@
 
                     bulkStatus() {
 
-                        axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
-                            this.jobs = res.data;
+                        api.get('/admin/api/bulk/status/?type=bulletin').then(res => {
+                            this.jobs = res?.data?.data ?? [];
 
                             if (!this.jobs.length) {
                                 clearInterval(this.bulkTimer);
                                 // default refresh to first page
                                 this.options.page = 1;
 
-                                this.refresh();
+                                this.goToFirstPage();
                                 this.showSnack("{{ _('Bulk Update is finished!')}}")
                             } else {
                                 //console.log(this.jobs)
@@ -1095,7 +1089,7 @@
 
                     bulk_update() {
                         this.loading = true;
-                        axios.put(`/admin/api/bulletin/bulk/`, {
+                        api.put(`/admin/api/bulletin/bulk/`, {
                             items: this.selected,
                             bulk: this.bulk
                         }).then(response => {
@@ -1124,38 +1118,86 @@
 
                     },
                     doSearch() {
-                        this.options.page = 1;
                         this.advSearchExpand = this.advSearchExpand && false;
-                        this.refresh();
+                        this.goToFirstPage();
                     },
 
-                    refresh(options) {
+                    setNextPerPageValue(nextPerPage) {
+                        this.perPage = nextPerPage;
+                        this.goToFirstPage();
+                    },
 
-                        this.options = options || { ...this.options, page: 1 };
+                    refresh() {
+                        if (this.loading) return;
+
                         this.loading = true;
                         const startTime = new Date()
 
-                        let url = `/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
-
-                        axios.post(url, {
+                        const requestData = {
                             q: this.search,
-                            options: this.options
-                        }).then(response => {
-                            const endTime = new Date()
-                            this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                            this.itemsLength = response.data.total;
-                            this.items = response.data.items;
-                            this.showVisualize = !(
-                                this.search.length === 1 &&
-                                Object.keys(this.search[0]).length === 0
-                            );
+                            per_page: this.perPage,
+                            cursor: this.currentCursor,
+                            include_count: true,
+                        };
 
-                        }).finally(() => {
-                            this.loading = false;
-                        });
-
-
+                        axios.post('/admin/api/bulletins/', requestData)
+                            .then((response) => {
+                                const endTime = new Date()
+                                const duration = endTime - startTime
+                                this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
+                                console.log(`API call took ${duration}ms`)
+                                
+                                this.items = response.data.items;
+                                this.showVisualize = !(
+                                    this.search.length === 1 &&
+                                    Object.keys(this.search[0]).length === 0
+                                );
+                                if ('total' in response.data) {
+                                    this.totalCount = response.data.total
+                                    this.countType = response.data.totalType
+                                }
+                                this.nextCursor = response.data.nextCursor || null;
+                            })
+                            .catch((error) => {
+                                console.error('Error loading data:', error);
+                                this.showSnack('Error loading data');
+                            })
+                            .finally(() => {
+                                this.loading = false;
+                            });
                     },
+
+                    goToFirstPage() {
+                        if (this.loading) return;
+
+                        this.currentCursor = null;
+                        this.cursorPage = 1
+
+                        this.refresh();
+                    },
+
+                    goToNextPage() {
+                        if (this.loading || !this.nextCursor) return;
+
+                        this.currentCursor = this.nextCursor;
+                        this.cursorPage++;
+
+                        // Save currentCursor before moving to next page
+                        this.cursorHistory[this.cursorPage - 1] = this.currentCursor;
+
+                        this.refresh();
+                    },
+
+                    goToPrevPage() {
+                        if (this.loading || this.cursorPage <= 1) return;
+
+                        this.cursorPage--;
+
+                        this.currentCursor = this.cursorHistory[this.cursorPage - 1] || null;
+                        this.refresh();
+                    },
+
+
                     removeQueryAt(i) {
 
                         this.search.splice(i, 1);
@@ -1175,7 +1217,7 @@
 
                     resetSearch() {
                         this.resetQuery();
-                        this.doSearch();
+                        this.goToFirstPage();
                     },
 
                     openSaveQueryDialog() {
@@ -1204,12 +1246,12 @@
 
 
                     loadSearchesFromAPI(selectLast = false) {
-                        axios.get('/admin/api/queries/', {
+                        api.get('/admin/api/queries/', {
                             params: {
                                 type: 'bulletin'
                             }
                         }).then(res => {
-                            this.searches = res.data;
+                            this.searches = res?.data?.data ?? [];
                             if (selectLast === true) {
                                 this.savedSearchSelection = this.searches.at(-1);
                             }
@@ -1220,7 +1262,7 @@
                     saveSearch() {
                         const newSearch = {q: this.search, name: this.queryName, type: 'bulletin'};
 
-                        axios.post('/admin/api/query/', newSearch)
+                        api.post('/admin/api/query/', newSearch)
                             .then(res => {
                                 this.showSnack(res.data);
                                 this.saveQueryDialog = false;
@@ -1234,14 +1276,14 @@
 
 
                     updateSearch() {
-                        axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
+                        api.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                             .then(res => {
                                 this.showSnack(res.data);
                             });
                     },
 
                     deleteSearch(id) {
-                        axios.delete('/admin/api/query/' + id)
+                        api.delete('/admin/api/query/' + id)
                             .then(res => {
                                 this.showSnack(res.data);
                                 this.searches = this.searches.filter(item => item.id !== id);
@@ -1259,33 +1301,22 @@
 
                     allBulletins() {
                         this.search = [{}];
-                        this.doSearch();
-
+                        this.goToFirstPage();
                     },
                     myAssigned() {
-                        q = {};
-                        this.options.page = 1;
+                        let q = {};
                         q.assigned = [this.currentUser.id];
                         q.statuses = ["Assigned"];
                         this.search = [q];
-                        this.refresh();
+                        this.goToFirstPage();
                     },
 
                     myReview() {
-                        q = {};
-                        this.options.page = 1;
+                        let q = {};
                         q.reviewer = [this.currentUser.id];
                         q.statuses = ["Peer Review Assigned"];
-                        this.search = [q]
-                        this.refresh();
-                    },
-
-
-                    removeEvent: function (evt, index) {
-                        if (confirm("{{ _('Confirm deleting this event?')}}")) {
-                            this.editedItem.events.splice(index, 1);
-                        }
-
+                        this.search = [q];
+                        this.goToFirstPage();
                     },
 
 
@@ -1313,7 +1344,7 @@
                     showBulletin(id) {
                         this.bulletinLoader = true
                         this.bulletinDrawer = true;
-                        axios.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
+                        api.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
                             this.bulletin = response.data;
                         }).catch(error => {
                             this.bulletinDrawer = false;
@@ -1455,7 +1486,7 @@
                         this.reviewDialog = true;
 
 
-                        axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                        api.get(`/admin/api/bulletin/${item.id}`).then(response => {
                             this.loading = false;
                             this.$nextTick(() => {
                                 this.reviewItem = response.data;
@@ -1478,7 +1509,7 @@
 
                     saveReview() {
 
-                        axios.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
+                        api.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
                             item: this.reviewItem
                         })
                             .then(response => {
@@ -1488,21 +1519,6 @@
                             });
 
                     },
-
-                    adjustDates() {
-
-
-                        if (this.editedItem.publish_date) {
-                            this.editedItem.publish_time = dateFns.format(this.editedItem.publish_date, 'HH:mm');
-                            this.editedItem.publish_date = dateFns.format(this.editedItem.publish_date, 'YYYY-MM-DD')
-                        }
-
-                        if (this.editedItem.documentation_date) {
-                            this.editedItem.documentation_time = dateFns.format(this.editedItem.documentation_date, 'HH:mm');
-                            this.editedItem.documentation_date = dateFns.format(this.editedItem.documentation_date, 'YYYY-MM-DD');
-                        }
-                    },
-
 
                     editItem(item) {
 
@@ -1519,7 +1535,7 @@
                         } else {
                             // load item from db
                             this.loading = true;
-                            axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                            api.get(`/admin/api/bulletin/${item.id}`).then(response => {
                                 this.dialog = true;
 
                                 this.$nextTick(() => {
@@ -1555,7 +1571,7 @@
                             confirm("{{ _('Are you sure you want to delete this item?')}}") &&
                             this.items.splice(index, 1);
                         if (cfm) {
-                            axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
+                            api.delete(`/admin/api/bulletin/${item.id}`).then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();
                             });
@@ -1564,6 +1580,10 @@
 
                     close() {
                         this.dialog = false;
+                        this.actorDialog = false;
+                        this.closeExpandedMedia();
+                        this.closeMediaDialog();
+                        this.closeSnapshotDialog();
                         setTimeout(() => {
                             this.editedItem = Object.assign({}, this.defaultItem);
 
@@ -1588,166 +1608,85 @@
                         this.saving = true;
                         if (this.editedItem.id) {
                             //update record
-                            axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
+                            api.put(`/admin/api/bulletin/${this.editedItem.id}`, {
                                 item: this.editedItem
                             }).then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
-                                console.error(err.response?.data);
+                                console.error(err);
+                                this.showSnack(handleRequestError(err));
                                 this.saving = false;
                             });
                         } else {
                             //create new record
-                            axios.post("/admin/api/bulletin/", {
+                            api.post("/admin/api/bulletin/", {
                                 item: this.editedItem
                             }).then(response => {
                                 this.items.unshift(response.data.item);
+                                this.totalCount += 1;
                                 this.showSnack(response.data.message);
                                 this.close();
                             }).catch(err => {
-                                console.error(err.response?.data);
+                                console.error(err);
+                                this.showSnack(handleRequestError(err));
                                 this.saving = false;
                             });
                         }
                     },
 
-                    editEvent(evt, item, index) {
-                        this.eventDialog = true;
-
-                        this.$nextTick(() => {
-                            this.editedEvent = Object.assign({}, item);
-
-                            this.editedEventIndex = index;
-
-                            //reset dual fields display to english
-                            this.eventTitle__ = true;
-                            this.eventComments__ = true;
-
+                    // related actors functions --------------------
+                    searchRelatedActors() {
+                        this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
+                    },
+                    relateCreatedActor({ item, relationData }) {
+                        this.relateActor({ item, relationData })
+                        // Reset filters values on RelateActors component
+                        this.$refs.relateActors.q = {};
+                    },
+                    relateActor({ item, relationData }) {
+                        this.addItemToRelation({
+                            type: 'actor',
+                            relationList: this.editedItem.actor_relations,
+                            item,
+                            relationData,
                         })
-
-                        //this.locations = this.editedItem.locations;
                     },
-
-                    closeEvent() {
-                        this.eventDialog = false;
-                        setTimeout(() => {
-                            this.editedEvent = Object.assign({}, this.defaultEvent);
-                            this.editedEventIndex = -1;
-                        }, 300);
-                    },
-
-                    saveEvent() {
-
-                        if (this.editedEventIndex > -1) {
-                            Object.assign(
-                                this.editedItem.events[this.editedEventIndex],
-                                this.editedEvent
-                            );
-                            //update record
-                        } else {
-                            this.editedItem.events.push(this.editedEvent);
-                            //create new record
-                        }
-                        this.closeEvent();
+                    removeActor(evt, index) {
+                        this.removeFromRelationList({ relationList: this.editedItem.actor_relations, index })
                     },
 
                     // related bulletins functions --------------------
-
                     searchRelatedBulletins() {
-
-                        this.$refs.relateBulletins.open();
-                        this.$nextTick(() => {
-                            this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-                            this.$refs.relateBulletins.reSearch();
-                        });
-
+                        this.searchRelatedItems({ ref: this.$refs.relateBulletins, searchTerm: this.relateBulletinTerm })
                     },
-
-                    relateBulletin(bulletin) {
-
-
-                        // get list of existing attached bulletins
-                        let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
-
-                        if (!ex.includes(bulletin.id)) {
-                            relation = {
-                                bulletin: bulletin
-                            };
-                            this.editedItem.bulletin_relations.push(relation);
-                        }
+                    relateBulletin({ item, relationData }) {
+                        this.addItemToRelation({
+                            type: 'bulletin',
+                            relationList: this.editedItem.bulletin_relations,
+                            item,
+                            relationData,
+                        })
                     },
-
-                    removeBulletin: function (evt, index) {
-                        if (confirm(translations.confirm_)) {
-                            this.editedItem.bulletin_relations.splice(index, 1);
-                        }
+                    removeBulletin(evt, index) {
+                        this.removeFromRelationList({ relationList: this.editedItem.bulletin_relations, index })
                     },
-
-
-                    // -------------------------------------------------
-
-
-                    // related actors functions ------------------------
-
-                    searchRelatedActors() {
-                        this.$refs.relateActors.open();
-                        this.$nextTick(() => {
-                            this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-                            this.$refs.relateActors.reSearch();
-                        });
-
-                    },
-                    relateActor(actor) {
-                        // get list of existing attached actors
-                        let ex = this.editedItem.actor_relations.map(x => x.actor.id);
-
-                        if (!ex.includes(actor.id)) {
-                            relation = {
-                                actor: actor
-                            };
-                            this.editedItem.actor_relations.push(relation);
-                            this.relateActorResults.removeById(actor.id);
-                        }
-                    },
-
-                    removeActor: function (evt, index) {
-                        if (confirm(translations.confirm_)) {
-                            this.editedItem.actor_relations.splice(index, 1);
-                        }
-                    },
-
 
                     // related incidents functions ------------------------
-
                     searchRelatedIncidents() {
-
-                        this.$refs.relateIncidents.open();
-                        this.$nextTick(() => {
-                            this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-                            this.$refs.relateIncidents.reSearch();
-                        });
-
+                        this.searchRelatedItems({ ref: this.$refs.relateIncidents, searchTerm: this.relateIncidentTerm })
                     },
-                    relateIncident(incident) {
-
-                        // get list of existing attached actors
-                        let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-                        if (!ex.includes(incident.id)) {
-                            relation = {
-                                incident: incident
-                            };
-                            this.editedItem.incident_relations.push(relation);
-                            this.relateIncidentResults.removeById(incident.id);
-                        }
+                    relateIncident({ item, relationData }) {
+                        this.addItemToRelation({
+                            type: 'incident',
+                            relationList: this.editedItem.incident_relations,
+                            item,
+                            relationData,
+                        })
                     },
-
-                    removeIncident: function (evt, index) {
-                        if (confirm(translations.confirm_)) {
-                            this.editedItem.incident_relations.splice(index, 1);
-                        }
+                    removeIncident(evt, index) {
+                        this.removeFromRelationList({ relationList: this.editedItem.incident_relations, index })
                     },
 
                     clearAssignee() {
@@ -1770,7 +1709,7 @@
 
                         this.webImportLoading = true;
                         
-                        axios.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
+                        api.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
                             .then(res => {
                                 this.webUrl = ''; // Clear the input
                                 this.webImportDlg = false;
@@ -1784,12 +1723,14 @@
                             .finally(() => {
                                 this.webImportLoading = false;
                             });
-                    }
+                    },
+
                 }
             })
         ;
 
 
+        app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
         app.component('UniField', UniField);
         app.component('DualField', DualField);
@@ -1798,6 +1739,7 @@
         app.component('RelateBulletins', RelateBulletins);
         app.component('RelateActors', RelateActors);
         app.component('RelateIncidents', RelateIncidents);
+        app.component('RelateItemsTemplate', RelateItemsTemplate);
         app.component('BulletinResult', BulletinResult);
         app.component('BulletinSearchBox', BulletinSearchBox);
         app.component('ActorSearchBox', ActorSearchBox);
@@ -1820,18 +1762,27 @@
         app.component('PopDateTimeField', PopDateTimeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
-        app.component('ImageGallery', ImageGallery);
+        app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('SnapshotDialog', SnapshotDialog);
         app.component('PreviewCard', PreviewCard);
+        app.component('RelationEditorCard', RelationEditorCard);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('ReadMore', ReadMore);
+
         app.component('mix-i', MixI);
         app.component('mix-ii', MixII);
         app.component('mix-iii', MixIII);
         app.component('mp-field', MPField);
         app.component('mp-card', MPCard);
+        app.component('tinymce-editor', Editor);
         app.component('ActorProfiles', ActorProfiles);
-
+        app.component('ShortActorDialog', ShortActorDialog);
+        app.component('IdNumberDynamicField', IdNumberDynamicField);
+        app.component('EventsSection', EventsSection);
 
         app.use(router);
         app.use(vuetify).mount('#app');

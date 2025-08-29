@@ -9,12 +9,12 @@ from collections import namedtuple
 from pathlib import Path
 
 from typing import Any, Generator, Literal, Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 
 import boto3
 import pandas as pd
 import requests
-from celery import Celery, chain
+from celery import Celery, chain, chord, group
 from celery.schedules import crontab
 from celery.signals import worker_ready, worker_process_init
 from packaging import version
@@ -25,6 +25,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
 from werkzeug.utils import safe_join
 
+from enferno.admin.constants import Constants
 from enferno.admin.models import (
     Bulletin,
     Actor,
@@ -36,10 +37,11 @@ from enferno.admin.models import (
     Location,
     Media,
 )
+from enferno.utils.email_utils import EmailUtils
+from enferno.admin.models.Notification import Notification
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
-from enferno.settings import Config as cfg
 from enferno.user.models import Role, User, Session
 from enferno.utils.csv_utils import convert_list_attributes
 from enferno.data_import.models import DataImport
@@ -53,6 +55,18 @@ from enferno.utils.graph_utils import GraphUtils
 import enferno.utils.typing as t
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
+
+# Simple test detection - use TestConfig if in test environment
+import os
+
+if os.environ.get("BAYANAT_CONFIG_FILE") == "config.test.json":
+    from enferno.settings import TestConfig
+
+    cfg = TestConfig()
+else:
+    from enferno.settings import Config
+
+    cfg = Config()
 
 celery = Celery("tasks", broker=cfg.celery_broker_url)
 # remove deprecated warning
@@ -124,6 +138,63 @@ def chunk_list(lst: list, n: int) -> Generator[list, Any, None]:
         yield lst[i : i + n]
 
 
+@celery.task(bind=True, max_retries=3)
+def send_email_notification(self, notification_id: int) -> bool:
+    """
+    Send email notification with retry logic - simplified status tracking.
+
+    Args:
+        notification_id: ID of the notification to send
+
+    Returns:
+        bool: True if email was sent successfully, False otherwise
+    """
+
+    # Get the notification record
+    notification = db.session.get(Notification, notification_id)
+    if not notification:
+        logger.error(f"Notification {notification_id} not found")
+        return False
+
+    if notification.email_sent:
+        logger.info(f"Notification {notification_id} already sent; skipping send")
+        return True
+
+    # Check if user has email (should be validated already, but double-check)
+    if not notification.user.email:
+        logger.error(f"User {notification.user.id} has no email address")
+        return False
+
+    success = EmailUtils.send_email(
+        recipient=notification.user.email,
+        subject=notification.title,
+        body=f"{notification.message}",
+    )
+
+    if success:
+        notification.email_sent = True
+        notification.email_sent_at = datetime.now(timezone.utc)
+        notification.save()
+        logger.info(
+            f"Email notification {notification_id} sent successfully to {notification.user.id}"
+        )
+        return True
+
+    else:
+        # Retry if retries remaining
+        if self.request.retries < self.max_retries:
+            logger.info(
+                f"Retrying email notification {notification_id}... (attempt {self.request.retries + 1})"
+            )
+            raise self.retry(countdown=60 * (2**self.request.retries))
+
+        # Log failure after retries exhausted
+        logger.error(
+            f"Failed to send email notification {notification_id} after {self.max_retries} retries"
+        )
+        return False
+
+
 @celery.task
 def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     """
@@ -144,6 +215,14 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     user = User.query.get(cur_user_id)
     chunks = chunk_list(ids, BULK_CHUNK_SIZE)
 
+    # Assigned user
+    assigned_to_id = bulk.get("assigned_to_id")
+    clear_assignee = bulk.get("assigneeClear")
+
+    # FPR user
+    first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
+    clear_reviewer = bulk.get("reviewerClear")
+
     for group in chunks:
         # Fetch bulletins
         bulletins = Bulletin.query.filter(Bulletin.id.in_(group))
@@ -156,9 +235,6 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # get Status initially
             status = bulk.get("status")
 
-            # Assigned user
-            assigned_to_id = bulk.get("assigned_to_id")
-            clear_assignee = bulk.get("assigneeClear")
             if clear_assignee:
                 bulletin.assigned_to_id = None
             elif assigned_to_id:
@@ -166,9 +242,6 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
                 if not status:
                     bulletin.status = "Assigned"
 
-            # FPR user
-            first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            clear_reviewer = bulk.get("reviewerClear")
             if clear_reviewer:
                 bulletin.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
@@ -237,6 +310,32 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
+    assigner = User.query.get(cur_user_id)
+    # Notify admin
+    Notification.send_notification_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        assigner,
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} Bulletins has been completed successfully.",
+    )
+
+    # send notifications for assignments and reviews
+    if assigned_to_id:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.NEW_ASSIGNMENT,
+            User.query.get(assigned_to_id),
+            "New Assignment",
+            f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for analysis.",
+        )
+
+    if first_peer_reviewer_id:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.REVIEW_NEEDED,
+            User.query.get(first_peer_reviewer_id),
+            "Review Needed",
+            f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for review.",
+        )
+
 
 @celery.task
 def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
@@ -257,6 +356,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
     user = User.query.get(cur_user_id)
     chunks = chunk_list(ids, BULK_CHUNK_SIZE)
+
+    # Assigned user
+    assigned_to_id = bulk.get("assigned_to_id")
+    clear_assignee = bulk.get("assigneeClear")
+
+    # FPR user
+    first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
+    clear_reviewer = bulk.get("reviewerClear")
+
     for group in chunks:
         # Fetch bulletins
         actors = Actor.query.filter(Actor.id.in_(group))
@@ -269,9 +377,6 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # get Status initially
             status = bulk.get("status")
 
-            # Assigned user
-            assigned_to_id = bulk.get("assigned_to_id")
-            clear_assignee = bulk.get("assigneeClear")
             if clear_assignee:
                 actor.assigned_to_id = None
             elif assigned_to_id:
@@ -279,9 +384,6 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
                 if not status:
                     actor.status = "Assigned"
 
-            # FPR user
-            first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            clear_reviewer = bulk.get("reviewerClear")
             if clear_reviewer:
                 actor.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
@@ -350,6 +452,32 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
+    assigner = User.query.get(cur_user_id)
+    # Notify admin
+    Notification.send_notification_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        assigner,
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} Actors has been completed successfully.",
+    )
+
+    # send notifications for assignments and reviews
+    if assigned_to_id:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.NEW_ASSIGNMENT,
+            User.query.get(assigned_to_id),
+            "New Assignment",
+            f"{len(ids)} Actors have been assigned to you by {assigner.username} for analysis.",
+        )
+
+    if first_peer_reviewer_id:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.REVIEW_NEEDED,
+            User.query.get(first_peer_reviewer_id),
+            "Review Needed",
+            f"{len(ids)} Actors have been assigned to you by {assigner.username} for review.",
+        )
+
 
 @celery.task
 def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
@@ -377,6 +505,14 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     actors = []
     bulletins = []
 
+    # Assigned user
+    assigned_to_id = bulk.get("assigned_to_id")
+    clear_assignee = bulk.get("assigneeClear")
+
+    # FPR user
+    first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
+    clear_reviewer = bulk.get("reviewerClear")
+
     for group in chunks:
         # Fetch bulletins
         incidents = Incident.query.filter(Incident.id.in_(group))
@@ -389,9 +525,6 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # get Status initially
             status = bulk.get("status")
 
-            # Assigned user
-            assigned_to_id = bulk.get("assigned_to_id")
-            clear_assignee = bulk.get("assigneeClear")
             if clear_assignee:
                 incident.assigned_to_id = None
             elif assigned_to_id:
@@ -399,9 +532,6 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
                 if not status:
                     incident.status = "Assigned"
 
-            # FPR user
-            first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            clear_reviewer = bulk.get("reviewerClear")
             if clear_reviewer:
                 incident.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
@@ -490,12 +620,38 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
+    assigner = User.query.get(cur_user_id)
+    # Notify admin
+    Notification.send_notification_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        assigner,
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} Incidents has been completed successfully.",
+    )
+
+    # send notifications for assignments and reviews
+    if assigned_to_id:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.NEW_ASSIGNMENT,
+            User.query.get(assigned_to_id),
+            "New Assignment",
+            f"{len(ids)} Incidents have been assigned to you by {assigner.username} for analysis.",
+        )
+
+    if first_peer_reviewer_id:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.REVIEW_NEEDED,
+            User.query.get(first_peer_reviewer_id),
+            "Review Needed",
+            f"{len(ids)} Incidents have been assigned to you by {assigner.username} for review.",
+        )
+
 
 @celery.task(rate_limit=10)
 def etl_process_file(
     batch_id: t.id, file: str, meta: Any, user_id: t.id, data_import_id: t.id
 ) -> Optional[Literal["done"]]:
-    """ETL process file task."""
+    """Process individual file for import. Part of coordinated batch operation."""
     try:
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
@@ -503,6 +659,7 @@ def etl_process_file(
     except Exception as e:
         log = DataImport.query.get(data_import_id)
         log.fail(e)
+        raise  # Re-raise for chord coordination
 
 
 # this will publish a message to redis and will be captured by the front-end client
@@ -634,27 +791,56 @@ def dedup_cron() -> None:
 
 
 @celery.task
+def batch_complete_notification(results: list, batch_id: str, user_id: int) -> None:
+    """Callback executed when all files in a batch are processed."""
+    from enferno.data_import.models import DataImport
+
+    batch_imports = DataImport.query.filter_by(batch_id=batch_id).all()
+    successful = [imp for imp in batch_imports if imp.status == "Ready"]
+    failed = [imp for imp in batch_imports if imp.status == "Failed"]
+
+    user = User.query.get(user_id)
+    if not user:
+        logger.error(f"User {user_id} not found for batch completion notification")
+        return
+
+    if len(failed) == 0:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            user,
+            "Batch Import Complete",
+            f"Batch {batch_id} completed successfully. All {len(successful)} files processed.",
+        )
+    else:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            user,
+            "Batch Import Completed with Errors",
+            f"Batch {batch_id} completed. {len(successful)} succeeded, {len(failed)} failed.",
+        )
+
+    logger.info(f"Batch {batch_id} complete: {len(successful)} success, {len(failed)} failed")
+
+
+@celery.task
 def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
+    """Process multiple files using Celery chord pattern for coordinated batch completion."""
+    file_tasks = []
+
     for file in files:
         f = file.get("path") or file.get("filename")
-        # logging every file early in the process to track progress
 
-        # Initialize log here, outside of the if condition
         data_import = DataImport(
             user_id=user_id, table="bulletin", file=f, batch_id=batch_id, data=meta
         )
 
         if meta.get("mode") == 2:
-            # getting hash of file for deduplication
-            # server-side import doesn't automatically
-            # retrieve files' hashes
+            # Server-side import: copy files and generate hashes
             allowed_path = Path(cfg.ETL_ALLOWED_PATH)
             full_path = safe_join(allowed_path, f)
-
             data_import.file_hash = file["etag"] = get_file_hash(full_path)
             data_import.save()
 
-            # checking for existing media or pending or processing imports
             if media_check_duplicates(file.get("etag"), data_import.id):
                 data_import.add_to_log(f"File already exists {f}.")
                 data_import.fail()
@@ -663,8 +849,21 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
             file["path"] = full_path
 
         data_import.add_to_log(f"Added file {file} to import queue.")
-        # make sure we have a log id
-        etl_process_file.delay(batch_id, file, meta, user_id, data_import.id)
+
+        file_tasks.append(etl_process_file.s(batch_id, file, meta, user_id, data_import.id))
+
+    if not file_tasks:
+        # Edge case: all files were duplicates or invalid
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            User.query.get(user_id),
+            "Batch Import Complete",
+            f"Batch {batch_id} had no valid files to process.",
+        )
+        return
+
+    # Execute all file tasks in parallel, with single callback when complete
+    chord(group(file_tasks), batch_complete_notification.s(batch_id, user_id)).apply_async()
 
 
 @celery.task
@@ -1363,16 +1562,39 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         # Start ETL process
         _start_etl_process(final_filename, url, batch_id, user_id, import_id)
 
+        # Notify user
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has been completed successfully.",
+        )
+
     except ValueError as e:
         # Handle specific error messages without traceback
         logger.error(f"Download failed: {str(e)}")
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
+        # Notify user
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has failed.",
+        )
+
     except Exception as e:
         # Handle other errors with traceback
         logger.error(f"Download failed: {str(e)}", exc_info=True)
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
+        # Notify user
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has failed.",
+        )
 
 
 def _get_ytdl_options(with_cookies: bool = False) -> dict:

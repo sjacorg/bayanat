@@ -1,6 +1,10 @@
-// common validation rules
+// Common validation rules
+// Each rule returns `true` if valid, or a string error message if invalid
+let checkUsernameTimeout;
+let passwordCheckTimeout;
 
 const validationRules = {
+
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
     },
@@ -19,6 +23,61 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
+    externalError(error) {
+        return () => {
+          if (!error) return true;
+          return Array.isArray(error) ? error[0] : error;
+        };
+    },
+    checkUsername: ({ initialUsername, onResponse }) => {
+        const defaultMsg = window.translations.usernameInvalidOrAlreadyTaken_;
+      
+        return v => new Promise(resolve => {
+          clearTimeout(checkUsernameTimeout);
+          checkUsernameTimeout = setTimeout(async () => {
+            try {
+              if (v === initialUsername) return onResponse(true), resolve(true);
+      
+              await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
+              onResponse(true);
+              resolve(true);
+            } catch (err) {
+              onResponse(false);
+              const status = err?.response?.status;
+              resolve(
+                status === 409 ? window.translations.usernameAlreadyTaken_ :
+                status === 400 ? window.translations.usernameInvalid_ :
+                defaultMsg
+              );
+            }
+          }, 350);
+        });
+    },    
+    matchesField: (otherValue, message) => {
+        const defaultMessage = window.translations.fieldsDoNotMatch_;
+        return v => v === otherValue || message || defaultMessage;
+    },
+    checkPassword: ({ onResponse }) => {
+        const defaultMessage = window.translations.passwordTooWeak_;
+        
+      
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(passwordCheckTimeout);
+      
+            passwordCheckTimeout = setTimeout(async () => {
+              try {
+                await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
+                onResponse(true);
+                resolve(true);
+            } catch (err) {
+                onResponse(false);
+                resolve(defaultMessage);
+              }
+            }, 350);
+          });
+        };
+    }
 };
 
 // Helper functions
@@ -47,8 +106,14 @@ function scrollToFirstError(errors) {
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
+        VRow: {
+            dense: true,
+        },
+        VApp: {
+            class: 'bg-background',
+        },
         VTextField: {
-            variant: 'outlined'
+            variant: 'outlined',
         },
         VSelect: {
             variant: 'outlined'
@@ -58,10 +123,35 @@ const vuetifyConfig = {
         },
         VCombobox: {
             variant: 'outlined'
-
+        },
+        VAutocomplete: {
+            variant: 'outlined'
+        },
+        VBtn: {
+            rounded: 'lg',
+            class: 'text-none font-weight-regular text-body-2 elevation-0',
+        },
+        VTab: {
+            VBtn: {
+                class: '', // Remove the custom classes from tab buttons
+                rounded: 'none', // Reset the border radius
+            },
+        },
+        VBtnGroup: {
+            VBtn: {
+                class: '', // Remove the custom classes from tab buttons
+                rounded: 'none', // Reset the border radius
+            },
         },
         VChip: {
             size: 'small'
+        },
+        VSwitch: {
+            color: 'primary',
+            density: 'compact'
+        },
+        VCheckbox: {
+            density: 'compact'
         },
         VDataTableServer: {
             itemsPerPageOptions: window.itemsPerPageOptions,
@@ -74,6 +164,7 @@ const vuetifyConfig = {
                 dark: false, // Explicitly set the light theme as not dark
                 colors: {
                     primary: '#439d92',
+                    'dark-primary': '#35857c',
                     secondary: '#b0bec5',
                     accent: '#8c9eff',
                     error: '#b71c1c',
@@ -86,21 +177,29 @@ const vuetifyConfig = {
                     rv: '#910C0A',
                     gv: '#9ECCC3',
                     pv: '#295651',
+                    background: '#FAFAFA',
+                    muted: '#79747E',
+                    border: '#D9D9D9',
+                    'table-header': '#9E9E9E',
+                    'table-body': '#666666'
                 },
             },
             dark: {
                 dark: true, // Explicitly set the dark theme as dark
                 colors: {
-                    white: '#333', // Adapted to the more complex structure of your dark theme
                     // Adapted to the more complex structure of your dark theme
                     primary: '#09a7a6',
+                    'dark-primary': '#0a8786',
                     grey: '#999', // Only one shade represented for simplicity
                     'blue-grey': '#222', // Base color, assuming primary shade
-                    black: '#ddd', // Base color
                     gv: '#019985', // Darken2 shade assumed for simplicity
                     lime: '#303030',
                     teal: '#008080',
                     // You might need to adjust or add additional custom colors here
+                    muted: '#A59E99',
+                    border: '#444444',
+                    'table-header': '#B0B0B0',
+                    'table-body': '#ffffffb3'
                 },
             },
         },
@@ -137,15 +236,38 @@ const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 // Set axios defaults
 axios.defaults.headers.common['Accept'] = 'application/json';
 
-//global axios error handler - can be used to define global exception handling on ajax failures
+// Centralized API service - handles standardized responses transparently
+const api = {
+    get: axios.get.bind(axios),
+    post: axios.post.bind(axios), 
+    put: axios.put.bind(axios),
+    delete: axios.delete.bind(axios)
+};
+
+//global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
-        // Do something with response data
-        return response;
+        const shouldFlatten =
+            isPlainObject(response?.data?.data) &&
+            !response?.config?.skipFlattening;
+    
+        if (shouldFlatten) {
+            return {
+                ...response,
+                data: {
+                    ...response.data.data,
+                    ...(response.data?.message ? { message: response.data.message } : {})
+                }
+            };
+        }
+    
+      return response;
     },
     function (error) {
-        const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
-        document.dispatchEvent(globalRequestErrorEvent);
+        if (!error.config?.suppressGlobalErrorHandler) {
+            const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
+            document.dispatchEvent(globalRequestErrorEvent);
+        }
         // Check for session expiration errors (401 Unauthorized)
         if ([401].includes(error?.response?.status)) {
             const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });
@@ -155,20 +277,28 @@ axios.interceptors.response.use(
     },
 );
 
+function isPlainObject(val) {
+    return val !== null && typeof val === 'object' && !Array.isArray(val);
+}
+
 function getInfraMessage(status) {
     switch (status) {
-      case 502:
-      case 503:
-        return 'Service temporarily unavailable, please try again shortly.';
-      case 500:
-        return 'Server error, please try again or contact support.';
-      default:
-        return 'Unexpected error, please contact support if the issue persists.';
+        case 502:
+        case 503:
+            return 'The service is currently unavailable. Please try again in a few moments.';
+        case 500:
+            return 'A server error occurred. Please try again or reach out to support.';
+        default:
+            return 'An unexpected error occurred. If this continues, please contact support.';
     }
-  }
+}
   
  function handleRequestError(error) {
     const response = error?.response;
+
+    if (response?.data?.message) {
+        return response.data.message;
+    }
   
     // Handle known API error format
     if (response?.data?.response?.errors) {
@@ -238,6 +368,8 @@ const routes = [
     {path: '/import/log/', name: 'logs', component: Vue.defineComponent({})},
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
+    { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
+    { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
 
 ];
 
@@ -261,14 +393,8 @@ var tinyConfig = {
     table_grid: false,
     menubar: false,
     toolbar:
-        'undo redo | styleselect | bold italic underline strikethrough backcolor | outdent indent | numlist bullist | link image | align | ltr rtl | table | removeformat | searchreplace | fullscreen',
-    toolbar_groups: {
-        align: {
-            icon: 'aligncenter',
-            tooltip: 'Align',
-            items: 'alignleft aligncenter alignright alignjustify',
-        },
-    },
+        'undo redo | styleselect | bold italic underline strikethrough backcolor | outdent indent | numlist bullist | link image | alignleft aligncenter alignright alignjustify | ltr rtl | table | removeformat | searchreplace | fullscreen',
+
     table_toolbar:
         'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
 
@@ -281,6 +407,7 @@ var tinyConfig = {
     cleanup: true,
 };
 
+
 // adjust rich text editor theme based on mode
 if (__settings__.dark) {
     tinyConfig.skin = 'oxide-dark';
@@ -288,32 +415,10 @@ if (__settings__.dark) {
 }
 
 // helper prototype functions
-
-// removes an item from the array based on its id
-Array.prototype.removeById = function (id) {
-    for (let i = 0; i < this.length; i++) {
-        if (this[i].id == id) {
-            this.splice(i, 1);
-            i--;
-        }
-    }
-    return this;
-};
-
-Array.prototype.toURLParams = function (varName) {
-    const pairs = this.map((x) => {
-        return `${varName}=${x}`;
-    });
-    return pairs.join('&');
-};
-
 String.prototype.getFilename = function () {
     return this.substring(this.lastIndexOf('/') + 1)
         .replace(/[\#\?].*$/, '')
         .replace(/\.[^/.]+$/, '');
-};
-String.prototype.trunc = function (n) {
-    return this.substr(0, n - 1) + (this.length > n ? '&hellip;' : '');
 };
 
 String.prototype.getInitials = function () {
@@ -327,29 +432,6 @@ function translate_status(str) {
     // placeholder, will handle translations in a future release
     return str;
 }
-
-String.prototype.toHHMMSS = function () {
-    var sec_num = parseInt(this, 10); // don't forget the second param
-    var hours = Math.floor(sec_num / 3600);
-    var minutes = Math.floor((sec_num - hours * 3600) / 60);
-    var seconds = sec_num - hours * 3600 - minutes * 60;
-
-    if (hours < 10) {
-        hours = '0' + hours;
-    }
-    if (minutes < 10) {
-        minutes = '0' + minutes;
-    }
-    if (seconds < 10) {
-        seconds = '0' + seconds;
-    }
-    return hours + ':' + minutes + ':' + seconds;
-};
-
-String.prototype.formatName = function () {
-    let firstlast = this.split(' ');
-    return firstlast[0].substr(0, 1).toUpperCase() + '.' + firstlast[1];
-};
 
 // relationship information helper
 
@@ -487,10 +569,10 @@ function normalizeDropzoneResponse(dzFile) {
         uuid: dzFile.upload.uuid,
         type: dzFile.type,
         name: dzFile.name,
-        s3url: response.filename,
-        filename: response.filename,
-        etag: response.etag,
-        original_filename: response.original_filename,
+        s3url: response.data.filename,
+        filename: response.data.filename,
+        etag: response.data.etag,
+        original_filename: response.data.original_filename,
     };
 }
 
@@ -498,7 +580,7 @@ function getBulletinLocations(ids) {
     promises = [];
     ids.forEach((x) => {
         promises.push(
-            axios.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
+            api.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
                 return aggregateBulletinLocations(response.data);
             }),
         );
@@ -568,11 +650,20 @@ const DEFAULT_VIDEOJS_OPTIONS = {
 }
 function buildVideoElement() {
     const videoElement = document.createElement('video');
-    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered w-100';
+    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9 h-100 pa-0';
     videoElement.setAttribute('crossorigin', 'anonymous');
     videoElement.setAttribute('controls', '');
     videoElement.setAttribute('width', '620');
     videoElement.setAttribute('height', '348');
 
     return videoElement;
+}
+
+// Deep clone utility for nested refs or reactive data
+function deepClone(value) {
+    try {
+        return structuredClone(value);
+    } catch (error) {
+        return JSON.parse(JSON.stringify(value));
+    }
 }

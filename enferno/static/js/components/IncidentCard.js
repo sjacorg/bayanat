@@ -3,7 +3,6 @@ const IncidentCard = Vue.defineComponent({
   emits: ['edit', 'close'],
 
   methods: {
-    
     loadGeoMap() {
       this.geoMapLoading = true;
       //load again all bulletin relations without paging (soft limit is 1000 bulletin)
@@ -19,7 +18,6 @@ const IncidentCard = Vue.defineComponent({
           if (relatedBulletins && relatedBulletins.length) {
             getBulletinLocations(relatedBulletins.map((x) => x.bulletin.id)).then((res) => {
               this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
-              this.geoMapLoading = false;
               this.geoMapOn = true;
             });
           } else {
@@ -29,7 +27,9 @@ const IncidentCard = Vue.defineComponent({
         })
         .catch((err) => {
           console.log(err.toJSON());
-        });
+        }).finally(() => {
+          this.geoMapLoading = false;
+        })
     },
 
     translate_status(status) {
@@ -173,7 +173,7 @@ const IncidentCard = Vue.defineComponent({
 
         <v-card  v-if="incident.description" class="ma-2 pa-2">
           <div class="caption grey--text mb-2">{{ translations.description_ }}</div>
-          <div class="rich-description" v-html="incident.description"></div>
+          <read-more><div class="rich-description" v-html="incident.description"></div></read-more>
         </v-card>
 
         <!-- Map -->
@@ -262,10 +262,8 @@ const IncidentCard = Vue.defineComponent({
                 color="teal-lighten-2">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.review_ }}</div>
-            <div v-html="incident.review" class="pa-1 my-2 grey--text text--darken-2">
-
-            </div>
-            <v-chip label color="lime">{{ incident.review_action }}</v-chip>
+            <read-more><div v-html="incident.review" class="pa-1 my-2 grey--text text--darken-2"></div></read-more>
+            <v-chip class="mt-4" label color="lime">{{ incident.review_action }}</v-chip>
           </v-card-text>
         </v-card>
 
@@ -280,8 +278,9 @@ const IncidentCard = Vue.defineComponent({
 
             <template v-for="(revision,index) in revisions">
               <v-card color="grey lighten-4" flat class="my-1 pa-2 d-flex align-center">
-                            <span class="caption">{{ revision.data['comments'] }} - <v-chip label
-                            >{{ translate_status(revision.data.status) }}</v-chip> - {{ revision.created_at }}
+                            <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
+                            <v-chip label
+                            >{{ translate_status(revision.data.status) }}</v-chip> - {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}
                               - By {{ revision.user.username }}</span>
                 <v-spacer></v-spacer>
 

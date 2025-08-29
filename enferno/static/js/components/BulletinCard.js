@@ -230,14 +230,13 @@ const BulletinCard = Vue.defineComponent({
           <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
         </v-toolbar>
 
-        <v-card-text class="text-body-2 " v-html="bulletin.description"></v-card-text>
+        <v-card-text class="text-body-2 "><read-more><div v-html="bulletin.description"></div></read-more></v-card-text>
       </v-card>
 
 
       <!-- Map -->
       <v-divider></v-divider>
       <v-card variant="flat" >
-       
         <global-map v-model="mapLocations"></global-map>
       </v-card>
 
@@ -313,11 +312,17 @@ const BulletinCard = Vue.defineComponent({
             <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
         </v-toolbar>
 
-        <div ref="playerContainer" class="px-2 my-3"></div>
+        <inline-media-renderer
+          :media="expandedMedia"
+          :media-type="expandedMediaType"
+          ref="inlineMediaRendererRef"
+          @fullscreen="handleFullscreen"
+          @close="closeExpandedMedia"
+        ></inline-media-renderer>
         
         <v-card-text>
           
-          <image-gallery prioritize-videos :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="handleExpandedMedia"></media-grid>
         </v-card-text>
       </v-card>
 
@@ -350,18 +355,19 @@ const BulletinCard = Vue.defineComponent({
 
       <!-- Pub/Doc Dates -->
       <v-sheet class="d-flex">
-        <uni-field :caption="translations.publishDate_" :english="bulletin.publish_date"></uni-field>
-        <uni-field :caption="translations.documentationDate_" :english="bulletin.documentation_date"></uni-field>
+        <uni-field :caption="translations.publishDate_" :english="$root.formatDate(bulletin.publish_date)"></uni-field>
+        <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(bulletin.documentation_date)"></uni-field>
       </v-sheet>
 
       <!-- Review -->
       <v-card v-if="showReview(bulletin)" variant="outlined" elevation="0" class="ma-3" color="teal-lighten-2">
         <v-card-text>
           <div class="px-1">{{ translations.review_ }}</div>
-          <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
-
-          </div>
-          <v-chip  color="primary">{{ bulletin.review_action }}</v-chip>
+          <read-more>
+            <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
+            </div>
+          </read-more>
+          <v-chip class="mt-4" color="primary">{{ bulletin.review_action }}</v-chip>
         </v-card-text>
       </v-card>
 
@@ -382,10 +388,10 @@ const BulletinCard = Vue.defineComponent({
 
           <template v-for="(revision,index) in revisions">
             <v-sheet class="my-1 pa-3  align-center d-flex">
-              <span class="caption">{{ revision.data['comments'] }} - 
+              <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
                 <v-chip label size="small"
                 >{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ revision.created_at }}
+                {{ $root.formatDate(revision.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 

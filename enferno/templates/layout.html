@@ -51,16 +51,16 @@
 
 <div id="app" class="justify-center full-height align-center min-vh-100">
     <v-app v-cloak class="h-screen">
-        <v-layout>
             {% block nav %}
                 {% include 'nav-bar.html' %}
                 {% include 'nav-drawer.html' %}
                 {% include 'settings_drawer.html' %}
+                {% include 'notifications_drawer.html' %}
+                {% include 'notifications_dialog.html' %}
+                {% include 'important_notifications_dialog.html' %}
             {% endblock %}
             {% block content %}
             {% endblock %}
-
-        </v-layout>
 
         <v-snackbar v-model="snackbar" multi-line>
 
@@ -108,10 +108,8 @@
 {% endif  %}
 <script src="/static/js/vuetify.min.js"></script>
 <script src="/static/js/vue-router.global.js"></script>
-<script src="/static/js/mixins/reauth-mixin.js"></script>
-<script src="/static/js/mixins/global-mixin.js"></script>
 <script src="/static/js/axios.min.js"></script>
-<script src="/static/js/dayjs.min.js"></script>
+<script src="/static/js/dayjs-with-plugins.min.js"></script>
 <script src="/static/js/lightgallery/plugins/rotate/lg-rotate.min.js"></script>
 <script src="/static/js/lightgallery/plugins/zoom/lg-zoom.min.js"></script>
 <script src="/static/js/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script>
@@ -128,11 +126,12 @@
 
 <script>
     {%  include 'admin/jsapi.jinja2' %}
-
 </script>
-
+<script src="/static/js/components/NotificationsList.js"></script>
 <script src="/static/js/common/config.js"></script>
-
+<script src="/static/js/mixins/reauth-mixin.js"></script>
+<script src="/static/js/mixins/notification-mixin.js"></script>
+<script src="/static/js/mixins/global-mixin.js"></script>
 
 {% block js %}{% endblock %}
 

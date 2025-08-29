@@ -117,6 +117,7 @@
 <script src="/static/js/components/BulletinCard.js"></script>
 <script src="/static/js/components/ActorProfiles.js"></script>
 <script src="/static/js/components/ActorCard.js"></script>
+<script src="/static/js/components/ReadMore.js"></script>
 <script src="/static/js/components/IncidentCard.js"></script>
 <script src="/static/js/components/EventCard.js"></script>
 <script src="/static/js/components/MediaCard.js"></script>
@@ -134,8 +135,10 @@
 <script src="/static/js/components/PopDateRangeField.js"></script>
 <script src="/static/js/components/PopDateTimeField.js"></script>
 
-<script src="/static/js/components/ImageGallery.js"></script>
+<script src="/static/js/components/MediaGrid.js"></script>
 <script src="/static/js/components/PdfViewer.js"></script>
+<script src="/static/js/components/ImageViewer.js"></script>
+<script src="/static/js/components/InlineMediaRenderer.js"></script>
 
 <script src="/static/js/components/Visualization.js"></script>
 <script src="/static/js/element-resize-detector.min.js"></script>
@@ -243,7 +246,7 @@
             },
 
             previewItem(endpoint) {
-                axios.get(endpoint).then(res => {
+                api.get(endpoint).then(res => {
                     this.pitem = res.data;
                     this.preview = true;
 
@@ -256,7 +259,7 @@
 
             process() {
                 this.loading = true;
-                axios.post('/deduplication/api/process').then(res => {
+                api.post('/deduplication/api/process').then(res => {
                     this.showSnack(res.data);
                     this.startTime = new Date();
                     this.processed = 0;
@@ -268,7 +271,7 @@
 
             stop() {
                 this.loading = true;
-                axios.post('/deduplication/api/stop').then(res => {
+                api.post('/deduplication/api/stop').then(res => {
                     this.showSnack(res.data);
                     }).finally(() => {
                         this.loading = false;
@@ -290,7 +293,7 @@
                 this.options = options || { ...this.options, page: 1 };
 
                 this.loading = true;
-                axios.get(`/deduplication/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
+                api.get(`/deduplication/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
                     this.items = res.data.items;
                     this.itemsLength = res.data.total;
                     if (this.pending) {
@@ -326,6 +329,7 @@
     app.component('BulletinCard', BulletinCard);
     app.component('ActorProfiles', ActorProfiles);
     app.component('ActorCard', ActorCard);
+    app.component('ReadMore', ReadMore);
     app.component('IncidentCard', IncidentCard);
     app.component('EventCard', EventCard);
     app.component('MediaCard', MediaCard);
@@ -335,8 +339,10 @@
     app.component('PopDateTimeField', PopDateTimeField);
     app.component('PopDateRangeField', PopDateRangeField);
 
-    app.component('ImageGallery', ImageGallery);
+    app.component('MediaGrid', MediaGrid);
     app.component('PdfViewer', PdfViewer);
+    app.component('ImageViewer', ImageViewer);
+    app.component('InlineMediaRenderer', InlineMediaRenderer);
 
     app.component('RelatedBulletinsCard', RelatedBulletinsCard);
     app.component('RelatedActorsCard', RelatedActorsCard);
