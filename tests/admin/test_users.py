@@ -27,6 +27,17 @@ from tests.models.admin import (
 
 @pytest.fixture(scope="function")
 def clean_slate_users(session):
+    from enferno.extensions import rds
+
+    # Clear Redis security keys to prevent persistence between tests
+    try:
+        keys_pattern = "security:user:*"
+        keys = rds.keys(keys_pattern)
+        if keys:
+            rds.delete(*keys)
+    except Exception:
+        pass  # Redis might not be available in some test environments
+
     session.query(Activity).delete(synchronize_session=False)
     session.query(Notification).delete(synchronize_session=False)
     session.query(User).delete(synchronize_session=False)
