@@ -186,16 +186,16 @@ const FieldListItem = Vue.defineComponent({
                         >
                             <div class="d-flex flex-column">
                                 <div class="d-flex justify-space-between align-center">
-                                    <div class="text-h6 text-primary">{{ translations.fieldOptions_ }}</div>
+                                    <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldOptions_ }}</div>
                                     <v-checkbox class="text-medium-emphasis" :label="translations.oneSelectionOnly_" hide-details :model-value="field.field_type === 'array'" @update:model-value="field.field_type === 'array' ? field.field_type = 'string' : field.field_type = 'array'"></v-checkbox>
                                 </div>
 
                                 <div class="mt-2">
                                     <draggable v-model="dropdownOptions" :item-key="'id'"
-                                            @end="onDragEnd" class="d-flex flex-column ga-1">
+                                            @end="onDragEnd" class="d-flex flex-column ga-1" handle=".drag-handle">
                                             <template #item="{ element: option, index }">
                                                 <div class="d-flex align-center ga-2">
-                                                    <v-icon>mdi-drag</v-icon>
+                                                    <v-icon class="drag-handle cursor-grab">mdi-drag</v-icon>
                                                     <div>{{ option.id || index + 1 }}</div>
                                                     <v-text-field
                                                         :label="translations.optionN_(index + 1)"
@@ -217,7 +217,7 @@ const FieldListItem = Vue.defineComponent({
                         </div>
 
                         <div class="w-100 w-md-50" style="flex: 1 1 calc(50% - 16px)">
-                            <div class="text-h6 text-primary">{{ translations.fieldProperties_ }}</div>
+                            <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldProperties_ }}</div>
                             <div class="mt-2 ga-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
                                 <v-text-field
                                     variant="filled"
