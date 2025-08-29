@@ -5,7 +5,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DB=bayanat_test
     volumes:
       - 'postgres_test_data:/var/lib/postgresql/data:rw'
     expose:
@@ -16,7 +16,7 @@ services:
     tmpfs:
       - /var/run/postgresql
     healthcheck:
-      test: "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"
+      test: "pg_isready -d bayanat_test -U ${POSTGRES_USER}"
       interval: 3s
       retries: 10
 
