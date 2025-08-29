@@ -4,7 +4,7 @@
 <select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
   :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
 <confirm-dialog ref="reviewAndConfirmDialog">
-  <div>{{ _('Please review your updates before applying them to the form.') }}</div>
+  <div class="mb-4">{{ _('Please review your updates before applying them to the form.') }}</div>
   <v-data-table hide-default-footer :items="changesTable" :headers="[
       { title: 'Field Name', value: 'title' },
       { title: 'Change Type', value: 'type' },
@@ -12,7 +12,7 @@
   >
     <template #[`item.type`]="{ item }">
       <span v-if="item.key === 'create'" class="text-green">${item.type}</span>
-      <span v-if="item.key === 'update'" class="text-yellow-darken-3">${item.type}</span>
+      <span v-if="item.key === 'update'" class="text-orange">${item.type}</span>
       <span v-if="item.key === 'delete'" class="text-red">${item.type}</span>
     </template>
   </v-data-table>
