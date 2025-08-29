@@ -16,6 +16,17 @@ from enferno.settings import TestConfig as cfg
 from enferno.app import create_app
 
 
+def pytest_sessionstart(session):
+    """Display test configuration at session start."""
+    terminal = session.config.pluginmanager.getplugin("terminalreporter")
+    if terminal:
+        terminal.write_line("")
+        terminal.write_line("🔧 TEST CONFIG:", bold=True, yellow=True)
+        terminal.write_line(f"   DB: {cfg.SQLALCHEMY_DATABASE_URI}", green=True)
+        terminal.write_line(f"   Redis: {cfg.REDIS_HOST}:{cfg.REDIS_PORT}", green=True)
+        terminal.write_line("")
+
+
 @pytest.fixture(scope="session", autouse=True)
 def flush_redis_after_tests():
     """Fixture to flush redis db after all tests are done."""
@@ -264,9 +275,18 @@ def users(session):
 def uninitialized_users(session_uninitialized):
     """Create users for testing."""
     from enferno.user.models import User, Role
+    from tests.factories import UserFactory
 
     session = session_uninitialized
     admin_user = User.query.filter(User.roles.any(Role.name == "Admin")).first()
+    if not admin_user:
+        # Create admin user for setup wizard tests
+        admin_role = Role.query.filter_by(name="Admin").first()
+        admin_user = UserFactory()
+        admin_user.username = "testAdmin"
+        admin_user.roles.append(admin_role)
+        session.add(admin_user)
+        session.commit()
     yield admin_user
 
 
