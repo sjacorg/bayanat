@@ -4,6 +4,7 @@
 <select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
   :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
 <confirm-dialog ref="reviewAndConfirmDialog">
+  <div>{{ _('Please review your updates before applying them to the form.') }}</div>
   <v-data-table hide-default-footer :items="changesTable" :headers="[
       { title: 'Field Name', value: 'title' },
       { title: 'Change Type', value: 'type' },
