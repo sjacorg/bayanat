@@ -179,10 +179,30 @@
     },
     methods: {
       discardChanges() {
-        console.log(this.$confirm())
-        // if (confirm( "{{ _('Are you sure you want to discard changes?') }}" )) {
-        //   this.dynamicFields = this.originalFields
-        // }
+        this.$confirm({
+          title: "You\'re about to discard changes",
+          message: "Discarding will remove all unsaved edits you've made to this form.\r\n\r\nDo you want to continue?",
+          acceptProps: {
+            text: 'Discard Changes',
+            color: 'red'
+          },
+          dialogProps: { width: 780 },
+          onAccept: () => {
+            this.dynamicFields = this.originalFields
+            this.$toast({
+              message: `All unsaved edits in Bulletin Form have been discarded.`,
+              hideActions: true,
+              snackbarProps: {
+                color: 'green-lighten-5',
+                contentClass: 'border'
+              },
+              iconProps: {
+                icon: 'mdi-check-circle',
+                color: 'green'
+              }
+            })
+          }
+        })
       },
       sortDynamicFields() {
         this.dynamicFields = this.dynamicFields.sort((a, b) => {
@@ -494,7 +514,27 @@
         });
       },
       async deleteField({ field }) {
-        this.dynamicFields = this.dynamicFields.filter(dynamicField => dynamicField.id !== field.id)
+        this.$confirm({
+          title: "You're about to delete a field",
+          message: `Deleting the field '${field.title || 'New Field'}' will remove it from your form.\r\n\r\nDo you want to continue?`,
+          acceptProps: { text: 'Delete Field', color: 'red' },
+          dialogProps: { width: 780 },
+          onAccept: () => {
+            this.dynamicFields = this.dynamicFields.filter(dynamicField => dynamicField.id !== field.id)
+            this.$toast({
+              message: `Field "${field.title || 'New Field'}" has been deleted successfully.`,
+              hideActions: true,
+              snackbarProps: {
+                color: 'green-lighten-5',
+                contentClass: 'border'
+              },
+              iconProps: {
+                icon: 'mdi-check-circle',
+                color: 'green'
+              }
+            })
+          }
+        })
       },
       async toggleFieldVisibility({ field }) {
           const matchingField = this.dynamicFields.find(dynamicField => dynamicField.id === field.id)

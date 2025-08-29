@@ -4,53 +4,103 @@ const ConfirmDialog = Vue.defineComponent({
       open: false,
       title: '',
       message: '',
-      resolve: null,
-      reject: null,
       loading: false,
-      color: null,
-      cancelText: 'Cancel',
-      confirmText: 'Confirm'
-    }
+      dialogProps: {},
+
+      cancelProps: { text: 'Cancel', variant: 'outlined' },
+      acceptProps: { text: 'Confirm', color: 'primary', variant: 'flat' },
+
+      onAccept: null,
+      onReject: null,
+
+      resolvePromise: null,
+      rejectPromise: null,
+    };
   },
   methods: {
-    show({ title = '', message = '' } = {}) {
-      this.title = title
-      this.message = message
-      this.open = true
-      this.loading = false
+    show({
+      title = 'Confirmation',
+      message = 'Are you sure you want to proceed?',
+      cancelProps = {},
+      acceptProps = {},
+      dialogProps = {},
+      onAccept = null,
+      onReject = null,
+    } = {}) {
+      Object.assign(this, {
+        title,
+        message,
+        dialogProps: { ...dialogProps },
+        cancelProps: { text: 'Cancel', variant: 'outlined', ...cancelProps },
+        acceptProps: { text: 'Confirm', color: 'primary', variant: 'flat', ...acceptProps },
+        onAccept,
+        onReject,
+        loading: false,
+        open: true,
+      });
 
-      return new Promise((resolve, reject) => {
-        this.resolve = resolve
-        this.reject = reject
-      })
+      return new Promise((resolve, rejectPromise) => {
+        this.resolvePromise = resolve;
+        this.rejectPromise = rejectPromise;
+      });
     },
-    cancel() {
-      this.open = false
-      this.resolve(false)
+
+    async cancel() {
+      this.open = false;
+      if (this.onReject) await this.onReject();
+      this.resolvePromise?.(false);
+      this.cleanup();
     },
-    ok() {
-      this.loading = true
+
+    async ok() {
+      this.loading = true;
+      this.open = false;
+      if (this.onAccept) await this.onAccept();
+      this.resolvePromise?.(true);
+      this.cleanup();
+    },
+
+    cleanup() {
       setTimeout(() => {
-        this.open = false
-        this.resolve(true)
+        this.loading = false;
+        this.onAccept = null;
+        this.onReject = null;
+        this.resolvePromise = null;
+        this.rejectPromise = null;
+        this.cancelProps = { text: 'Cancel', variant: 'outlined' };
+        this.acceptProps = { text: 'Confirm', color: 'primary', variant: 'flat' };
+        this.dialogProps = {};
       }, 300)
     },
   },
   template: `
-    <v-dialog v-model="open" max-width="250">
+    <v-dialog v-model="open" v-bind="dialogProps">
       <v-card rounded="12">
-        <v-card-title class="text-h6">
+        <v-card-title class="px-7 pt-6 pb-0">
           <slot name="title">{{ title }}</slot>
         </v-card-title>
 
-        <v-card-text>
+        <v-card-text class="px-7 pb-7 pt-2 text-pre-wrap">
           <slot name="message">{{ message }}</slot>
         </v-card-text>
 
-        <v-card-actions class="justify-end">
+        <v-card-actions class="justify-end pb-7 px-7 pt-0">
           <slot name="actions">
-            <v-btn text :disabled="loading" @click="cancel">{{ cancelText }}</v-btn>
-            <v-btn :color="color" :loading="loading" dark @click="ok">{{ confirmText }}</v-btn>
+            <v-btn
+              :disabled="loading"
+              @click="cancel"
+              v-bind="cancelProps"
+            >
+              {{ cancelProps.text }}
+            </v-btn>
+
+            <v-btn
+              :loading="loading"
+              @click="ok"
+              v-bind="acceptProps"
+            >
+              {{ acceptProps.text }}
+            </v-btn>
           </slot>
         </v-card-actions>
       </v-card>

@@ -2,6 +2,7 @@ const globalMixin = {
   mixins: [reauthMixin, notificationMixin],
   components: {
     'ConfirmDialog': ConfirmDialog,
+    'Toast': Toast,
   },
   data: () => ({
     snackbar: false,
@@ -155,6 +156,9 @@ const globalMixin = {
     },
     $confirm(options) {
       return this.$refs.confirmDialog.show(options)
+    },
+    $toast(options) {
+      return this.$refs.toast.show(options)
     },
   },
 };

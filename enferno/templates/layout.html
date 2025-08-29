@@ -63,12 +63,9 @@
             {% endblock %}
 
         <v-snackbar v-model="snackbar" multi-line>
-
                 <span v-html="snackMessage"></span>
-
             <template #actions>
                 <v-btn icon="mdi-close" variant="text" @click="snackbar = false"></v-btn>
-
             </template>
         </v-snackbar>
 
@@ -77,6 +74,7 @@
     </v-app>
     
     <confirm-dialog ref="confirmDialog"></confirm-dialog>
+    <toast ref="toast"></toast>
 </div>
 
 {% block outside %}
@@ -130,6 +128,7 @@
 </script>
 <script src="/static/js/components/NotificationsList.js"></script>
 <script src="/static/js/components/ConfirmDialog.js"></script>
+<script src="/static/js/components/Toast.js"></script>
 <script src="/static/js/common/config.js"></script>
 <script src="/static/js/mixins/reauth-mixin.js"></script>
 <script src="/static/js/mixins/notification-mixin.js"></script>
