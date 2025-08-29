@@ -1,39 +1,44 @@
 const ConfirmDialog = Vue.defineComponent({
-    props: {
-        modelValue: { type: Boolean, default: false },
-        title: { type: String, default: 'Confirm' },
-        message: { type: String, default: 'Are you sure?' },
-        cancelText: { type: String, default: 'Cancel' },
-        confirmText: { type: String, default: 'Confirm' },
-        color: { type: String, default: 'red' },
+  data() {
+    return {
+      open: false,
+      title: '',
+      message: '',
+      resolve: null,
+      reject: null,
+      loading: false,
+      color: null,
+      cancelText: 'Cancel',
+      confirmText: 'Confirm'
+    }
+  },
+  methods: {
+    show({ title = '', message = '' } = {}) {
+      this.title = title
+      this.message = message
+      this.open = true
+      this.loading = false
+
+      return new Promise((resolve, reject) => {
+        this.resolve = resolve
+        this.reject = reject
+      })
     },
-    emits: ['update:model-value', 'confirm', 'cancel'],
-    data() {
-        return {
-            open: this.modelValue,
-        };
+    cancel() {
+      this.open = false
+      this.resolve(false)
     },
-    watch: {
-        modelValue(val) {
-            this.open = val;
-        },
-        open(val) {
-            this.$emit('update:model-value', val);
-        },
+    ok() {
+      this.loading = true
+      setTimeout(() => {
+        this.open = false
+        this.resolve(true)
+      }, 300)
     },
-    methods: {
-        onCancel() {
-            this.$emit('cancel');
-            this.open = false;
-        },
-        onConfirm() {
-            this.$emit('confirm');
-            this.open = false;
-        },
-    },
-    template: `
-    <v-dialog v-model="open" max-width="450">
-      <v-card>
+  },
+  template: `
+    <v-dialog v-model="open" max-width="250">
+      <v-card rounded="12">
         <v-card-title class="text-h6">
           <slot name="title">{{ title }}</slot>
         </v-card-title>
@@ -44,8 +49,8 @@ const ConfirmDialog = Vue.defineComponent({
 
         <v-card-actions class="justify-end">
           <slot name="actions">
-            <v-btn text @click="onCancel">{{ cancelText }}</v-btn>
-            <v-btn :color="color" dark @click="onConfirm">{{ confirmText }}</v-btn>
+            <v-btn text :disabled="loading" @click="cancel">{{ cancelText }}</v-btn>
+            <v-btn :color="color" :loading="loading" dark @click="ok">{{ confirmText }}</v-btn>
           </slot>
         </v-card-actions>
       </v-card>

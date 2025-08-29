@@ -3,8 +3,6 @@
 <!-- Field Creation Modal -->
 <select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
   :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
-<!-- Discard changes confirmation modal -->
-<confirm-dialog v-model="" confirm-text="{{ _('Discard Changes') }}"></confirm-dialog>
 
 <v-main>
   <v-sheet>
@@ -181,9 +179,10 @@
     },
     methods: {
       discardChanges() {
-        if (confirm( "{{ _('Are you sure you want to discard changes?') }}" )) {
-          this.dynamicFields = this.originalFields
-        }
+        console.log(this.$confirm())
+        // if (confirm( "{{ _('Are you sure you want to discard changes?') }}" )) {
+        //   this.dynamicFields = this.originalFields
+        // }
       },
       sortDynamicFields() {
         this.dynamicFields = this.dynamicFields.sort((a, b) => {
