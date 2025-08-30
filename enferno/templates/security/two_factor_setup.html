@@ -37,7 +37,7 @@
 
         <v-card  class="ma-auto overflow-auto ">
             <v-toolbar
-                    title="{{ _fsdomain("Two-factor authentication adds an extra layer of security to your account") }}"></v-toolbar>
+                    title="{{ _fsdomain('Two-factor authentication adds an extra layer of security to your account') }}"></v-toolbar>
 
         <v-card-text class="text-caption">
             {% include "security/_messages.html" %}
@@ -51,6 +51,9 @@
                     {{ two_factor_setup_form.hidden_tag() }}
                     {{ render_form_errors(two_factor_setup_form) }}
 
+                    {% if two_factor_required and primary_method == 'none' %}
+                        <v-alert type="warning" variant="tonal">{{ _fsdomain("Two-factor authentication is required. You won't be able to proceed without setting it up.") }}</v-alert>
+                    {% endif %}
 
                     {% if primary_method != 'none' %}
                         <v-card-title>{{ _fsdomain("Current two-factor methods:") }}</v-card-title>
