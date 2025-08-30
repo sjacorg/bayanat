@@ -32,6 +32,7 @@ const SearchField = Vue.defineComponent({
     return {
       loading: false,
       items: [],
+      uniqueItems: new Set(),
       searchInput: '',
     };
   },
@@ -71,34 +72,62 @@ const SearchField = Vue.defineComponent({
     },
   },
   methods: {
+    clearValue() {
+      this.searchInput = '';
+      this.$emit('update:model-value', this.multiple ? [] : null);
+    },
+    isValid(newItem) {
+      return this.uniqueItems.has(this.returnObject ? newItem[this.itemValue] : newItem)
+    },
     updateValue(val) {
       if (this.multiple) {
-        // Handle multiple values: emit an array of either full objects or specific item values
-        this.$emit(
-          'update:model-value',
-          this.returnObject ? val.filter((x) => x.id) : val.map((item) => item[this.itemValue]),
-        );
+        this.handleMultipleUpdate(val);
       } else {
-        // Handle single value: emit the object or a specific item value
-        if (this.returnObject) {
-          if (val === null) {
-            // If the value is cleared (null), emit null instead of resetting the field
-            this.$emit('update:model-value', null);
-          } else if (typeof val === 'object' && !val.hasOwnProperty(this.itemValue)) {
-            this.$refs.fld.reset();
-          } else {
-            this.$emit('update:model-value', val);
-          }
-        } else {
-          if (val !== this.modelValue) {
-            // Emit the value directly if returnObject is false
-            this.$emit('update:model-value', val);
-          }
-        }
+        this.handleSingleUpdate(val);
       }
     },
-    search: debounce(function () {
-      this.loading = true;
+    handleMultipleUpdate(val) {
+      const oldSelections = Array.isArray(this.modelValue) ? this.modelValue : [];
+
+      const getKey = (item) =>
+        this.returnObject ? item?.[this.itemValue] : item;
+
+      const valKeys = val.map(getKey);
+
+      // Step 1: Keep only the ones that are still present in `val`
+      const preserved = oldSelections.filter(
+        (oldItem) => valKeys.includes(getKey(oldItem))
+      );
+
+      // Step 2: Add new selections that are valid
+      const validNew = val.filter((newItem) => this.isValid(newItem));
+
+      // Step 3: Merge both (no duplicates)
+      const merged = [
+        ...preserved,
+        ...validNew.filter(
+          (newItem) =>
+            !preserved.some(
+              (oldItem) => getKey(oldItem) === getKey(newItem)
+            )
+        ),
+      ];
+
+      this.$emit("update:model-value", merged);
+    }
+,
+    handleSingleUpdate(val) {
+      if (val === null || this.isValid(val)) {
+        this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue] || val);
+      } else {
+        this.searchInput = '';
+      }
+    },
+    startSearch() {
+      this.loading = true       // immediate
+      this.debouncedSearch()    // delayed API call
+    },
+    debouncedSearch: debounce(function () {
       api
         .get(this.api, {
           params: {
@@ -108,14 +137,13 @@ const SearchField = Vue.defineComponent({
           },
         })
         .then((response) => {
-          this.items = response.data.items;
+          this.items = response.data.items
+          this.items.forEach(item => this.uniqueItems.add(item[this.itemValue]));
         })
-        .catch((error) => {
-          console.error('Error fetching data:', error);
-        })
+        .catch(console.error)
         .finally(() => {
-          this.loading = false;
-        });
+          this.loading = false
+        })
     }, 350),
     copyValue() {
       let textToCopy = '';
@@ -144,7 +172,7 @@ const SearchField = Vue.defineComponent({
       ref="fld"
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
-      :auto-select-first="true"
+      :auto-select-first="!loading"
       :model-value="checkValue"
       @update:model-value="updateValue"
       :hide-no-data="true"
@@ -159,12 +187,12 @@ const SearchField = Vue.defineComponent({
       :chips="true"
       :closable-chips="true"
       :clearable="true"
-      @click:input="search"
-      @update:focused="search"
+      @click:input="startSearch"
+      @update:focused="(focused) => { focused ? startSearch() : loading = false }"
       :return-object="returnObject"
-      @click:clear="search"
+      @click:clear="clearValue"
       v-model:search="searchInput"
-      @update:search="search"
+      @update:search="startSearch"
       v-bind="$attrs"
       :loading="loading"
       :rules="rules"
@@ -180,7 +208,9 @@ const SearchField = Vue.defineComponent({
 const LocationSearchField = Vue.defineComponent({
   extends: SearchField,
   methods: {
-    search: debounce(function (evt) {
+    debouncedSearch: debounce(function (evt) {
+      this.loading = true;
+      this.items = []; // clear previous items to avoid old selection
       api
         .post(this.api, {
           q: {
@@ -191,6 +221,9 @@ const LocationSearchField = Vue.defineComponent({
         })
         .then((response) => {
           this.items = response.data.items;
+          this.items.forEach(item => this.uniqueItems.add(item[this.itemValue]));
+        }).finally(() => {
+          this.loading = false;
         });
     }, 350),
   },

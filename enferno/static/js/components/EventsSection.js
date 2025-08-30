@@ -152,12 +152,14 @@ const EventsSection = Vue.defineComponent({
     </v-card>
 
 
+    <div :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !eventDialog }]" :style="$root?.rightDialogProps?.['content-props']?.style">
+    <div class="position-relative h-100 w-100">
     <v-dialog v-model="eventDialog" v-bind="dialogProps || { 'max-width': '880px' }">
-        <v-card>
+        <v-card elevation="4">
             <v-toolbar color="dark-primary">
                 <v-toolbar-title>{{ translations.event_ }}</v-toolbar-title>
                 <v-spacer></v-spacer>
-            
+
                 <template #append>
                     <v-btn variant="elevated" @click="validateForm" class="mx-2">{{ translations.save_ }}</v-btn>
                     <v-btn icon="mdi-close" @click="closeEvent"></v-btn>
@@ -184,6 +186,9 @@ const EventsSection = Vue.defineComponent({
                                             v-model:translation="editedEvent.comments_ar"
                                             :label-original="translations.comments_"
                                             :label-translation="translations.commentsAr_"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                 ></dual-field>
                             </v-col>
                         </v-row>
@@ -240,5 +245,7 @@ const EventsSection = Vue.defineComponent({
             </v-form>
         </v-card>
     </v-dialog>
+    </div>
+    </div>
     `,
 });

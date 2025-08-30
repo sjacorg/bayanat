@@ -315,6 +315,7 @@ By implementing the above Access Control Model, Bayanat system ensures that diff
 - Storage: Postgres DB, Disk Storage.
 - Transmission:
 	- User browser -> Nginx -> SQLAlchemy -> Database.
+	- User browser -> Nginx -> Celery -> Disk Storage.
 - Execution Environment: Memory
 - Input:
 	- User’s uploaded media files.
@@ -380,11 +381,37 @@ By implementing the above Access Control Model, Bayanat system ensures that diff
     -   User Login Endpoint.
     -   System Settings Endpoint.
 
-
 ### Data Flow Diagram
 
 ![wizard.png](./assets/threat-model//wizard.png){.align-center}
 
+## Notifications data 
+
+### Data Characterization
+
+-   Trust Level Access: 2, 6, 7, 9
+-   Storage: Disk Storage.
+-   Transmission:
+    -   Input Endpoint -> Notifications Endpoint -> SQLAlchemy -> Postgres DB.
+-   Execution Environment: Memory
+-   Input:
+    -   Celery.
+    -   Login Endpoint.
+    -   Users Endpoint.
+    -   Roles Endpoint.
+    -   Bulletins Endpoint.
+    -   Actors Endpoint.
+    -   Incidents Endpoint.
+    -   Labels Endpoint.
+    -   Locations Endpoint.
+    -   Media Import Endpoint.
+    -   Settings Endpoint.
+-   Output:
+    -   Notifications Endpoint.
+
+### Data Flow Diagram
+
+![notifications.png](./assets/threat-model//notifications.png){.align-center}
 
 # Security Controls
 
@@ -405,7 +432,7 @@ Bayanat has incorporated several robust security controls to safeguard its syste
 | Secrets and Keys | Flask security keys and password salt are generated randomly for every build based on Flask recommendations. |
 | Secrets and Keys | All critical configuration secrets are masked during transmission between the server and client to enhance security and prevent data leaks. |
 | Users' Sessions | http-only cookies are used to mitigate Cookie Theft attempts. |
-| Users' Sessions | Login form uses CSRF Tokens to protect from CSRF attacks. |
+| Users' Sessions | The login form implements CSRF tokens to mitigate CSRF attacks, and rate limiting is enforced on the CSRF endpoint (via Flask-Limiter) to prevent automated abuse. |
 | Users' Sessions | Users' sessions are tracked and managed by administrators. |
 | Bayanat Data<br><br>(“Bulletins”, “Actors”, “Incidents”, “Locations”, “Sources”, “Labels”) | Activity View shows CRUD activities on Bulletins/Actors/Incidents/Locations/Sources/Labels data which protects integrity and Non-repudiation. |
 | Bayanat Data<br><br>(“Bulletins”, “Actors”, “Incidents”, “Locations”, “Sources”, “Labels”) | Users are authenticated on every request to access Bayanat Data. |

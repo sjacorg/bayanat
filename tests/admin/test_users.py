@@ -27,6 +27,17 @@ from tests.models.admin import (
 
 @pytest.fixture(scope="function")
 def clean_slate_users(session):
+    from enferno.extensions import rds
+
+    # Clear Redis security keys to prevent persistence between tests
+    try:
+        keys_pattern = "security:user:*"
+        keys = rds.keys(keys_pattern)
+        if keys:
+            rds.delete(*keys)
+    except Exception:
+        pass  # Redis might not be available in some test environments
+
     session.query(Activity).delete(synchronize_session=False)
     session.query(Notification).delete(synchronize_session=False)
     session.query(User).delete(synchronize_session=False)
@@ -174,10 +185,10 @@ post_user_endpoint_invalid_email_roles = [
 def test_post_user_endpoint_invalid_email(
     clean_slate_users, request, client_fixture, expected_status
 ):
-    from enferno.settings import Config as cfg
+    from flask import current_app
 
-    with patch.object(cfg, "MAIL_ENABLED", True), patch.object(
-        cfg, "MAIL_ALLOWED_DOMAINS", ["valid_domain.com"]
+    with patch.dict(
+        current_app.config, {"MAIL_ENABLED": True, "MAIL_ALLOWED_DOMAINS": ["valid_domain.com"]}
     ):
         client_ = request.getfixturevalue(client_fixture)
         user = UserFactory()
@@ -201,9 +212,9 @@ def test_post_user_endpoint_invalid_email(
 def test_post_user_endpoint_allow_all_domains(
     clean_slate_users, request, client_fixture, expected_status
 ):
-    from enferno.settings import Config as cfg
+    from flask import current_app
 
-    with patch.object(cfg, "MAIL_ENABLED", True), patch.object(cfg, "MAIL_ALLOWED_DOMAINS", ["*"]):
+    with patch.dict(current_app.config, {"MAIL_ENABLED": True, "MAIL_ALLOWED_DOMAINS": ["*"]}):
         client_ = request.getfixturevalue(client_fixture)
         user = UserFactory()
         data = user_to_dict(user)

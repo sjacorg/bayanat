@@ -267,11 +267,11 @@
                     </v-overlay>
 
                     <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
-                                      ref="relateBulletins"></relate-bulletins>
+                                      ref="relateBulletins" :dialog-props="commonDialogProps"></relate-bulletins>
                     <relate-actors @relate="relateActor" :exids="exActors"
-                                   ref="relateActors"></relate-actors>
+                                   ref="relateActors" :dialog-props="commonDialogProps"></relate-actors>
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
-                                      ref="relateIncidents"></relate-incidents>
+                                      ref="relateIncidents" :dialog-props="commonDialogProps"></relate-incidents>
 
                     <v-dialog width="600" v-model="selfAssignDialog">
                         <v-card class="pa-3">
@@ -315,6 +315,7 @@
     <script src="/static/js/dropzone.min.js"></script>
     <script src="/static/js/components/VueDropzone.js"></script>
 
+    <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
@@ -361,6 +362,7 @@
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/IdNumberDynamicField.js"></script>
     <script src="/static/js/components/EventsSection.js"></script>
+    <script src="/static/js/components/ReadMore.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -407,6 +409,7 @@
             mixins: [mediaMixin, globalMixin, relationsMixin],
 
             data: () => ({
+                commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
                 leftDialogProps: null,
@@ -1726,6 +1729,7 @@
         app.component('ImageViewer', ImageViewer);
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
+        app.component('ReadMore', ReadMore);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);

@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from flask import current_app
 from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import Config as cfg
 from enferno.admin.models import Actor, ActorProfile, Atoa
@@ -74,7 +75,7 @@ def test_actors_endpoint(
     """
     Test the POST actors endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         response = client_.post(
             "/admin/api/actors",
@@ -106,7 +107,7 @@ def test_actor_endpoint(
     """
     Test the actor endpoint with different request modes and roles in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         actor = get_first_actor_or_fail()
         response = client_.get(
@@ -211,7 +212,7 @@ def test_actor_endpoint_no_roles_restricted(
 
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_actor_or_fail()
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/actor/{actor.id}?mode=3", headers={"Content-Type": "application/json"}
         )
@@ -241,7 +242,7 @@ def test_actor_endpoint_roled_restricted(
 
     actor = restrict_to_roles(create_full_actor, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
         response = client_.get(
             f"/admin/api/actor/{actor.id}?mode=3", headers={"Content-Type": "application/json"}
         )
@@ -350,7 +351,7 @@ def test_put_actor_assigned_endpoint(
     Test the PUT actor endpoint in non-restrictive mode with no roles specified.
     The actor is assigned to the user that makes the request.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         actor = get_first_actor_or_fail()
         uid = get_uid_from_client(users, client_fixture)
@@ -404,7 +405,7 @@ def test_put_actor_assign_endpoint(
     Test the PUT actor assignment endpoint in non-restrictive mode with no roles specified.
     Users without self-assignment permissions won't be able to assign the actor to themselves.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         actor = get_first_or_fail(Actor)
         actor_id = actor.id
@@ -436,7 +437,7 @@ def test_put_actor_review_endpoint(
     """
     Test the PUT actor review endpoint in non-restrictive mode with no roles specified.
     """
-    with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
+    with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
         client_ = request.getfixturevalue(client_fixture)
         nb = ActorFactory()
         actor = get_first_or_fail(Actor)

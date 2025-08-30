@@ -7,6 +7,14 @@ const GlobalMap = Vue.defineComponent({
       default: true,
     },
   },
+  computed: {
+    uniqueEventTypes() {
+      return [...new Set(this.locations.map(loc => loc.eventtype).filter(Boolean))];
+    },
+    filteredLocations() {
+      return this.locations.filter(loc => this.selectedLocations.includes(loc.eventtype) || !('eventtype' in loc));
+    }
+  },
 
   data: function () {
     return {
@@ -27,6 +35,7 @@ const GlobalMap = Vue.defineComponent({
       attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
       googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
       measureControls: null,
+      selectedLocations: [],
     };
   },
 
@@ -40,15 +49,19 @@ const GlobalMap = Vue.defineComponent({
 
       if (val?.length || val !== old) {
         this.locations = val;
+        this.selectedLocations = [...this.uniqueEventTypes];
         this.fitMarkers();
+        this.updateMapBounds();
       }
       if (val.length === 0) {
         this.map.setView([this.lat, this.lng]);
       }
     },
-
+    selectedLocations(val) {
+      this.clearAllLayers();
+      this.fitMarkers();
+    },
     locations() {
-
       this.$emit('update:modelValue', this.locations);
     },
   },
@@ -71,11 +84,11 @@ const GlobalMap = Vue.defineComponent({
     },
 
     initMap() {
-
       this.map = L.map(this.mapId, {
         center: [this.lat, this.lng],
         zoom: this.zoom,
         scrollWheelZoom: false,
+        zoomAnimation: false,
       });
 
       // Add the default tile layer
@@ -110,19 +123,28 @@ const GlobalMap = Vue.defineComponent({
 
       this.fitMarkers();
     },
+    updateMapBounds() {
+      // Fit map of bounds of clusterLayer
+      let bounds = this.markerGroup.getBounds();
+      if (bounds.isValid()){
+        this.map.fitBounds(bounds, { padding: [20, 20] });
+      }
 
-    fsHandler() {
-      //allow some time for the map to enter/exit fullscreen
-      setTimeout(() => this.fitMarkers(), 500);
+
+      if (this.map.getZoom() > 14) {
+        // flyout of center when map is zoomed in too much (single marker or many dense markers)
+        this.map.flyTo(this.map.getCenter(), 10, { duration: 1 });
+      }
     },
+    clearAllLayers() {
+      // Remove marker cluster group
+      this.markerGroup?.clearLayers?.();
 
-    redraw() {
-      this.map.invalidateSize();
+      // Remove event links group
+      this.eventLinks?.clearLayers?.();
     },
-
     fitMarkers() {
       // construct a list of markers to build a feature group
-
       if (this.markerGroup) {
         this.map.removeLayer(this.markerGroup);
       }
@@ -130,19 +152,17 @@ const GlobalMap = Vue.defineComponent({
       this.markerGroup = L.markerClusterGroup({
         maxClusterRadius: 20,
       });
-      if (this.locations?.length) {
+
+      const visibleLocations = this.filteredLocations || [];
+      if (visibleLocations?.length) {
         let eventLocations = [];
 
-        const locationsWithCoordinates = this.locations.filter(loc => loc.lat && loc.lng);
-
+        const locationsWithCoordinates = visibleLocations.filter(loc => loc.lat && loc.lng);
         for (const loc of locationsWithCoordinates) {
 
-          let mainStr = false;
           if (loc.main) {
-            mainStr = this.translations.mainIncident_;
             loc.color = '#000000';
           }
-
 
           let marker = L.circleMarker([loc.lat, loc.lng], {
             color: 'white',
@@ -163,10 +183,8 @@ const GlobalMap = Vue.defineComponent({
           this.markerGroup.addLayer(marker);
         }
 
-        // Add event linestring links if any available
-        if (eventLocations.length > 1) {
-          this.addEventRouteLinks(eventLocations);
-        }
+        // Add event linestring links
+        this.addEventRouteLinks(eventLocations);
 
         if (!this.measureControls) {
           this.measureControls = L.control.polylineMeasure({
@@ -191,22 +209,8 @@ const GlobalMap = Vue.defineComponent({
           this.measureControls.addTo(this.map);
         }
 
-        // Fit map of bounds of clusterLayer
-        let bounds = this.markerGroup.getBounds();
         this.markerGroup.addTo(this.map);
-        if (bounds.isValid()){
-        this.map.fitBounds(bounds, { padding: [20, 20] });
-        }
-
-
-        if (this.map.getZoom() > 14) {
-          // flyout of center when map is zoomed in too much (single marker or many dense markers)
-
-          this.map.flyTo(this.map.getCenter(), 10, { duration: 1 });
-        }
       }
-
-      this.map.invalidateSize();
     },
 
     addEventRouteLinks(eventLocations) {
@@ -214,7 +218,7 @@ const GlobalMap = Vue.defineComponent({
       if (this.eventLinks) {
         this.map.removeLayer(this.eventLinks);
       }
-      this.eventLinks = L.layerGroup({}).addTo(this.map);
+      this.eventLinks = L.layerGroup().addTo(this.map);
 
       for (let i = 0; i < eventLocations.length - 1; i++) {
         const startCoord = [eventLocations[i].lat, eventLocations[i].lng];
@@ -293,27 +297,64 @@ const GlobalMap = Vue.defineComponent({
   template: `
       <div>
         <v-card  variant="flat">
-
           <v-card-text>
-            <div v-if="legend" class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
-              <div class="caption">
-                <v-icon small color="#00a1f1"> mdi-checkbox-blank-circle</v-icon>
-                {{ translations.locations_ }}
-              </div>
-              <div class="caption">
-                <v-icon small color="#ffbb00"> mdi-checkbox-blank-circle</v-icon>
-                {{ translations.geoMarkers_ }}
-              </div>
-              <div class="caption">
-                <v-icon small color="#00f166"> mdi-checkbox-blank-circle</v-icon>
-                {{ translations.events_ }}
+            <div class="d-flex">
+              <div v-if="legend" class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
+                <div class="caption">
+                  <v-icon small color="#00a1f1"> mdi-checkbox-blank-circle</v-icon>
+                  {{ translations.locations_ }}
+                </div>
+                <div class="caption">
+                  <v-icon small color="#ffbb00"> mdi-checkbox-blank-circle</v-icon>
+                  {{ translations.geoMarkers_ }}
+                </div>
+                <div class="caption">
+                  <v-icon small color="#00f166"> mdi-checkbox-blank-circle</v-icon>
+                  {{ translations.events_ }}
+                </div>
               </div>
 
+              <v-menu v-if="uniqueEventTypes.length > 1" :close-on-content-click="false">
+                <template v-slot:activator="{ props: menuProps }">
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props: tooltipProps }">
+                      <v-btn
+                        v-bind="{ ...menuProps, ...tooltipProps }"
+                        icon="mdi-dots-vertical"
+                        variant="outlined"
+                        density="compact"
+                        class="ml-2 mb-4"
+                        @click="this.map.closePopup()"
+                      />
+                    </template>
+                    {{ translations.showOrHideEventTypes_ }}
+                  </v-tooltip>
+                </template>
+
+                <v-list
+                  v-model:selected="selectedLocations"
+                  select-strategy="leaf"
+                >
+                  <v-list-item
+                    v-for="(eventType, index) in uniqueEventTypes"
+                    :key="index"
+                    :title="eventType"
+                    :value="eventType"
+                  >
+                    <template v-slot:prepend="{ isSelected, select }">
+                      <v-list-item-action start>
+                        <v-checkbox-btn
+                          :model-value="isSelected"
+                          @update:model-value="select"
+                        />
+                      </v-list-item-action>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
             </div>
 
             <div :id="mapId" :style="'resize:vertical;height:'+ mapHeight + 'px'"></div>
-
-
           </v-card-text>
         </v-card>
       </div>

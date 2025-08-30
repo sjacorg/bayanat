@@ -849,11 +849,17 @@ div.jsondiffpatch-child-node-type-array:after {
 .z-1 {
     z-index: 1;
 }
+.z-100 {
+    z-index: 100;
+}
 .left-auto {
     left: auto !important;
 }
 .h-fit {
     height: fit-content;
+}
+.pointer-events-none {
+    pointer-events: none !important;
 }
 
 /* wrap chips */
@@ -877,4 +883,15 @@ div.jsondiffpatch-child-node-type-array:after {
 .lg-backdrop,
 .lg-outer {
     z-index: 3000 !important;
+}
+
+/* Line clamp */
+.no-clamp {
+    -webkit-line-clamp: unset !important;
+}
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
