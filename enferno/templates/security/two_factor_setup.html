@@ -135,7 +135,7 @@
                         </v-card-actions>
                     </form>
                 {% else %}
-                    {% if security.webauthn %}
+                    {% if security.webauthn and current_user.is_authenticated %}
                         <v-divider class="my-4"></v-divider>
                         <h3>{{ _fsdomain("Security Keys/Passkeys") }}</h3>
                         <div class="fs-div">
@@ -180,7 +180,8 @@
             data() {
                 return {
                     activeTab: null,
-                    selectedOption: ''
+                    selectedOption: '',
+                    drawer: null
                 }
 
             },

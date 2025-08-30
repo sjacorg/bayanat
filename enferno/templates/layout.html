@@ -52,12 +52,14 @@
 <div id="app" class="justify-center full-height align-center min-vh-100">
     <v-app v-cloak class="h-screen">
             {% block nav %}
-                {% include 'nav-bar.html' %}
-                {% include 'nav-drawer.html' %}
-                {% include 'settings_drawer.html' %}
-                {% include 'notifications_drawer.html' %}
-                {% include 'notifications_dialog.html' %}
-                {% include 'important_notifications_dialog.html' %}
+                {% if current_user.is_authenticated %}
+                    {% include 'nav-bar.html' %}
+                    {% include 'nav-drawer.html' %}
+                    {% include 'settings_drawer.html' %}
+                    {% include 'notifications_drawer.html' %}
+                    {% include 'notifications_dialog.html' %}
+                    {% include 'important_notifications_dialog.html' %}
+                {% endif %}
             {% endblock %}
             {% block content %}
             {% endblock %}
