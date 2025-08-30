@@ -1,10 +1,10 @@
 const iconMap = {
-    text_input: 'mdi-text-short',
-    text_area: 'mdi-text-long',
+    input: 'mdi-text-short',
+    textarea: 'mdi-text-long', 
     dropdown: 'mdi-chevron-down-circle-outline',
-    number: 'mdi-numeric',
+    number_input: 'mdi-numeric',
     date_picker: 'mdi-calendar-blank-outline',
-    multi_select: 'mdi-checkbox-multiple-marked-circle-outline',
+    multi_dropdown: 'mdi-format-list-checks',
 }
 
 const FieldListItem = Vue.defineComponent({
@@ -30,7 +30,7 @@ const FieldListItem = Vue.defineComponent({
         },
         dropdownOptionsProxy: {
             get() {
-                return this.field?.ui_component === 'dropdown'
+                return (this.field?.ui_component === 'dropdown' || this.field?.ui_component === 'multi_dropdown')
                     ? this.field?.options || [{ label: '', value: '' }]
                     : null
             },
@@ -65,34 +65,26 @@ const FieldListItem = Vue.defineComponent({
             };
 
             const componentMap = {
-                number: { component: 'v-number-input', ...baseProps, ...numberProps },
-                text_input: { component: 'v-text-field', ...baseProps },
-                multi_select: {
-                    component: 'v-select',
-                    ...baseProps,
-                    items: field.options,
-                    'item-title': 'label',
-                    'item-value': 'value',
-                    multiple: field.field_type === 'array'
-                },
+                input: { component: 'v-text-field', ...baseProps },
+                textarea: { component: 'v-textarea', ...baseProps },
+                number_input: { component: 'v-number-input', ...baseProps, ...numberProps },
                 dropdown: {
                     component: 'v-select',
                     ...baseProps,
                     items: field.options,
                     'item-title': 'label',
                     'item-value': 'value',
-                    multiple: field.field_type === 'array'
+                    multiple: false
                 },
-                text_area: { component: 'v-textarea', ...baseProps },
-                checkbox: { component: 'v-checkbox', ...baseProps },
-                switch: { component: 'v-switch', ...baseProps },
+                multi_dropdown: {
+                    component: 'v-select',
+                    ...baseProps,
+                    items: field.options,
+                    'item-title': 'label',
+                    'item-value': 'value',
+                    multiple: true
+                },
                 date_picker: { component: 'pop-date-time-field' },
-                editor: {
-                    component: 'tinymce-editor',
-                    init: tinyConfig,
-                    disabled: !field.active,
-                    fieldId: field.id
-                },
             };
 
             return componentMap[field.ui_component] || null;
@@ -194,15 +186,12 @@ const FieldListItem = Vue.defineComponent({
 
                     <div class="d-flex flex-wrap ga-4">
                         <div
-                            v-if="field.ui_component === 'dropdown'"
+                            v-if="field.ui_component === 'dropdown' || field.ui_component === 'multi_dropdown'"
                             class="w-100 w-md-50"
                             style="flex: 1 1 calc(50% - 16px)"
                         >
                             <div class="d-flex flex-column">
-                                <div class="d-flex justify-space-between align-center">
-                                    <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldOptions_ }}</div>
-                                    <v-checkbox class="text-medium-emphasis" :label="translations.oneSelectionOnly_" hide-details :model-value="field.field_type === 'array'" @update:model-value="field.field_type === 'array' ? field.field_type = 'string' : field.field_type = 'array'"></v-checkbox>
-                                </div>
+                                <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldOptions_ }}</div>
 
                                 <div class="mt-2">
                                     <draggable v-model="dropdownOptionsProxy" :item-key="'id'" class="d-flex flex-column ga-1" handle=".drag-handle">
@@ -245,7 +234,7 @@ const FieldListItem = Vue.defineComponent({
                                     v-model="field.ui_config.help_text"
                                 ></v-text-field>
                                 <v-text-field
-                                    v-if="field.ui_component === 'text_input'"
+                                    v-if="field.ui_component === 'input'"
                                     variant="filled"
                                     :label="translations.maxLength_"
                                     v-model="field.validation_config.max_length"
