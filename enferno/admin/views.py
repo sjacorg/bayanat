@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import os
 import shutil
-import unicodedata
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 from uuid import uuid4
-
-import bleach
+import re
 import boto3
 from botocore.config import Config as BotoConfig
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
@@ -17,10 +15,8 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, asc, text, select, func, String
-from sqlalchemy.orm import joinedload
+from sqlalchemy import desc, or_, asc, text, select, func
 from werkzeug.utils import safe_join, secure_filename
-from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
 
@@ -73,7 +69,6 @@ from enferno.admin.validation.models import (
     AtoaInfoRequestModel,
     AtobInfoRequestModel,
     BtobInfoRequestModel,
-    BulkUpdateRequestModel,
     BulletinBulkUpdateRequestModel,
     BulletinQueryRequestModel,
     BulletinRequestModel,
@@ -3863,7 +3858,7 @@ def api_medias_chunk() -> Response:
     except KeyError as err:
         raise abort(400, body=f"Not all required fields supplied, missing {err}")
     except ValueError:
-        raise abort(400, body=f"Values provided were not in expected format")
+        raise abort(400, body="Values provided were not in expected format")
 
     # validate dz_uuid
     if not safe_join(str(Media.media_file), dz_uuid):
@@ -3892,7 +3887,7 @@ def api_medias_chunk() -> Response:
                 f.write((save_dir / str(file_number)).read_bytes())
 
         if os.stat(filepath).st_size != total_size:
-            return HTTPResponse.error(f"Error uploading the file")
+            return HTTPResponse.error("Error uploading the file")
 
         shutil.rmtree(save_dir)
         # get md5 hash
@@ -4055,7 +4050,7 @@ def serve_media(
                     return HTTPResponse.forbidden("Restricted Access")
             except s3.exceptions.NoSuchKey:
                 return HTTPResponse.not_found("File not found")
-            except Exception as e:
+            except Exception:
                 return HTTPResponse.error("Internal Server Error", status=500)
         else:
             # media exists in the database, check access control restrictions
@@ -6726,6 +6721,18 @@ def api_dynamic_field_create() -> Response:
             return d
 
         field_data = clean_dict(field_data)
+
+        # Generate name from title if not provided
+        if "name" not in field_data and "title" in field_data:
+            name = field_data["title"].lower()
+            # Replace spaces and non-alphanumeric with underscores
+            name = re.sub(r"[^a-z0-9_]", "_", name)
+            # Remove consecutive underscores and trim
+            name = re.sub(r"_+", "_", name).strip("_")
+            # Ensure it starts with a letter
+            if not name or not name[0].isalpha():
+                name = f"field_{name}" if name else "field"
+            field_data["name"] = name
 
         # Check for duplicate field name within entity type
         existing_field = DynamicField.query.filter_by(
