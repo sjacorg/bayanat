@@ -16,32 +16,38 @@ const SelectFieldTypeDialog = Vue.defineComponent({
       componentTypes: [
         {
           label: translations.shortText_,
-          component: 'text_input',
-          field: 'string',
+          field_type: 'text',
+          ui_component: 'input',
           icon: 'mdi-text-short',
         },
         {
           label: translations.longText_,
-          component: 'text_area',
-          field: 'text',
+          field_type: 'long_text', 
+          ui_component: 'textarea',
           icon: 'mdi-text-long',
         },
         {
           label: translations.number_,
-          component: 'number',
-          field: 'integer',
+          field_type: 'number',
+          ui_component: 'number_input',
           icon: 'mdi-numeric',
         },
         {
           label: translations.dropdown_,
-          component: 'dropdown',
-          field: 'string',
+          field_type: 'single_select',
+          ui_component: 'dropdown',
           icon: 'mdi-chevron-down-circle-outline',
         },
         {
+          label: translations.multiSelect_ || 'Multi-Select',
+          field_type: 'multi_select',
+          ui_component: 'multi_dropdown',
+          icon: 'mdi-format-list-checks',
+        },
+        {
           label: translations.dateAndTime_,
-          component: 'date_picker',
-          field: 'datetime',
+          field_type: 'datetime',
+          ui_component: 'date_picker',
           icon: 'mdi-calendar-blank-outline',
         },
       ]
@@ -59,7 +65,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           ui_component,
           sort_order: 0,
           required: false,
-          options: ui_component === 'dropdown' ? [{label: '', value: ''}] : null,
+          options: (field_type === 'single_select' || field_type === 'multi_select') ? [{label: '', value: ''}] : null,
           schema_config: {},
           ui_config: { width: 'w-100', help_text: '' },
           validation_config: {},
@@ -84,8 +90,8 @@ const SelectFieldTypeDialog = Vue.defineComponent({
         </v-card-title>
         <v-card-text class="px-7 pb-7">
           <v-row :dense="false">
-            <v-col v-for="({ label, field, component, icon }) in componentTypes" cols="12" md="4">
-              <v-card class="rounded-10 border border-opacity-25" rounded="10" variant="outlined" @click="create({ field_type: field, ui_component: component })">
+            <v-col v-for="({ label, field_type, ui_component, icon }) in componentTypes" cols="12" md="4">
+              <v-card class="rounded-10 border border-opacity-25" rounded="10" variant="outlined" @click="create({ field_type, ui_component })">
                 <v-card-text>
                   <v-icon size="large" class="mr-2" color="primary">{{ icon }}</v-icon>{{ label }}
                 </v-card-text>
