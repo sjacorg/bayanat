@@ -21,32 +21,31 @@ logger = get_logger()
 
 class DynamicField(db.Model, BaseMixin):
     """
-    Defines custom fields for any entity type.
+    Defines dynamic custom fields for any entity type (bulletin, actor, incident).
+
+    Supports 6 clean field types:
+    - TEXT: Short text input (varchar 255)
+    - LONG_TEXT: Long text area
+    - NUMBER: Numeric input (integer)
+    - SINGLE_SELECT: Dropdown selection
+    - MULTI_SELECT: Multi-select dropdown (stored as array)
+    - DATETIME: Date and time picker
 
     JSONB Field Documentation:
 
     - schema_config (JSONB): Database-related config.
         Example:
         {
-            "type": "string",
             "required": true,
             "default": "",
-            "unique": false,
             "max_length": 100
         }
 
     - ui_config (JSONB): UI rendering config.
         Example:
         {
-            "label": "Full Name",
             "help_text": "Enter your full legal name.",
-            "widget": "text_input",
-            "sort_order": 1,
-            "readonly": false,
-            "hidden": false,
-            "group": "personal",
-            "group_label": "Personal Info",
-            "width": "full"
+            "width": "w-100"
         }
 
     - validation_config (JSONB): Validation rules.
@@ -60,67 +59,58 @@ class DynamicField(db.Model, BaseMixin):
     - options (JSONB): Allowed values for select/multi fields.
         Example:
         [
-            {"value": "admin", "label": "Administrator"},
-            {"value": "user", "label": "User"}
+            {"label": "Administrator", "value": "admin"},
+            {"label": "User", "value": "user"}
         ]
     """
 
     __tablename__ = "dynamic_fields"
 
-    # Field Types
-    STRING = "string"
-    INTEGER = "integer"
-    DATETIME = "datetime"
-    ARRAY = "array"
-    TEXT = "text"
-    BOOLEAN = "boolean"
-    FLOAT = "float"
-    JSON = "json"
+    # Data Types (clean separation from UI components)
+    TEXT = "text"  # Short text input
+    LONG_TEXT = "long_text"  # Long text area
+    NUMBER = "number"  # Numeric input
+    SINGLE_SELECT = "single_select"  # Single choice dropdown
+    MULTI_SELECT = "multi_select"  # Multiple choice selection
+    DATETIME = "datetime"  # Date and time picker
 
-    # UI Components for rendering
+    # UI Components for rendering (clean, lean set)
     class UIComponent:
-        TEXT_INPUT = "text_input"
-        TEXT_AREA = "text_area"
-        NUMBER = "number"
+        INPUT = "input"
+        TEXTAREA = "textarea"
+        NUMBER_INPUT = "number_input"
         DATE_PICKER = "date_picker"
         DROPDOWN = "dropdown"
-        MULTI_SELECT = "multi_select"
-        CHECKBOX = "checkbox"
+        MULTI_DROPDOWN = "multi_dropdown"
 
-    # Field type to UI component mapping
+    # Data type to UI component mapping (1:1, extensible)
     COMPONENT_MAP = {
-        STRING: [UIComponent.TEXT_INPUT, UIComponent.DROPDOWN],
-        INTEGER: [UIComponent.NUMBER],
+        TEXT: [UIComponent.INPUT],
+        LONG_TEXT: [UIComponent.TEXTAREA],
+        NUMBER: [UIComponent.NUMBER_INPUT],
+        SINGLE_SELECT: [UIComponent.DROPDOWN],
+        MULTI_SELECT: [UIComponent.MULTI_DROPDOWN],
         DATETIME: [UIComponent.DATE_PICKER],
-        ARRAY: [UIComponent.MULTI_SELECT],
-        TEXT: [UIComponent.TEXT_AREA],
-        BOOLEAN: [UIComponent.CHECKBOX],
-        FLOAT: [UIComponent.NUMBER],
-        JSON: [UIComponent.TEXT_AREA],
     }
 
-    # SQL Type mapping for column creation
+    # Clean field type to SQL type mapping
     TYPE_MAP = {
-        STRING: "character varying",
-        INTEGER: "integer",
-        DATETIME: "timestamp with time zone",
-        ARRAY: "character varying[]",
-        TEXT: "text",
-        BOOLEAN: "boolean",
-        FLOAT: "double precision",
-        JSON: "jsonb",
+        TEXT: "varchar(255)",  # Short text input
+        LONG_TEXT: "text",  # Long text area
+        NUMBER: "integer",  # Numeric input
+        SINGLE_SELECT: "varchar(255)",  # Single choice (stores selected value)
+        MULTI_SELECT: "varchar(255)[]",  # Multiple choice (stores array of values)
+        DATETIME: "timestamp with time zone",  # Date and time
     }
 
-    # SQLAlchemy column types
+    # SQLAlchemy column types for clean data type mapping
     _column_types = {
-        STRING: String(100),
-        INTEGER: Integer,
-        DATETIME: DateTime(timezone=True),
-        ARRAY: SQLArray(String),
-        TEXT: Text,
-        BOOLEAN: Boolean,
-        FLOAT: Float,
-        JSON: JSONB,
+        TEXT: String(255),  # Short text input
+        LONG_TEXT: Text,  # Long text area
+        NUMBER: Integer,  # Numeric input
+        SINGLE_SELECT: String(255),  # Single choice dropdown
+        MULTI_SELECT: SQLArray(String(255)),  # Multiple choice selection
+        DATETIME: DateTime(timezone=True),  # Date and time
     }
 
     id = db.Column(db.Integer, primary_key=True)  # Primary key
@@ -129,7 +119,9 @@ class DynamicField(db.Model, BaseMixin):
     entity_type = db.Column(
         db.String(50), nullable=False
     )  # Target entity/table (e.g., 'bulletin', 'actor')
-    field_type = db.Column(db.String(20), nullable=False)  # Data type of the field
+    field_type = db.Column(
+        db.String(20), nullable=False
+    )  # Data type (text, number, single_select, etc.)
     required = db.Column(
         db.Boolean, default=False
     )  # Whether the field is required (legacy, see schema_config)
@@ -205,30 +197,16 @@ class DynamicField(db.Model, BaseMixin):
                 f"Invalid UI component {self.ui_component} for field type {self.field_type}"
             )
 
-        # Validate options if dropdown/multi-select (skip for core fields)
+        # Validate options if select fields (skip for core fields)
         if (
-            self.ui_component in [self.UIComponent.DROPDOWN, self.UIComponent.MULTI_SELECT]
+            self.field_type in [self.SINGLE_SELECT, self.MULTI_SELECT]
             and not self.options
             and not self.core  # Skip validation for core fields
         ):
-            raise ValueError(f"Options are required for {self.ui_component}")
+            raise ValueError(f"Options are required for {self.field_type} fields")
 
         # Validate config based on field type
         self.validate_config()
-
-    def get_ui_schema(self) -> dict:
-        """Get UI schema for rendering the field"""
-        schema = {
-            "type": self.field_type,
-            "component": self.ui_component or self.get_valid_components(self.field_type)[0],
-            "title": self.title,
-            "ui_config": self.ui_config,
-            "required": self.schema_config.get("required", self.required),
-            "schema_config": self.schema_config,
-            "validation_config": self.validation_config,
-            "options": self.options,
-        }
-        return schema
 
     def save(self):
         """Save the field after validating if not already validated"""
@@ -243,7 +221,8 @@ class DynamicField(db.Model, BaseMixin):
         table_name = model_class.__tablename__
 
         try:
-            sql_type = DynamicField.TYPE_MAP[self.field_type]
+            # Direct mapping from field_type to SQL type
+            sql_type = DynamicField.TYPE_MAP.get(self.field_type)
             if not sql_type:
                 raise ValueError(f"Invalid field type: {self.field_type}")
 
@@ -263,20 +242,29 @@ class DynamicField(db.Model, BaseMixin):
             # Create indexes if needed
             if self.searchable:
                 idx_name = f"ix_{table_name}_{self.name}"
-                if self.field_type in [DynamicField.STRING, DynamicField.TEXT]:
+                if self.field_type == DynamicField.MULTI_SELECT:
+                    # Use GIN index for array columns (multi-select fields)
+                    db.session.execute(
+                        text(
+                            f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table_name} USING gin ({self.name})"
+                        )
+                    )
+                elif self.field_type in [DynamicField.TEXT, DynamicField.LONG_TEXT]:
+                    # Use GIN trigram index for text search
                     db.session.execute(
                         text(
                             f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table_name} USING gin ({self.name} gin_trgm_ops)"
                         )
                     )
                 else:
+                    # Standard B-tree index for numbers, single_select, datetime
                     db.session.execute(
                         text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table_name} ({self.name})")
                     )
 
-            # Update SQLAlchemy model
-            column_type = self._column_types[self.field_type]
-            if self.field_type == DynamicField.STRING and self.schema_config.get("max_length"):
+            # Update SQLAlchemy model - direct mapping from field_type
+            column_type = self._column_types.get(self.field_type)
+            if self.field_type == DynamicField.TEXT and self.schema_config.get("max_length"):
                 column_type = String(self.schema_config["max_length"])
 
             column_args = {"nullable": not self.required}
@@ -324,14 +312,12 @@ class DynamicField(db.Model, BaseMixin):
             True if valid, False otherwise
         """
         return field_type in [
-            cls.STRING,
-            cls.INTEGER,
-            cls.DATETIME,
-            cls.ARRAY,
-            cls.TEXT,
-            cls.BOOLEAN,
-            cls.FLOAT,
-            cls.JSON,
+            cls.TEXT,  # Short text input
+            cls.LONG_TEXT,  # Long text area
+            cls.NUMBER,  # Numeric input
+            cls.SINGLE_SELECT,  # Single choice dropdown
+            cls.MULTI_SELECT,  # Multiple choice selection
+            cls.DATETIME,  # Date and time
         ]
 
     def validate_config(self):
@@ -340,7 +326,7 @@ class DynamicField(db.Model, BaseMixin):
             self.schema_config = {}
 
         # Validate based on field type
-        if self.field_type == DynamicField.STRING:
+        if self.field_type == DynamicField.TEXT:
             if "max_length" in self.schema_config:
                 try:
                     max_length = int(self.schema_config["max_length"])
