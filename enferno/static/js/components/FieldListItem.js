@@ -133,7 +133,7 @@ const FieldListItem = Vue.defineComponent({
                 <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging), 'pointer-events-none': dragging }]">
                     <div>
                         <span class="text-caption">{{ translations.width_ }}</span>:
-                        <v-btn-toggle v-model="widthProxy" :disabled="field.core" color="primary" mandatory density="compact" variant="outlined" divided rounded>
+                        <v-btn-toggle v-model="widthProxy" rounded="pill" :disabled="field.core" color="primary" mandatory density="compact" variant="outlined" divided rounded>
                             <v-btn value="w-100">
                                 {{ translations.full_ }}
                             </v-btn>
