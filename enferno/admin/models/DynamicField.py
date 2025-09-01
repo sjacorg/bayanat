@@ -73,6 +73,7 @@ class DynamicField(db.Model, BaseMixin):
     SINGLE_SELECT = "single_select"  # Single choice dropdown
     MULTI_SELECT = "multi_select"  # Multiple choice selection
     DATETIME = "datetime"  # Date and time picker
+    HTML_BLOCK = "html_block"  # Existing HTML component/template (for complex core fields)
 
     # UI Components for rendering (clean, lean set)
     class UIComponent:
@@ -82,6 +83,7 @@ class DynamicField(db.Model, BaseMixin):
         DATE_PICKER = "date_picker"
         DROPDOWN = "dropdown"
         MULTI_DROPDOWN = "multi_dropdown"
+        HTML_BLOCK = "html_block"  # Renders existing HTML template/component
 
     # Data type to UI component mapping (1:1, extensible)
     COMPONENT_MAP = {
@@ -91,6 +93,7 @@ class DynamicField(db.Model, BaseMixin):
         SINGLE_SELECT: [UIComponent.DROPDOWN],
         MULTI_SELECT: [UIComponent.MULTI_DROPDOWN],
         DATETIME: [UIComponent.DATE_PICKER],
+        HTML_BLOCK: [UIComponent.HTML_BLOCK],  # Maps to existing HTML template
     }
 
     # Clean field type to SQL type mapping
@@ -316,6 +319,7 @@ class DynamicField(db.Model, BaseMixin):
             cls.SINGLE_SELECT,  # Single choice dropdown
             cls.MULTI_SELECT,  # Multiple choice selection
             cls.DATETIME,  # Date and time
+            cls.HTML_BLOCK,  # Existing HTML template/component
         ]
 
     def validate_config(self):
