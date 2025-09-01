@@ -5,6 +5,7 @@ const iconMap = {
     number_input: 'mdi-numeric',
     date_picker: 'mdi-calendar-blank-outline',
     multi_dropdown: 'mdi-format-list-checks',
+    html_block: 'mdi-code-tags',  // Icon for HTML block components
 }
 
 const FieldListItem = Vue.defineComponent({
@@ -86,6 +87,12 @@ const FieldListItem = Vue.defineComponent({
                     multiple: true
                 },
                 date_picker: { component: 'v-text-field', ...baseProps },
+                html_block: { 
+                    component: 'v-text-field', 
+                    ...baseProps,
+                    modelValue: `Complex component: ${field.ui_config?.html_template || field.name}`,
+                    readonly: true
+                },
             };
 
             return componentMap[field.ui_component] || null;
