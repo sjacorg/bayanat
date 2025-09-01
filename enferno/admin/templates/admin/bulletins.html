@@ -93,6 +93,9 @@
                                 ></v-text-field>
 
                                 <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','Mod']) %}
+                                    <v-btn href="/admin/bulletin-fields/" variant="outlined" class="ma-2" prepend-icon="mdi-pencil">{{ _('Edit Bulletin Form') }}</v-btn>
+                                {% endif %}
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn
                                             @click="editItem"
