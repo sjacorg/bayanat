@@ -244,61 +244,21 @@
         try {
           const changes = this.computeChanges();
 
-          const requests = [];
+          // Build payload, and hide temporary ID for new fields
+          const payload = this.dynamicFields.map(field => {
+            if (field.id?.startsWith?.('backup-')) {
+              const { id, ...restField } = field
 
-          // Create
-          for (const { item } of changes.create) {
-            const { id, ...payload } = item
+              return restField
+            }
 
-            requests.push(
-              axios.post(`/admin/api/dynamic-fields/`, { item: payload })
-                .then(res => {
-                  // ✅ mark as saved
-                  this.originalFields.push(res.data.item);
-                })
-            );
-          }
+            return field
+          })
 
-          // Update
-          for (const { id, item } of changes.update) {
-            requests.push(
-              axios.put(`/admin/api/dynamic-fields/${id}`, { item })
-                .then(res => {
-                  // ✅ replace in originalFields
-                  const idx = this.originalFields.findIndex(f => f.id === id);
-                  if (idx !== -1) this.originalFields[idx] = res.data.item;
-                })
-            );
-          }
+          await axios.put(`/admin/api/dynamic-fields/entity/bulletin`, { fields: payload })
 
-          // Delete
-          for (const { id, item } of changes.delete) {
-            if (!id || id?.startsWith?.('backup-')) continue;
-
-            requests.push(
-              axios.delete(`/admin/api/dynamic-fields/${id}`)
-                .then(() => {
-                  // ✅ remove from originalFields
-                  this.originalFields = this.originalFields.filter(f => f.id !== id);
-                })
-            );
-          }
-
-          // Run all in parallel, but don’t throw
-          const results = await Promise.allSettled(requests);
-
-          const failed = results.filter(r => r.status === 'rejected');
-          if (failed.length > 0) {
-            console.log('Some requests failed:', failed);
-            this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
-            // recompute changes so dialog only shows unsaved
-            this.changes = this.computeChanges();
-            this.buildChangesTable();
-            throw failed?.[0]?.reason
-          } else {
-            this.showSnack('{{ _("Fields saved successfully") }}');
-            await this.fetchDynamicFields(); // reload fresh
-          }
+          this.showSnack('{{ _("Fields saved successfully") }}');
+          await this.fetchDynamicFields(); // reload fresh
         } catch (err) {
           console.error(err);
           this.showSnack(handleRequestError(err));
