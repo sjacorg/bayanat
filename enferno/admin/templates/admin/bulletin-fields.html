@@ -30,7 +30,7 @@
       
         <div class="d-flex ga-4 align-center">
           <v-btn variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
-            _('Restore Default Settings') }}</v-btn>
+            _('Discard Changes') }}</v-btn>
           <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" variant="outlined" :loading="saving"
           :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
           <v-menu>
