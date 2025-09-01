@@ -21,7 +21,7 @@
 <v-main>
   <div class="pa-4">
     <v-card>
-      <v-card-text class="d-flex justify-space-between ga-12">
+      <v-card-text class="d-flex justify-space-between ga-12 pt-6">
         <div class="text-h6 text-no-wrap">{{ _('Bulletin Fields Configuration') }}
         </div>
       
@@ -29,7 +29,7 @@
           hide-details v-model="search"></v-text-field>
       
         <div class="d-flex ga-4 align-center">
-          <v-btn variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
+          <v-btn :disabled="!hasChanges" variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
             _('Discard Changes') }}</v-btn>
           <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" variant="outlined" :loading="saving"
           :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
@@ -49,12 +49,14 @@
       </v-card-text>
 
       <div class="d-flex">
-        <v-card class="h-fit ma-3 flex-shrink-0 rounded-10 border border-opacity-25">
-          <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
-        </v-card>
+        <div class="ml-1">
+          <v-card class="h-fit ma-3 flex-shrink-0 rounded-10 border border-opacity-25">
+            <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
+          </v-card>
+        </div>
         <v-divider vertical></v-divider>
         <v-card variant="flat" class="ml-3 w-100">
-          <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0" style="height: calc(100vh - 168px);">
+          <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0 px-0" style="height: calc(100vh - 176px);">
             <v-container v-if="loading" height="130px" class="d-flex justify-center align-center">
               <v-progress-circular indeterminate ></v-progress-circular>
             </v-container>
