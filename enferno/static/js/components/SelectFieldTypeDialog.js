@@ -65,7 +65,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           ui_component,
           sort_order: 0,
           required: false,
-          options: (field_type === 'single_select' || field_type === 'multi_select') ? [{label: '', value: ''}] : null,
+          options: (field_type === 'single_select' || field_type === 'multi_select') ? [{ id: 1, label: '', value: '', hidden: false }] : null,
           schema_config: {},
           ui_config: { width: 'w-100', help_text: '' },
           validation_config: {},

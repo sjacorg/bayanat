@@ -104,6 +104,14 @@ const FieldListItem = Vue.defineComponent({
 
             this.editingMode = true
         },
+        createOptionId() {
+            const optionIdList = this.dropdownOptionsProxy
+                .map(option => Number(option.id))
+                .filter(id => !isNaN(id)); // remove NaN values
+
+            const maxId = optionIdList.length > 0 ? Math.max(...optionIdList) : 0;
+            return maxId + 1;
+        }
     },
     watch: {
         'field.title'(nextTitle) {
@@ -219,7 +227,7 @@ const FieldListItem = Vue.defineComponent({
                                     </draggable>
 
 
-                                    <v-btn class="mt-4" @click="dropdownOptionsProxy.push({ id: dropdownOptionsProxy.length + 1, label: '', value: '', hidden: true })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
+                                    <v-btn class="mt-4" @click="dropdownOptionsProxy.push({ id: createOptionId(), label: '', value: '', hidden: false })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
                                 </div>
 
                             </div>
