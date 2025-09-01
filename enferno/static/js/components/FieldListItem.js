@@ -62,12 +62,13 @@ const FieldListItem = Vue.defineComponent({
                     : 0,
                 min: field?.validation_config?.min,
                 max: field?.validation_config?.max,
+                controlVariant: 'hidden'
             };
 
             const componentMap = {
                 input: { component: 'v-text-field', ...baseProps },
                 textarea: { component: 'v-textarea', ...baseProps },
-                number_input: { component: 'v-number-input', ...baseProps, ...numberProps },
+                number_input: { component: 'v-text-field', ...baseProps, ...numberProps },
                 dropdown: {
                     component: 'v-select',
                     ...baseProps,
@@ -84,7 +85,7 @@ const FieldListItem = Vue.defineComponent({
                     'item-value': 'value',
                     multiple: true
                 },
-                date_picker: { component: 'pop-date-time-field' },
+                date_picker: { component: 'v-text-field', ...baseProps },
             };
 
             return componentMap[field.ui_component] || null;
