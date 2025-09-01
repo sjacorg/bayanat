@@ -71,7 +71,18 @@ const GlobalMap = Vue.defineComponent({
       function renderIfExists(label, value) {
         return value ? `${label ? `<b>${label}:</b>` : ''} ${value}` : ''
       }
-      // Simple HTML structure for popup content. Adjust as needed.
+
+      // Dates
+      const dates = []
+      if (loc.from_date) dates.push(`<span class="chip"><i class="mdi mdi-calendar mr-1"></i>${this.$root.formatDate(loc.from_date)}</span>`)
+      if (loc.to_date) dates.push(`<span><i class="mdi mdi-arrow-right mr-1"></i>${this.$root.formatDate(loc.to_date)}</span>`)
+      const dateRange = dates.length ? `<div class="text-caption d-flex">${dates.join(' ')}</div>` : ''
+
+      // Estimated
+      const estimated = loc.estimated
+        ? `<div class="text-caption text-medium-emphasis d-flex ml-1"><i class="mdi mdi-information mr-1"></i>${this.translations.timingForThisEventIsEstimated_}</div>`
+        : ''
+
       return `<div class="popup-content">
       <h4>${renderIfExists('', loc.title)}</h4>
       <div>${renderIfExists(this.translations.number_, loc.number)} ${renderIfExists(this.translations.parentId_, loc.parentId)}</div>
@@ -80,7 +91,9 @@ const GlobalMap = Vue.defineComponent({
       ${loc.main ? `<div>${this.translations.mainIncident_}</div>` : ''}
       <div>${renderIfExists(this.translations.type_, loc.geotype?.title)}</div>
       <div>${renderIfExists(this.translations.eventType_, loc.eventtype)}</div>
-    </div>`;
+      ${dateRange}
+      ${estimated}
+    </div>`
     },
 
     initMap() {

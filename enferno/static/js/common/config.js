@@ -543,6 +543,9 @@ function prepareEventLocations(parentId, events) {
         x.location.lat = x.location.latlng.lat;
         x.location.lng = x.location.latlng.lng;
         x.location.zombie = x.from_date === null && x.to_date === null;
+        x.location.from_date = x.from_date;
+        x.location.to_date = x.to_date;
+        x.location.estimated = Boolean(x.estimated);
         x.location.eventtype = x.eventtype?.title;
         return x.location;
     });
