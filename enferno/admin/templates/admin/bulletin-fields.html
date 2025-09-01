@@ -19,69 +19,69 @@
 </confirm-dialog>
 
 <v-main>
-  <v-sheet>
-    <div class="d-flex justify-space-between ga-6 pa-6">
-      <div class="font-weight-bold text-h4 text-no-wrap" style="font-size: 30px;">{{ _('Bulletin Fields Configuration') }}
-      </div>
-    
-      <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
-        hide-details v-model="search"></v-text-field>
-    
-      <div class="d-flex ga-4 align-center">
-        <v-menu>
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" prepend-icon="mdi-plus" append-icon="mdi-menu-down" variant="flat" color="primary">{{
-              _('Add New') }}</v-btn>
-          </template>
-    
-          <v-list>
-            <v-list-item @click="ui.selectFieldTypeDialog = true">
-              <v-list-item-title>{{ _('Field') }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-    
-        <v-btn v-if="hasChanges" prepend-icon="mdi-delete" variant="outlined" @click="discardChanges"
-          color="red">{{
-          _('Discard Changes') }}</v-btn>
-        <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" color="primary" variant="outlined" :loading="saving"
+  <div class="pa-4">
+    <v-card>
+      <v-card-text class="d-flex justify-space-between ga-12">
+        <div class="text-h6 text-no-wrap">{{ _('Bulletin Fields Configuration') }}
+        </div>
+      
+        <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
+          hide-details v-model="search"></v-text-field>
+      
+        <div class="d-flex ga-4 align-center">
+          <v-btn variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
+            _('Discard Changes') }}</v-btn>
+          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" variant="outlined" :loading="saving"
           :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
-      </div>
-    </div>
+          <v-menu>
+            <template v-slot:activator="{ props }">
+              <v-btn v-bind="props" prepend-icon="mdi-plus" append-icon="mdi-menu-down" variant="flat" color="primary">{{
+                _('Add New') }}</v-btn>
+            </template>
+      
+            <v-list>
+              <v-list-item @click="ui.selectFieldTypeDialog = true">
+                <v-list-item-title>{{ _('Field') }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </div>
+      </v-card-text>
 
-    <div class="d-flex">
-      <v-card class="h-fit ma-3 flex-shrink-0 rounded-10 border border-opacity-25">
-        <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
-      </v-card>
-      <v-divider vertical></v-divider>
-      <v-card variant="flat" class="ml-3 w-100">
-        <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0" style="height: calc(100vh - 152px);">
-          <v-container v-if="loading" height="130px" class="d-flex justify-center align-center">
-            <v-progress-circular indeterminate ></v-progress-circular>
-          </v-container>
-          
-          <div class="d-flex justify-center w-100"></div>
+      <div class="d-flex">
+        <v-card class="h-fit ma-3 flex-shrink-0 rounded-10 border border-opacity-25">
+          <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
+        </v-card>
+        <v-divider vertical></v-divider>
+        <v-card variant="flat" class="ml-3 w-100">
+          <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0" style="height: calc(100vh - 168px);">
+            <v-container v-if="loading" height="130px" class="d-flex justify-center align-center">
+              <v-progress-circular indeterminate ></v-progress-circular>
+            </v-container>
+            
+            <div class="d-flex justify-center w-100"></div>
 
-          <div v-if="filteredDynamicFields.length && !loading" ref="mainList" class="d-flex flex-wrap">
-            <div v-for="(field, index) in filteredDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
-                'drop-line': dropLine.id == field.id,
-                [dropLine.cls]: dropLine.id == field.id
-              }]">
-              <field-list-item :field="field"
-                @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(draggingId)" />
+            <div v-if="filteredDynamicFields.length && !loading" ref="mainList" class="d-flex flex-wrap">
+              <div v-for="(field, index) in filteredDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
+                  'drop-line': dropLine.id == field.id,
+                  [dropLine.cls]: dropLine.id == field.id
+                }]">
+                <field-list-item :field="field"
+                  @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(draggingId)" />
+              </div>
             </div>
-          </div>
-          <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && !search">
-            {{ _("No fields yet. Start by creating your first field to get started!") }}
-          </v-container>
-          <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && search">
-            {{ _("We couldn't find any fields for that search. Try another keyword.") }}
-          </v-container>
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && !search">
+              {{ _("No fields yet. Start by creating your first field to get started!") }}
+            </v-container>
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!loading && search">
+              {{ _("We couldn't find any fields for that search. Try another keyword.") }}
+            </v-container>
 
-        </v-card-text>
-      </v-card>
-    </div>
-  </v-sheet>
+          </v-card-text>
+        </v-card>
+      </div>
+    </v-card>
+  </div>
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
@@ -244,61 +244,21 @@
         try {
           const changes = this.computeChanges();
 
-          const requests = [];
+          // Build payload, and hide temporary ID for new fields
+          const payload = this.dynamicFields.map(field => {
+            if (field.id?.startsWith?.('backup-')) {
+              const { id, ...restField } = field
 
-          // Create
-          for (const { item } of changes.create) {
-            const { id, ...payload } = item
+              return restField
+            }
 
-            requests.push(
-              axios.post(`/admin/api/dynamic-fields/`, { item: payload })
-                .then(res => {
-                  // ✅ mark as saved
-                  this.originalFields.push(res.data.item);
-                })
-            );
-          }
+            return field
+          })
 
-          // Update
-          for (const { id, item } of changes.update) {
-            requests.push(
-              axios.put(`/admin/api/dynamic-fields/${id}`, { item })
-                .then(res => {
-                  // ✅ replace in originalFields
-                  const idx = this.originalFields.findIndex(f => f.id === id);
-                  if (idx !== -1) this.originalFields[idx] = res.data.item;
-                })
-            );
-          }
+          await axios.put(`/admin/api/dynamic-fields/entity/bulletin`, { fields: payload })
 
-          // Delete
-          for (const { id, item } of changes.delete) {
-            if (!id || id?.startsWith?.('backup-')) continue;
-
-            requests.push(
-              axios.delete(`/admin/api/dynamic-fields/${id}`)
-                .then(() => {
-                  // ✅ remove from originalFields
-                  this.originalFields = this.originalFields.filter(f => f.id !== id);
-                })
-            );
-          }
-
-          // Run all in parallel, but don’t throw
-          const results = await Promise.allSettled(requests);
-
-          const failed = results.filter(r => r.status === 'rejected');
-          if (failed.length > 0) {
-            console.log('Some requests failed:', failed);
-            this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
-            // recompute changes so dialog only shows unsaved
-            this.changes = this.computeChanges();
-            this.buildChangesTable();
-            throw failed?.[0]?.reason
-          } else {
-            this.showSnack('{{ _("Fields saved successfully") }}');
-            await this.fetchDynamicFields(); // reload fresh
-          }
+          this.showSnack('{{ _("Fields saved successfully") }}');
+          await this.fetchDynamicFields(); // reload fresh
         } catch (err) {
           console.error(err);
           this.showSnack(handleRequestError(err));

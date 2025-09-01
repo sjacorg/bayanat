@@ -62,12 +62,13 @@ const FieldListItem = Vue.defineComponent({
                     : 0,
                 min: field?.validation_config?.min,
                 max: field?.validation_config?.max,
+                controlVariant: 'hidden'
             };
 
             const componentMap = {
                 input: { component: 'v-text-field', ...baseProps },
                 textarea: { component: 'v-textarea', ...baseProps },
-                number_input: { component: 'v-number-input', ...baseProps, ...numberProps },
+                number_input: { component: 'v-text-field', ...baseProps, ...numberProps },
                 dropdown: {
                     component: 'v-select',
                     ...baseProps,
@@ -84,7 +85,7 @@ const FieldListItem = Vue.defineComponent({
                     'item-value': 'value',
                     multiple: true
                 },
-                date_picker: { component: 'pop-date-time-field' },
+                date_picker: { component: 'v-text-field', ...baseProps },
             };
 
             return componentMap[field.ui_component] || null;
@@ -104,6 +105,23 @@ const FieldListItem = Vue.defineComponent({
 
             this.editingMode = true
         },
+        createOptionId() {
+            const optionIdList = this.dropdownOptionsProxy
+                .map(option => Number(option.id))
+                .filter(id => !isNaN(id)); // remove NaN values
+
+            const maxId = optionIdList.length > 0 ? Math.max(...optionIdList) : 0;
+            return maxId + 1;
+        },
+        addDropdownOption() {
+            this.dropdownOptionsProxy.push({ id: this.createOptionId(), label: '', value: '', hidden: false });
+            this.$nextTick(() => {
+                this.$refs.optionsRef.$el.scrollTo({
+                    top: this.$refs.optionsRef.$el.scrollHeight,
+                    behavior: 'smooth'
+                });
+            })
+        }
     },
     watch: {
         'field.title'(nextTitle) {
@@ -125,7 +143,7 @@ const FieldListItem = Vue.defineComponent({
                 <div :class="['d-flex justify-space-between align-center opacity-0', { 'opacity-100': editingMode || (isHovering && !dragging), 'pointer-events-none': dragging }]">
                     <div>
                         <span class="text-caption">{{ translations.width_ }}</span>:
-                        <v-btn-toggle v-model="widthProxy" :disabled="field.core" color="primary" mandatory density="compact" variant="outlined" divided rounded>
+                        <v-btn-toggle v-model="widthProxy" rounded="pill" :disabled="field.core" color="primary" mandatory density="compact" variant="outlined" divided>
                             <v-btn value="w-100">
                                 {{ translations.full_ }}
                             </v-btn>
@@ -194,32 +212,32 @@ const FieldListItem = Vue.defineComponent({
                                 <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldOptions_ }}</div>
 
                                 <div class="mt-2">
-                                    <draggable v-model="dropdownOptionsProxy" :item-key="'id'" class="d-flex flex-column ga-1" handle=".drag-handle">
-                                            <template #item="{ element: option, index }">
-                                                <div class="d-flex align-center ga-2">
-                                                    <v-icon class="drag-handle cursor-grab">mdi-drag</v-icon>
-                                                    <div>{{ option.id || index + 1 }}</div>
-                                                    <v-text-field
-                                                        :label="translations.optionN_(index + 1)"
-                                                        :model-value="option.label"
-                                                        @update:model-value="updateDropdownOption($event, option, index)"
-                                                        variant="filled"
-                                                        hide-details
-                                                        :disabled="option.hidden"
-                                                    ></v-text-field>
+                                    <draggable ref="optionsRef" v-model="dropdownOptionsProxy" :item-key="'id'" class="d-flex flex-column ga-1 overflow-y-auto" handle=".drag-handle" style="max-height: 260px;">
+                                        <template #item="{ element: option, index }">
+                                            <div class="d-flex align-center ga-2">
+                                                <v-icon class="drag-handle cursor-grab">mdi-drag</v-icon>
+                                                <div>{{ option.id || index + 1 }}</div>
+                                                <v-text-field
+                                                    :label="translations.optionN_(index + 1)"
+                                                    :model-value="option.label"
+                                                    @update:model-value="updateDropdownOption($event, option, index)"
+                                                    variant="filled"
+                                                    hide-details
+                                                    :disabled="option.hidden"
+                                                ></v-text-field>
 
-                                                    <v-tooltip location="top">
-                                                        <template v-slot:activator="{ props }">
-                                                            <v-btn v-bind="props" :icon="option.hidden ? 'mdi-eye-outline' : 'mdi-eye-off-outline'" density="comfortable" variant="text" @click="option.hidden = !option?.hidden"></v-btn>
-                                                        </template>
-                                                        {{ option.hidden ? translations.showOption_ : translations.hideOption_ }}
-                                                    </v-tooltip>
-                                                </div>
-                                            </template>
+                                                <v-tooltip location="top">
+                                                    <template v-slot:activator="{ props }">
+                                                        <v-btn v-bind="props" :icon="option.hidden ? 'mdi-eye-outline' : 'mdi-eye-off-outline'" density="comfortable" variant="text" @click="option.hidden = !option?.hidden"></v-btn>
+                                                    </template>
+                                                    {{ option.hidden ? translations.showOption_ : translations.hideOption_ }}
+                                                </v-tooltip>
+                                            </div>
+                                        </template>
                                     </draggable>
 
 
-                                    <v-btn class="mt-4" @click="dropdownOptionsProxy.push({ id: dropdownOptionsProxy.length + 1, label: '', value: '', hidden: true })" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
+                                    <v-btn class="mt-4" @click="addDropdownOption()" prepend-icon="mdi-plus-circle" color="primary" variant="text">{{ translations.addAnotherOption_ }}</v-btn>
                                 </div>
 
                             </div>

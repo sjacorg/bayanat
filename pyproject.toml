@@ -154,8 +154,6 @@ line-length = 100
 target-version = ["py312", "py313"]
 include = "\\.pyi?$"
 exclude = "/(\n    \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.nox\n  | \\.pants.d\n  | \\.pytype\n  | \\.ruff_cache\n  | \\.svn\n  | \\.tox\n  | \\.venv\n  | \\.env\n  | __pypackages__\n  | _build\n  | buck-out\n  | build\n  | dist\n  | node_modules\n  | venv\n)/\n"
-
-[tool.black.format]
 color = true
 
 [dependency-groups]
