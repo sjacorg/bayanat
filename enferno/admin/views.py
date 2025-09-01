@@ -6745,6 +6745,11 @@ def api_dynamic_field_create() -> Response:
                 status=409,
             )
 
+        # Handle required field - ensure it gets stored in schema_config
+        schema_config = field_data.get("schema_config", {})
+        if "required" in field_data:
+            schema_config["required"] = field_data["required"]
+
         # Create the dynamic field
         field = DynamicField(
             name=field_data["name"],
@@ -6752,7 +6757,7 @@ def api_dynamic_field_create() -> Response:
             entity_type=field_data["entity_type"],
             field_type=field_data["field_type"],
             ui_component=field_data.get("ui_component"),
-            schema_config=field_data.get("schema_config", {}),
+            schema_config=schema_config,
             ui_config=field_data.get("ui_config", {}),
             validation_config=field_data.get("validation_config", {}),
             options=field_data.get("options", []),
@@ -6850,12 +6855,17 @@ def api_dynamic_field_update(field_id: int) -> Response:
             field.active = field_data.get("active", field.active)
             field.sort_order = field_data.get("sort_order", field.sort_order)
         else:
+            # Handle required field - ensure it gets stored in schema_config
+            schema_config = field_data.get("schema_config", {})
+            if "required" in field_data:
+                schema_config["required"] = field_data["required"]
+
             # Dynamic fields can update everything
             field.name = field_data["name"]
             field.title = field_data["title"]
             field.entity_type = field_data["entity_type"]
             field.ui_component = field_data.get("ui_component")
-            field.schema_config = field_data.get("schema_config", {})
+            field.schema_config = schema_config
             field.ui_config = field_data.get("ui_config", {})
             field.validation_config = field_data.get("validation_config", {})
             field.options = field_data.get("options", [])

@@ -122,9 +122,7 @@ class DynamicField(db.Model, BaseMixin):
     field_type = db.Column(
         db.String(20), nullable=False
     )  # Data type (text, number, single_select, etc.)
-    required = db.Column(
-        db.Boolean, default=False
-    )  # Whether the field is required (legacy, see schema_config)
+
     searchable = db.Column(db.Boolean, default=False)  # Whether the field is indexed for search
 
     # UI Configuration
@@ -227,7 +225,7 @@ class DynamicField(db.Model, BaseMixin):
                 raise ValueError(f"Invalid field type: {self.field_type}")
 
             constraints = []
-            if self.required:
+            if self.schema_config.get("required", False):
                 constraints.append("NOT NULL")
 
             full_sql_type = f"{sql_type} {' '.join(constraints)}".strip()
@@ -267,7 +265,7 @@ class DynamicField(db.Model, BaseMixin):
             if self.field_type == DynamicField.TEXT and self.schema_config.get("max_length"):
                 column_type = String(self.schema_config["max_length"])
 
-            column_args = {"nullable": not self.required}
+            column_args = {"nullable": not self.schema_config.get("required", False)}
             setattr(model_class, self.name, Column(self.name, column_type, **column_args))
 
             logger.info(f"Successfully created column {self.name} in {table_name}")
@@ -365,7 +363,7 @@ class DynamicField(db.Model, BaseMixin):
             "entity_type": self.entity_type,
             "field_type": self.field_type,
             "ui_component": self.ui_component,
-            "required": self.schema_config.get("required", self.required),
+            "required": self.schema_config.get("required", False),
             "searchable": self.searchable,
             "schema_config": self.schema_config,
             "ui_config": self.ui_config,
