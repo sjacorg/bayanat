@@ -190,7 +190,7 @@ const FieldListItem = Vue.defineComponent({
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
                                 <span v-bind="props">
-                                    <v-btn density="comfortable" variant="flat" :disabled="field.core" icon @click="$emit('delete', { field, componentProps })" size="small"><v-icon>mdi-trash-can-outline</v-icon></v-btn>
+                                    <v-btn density="comfortable" variant="flat" :disabled="field.core || !field.active" icon @click="$emit('delete', { field, componentProps })" size="small"><v-icon>mdi-trash-can-outline</v-icon></v-btn>
                                 </span>
                             </template>
                             {{ field.core ? translations.deletionRestricted_ : translations.deleteField_ }}

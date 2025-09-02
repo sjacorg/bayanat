@@ -280,8 +280,9 @@
             requests.push(
               axios.delete(`/admin/api/dynamic-fields/${id}`)
                 .then(() => {
-                  // ✅ remove from originalFields
-                  this.originalFields = this.originalFields.filter(f => f.id !== id);
+                  // ✅ disable from originalFields
+                  const originalField = this.originalFields.find(originalField => originalField.id === id)
+                  originalField.active = false;
                 })
             );
           }
@@ -498,7 +499,9 @@
           acceptProps: { text: 'Delete Field', color: 'red' },
           dialogProps: { width: 780 },
           onAccept: () => {
-            this.dynamicFields = this.dynamicFields.filter(dynamicField => dynamicField.id !== field.id)
+            const dynamicField = this.dynamicFields.find(dynamicField => dynamicField.id === field.id)
+            dynamicField.active = false;
+
             this.$toast({
               message: `Field "${field.title || 'New Field'}" has been deleted successfully.`,
               hideActions: true,
