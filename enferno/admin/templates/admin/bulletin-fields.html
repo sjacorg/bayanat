@@ -2,10 +2,10 @@
 
 <!-- Field Creation Modal -->
 <select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
-  :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
+  :item="form.editedItem" entity-type="bulletin"></select-field-type-dialog>
 <confirm-dialog ref="reviewAndConfirmDialog">
   <div class="mb-4">{{ _('Please review your updates before applying them to the form.') }}</div>
-  <v-data-table hide-default-footer :items="changesTable" :headers="[
+  <v-data-table hide-default-footer :items="changes.table" :headers="[
       { title: 'Field Name', value: 'title' },
       { title: 'Change Type', value: 'type' },
     ]"
@@ -26,12 +26,12 @@
         </div>
       
         <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
-          hide-details v-model="search"></v-text-field>
+          hide-details v-model="ui.search"></v-text-field>
       
         <div class="d-flex ga-4 align-center">
           <v-btn :disabled="!hasChanges" variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
             _('Discard Changes') }}</v-btn>
-          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" variant="outlined" :loading="saving"
+          <v-btn @click="showSaveDialog()" prepend-icon="mdi-check" variant="outlined" :loading="ui.saving"
           :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
           <v-menu>
             <template v-slot:activator="{ props }">
@@ -65,17 +65,17 @@
 
             <div v-if="filteredDynamicFields.length" ref="mainList" class="d-flex flex-wrap">
               <div v-for="(field, index) in filteredDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
-                  'drop-line': dropLine.id == field.id,
-                  [dropLine.cls]: dropLine.id == field.id
+                  'drop-line': dragDrop.dropLine.id == field.id,
+                  [dragDrop.dropLine.cls]: dragDrop.dropLine.id == field.id
                 }]">
                 <field-list-item :field="field"
-                  @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(draggingId)" />
+                  @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(dragDrop.draggingId)" />
               </div>
             </div>
-            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!formBuilder.loading && !search">
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!formBuilder.loading && !ui.search">
               {{ _("No fields yet. Start by creating your first field to get started!") }}
             </v-container>
-            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!formBuilder.loading && search">
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!formBuilder.loading && ui.search">
               {{ _("We couldn't find any fields for that search. Try another keyword.") }}
             </v-container>
 
@@ -87,20 +87,12 @@
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
-<script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
-<script src="/static/js/tinymce-vue.min.js"></script>
-<script src="/static/js/diff-tool.js"></script>
 <script src="/static/js/Sortable.min.js"></script>
 <script src="/static/js/vuedraggable.umd.js"></script>
-<script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
 <script src="/static/js/mixins/form-builder-mixin.js"></script>
 <script src="/static/js/components/FieldListItem.js"></script>
 <script src="/static/js/components/SelectFieldTypeDialog.js"></script>
-<script src="/static/js/components/PopDateField.js"></script>
-<script src="/static/js/components/PopDateTimeField.js"></script>
-<script src="/static/js/components/PopDateRangeField.js"></script>
-<script src="/static/js/components/DiffRenderer.js"></script>
 
 <script>
   const { createApp } = Vue;
@@ -111,20 +103,24 @@
     delimiters: delimiters,
     mixins: [globalMixin, formBuilderMixin],
     data: () => ({
-      tinyConfig: tinyConfig,
-      drawer: drawer,
+      drawer,
       ui: {
-        selectFieldTypeDialog: false
-      }, 
-      editedItem: {},
-      search: '',
-      searchQuery: '',
-      saving: false,
-      changes: '',
-      dropLine: { id: null, cls: "" },
-      draggingId: null,
-      sortables: {},
-      changesTable: []
+        selectFieldTypeDialog: false,
+        saving: false,
+        search: '',
+      },
+      form: {
+        editedItem: {},
+      },
+      changes: {
+        diff: '',
+        table: [],
+      },
+      dragDrop: {
+        dropLine: { id: null, cls: "" },
+        draggingId: null,
+        sortables: {},
+      },
     }),
     async mounted() {
       await this.fetchDynamicFields('bulletin');
@@ -134,12 +130,12 @@
     computed: {
       hasChanges() {
         const changes = this.computeChanges();
-        return changes.create.length || changes.update.length || changes.delete.length;
+        return Boolean(changes.create.length || changes.update.length || changes.delete.length);
       },
       filteredDynamicFields() {
-        if (!this.search) return this.formBuilder.dynamicFields
+        if (!this.ui.search) return this.formBuilder.dynamicFields
 
-        return this.formBuilder.dynamicFields.filter(field => field.title?.toLowerCase().includes(this.search.toLowerCase()))
+        return this.formBuilder.dynamicFields.filter(field => field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()))
       }
     },
     methods: {
@@ -176,7 +172,7 @@
       },
       edit({ field }) {
         const matchingField = this.formBuilder.dynamicFields.find(dynamicField => dynamicField.id === field.id)
-        this.editedItem = matchingField;
+        this.form.editedItem = matchingField;
         this.ui.selectFieldTypeDialog = true;
       },
       saveField(evt) {
@@ -204,13 +200,13 @@
           delete: translations.deleted_,
         }
 
-        this.changesTable = Object.entries(this.changes).flatMap(([changeType, change]) =>
+        this.changes.table = Object.entries(this.changes.diff).flatMap(([changeType, change]) =>
           change.map(item => ({ title: item.item.title || 'New Field', type: changeTypeTranslations[changeType], key: changeType }))
         )
       },
 
       showSaveDialog() {
-        this.changes = this.computeChanges();
+        this.changes.diff = this.computeChanges();
         this.buildChangesTable()
 
         this.$refs.reviewAndConfirmDialog.show({
@@ -223,18 +219,16 @@
       },
 
       async save() {
-        this.saving = true;
+        this.ui.saving = true;
         try {
-          const changes = this.computeChanges();
-
           const requests = [];
 
           // Create
-          for (const { item } of changes.create) {
+          for (const { item } of this.changes.diff.create) {
             const { id, ...payload } = item
 
             requests.push(
-              axios.post(`/admin/api/dynamic-fields/`, { item: payload })
+              api.post(`/admin/api/dynamic-fields/`, { item: payload })
                 .then(res => {
                   // ✅ mark as saved
                   this.formBuilder.originalFields.push(res.data.item);
@@ -243,9 +237,9 @@
           }
 
           // Update
-          for (const { id, item } of changes.update) {
+          for (const { id, item } of this.changes.diff.update) {
             requests.push(
-              axios.put(`/admin/api/dynamic-fields/${id}`, { item })
+              api.put(`/admin/api/dynamic-fields/${id}`, { item })
                 .then(res => {
                   // ✅ replace in originalFields
                   const idx = this.formBuilder.originalFields.findIndex(f => f.id === id);
@@ -255,11 +249,11 @@
           }
 
           // Delete
-          for (const { id, item } of changes.delete) {
+          for (const { id, item } of this.changes.diff.delete) {
             if (!id || id?.startsWith?.('temp-')) continue;
 
             requests.push(
-              axios.delete(`/admin/api/dynamic-fields/${id}`)
+              api.delete(`/admin/api/dynamic-fields/${id}`)
                 .then(() => {
                   // ✅ disable from originalFields
                   const originalField = this.formBuilder.originalFields.find(originalField => originalField.id === id)
@@ -276,7 +270,7 @@
             console.log('Some requests failed:', failed);
             this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
             // recompute changes so dialog only shows unsaved
-            this.changes = this.computeChanges();
+            this.changes.diff = this.computeChanges();
             this.buildChangesTable();
             throw failed?.[0]?.reason
           } else {
@@ -288,7 +282,7 @@
           this.showSnack(handleRequestError(err));
           throw err
         } finally {
-          this.saving = false;
+          this.ui.saving = false;
         }
       },
 
@@ -353,22 +347,22 @@
           scrollSensitivity: 100,
 
           onStart: (evt) => {
-            this.draggingId = evt.item?.dataset?.id ?? null;
+            this.dragDrop.draggingId = evt.item?.dataset?.id ?? null;
             document.body.classList.add('cursor-grabbing');
           },
 
           onMove: (evt, originalEvent) => {
             const target = evt.related?.closest?.('.sortable-item');
             if (!target) {
-              this.dropLine.id = null;
-              this.dropLine.cls = "";
+              this.dragDrop.dropLine.id = null;
+              this.dragDrop.dropLine.cls = "";
               return false;
             }
 
             const overId = target.dataset?.id;
-            if (!overId || overId == this.draggingId) {
-              this.dropLine.id = null;
-              this.dropLine.cls = "";
+            if (!overId || overId == this.dragDrop.draggingId) {
+              this.dragDrop.dropLine.id = null;
+              this.dragDrop.dropLine.cls = "";
               return false;
             }
 
@@ -388,17 +382,17 @@
             }
 
             // 🔍 Hide drop line if dropping wouldn't move the item
-            const fromIdx = this.formBuilder.dynamicFields.findIndex(i => i.id == this.draggingId);
+            const fromIdx = this.formBuilder.dynamicFields.findIndex(i => i.id == this.dragDrop.draggingId);
             const tgtIdx = this.formBuilder.dynamicFields.findIndex(i => i.id == overId);
             if (!this.wouldMove(fromIdx, tgtIdx, cls)) cls = "";
 
             // Update drop line state
             if (cls) {
-              this.dropLine.id = overId;
-              this.dropLine.cls = cls;
+              this.dragDrop.dropLine.id = overId;
+              this.dragDrop.dropLine.cls = cls;
             } else {
-              this.dropLine.id = null;
-              this.dropLine.cls = "";
+              this.dragDrop.dropLine.id = null;
+              this.dragDrop.dropLine.cls = "";
             }
 
             return false; // cancel DOM swap
@@ -406,23 +400,23 @@
 
           onEnd: (evt) => {
             document.body.classList.remove('cursor-grabbing');
-            const overId = this.dropLine.id;
-            const cls = this.dropLine.cls;
+            const overId = this.dragDrop.dropLine.id;
+            const cls = this.dragDrop.dropLine.cls;
 
             const resetUI = () => {
-              this.draggingId = null;
-              this.dropLine.id = null;
-              this.dropLine.cls = "";
+              this.dragDrop.draggingId = null;
+              this.dragDrop.dropLine.id = null;
+              this.dragDrop.dropLine.cls = "";
             };
 
-            if (!overId || !cls || !this.draggingId) {
+            if (!overId || !cls || !this.dragDrop.draggingId) {
               resetUI();
               return;
             }
 
             const arr = this.formBuilder.dynamicFields;
 
-            const fromIdx = arr.findIndex(i => i.id == this.draggingId);
+            const fromIdx = arr.findIndex(i => i.id == this.dragDrop.draggingId);
             const tgtIdx = arr.findIndex(i => i.id == overId);
 
             if (fromIdx === -1 || tgtIdx === -1) {
@@ -449,7 +443,7 @@
           },
         });
 
-        this.sortables.main = sortable;
+        this.dragDrop.sortables.main = sortable;
       },
 
 
@@ -487,7 +481,7 @@
       },
       closeDrawer(open) {
         this.ui.selectFieldTypeDialog = open;
-        this.editedItem = {}
+        this.form.editedItem = {}
       }
     },
   });
@@ -495,11 +489,6 @@
   app.component('FieldListItem', FieldListItem);
   app.component('SelectFieldTypeDialog', SelectFieldTypeDialog);
   app.component('draggable', vuedraggable);
-  app.component('tinymce-editor', Editor);
-  app.component('PopDateField', PopDateField);
-  app.component('PopDateRangeField', PopDateRangeField);
-  app.component('PopDateTimeField', PopDateTimeField);
-  app.component('DiffRenderer', DiffRenderer);
 
   app.use(router);
   app.use(vuetify).mount('#app');
