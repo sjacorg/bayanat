@@ -32,7 +32,7 @@ const FieldListItem = Vue.defineComponent({
         dropdownOptionsProxy: {
             get() {
                 return (this.field?.ui_component === 'dropdown' || this.field?.ui_component === 'multi_dropdown')
-                    ? this.field?.options || [{ label: '', value: '' }]
+                    ? this.field?.options || [{ id: 1, label: this.translations.optionN_(1), value: 'option_1', hidden: false }]
                     : null
             },
             set(val) {
@@ -121,7 +121,13 @@ const FieldListItem = Vue.defineComponent({
             return maxId + 1;
         },
         addDropdownOption() {
-            this.dropdownOptionsProxy.push({ id: this.createOptionId(), label: '', value: '', hidden: false });
+            const nextNumber = this.dropdownOptionsProxy.length + 1
+            this.dropdownOptionsProxy.push({
+                id: this.createOptionId(),
+                label: this.translations.optionN_(nextNumber),
+                value: `option_${nextNumber}`,
+                hidden: false
+            });
             this.$nextTick(() => {
                 this.$refs.optionsRef.$el.scrollTo({
                     top: this.$refs.optionsRef.$el.scrollHeight,
@@ -231,6 +237,7 @@ const FieldListItem = Vue.defineComponent({
                                                     variant="filled"
                                                     hide-details
                                                     :disabled="option.hidden"
+                                                    clearable
                                                 ></v-text-field>
 
                                                 <v-tooltip location="top">

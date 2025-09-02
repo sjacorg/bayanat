@@ -2,7 +2,7 @@
 
 <!-- Field Creation Modal -->
 <select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
-  :item="editedItem" entity-type="bulletin"></select-field-type-dialog>
+  :item="editedItem" entity-type="bulletin" :dynamic-fields="dynamicFields"></select-field-type-dialog>
 <confirm-dialog ref="reviewAndConfirmDialog">
   <div class="mb-4">{{ _('Please review your updates before applying them to the form.') }}</div>
   <v-data-table hide-default-footer :items="changesTable" :headers="[
@@ -275,7 +275,7 @@
 
           // Delete
           for (const { id, item } of changes.delete) {
-            if (!id || id?.startsWith?.('backup-')) continue;
+            if (!id || id?.startsWith?.('temp-')) continue;
 
             requests.push(
               axios.delete(`/admin/api/dynamic-fields/${id}`)
@@ -315,7 +315,7 @@
         const originalMap = new Map(this.originalFields.map(f => [f.id, f]));
 
         for (const field of this.dynamicFields) {
-          if (!field.id || field.id?.startsWith?.('backup-')) {
+          if (!field.id || field.id?.startsWith?.('temp-')) {
             changes.create.push({ item: field });
           } else {
             const orig = originalMap.get(field.id);

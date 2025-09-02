@@ -4,6 +4,10 @@ const SelectFieldTypeDialog = Vue.defineComponent({
       type: Boolean,
       default: false,
     },
+    dynamicFields: {
+      type: Array,
+      default: () => [],
+    },
     entityType: {
       type: String,
       default: '',
@@ -56,16 +60,18 @@ const SelectFieldTypeDialog = Vue.defineComponent({
   methods: {
     async create({ field_type, ui_component }) {
       try {
+        const nextNumber = this.dynamicFields.filter(field => !field.core).length + 1
+
         const field = {
-          id: `backup-${Date.now()}`, // temp ID if new
-          name: '',
-          title: '',
+          id: `temp-${Date.now()}`, // temp ID if new
+          name: `field_${nextNumber}`,
+          title: this.translations.fieldN_(nextNumber),
           entity_type: this.entityType,
           field_type,
           ui_component,
           sort_order: 0,
           required: false,
-          options: (field_type === 'single_select' || field_type === 'multi_select') ? [{ id: 1, label: '', value: '', hidden: false }] : null,
+          options: (field_type === 'single_select' || field_type === 'multi_select') ? [{ id: 1, label: this.translations.optionN_(1), value: 'option_1', hidden: false }] : null,
           schema_config: {},
           ui_config: { width: 'w-100', help_text: '' },
           validation_config: {},
