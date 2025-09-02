@@ -92,16 +92,31 @@ function isValidLength(value, limit, type) {
 }
 
 function scrollToFirstError(errors) {
+    // Try to get id first, fallback to name
     const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
-    const element = document.getElementById(invalidFieldId)
-    element?.scrollIntoView({
+    if (!invalidFieldId) return
+
+    let element = null
+    if (invalidFieldId) {
+        element = document.getElementById(invalidFieldId)
+    }
+
+    if (!element && invalidFieldId) {
+        element = document.querySelector(`[name="${invalidFieldId}"]`)
+    }
+
+    if (!element) return
+
+    element.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
     })
-    if (element?.focus) {
-        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+
+    if (element.focus) {
+        setTimeout(() => element.focus(), 300) // give time for scroll
     }
 }
+
 
 // global vuetify config object passed to most pages of the system
 const variables = {
