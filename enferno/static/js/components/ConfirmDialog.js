@@ -81,7 +81,7 @@ const ConfirmDialog = Vue.defineComponent({
     },
   },
   template: `
-    <v-dialog v-model="open" v-bind="dialogProps">
+    <v-dialog v-model="open" v-bind="{ persistent: loading, ...dialogProps}">
       <v-card rounded="12">
         <v-card-title class="px-7 pt-6 pb-0">
           <slot name="title">{{ title }}</slot>

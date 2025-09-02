@@ -98,7 +98,7 @@ const FieldListItem = Vue.defineComponent({
             return componentMap[field.ui_component] || null;
         },
         updateDropdownOption(nextValue, option, index) {
-            const originalField = this.$root.originalFields.find(of => of.id === this.field.id)
+            const originalField = this.$root.formBuilder.originalFields.find(of => of.id === this.field.id)
             const originalOption = originalField?.options?.[index]
 
             option.label = nextValue;
@@ -138,7 +138,7 @@ const FieldListItem = Vue.defineComponent({
     },
     watch: {
         'field.title'(nextTitle) {
-            const originalField = this.$root.originalFields.find(of => of.id === this.field.id)
+            const originalField = this.$root.formBuilder.originalFields.find(of => of.id === this.field.id)
             if (!originalField?.name) {
                 const slugTitle = slugify(nextTitle)
                 this.field.name = slugTitle
