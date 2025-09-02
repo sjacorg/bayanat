@@ -213,7 +213,7 @@ const FieldListItem = Vue.defineComponent({
                     </div>
                 </div>
                 <div v-else>
-                    <v-text-field variant="filled" :label="translations.fieldLabel_" v-model="field.title"></v-text-field>
+                    <v-text-field variant="filled" :label="translations.fieldLabel_" v-model="field.title" autofocus clearable></v-text-field>
 
                     <div class="d-flex flex-wrap ga-4">
                         <div
@@ -264,12 +264,14 @@ const FieldListItem = Vue.defineComponent({
                                     variant="filled"
                                     :label="translations.helpText_"
                                     v-model="field.ui_config.help_text"
+                                    clearable
                                 ></v-text-field>
                                 <v-text-field
                                     v-if="field.ui_component === 'input'"
                                     variant="filled"
                                     :label="translations.maxLength_"
                                     v-model="field.validation_config.max_length"
+                                    clearable
                                 ></v-text-field>
                             </div>
                         </div>
