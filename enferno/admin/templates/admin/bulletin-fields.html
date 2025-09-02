@@ -127,7 +127,7 @@
       changesTable: []
     }),
     async mounted() {
-      await this.fetchDynamicFields();
+      await this.fetchDynamicFields('bulletin');
 
       this.initSortable(this.$refs.mainList);
     },
