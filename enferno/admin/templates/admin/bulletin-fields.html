@@ -173,8 +173,6 @@
       },
       sortDynamicFields() {
         this.dynamicFields = this.dynamicFields.sort((a, b) => {
-          if (a.sort_order === 0 && b.sort_order !== 0) return 1;  // a goes last
-          if (b.sort_order === 0 && a.sort_order !== 0) return -1; // b goes last
           return a.sort_order - b.sort_order; // normal sort
         });
       },
@@ -205,7 +203,6 @@
           this.loading = true;
           const response = await axios.get('/admin/api/dynamic-fields/?entity_type=bulletin');
           this.dynamicFields = response.data.data;
-          this.reindexZeroSortFields();
           this.sortDynamicFields();
           this.originalFields = deepClone(this.dynamicFields); // deep clone
         } catch (err) {
@@ -474,23 +471,6 @@
 
       reindexFields() {
         this.dynamicFields = this.dynamicFields.map((field, index) => ({ ...field, sort_order: index + 1 }))
-      },
-      reindexZeroSortFields() {
-        // Find max sort_order before first zero
-        let maxOrder = 0;
-        for (const field of this.dynamicFields) {
-          if (field.sort_order === 0) break;
-          if (field.sort_order > maxOrder) maxOrder = field.sort_order;
-        }
-
-        let counter = maxOrder + 1;
-
-        this.dynamicFields = this.dynamicFields.map(field => {
-          if (field.sort_order === 0) {
-            return { ...field, sort_order: counter++ };
-          }
-          return field;
-        });
       },
       async deleteField({ field }) {
         this.$confirm({

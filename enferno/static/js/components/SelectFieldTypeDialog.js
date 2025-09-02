@@ -61,6 +61,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
     async create({ field_type, ui_component }) {
       try {
         const nextNumber = this.dynamicFields.filter(field => !field.core).length + 1
+        const nextSort = Math.max(...this.dynamicFields.map(field => field.sort_order)) + 1
 
         const field = {
           id: `temp-${Date.now()}`, // temp ID if new
@@ -69,7 +70,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           entity_type: this.entityType,
           field_type,
           ui_component,
-          sort_order: 0,
+          sort_order: nextSort,
           required: false,
           options: (field_type === 'single_select' || field_type === 'multi_select') ? [{ id: 1, label: this.translations.optionN_(1), value: 'option_1', hidden: false }] : null,
           schema_config: {},
