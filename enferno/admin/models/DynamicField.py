@@ -15,6 +15,7 @@ from enferno.admin.models import Incident
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.date_helper import DateHelper
 
 logger = get_logger()
 
@@ -357,6 +358,51 @@ class DynamicField(db.Model, BaseMixin):
             .order_by(cls.sort_order)
             .all()
         }
+
+    @staticmethod
+    def _serialize_value(field_type: str, value):
+        """Serialize a dynamic field value based on its type."""
+        if value is None:
+            if field_type == DynamicField.MULTI_SELECT:
+                return []
+            return ""
+
+        if field_type == DynamicField.DATETIME:
+            return DateHelper.serialize_datetime(value)
+
+        if field_type == DynamicField.MULTI_SELECT:
+            # Stored as a native array (e.g., varchar[]). Return as-is (or empty list).
+            return list(value) if value is not None else []
+
+        return value
+
+    @classmethod
+    def extract_values_for(cls, entity) -> dict:
+        """Extract current values for all active non-core dynamic fields on an entity.
+
+        Returns a flat dict {field_name: serialized_value} suitable for merging
+        into the entity's to_dict output.
+        """
+        # Infer entity_type from table name (e.g., Bulletin -> "bulletin")
+        entity_type = getattr(entity, "__tablename__", None)
+        if not entity_type:
+            return {}
+
+        values = {}
+        fields = (
+            cls.query.filter(
+                cls.entity_type == entity_type,
+                cls.active.is_(True),
+                cls.core.is_(False),
+            )
+            .order_by(cls.sort_order)
+            .all()
+        )
+        for field in fields:
+            # Read raw value directly from model attribute
+            raw = getattr(entity, field.name, None)
+            values[field.name] = cls._serialize_value(field.field_type, raw)
+        return values
 
     def to_dict(self):
         """Return dictionary representation of the field"""
