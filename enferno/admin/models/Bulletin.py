@@ -20,6 +20,7 @@ from enferno.admin.models.Itob import Itob
 from enferno.admin.models.Location import Location
 from enferno.admin.models.GeoLocation import GeoLocation
 from enferno.admin.models.Event import Event
+from enferno.admin.models.DynamicField import DynamicField
 
 
 from enferno.admin.models.tables import (
@@ -690,7 +691,7 @@ class Bulletin(db.Model, BaseMixin):
         if mode == "1":
             return self.min_json()
 
-        # Get base dictionary with dynamic fields
+        # Get base dictionary
         data = super().to_dict()
 
         # locations json
@@ -753,7 +754,7 @@ class Bulletin(db.Model, BaseMixin):
             for relation in self.incident_relations:
                 incident_relations_dict.append(relation.to_dict())
 
-        # Update with bulletin-specific fields
+        # Update with bulletin-specific core fields
         data.update(
             {
                 "class": self.__tablename__,
@@ -793,6 +794,15 @@ class Bulletin(db.Model, BaseMixin):
                 "roles": [role.to_dict() for role in self.roles] if self.roles else [],
             }
         )
+
+        # Merge dynamic fields (non-core) into the response
+        try:
+            dynamic_values = DynamicField.extract_values_for(self)
+            if dynamic_values:
+                data.update(dynamic_values)
+        except Exception:
+            # Fail-safe: never break serialization because of dynamic fields
+            logger.error("Failed to merge dynamic fields for Bulletin %s", self.id, exc_info=True)
 
         return data
 
