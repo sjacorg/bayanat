@@ -389,6 +389,7 @@ class DynamicField(db.Model, BaseMixin):
             return {}
 
         values = {}
+
         fields = (
             cls.query.filter(
                 cls.entity_type == entity_type,
@@ -403,6 +404,53 @@ class DynamicField(db.Model, BaseMixin):
             raw = getattr(entity, field.name, None)
             values[field.name] = cls._serialize_value(field.field_type, raw)
         return values
+
+    @classmethod
+    def apply_values(cls, entity, data: dict) -> None:
+        """Apply incoming dynamic field values to an entity in-place.
+
+        - Only applies non-core active fields for the entity type
+        - Minimal coercion: datetime parsing and list wrapping for multi_select, int for number
+        """
+        entity_type = getattr(entity, "__tablename__", None)
+        if not entity_type or not isinstance(data, dict):
+            return
+
+        fields = (
+            cls.query.filter(
+                cls.entity_type == entity_type,
+                cls.active.is_(True),
+                cls.core.is_(False),
+            )
+            .order_by(cls.sort_order)
+            .all()
+        )
+
+        for field in fields:
+            name = field.name
+            if name not in data:
+                continue
+            value = data.get(name)
+
+            # Ensure the mapped attribute exists (column was created). If not, skip silently.
+            if not hasattr(entity.__class__, name):
+                continue
+
+            if value is None:
+                setattr(entity, name, None)
+                continue
+
+            if field.field_type == cls.DATETIME:
+                setattr(entity, name, DateHelper.parse_datetime(value))
+            elif field.field_type == cls.MULTI_SELECT:
+                setattr(entity, name, list(value) if isinstance(value, (list, tuple)) else [value])
+            elif field.field_type == cls.NUMBER:
+                try:
+                    setattr(entity, name, int(value) if value is not None else None)
+                except (TypeError, ValueError):
+                    setattr(entity, name, None)
+            else:
+                setattr(entity, name, value)
 
     def to_dict(self):
         """Return dictionary representation of the field"""
