@@ -152,13 +152,13 @@
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
                                             v-model="editedItem.documentation_date"></pop-date-time-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'related_bulletins')" :class="[field?.ui_config?.width || 'w-100', 'px-3']">
+                                    <div v-else-if="isActiveField(field, 'related_bulletins')" :class="[field?.ui_config?.width || 'w-100', 'pa-3']">
                                         {% include 'admin/partials/edit_related_bulletins.html' %}
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'related_actors')" :class="[field?.ui_config?.width || 'w-100', 'px-3']">
+                                    <div v-else-if="isActiveField(field, 'related_actors')" :class="[field?.ui_config?.width || 'w-100', 'pa-3']">
                                         {% include 'admin/partials/edit_related_actors.html' %}
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'related_incidents')" :class="[field?.ui_config?.width || 'w-100', 'px-3']">
+                                    <div v-else-if="isActiveField(field, 'related_incidents')" :class="[field?.ui_config?.width || 'w-100', 'pa-3']">
                                         {% include 'admin/partials/edit_related_incidents.html' %}
                                     </div>
                                     <div v-else-if="isActiveField(field, 'comments')" :class="[field?.ui_config?.width || 'w-100', 'pa-3']">
@@ -170,7 +170,7 @@
                                         <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"
                                             v-model="editedItem.status" label="{{ _('Status') }}"></v-select>
                                     </div>
-                                    <field-renderer v-else-if="isActiveField(field)" :field="field" :class="[field?.ui_config?.width || 'w-100', 'px-2']"></field-renderer>
+                                    <field-renderer v-else-if="isActiveField(field)" v-model="editedItem[field.name]" :field="field" :class="[field?.ui_config?.width || 'w-100', 'px-2']"></field-renderer>
                                 </template>
                             </div>
 
