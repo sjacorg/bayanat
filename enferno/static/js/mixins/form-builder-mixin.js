@@ -17,7 +17,7 @@ const formBuilderMixin = {
         return a.sort_order - b.sort_order; // normal sort
       });
     },
-    async fetchDynamicFields(entityType) {
+    async fetchDynamicFields({ entityType }) {
       try {
         this.formBuilder.loading = true;
         const response = await api.get(`/admin/api/dynamic-fields/?entity_type=${entityType}&limit=50`);

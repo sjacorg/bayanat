@@ -123,7 +123,7 @@
       },
     }),
     async mounted() {
-      await this.fetchDynamicFields('bulletin');
+      await this.fetchDynamicFields({ entityType: 'bulletin' });
 
       this.initSortable(this.$refs.mainList);
     },
@@ -270,7 +270,7 @@
             throw failed?.[0]?.reason
           } else {
             this.showSnack('{{ _("Fields saved successfully") }}');
-            await this.fetchDynamicFields(); // reload fresh
+            await this.fetchDynamicFields({ entityType: 'bulletin' }); // reload fresh
           }
         } catch (err) {
           console.error(err);
