@@ -8,6 +8,9 @@ from sqlalchemy import (
     Float,
     ARRAY as SQLArray,
     ForeignKey,
+    Table,
+    MetaData,
+    update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import text
@@ -399,23 +402,51 @@ class DynamicField(db.Model, BaseMixin):
             .order_by(cls.sort_order)
             .all()
         )
-        for field in fields:
-            # Read raw value directly from model attribute
-            raw = getattr(entity, field.name, None)
-            values[field.name] = cls._serialize_value(field.field_type, raw)
+
+        if not fields:
+            return values
+
+        # Use SQLAlchemy Core to read current values from DB
+        try:
+            meta = MetaData()
+            table = Table(entity_type, meta, autoload_with=db.engine)
+
+            # Build select for existing columns only
+            field_names = [f.name for f in fields if f.name in table.columns]
+            if not field_names:
+                return values
+
+            # Select current values
+            stmt = table.select().where(table.c.id == entity.id)
+            result = db.session.execute(stmt).first()
+
+            if result:
+                for field in fields:
+                    if field.name in table.columns:
+                        raw = getattr(result, field.name, None)
+                        values[field.name] = cls._serialize_value(field.field_type, raw)
+
+        except Exception as e:
+            logger.error(
+                f"Failed to extract dynamic field values for {entity_type}#{entity.id}: {e}",
+                exc_info=True,
+            )
+
         return values
 
     @classmethod
     def apply_values(cls, entity, data: dict) -> None:
-        """Apply incoming dynamic field values to an entity in-place.
+        """Apply incoming dynamic field values via SQLAlchemy Core (reliable, no ORM mapping needed).
 
-        - Only applies non-core active fields for the entity type
-        - Minimal coercion: datetime parsing and list wrapping for multi_select, int for number
+        - Uses fresh table metadata from DB to check column existence
+        - Coerces values by field type before update
+        - Updates via Core SQL, no setattr needed
         """
         entity_type = getattr(entity, "__tablename__", None)
         if not entity_type or not isinstance(data, dict):
             return
 
+        # Get active non-core dynamic fields
         fields = (
             cls.query.filter(
                 cls.entity_type == entity_type,
@@ -426,31 +457,49 @@ class DynamicField(db.Model, BaseMixin):
             .all()
         )
 
+        # Build coerced updates dict
+        updates = {}
         for field in fields:
             name = field.name
             if name not in data:
                 continue
             value = data.get(name)
 
-            # Ensure the mapped attribute exists (column was created). If not, skip silently.
-            if not hasattr(entity.__class__, name):
-                continue
-
+            # Coerce value by field type
             if value is None:
-                setattr(entity, name, None)
-                continue
-
-            if field.field_type == cls.DATETIME:
-                setattr(entity, name, DateHelper.parse_datetime(value))
+                updates[name] = None
+            elif field.field_type == cls.DATETIME:
+                updates[name] = DateHelper.parse_datetime(value)
             elif field.field_type == cls.MULTI_SELECT:
-                setattr(entity, name, list(value) if isinstance(value, (list, tuple)) else [value])
+                updates[name] = list(value) if isinstance(value, (list, tuple)) else [value]
             elif field.field_type == cls.NUMBER:
                 try:
-                    setattr(entity, name, int(value) if value is not None else None)
+                    updates[name] = int(value) if value is not None else None
                 except (TypeError, ValueError):
-                    setattr(entity, name, None)
+                    updates[name] = None
             else:
-                setattr(entity, name, value)
+                updates[name] = value
+
+        if not updates:
+            return
+
+        # Use SQLAlchemy Core with fresh table metadata
+        try:
+            meta = MetaData()
+            table = Table(entity_type, meta, autoload_with=db.engine)
+
+            # Filter to only existing columns
+            safe_updates = {k: v for k, v in updates.items() if k in table.columns}
+
+            if safe_updates:
+                stmt = update(table).where(table.c.id == entity.id).values(safe_updates)
+                db.session.execute(stmt)
+
+        except Exception as e:
+            logger.error(
+                f"Failed to apply dynamic fields via Core on {entity_type}#{entity.id}: {e}",
+                exc_info=True,
+            )
 
     def to_dict(self):
         """Return dictionary representation of the field"""
