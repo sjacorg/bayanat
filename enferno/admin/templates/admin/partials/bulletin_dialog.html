@@ -80,7 +80,7 @@
                         <template #right>
                             <div v-if="formBuilder.dynamicFields.length" class="d-flex flex-wrap mt-4">
                                 <template v-for="(field, index) in formBuilder.dynamicFields" :key="field.id">
-                                    <div v-if="isActiveField(field, 'title')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-if="isActiveField(field, 'title')" :class="fieldClass(field)">
                                         <dual-field v-model:original="editedItem.title" v-model:translation="editedItem.title_ar"
                                             label-original="{{ _('Original Title') }}" label-translation="{{ _('Original Title (Ar)') }}" :rules="[
                                                 validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
@@ -88,47 +88,47 @@
                                             ]">
                                         </dual-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'sjac_title')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'sjac_title')" :class="fieldClass(field)">
                                         <dual-field v-model:original="editedItem.sjac_title" v-model:translation="editedItem.sjac_title_ar"
                                             label-original="{{ _('Title') }}" label-translation="{{ _('Title (Ar)') }}"
                                             :rules="[validationRules.maxLength(255)]"></dual-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'tags')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'tags')" :class="fieldClass(field)">
                                         <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'sources')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'sources')" :class="fieldClass(field)">
                                         <search-field v-model="editedItem.sources" api="/admin/api/sources/" item-title="title" item-value="id"
                                             :multiple="true" label="{{ _('Sources') }}"></search-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'description')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'description')" :class="fieldClass(field)">
                                         <tinymce-editor :init="tinyConfig" :key="descKey" v-model="editedItem.description"></tinymce-editor>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'labels')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'labels')" :class="fieldClass(field)">
                                         <search-field v-model="editedItem.labels" api="/admin/api/labels/" :query-params="{ typ: 'for_bulletin' }"
                                             item-title="title" item-value="id" :multiple="true" :show-copy-icon="advFeatures"
                                             label="{{ _('Labels') }}"></search-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'ver_labels')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'ver_labels')" :class="fieldClass(field)">
                                         <search-field v-model="editedItem.verLabels" api="/admin/api/labels/"
                                             :query-params="{ fltr: 'verified', typ: 'for_bulletin' }" item-title="title" item-value="id" :multiple="true"
                                             :show-copy-icon="advFeatures" label="{{ _('Verified Labels') }}"></search-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'locations')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'locations')" :class="fieldClass(field)">
                                         <location-search-field v-model="editedItem.locations" api="/admin/api/locations/" item-title="full_string"
                                             item-value="id" :multiple="true" :show-copy-icon="advFeatures" label="{{ _('Locations') }}"></location-search-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'events_section')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'events_section')" :class="fieldClass(field)">
                                         <events-section :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures"
                                         :event-params="eventParams"></events-section>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'geo_locations')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'geo_locations')" :class="fieldClass(field)">
                                         <geo-locations @locations-updated="geoLocationsUpdated" :others="editedItem.geoLocations"
                                             v-model="editedItem.geoLocations" :dialog-props="rightContainedDialogProps"></geo-locations>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'global_map')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'global_map')" :class="fieldClass(field)">
                                         <global-map  ref="globalmap" :model-value="compLocations"></global-map>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'source_link')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'source_link')" :class="fieldClass(field)">
                                         <v-sheet class="d-flex align-center">
                                             <v-text-field class="mx-2" :disabled="source_disabled" v-model="editedItem.source_link"
                                                 label="{{ _('Source Link') }}" :rules="[
@@ -144,33 +144,33 @@
                                             </v-switch>
                                         </v-sheet>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'publish_date')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'publish_date')" :class="fieldClass(field)">
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
                                             v-model="editedItem.publish_date"></pop-date-time-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'documentation_date')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'documentation_date')" :class="fieldClass(field)">
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
                                             v-model="editedItem.documentation_date"></pop-date-time-field>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'related_bulletins')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'related_bulletins')" :class="fieldClass(field)">
                                         {% include 'admin/partials/edit_related_bulletins.html' %}
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'related_actors')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'related_actors')" :class="fieldClass(field)">
                                         {% include 'admin/partials/edit_related_actors.html' %}
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'related_incidents')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'related_incidents')" :class="fieldClass(field)">
                                         {% include 'admin/partials/edit_related_incidents.html' %}
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'comments')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'comments')" :class="fieldClass(field)">
                                         <v-textarea required :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
                                             label="{{ _('Comments') }}">
                                         </v-textarea>
                                     </div>
-                                    <div v-else-if="isActiveField(field, 'status')" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']">
+                                    <div v-else-if="isActiveField(field, 'status')" :class="fieldClass(field)">
                                         <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"
                                             v-model="editedItem.status" label="{{ _('Status') }}"></v-select>
                                     </div>
-                                    <field-renderer v-else-if="isActiveField(field)" v-model="editedItem[field.name]" :field="field" :class="[field?.ui_config?.width || 'w-100', 'px-3 py-2']"></field-renderer>
+                                    <field-renderer v-else-if="isActiveField(field)" v-model="editedItem[field.name]" :field="field" :class="fieldClass(field)"></field-renderer>
                                 </template>
                             </div>
 

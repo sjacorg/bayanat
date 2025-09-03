@@ -7,6 +7,9 @@ const formBuilderMixin = {
     }
   }),
   methods: {
+    fieldClass(field) {
+      return [field?.ui_config?.width || 'w-100', 'px-3 py-2']
+    },
     isActiveField(field, name) {
       if (!name) return field.active
 
