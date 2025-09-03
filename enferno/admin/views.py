@@ -6712,26 +6712,18 @@ def api_dynamic_field_create() -> Response:
 
         field_data = data["item"]
 
-        # Simple fix: Remove None values to avoid conversion issues
-        def clean_dict(d):
-            if isinstance(d, dict):
-                return {k: clean_dict(v) for k, v in d.items() if v is not None}
-            elif isinstance(d, list):
-                return [clean_dict(item) for item in d if item is not None]
-            return d
+        # Just basic null checks - let model handle all validation
+        if not field_data.get("title", "").strip():
+            return HTTPResponse.error("Title is required", status=400)
 
-        field_data = clean_dict(field_data)
+        # Auto-generate name from title if not provided
+        if not field_data.get("name"):
+            import time
 
-        # Generate name from title if not provided
-        if "name" not in field_data and "title" in field_data:
-            name = field_data["title"].lower()
-            # Replace spaces and non-alphanumeric with underscores
-            name = re.sub(r"[^a-z0-9_]", "_", name)
-            # Remove consecutive underscores and trim
-            name = re.sub(r"_+", "_", name).strip("_")
-            # Ensure it starts with a letter
+            name = re.sub(r"[^a-z0-9_]", "_", field_data["title"].lower())
+            name = re.sub(r"_+", "_", name).strip("_")[:50]
             if not name or not name[0].isalpha():
-                name = f"field_{name}" if name else "field"
+                name = f"field_{int(time.time())}"
             field_data["name"] = name
 
         # Check for duplicate field name within entity type
@@ -6766,7 +6758,13 @@ def api_dynamic_field_create() -> Response:
             sort_order=field_data.get("sort_order") or 0,
         )
 
-        # Save the field first
+        # Validate using model logic before saving
+        try:
+            field.validate_field()
+        except ValueError as e:
+            return HTTPResponse.error(str(e), status=400)
+
+        # Save the field
         if not field.save():
             return HTTPResponse.error("Failed to save field", status=500)
 
@@ -6824,6 +6822,12 @@ def api_dynamic_field_update(field_id: int) -> Response:
 
         field_data = data["item"]
 
+        # Minimal validation for update - only title can't be empty
+        if "title" in field_data:
+            if not field_data["title"].strip():
+                return HTTPResponse.error("Title cannot be empty", status=400)
+            field_data["title"] = field_data["title"].strip()[:100]
+
         # Get the existing field
         stmt = select(DynamicField).where(DynamicField.id == field_id)
         field = db.session.execute(stmt).scalars().first()
@@ -6836,7 +6840,7 @@ def api_dynamic_field_update(field_id: int) -> Response:
         original_field_type = field.field_type
 
         # Disable field name changes for safety
-        if field_data["name"] != original_name:
+        if field_data.get("name") and field_data["name"] != original_name:
             return HTTPResponse.error(
                 "Field name cannot be changed. Create a new field instead.",
                 status=400,
