@@ -1,5 +1,6 @@
 const FieldRenderer = Vue.defineComponent({
-    props: ['field'],
+    props: ['field', 'modelValue'],
+    emits: ['update:modelValue'],
     data() {
         return {
             translations: window.translations,
@@ -31,7 +32,8 @@ const FieldRenderer = Vue.defineComponent({
                 fieldId: field.id,
                 label: field.title || this.translations.newField_,
                 name: field.name,
-                modelValue: field.schema_config?.default ?? null,
+                modelValue: this.modelValue ?? field.schema_config?.default ?? null,
+                'onUpdate:modelValue': (newValue) => this.$emit('update:modelValue', newValue),
                 disabled: !field.active,
                 hint: field?.ui_config?.help_text,
                 rules: this.buildValidationRules(field)
