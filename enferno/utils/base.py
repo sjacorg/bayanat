@@ -5,7 +5,7 @@ from sqlalchemy.orm import declared_attr
 from enferno.extensions import db
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
-from enferno.admin.models.DynamicField import DynamicField
+
 
 logger = get_logger()
 
@@ -57,6 +57,8 @@ class BaseMixin(object):
             return f"---- needs implementation -----> {column_name}"
 
     def get_dynamic_fields(self):
+        from enferno.admin.models.DynamicField import DynamicField
+
         """Get all dynamic fields for this entity type - exclude core fields to avoid collisions with existing model attributes"""
 
         # Get the entity type from the table name
