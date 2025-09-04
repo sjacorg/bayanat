@@ -1208,6 +1208,9 @@ class BulletinQueryValidationModel(QueryBaseModel):
     childsources: Optional[bool] = False
     locTypes: Optional[list[str]] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel] = None
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "case_number", "op": "contains", "value": "2024-"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
     @field_validator("tags")
     def validate_tags(cls, v):
