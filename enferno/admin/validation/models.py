@@ -218,6 +218,9 @@ class PartialMediaModel(BaseValidationModel):
 
 
 class BulletinValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     originid: Optional[str] = None
     title: str = Field(min_length=1)
     sjac_title: Optional[str] = None
