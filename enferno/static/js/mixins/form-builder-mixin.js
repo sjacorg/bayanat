@@ -24,6 +24,11 @@ const formBuilderMixin = {
 
       return field.active && field.name === name;
     },
+    findFieldOptionByValue(field, value) {
+      if (!Array.isArray(field.options)) return
+
+      return field.options.find(option => option?.value === value)
+    },
     sortDynamicFields() {
       this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.sort((a, b) => {
         return a.sort_order - b.sort_order; // normal sort

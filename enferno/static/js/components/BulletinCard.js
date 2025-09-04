@@ -224,34 +224,33 @@ const BulletinCard = Vue.defineComponent({
 
       <div class="d-flex flex-wrap">
         <template v-for="(field) in $root.dynamicFieldsBulletinCard">
-          <div v-if="$root.isFieldActive(field, 'title')" :class="$root.fieldClass(field)">
+          <div v-if="$root.isFieldActive(field, 'title')" :class="$root.fieldClassDrawer(field)">
             <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'sjac_title')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'sjac_title')" :class="$root.fieldClassDrawer(field)">
             <uni-field :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'description')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'description')" :class="$root.fieldClassDrawer(field)">
             <v-card v-if="bulletin.description" class="ma-2 mb-4">
               <v-toolbar density="compact">
                 <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
               </v-toolbar>
 
-              <v-card-text class="text-body-2 "><read-more><div v-html="bulletin.description"></div></read-more></v-card-text>
+              <v-card-text class="text-body-2 pt-0"><read-more><div v-html="bulletin.description"></div></read-more></v-card-text>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'global_map')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'global_map')" :class="$root.fieldClassDrawer(field)">
             <v-card variant="flat">
               <global-map v-model="mapLocations"></global-map>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'sources')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'sources')" :class="$root.fieldClassDrawer(field)">
             <v-card class="ma-2"  v-if="bulletin.sources && bulletin.sources.length">
               <v-toolbar density="compact">
                 <v-toolbar-title class="text-subtitle-1">{{ translations.sources_ }}</v-toolbar-title>
 
               </v-toolbar>
-              <v-card-text>
-
+              <v-card-text class="pt-0">
                 <div class="flex-chips">
                   <v-chip size="small" class="flex-chip" v-for="source in bulletin.sources"
                           :key="source.id">
@@ -261,26 +260,25 @@ const BulletinCard = Vue.defineComponent({
               </v-card-text>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'events_section')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'events_section')" :class="$root.fieldClassDrawer(field)">
             <v-card class="ma-2" v-if="bulletin.events && bulletin.events.length">
               <v-toolbar density="compact">
                 <v-toolbar-title class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
               </v-toolbar>
 
-              <v-card-text class="pa-2">
+              <v-card-text class="pt-0 px-2 pb-2">
                 <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id"
                             :event="event"></event-card>
               </v-card-text>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'labels')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'labels')" :class="$root.fieldClassDrawer(field)">
             <v-card class="ma-2" v-if="bulletin.labels && bulletin.labels.length">
               <v-toolbar density="compact">
                 <v-toolbar-title class="text-subtitle-1">{{ translations.labels_ }}</v-toolbar-title>
               </v-toolbar>
 
-              <v-card-text>
-
+              <v-card-text class="pt-0">
                 <div class="flex-chips">
                   <v-chip label size="small" class="flex-chip" v-for="label in bulletin.labels"
                           :key="label.id">
@@ -290,12 +288,12 @@ const BulletinCard = Vue.defineComponent({
               </v-card-text>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'ver_labels')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'ver_labels')" :class="$root.fieldClassDrawer(field)">
             <v-card class="ma-2" v-if="bulletin.verLabels && bulletin.verLabels.length">
               <v-toolbar density="compact">
                 <v-toolbar-title class="text-subtitle-1">{{ translations.verifiedLabels_ }}</v-toolbar-title>
               </v-toolbar>
-              <v-card-text>
+              <v-card-text class="pt-0">
                 <div class="flex-chips">
                   <v-chip label size="small" class="flex-chip" v-for="vlabel in bulletin.verLabels"
                           :key="vlabel.id">
@@ -305,12 +303,12 @@ const BulletinCard = Vue.defineComponent({
               </v-card-text>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'locations')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'locations')" :class="$root.fieldClassDrawer(field)">
             <v-card class="ma-2"  v-if="bulletin.locations && bulletin.locations.length">
               <v-toolbar density="compact">
                 <v-toolbar-title class="text-subtitle-1">{{ translations.locations_ }}</v-toolbar-title>
               </v-toolbar>
-              <v-card-text>
+              <v-card-text class="pt-0">
                 <div class="flex-chips">
                   <v-chip label size="small" prepend-icon="mdi-map-marker" class="flex-chip" v-for="location in bulletin.locations"
                           :key="location.id">
@@ -320,25 +318,43 @@ const BulletinCard = Vue.defineComponent({
               </v-card-text>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'related_bulletins')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'related_bulletins')" :class="$root.fieldClassDrawer(field)">
             <related-bulletins-card v-if="bulletin" :entity="bulletin"
                               :relationInfo="$root.btobInfo"> </related-bulletins-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'related_actors')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'related_actors')" :class="$root.fieldClassDrawer(field)">
             <related-actors-card v-if="bulletin" :entity="bulletin"
                                 :relationInfo="$root.atobInfo" ></related-actors-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'related_incidents')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'related_incidents')" :class="$root.fieldClassDrawer(field)">
             <related-incidents-card v-if="bulletin" :entity="bulletin"
                                       :relationInfo="$root.itobInfo"></related-incidents-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'publish_date')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'publish_date')" :class="$root.fieldClassDrawer(field)">
             <uni-field :caption="translations.publishDate_" :english="$root.formatDate(bulletin.publish_date)"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'documentation_date')" :class="$root.fieldClass(field)">
+          <div v-else-if="$root.isFieldActive(field, 'documentation_date')" :class="$root.fieldClassDrawer(field)">
             <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(bulletin.documentation_date)"></uni-field>
           </div>
-          <div v-else>{{ field.title }}</div>
+          <div v-else-if="$root.isFieldActive(field)" :class="$root.fieldClassDrawer(field)">
+            <div v-if="Array.isArray(bulletin?.[field.name])">
+              <v-card class="ma-2" v-if="bulletin?.[field.name] && bulletin?.[field.name].length">
+                <v-toolbar density="compact">
+                    <v-toolbar-title class="text-subtitle-1">{{ field.title }}</v-toolbar-title>
+                </v-toolbar>
+                <v-card-text class="pt-0">
+                  <div class="flex-chips">
+                    <v-chip label size="small" class="flex-chip" v-for="value in bulletin?.[field.name]" :key="value">
+                      {{ $root.findFieldOptionByValue(field, value)?.label ?? value }}
+                    </v-chip>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </div>
+            <div v-else>
+              <uni-field v-if="bulletin?.[field.name]" :caption="field.title" :english="bulletin?.[field.name]"></uni-field>
+            </div>
+          </div>
         </template>
       </div>
 
