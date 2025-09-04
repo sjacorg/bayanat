@@ -108,21 +108,11 @@
                                        :text="item.active === true ? '{{ _('Active') }}' : '{{ _('Inactive') }}'">
                                 <template #activator="{props}">
                                     <v-icon
-                                            v-if="item.active === true"
-                                            color="success"
-                                            v-bind="props"
-                                            size="small"
-                                    >
-                                        mdi-account-check
-                                    </v-icon>
-                                    <v-icon
-                                            v-else
-                                            color="gray"
-                                            v-bind="props"
-                                            size="small"
-                                    >
-                                        mdi-account-cancel
-                                    </v-icon>
+                                        :color="item.active ? 'success' : 'grey'"
+                                        :icon="item.active ? 'mdi-account-check' : 'mdi-account-cancel'"
+                                        v-bind="props"
+                                        size="small"
+                                    />
                                 </template>
                             </v-tooltip>
                         </template>
