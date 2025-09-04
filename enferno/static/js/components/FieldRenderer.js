@@ -32,11 +32,12 @@ const FieldRenderer = Vue.defineComponent({
                 fieldId: field.id,
                 label: field.title || this.translations.newField_,
                 name: field.name,
-                modelValue: this.modelValue ?? field.schema_config?.default ?? null,
+                modelValue: this.modelValue || field.schema_config?.default || null,
                 'onUpdate:modelValue': (newValue) => this.$emit('update:modelValue', newValue),
                 disabled: !field.active,
                 hint: field?.ui_config?.help_text,
-                rules: this.buildValidationRules(field)
+                rules: this.buildValidationRules(field),
+                variant: 'outlined'
             };
 
             const numberProps = {
@@ -45,13 +46,13 @@ const FieldRenderer = Vue.defineComponent({
                     : 0,
                 min: field?.validation_config?.min,
                 max: field?.validation_config?.max,
-                controlVariant: 'hidden'
+                controlVariant: 'hidden',
             };
 
             const componentMap = {
                 input: { component: 'v-text-field', ...baseProps },
                 textarea: { component: 'v-textarea', ...baseProps },
-                number_input: { component: 'v-text-field', ...baseProps, ...numberProps },
+                number_input: { component: 'v-number-input', ...baseProps, ...numberProps },
                 dropdown: {
                     component: 'v-select',
                     ...baseProps,
@@ -68,7 +69,7 @@ const FieldRenderer = Vue.defineComponent({
                     'item-value': 'value',
                     multiple: true
                 },
-                date_picker: { component: 'v-text-field', ...baseProps },
+                date_picker: { component: 'pop-date-time-field', ...baseProps },
                 html_block: { 
                     component: 'v-text-field', 
                     ...baseProps,
