@@ -397,7 +397,7 @@ class DynamicField(db.Model, BaseMixin):
             cls.query.filter(
                 cls.entity_type == entity_type,
                 cls.active.is_(True),
-                cls.core.is_(False),
+                cls.core.is_(False),  # Exclude core fields - they're handled by model's to_dict
             )
             .order_by(cls.sort_order)
             .all()
@@ -451,7 +451,7 @@ class DynamicField(db.Model, BaseMixin):
             cls.query.filter(
                 cls.entity_type == entity_type,
                 cls.active.is_(True),
-                cls.core.is_(False),
+                cls.core.is_(False),  # Exclude core fields - they're handled by model's from_json
             )
             .order_by(cls.sort_order)
             .all()
