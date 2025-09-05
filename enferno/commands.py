@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
+from datetime import datetime, timezone
 
 import click
 from flask.cli import AppGroup
@@ -20,10 +21,53 @@ from enferno.utils.data_helpers import (
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
+from enferno.admin.models import Bulletin
+from enferno.admin.models.DynamicField import DynamicField
+from enferno.utils.date_helper import DateHelper
 
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
+
+
+def generate_core_fields():
+    """Generate core fields as DynamicField records in the database."""
+    from enferno.admin.models.core_fields import BULLETIN_CORE_FIELDS
+
+    # Check if core fields already exist
+    existing_core_fields = DynamicField.query.filter_by(core=True, entity_type="bulletin").count()
+    if existing_core_fields > 0:
+        logger.info("Core fields already exist, skipping generation")
+        return
+
+    logger.info("Generating core fields as DynamicField records")
+
+    for field_name, field_config in BULLETIN_CORE_FIELDS.items():
+        try:
+            core_field = DynamicField(
+                name=field_name,
+                title=field_config["title"],
+                entity_type="bulletin",
+                field_type=field_config["field_type"],
+                ui_component=field_config["ui_component"],
+                schema_config={},
+                ui_config={},
+                validation_config={},
+                options=field_config.get("options", []),
+                active=field_config["visible"],
+                searchable=False,
+                sort_order=field_config["sort_order"],
+                core=True,  # Mark as core field
+            )
+            core_field.save()
+            logger.info(f"Created core field: {field_name}")
+
+        except Exception as e:
+            logger.error(f"Error creating core field {field_name}: {str(e)}")
+            continue
+
+    db.session.commit()
+    logger.info("Core fields generation completed")
 
 
 @click.command()
@@ -61,6 +105,9 @@ def create_db(create_exts: bool) -> None:
     create_default_location_data()
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
+    generate_core_fields()
+    click.echo("Generated core fields successfully.")
+    logger.info("Generated core fields successfully.")
 
 
 @click.command()
@@ -308,6 +355,237 @@ def check_db_alignment() -> None:
     checker = DBAlignmentChecker()
     checker.check_db_alignment()
     logger.info("Database schema alignment check completed.")
+
+
+@click.command()
+@click.option("--cleanup", is_flag=True, help="Clean up test data after running")
+@with_appcontext
+def test_dynamic_fields(cleanup: bool) -> None:
+    """Test dynamic fields functionality by creating test fields of each type."""
+    logger.info("Starting dynamic fields test")
+
+    # Clean up any existing test fields first
+    logger.info("Cleaning up existing test fields")
+    try:
+        fields_to_cleanup = DynamicField.query.filter(DynamicField.name.like("test_%")).all()
+        for field in fields_to_cleanup:
+            field.drop_column()
+            field.delete()
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"Error during initial cleanup: {str(e)}")
+        db.session.rollback()
+        return
+
+    test_fields = [
+        {
+            "name": "test_string_field",
+            "title": "Test String Field",
+            "field_type": DynamicField.TEXT,
+            "ui_component": DynamicField.UIComponent.INPUT,
+            "schema_config": {"required": True, "default": "Hello World"},
+            "ui_config": {
+                "help_text": "A test string field",
+                "width": "w-100",
+            },
+            "validation_config": {"max_length": 100},
+            "options": [],
+            "test_value": "Hello World",
+        },
+        {
+            "name": "test_dropdown_field",
+            "title": "Test Dropdown Field",
+            "field_type": DynamicField.SINGLE_SELECT,
+            "ui_component": DynamicField.UIComponent.DROPDOWN,
+            "schema_config": {"required": False, "default": "Option 1"},
+            "ui_config": {
+                "help_text": "A test dropdown field",
+                "width": "w-50",
+            },
+            "validation_config": {},
+            "options": [
+                {"label": "Option 1", "value": "option1"},
+                {"label": "Option 2", "value": "option2"},
+                {"label": "Option 3", "value": "option3"},
+            ],
+            "test_value": "Option 1",
+        },
+        {
+            "name": "test_integer_field",
+            "title": "Test Integer Field",
+            "field_type": DynamicField.NUMBER,
+            "ui_component": DynamicField.UIComponent.NUMBER_INPUT,
+            "schema_config": {"required": False, "default": 42},
+            "ui_config": {
+                "help_text": "A test integer field",
+                "width": "w-50",
+            },
+            "validation_config": {"min": 0, "max": 100},
+            "options": [],
+            "test_value": 42,
+        },
+        {
+            "name": "test_datetime_field",
+            "title": "Test DateTime Field",
+            "field_type": DynamicField.DATETIME,
+            "ui_component": DynamicField.UIComponent.DATE_PICKER,
+            "schema_config": {
+                "required": False,
+                "default": DateHelper.serialize_datetime(datetime.now(timezone.utc)),
+            },
+            "ui_config": {
+                "help_text": "A test datetime field",
+                "width": "w-100",
+            },
+            "validation_config": {"format": "YYYY-MM-DD"},
+            "options": [],
+            "test_value": DateHelper.serialize_datetime(datetime.now(timezone.utc)),
+        },
+        {
+            "name": "test_array_field",
+            "title": "Test Array Field",
+            "field_type": DynamicField.MULTI_SELECT,
+            "ui_component": DynamicField.UIComponent.MULTI_DROPDOWN,
+            "schema_config": {"required": False, "default": ["Tag 1", "Tag 2"]},
+            "ui_config": {
+                "help_text": "A test array field",
+                "width": "w-100",
+            },
+            "validation_config": {},
+            "options": [
+                {"label": "Tag 1", "value": "tag1"},
+                {"label": "Tag 2", "value": "tag2"},
+                {"label": "Tag 3", "value": "tag3"},
+            ],
+            "test_value": ["Tag 1", "Tag 2"],
+        },
+        {
+            "name": "test_text_field",
+            "title": "Test Text Field",
+            "field_type": DynamicField.LONG_TEXT,
+            "ui_component": DynamicField.UIComponent.TEXTAREA,
+            "schema_config": {
+                "required": False,
+                "default": "This is a longer text field\nwith multiple lines",
+            },
+            "ui_config": {
+                "help_text": "A test text field",
+                "width": "w-100",
+            },
+            "validation_config": {},
+            "options": [],
+            "test_value": "This is a longer text field\nwith multiple lines",
+        },
+    ]
+
+    created_fields = []
+    try:
+        # Create fields
+        for field_data in test_fields:
+            try:
+                logger.info(f"Creating {field_data['name']}")
+                field = DynamicField(
+                    name=field_data["name"],
+                    title=field_data["title"],
+                    entity_type="bulletin",
+                    field_type=field_data["field_type"],
+                    ui_component=field_data["ui_component"],
+                    schema_config=field_data.get("schema_config", {}),
+                    ui_config=field_data.get("ui_config", {}),
+                    validation_config=field_data.get("validation_config", {}),
+                    options=field_data.get("options", []),
+                )
+                field.save()
+                field.create_column()
+                created_fields.append(field)
+                db.session.commit()
+                click.echo(f"Created {field_data['name']} successfully")
+            except Exception as e:
+                logger.error(f"Error creating field {field_data['name']}: {str(e)}")
+                db.session.rollback()
+                if cleanup:
+                    cleanup_test_data()
+                return
+
+        # Create and test bulletin
+        try:
+            logger.info("Creating test bulletin")
+            bulletin = Bulletin(title="Test Bulletin", description="Testing dynamic fields")
+            bulletin.save()
+
+            # Test setting values
+            for field_data in test_fields:
+                setattr(bulletin, field_data["name"], field_data["test_value"])
+
+            bulletin.save()
+            db.session.commit()
+            click.echo("\nTest bulletin created successfully!")
+
+            # Verify values
+            click.echo("\nField values:")
+            for field_data in test_fields:
+                value = getattr(bulletin, field_data["name"])
+                ui = field_data.get("ui_config", {})
+                schema = field_data.get("schema_config", {})
+                click.echo(
+                    f"{field_data['title']}: {value} (group: {ui.get('group')}, width: {ui.get('width')}, help_text: {ui.get('help_text')}, default: {schema.get('default')}, readonly: {ui.get('readonly')}, hidden: {ui.get('hidden')})"
+                )
+
+        except Exception as e:
+            logger.error(f"Error testing bulletin: {str(e)}")
+            db.session.rollback()
+            if cleanup:
+                cleanup_test_data()
+            return
+
+        # Refresh schema at the end
+        db.Model.metadata.clear()
+        db.session.remove()
+        db.create_all()
+
+        if cleanup:
+            cleanup_test_data()
+            click.echo("\nCleanup complete!")
+        else:
+            click.echo("\nTest data remains in database. Use --cleanup flag to remove test data.")
+
+    except Exception as e:
+        logger.error(f"Error in test_dynamic_fields: {str(e)}")
+        db.session.rollback()
+        if cleanup:
+            cleanup_test_data()
+
+
+def cleanup_test_data():
+    """Clean up test dynamic fields and bulletin."""
+    logger.info("Cleaning up test data")
+
+    try:
+        # Delete test bulletin first
+        test_bulletin = Bulletin.query.filter_by(title="Test Bulletin").first()
+        if test_bulletin:
+            test_bulletin.delete()
+            db.session.commit()
+
+        # Drop columns and delete dynamic fields
+        fields = DynamicField.query.filter(DynamicField.name.like("test_%")).all()
+        for field in fields:
+            try:
+                field.drop_column()
+                field.delete()
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Error cleaning up field {field.name}: {str(e)}")
+                db.session.rollback()
+
+        # Refresh SQLAlchemy models at the end
+        db.Model.metadata.clear()
+        db.session.remove()
+        db.create_all()
+
+    except Exception as e:
+        logger.error(f"Error in cleanup: {str(e)}")
+        db.session.rollback()
 
 
 @click.command()
