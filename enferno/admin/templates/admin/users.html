@@ -103,6 +103,20 @@
                             </v-tooltip>
                         </template>
 
+                        <template v-slot:item.active_status="{ item }">
+                            <v-tooltip location="top"
+                                       :text="item.active === true ? '{{ _('Active') }}' : '{{ _('Inactive') }}'">
+                                <template #activator="{props}">
+                                    <v-icon
+                                        :color="item.active ? 'success' : 'grey'"
+                                        :icon="item.active ? 'mdi-account-check' : 'mdi-account-cancel'"
+                                        v-bind="props"
+                                        size="small"
+                                    />
+                                </template>
+                            </v-tooltip>
+                        </template>
+
                         <template v-slot:item.roles="{ item }">
 
                             <v-chip size="small" v-for="role in item.roles" class="ma-1">
@@ -338,7 +352,7 @@
                     {title: "{{_('Username')}}", value: "username"},
                     {title: "{{_('Email')}}", value: "email"},
                     {title: "{{_('Name')}}", value: "name"},
-                    {title: "{{_('Google ID')}}", value: "google_id"},
+                    {title: "{{_('Account Status')}}", value: "active_status"},
                     {title: "{{_('Groups')}}", value: "roles"},
                     {title: "{{_('Two Factor Authentication')}}", value: "2fa"},
                     {title: "{{_('Actions')}}", value: "action", sortable: false}
