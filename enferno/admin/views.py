@@ -5507,7 +5507,7 @@ def api_incidents(validated_data: dict) -> Response:
     """
     # log search query
     q = validated_data.get("q", None)
-    if q and q != [{}]:
+    if q and q != {}:
         Activity.create(
             current_user,
             Activity.ACTION_SEARCH,
@@ -5516,7 +5516,7 @@ def api_incidents(validated_data: dict) -> Response:
             "incident",
         )
 
-    q = validated_data.get("q", [{}])
+    q = validated_data.get("q", {})
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
@@ -5526,7 +5526,7 @@ def api_incidents(validated_data: dict) -> Response:
 
     if include_count and cursor is None:
         # Check if this is a simple listing query (no search filters)
-        is_simple_listing = q == [{}] or not any(
+        is_simple_listing = q == {} or not any(
             bool(filter_dict) for filter_dict in q if filter_dict
         )
 
