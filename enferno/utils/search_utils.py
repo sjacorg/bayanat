@@ -396,7 +396,10 @@ class SearchUtils:
                     op = (item.get("op") or "eq").lower()
                     value = item.get("value")
                     if not name or name not in searchable_meta:
-                        logger.warning("dyn filter skipped: invalid name", extra={"name": name})
+                        logger.warning(
+                            "dyn filter skipped: invalid dynamic field name",
+                            extra={"field_name": name},
+                        )
                         continue
 
                     df = searchable_meta[name]
