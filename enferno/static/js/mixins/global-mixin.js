@@ -68,7 +68,7 @@ const globalMixin = {
       if (!date) return '';
 
       let d = dayjs(date);
-      
+
       if (options.utc) {
         d = d.utc();
       } else if (options.local) {
@@ -80,6 +80,13 @@ const globalMixin = {
 
       if (options.locale) {
           d = d.locale(options.locale);
+      }
+
+      // Hide time if date is T00:00
+      if (format === this.dateFormats.standardDatetime) {
+        if (d.hour() === 0 && d.minute() === 0 && d.second() === 0) {
+          format = this.dateFormats.standardDate;
+        }
       }
 
       switch ((format || '').toLowerCase()) {
