@@ -40,6 +40,7 @@ const GlobalMap = Vue.defineComponent({
   },
 
   mounted() {
+    window.showSnack = this.$root.showSnack;
     this.map = null;
     this.initMap();
   },
@@ -99,7 +100,7 @@ const GlobalMap = Vue.defineComponent({
       // Copy button for coordinates (added next to location)
       const copyCoordsBtn =
         loc.lat && loc.lng
-          ? `<button class="ml-1" title="Copy coordinates" onclick="navigator.clipboard.writeText('${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}')">
+          ? `<button class="ml-1" title="${t.copyCoordinates_}" onclick="navigator.clipboard.writeText('${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}'); window.showSnack('${translations.copiedToClipboard_}')">
           <i class="mdi mdi-content-copy"></i>
         </button>`
           : ''
