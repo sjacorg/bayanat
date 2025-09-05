@@ -68,32 +68,67 @@ const GlobalMap = Vue.defineComponent({
 
   methods: {
     generatePopupContent(loc) {
-      function renderIfExists(label, value) {
-        return value ? `${label ? `<b>${label}:</b>` : ''} ${value}` : ''
+      const t = this.translations
+
+      // Dates (use mdi-calendar-clock)
+      const dates = []
+      if (loc.from_date) {
+        dates.push(`<span class="chip">
+      ${this.$root.formatDate(loc.from_date)}
+    </span>`)
+      }
+      if (loc.to_date) {
+        dates.push(`<span><i class="mdi mdi-arrow-right mr-1"></i>${this.$root.formatDate(loc.to_date)}</span>`)
       }
 
-      // Dates
-      const dates = []
-      if (loc.from_date) dates.push(`<span class="chip"><i class="mdi mdi-calendar mr-1"></i>${this.$root.formatDate(loc.from_date)}</span>`)
-      if (loc.to_date) dates.push(`<span><i class="mdi mdi-arrow-right mr-1"></i>${this.$root.formatDate(loc.to_date)}</span>`)
-      const dateRange = dates.length ? `<div class="text-caption d-flex">${dates.join(' ')}</div>` : ''
-
-      // Estimated
+      // Estimated → calendar-question icon w/ tooltip
       const estimated = loc.estimated
-        ? `<div class="text-caption text-medium-emphasis d-flex ml-1"><i class="mdi mdi-information mr-1"></i>${this.translations.timingForThisEventIsEstimated_}</div>`
+        ? `<i class="mdi mdi-calendar-question mr-1" title="${loc.comment || t.timingForThisEventIsEstimated_}"></i>`
+        : '<i class="mdi mdi-calendar-clock mr-1"></i>'
+
+      const dateRange = dates.length
+        ? `<div class="d-flex">${estimated} ${dates.join(' ')}</div>`
         : ''
 
-      return `<div class="popup-content">
-      <h4>${renderIfExists('', loc.title)}</h4>
-      <div>${renderIfExists(this.translations.number_, loc.number)} ${renderIfExists(this.translations.parentId_, loc.parentId)}</div>
-      <div>${renderIfExists(this.translations.coordinates_, `${loc.lat?.toFixed(6)}, ${loc.lng?.toFixed(6)}`)}</div>
-      <div>${renderIfExists('', loc.full_string)}</div>
-      ${loc.main ? `<div>${this.translations.mainIncident_}</div>` : ''}
-      <div>${renderIfExists(this.translations.type_, loc.geotype?.title)}</div>
-      <div>${renderIfExists(this.translations.eventType_, loc.eventtype)}</div>
-      ${dateRange}
-      ${estimated}
-    </div>`
+      // ParentId check
+      const parentId =
+        loc?.parent?.id
+          ? `<div>#${loc.parent?.id}</div>`
+          : ''
+
+      // Copy button for coordinates (added next to location)
+      const copyCoordsBtn =
+        loc.lat && loc.lng
+          ? `<button class="ml-1" title="Copy coordinates" onclick="navigator.clipboard.writeText('${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}')">
+          <i class="mdi mdi-content-copy"></i>
+        </button>`
+          : ''
+
+      // Event type with icon (assuming eventtype.icon available)
+      const eventType = loc.eventtype
+        ? `<div class="d-flex align-center">
+         <i class="mdi mdi-calendar-range mr-1"></i>${loc.eventtype || ''}
+       </div>`
+        : ''
+  
+      // Event type with icon (assuming eventtype.icon available)
+      const locNumber = loc.number
+        ? `<div class="d-flex align-center">
+         #${loc.number || ''}
+       </div>`
+        : ''
+
+      return `<div class="popup-content d-flex flex-column ga-1">
+      <div class="d-flex ga-2">${locNumber} ${parentId} ${eventType}</div>
+      <h4>${loc.title || ''}</h4>
+        <div class="d-flex align-center">
+          <i class="mdi mdi-map-marker-outline mr-1"></i>
+          ${loc.full_string || ''}
+          ${copyCoordsBtn}
+        </div>
+        ${loc.main ? `<div>${t.mainIncident_}</div>` : ''}
+        ${dateRange}
+      </div>`
     },
 
     initMap() {
