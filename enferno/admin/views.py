@@ -6011,7 +6011,7 @@ def activity() -> str:
 @roles_required("Admin")
 def api_activities() -> Response:
     """Returns activities in JSON format, allows search and paging."""
-    su = SearchUtils(request.json, cls="Activity")
+    su = SearchUtils(request.json, cls="activity")
     query = su.get_query()
 
     options = request.json.get("options")
