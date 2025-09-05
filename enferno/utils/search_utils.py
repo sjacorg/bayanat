@@ -21,7 +21,12 @@ from enferno.admin.models import (
     ActorProfile,
     Activity,
 )
+from enferno.admin.models.DynamicField import DynamicField
 from enferno.user.models import Role
+from enferno.utils.logging_utils import get_logger
+
+
+logger = get_logger()
 
 
 # helper methods
@@ -364,6 +369,89 @@ class SearchUtils:
                 conditions.extend(
                     [Bulletin.events.any(condition) for condition in event_conditions]
                 )
+
+        # Dynamic custom fields
+        # Accept a permissive list of dicts under key "dyn"
+        # Example: {"name": "case_number", "op": "contains", "value": "2024-"}
+        try:
+            dyn_filters = q.get("dyn", []) or []
+            if isinstance(dyn_filters, list) and dyn_filters:
+                # Preload searchable field meta for bulletins
+                searchable_meta = {
+                    f.name: f
+                    for f in db.session.query(DynamicField)
+                    .filter(
+                        DynamicField.entity_type == "bulletin",
+                        DynamicField.active.is_(True),
+                        DynamicField.searchable.is_(True),
+                    )
+                    .all()
+                }
+
+                for item in dyn_filters:
+                    if not isinstance(item, dict):
+                        logger.warning("dyn filter skipped: invalid item", extra={"item": item})
+                        continue
+                    name = item.get("name")
+                    op = (item.get("op") or "eq").lower()
+                    value = item.get("value")
+                    if not name or name not in searchable_meta:
+                        logger.warning("dyn filter skipped: invalid name", extra={"name": name})
+                        continue
+
+                    df = searchable_meta[name]
+                    col = getattr(Bulletin, name, None)
+                    if col is None:
+                        # Column may not exist yet; skip safely
+                        logger.warning(
+                            "dyn filter skipped: bulletin column missing",
+                            extra={"field": name},
+                        )
+                        continue
+
+                    # Contains for TEXT, LONG_TEXT, and SINGLE_SELECT
+                    if (
+                        df.field_type
+                        in (
+                            DynamicField.TEXT,
+                            DynamicField.LONG_TEXT,
+                            DynamicField.SINGLE_SELECT,
+                        )
+                        and op == "contains"
+                    ):
+                        if isinstance(value, str) and value:
+                            conditions.append(col.ilike(f"%{value}%"))
+                        continue
+
+                    # SINGLE_SELECT equality
+                    if df.field_type == DynamicField.SINGLE_SELECT and op == "eq":
+                        if value is not None:
+                            conditions.append(col == value)
+                        continue
+
+                    # NUMBER equality (MVP)
+                    if df.field_type == DynamicField.NUMBER and op == "eq":
+                        try:
+                            num = int(value) if value is not None else None
+                            if num is not None:
+                                conditions.append(col == num)
+                        except (TypeError, ValueError):
+                            logger.warning(
+                                "dyn filter number cast failed",
+                                extra={"field": name, "value": value},
+                            )
+                        continue
+
+                    # DATETIME between
+                    if df.field_type == DynamicField.DATETIME and op == "between":
+                        if isinstance(value, (list, tuple)) and len(value) >= 1:
+                            dates = [d for d in value[:2] if d]
+                            if dates:
+                                conditions.append(date_between_query(col, dates))
+                        continue
+        except Exception as e:
+            # Fail-safe: dynamic filters should never break search
+            logger.warning("dyn filters evaluation failed", exc_info=e)
 
         # Access Roles
         if roles := q.get("roles"):
