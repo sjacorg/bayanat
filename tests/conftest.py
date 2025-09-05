@@ -1,23 +1,26 @@
+import os
 from unittest.mock import patch
 from uuid import uuid4
-from unittest.mock import patch
 
 import pytest
-from enferno.utils.config_utils import ConfigManager
+from enferno.admin.models.Notification import Notification
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 
-with patch.object(ConfigManager, "CONFIG_FILE_PATH", "config.sample.json"):
-    from enferno.settings import TestConfig as cfg
+from enferno.settings import TestConfig as cfg
 
-from enferno.settings import Config as prod_cfg
+from enferno.app import create_app
 
-# Because the app context is not available when the extensions are initialized,
-# Flask-Limiter extension directly uses the config object to initialize the storage.
-# We need to patch the production config before importing create_app to use the
-# test config for rate limiting
-with patch.object(prod_cfg, "REDIS_URL", cfg.REDIS_URL):
-    from enferno.app import create_app
+
+def pytest_sessionstart(session):
+    """Display test configuration at session start."""
+    terminal = session.config.pluginmanager.getplugin("terminalreporter")
+    if terminal:
+        terminal.write_line("")
+        terminal.write_line("🔧 TEST CONFIG:", bold=True, yellow=True)
+        terminal.write_line(f"   DB: {cfg.SQLALCHEMY_DATABASE_URI}", green=True)
+        terminal.write_line(f"   Redis: {cfg.REDIS_HOST}:{cfg.REDIS_PORT}", green=True)
+        terminal.write_line("")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -160,26 +163,44 @@ def setup_db_uninitialized(uninitialized_app):
 
 @pytest.fixture(scope="function")
 def session(setup_db, app):
-    """Create a new database session for a test."""
+    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
     from enferno.extensions import db
 
     with app.app_context():
-        with db.engine.begin() as conn:
-            trans = conn.begin_nested()
-            yield db.session
-            trans.rollback()
+        # Create connection and transaction with context managers for automatic cleanup
+        with db.engine.connect() as connection:
+            with connection.begin() as transaction:
+                # Configure session to use this connection
+                db.session.configure(bind=connection)
+
+                # Create nested transaction (savepoint) for test isolation
+                with connection.begin_nested() as savepoint:
+                    try:
+                        yield db.session
+                    finally:
+                        # Explicit rollback and session cleanup
+                        db.session.remove()
 
 
 @pytest.fixture(scope="function")
 def session_uninitialized(setup_db_uninitialized, uninitialized_app):
-    """Create a new database session for a test."""
+    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
     from enferno.extensions import db
 
     with uninitialized_app.app_context():
-        with db.engine.begin() as conn:
-            trans = conn.begin_nested()
-            yield db.session
-            trans.rollback()
+        # Create connection and transaction with context managers for automatic cleanup
+        with db.engine.connect() as connection:
+            with connection.begin() as transaction:
+                # Configure session to use this connection
+                db.session.configure(bind=connection)
+
+                # Create nested transaction (savepoint) for test isolation
+                with connection.begin_nested() as savepoint:
+                    try:
+                        yield db.session
+                    finally:
+                        # Explicit rollback and session cleanup
+                        db.session.remove()
 
 
 @pytest.fixture(scope="function")
@@ -234,6 +255,9 @@ def users(session):
         user.id for user in self_assign_dict.values()
     ]
     session.query(Activity).filter(Activity.user_id.in_(user_ids)).delete(synchronize_session=False)
+    session.query(Notification).filter(Notification.user_id.in_(user_ids)).delete(
+        synchronize_session=False
+    )
     session.delete(admin_user)
     session.delete(da_user)
     session.delete(mod_user)
@@ -247,9 +271,18 @@ def users(session):
 def uninitialized_users(session_uninitialized):
     """Create users for testing."""
     from enferno.user.models import User, Role
+    from tests.factories import UserFactory
 
     session = session_uninitialized
     admin_user = User.query.filter(User.roles.any(Role.name == "Admin")).first()
+    if not admin_user:
+        # Create admin user for setup wizard tests
+        admin_role = Role.query.filter_by(name="Admin").first()
+        admin_user = UserFactory()
+        admin_user.username = "testAdmin"
+        admin_user.roles.append(admin_role)
+        session.add(admin_user)
+        session.commit()
     yield admin_user
 
 
@@ -259,7 +292,7 @@ def uninitialized_admin_client(uninitialized_app, session_uninitialized, uniniti
     with uninitialized_app.app_context():
         admin_user = uninitialized_users
         with uninitialized_app.test_client(user=admin_user) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -268,7 +301,7 @@ def uninitialized_anonymous_client(uninitialized_app):
     """Test client for an unauthenticated user."""
     with uninitialized_app.app_context():
         with uninitialized_app.test_client() as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -279,7 +312,7 @@ def admin_client(app, session, users):
     with app.app_context():
         admin_user, _, _, _ = users
         with app.test_client(user=admin_user) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -290,7 +323,7 @@ def da_client(app, session, users):
     with app.app_context():
         _, da_user, _, _ = users
         with app.test_client(user=da_user) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -301,7 +334,7 @@ def mod_client(app, session, users):
     with app.app_context():
         _, _, mod_user, _ = users
         with app.test_client(user=mod_user) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -311,7 +344,7 @@ def anonymous_client(app, session):
     """Test client for an unauthenticated user."""
     with app.app_context():
         with app.test_client() as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -322,7 +355,7 @@ def admin_sa_client(app, session, users):
     with app.app_context():
         _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["admin"]) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -333,7 +366,7 @@ def da_sa_client(app, session, users):
     with app.app_context():
         _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["da"]) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -344,7 +377,7 @@ def mod_sa_client(app, session, users):
     with app.app_context():
         _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["mod"]) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
 
 
@@ -376,7 +409,7 @@ def roled_client(app, session, create_test_role):
     session.commit()
     with app.app_context():
         with app.test_client(user=new_user) as client:
-            client.follow_redirects = True
+            client.follow_redirects = False
             yield client
     new_user.roles = []
     session.query(Activity).filter(Activity.user_id == new_user.id).delete(

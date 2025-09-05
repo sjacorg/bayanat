@@ -3,7 +3,7 @@ from typing import Any, Dict
 from datetime import datetime
 from uuid import uuid4
 
-from flask import current_app, session
+from flask import current_app, session, has_app_context
 from flask_security import UserMixin, RoleMixin
 from flask_security import current_user
 from flask_security.utils import hash_password
@@ -12,8 +12,9 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import Mutable
 
 from enferno.extensions import db, rds
-from enferno.settings import Config as cfg
+from enferno.settings import Config
 from enferno.utils.base import BaseMixin
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
 # Redis key namespace to set flag for forcing password reset
@@ -256,7 +257,8 @@ class User(UserMixin, db.Model, BaseMixin):
                 if rds.exists(session_key):
                     rds.delete(session_key)
             except Exception as e:
-                errors.append(f"Failed to delete session {s.session_token}: {str(e)}")
+                logger.error(f"Failed to delete session {s.id}: {str(e)}", exc_info=True)
+                errors.append(f"Failed to delete session {s.id}")
         if errors:
             logger.error("Failed to delete some sessions: %s", errors)
 
@@ -319,7 +321,7 @@ class User(UserMixin, db.Model, BaseMixin):
             if set(self.roles) & set(obj.roles):
                 return True
 
-            if not cfg.ACCESS_CONTROL_RESTRICTIVE and not obj.roles:
+            if not Config.get("ACCESS_CONTROL_RESTRICTIVE") and not obj.roles:
                 return True
 
         # handle media access
@@ -332,7 +334,12 @@ class User(UserMixin, db.Model, BaseMixin):
             if parent:
                 if set(self.roles) & set(parent.roles):
                     return True
-                if not cfg.ACCESS_CONTROL_RESTRICTIVE and not parent.roles:
+                restrictive = (
+                    current_app.config.get("ACCESS_CONTROL_RESTRICTIVE")
+                    if has_app_context()
+                    else Config.get("ACCESS_CONTROL_RESTRICTIVE")
+                )
+                if not restrictive and not parent.roles:
                     return True
 
         return False
@@ -469,8 +476,8 @@ class Session(db.Model, BaseMixin):
     user = db.relationship("User", backref=db.backref("sessions", lazy=True))
 
     session_token = db.Column(db.String(255), unique=True, nullable=False)
-    last_active = db.Column(db.DateTime)
-    expires_at = db.Column(db.DateTime)
+    last_active = db.Column(db.DateTime())
+    expires_at = db.Column(db.DateTime())
     ip_address = db.Column(db.String(255))
 
     # Combined metadata field for location, browser, and operating system details
@@ -482,11 +489,11 @@ class Session(db.Model, BaseMixin):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "last_active": self.last_active,
-            "expires_at": self.expires_at,
+            "last_active": DateHelper.serialize_datetime(self.last_active),
+            "expires_at": DateHelper.serialize_datetime(self.expires_at),
             "ip_address": self.ip_address,
             "meta": self.meta,
             "is_active": self.is_active,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
+            "created_at": DateHelper.serialize_datetime(self.created_at),
+            "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }

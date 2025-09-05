@@ -35,15 +35,15 @@
                                         </template>
 
                                         <template v-slot:item.expires_on="{item}">
-                                            ${localDate(item.expires_on)}
+                                            ${formatDate(item.expires_on, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.created_at="{item}">
-                                            ${localDate(item.created_at)}
+                                            ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.imported_at="{item}">
-                                            ${localDate(item.imported_at)}
+                                            ${formatDate(item.imported_at, dateFormats.standardDatetime, dateOptions.local)}
                                         </template>
 
                                         <template v-slot:item.status="{item}">
@@ -99,6 +99,7 @@
 <script src="/static/js/components/BulletinCard.js"></script>
 <script src="/static/js/components/ActorProfiles.js"></script>
 <script src="/static/js/components/ActorCard.js"></script>
+<script src="/static/js/components/ReadMore.js"></script>
 <script src="/static/js/components/IncidentCard.js"></script>
 <script src="/static/js/components/EventCard.js"></script>
 
@@ -144,7 +145,6 @@
             data: () => ({
 
                 translations: translations,
-
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
                 q: {},
@@ -217,7 +217,7 @@
                 this.loading = true;
                 let url = `/import/api/imports/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
 
-                axios.post(url, {
+                api.post(url, {
                     q: this.q,
                     options: this.options
                 }).then(response => {
@@ -244,7 +244,7 @@
 
                 this.logLoader = true;
                 this.logDialog = true;
-                axios.get(`/import/api/imports/${item.id}`).then(response => {
+                api.get(`/import/api/imports/${item.id}`).then(response => {
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
@@ -258,7 +258,7 @@
             showLog(id) {
                 this.logLoader = true;
                 this.logDialog = true;
-                axios.get(`/import/api/imports/${id}`).then(response => {
+                api.get(`/import/api/imports/${id}`).then(response => {
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
@@ -273,7 +273,7 @@
             },
 
             previewItem(endpoint) {
-                axios.get(endpoint).then(res => {
+                api.get(endpoint).then(res => {
                     this.pitem = res.data;
                     this.preview = true;
                 })
@@ -309,6 +309,7 @@
         app.component('bulletin-card', BulletinCard);
         app.component('actor-profiles', ActorProfiles);
         app.component('actor-card', ActorCard);
+        app.component('ReadMore', ReadMore);
         app.component('incident-card', IncidentCard);
         app.component('event-card', EventCard);
         app.component('media-grid', MediaGrid);

@@ -8,19 +8,31 @@ from pydantic import (
     HttpUrl,
     ValidationInfo,
 )
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
+from enferno.settings import Config
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
+from enferno.utils.validation_utils import (
+    SanitizedField,
+    one_must_exist,
+    validate_email_format,
+    validate_password_policy,
+    validate_username,
+    validate_username_constraints,
+)
+from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
 BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+PER_PAGE = int(Config.get("ITEMS_PER_PAGE_OPTIONS")[0])
 
 
 class BaseValidationModel(BaseModel):
@@ -1209,6 +1221,16 @@ class BulletinQueryValidationModel(QueryBaseModel):
 
 class BulletinQueryRequestModel(BaseValidationModel):
     q: list[BulletinQueryValidationModel] = Field(default_factory=list)
+    per_page: int = Field(ge=1, default=PER_PAGE)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        valid_values = [int(x) for x in Config.get("ITEMS_PER_PAGE_OPTIONS")]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class EntityReviewValidationModel(BaseValidationModel):
@@ -1305,6 +1327,7 @@ class ActorQueryLocTypes(Enum):
 
 class ActorQueryModel(QueryBaseModel):
     op: Optional[str] = "or"
+    ids: list[int] = Field(default_factory=list)
     nickname: Optional[str] = None
     first_name: Optional[str] = None
     middle_name: Optional[str] = None
@@ -1356,6 +1379,16 @@ class ActorQueryModel(QueryBaseModel):
 
 class ActorQueryRequestModel(BaseValidationModel):
     q: list[ActorQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=PER_PAGE, ge=1)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        valid_values = [int(x) for x in Config.get("ITEMS_PER_PAGE_OPTIONS")]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class ActorReviewRequestModel(BaseValidationModel):
@@ -1364,7 +1397,7 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 class UserValidationModel(StrictValidationModel):
     email: Optional[str] = None
-    username: str = Field(min_length=1)
+    username: str = Field(min_length=4, max_length=32)
     password: Optional[str] = None  # Optional on PUT, required on POST
     name: str = Field(min_length=1)
     roles: list[PartialRoleModel] = Field(default_factory=list)
@@ -1381,17 +1414,70 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
+    @field_validator("username", mode="before")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        return validate_username_constraints(v)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_field(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validates the email format and returns the validated email.
+
+        Args:
+            v: The email to validate
+
+        Returns:
+            Optional[str]: The validated email or None
+
+        Raises:
+            ValueError: If the email format is invalid
+        """
+        if not v:
+            return v
+
+        try:
+            v = validate_email_format(v)
+        except ValidationError as e:
+            raise ValueError("Invalid email format")
+
+        if Config.get("MAIL_ALLOWED_DOMAINS") and "*" not in Config.get("MAIL_ALLOWED_DOMAINS"):
+            if v.domain not in Config.get("MAIL_ALLOWED_DOMAINS"):
+                raise ValueError(
+                    f"Email domain is not allowed. Allowed domains are: {', '.join(Config.get('MAIL_ALLOWED_DOMAINS'))}"
+                )
+
+        return v.normalized
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        if not v:
+            return v
+        return validate_password_policy(v)
+
 
 class UserRequestModel(BaseValidationModel):
     item: UserValidationModel
 
 
 class UserNameCheckValidationModel(BaseValidationModel):
-    item: str = Field(min_length=1)
+    item: str = Field(min_length=4, max_length=32)
+
+    @field_validator("item", mode="before")
+    @classmethod
+    def validate_username_check(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Username cannot be empty")
+        return validate_username_constraints(v)
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: str = Field(min_length=1)
+    password: str  # no assumptions about password policy here, let field validator do the job
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        return validate_password_policy(v)
 
 
 class UserForceResetRequestModel(BaseValidationModel):
@@ -1410,12 +1496,23 @@ class RoleRequestModel(BaseValidationModel):
 
 
 class IncidentQueryModel(QueryBaseModel):
+    ids: list[int] = Field(default_factory=list)
     potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
     claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
-    q: Optional[IncidentQueryModel] = None
+    q: list[IncidentQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=PER_PAGE, ge=1)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        valid_values = [int(x) for x in Config.get("ITEMS_PER_PAGE_OPTIONS")]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class IncidentReviewRequestModel(BaseValidationModel):
@@ -1454,6 +1551,12 @@ class ActivitiesModel(BaseModel):
     UPDATE: bool = Field(default=False)
     UPLOAD: bool = Field(default=False)
     VIEW: bool = Field(default=False)
+
+
+class NotificationConfigModel(BaseValidationModel):
+    email_enabled: Optional[bool] = None
+    in_app_enabled: Optional[bool] = None
+    category: Optional[str] = None
 
 
 class ConfigValidationModel(StrictValidationModel):
@@ -1719,15 +1822,44 @@ class FullConfigValidationModel(ConfigValidationModel):
     ADV_ANALYSIS: bool
     SETUP_COMPLETE: bool = Field(default=True)
     LOCATIONS_INCLUDE_POSTAL_CODE: bool
+    MAIL_ENABLED: bool
+    MAIL_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
+    MAIL_SERVER: Optional[str] = None
+    MAIL_PORT: Optional[int] = None
+    MAIL_USE_TLS: Optional[bool] = None
+    MAIL_USE_SSL: Optional[bool] = None
+    MAIL_USERNAME: Optional[str] = None
+    MAIL_PASSWORD: Optional[str] = None
+    MAIL_DEFAULT_SENDER: Optional[str] = None
     TRANSCRIPTION_ENABLED: bool
     WHISPER_MODEL: Optional[str] = None
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
+    NOTIFICATIONS: dict[str, NotificationConfigModel] = Field(default_factory=dict)
 
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        return values
+
+    @model_validator(mode="before")
+    def validate_mail_settings(cls, values):
+        if values.get("MAIL_ENABLED"):
+            if (
+                not values.get("MAIL_SERVER")
+                or not values.get("MAIL_PORT")
+                or not values.get("MAIL_USERNAME")
+                or not values.get("MAIL_PASSWORD")
+                or not values.get("MAIL_DEFAULT_SENDER")
+            ):
+                raise ValueError(
+                    "MAIL_SERVER, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD must be provided if MAIL_ENABLED is True"
+                )
+            if not values.get("MAIL_ALLOWED_DOMAINS"):
+                raise ValueError(
+                    "MAIL_ALLOWED_DOMAINS must be provided and not empty if MAIL_ENABLED is True"
+                )
         return values
 
     @model_validator(mode="before")
@@ -1838,9 +1970,7 @@ class WebImportValidationModel(StrictValidationModel):
         domain = v._url.host
         if domain.startswith("www."):
             domain = domain[4:]
-        from enferno.settings import Config as cfg
-
-        allowed_domains = cfg.YTDLP_ALLOWED_DOMAINS
+        allowed_domains = Config.get("YTDLP_ALLOWED_DOMAINS")
         if not any(domain.endswith(allowed) for allowed in allowed_domains):
             raise ValueError(f"Imports not allowed from {domain}")
 

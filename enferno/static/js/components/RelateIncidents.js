@@ -1,74 +1,8 @@
 const RelateIncidents = Vue.defineComponent({
-  props: {
-    exids: {
-      type: Array,
-      default: () => ([])
-    },
-    dialogProps: {
-      type: Object,
-      default: () => ({})
-    }
-  },
-  emits: ['relate'],
-  data: () => {
-    return {
-      translations: window.translations,
-      q: {},
-      loading: true,
-      results: [],
-      visible: false,
-      page: 1,
-      perPage: 10,
-      total: 0,
-      hasMore: false,
-    };
-  },
-  methods: {
-    open() {
-      this.visible = true;
-    },
-    close() {
-      this.visible = false;
-    },
-    reSearch() {
-      this.page = 1;
-      this.results = [];
-      this.search();
-    },
-
-    search() {
-      this.loading = true;
-      axios
-        .post(`/admin/api/incidents/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
-          q: this.q,
-        })
-        .then((response) => {
-          this.loading = false;
-          this.total = response.data.total;
-
-          // exclude ids of item and related items
-          const ex_arr = this.exids || [];
-          this.results = this.results.concat(
-            response.data.items.filter((x) => !ex_arr.includes(x.id)),
-          );
-
-          this.moreItems = this.page * this.perPage < this.total;
-        })
-        .catch((err) => {
-          console.log(err.response.data);
-          this.loading = false;
-        });
-    },
-    loadMore() {
-      this.page += 1;
-      this.search();
-    },
-    relateItem({ item, relationData }) {
-      this.results = this.results.filter((result) => result.id !== item.id);
-      this.$emit('relate', { item, relationData });
-    },
-  },
-
+  mixins: [relatedSearchMixin],
+  data: () => ({
+    searchEndpoint: `/admin/api/incidents/?mode=2`,
+  }),
   template: /*html*/ `
     <relate-items-template
       v-model:visible="visible"

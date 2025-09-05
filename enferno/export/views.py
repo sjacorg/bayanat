@@ -4,7 +4,9 @@ from typing import Literal, Optional
 from flask import current_app, request, Response, Blueprint, json, send_from_directory
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
+from enferno.admin.constants import Constants
 from enferno.admin.models import Activity
+from enferno.admin.models.Notification import Notification
 from enferno.export.models import Export
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
@@ -31,7 +33,7 @@ def export_before_request() -> Optional[Response]:
     """Check user's permissions."""
     # check user's permissions
     if not (current_user.has_role("Admin") or current_user.can_export):
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.forbidden("Forbidden")
 
 
 @export.route("/dashboard/")
@@ -69,9 +71,18 @@ def export_bulletins() -> Response:
             export_request.to_mini(),
             Export.__table__.name,
         )
+        # Notify admins
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
+        )
 
-        return f"Export request created successfully, id:  {export_request.id} ", 200
-    return "Error creating export request", 417
+        return HTTPResponse.created(
+            message=f"Export request created successfully, id:  {export_request.id} ",
+            data={"item": export_request.to_dict()},
+        )
+    return HTTPResponse.error("Error creating export request", status=417)
 
 
 @export.post("/api/actor/export")
@@ -94,8 +105,18 @@ def export_actors() -> Response:
             export_request.to_mini(),
             Export.__table__.name,
         )
-        return f"Export request created successfully, id:  {export_request.id} ", 200
-    return "Error creating export request", 417
+        # Notify admins
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
+        )
+
+        return HTTPResponse.created(
+            message=f"Export request created successfully, id:  {export_request.id} ",
+            data={"item": export_request.to_dict()},
+        )
+    return HTTPResponse.error("Error creating export request", status=417)
 
 
 @export.post("/api/incident/export")
@@ -118,8 +139,17 @@ def export_incidents() -> Response:
             export_request.to_mini(),
             Export.__table__.name,
         )
-        return f"Export request created successfully, id:  {export_request.id} ", 200
-    return "Error creating export request", 417
+        # Notify admins
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
+        )
+        return HTTPResponse.created(
+            message=f"Export request created successfully, id:  {export_request.id} ",
+            data={"item": export_request.to_dict()},
+        )
+    return HTTPResponse.error("Error creating export request", status=417)
 
 
 @export.get("/api/export/<int:id>")
@@ -136,9 +166,9 @@ def api_export_get(id: t.id) -> Response:
     export = Export.query.get(id)
 
     if export is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Export not found")
     else:
-        return json.dumps(export.to_dict()), 200
+        return HTTPResponse.success(data=export.to_dict(), message="Export retrieved successfully")
 
 
 @export.post("/api/exports/")
@@ -172,7 +202,7 @@ def api_exports() -> Response:
         "total": result.total,
     }
 
-    return Response(json.dumps(response), content_type="application/json")
+    return HTTPResponse.success(data=response)
 
 
 @export.put("/api/exports/status")
@@ -186,15 +216,15 @@ def change_export_status() -> Response:
     """
     action = request.json.get("action")
     if not action or action not in ["approve", "reject"]:
-        return "Please check request action", 417
+        return HTTPResponse.error("Please check request action", status=417)
     export_id = request.json.get("exportId")
 
     if not export_id:
-        return "Invalid export request id", 417
+        return HTTPResponse.error("Invalid export request id", status=417)
     export_request = Export.query.get(export_id)
 
     if not export_request:
-        return "Export request does not exist", 404
+        return HTTPResponse.not_found("Export request does not exist")
 
     if action == "approve":
         export_request = export_request.approve()
@@ -214,7 +244,16 @@ def change_export_status() -> Response:
             export_request.uuid = res.id
             export_request.save()
 
-            return "Export request approval will be processed shortly.", 200
+            # Notify admins
+            Notification.send_admin_notification_for_event(
+                Constants.NotificationEvent.APPROVE_EXPORT,
+                "Export Request Approved",
+                f"Export request {export_request.id} has been approved by {current_user.username} successfully.",
+            )
+
+            return HTTPResponse.success(
+                message="Export request approval will be processed shortly."
+            )
 
     if action == "reject":
         export_request = export_request.reject()
@@ -228,7 +267,7 @@ def change_export_status() -> Response:
                 Export.__table__.name,
             )
 
-            return "Export request rejected.", 200
+            return HTTPResponse.success(message="Export request rejected.")
 
 
 @export.put("/api/exports/expiry")
@@ -245,17 +284,17 @@ def update_expiry() -> Response:
     export_request = Export.query.get(export_id)
 
     if export_request.expired:
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.forbidden("Forbidden")
     else:
         try:
             export_request.set_expiry(new_date)
         except Exception as e:
-            return "Invalid expiry date", 417
+            return HTTPResponse.error("Invalid expiry date", status=417)
 
         if export_request.save():
-            return f"Updated Export #{export_id}", 200
+            return HTTPResponse.success(message=f"Updated Export #{export_id}")
         else:
-            return "Save failed", 417
+            return HTTPResponse.error("Save failed", status=417)
 
 
 @export.get("/api/exports/download")
@@ -276,10 +315,10 @@ def download_export_file() -> Response:
         # either admin or user is requester
         if not current_user.has_role("Admin"):
             if current_user.id != export.requester.id:
-                return HTTPResponse.FORBIDDEN
+                return HTTPResponse.forbidden("Forbidden")
 
         if not export_id or not export:
-            return HTTPResponse.NOT_FOUND
+            return HTTPResponse.not_found("Export not found")
         # check expiry
         if not export.expired:
             # Record activity
@@ -294,8 +333,8 @@ def download_export_file() -> Response:
                 f"{Path(*Export.export_dir.parts[1:])}", f"{export.file_id}.zip"
             )
         else:
-            return HTTPResponse.REQUEST_EXPIRED
+            return HTTPResponse.error("Request expired", status=410)
 
     except Exception as e:
         logger.error(f"Unable to decrypt export request uid {e}")
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Unable to decrypt export request uid")

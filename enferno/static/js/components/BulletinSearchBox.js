@@ -90,26 +90,30 @@ const BulletinSearchBox = Vue.defineComponent({
               ></v-text-field>
 
               <v-text-field
+                  class="mb-4"
                   v-model="q.extsv"
                   :label="translations.notContains_"
                   clearable
+                  hint="Separate words with space, use quotes for exact match"
+                  persistent-hint
               ></v-text-field>
 
               <v-text-field
+                  class="mb-4"
                   v-model="q.originid"
                   :label="translations.originId_"
                   clearable
               ></v-text-field>
-
+              
               <v-combobox
-              v-model="q.tags"
-              :label="translations.inTags_"
-                    multiple
-                    chips
-                    closable-chips
-                    small-chips
-                    clearable
-                    ></v-combobox>
+                  v-model="q.tags"
+                  :label="translations.inTags_"
+                  multiple
+                  chips
+                  closable-chips
+                  small-chips
+                  clearable
+              ></v-combobox>
                     
               <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.opTags" color="primary" small

@@ -31,6 +31,10 @@
               </v-toolbar>
             </template>
 
+            <template v-slot:item.created_at="{ item }">
+              ${ formatDate(item.created_at) }
+            </template>
+
             <template v-slot:item.user_id="{ item }">
               ${ getUsername(item.user_id) }
             </template>
@@ -164,6 +168,7 @@
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/ReadMore.js"></script>
 
     <script src="/static/js/components/BulletinSearchBox.js"></script>
     <script src="/static/js/components/ActorSearchBox.js"></script>
@@ -220,7 +225,6 @@
     mixins: [globalMixin],
     data: () => ({
       translations: window.translations,
-
       itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
         itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
         itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
@@ -296,7 +300,7 @@
     mounted () {
       // populate roles for advanced search for admins
       // needed for search popup
-      axios.get('/admin/api/roles/').then(res => {
+      api.get('/admin/api/roles/').then(res => {
           this.roles = res.data.items;
       }).catch(e => {
           this.roles = [];
@@ -305,7 +309,6 @@
     },
 
     methods: {
-
          has_role(user, role) {
           for (r of user.roles) {
               if (r.name == role) {
@@ -318,7 +321,7 @@
 
 
         previewItem(endpoint) {
-        axios.get(endpoint).then(res => {
+        api.get(endpoint).then(res => {
             this.pitem = res.data;
             this.preview = true;
           })
@@ -347,7 +350,7 @@
           }
 
           this.loading = true;
-                axios.post(`/admin/api/activities/`, {
+                api.post(`/admin/api/activities/`, {
                     q: this.q,
                     options: this.options,
                     model: this.model
@@ -411,6 +414,7 @@
 
   app.component('BulletinCard', BulletinCard);
   app.component('ActorProfiles', ActorProfiles);
+  app.component('ReadMore', ReadMore);
   app.component('ActorCard', ActorCard);
   app.component('IncidentCard', IncidentCard);
   app.component('EventCard', EventCard);

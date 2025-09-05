@@ -12,7 +12,7 @@
     {% include   'admin/partials/export_drawer.html' %}
     <v-main>
         <v-container fluid>
-            <v-tooltip text="{{ _('Visualize Results') }}">
+            <!-- <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{ props }">
                     <v-btn
                             elevation="16"
@@ -29,7 +29,7 @@
 
                     </v-btn>
                 </template>
-            </v-tooltip>
+            </v-tooltip> -->
 
             <v-card>
                 <v-card-title>
@@ -41,20 +41,19 @@
                             height="calc(100vh - 331px)"
                             id="incidents-dt"
                             v-model="selected"
+                            hover
                             :headers="headers"
                             @click:row="rowClick"
-                            hover
                             :items="items"
                             :loading="loading"
-                            :items-length="itemsLength"
-                            @update:options="refresh"
-                            :page="options.page"
                             :row-props="rowClass"
+                            :items-length="totalCount"
                             show-select
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
                             class="elevation-1"
+                            hide-default-footer
                     >
 
                         <template v-slot:top>
@@ -157,9 +156,33 @@
                             </v-toolbar>
                         </template>
 
-                        <template #footer.prepend>
-                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }} ${searchTime} {{ _('seconds') }}</div>
+                        <template #bottom>
+                            <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
+                                <div>{{ _('Search time: ') }}
+                                    ${searchTime} {{ _('seconds') }}</div>
+                                <div>
+                        
+                                    <div class="d-flex flex-row align-center ga-2">
+                                        <div class="d-flex flex-row align-center ga-2">
+                                            {{ _('Items per page:') }}
+                                            <v-select :model-value="perPage" @update:model-value="setNextPerPageValue" hide-details
+                                                density="compact" :items="itemsPerPageOptions" variant="outlined"></v-select>
+                        
+                                        </div>
+                                        <div>
+                                            <span>${rangeStart.toLocaleString('en-US')}-${rangeEnd.toLocaleString('en-US')} of ${totalCount.toLocaleString('en-US')}</span>
+                                            <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text"
+                                                icon="mdi-page-first"></v-btn>
+                                            <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text"
+                                                icon="mdi-chevron-left"></v-btn>
+                                            <v-btn :disabled="loading || !nextCursor" @click="goToNextPage()" variant="text"
+                                                icon="mdi-chevron-right"></v-btn>
+                                        </div>
+                                    </div>
+                                </div>
                         </template>
+                        
+                        <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
                         <template v-slot:item.roles="{item}">
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
@@ -238,11 +261,11 @@
                     </v-overlay>
 
                     <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
-                                      ref="relateBulletins"></relate-bulletins>
+                                      ref="relateBulletins" :dialog-props="commonDialogProps"></relate-bulletins>
                     <relate-actors @relate="relateActor" :exids="exActors"
-                                   ref="relateActors"></relate-actors>
+                                   ref="relateActors" :dialog-props="commonDialogProps"></relate-actors>
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
-                                      ref="relateIncidents"></relate-incidents>
+                                      ref="relateIncidents" :dialog-props="commonDialogProps"></relate-incidents>
 
 
                     <v-dialog width="600" v-model="selfAssignDialog">
@@ -283,6 +306,7 @@
 
     <script src="/static/js/tinymce-vue.min.js"></script>
 
+    <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
@@ -299,6 +323,7 @@
     <script src="/static/js/components/ActorCard.js"></script>
     <script src="/static/js/components/ActorProfiles.js"></script>
     <script src="/static/js/components/IncidentCard.js"></script>
+    <script src="/static/js/components/ReadMore.js"></script>
 
     <script src="/static/js/components/BulletinSearchBox.js"></script>
     <script src="/static/js/components/ActorSearchBox.js"></script>
@@ -363,6 +388,8 @@
             },
             mixins: [globalMixin, relationsMixin],
             data: () => ({
+                commonDialogProps: { class: 'w-sm-100 w-md-75' },
+                itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
                 rightDialogProps: null,
                 translations: window.translations,
@@ -370,6 +397,14 @@
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                 helper: {}, // helper object for review items
+
+                cursorPage: 1,
+                currentCursor: null,          // the current request's cursor
+                nextCursor: null,             // the next cursor from the API
+                cursorHistory: [null],        // page 1 starts at null
+                perPage: window.itemsPerPageOptions?.[0] ?? 20,
+                items: [],
+                selected: [],
 
                 assignIncident: {},
                 selfAssignDialog: false,
@@ -403,7 +438,7 @@
                 roles: [],
 
 
-                fsloading: true,
+                fsloading: false,
 
                 // flags for lazy loaded relations state
                 br_loaded: false,
@@ -479,7 +514,7 @@
                 //rich text config
                 tinyConfig: tinyConfig,
 
-                loading: true,
+                loading: false,
                 parentLoading: false,
                 csvFile: null,
                 options: {},
@@ -554,10 +589,24 @@
                 bulkTimer: 0,
 
                 incident: {},
-                incidentLoader: false
+                incidentLoader: false,
+
+                fetchingRecordsError: false,
+
+                // Count functionality  
+                totalCount: 0,
             }),
 
             computed: {
+                rangeStart() {
+                    return this.totalCount === 0 ? 0 : (this.cursorPage - 1) * this.perPage + 1;
+                },
+                rangeEnd() {
+                    return this.totalCount === 0 ? 0 : this.rangeStart + this.items.length - 1;
+                },
+                showingItemsOfText() {
+                    return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
+                },
                 searchEmpty() {
                     return !Object.values(this.search).some(Boolean);
                 },
@@ -641,7 +690,7 @@
 
                 // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
-                    axios.get('/admin/api/roles/').then(res => {
+                    api.get('/admin/api/roles/').then(res => {
                         this.roles = res.data.items;
                     }).catch(e => {
                         this.roles = [];
@@ -649,8 +698,8 @@
                     });
                 {% endif  %}
 
-
-
+                // Load initial data
+                this.refresh();
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -717,7 +766,7 @@
                 },
 
                 checkGraphStatus: function () {
-                    axios.get('/admin/api/graph/status')
+                    api.get('/admin/api/graph/status')
                         .then(res => {
                             if (res.data.status == 'done') {
                                 clearInterval(this.graphTimer);
@@ -735,7 +784,7 @@
 
                 visualizeResults() {
                     this.visualizeLoading = true;
-                    axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                    api.post('/admin/api/graph/visualize', {q: this.search}, {
                         params: {
                             type: 'incident'
                         }
@@ -751,7 +800,7 @@
 
                 exportRequest() {
                     this.loading = true;
-                    axios.post(`/export/api/incident/export`, {
+                    api.post(`/export/api/incident/export`, {
                         items: this.selected,
                         config: this.exportConfig
                     }).then(response => {
@@ -788,7 +837,7 @@
                 selfAssign() {
 
 
-                    axios.put(`/admin/api/incident/assign/${this.assignIncident.id}`, {incident: this.assignIncident}).then(res => {
+                    api.put(`/admin/api/incident/assign/${this.assignIncident.id}`, {incident: this.assignIncident}).then(res => {
                         this.showSnack("{{_('Incident assigned successfully.')}}")
                         this.refresh()
 
@@ -803,24 +852,24 @@
                 filter_related_to_bulletin(id) {
                     this.bulletinDrawer = false;
                     this.search = {rel_to_bulletin: id};
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
                     this.bulletinDrawer = false;
                     this.search = {rel_to_actor: id};
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
                     this.bulletinDrawer = false;
                     this.search = {rel_to_incident: id};
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 previewItem(endpoint) {
 
-                    axios.get(endpoint).then(res => {
+                    api.get(endpoint).then(res => {
                         this.pitem = res.data;
                         this.preview = true;
 
@@ -830,13 +879,13 @@
 
                 bulkStatus() {
 
-                    axios.get('/admin/api/bulk/status/?type=incident').then(res => {
-                        this.jobs = res.data;
+                    api.get('/admin/api/bulk/status/?type=incident').then(res => {
+                        this.jobs = res?.data?.data ?? [];
                         if (!this.jobs.length) {
                             clearInterval(this.bulkTimer);
                             //reset search pager
                             this.options.page = 1;
-                            this.refresh();
+                            this.goToFirstPage();
                             this.showSnack("{{_('Bulk Update is finished!')}}")
                         }
                     });
@@ -849,7 +898,7 @@
 
                 bulk_update() {
                     this.loading = true;
-                    axios.put(`/admin/api/incident/bulk/`, {
+                    api.put(`/admin/api/incident/bulk/`, {
                         items: this.selected,
                         bulk: this.bulk
                     }).then(response => {
@@ -880,16 +929,8 @@
                 },
 
                 doSearch() {
-                    this.options.page = 1;
-
-                    // some good UX
-                    if (this.advSearchExpand) {
-                        this.advSearchExpand = false;
-                    } else {
-                        //this.search = Object.assign({},{tsv:this.search.tsv})
-                    }
-
-                    this.refresh();
+                    this.advSearchExpand = this.advSearchExpand && false;
+                    this.goToFirstPage();
                 },
 
                 resetQuery() {
@@ -900,33 +941,81 @@
 
                 resetSearch() {
                     this.resetQuery();
-                    this.doSearch();
+                    this.goToFirstPage();
                 },
 
-                refresh(options) {
+                setNextPerPageValue(nextPerPage) {
+                    this.perPage = nextPerPage;
+                    this.goToFirstPage();
+                },
 
-                    this.options = options || { ...this.options, page: 1 };
+                refresh() {
+                    if (this.loading) return;
 
                     this.loading = true;
-                    const startTime = new Date();
+                    const startTime = new Date()
 
-                    axios.post(`/admin/api/incidents/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
-                        const endTime = new Date();
+                    const requestData = {
+                        q: [this.search],
+                        per_page: this.perPage,
+                        cursor: this.currentCursor,
+                        include_count: true,
+                    };
 
-                        this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                        this.itemsLength = response.data.total;
-                        this.items = response.data.items;
+                    axios.post('/admin/api/incidents/', requestData)
+                        .then((response) => {
+                            const endTime = new Date()
+                            const duration = endTime - startTime
+                            this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
+                            console.log(`API call took ${duration}ms`)
 
-                        this.showVisualize = !(
-                            Object.keys(this.search).length === 0
-                        );
-                    }).catch(error => {
-                        console.error(error);
-                    }).finally(() => {
-                        this.loading = false;
-                    });
+                            this.items = response.data.items;
+                            this.showVisualize = !(
+                                Object.keys(this.search).length === 0
+                            );
+                            if ('total' in response.data) {
+                                this.totalCount = response.data.total
+                                this.countType = response.data.totalType
+                            }
+                            this.nextCursor = response.data.nextCursor || null;
+                        })
+                        .catch((error) => {
+                            console.error('Error loading data:', error);
+                            this.showSnack('Error loading data');
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
 
+                goToFirstPage() {
+                    if (this.loading) return;
 
+                    this.currentCursor = null;
+                    this.cursorPage = 1
+
+                    this.refresh();
+                },
+
+                goToNextPage() {
+                    if (this.loading || !this.nextCursor) return;
+
+                    this.currentCursor = this.nextCursor;
+                    this.cursorPage++;
+
+                    // Save currentCursor before moving to next page
+                    this.cursorHistory[this.cursorPage - 1] = this.currentCursor;
+
+                    this.refresh();
+                },
+
+                goToPrevPage() {
+                    if (this.loading || this.cursorPage <= 1) return;
+
+                    this.cursorPage--;
+
+                    this.currentCursor = this.cursorHistory[this.cursorPage - 1] || null;
+                    this.refresh();
                 },
 
                 openSaveQueryDialog() {
@@ -951,13 +1040,13 @@
 
 
                 loadSearchesFromAPI(selectLast = false) {
-                    axios.get('/admin/api/queries/', {
+                    api.get('/admin/api/queries/', {
                         params: {
                             type: 'incident'
                         }
                     }).then(
                         res => {
-                            this.searches = res.data;
+                            this.searches = res?.data?.data ?? [];
                             if (selectLast === true) {
 
                                 this.savedSearchSelection = this.searches.at(-1);
@@ -972,7 +1061,7 @@
                 saveSearch() {
                     const newSearch = {q: this.search, name: this.queryName, type: 'incident'};
 
-                    axios.post('/admin/api/query/', newSearch)
+                    api.post('/admin/api/query/', newSearch)
                         .then(res => {
                             this.showSnack(res.data);
                             this.saveQueryDialog = false;
@@ -986,7 +1075,7 @@
 
 
                 updateSearch() {
-                    axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
+                    api.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                         .then(res => {
                             this.showSnack(res.data);
                         });
@@ -994,7 +1083,7 @@
 
 
                 deleteSearch(id) {
-                    axios.delete('/admin/api/query/' + id)
+                    api.delete('/admin/api/query/' + id)
                         .then(res => {
                             this.showSnack(res.data);
                             this.searches = this.searches.filter(item => item.id !== id);
@@ -1008,23 +1097,21 @@
 
                 allIncidents() {
                     this.search = {};
-                    this.doSearch();
+                    this.goToFirstPage();
 
                 },
                 myAssigned() {
                     this.search = {};
-                    this.options.page = 1;
                     this.search.assigned = [this.currentUser.id];
                     this.search.statuses = ["Assigned"];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 myReview() {
                     this.search = {};
-                    this.options.page = 1;
                     this.search.reviewer = [this.currentUser.id];
                     this.search.statuses = ["Peer Review Assigned"];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
 
@@ -1051,7 +1138,7 @@
                 showIncident(id) {
                     this.incidentLoader = true;
                     this.incidentDrawer = true;
-                    axios.get(`/admin/api/incident/${id}?mode=3`).then(response => {
+                    api.get(`/admin/api/incident/${id}?mode=3`).then(response => {
                         this.incident = response.data;
                     }).catch(error => {
                         this.incidentDrawer = false;
@@ -1063,7 +1150,7 @@
                 searchUsers: debounce(function (evt) {
                     this.searchLoading[evt.target.dataset.loader] = true;
 
-                    axios.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
+                    api.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
                         this.users = response.data.items;
                         this.searchLoading[evt.target.dataset.loader] = false;
                     });
@@ -1190,7 +1277,7 @@
                 addReview(item) {
                     this.loading = true;
                     this.reviewDialog = true;
-                    axios.get(`/admin/api/incident/${item.id}`).then(response => {
+                    api.get(`/admin/api/incident/${item.id}`).then(response => {
                         this.loading = false;
                         this.$nextTick(() => {
                             this.reviewItem = response.data;
@@ -1206,7 +1293,7 @@
 
                 saveReview() {
 
-                    axios.put(`/admin/api/incident/review/${this.reviewItem.id}`, {
+                    api.put(`/admin/api/incident/review/${this.reviewItem.id}`, {
                         item: this.reviewItem
                     })
                         .then(response => {
@@ -1221,7 +1308,7 @@
                     // UI feedback
                     this.br_loading = true;
                     // pass page=0 to load all relations
-                    axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=bulletin&page=0`).then(res => {
+                    api.get(`/admin/api/incident/relations/${this.editedItem.id}?class=bulletin&page=0`).then(res => {
 
                         this.editedItem.bulletin_relations = res.data.items;
                         // update UI state / show related items
@@ -1242,7 +1329,7 @@
                     //UI feedback
                     this.ar_loading = true;
                     // pass page=0 to load all relations
-                    axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=actor&page=0`).then(res => {
+                    api.get(`/admin/api/incident/relations/${this.editedItem.id}?class=actor&page=0`).then(res => {
 
                         this.editedItem.actor_relations = res.data.items;
                         // update UI state / show related items
@@ -1263,7 +1350,7 @@
                     //UI Feedback
                     this.ir_loading = true;
                     // pass page=0 to load all relations
-                    axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=incident&page=0`).then(res => {
+                    api.get(`/admin/api/incident/relations/${this.editedItem.id}?class=incident&page=0`).then(res => {
 
                         this.editedItem.incident_relations = res.data.items;
                         // update UI state / show related items
@@ -1297,7 +1384,7 @@
                         this.handleStatus(item);
                     } else {
                         this.loading = true;
-                        axios.get(`/admin/api/incident/${item.id}?mode=3`).then(response => {
+                        api.get(`/admin/api/incident/${item.id}?mode=3`).then(response => {
                             this.dialog = true;
                             this.$nextTick(() => {
                                 this.loading = false
@@ -1328,7 +1415,7 @@
                         confirm("{{_('Are you sure you want to delete this item?')}}") &&
                         this.items.splice(index, 1);
                     if (cfm) {
-                        axios.delete(`/admin/api/incident/${item.id}`).then(response => {
+                        api.delete(`/admin/api/incident/${item.id}`).then(response => {
                             this.showSnack(response.data);
                             this.refresh();
                         });
@@ -1363,7 +1450,7 @@
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
-                        axios.put(`/admin/api/incident/${this.editedItem.id}`, {
+                        api.put(`/admin/api/incident/${this.editedItem.id}`, {
                             item: this.editedItem
                         }).then(response => {
                             this.showSnack(response.data);
@@ -1375,10 +1462,11 @@
                         });
                     } else {
                         //create new record
-                        axios.post("/admin/api/incident/", {
+                        api.post("/admin/api/incident/", {
                             item: this.editedItem
                         }).then(response => {
                             this.items.unshift(response.data.item);
+                            this.totalCount += 1;
                             this.showSnack(response.data.message);
                             this.close();
                         }).catch(err => {
@@ -1472,6 +1560,7 @@
         app.component('RelatedActorsCard', RelatedActorsCard);
         app.component('RelatedIncidentsCard', RelatedIncidentsCard);
 
+        app.component('ReadMore', ReadMore);
         app.component('BulletinCard', BulletinCard);
         app.component('ActorCard', ActorCard);
         app.component('ActorProfiles', ActorProfiles);

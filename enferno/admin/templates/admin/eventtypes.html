@@ -161,6 +161,11 @@
 
                                     </v-toolbar>
                                 </template>
+
+                                <template #['item.comments']="{ item }">
+                                    <div class="line-clamp-1">${item.comments}</div>
+                                </template>
+
                                 <template v-slot:item.action="{ item }">
                                     <v-icon small class="mr-2" @click="editItem(item)">
                                         mdi-pencil
@@ -242,7 +247,7 @@
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
 
-                    axios.get(`/admin/api/eventtypes/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+                    api.get(`/admin/api/eventtypes/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
 
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
@@ -254,7 +259,7 @@
                 importCSV() {
                     const reqData = new FormData();
                     reqData.append('csv', this.csvFile)
-                    axios.post('/admin/api/eventtype/import/', reqData).then(response => {
+                    api.post('/admin/api/eventtype/import/', reqData).then(response => {
 
                         this.imDialog = false;
                         this.refresh();
@@ -274,7 +279,7 @@
                     const cfm = confirm("{{ _('Are you sure you want to delete this item?') }}") &&
                         this.items.splice(index, 1);
                     if (cfm) {
-                        axios.delete(`/admin/api/eventtype/${item.id}`)
+                        api.delete(`/admin/api/eventtype/${item.id}`)
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh()
@@ -298,7 +303,7 @@
                 save() {
                     if (this.editedIndex > -1) {
                         Object.assign(this.items[this.editedIndex], this.editedItem);
-                        axios.put(`/admin/api/eventtype/${this.editedItem.id}`, {item: this.editedItem})
+                        api.put(`/admin/api/eventtype/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();
@@ -309,7 +314,7 @@
 
                     } else {
                         
-                        axios.post("/admin/api/eventtype/", {item: this.editedItem})
+                        api.post("/admin/api/eventtype/", {item: this.editedItem})
                         .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();

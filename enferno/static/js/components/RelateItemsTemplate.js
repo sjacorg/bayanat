@@ -7,7 +7,7 @@ const RelateItemsTemplate = Vue.defineComponent({
         showSearch: true,
         relation: {
           probability: null,
-          related_as: [],
+          related_as: null,
           comment: '',
         }
       };
@@ -15,7 +15,7 @@ const RelateItemsTemplate = Vue.defineComponent({
     watch: {
       '$root.isConfirmRelationDialogOpen'(isOpen) {
         if (!isOpen) {
-          this.relation = { probability: null, related_as: [], comment: '' }
+          this.relation = { probability: null, related_as: null, comment: '' }
           this.$root.relationToConfirm = null
         }
       }
@@ -60,7 +60,7 @@ const RelateItemsTemplate = Vue.defineComponent({
                   <!-- Load More / No Results -->
                   <v-card-actions class="px-4 pb-4">
                     <v-spacer></v-spacer>
-                    <v-btn v-if="hasMore" @click="$emit('loadMore')" color="primary">{{ translations.loadMore_ }}</v-btn>
+                    <v-btn v-if="hasMore" @click="$emit('loadMore')" variant="tonal" append-icon="mdi-chevron-down" color="grey" elevation="0">{{ translations.loadMore_ }}</v-btn>
                     <span v-else class="text-grey">{{ translations.noResults_ }}</span>
                     <v-spacer></v-spacer>
                   </v-card-actions>

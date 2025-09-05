@@ -1,6 +1,7 @@
 import pytest
 
 from enferno.admin.models import MediaCategory
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import MediaCategoryFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -9,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import MediaCategoriesResponseModel
+from tests.models.admin import MediaCategoriesResponseModel, MediaCategoryCreatedResponseModel
 
 ##### FIXTURES #####
 
@@ -58,14 +59,14 @@ def test_mediacategories_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) > 0
+        assert len(response.json["data"]["items"]) > 0
         conform_to_schema_or_fail(response.json, MediaCategoriesResponseModel)
 
 
 ##### POST /admin/api/mediacategory #####
 
 post_mediacategory_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -85,7 +86,10 @@ def test_post_mediacategory_endpoint(
     )
     assert response.status_code == expected_status
     found_cat = MediaCategory.query.filter(MediaCategory.title == cat.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), MediaCategoryCreatedResponseModel
+        )
         assert found_cat
     else:
         assert found_cat is None
