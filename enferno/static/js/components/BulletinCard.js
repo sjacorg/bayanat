@@ -352,7 +352,7 @@ const BulletinCard = Vue.defineComponent({
               </v-card>
             </div>
             <div v-else>
-              <uni-field v-if="bulletin?.[field.name]" :caption="field.title" :english="bulletin?.[field.name]"></uni-field>
+              <uni-field v-if="bulletin?.[field.name]" :caption="field.title" :english="$root.findFieldOptionByValue(field, bulletin?.[field.name])?.label ?? bulletin?.[field.name]"></uni-field>
             </div>
           </div>
         </template>
