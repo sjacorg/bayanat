@@ -62,8 +62,8 @@ def date_between_query(field: ColumnElement, dates: list) -> BinaryExpression:
 class SearchUtils:
     """Utility class to build search queries for different models."""
 
-    def __init__(self, json=None, cls=None):
-        self.search = json.get("q") if json else [{}]
+    def __init__(self, q=None, cls=None):
+        self.search = q
         self.cls = cls
 
     def get_query(self):
