@@ -74,7 +74,7 @@ def test_incidents_endpoint(
         client_ = request.getfixturevalue(client_fixture)
         response = client_.post(
             "/admin/api/incidents",
-            json={"q": [{}], "per_page": 30, "include_count": True},
+            json={"q": {}, "per_page": 30, "include_count": True},
             headers={"content-type": "application/json"},
             follow_redirects=True,
         )

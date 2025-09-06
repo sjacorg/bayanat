@@ -62,8 +62,8 @@ def date_between_query(field: ColumnElement, dates: list) -> BinaryExpression:
 class SearchUtils:
     """Utility class to build search queries for different models."""
 
-    def __init__(self, json=None, cls=None):
-        self.search = json.get("q") if json else [{}]
+    def __init__(self, q=None, cls=None):
+        self.search = q
         self.cls = cls
 
     def get_query(self):
@@ -116,25 +116,11 @@ class SearchUtils:
 
         elif self.cls == "incident":
             # Get conditions from first query
-            main_stmt, conditions = self.incident_query(self.search[0])
-            final_conditions = conditions
-
-            # Handle nested queries by combining conditions
-            if len(self.search) > 1:
-                for i in range(1, len(self.search)):
-                    _, next_conditions = self.incident_query(self.search[i])
-                    op = self.search[i].get("op", "or")
-
-                    if op == "and":
-                        final_conditions.extend(next_conditions)
-                    elif op == "or":
-                        # Combine conditions with OR
-                        final_conditions = [or_(*conditions, *next_conditions)]
-
+            _, conditions = self.incident_query(self.search)
             # Build final query with all conditions and default sorting
             result = select(Incident)
-            if final_conditions:
-                result = result.where(and_(*final_conditions))
+            if conditions:
+                result = result.where(and_(*conditions))
             return result
 
         elif self.cls == "location":

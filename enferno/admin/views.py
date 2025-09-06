@@ -1066,8 +1066,8 @@ def api_locations(validated_data: dict) -> Response:
     Returns:
         - json response of locations.
     """
-    query = []
-    su = SearchUtils(validated_data, cls="location")
+    q = validated_data.get("q", {})
+    su = SearchUtils(q, cls="location")
     query = su.get_query()
 
     options = validated_data.get("options")
@@ -3143,7 +3143,7 @@ def bulletins(id: Optional[t.id]) -> str:
 @validate_with(BulletinQueryRequestModel)
 def api_bulletins(validated_data: dict) -> Response:
     # Log search query
-    q = validated_data.get("q", None)
+    q = validated_data.get("q", [{}])
     if q and q != [{}]:
         Activity.create(
             current_user,
@@ -3153,12 +3153,11 @@ def api_bulletins(validated_data: dict) -> Response:
             "bulletin",
         )
 
-    q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
-    search = SearchUtils({"q": q}, "bulletin")
+    search = SearchUtils(q, "bulletin")
     base_query = search.get_query()
 
     if include_count and cursor is None:
@@ -4236,7 +4235,7 @@ def api_actors(validated_data: dict) -> Response:
     per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
-    search = SearchUtils({"q": q}, "actor")
+    search = SearchUtils(q, "actor")
     base_query = search.get_query()
 
     if include_count and cursor is None:
@@ -5506,8 +5505,8 @@ def api_incidents(validated_data: dict) -> Response:
         - incidents in json format / success or error
     """
     # log search query
-    q = validated_data.get("q", None)
-    if q and q != [{}]:
+    q = validated_data.get("q", {})
+    if q and q != {}:
         Activity.create(
             current_user,
             Activity.ACTION_SEARCH,
@@ -5516,17 +5515,16 @@ def api_incidents(validated_data: dict) -> Response:
             "incident",
         )
 
-    q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
-    search = SearchUtils(validated_data, cls="incident")
+    search = SearchUtils(q, cls="incident")
     base_query = search.get_query()
 
     if include_count and cursor is None:
         # Check if this is a simple listing query (no search filters)
-        is_simple_listing = q == [{}] or not any(
+        is_simple_listing = q == {} or not any(
             bool(filter_dict) for filter_dict in q if filter_dict
         )
 
@@ -6011,7 +6009,8 @@ def activity() -> str:
 @roles_required("Admin")
 def api_activities() -> Response:
     """Returns activities in JSON format, allows search and paging."""
-    su = SearchUtils(request.json, cls="Activity")
+    q = request.json.get("q", {})
+    su = SearchUtils(q, cls="activity")
     query = su.get_query()
 
     options = request.json.get("options")
