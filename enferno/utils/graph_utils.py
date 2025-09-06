@@ -59,6 +59,8 @@ class GraphUtils:
         if instance and model.__tablename__ in ["actor", "incident", "bulletin"]:
             if self.user and self.user.can_access(instance):
                 title = instance.title
+        elif instance and model.__tablename__ == "location":
+            title = instance.title
 
         return {
             "id": f"{model.__name__}{id}",
