@@ -32,7 +32,7 @@ const FieldRenderer = Vue.defineComponent({
                 fieldId: field.id,
                 label: field.title || this.translations.newField_,
                 name: field.name,
-                modelValue: this.modelValue || field.schema_config?.default || null,
+                modelValue: this.modelValue ?? field.schema_config?.default ?? null,
                 'onUpdate:modelValue': (newValue) => this.$emit('update:modelValue', newValue),
                 disabled: !field.active,
                 hint: field?.ui_config?.help_text,
@@ -47,6 +47,13 @@ const FieldRenderer = Vue.defineComponent({
                 min: field?.validation_config?.min,
                 max: field?.validation_config?.max,
                 controlVariant: 'hidden',
+                modelValue: (() => {
+                    const value = this.modelValue ?? field.schema_config?.default
+
+                    if (value === "" || value === undefined || value === null) return null
+                    const num = Number(value)
+                    return isNaN(num) ? null : num
+                })(),
             };
 
             const componentMap = {
