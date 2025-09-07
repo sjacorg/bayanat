@@ -14,6 +14,9 @@ from enferno.admin.constants import Constants
 from enferno.settings import Config
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User, Session
+from enferno.extensions import db
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import func
 from enferno.admin.models.Notification import Notification
 from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
 
@@ -252,20 +255,50 @@ def before_app_request() -> Optional[Response]:
 
 @user_authenticated.connect
 def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
-    session_data = {
-        "user_id": user.id,
-        "session_token": session.sid,
-        "ip_address": request.remote_addr,
-        "meta": {
-            "browser": request.user_agent.browser,
-            "browser_version": request.user_agent.version,
-            "os": request.user_agent.platform,
-            "device": request.user_agent.string,  # Full user-agent string
-        },
+    """
+    Persist or update the current server-side session in the SQL table.
+
+    This handler can fire for both fresh logins and subsequent requests that
+    authenticate via the existing session cookie. To avoid unique violations
+    on the unique `session_token`, perform an UPSERT keyed by `session.sid`.
+    """
+    token = getattr(session, "sid", None)
+    if not token:
+        return
+
+    ip_addr = request.remote_addr
+    meta = {
+        "browser": request.user_agent.browser,
+        "browser_version": request.user_agent.version,
+        "os": request.user_agent.platform,
+        "device": request.user_agent.string,
     }
-    # Create a new Session object and add it to the database
-    new_session = Session(**session_data)
-    new_session.save()
+
+    stmt = (
+        insert(Session)
+        .values(
+            user_id=user.id,
+            session_token=token,
+            ip_address=ip_addr,
+            meta=meta,
+            is_active=True,
+            last_active=func.now(),
+        )
+        .on_conflict_do_update(
+            index_elements=[Session.session_token],
+            set_=dict(
+                user_id=user.id,
+                ip_address=ip_addr,
+                meta=meta,
+                is_active=True,
+                last_active=func.now(),
+                updated_at=func.now(),
+            ),
+        )
+    )
+
+    db.session.execute(stmt)
+    db.session.commit()
 
     # Check if logged in from a different IP address
     if current_user.current_login_ip != current_user.last_login_ip:
