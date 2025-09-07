@@ -246,7 +246,7 @@ def change_export_status() -> Response:
 
             # Notify admins
             Notification.send_admin_notification_for_event(
-                Constants.NotificationEvent.APPROVE_EXPORT,
+                Constants.NotificationEvent.EXPORT_APPROVED,
                 "Export Request Approved",
                 f"Export request {export_request.id} has been approved by {current_user.username} successfully.",
             )
