@@ -1504,7 +1504,7 @@ class IncidentQueryModel(QueryBaseModel):
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
-    q: list[IncidentQueryModel] = Field(default_factory=list)
+    q: IncidentQueryModel
     per_page: int = Field(default=PER_PAGE, ge=1)
     cursor: Optional[str] = None
     include_count: Optional[bool] = False
