@@ -176,6 +176,12 @@ class SearchUtils:
 
                 conditions.append(raw_condition)
 
+        # Origin ID
+        originid = (q.get("originid") or "").strip()
+        if originid:
+            condition = Bulletin.originid.ilike(f"%{originid}%")
+            conditions.append(condition)
+
         # Tags - OPTIMIZED APPROACH respecting UI checkboxes
         if ref := q.get("tags"):
             exact = q.get("inExact")  # "Exact Match" checkbox
@@ -488,6 +494,12 @@ class SearchUtils:
                             .where(or_(*exclude_conditions))
                         )
                         conditions.append(~Actor.id.in_(subquery))
+
+        # Origin ID
+        originid = (q.get("originid") or "").strip()
+        if originid:
+            condition = Actor.actor_profiles.any(ActorProfile.originid.ilike(f"%{originid}%"))
+            conditions.append(condition)
 
         # Nickname
         if search := q.get("nickname"):

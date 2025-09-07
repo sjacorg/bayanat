@@ -26,7 +26,7 @@ class ActorProfile(db.Model, BaseMixin):
     mode = db.Column(
         db.Integer, default=MODE_PROFILE, nullable=False
     )  # 1: profile , 2: main , 3: missing person
-    originid = db.Column(db.String, index=True)
+    originid = db.Column(db.String)
     description = db.Column(db.Text)
     source_link = db.Column(db.String(255))
     source_link_type = db.Column(db.Boolean, default=False)
@@ -134,6 +134,12 @@ class ActorProfile(db.Model, BaseMixin):
             "search",
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+        db.Index(
+            "ix_actor_profile_originid_gin",
+            "originid",
+            postgresql_using="gin",
+            postgresql_ops={"originid": "gin_trgm_ops"},
         ),
     )
 
