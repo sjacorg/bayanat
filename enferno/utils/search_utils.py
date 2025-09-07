@@ -191,7 +191,7 @@ class SearchUtils:
                 conditions.append(raw_condition)
 
         # Origin ID
-        originid = q.get("originid")
+        originid = (q.get("originid") or "").strip()
         if originid:
             condition = Bulletin.originid.ilike(f"%{originid}%")
             conditions.append(condition)
@@ -510,7 +510,7 @@ class SearchUtils:
                         conditions.append(~Actor.id.in_(subquery))
 
         # Origin ID
-        originid = q.get("originid")
+        originid = (q.get("originid") or "").strip()
         if originid:
             condition = Actor.actor_profiles.any(ActorProfile.originid.ilike(f"%{originid}%"))
             conditions.append(condition)
