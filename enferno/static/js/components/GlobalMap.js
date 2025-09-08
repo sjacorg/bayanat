@@ -40,7 +40,6 @@ const GlobalMap = Vue.defineComponent({
   },
 
   mounted() {
-    window.showSnack = this.$root.showSnack;
     this.map = null;
     this.initMap();
   },
@@ -86,7 +85,7 @@ const GlobalMap = Vue.defineComponent({
         ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>` : '';
 
       // Copy button using data-copy instead of onclick
-      const copyCoordsBtn = (loc.lat && loc.lng)
+      const copyCoordsBtn = (Number.isFinite(loc.lat) && Number.isFinite(loc.lng))
         ? `<button type="button" class="ml-1" title="${t.copyCoordinates_}" data-copy="${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}">
             <i class="mdi mdi-content-copy" aria-hidden="true"></i>
           </button>`
