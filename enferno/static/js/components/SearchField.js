@@ -56,14 +56,8 @@ const SearchField = Vue.defineComponent({
     });
   },
   watch: {
-    modelValue(val) {
-      if (this.multiple && Array.isArray(val)) {
-        this.searchInput = '';
-      } else if (val && typeof val === 'object') {
-        this.searchInput = val[this.itemTitle] || '';
-      } else {
-        this.searchInput = '';
-      }
+    modelValue() {
+      this.searchInput = '';
     },
   },
   computed: {
@@ -119,6 +113,7 @@ const SearchField = Vue.defineComponent({
     handleSingleUpdate(val) {
       if (val === null || this.isValid(val)) {
         this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue] || val);
+        this.$refs.fld.blur()
       } else {
         this.searchInput = '';
       }
