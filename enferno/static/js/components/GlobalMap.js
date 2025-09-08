@@ -93,8 +93,8 @@ const GlobalMap = Vue.defineComponent({
 
       // ParentId check
       const parentId =
-        loc?.parent?.id
-          ? `<div>#${loc.parent?.id}</div>`
+        loc?.parentId && loc?.class_type !== 'incident'
+          ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>`
           : ''
 
       // Copy button for coordinates (added next to location)
