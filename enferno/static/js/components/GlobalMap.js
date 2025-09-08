@@ -69,59 +69,39 @@ const GlobalMap = Vue.defineComponent({
 
   methods: {
     generatePopupContent(loc) {
-      const t = this.translations
+      const t = this.translations;
 
-      // Dates (use mdi-calendar-clock)
-      const dates = []
-      if (loc.from_date) {
-        dates.push(`<span class="chip">
-      ${this.$root.formatDate(loc.from_date)}
-    </span>`)
-      }
-      if (loc.to_date) {
-        dates.push(`<span><i class="mdi mdi-arrow-right mr-1"></i>${this.$root.formatDate(loc.to_date)}</span>`)
-      }
+      // Dates
+      const dates = [];
+      if (loc.from_date) dates.push(`<span class="chip">${this.$root.formatDate(loc.from_date)}</span>`);
+      if (loc.to_date) dates.push(`<span><i class="mdi mdi-arrow-right mr-1"></i>${this.$root.formatDate(loc.to_date)}</span>`);
 
-      // Estimated → calendar-question icon w/ tooltip
       const estimated = loc.estimated
         ? `<i class="mdi mdi-calendar-question mr-1" title="${loc.comment || t.timingForThisEventIsEstimated_}"></i>`
-        : '<i class="mdi mdi-calendar-clock mr-1"></i>'
+        : '<i class="mdi mdi-calendar-clock mr-1"></i>';
 
-      const dateRange = dates.length
-        ? `<div class="d-flex">${estimated} ${dates.join(' ')}</div>`
-        : ''
- 
-      // ParentId check
-      const parentId =
-        loc?.parentId && loc?.show_parent_id
-          ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>`
-          : ''
+      const dateRange = dates.length ? `<div class="d-flex">${estimated} ${dates.join(' ')}</div>` : '';
 
-      // Copy button for coordinates (added next to location)
-      const copyCoordsBtn =
-        loc.lat && loc.lng
-          ? `<button class="ml-1" title="${t.copyCoordinates_}" onclick="navigator.clipboard.writeText('${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}'); window.showSnack('${translations.copiedToClipboard_}')">
-          <i class="mdi mdi-content-copy"></i>
-        </button>`
-          : ''
+      const parentId = loc?.parentId && loc?.show_parent_id
+        ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>` : '';
 
-      // Event type with icon (assuming eventtype.icon available)
+      // Copy button using data-copy instead of onclick
+      const copyCoordsBtn = (loc.lat && loc.lng)
+        ? `<button type="button" class="ml-1" title="${t.copyCoordinates_}" data-copy="${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}">
+            <i class="mdi mdi-content-copy" aria-hidden="true"></i>
+          </button>`
+        : '';
+
       const eventType = loc.eventtype
-        ? `<div class="d-flex align-center">
-         <i class="mdi mdi-calendar-range mr-1"></i>${loc.eventtype || ''}
-       </div>`
-        : ''
-  
-      // Event type with icon (assuming eventtype.icon available)
-      const locNumber = loc.number
-        ? `<div class="d-flex align-center">
-         #${loc.number || ''}
-       </div>`
-        : ''
+        ? `<div class="d-flex align-center"><i class="mdi mdi-calendar-range mr-1"></i>${loc.eventtype || ''}</div>`
+        : '';
 
-      return `<div class="popup-content d-flex flex-column ga-1">
-      <div class="d-flex ga-2">${locNumber} ${parentId} ${eventType}</div>
-      <h4>${loc.title || ''}</h4>
+      const locNumber = loc.number
+        ? `<div class="d-flex align-center">#${loc.number || ''}</div>` : '';
+
+      const html = `<div class="popup-content d-flex flex-column ga-1">
+        <div class="d-flex ga-2">${locNumber} ${parentId} ${eventType}</div>
+        <h4>${loc.title || ''}</h4>
         <div class="d-flex align-center">
           <i class="mdi mdi-map-marker-outline mr-1"></i>
           ${loc.full_string || ''}
@@ -129,7 +109,21 @@ const GlobalMap = Vue.defineComponent({
         </div>
         ${loc.main ? `<div>${t.mainIncident_}</div>` : ''}
         ${dateRange}
-      </div>`
+      </div>`;
+
+      // Turn into DOM so we can attach events
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = DOMPurify.sanitize(html);
+
+      const btn = wrapper.querySelector('button[data-copy]');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          navigator.clipboard.writeText(btn.getAttribute('data-copy'))
+            .then(() => this.$root.showSnack(t.copiedToClipboard_))
+        });
+      }
+
+      return wrapper;
     },
 
     initMap() {
