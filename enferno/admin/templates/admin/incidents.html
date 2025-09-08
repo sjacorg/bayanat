@@ -687,7 +687,6 @@
 
             },
             mounted: function () {
-
                 // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
                     api.get('/admin/api/roles/').then(res => {
@@ -697,9 +696,6 @@
                         console.log(e.message);
                     });
                 {% endif  %}
-
-                // Load initial data
-                this.refresh();
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -712,48 +708,29 @@
                     }
                 });
 
-
-                if (this.$route.params.id) {
-                    this.showIncident(this.$route.params.id);
-                }
-
-                if (this.$route.query.reltob) {
-                    this.filter_related_to_bulletin(this.$route.query.reltob);
-                }
-
-                if (this.$route.query.reltoa) {
-                    this.filter_related_to_actor(this.$route.query.reltoa);
-                }
-
-                if (this.$route.query.reltoi) {
-                    this.filter_related_to_incident(this.$route.query.reltoi);
-                }
-
-                this.$router.afterEach((to, from, next) => {
-
-                    if (this.$route.query.reltob) {
-                        this.filter_related_to_bulletin(this.$route.query.reltob);
-                    }
-
-                    if (this.$route.query.reltoa) {
-                        this.filter_related_to_actor(this.$route.query.reltoa);
-                    }
-
-                    if (this.$route.query.reltoi) {
-                        this.filter_related_to_incident(this.$route.query.reltoi);
-                    }
-
-
-                    if (this.$route.params.id) {
-                        this.showIncident(this.$route.params.id);
-                    }
-
-                })
-
-
+                this.handleRoute({ initialLoad: true });
+                this.$router.afterEach(() => {
+                    this.handleRoute();
+                });
             },
 
             methods: {
+                handleRoute({ initialLoad = false } = {}) {
+                    // Use URLSearchParams to reliably read query strings on initial page load 
+                    const params = new URLSearchParams(window.location.search);
+                    const id = this.$route.params.id;
+                    const reltob = params.get('reltob');
+                    const reltoa = params.get('reltoa');
+                    const reltoi = params.get('reltoi');
+
+                    if (id) this.showIncident(id);
+                    if (reltob) return this.filter_related_to_bulletin(reltob);
+                    if (reltoa) return this.filter_related_to_actor(reltoa);
+                    if (reltoi) return this.filter_related_to_incident(reltoi);
+
+                    // Only refresh on initial page load
+                    if (initialLoad) this.refresh();
+                },
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
