@@ -5,6 +5,7 @@ const IncidentCard = Vue.defineComponent({
   methods: {
     loadGeoMap() {
       this.geoMapLoading = true;
+      this.geoMapOn = true;
       //load again all bulletin relations without paging (soft limit is 1000 bulletin)
 
       axios
@@ -13,20 +14,19 @@ const IncidentCard = Vue.defineComponent({
         )
         .then((res) => {
           // Check if there are related bulletins / then fetch their full data to visualize location
-          let relatedBulletins = res.data.items;
-
-          if (relatedBulletins && relatedBulletins.length) {
-            getBulletinLocations(relatedBulletins.map((x) => x.bulletin.id)).then((res) => {
-              this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
-              this.geoMapOn = true;
-            });
-          } else {
-            this.mapLocations = aggregateIncidentLocations(this.incident);
-            this.geoMapOn = true;
-          }
+            let relatedBulletins = res.data.items;
+  
+            if (relatedBulletins && relatedBulletins.length) {
+              getBulletinLocations(relatedBulletins.map((x) => x.bulletin.id)).then((res) => {
+                this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
+              });
+            } else {
+              this.mapLocations = aggregateIncidentLocations(this.incident);
+            }
         })
         .catch((err) => {
           console.log(err.toJSON());
+          this.geoMapOn = false;
         }).finally(() => {
           this.geoMapLoading = false;
         })
