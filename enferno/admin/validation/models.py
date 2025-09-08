@@ -1194,6 +1194,7 @@ class BulletinQueryLocTypes(Enum):
 class BulletinQueryValidationModel(QueryBaseModel):
     op: Optional[str] = "or"
     ids: list[int] = Field(default_factory=list)
+    originid: Optional[str] = None
     tags: Optional[list[str]] = Field(default_factory=list)
     inExact: Optional[bool] = False
     opTags: Optional[bool] = False
@@ -1328,6 +1329,7 @@ class ActorQueryLocTypes(Enum):
 class ActorQueryModel(QueryBaseModel):
     op: Optional[str] = "or"
     ids: list[int] = Field(default_factory=list)
+    originid: Optional[str] = None
     nickname: Optional[str] = None
     first_name: Optional[str] = None
     middle_name: Optional[str] = None
@@ -1502,7 +1504,7 @@ class IncidentQueryModel(QueryBaseModel):
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
-    q: list[IncidentQueryModel] = Field(default_factory=list)
+    q: IncidentQueryModel
     per_page: int = Field(default=PER_PAGE, ge=1)
     cursor: Optional[str] = None
     include_count: Optional[bool] = False
