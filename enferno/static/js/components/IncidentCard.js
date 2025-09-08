@@ -18,15 +18,17 @@ const IncidentCard = Vue.defineComponent({
         let bulletinLocations = [];
         if (bulletinsRes.data.items?.length) {
           bulletinLocations = await getBulletinLocations(bulletinsRes.data.items.map(x => x.bulletin.id));
+          bulletinLocations = bulletinLocations?.flat()?.map(location => ({ ...location, show_parent_id: true }))
         }
 
         let actorLocations = [];
         if (actorsRes.data.items?.length) {
           actorLocations = await getActorLocations(actorsRes.data.items.map(x => x.actor.id));
+          actorLocations = actorLocations?.flat()?.map(location => ({ ...location, show_parent_id: true }))
         }
 
         // 🔥 Combine bulletins and actor locations
-        this.mapLocations = baseLocations.concat(bulletinLocations.flat(), actorLocations.flat());
+        this.mapLocations = baseLocations.concat(bulletinLocations, actorLocations);
 
       } catch (err) {
         console.error(err);

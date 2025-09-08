@@ -90,10 +90,10 @@ const GlobalMap = Vue.defineComponent({
       const dateRange = dates.length
         ? `<div class="d-flex">${estimated} ${dates.join(' ')}</div>`
         : ''
-
+ 
       // ParentId check
       const parentId =
-        loc?.parentId && loc?.class_type !== 'incident'
+        loc?.parentId && loc?.show_parent_id
           ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>`
           : ''
 
