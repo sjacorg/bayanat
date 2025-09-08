@@ -3,33 +3,37 @@ const IncidentCard = Vue.defineComponent({
   emits: ['edit', 'close'],
 
   methods: {
-    loadGeoMap() {
+    async loadGeoMap() {
       this.geoMapLoading = true;
       this.geoMapOn = true;
-      //load again all bulletin relations without paging (soft limit is 1000 bulletin)
 
-      axios
-        .get(
-          `/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`,
-        )
-        .then((res) => {
-          // Check if there are related bulletins / then fetch their full data to visualize location
-            let relatedBulletins = res.data.items;
-  
-            if (relatedBulletins && relatedBulletins.length) {
-              getBulletinLocations(relatedBulletins.map((x) => x.bulletin.id)).then((res) => {
-                this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
-              });
-            } else {
-              this.mapLocations = aggregateIncidentLocations(this.incident);
-            }
-        })
-        .catch((err) => {
-          console.log(err.toJSON());
-          this.geoMapOn = false;
-        }).finally(() => {
-          this.geoMapLoading = false;
-        })
+      try {
+        const [bulletinsRes, actorsRes] = await Promise.all([
+          axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`),
+          axios.get(`/admin/api/incident/relations/${this.incident.id}?class=actor&page=1&per_page=1000`),
+        ]);
+
+        const baseLocations = aggregateIncidentLocations(this.incident);
+
+        let bulletinLocations = [];
+        if (bulletinsRes.data.items?.length) {
+          bulletinLocations = await getBulletinLocations(bulletinsRes.data.items.map(x => x.bulletin.id));
+        }
+
+        let actorLocations = [];
+        if (actorsRes.data.items?.length) {
+          actorLocations = await getActorLocations(actorsRes.data.items.map(x => x.actor.id));
+        }
+
+        // 🔥 Combine bulletins and actor locations
+        this.mapLocations = baseLocations.concat(bulletinLocations.flat(), actorLocations.flat());
+
+      } catch (err) {
+        console.error(err);
+        this.geoMapOn = false;
+      } finally {
+        this.geoMapLoading = false;
+      }
     },
 
     translate_status(status) {
