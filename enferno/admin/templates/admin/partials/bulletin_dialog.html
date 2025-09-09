@@ -60,7 +60,7 @@
                 </v-toolbar-title>
 
                 <template #append>
-                    <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
+                    <v-btn @click="validateFormAndSave" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>
                     <v-btn icon="mdi-close" @click="confirmClose"></v-btn>
@@ -229,12 +229,13 @@
                                                         label="{{ _('Source Link') }}"
                                                         :rules="[
                                                             validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
-                                                            validationRules.maxLength(255)
+                                                            validationRules.maxLength(255),
+                                                            validationRules.externalError(errorsMap?.source_link)
                                                         ]"
+                                                        @input="resetErrorFromMap('source_link', errorsMap); validateForm()"
                                             ></v-text-field>
     
-    
-                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
+                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt" @change="resetErrorFromMap('source_link', errorsMap); validateForm()">
                                             </v-checkbox>
     
                                             <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
