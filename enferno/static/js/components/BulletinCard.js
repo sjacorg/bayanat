@@ -351,6 +351,9 @@ const BulletinCard = Vue.defineComponent({
                 </v-card-text>
               </v-card>
             </div>
+            <div v-else-if="field.field_type === 'datetime'">
+              <uni-field v-if="bulletin?.[field.name]" :caption="field.title" :english="$root.formatDate(bulletin?.[field.name])"></uni-field>
+            </div>
             <div v-else>
               <uni-field v-if="bulletin?.[field.name]" :caption="field.title" :english="$root.findFieldOptionByValue(field, bulletin?.[field.name])?.label ?? bulletin?.[field.name]"></uni-field>
             </div>
