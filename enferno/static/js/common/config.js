@@ -4,7 +4,6 @@ let checkUsernameTimeout;
 let passwordCheckTimeout;
 
 const validationRules = {
-
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
     },
@@ -14,6 +13,24 @@ const validationRules = {
     maxLength: (max, message) => {
         const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
         return v => isValidLength(v, max, "max") || message || defaultMessage;
+    },
+    date(message = window.translations.invalidDate_) {
+        return v => {
+            if (!v) return true; // allow empty values
+            return dayjs(v).isValid() || message;
+        };
+    },
+    dateBeforeOtherDate(otherDate, message = window.translations.fromDateMustBeBeforeTheToDate_) {
+        return v => {
+            if (!v || !otherDate) return true;
+            return dayjs(v).isSameOrBefore(dayjs(otherDate)) || message;
+        };
+    },
+    dateAfterOtherDate(otherDate, message = window.translations.toDateMustBeAfterTheFromDate_) {
+        return v => {
+            if (!v || !otherDate) return true;
+            return dayjs(v).isSameOrAfter(dayjs(otherDate)) || message;
+        };
     },
     minLength: (min, message) => {
         const defaultMessage = window.translations.mustBeAtLeastCharacters_(min);
@@ -89,6 +106,19 @@ function isValidLength(value, limit, type) {
     if (!value) return true; // Allow empty values
     const length = Array.isArray(value) ? value.length : value.length;
     return type === "max" ? length <= limit : length >= limit;
+}
+
+function mapResponseErrors(error) {
+    const errors = error?.response?.data?.errors
+    if (!errors) return
+    if (isPlainObject(errors)) {
+        return Object.fromEntries(Object.entries(errors).map(([key, value]) => [key.replace('item.', ''), value]))
+    }
+}
+
+function resetErrorFromMap(key, errorsMap) {
+    if (!errorsMap) return
+    if (key in errorsMap) errorsMap[key] = null
 }
 
 function scrollToFirstError(errors) {
@@ -295,10 +325,6 @@ function getInfraMessage(status) {
   
  function handleRequestError(error) {
     const response = error?.response;
-
-    if (response?.data?.message) {
-        return response.data.message;
-    }
   
     // Handle known API error format
     if (response?.data?.response?.errors) {
@@ -310,28 +336,32 @@ function getInfraMessage(status) {
       return Object.entries(errors).map(([field, message]) => {
         const fieldName = field.startsWith('item.') ? field.slice(5) : field;
         const label = fieldName.includes('__root__') ? 'Validation Error' : fieldName;
-        return `[${label}]: ${message}`;
+        return `<span class="font-weight-bold text-red">[${label}]</span>: ${message}`;
       }).join('\n') || 'An error occurred.';
     }
-  
-    // Check for HTML response by Content-Type header
-    const ct = response?.headers?.['content-type'] || '';
-    if (ct.includes('text/html') && response?.status) {
-      return getInfraMessage(response.status);
+
+    if (response?.data?.message) {
+        return response.data.message;
     }
-  
-    // Fallback: detect HTML content via DOMParser
-    if (typeof response?.data === 'string') {
-      try {
-        const doc = new DOMParser().parseFromString(response.data, 'text/html');
-        if (doc.body.children.length && response?.status) {
-          return getInfraMessage(response.status);
-        }
-        return response.data; // It's a plain string, safe to show
-      } catch {
-        return 'Unexpected error occurred while processing server response.';
-      }
-    }
+
+     // Check for HTML response by Content-Type header
+     const ct = response?.headers?.['content-type'] || '';
+     if (ct.includes('text/html') && response?.status) {
+         return getInfraMessage(response.status);
+     }
+
+     // Fallback: detect HTML content via DOMParser
+     if (typeof response?.data === 'string') {
+         try {
+             const doc = new DOMParser().parseFromString(response.data, 'text/html');
+             if (doc.body.children.length && response?.status) {
+                 return getInfraMessage(response.status);
+             }
+             return response.data; // It's a plain string, safe to show
+         } catch {
+             return 'Unexpected error occurred while processing server response.';
+         }
+     }
   
     // No response from server (network issue, timeout, etc.)
     if (error.request) {
