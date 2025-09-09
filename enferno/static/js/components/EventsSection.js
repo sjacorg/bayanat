@@ -38,7 +38,7 @@ const EventsSection = Vue.defineComponent({
     },
   },
   methods: {
-    validateEventForm() {
+    checkEventFormRules() {
       const e = this.editedEvent;
 
       const hasDateOrLocation = !!(e.location || e.from_date || e.to_date);
@@ -55,9 +55,9 @@ const EventsSection = Vue.defineComponent({
 
       return true;
     },
-    validateForm() {
+    validateFormAndSave() {
       this.$refs.form.validate().then(({ valid, errors }) => {
-        if (!this.validateEventForm()) return
+        if (!this.checkEventFormRules()) return
 
         if (valid) {
           this.saveEvent();
@@ -161,12 +161,12 @@ const EventsSection = Vue.defineComponent({
                 <v-spacer></v-spacer>
 
                 <template #append>
-                    <v-btn variant="elevated" @click="validateForm" class="mx-2">{{ translations.save_ }}</v-btn>
+                    <v-btn variant="elevated" @click="validateFormAndSave" class="mx-2">{{ translations.save_ }}</v-btn>
                     <v-btn icon="mdi-close" @click="closeEvent"></v-btn>
                 </template>
             </v-toolbar>
 
-            <v-form @submit.prevent="validateForm" ref="form" v-model="valid">
+            <v-form @submit.prevent="validateFormAndSave" ref="form" v-model="valid">
                 <v-card-text>
                     <v-container>
                         <v-row>
@@ -224,11 +224,11 @@ const EventsSection = Vue.defineComponent({
                         </v-row>
 
                         <v-row>
-                            <v-col cols="12" md="6" class="text-center">
-                                <pop-date-time-field :allowed-dates="allowedDateFrom" :time-label="translations.time_" :label="translations.from_" v-model="editedEvent.from_date"></pop-date-time-field>
+                            <v-col cols="12" md="6">
+                                <pop-date-time-field :rules="[validationRules.date(), validationRules.dateBeforeOtherDate(editedEvent.to_date)]" :allowed-dates="allowedDateFrom" :time-label="translations.time_" :label="translations.from_" v-model="editedEvent.from_date"></pop-date-time-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <pop-date-time-field :allowed-dates="allowedDateTo" :time-label="translations.time_" :label="translations.to_" v-model="editedEvent.to_date"></pop-date-time-field>
+                                <pop-date-time-field :rules="[validationRules.date(), validationRules.dateAfterOtherDate(editedEvent.from_date)]" :allowed-dates="allowedDateTo" :time-label="translations.time_" :label="translations.to_" v-model="editedEvent.to_date"></pop-date-time-field>
                             </v-col>
                         </v-row>
                         <v-row>
