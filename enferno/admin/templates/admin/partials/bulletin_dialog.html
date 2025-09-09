@@ -230,7 +230,8 @@
                                                         :rules="[
                                                             validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
                                                             validationRules.maxLength(255),
-                                                            validationRules.externalError(errorsMap?.source_link)
+                                                            validationRules.urlOrNA(),
+                                                            validationRules.externalError(errorsMap?.source_link),
                                                         ]"
                                                         @input="resetErrorFromMap('source_link', errorsMap); validateForm()"
                                             ></v-text-field>

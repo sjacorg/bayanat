@@ -20,6 +20,18 @@ const validationRules = {
             return dayjs(v).isValid() || message;
         };
     },
+    urlOrNA(message = window.translations.mustBeAValidUrlOrNa_) {
+        return v => {
+            if (!v) return true; // allow empty if not required
+            if (v === 'NA') return true;
+            try {
+                new URL(v);
+                return true;
+            } catch {
+                return message;
+            }
+        };
+    },
     dateBeforeOtherDate(otherDate, message = window.translations.fromDateMustBeBeforeTheToDate_) {
         return v => {
             if (!v || !otherDate) return true;
