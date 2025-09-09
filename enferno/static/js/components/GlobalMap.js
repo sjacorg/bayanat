@@ -76,13 +76,12 @@ const GlobalMap = Vue.defineComponent({
       if (loc.to_date) dates.push(`<span><i class="mdi mdi-arrow-right mr-1"></i>${this.$root.formatDate(loc.to_date)}</span>`);
 
       const estimated = loc.estimated
-        ? `<i class="mdi mdi-calendar-question mr-1" title="${loc.comment || t.timingForThisEventIsEstimated_}"></i>`
+        ? `<i class="mdi mdi-calendar-question mr-1" title="${t.timingForThisEventIsEstimated_}"></i>`
         : '<i class="mdi mdi-calendar-clock mr-1"></i>';
 
       const dateRange = dates.length ? `<div class="d-flex">${estimated} ${dates.join(' ')}</div>` : '';
 
-      const parentId = loc?.parentId && loc?.show_parent_id
-        ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>` : '';
+      const parentId = loc?.parentId && loc?.show_parent_id ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>` : '';
 
       // Copy button using data-copy instead of onclick
       const copyCoordsBtn = (Number.isFinite(loc.lat) && Number.isFinite(loc.lng))
@@ -91,12 +90,9 @@ const GlobalMap = Vue.defineComponent({
           </button>`
         : '';
 
-      const eventType = loc.eventtype
-        ? `<div class="d-flex align-center"><i class="mdi mdi-calendar-range mr-1"></i>${loc.eventtype || ''}</div>`
-        : '';
+      const eventType = loc.eventtype ? `<div class="d-flex align-center"><i class="mdi mdi-calendar-range mr-1"></i>${loc.eventtype || ''}</div>` : '';
 
-      const locNumber = loc.number
-        ? `<div class="d-flex align-center">#${loc.number || ''}</div>` : '';
+      const locNumber = loc.number ? `<div class="d-flex align-center">#${loc.number || ''}</div>` : '';
 
       const html = `<div class="popup-content d-flex flex-column ga-1">
         <div class="d-flex ga-2">${locNumber} ${parentId} ${eventType}</div>
@@ -112,7 +108,7 @@ const GlobalMap = Vue.defineComponent({
 
       // Turn into DOM so we can attach events
       const wrapper = document.createElement('div');
-      wrapper.innerHTML = DOMPurify.sanitize(html);
+      wrapper.innerHTML = html;
 
       const btn = wrapper.querySelector('button[data-copy]');
       if (btn) {
