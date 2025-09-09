@@ -138,7 +138,7 @@ class Bulletin(db.Model, BaseMixin):
     tags = db.Column(ARRAY(db.String), default=[], nullable=False)
 
     # extra fields used by etl etc ..
-    originid = db.Column(db.String, index=True)
+    originid = db.Column(db.String)
     comments = db.Column(db.Text)
 
     # review fields
@@ -183,6 +183,12 @@ class Bulletin(db.Model, BaseMixin):
             "ix_bulletin_status_assigned",
             "status",
             "assigned_to_id",
+        ),
+        db.Index(
+            "ix_bulletin_originid_gin",
+            "originid",
+            postgresql_using="gin",
+            postgresql_ops={"originid": "gin_trgm_ops"},
         ),
     )
 
