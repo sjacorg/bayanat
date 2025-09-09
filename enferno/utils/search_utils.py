@@ -424,7 +424,7 @@ class SearchUtils:
                             conditions.append(col == value)
                         continue
 
-                    # NUMBER equality (MVP)
+                    # NUMBER equality
                     if df.field_type == DynamicField.NUMBER and op == "eq":
                         try:
                             num = int(value) if value is not None else None
@@ -443,6 +443,36 @@ class SearchUtils:
                             dates = [d for d in value[:2] if d]
                             if dates:
                                 conditions.append(date_between_query(col, dates))
+                        continue
+
+                    # MULTI_SELECT handling (PostgreSQL array operations)
+                    if df.field_type == DynamicField.MULTI_SELECT:
+                        if op == "any":
+                            # OR logic - at least one value must be present
+                            if isinstance(value, list) and value:
+                                # Use PostgreSQL ANY operator for OR logic
+                                or_conditions = []
+                                for val in value:
+                                    or_conditions.append(
+                                        text(f":val = ANY({name})").bindparams(val=val)
+                                    )
+                                conditions.append(or_(*or_conditions))
+                            elif isinstance(value, str) and value:
+                                # Single value check
+                                conditions.append(text(f":val = ANY({name})").bindparams(val=value))
+                        elif op in ["all", "contains"]:
+                            # AND logic (default) - all values must be present
+                            if isinstance(value, list) and value:
+                                # Check that array contains all specified values
+                                for val in value:
+                                    conditions.append(
+                                        text(f":val_{name}_{val} = ANY({name})").bindparams(
+                                            **{f"val_{name}_{val}": val}
+                                        )
+                                    )
+                            elif isinstance(value, str) and value:
+                                # Single value check
+                                conditions.append(text(f":val = ANY({name})").bindparams(val=value))
                         continue
         except Exception as e:
             # Fail-safe: dynamic filters should never break search
