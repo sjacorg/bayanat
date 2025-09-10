@@ -32,6 +32,7 @@ const BulletinSearchBox = Vue.defineComponent({
       saveDialog: false,
       repr: '',
       q: {},
+      dyn: {},
       qName: '',
     };
   },
@@ -43,10 +44,31 @@ const BulletinSearchBox = Vue.defineComponent({
   mounted() {
     this.$root.fetchSearchableDynamicFields({ entityType: 'bulletin' });
     this.q.locTypes = this.q.locTypes || this.translations.bulletinLocTypes_.map((x) => x.code);
-
+    
+    if (this.q.dyn) {
+      this.dyn = (this.q.dyn || []).reduce((prev, curr) => {
+        prev[curr.name] = { ...curr }
+        return prev
+      }, {})
+    }
   },
 
   watch: {
+    dyn: {
+      handler(newDyn) {
+        const dynamicFieldList = Object.values(newDyn)
+
+        const newQ = { ...this.q }
+        if (dynamicFieldList.length) {
+          newQ.dyn = dynamicFieldList
+        } else {
+          delete newQ.dyn
+        }
+
+        this.$emit('update:modelValue', newQ)
+      },
+      deep: true,
+    },
     q: {
       handler(newVal) {
         this.$emit('update:modelValue', newVal);
@@ -67,7 +89,29 @@ const BulletinSearchBox = Vue.defineComponent({
   },
 
   methods: {
-    
+    updateDynamicField(value, field, operator) {
+      if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+        delete this.dyn[field.name]
+      } else {
+        this.dyn[field.name] = {
+          name: field.name,
+          op: operator ?? this.getDefaultOperator(field),
+          value: value
+        }
+      }
+    },
+
+    getDefaultOperator(field) {
+      switch (field.field_type) {
+        case 'text':
+        case 'long_text': return 'contains'
+        case 'number': return 'eq'
+        case 'single_select': return 'eq'
+        case 'multi_select': return 'all' // default, can toggle with checkbox
+        case 'datetime': return 'between'
+        default: return 'eq'
+      }
+    }
   },
 
   template: `
@@ -149,7 +193,6 @@ const BulletinSearchBox = Vue.defineComponent({
           <v-row>
             <v-col cols="12">
                 <pop-date-range-field
-                    ref="publishDateComponent"
                     :label="translations.publishDate_"
                     v-model="q.pubdate"
                 />
@@ -376,7 +419,7 @@ const BulletinSearchBox = Vue.defineComponent({
                 <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.oplabels" color="primary" small
                             class="me-4"></v-checkbox>
-              </div>
+                </div>
 
               <search-field
                   v-model="q.exlabels"
@@ -484,7 +527,68 @@ const BulletinSearchBox = Vue.defineComponent({
 
           <div>
             <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields" :key="index">
-              {{field.searchable}}
+              <v-text-field
+                  v-if="['text', 'long_text'].includes(field.field_type)"
+                  :label="field.title"
+                  clearable
+                  :model-value="dyn[field.name]?.value"
+                  @update:model-value="updateDynamicField($event, field)"
+              ></v-text-field>
+              <v-number-input
+                  v-else-if="['number'].includes(field.field_type)"
+                  :label="field.title"
+                  clearable
+                  :model-value="dyn[field.name]?.value"
+                  @update:model-value="updateDynamicField($event, field)"
+                  control-variant="hidden"
+              ></v-number-input>
+              <div
+                v-else-if="['single_select'].includes(field.field_type)"
+              >
+                <v-autocomplete
+                  :model-value="dyn[field.name]?.value"
+                  @update:model-value="updateDynamicField($event, field)"
+                  :item-color="'secondary'"
+                  :label="field.title"
+                  :items="field.options"
+                  item-title="label"
+                  item-value="value"
+                  :multiple="false"
+                  chips
+                  clearable
+                  :prepend-inner-icon="'mdi-magnify'"
+                  :return-object="false"
+                ></v-autocomplete>
+              </div>
+              <div
+                v-else-if="['multi_select'].includes(field.field_type)"
+              >
+                <v-autocomplete
+                  :model-value="dyn[field.name]?.value"
+                  @update:model-value="updateDynamicField($event, field)"
+                  :item-color="'secondary'"
+                  :label="field.title"
+                  :items="field.options"
+                  item-title="label"
+                  item-value="value"
+                  multiple
+                  chips
+                  clearable
+                  closable-chips
+                  :prepend-inner-icon="'mdi-magnify'"
+                  :return-object="false"
+                ></v-autocomplete>
+                <div class="d-flex align-center flex-wrap">
+                  <v-checkbox :label="translations.any_" dense :model-value="dyn[field.name]?.op === 'any'" @update:model-value="updateDynamicField(dyn[field.name]?.value, field, $event ? 'any' : null)" color="primary" small
+                                class="me-4"></v-checkbox>
+                </div>
+              </div>
+              <pop-date-range-field
+                v-else-if="['datetime'].includes(field.field_type)"
+                :label="field.title"
+                :model-value="dyn[field.name]?.value"
+                @update:model-value="updateDynamicField($event, field)"
+              />
             </div>
           </div>
 
