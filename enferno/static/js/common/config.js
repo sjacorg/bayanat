@@ -244,9 +244,16 @@ const api = {
     delete: axios.delete.bind(axios)
 };
 
+const sessionSyncChannel = new BroadcastChannel("session-sync");
+
 //global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
+        const isAuthenticatedRequest = response.config.url?.startsWith('/admin/api')
+        if (isAuthenticatedRequest) {
+            sessionSyncChannel.postMessage({ type: 'session-alive', userId: window.__userId__ });
+        }
+
         const shouldFlatten =
             isPlainObject(response?.data?.data) &&
             !response?.config?.skipFlattening;
@@ -260,7 +267,7 @@ axios.interceptors.response.use(
                 }
             };
         }
-    
+
       return response;
     },
     function (error) {

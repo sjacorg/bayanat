@@ -12,10 +12,21 @@ const reauthMixin = {
     twoFaSelectForm: null,
     verificationCode: null,
     signInStep: 'sign-in',
-    callbackQueue: []
+    callbackQueue: [],
+    sessionSyncChannel: sessionSyncChannel
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
+
+    this.sessionSyncChannel.onmessage = (event) => {
+      const msg = event.data;
+      // If new userId is not the same reload window
+      if (msg.userId !== window.__userId__) {
+        window.location.reload();
+      } else if (msg.type === 'session-alive') {
+        this.resetState();
+      }
+    };
   },
   beforeUnmount() {
     document.removeEventListener('authentication-required', this.showLoginDialog);
