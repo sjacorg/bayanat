@@ -6594,24 +6594,34 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
 
 def parse_filters(args):
     """
-    Parse filter parameters from the query string and build SQLAlchemy filter conditions.
-    Supports equality checks on model fields using:
-      filter[field][_eq]=value
-    Example: ?filter[entity_type][_eq]=bulletin&filter[active][_eq]=true
+    Parse simple filter parameters from query string, following standard app patterns.
+    Supports direct field parameters like: ?entity_type=bulletin&active=true&searchable=true
     """
     filters = []
-    for key, value in args.items():
-        if key.startswith("filter[") and key.endswith("]"):
-            parts = key[7:-1].split("][_")
-            if len(parts) == 2:
-                field, op = parts
-                if op == "eq":
-                    if hasattr(DynamicField, field):
-                        filters.append(getattr(DynamicField, field) == value)
-            elif len(parts) == 1:
-                field = parts[0]
-                if hasattr(DynamicField, field):
-                    filters.append(getattr(DynamicField, field) == value)
+
+    # Handle entity_type filter
+    entity_type = args.get("entity_type")
+    if entity_type:
+        filters.append(DynamicField.entity_type == entity_type)
+
+    # Handle boolean filters
+    active = args.get("active")
+    if active is not None and active.strip():
+        filters.append(DynamicField.active == (active.lower() == "true"))
+
+    searchable = args.get("searchable")
+    if searchable is not None and searchable.strip():
+        filters.append(DynamicField.searchable == (searchable.lower() == "true"))
+
+    core = args.get("core")
+    if core is not None and core.strip():
+        filters.append(DynamicField.core == (core.lower() == "true"))
+
+    # Handle field_type filter
+    field_type = args.get("field_type")
+    if field_type:
+        filters.append(DynamicField.field_type == field_type)
+
     return filters
 
 
@@ -6645,6 +6655,10 @@ def api_dynamic_fields():
     Also includes core fields for bulletin entity type.
     Query params:
       entity_type=value         (e.g. ?entity_type=bulletin)
+      active=true/false         (e.g. ?active=true)
+      searchable=true/false     (e.g. ?searchable=true)
+      core=true/false           (e.g. ?core=false)
+      field_type=value          (e.g. ?field_type=text)
       sort=field or sort=-field (e.g. ?sort=sort_order)
       limit, offset             (e.g. ?limit=10&offset=0)
     Returns a JSON response with 'data' (list of fields) and 'meta' (pagination info).
