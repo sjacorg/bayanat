@@ -66,6 +66,8 @@ const FieldRenderer = Vue.defineComponent({
                     items: field.options,
                     'item-title': 'label',
                     'item-value': 'value',
+                    chips: true,
+                    clearable: true,
                     multiple: false
                 },
                 multi_dropdown: {
@@ -74,6 +76,9 @@ const FieldRenderer = Vue.defineComponent({
                     items: field.options,
                     'item-title': 'label',
                     'item-value': 'value',
+                    chips: true,
+                    clearable: true,
+                    closableChips: true,
                     multiple: true
                 },
                 date_picker: { component: 'pop-date-time-field', ...baseProps },
