@@ -2,6 +2,7 @@ const formBuilderMixin = {
   data: () => ({
     formBuilder: {
       loading: false,
+      searchableDynamicFields: [],
       dynamicFields: [],
       originalFields: []
     }
@@ -41,6 +42,18 @@ const formBuilderMixin = {
         this.formBuilder.dynamicFields = response.data.data;
         this.sortDynamicFields();
         this.formBuilder.originalFields = deepClone(this.formBuilder.dynamicFields); // deep clone
+      } catch (err) {
+        console.error(err);
+        this.showSnack(handleRequestError(err));
+      } finally {
+        this.formBuilder.loading = false;
+      }
+    },
+    async fetchSearchableDynamicFields({ entityType }) {
+      try {
+        this.formBuilder.loading = true;
+        const response = await api.get(`/admin/api/dynamic-fields/?entity_type=${entityType}&active=true&searchable=true&limit=50`);
+        this.formBuilder.searchableDynamicFields = response.data.data;
       } catch (err) {
         console.error(err);
         this.showSnack(handleRequestError(err));

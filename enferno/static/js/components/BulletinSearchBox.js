@@ -41,7 +41,7 @@ const BulletinSearchBox = Vue.defineComponent({
   },
 
   mounted() {
-
+    this.$root.fetchSearchableDynamicFields({ entityType: 'bulletin' });
     this.q.locTypes = this.q.locTypes || this.translations.bulletinLocTypes_.map((x) => x.code);
 
   },
@@ -66,9 +66,11 @@ const BulletinSearchBox = Vue.defineComponent({
     },
   },
 
-  methods: {},
+  methods: {
+    
+  },
 
-  template: /*html*/`
+  template: `
       <div>
         <v-container fluid>
           <v-row v-if="showOp">
@@ -479,6 +481,12 @@ const BulletinSearchBox = Vue.defineComponent({
                      :map-height="200"
                      :radius-controls="true"/>
           </v-sheet>
+
+          <div>
+            <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields" :key="index">
+              {{field.searchable}}
+            </div>
+          </div>
 
         </v-container>
       </div>
