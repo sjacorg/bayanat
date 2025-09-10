@@ -185,7 +185,7 @@
           })
         }
 
-        this.sortDynamicFields()
+        this.formBuilder.dynamicFields = this.sortFields(this.formBuilder.dynamicFields);
       },
 
       buildChangesTable() {

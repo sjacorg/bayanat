@@ -30,8 +30,8 @@ const formBuilderMixin = {
 
       return field.options.find(option => option?.value === value)
     },
-    sortDynamicFields() {
-      this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.sort((a, b) => {
+    sortFields(fields) {
+      return fields.sort((a, b) => {
         return a.sort_order - b.sort_order; // normal sort
       });
     },
@@ -40,7 +40,7 @@ const formBuilderMixin = {
         this.formBuilder.loading = true;
         const response = await api.get(`/admin/api/dynamic-fields/?entity_type=${entityType}&limit=50`);
         this.formBuilder.dynamicFields = response.data.data;
-        this.sortDynamicFields();
+        this.formBuilder.dynamicFields = this.sortFields(this.formBuilder.dynamicFields);
         this.formBuilder.originalFields = deepClone(this.formBuilder.dynamicFields); // deep clone
       } catch (err) {
         console.error(err);
@@ -54,6 +54,7 @@ const formBuilderMixin = {
         this.formBuilder.loading = true;
         const response = await api.get(`/admin/api/dynamic-fields/?entity_type=${entityType}&active=true&searchable=true&limit=50`);
         this.formBuilder.searchableDynamicFields = response.data.data;
+        this.formBuilder.searchableDynamicFields = this.sortFields(this.formBuilder.searchableDynamicFields);
       } catch (err) {
         console.error(err);
         this.showSnack(handleRequestError(err));
