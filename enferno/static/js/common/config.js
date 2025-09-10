@@ -165,6 +165,9 @@ const vuetifyConfig = {
         VAutocomplete: {
             variant: 'outlined'
         },
+        VNumberInput: {
+            variant: 'outlined'
+        },
         VBtn: {
             rounded: 'lg',
             class: 'text-none font-weight-regular text-body-2 elevation-0',
