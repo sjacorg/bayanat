@@ -73,8 +73,6 @@ const SearchField = Vue.defineComponent({
   },
   template: `
     <v-autocomplete
-      variant="outlined"
-      ref="fld"
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
       :auto-select-first="true"
@@ -86,7 +84,7 @@ const SearchField = Vue.defineComponent({
       :items="items"
       :item-title="itemTitle"
       :item-value="itemValue"
-      :prepend-inner-icon="'mdi-magnify'"
+      prepend-inner-icon="mdi-magnify"
       :multiple="multiple"
       chips
       :closable-chips="multiple"
