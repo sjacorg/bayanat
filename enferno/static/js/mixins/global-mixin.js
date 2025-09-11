@@ -82,13 +82,6 @@ const globalMixin = {
           d = d.locale(options.locale);
       }
 
-      // Hide time if date is T00:00
-      if (format === this.dateFormats.standardDatetime) {
-        if (d.hour() === 0 && d.minute() === 0 && d.second() === 0) {
-          format = this.dateFormats.standardDate;
-        }
-      }
-
       switch ((format || '').toLowerCase()) {
         case 'iso': return d.toISOString();
         case 'relative': return d.fromNow();
