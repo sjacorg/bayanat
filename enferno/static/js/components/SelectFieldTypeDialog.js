@@ -15,37 +15,37 @@ const SelectFieldTypeDialog = Vue.defineComponent({
       translations: window.translations,
       componentTypes: [
         {
-          label: translations.shortText_,
+          label: window.translations.shortText_,
           field_type: 'text',
           ui_component: 'input',
           icon: 'mdi-text-short',
         },
         {
-          label: translations.longText_,
+          label: window.translations.longText_,
           field_type: 'long_text', 
           ui_component: 'textarea',
           icon: 'mdi-text-long',
         },
         {
-          label: translations.number_,
+          label: window.translations.number_,
           field_type: 'number',
           ui_component: 'number_input',
           icon: 'mdi-numeric',
         },
         {
-          label: translations.dropdown_,
+          label: window.translations.dropdown_,
           field_type: 'single_select',
           ui_component: 'dropdown',
           icon: 'mdi-chevron-down-circle-outline',
         },
         {
-          label: translations.multiSelect_ || 'Multi-Select',
+          label: window.translations.multiSelect_,
           field_type: 'multi_select',
           ui_component: 'multi_dropdown',
           icon: 'mdi-format-list-checks',
         },
         {
-          label: translations.dateAndTime_,
+          label: window.translations.dateAndTime_,
           field_type: 'datetime',
           ui_component: 'date_picker',
           icon: 'mdi-calendar-blank-outline',

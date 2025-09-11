@@ -9,6 +9,7 @@ const formBuilderMixin = {
   }),
   computed: {
     dynamicFieldsBulletinCard() {
+      // Keys omited since they are rendered somewhere else in the drawer
       const omitedKeys = ['source_link', 'status', 'tags', 'comments', 'geo_locations']
       return this.formBuilder.dynamicFields.filter(field => !omitedKeys.includes(field.name))
     }
