@@ -1,50 +1,17 @@
 const DiffTool = {
-    hasDiff(obj1 = {}, obj2 = {}) {
-        return Object.keys(DiffTool.getDiff(obj1, obj2)).length > 0;
+    hasDiff: function (obj1 = {}, obj2 = {}) {
+        return Object.keys(DiffTool.getDiff(obj1, obj2)).length;
     },
 
-    getDiff(obj1 = {}, obj2 = {}, options = {}) {
+    getDiff: function (obj1 = {}, obj2 = {}) {
         const diff = {};
-        const idKey = options.idKey || "id";
 
         const diffRecursive = (a, b, currentPath) => {
             if (Array.isArray(a) && Array.isArray(b)) {
-                // If objects with IDs → compare by ID
-                if (a.every(x => typeof x === "object" && x?.[idKey]) &&
-                    b.every(x => typeof x === "object" && x?.[idKey])) {
-                    
-                    const mapA = new Map(a.map(item => [item[idKey], item]));
-                    const mapB = new Map(b.map(item => [item[idKey], item]));
-
-                    // Detect removed
-                    for (const [id, itemA] of mapA) {
-                        if (!mapB.has(id)) {
-                            diff[`${currentPath}[${id}]`] = { old: itemA, new: undefined };
-                        }
-                    }
-
-                    // Detect added or changed
-                    for (const [id, itemB] of mapB) {
-                        if (!mapA.has(id)) {
-                            diff[`${currentPath}[${id}]`] = { old: undefined, new: itemB };
-                        } else {
-                            diffRecursive(mapA.get(id), itemB, `${currentPath}[${id}]`);
-                        }
-                    }
-                } else {
-                    // Fallback: index-based comparison
-                    const maxLen = Math.max(a.length, b.length);
-                    for (let i = 0; i < maxLen; i++) {
-                        const newPath = `${currentPath}[${i}]`;
-                        diffRecursive(a[i], b[i], newPath);
-                    }
+                if (JSON.stringify(a) !== JSON.stringify(b)) {
+                    diff[currentPath] = { old: a, new: b };
                 }
-            } else if (
-                typeof a === "object" &&
-                typeof b === "object" &&
-                a !== null &&
-                b !== null
-            ) {
+            } else if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
                 const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
                 for (const key of keys) {
                     const newPath = currentPath ? `${currentPath}.${key}` : key;
@@ -72,7 +39,7 @@ const DiffTool = {
                     .map(([key, val], index) => {
                         const isLast = index === childEntries.length - 1
                         const indentClass = options?.hasParent ? 'ml-2' : '';
-                        const marginClass = options?.hasParent || isLast ? '' : 'mb-1';
+                        const marginClass = options?.hasParent || isLast ? '' : 'mb-2';
 
                         return `<li class="${[indentClass, marginClass].filter(Boolean).join(' ')}">${key.toUpperCase()}: ${formatValue(val, { hasParent: true })}</li>`
                     })
@@ -132,9 +99,9 @@ const DiffTool = {
 
         return `<table class="text-left w-100" style="table-layout: fixed; border-collapse: collapse;">
                     <thead>
-                        <th class="border-b pa-1">${window?.translations?.field_ ?? 'Field'}</th>
-                        <th class="border-b pa-1">${window?.translations?.previous_ ?? 'Previous'}</th>
-                        <th class="border-b pa-1">${window?.translations?.updated_ ?? 'Updated'}</th>
+                        <th class="border-b pa-1">${window?.translations?.setting_ ?? 'Setting'}</th>
+                        <th class="border-b pa-1">${window?.translations?.before_ ?? 'Before'}</th>
+                        <th class="border-b pa-1">${window?.translations?.after_ ?? 'After'}</th>
                     </thead>
                     <tbody>
                         ${diffHtml.join('')}
