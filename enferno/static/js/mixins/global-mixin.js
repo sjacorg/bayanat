@@ -155,10 +155,10 @@ const globalMixin = {
       }, 1000);
     },
     $confirm(options) {
-      return this.$refs.confirmDialog.show(options)
+      return this.$root.$refs.confirmDialog.show(options)
     },
     $toast(options) {
-      return this.$refs.toast.show(options)
+      return this.$root.$refs.toast.show(options)
     },
   },
 };
