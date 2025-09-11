@@ -2,6 +2,7 @@ import re
 from dateutil.parser import parse
 from sqlalchemy import or_, not_, and_, any_, all_, func, text, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from datetime import datetime, time
 
 from enferno.extensions import db
 from enferno.admin.models import (
@@ -395,14 +396,8 @@ class SearchUtils:
                         continue
 
                     df = searchable_meta[name]
-                    col = getattr(Bulletin, name, None)
-                    if col is None:
-                        # Column may not exist yet; skip safely
-                        logger.warning(
-                            "dyn filter skipped: bulletin column missing",
-                            extra={"field": name},
-                        )
-                        continue
+                    # Skip SQLAlchemy column check - use raw SQL for dynamic fields
+                    # This avoids issues with dynamic columns not being in the model metadata
 
                     # Contains for TEXT, LONG_TEXT, and SINGLE_SELECT
                     if (
@@ -415,13 +410,15 @@ class SearchUtils:
                         and op == "contains"
                     ):
                         if isinstance(value, str) and value:
-                            conditions.append(col.ilike(f"%{value}%"))
+                            conditions.append(
+                                text(f"{name} ILIKE :val").bindparams(val=f"%{value}%")
+                            )
                         continue
 
                     # SINGLE_SELECT equality
                     if df.field_type == DynamicField.SINGLE_SELECT and op == "eq":
                         if value is not None:
-                            conditions.append(col == value)
+                            conditions.append(text(f"{name} = :val").bindparams(val=value))
                         continue
 
                     # NUMBER equality
@@ -429,7 +426,7 @@ class SearchUtils:
                         try:
                             num = int(value) if value is not None else None
                             if num is not None:
-                                conditions.append(col == num)
+                                conditions.append(text(f"{name} = :val").bindparams(val=num))
                         except (TypeError, ValueError):
                             logger.warning(
                                 "dyn filter number cast failed",
@@ -442,7 +439,17 @@ class SearchUtils:
                         if isinstance(value, (list, tuple)) and len(value) >= 1:
                             dates = [d for d in value[:2] if d]
                             if dates:
-                                conditions.append(date_between_query(col, dates))
+                                # Use raw SQL for datetime between
+
+                                start_date = parse(dates[0]).date()
+                                end_date = parse(dates[1]).date() if len(dates) > 1 else start_date
+                                start_datetime = datetime.combine(start_date, time.min)
+                                end_datetime = datetime.combine(end_date, time.max)
+                                conditions.append(
+                                    text(f"{name} BETWEEN :start_dt AND :end_dt").bindparams(
+                                        start_dt=start_datetime, end_dt=end_datetime
+                                    )
+                                )
                         continue
 
                     # MULTI_SELECT handling (PostgreSQL array operations)
@@ -450,29 +457,37 @@ class SearchUtils:
                         if op == "any":
                             # OR logic - at least one value must be present
                             if isinstance(value, list) and value:
-                                # Use PostgreSQL ANY operator for OR logic
+                                # Use PostgreSQL ANY operator for OR logic with unique parameter names
                                 or_conditions = []
-                                for val in value:
+                                for i, val in enumerate(value):
+                                    param_name = f"val_{name}_{i}"
                                     or_conditions.append(
-                                        text(f":val = ANY({name})").bindparams(val=val)
+                                        text(f":{param_name} = ANY({name})").bindparams(
+                                            **{param_name: val}
+                                        )
                                     )
                                 conditions.append(or_(*or_conditions))
                             elif isinstance(value, str) and value:
                                 # Single value check
                                 conditions.append(text(f":val = ANY({name})").bindparams(val=value))
                         elif op in ["all", "contains"]:
-                            # AND logic (default) - all values must be present
+                            # AND logic - ALL values must be present (array containment)
                             if isinstance(value, list) and value:
-                                # Check that array contains all specified values
-                                for val in value:
-                                    conditions.append(
-                                        text(f":val_{name}_{val} = ANY({name})").bindparams(
-                                            **{f"val_{name}_{val}": val}
-                                        )
+                                # Use PostgreSQL array containment operator @> with explicit casting
+                                # Cast the parameter to varchar[] to match the column type (character varying[])
+                                conditions.append(
+                                    text(f"{name} @> CAST(:search_values AS varchar[])").bindparams(
+                                        search_values=value
                                     )
+                                )
                             elif isinstance(value, str) and value:
-                                # Single value check
-                                conditions.append(text(f":val = ANY({name})").bindparams(val=value))
+                                # Single value - array must contain this exact value
+                                # Ensure ARRAY literal is typed as varchar[]
+                                conditions.append(
+                                    text(f"{name} @> (ARRAY[:search_value])::varchar[]").bindparams(
+                                        search_value=value
+                                    )
+                                )
                         continue
         except Exception as e:
             # Fail-safe: dynamic filters should never break search
