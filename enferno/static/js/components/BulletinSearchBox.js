@@ -579,7 +579,7 @@ const BulletinSearchBox = Vue.defineComponent({
                   :return-object="false"
                 ></v-autocomplete>
                 <div class="d-flex align-center flex-wrap">
-                  <v-checkbox :label="translations.any_" dense :model-value="dyn[field.name]?.op === 'any'" @update:model-value="updateDynamicField(dyn[field.name]?.value, field, $event ? 'any' : null)" color="primary" small
+                  <v-checkbox :disabled="!dyn[field.name]?.value" :label="translations.any_" dense :model-value="dyn[field.name]?.op === 'any'" @update:model-value="updateDynamicField(dyn[field.name]?.value, field, $event ? 'any' : null)" color="primary" small
                                 class="me-4"></v-checkbox>
                 </div>
               </div>
