@@ -8,7 +8,7 @@ const ActivitySearchBox = Vue.defineComponent({
 
   mixins: [globalMixin],
 
-  emits: ['update:modelValue', 'search'],
+  emits: ['update:modelValue', 'search', 'close'],
 
   data: () => {
     return {
@@ -86,10 +86,10 @@ const ActivitySearchBox = Vue.defineComponent({
 
 
       </v-card>
-      <v-card tile class="text-center  search-toolbar" elevation="10" color="grey lighten-5">
+      <v-card tile class="text-center  search-toolbar" elevation="10">
         <v-card-text>
           <v-spacer></v-spacer>
-          <v-btn @click="q={}" text>{{ translations.clearSearch_ }}</v-btn>
+          <v-btn class="mr-2" @click="q={}" text>{{ translations.clearSearch_ }}</v-btn>
 
           <v-btn @click="$emit('search',q)" color="primary">{{ translations.search_ }}</v-btn>
           <v-spacer></v-spacer>
