@@ -1,5 +1,4 @@
 const GeoMap = Vue.defineComponent({
-  mixins: [globalMixin],
   props: {
     title: String,
     modelValue: Object,
@@ -62,6 +61,7 @@ const GeoMap = Vue.defineComponent({
 
   data: function () {
     return {
+      validationRules: validationRules,
       translations: window.translations,
       mapId: 'map-' + this.$.uid,
       mapKey: 0,
@@ -365,10 +365,10 @@ const GeoMap = Vue.defineComponent({
           <h3 v-if="title" class="mb-5">{{ title }}</h3>
           <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
             <v-text-field v-bind="inputProps" type="number" min="-90" max="90" label="Latitude"
-                          :rules="[rules.required]"
+                          :rules="[validationRules.required()]"
                           v-model.number="lat"></v-text-field>
             <v-text-field v-bind="inputProps" type="number" min="-180" max="180" label="Longitude"
-                          :rules="[rules.required]"
+                          :rules="[validationRules.required()]"
                           v-model.number="lng"></v-text-field>
             <v-btn icon variant="flat" v-if="lat && lng" @click="clearMarker">
               <v-icon>mdi-close</v-icon>
@@ -393,7 +393,7 @@ const GeoMap = Vue.defineComponent({
                     v-model.number="radius"
                     suffix="meters"
                     type="number"
-                    :rules="[rules.required]"
+                    :rules="[validationRules.required()]"
                     outlined
                     dense>
                 </v-text-field>

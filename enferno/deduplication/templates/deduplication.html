@@ -106,6 +106,7 @@
 
 {% block js %}
 <script src="/static/js/mixins/media-mixin.js"></script>
+<script src="/static/js/mixins/form-builder-mixin.js"></script>
 
 <script src="/static/js/components/GeoMap.js"></script>
 <script src="/static/js/components/GlobalMap.js"></script>
@@ -166,7 +167,7 @@
 
     const app = createApp({
         delimiters: delimiters,
-        mixins: [globalMixin],
+        mixins: [globalMixin, formBuilderMixin],
         
         data: () => ({
 
