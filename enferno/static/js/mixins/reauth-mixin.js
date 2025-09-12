@@ -12,7 +12,7 @@ const reauthMixin = {
     twoFaSelectForm: null,
     verificationCode: null,
     signInStep: 'sign-in',
-    callbackQueue: [],
+    callbackQueue: []
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);

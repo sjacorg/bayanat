@@ -260,7 +260,7 @@ axios.interceptors.response.use(
                 }
             };
         }
-
+    
       return response;
     },
     function (error) {
