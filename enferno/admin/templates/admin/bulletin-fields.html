@@ -26,7 +26,7 @@
         </div>
       
         <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
-          hide-details v-model="ui.search"></v-text-field>
+          hide-details v-model="ui.search" clearable></v-text-field>
       
         <div class="d-flex ga-4 align-center">
           <v-btn :disabled="!hasChanges" variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
@@ -68,7 +68,7 @@
                   'drop-line': dragDrop.dropLine.id == field.id,
                   [dragDrop.dropLine.cls]: dragDrop.dropLine.id == field.id
                 }]">
-                <field-list-item :field="field"
+                <field-list-item :field="field" :hide-drag-handle="Boolean(ui.search)"
                   @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(dragDrop.draggingId)" />
               </div>
             </div>
