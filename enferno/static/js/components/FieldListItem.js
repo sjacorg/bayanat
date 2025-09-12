@@ -103,7 +103,6 @@ const FieldListItem = Vue.defineComponent({
                 html_block: { 
                     component: 'v-text-field', 
                     ...baseProps,
-                    modelValue: `Complex component: ${field.ui_config?.html_template || field.name}`,
                     readonly: true
                 },
             };
