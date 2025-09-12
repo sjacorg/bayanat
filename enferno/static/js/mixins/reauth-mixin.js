@@ -13,33 +13,39 @@ const reauthMixin = {
     verificationCode: null,
     signInStep: 'sign-in',
     callbackQueue: [],
-    sessionSyncChannel: sessionSyncChannel
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
-
-    this.sessionSyncChannel.onmessage = (event) => {
-      const msg = event.data;
-      // If new userId is not the same reload window
-      if (msg.userId !== window.__userId__) {
-        window.location.reload();
-      } else if (msg.type === 'session-alive') {
-        this.resetState();
-      }
-    };
   },
   beforeUnmount() {
     document.removeEventListener('authentication-required', this.showLoginDialog);
   },
   methods: {
+    onFocusProbe: async function () {
+      // Only check if dialog is visible
+      if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
+
+      try {
+        await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
+        this.resetState(); // Session restored - close dialog
+      } catch (error) {
+        // Still expired - keep dialog open
+      }
+    },
     showLoginDialog(event) {
       if (this.isReauthRequired(event?.detail)) {
         this.isReauthDialogVisible = true;
       } else {
         this.isSignInDialogVisible = true;
       }
+
+      // Start listening for tab focus
+      window.addEventListener('focus', this.onFocusProbe);
     },
     resetState() {
+      // Stop listening when dialog closes
+      window.removeEventListener('focus', this.onFocusProbe);
+
       this.signInForm = {
         username: window.__username__ || null,
         password: null,
