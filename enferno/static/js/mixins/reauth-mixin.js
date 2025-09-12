@@ -21,10 +21,12 @@ const reauthMixin = {
     document.removeEventListener('authentication-required', this.showLoginDialog);
   },
   methods: {
-    onFocusProbe: async function () {
+    async onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return; // only run when tab becomes active
+
       // Only check if dialog is visible
       if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
-
+      
       try {
         await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
         this.resetState(); // Session restored - close dialog
@@ -40,11 +42,11 @@ const reauthMixin = {
       }
 
       // Start listening for tab focus
-      window.addEventListener('focus', this.onFocusProbe);
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
     },
     resetState() {
       // Stop listening when dialog closes
-      window.removeEventListener('focus', this.onFocusProbe);
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
       this.signInForm = {
         username: window.__username__ || null,
