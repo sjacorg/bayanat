@@ -9,7 +9,20 @@ const iconMap = {
 }
 
 const FieldListItem = Vue.defineComponent({
-    props: ['field', 'dragging'],
+    props: {
+        field: {
+            type: Object,
+            default: () => ({})
+        },
+        dragging: {
+            type: Boolean,
+            default: false,
+        },
+        hideDragHandle: {
+            type: Boolean,
+            default: false
+        }
+    },
     emits: ['delete', 'toggle-visibility', 'width'],
     data() {
         return {
@@ -166,7 +179,7 @@ const FieldListItem = Vue.defineComponent({
                         </v-btn-toggle>
                     </div>
 
-                    <v-icon class="drag-handle cursor-grab" size="large">mdi-drag-horizontal</v-icon>
+                    <v-icon v-if="!hideDragHandle" class="drag-handle cursor-grab" size="large">mdi-drag-horizontal</v-icon>
 
                     <div class="d-flex ga-4">
                         <v-tooltip location="top">
