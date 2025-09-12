@@ -73,7 +73,8 @@ const GlobalMap = Vue.defineComponent({
       // Dates
       const dates = [];
       if (loc.from_date) dates.push(`<span class="chip">${this.$root.formatDate(loc.from_date, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime)}</span>`);
-      if (loc.to_date) dates.push(`<span><i class="mdi mdi-arrow-right mr-1"></i>${this.$root.formatDate(loc.to_date, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime)}</span>`);
+      if (loc.from_date && loc.to_date) dates.push(`<i class="mdi mdi-arrow-right mr-1">`);
+      if (loc.to_date) dates.push(`<span></i>${this.$root.formatDate(loc.to_date, loc.to_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime)}</span>`);
 
       const estimated = loc.estimated
         ? `<i class="mdi mdi-calendar-question mr-1" title="${t.timingForThisEventIsEstimated_}"></i>`
