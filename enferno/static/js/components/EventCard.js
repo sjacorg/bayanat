@@ -44,8 +44,8 @@ const EventCard = Vue.defineComponent({
           <v-chip prepend-icon="mdi-calendar" label variant="text"  class="text-caption" v-if="event.from_date">
             {{ $root.formatDate(event.from_date) }}
           </v-chip>
+          <v-icon v-if="event.from_date && event.to_date" icon="mdi-arrow-right" class="mr-1"></v-icon>
           <span class="text-caption" v-if="event.to_date">
-            <v-icon icon="mdi-arrow-right" class="mr-1"></v-icon>
             {{ $root.formatDate(event.to_date) }}
           </span>
         </div>
