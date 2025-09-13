@@ -213,11 +213,31 @@ class DynamicField(db.Model, BaseMixin):
         # Validate config based on field type
         self.validate_config()
 
+    def ensure_option_ids(self):
+        """Ensure all options have unique incremental IDs - never reassign existing ones"""
+        if not self.options or not isinstance(self.options, list):
+            return
+
+        # Find highest existing ID
+        existing_ids = [opt.get("id", 0) for opt in self.options if isinstance(opt, dict)]
+        max_id = max(existing_ids) if existing_ids else 0
+
+        # Only assign IDs to options that don't have one
+        for option in self.options:
+            if isinstance(option, dict) and not option.get("id"):
+                max_id += 1
+                option["id"] = max_id
+
     def save(self):
         """Save the field after validating if not already validated"""
         if not getattr(self, "_validated", False):
             self.validate_field()
             self._validated = True
+
+        # Ensure options have IDs for select fields
+        if self.field_type in [self.SINGLE_SELECT, self.MULTI_SELECT]:
+            self.ensure_option_ids()
+
         return super().save()
 
     def create_column(self):
