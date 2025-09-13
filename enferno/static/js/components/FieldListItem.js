@@ -138,6 +138,14 @@ const FieldListItem = Vue.defineComponent({
                     behavior: 'smooth'
                 });
             })
+        },
+        toggleAllowMultiple() {
+            // Initialize schema_config if it doesn't exist
+            if (!this.field.schema_config) {
+                this.field.schema_config = {};
+            }
+            // Toggle the allow_multiple property
+            this.field.schema_config.allow_multiple = !this.field.schema_config.allow_multiple;
         }
     },
     watch: {
@@ -184,6 +192,14 @@ const FieldListItem = Vue.defineComponent({
                                 <v-btn v-bind="props" :disabled="field.core" @click="field.searchable = !field.searchable" density="comfortable" :color="field.searchable ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-magnify</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsSearchable_ }}
+                        </v-tooltip>
+                        <v-tooltip v-if="field.ui_component === 'dropdown'" location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn v-bind="props" :disabled="field.core" @click="toggleAllowMultiple" density="comfortable" :color="field.schema_config?.allow_multiple ? 'primary' : null" variant="flat" icon size="small">
+                                    <v-icon>{{ field.schema_config?.allow_multiple ? 'mdi-format-list-checks' : 'mdi-format-list-bulleted' }}</v-icon>
+                                </v-btn>
+                            </template>
+                            {{ field.schema_config?.allow_multiple ? 'Multiple Selection' : 'Single Selection' }}
                         </v-tooltip>
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
