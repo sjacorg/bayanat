@@ -267,8 +267,8 @@ class DynamicField(db.Model, BaseMixin):
             # Create indexes if needed
             if self.searchable:
                 idx_name = f"ix_{table_name}_{self.name}"
-                if self.field_type == DynamicField.MULTI_SELECT:
-                    # Use GIN index for array columns (multi-select fields)
+                if self.field_type in [DynamicField.SINGLE_SELECT, DynamicField.MULTI_SELECT]:
+                    # Use GIN index for array columns (both single and multi-select)
                     db.session.execute(
                         text(
                             f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table_name} USING gin ({self.name})"
@@ -282,7 +282,7 @@ class DynamicField(db.Model, BaseMixin):
                         )
                     )
                 else:
-                    # Standard B-tree index for numbers, single_select, datetime
+                    # Standard B-tree index for numbers, datetime
                     db.session.execute(
                         text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table_name} ({self.name})")
                     )
