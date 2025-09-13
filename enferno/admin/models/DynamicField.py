@@ -105,7 +105,7 @@ class DynamicField(db.Model, BaseMixin):
         TEXT: "varchar(255)",  # Short text input
         LONG_TEXT: "text",  # Long text area
         NUMBER: "integer",  # Numeric input
-        SINGLE_SELECT: "varchar(255)",  # Single choice (stores selected value)
+        SINGLE_SELECT: "varchar(255)[]",  # Single choice (stores array with ≤1 element)
         MULTI_SELECT: "varchar(255)[]",  # Multiple choice (stores array of values)
         DATETIME: "timestamp with time zone",  # Date and time
     }
@@ -115,7 +115,7 @@ class DynamicField(db.Model, BaseMixin):
         TEXT: String(255),  # Short text input
         LONG_TEXT: Text,  # Long text area
         NUMBER: Integer,  # Numeric input
-        SINGLE_SELECT: String(255),  # Single choice dropdown
+        SINGLE_SELECT: SQLArray(String(255)),  # Single choice (array with ≤1 element)
         MULTI_SELECT: SQLArray(String(255)),  # Multiple choice selection
         DATETIME: DateTime(timezone=True),  # Date and time
     }
