@@ -34,15 +34,9 @@ const SelectFieldTypeDialog = Vue.defineComponent({
         },
         {
           label: window.translations.dropdown_,
-          field_type: 'single_select',
+          field_type: 'select',
           ui_component: 'dropdown',
           icon: 'mdi-chevron-down-circle-outline',
-        },
-        {
-          label: window.translations.multiSelect_,
-          field_type: 'multi_select',
-          ui_component: 'multi_dropdown',
-          icon: 'mdi-format-list-checks',
         },
         {
           label: window.translations.dateAndTime_,

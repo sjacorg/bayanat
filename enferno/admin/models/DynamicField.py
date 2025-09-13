@@ -484,7 +484,17 @@ class DynamicField(db.Model, BaseMixin):
             elif field.field_type == cls.DATETIME:
                 updates[name] = DateHelper.parse_datetime(value)
             elif field.field_type == cls.SELECT:
-                updates[name] = list(value) if isinstance(value, (list, tuple)) else [value]
+                # Always store as array, validate length for single-select
+                array_value = (
+                    list(value) if isinstance(value, (list, tuple)) else ([value] if value else [])
+                )
+
+                # Validate single-select constraint
+                allow_multiple = field.schema_config.get("allow_multiple", False)
+                if not allow_multiple and len(array_value) > 1:
+                    raise ValueError(f"Field {field.name} allows only one selection")
+
+                updates[name] = array_value
             elif field.field_type == cls.NUMBER:
                 try:
                     updates[name] = int(value) if value is not None else None
