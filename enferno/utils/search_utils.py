@@ -399,26 +399,35 @@ class SearchUtils:
                     # Skip SQLAlchemy column check - use raw SQL for dynamic fields
                     # This avoids issues with dynamic columns not being in the model metadata
 
-                    # Contains for TEXT, LONG_TEXT, and SINGLE_SELECT
+                    # Contains for TEXT, LONG_TEXT, and SELECT
                     if (
                         df.field_type
                         in (
                             DynamicField.TEXT,
                             DynamicField.LONG_TEXT,
-                            DynamicField.SINGLE_SELECT,
+                            DynamicField.SELECT,
                         )
                         and op == "contains"
                     ):
                         if isinstance(value, str) and value:
-                            conditions.append(
-                                text(f"{name} ILIKE :val").bindparams(val=f"%{value}%")
-                            )
+                            # For SELECT fields, search in array values
+                            if df.field_type == DynamicField.SELECT:
+                                conditions.append(
+                                    text(f"array_to_string({name}, ' ') ILIKE :val").bindparams(
+                                        val=f"%{value}%"
+                                    )
+                                )
+                            else:
+                                conditions.append(
+                                    text(f"{name} ILIKE :val").bindparams(val=f"%{value}%")
+                                )
                         continue
 
-                    # SINGLE_SELECT equality
-                    if df.field_type == DynamicField.SINGLE_SELECT and op == "eq":
+                    # SELECT equality (for both single and multi-select)
+                    if df.field_type == DynamicField.SELECT and op == "eq":
                         if value is not None:
-                            conditions.append(text(f"{name} = :val").bindparams(val=value))
+                            # Use array containment for equality check
+                            conditions.append(text(f":val = ANY({name})").bindparams(val=value))
                         continue
 
                     # NUMBER equality
@@ -452,8 +461,8 @@ class SearchUtils:
                                 )
                         continue
 
-                    # MULTI_SELECT handling (PostgreSQL array operations)
-                    if df.field_type == DynamicField.MULTI_SELECT:
+                    # SELECT array operations (handles both single and multi-select)
+                    if df.field_type == DynamicField.SELECT:
                         if op == "any":
                             # OR logic - at least one value must be present
                             if isinstance(value, list) and value:
