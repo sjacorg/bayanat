@@ -61,15 +61,9 @@ class TestDynamicField:
             (DynamicField.LONG_TEXT, DynamicField.UIComponent.TEXTAREA, "test_long_text"),
             (DynamicField.NUMBER, DynamicField.UIComponent.NUMBER_INPUT, "test_number"),
             (
-                DynamicField.SINGLE_SELECT,
+                DynamicField.SELECT,
                 DynamicField.UIComponent.DROPDOWN,
-                "test_single",
-                [{"label": "Option 1", "value": "opt1"}],
-            ),
-            (
-                DynamicField.MULTI_SELECT,
-                DynamicField.UIComponent.MULTI_DROPDOWN,
-                "test_multi",
+                "test_select",
                 [{"label": "Option 1", "value": "opt1"}],
             ),
             (DynamicField.DATETIME, DynamicField.UIComponent.DATE_PICKER, "test_datetime"),
@@ -107,12 +101,12 @@ class TestDynamicField:
         session.commit()
 
     def test_field_options(self, session):
-        """Test field with options (dropdown/multi-select)."""
+        """Test field with options (select field)."""
         field = DynamicField(
             name="test_options_dropdown",
             title="Test Options Dropdown",
             entity_type="bulletin",
-            field_type=DynamicField.SINGLE_SELECT,
+            field_type=DynamicField.SELECT,
             ui_component=DynamicField.UIComponent.DROPDOWN,
             options=[
                 {"label": "Option 1", "value": "opt1"},
@@ -128,6 +122,10 @@ class TestDynamicField:
         assert len(saved_field.options) == 2
         assert saved_field.options[0]["label"] == "Option 1"
         assert saved_field.options[0]["value"] == "opt1"
+
+        # Verify options have IDs after save
+        assert saved_field.options[0].get("id") == 1
+        assert saved_field.options[1].get("id") == 2
 
         # Cleanup
         session.delete(field)
@@ -203,10 +201,7 @@ class TestDynamicField:
             DynamicField.NUMBER
         )
         assert DynamicField.UIComponent.DROPDOWN in DynamicField.get_valid_components(
-            DynamicField.SINGLE_SELECT
-        )
-        assert DynamicField.UIComponent.MULTI_DROPDOWN in DynamicField.get_valid_components(
-            DynamicField.MULTI_SELECT
+            DynamicField.SELECT
         )
         assert DynamicField.UIComponent.DATE_PICKER in DynamicField.get_valid_components(
             DynamicField.DATETIME
@@ -214,3 +209,84 @@ class TestDynamicField:
 
         # Invalid field type should return empty list
         assert DynamicField.get_valid_components("invalid_type") == []
+
+    def test_option_id_generation(self, session):
+        """Test automatic option ID generation for select fields."""
+        field = DynamicField(
+            name="test_option_ids",
+            title="Test Option IDs",
+            entity_type="bulletin",
+            field_type=DynamicField.SELECT,
+            ui_component=DynamicField.UIComponent.DROPDOWN,
+            options=[
+                {"label": "Option A", "value": "opt_a"},
+                {"label": "Option B", "value": "opt_b"},
+            ],
+        )
+
+        # Initially no IDs
+        assert field.options[0].get("id") is None
+        assert field.options[1].get("id") is None
+
+        # After save, IDs should be generated
+        field.save()
+        assert field.options[0].get("id") == 1
+        assert field.options[1].get("id") == 2
+
+        # Add new option - should get next ID
+        field.options.append({"label": "Option C", "value": "opt_c"})
+        field.ensure_option_ids()  # Call directly to test
+        assert field.options[2].get("id") == 3
+
+        # Delete middle option and add new one
+        del field.options[1]  # Remove Option B (id=2)
+        field.options.append({"label": "Option D", "value": "opt_d"})
+        field.ensure_option_ids()  # Call directly to test
+
+        # IDs should be: Option A=1, Option C=3, Option D=4 (not reusing 2)
+        assert field.options[0].get("id") == 1  # Option A
+        assert field.options[1].get("id") == 3  # Option C
+        assert field.options[2].get("id") == 4  # Option D (new)
+
+        # Cleanup
+        session.delete(field)
+        session.commit()
+
+    def test_allow_multiple_config(self, session):
+        """Test allow_multiple configuration for select fields."""
+        # Create single-select field
+        single_field = DynamicField(
+            name="test_single_select",
+            title="Test Single Select",
+            entity_type="bulletin",
+            field_type=DynamicField.SELECT,
+            ui_component=DynamicField.UIComponent.DROPDOWN,
+            schema_config={"allow_multiple": False},
+            options=[{"label": "Option 1", "value": "opt1"}],
+        )
+        single_field.save()
+
+        # Create multi-select field
+        multi_field = DynamicField(
+            name="test_multi_select",
+            title="Test Multi Select",
+            entity_type="bulletin",
+            field_type=DynamicField.SELECT,
+            ui_component=DynamicField.UIComponent.DROPDOWN,
+            schema_config={"allow_multiple": True},
+            options=[{"label": "Option 1", "value": "opt1"}],
+        )
+        multi_field.save()
+
+        # Both should be SELECT type
+        assert single_field.field_type == DynamicField.SELECT
+        assert multi_field.field_type == DynamicField.SELECT
+
+        # But different allow_multiple settings
+        assert single_field.schema_config.get("allow_multiple") is False
+        assert multi_field.schema_config.get("allow_multiple") is True
+
+        # Cleanup
+        session.delete(single_field)
+        session.delete(multi_field)
+        session.commit()
