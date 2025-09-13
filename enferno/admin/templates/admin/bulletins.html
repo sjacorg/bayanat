@@ -717,6 +717,7 @@
                     totalCount: 0,
 
                     relateActorSearchTerms: {},
+                    errorsMap: null,
                 }),
 
                 computed: {
@@ -922,7 +923,16 @@
                 },
 
                 methods: {
+                    resetErrorFromMap: resetErrorFromMap,
                     validateForm() {
+                        this.$refs.form.validate().then(({ valid, errors }) => {
+                            if (!valid) {
+                                this.showSnack("{{ _('Please review the form for errors.')}}")
+                                scrollToFirstError(errors)
+                            }
+                        });
+                    },
+                    validateFormAndSave() {
                         this.$refs.form.validate().then(({ valid, errors }) => {
                             if (valid) {
                                 this.save();
@@ -1618,6 +1628,8 @@
                                 console.error(err);
                                 this.showSnack(handleRequestError(err));
                                 this.saving = false;
+                                this.errorsMap = mapResponseErrors(err);
+                                this.validateForm()
                             });
                         } else {
                             //create new record
@@ -1632,6 +1644,8 @@
                                 console.error(err);
                                 this.showSnack(handleRequestError(err));
                                 this.saving = false;
+                                this.errorsMap = mapResponseErrors(err);
+                                this.validateForm()
                             });
                         }
                     },
