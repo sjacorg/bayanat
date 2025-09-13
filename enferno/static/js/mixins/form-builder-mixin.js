@@ -29,7 +29,7 @@ const formBuilderMixin = {
     findFieldOptionByValue(field, value) {
       if (!Array.isArray(field.options)) return
 
-      return field.options.find(option => option?.value === value)
+      return field.options.find(option => option?.id === value)
     },
     sortFields(fields) {
       return fields.sort((a, b) => {

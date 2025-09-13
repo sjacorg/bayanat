@@ -63,27 +63,17 @@ const FieldRenderer = Vue.defineComponent({
                 dropdown: {
                     component: 'v-select',
                     ...baseProps,
-                    items: field.options,
+                    items: field.options || [],
                     'item-title': 'label',
-                    'item-value': 'value',
+                    'item-value': 'id',
                     chips: true,
                     clearable: true,
-                    multiple: false
-                },
-                multi_dropdown: {
-                    component: 'v-select',
-                    ...baseProps,
-                    items: field.options,
-                    'item-title': 'label',
-                    'item-value': 'value',
-                    chips: true,
-                    clearable: true,
-                    closableChips: true,
-                    multiple: true
+                    multiple: field.schema_config?.allow_multiple || false,
+                    closableChips: field.schema_config?.allow_multiple || false
                 },
                 date_picker: { component: 'pop-date-time-field', ...baseProps },
-                html_block: { 
-                    component: 'v-text-field', 
+                html_block: {
+                    component: 'v-text-field',
                     ...baseProps,
                     modelValue: `Complex component: ${field.ui_config?.html_template || field.name}`,
                     readonly: true
