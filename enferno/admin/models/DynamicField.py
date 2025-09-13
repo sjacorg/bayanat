@@ -27,12 +27,11 @@ class DynamicField(db.Model, BaseMixin):
     """
     Defines dynamic custom fields for any entity type (bulletin, actor, incident).
 
-    Supports 6 clean field types:
+    Supports 5 field types:
     - TEXT: Short text input (varchar 255)
     - LONG_TEXT: Long text area
     - NUMBER: Numeric input (integer)
-    - SINGLE_SELECT: Dropdown selection
-    - MULTI_SELECT: Multi-select dropdown (stored as array)
+    - SELECT: Select field (single or multi via allow_multiple config)
     - DATETIME: Date and time picker
 
     JSONB Field Documentation:
@@ -74,8 +73,7 @@ class DynamicField(db.Model, BaseMixin):
     TEXT = "text"  # Short text input
     LONG_TEXT = "long_text"  # Long text area
     NUMBER = "number"  # Numeric input
-    SINGLE_SELECT = "single_select"  # Single choice dropdown
-    MULTI_SELECT = "multi_select"  # Multiple choice selection
+    SELECT = "select"  # Select field (single/multi via allow_multiple)
     DATETIME = "datetime"  # Date and time picker
     HTML_BLOCK = "html_block"  # Existing HTML component/template (for complex core fields)
 
@@ -86,7 +84,6 @@ class DynamicField(db.Model, BaseMixin):
         NUMBER_INPUT = "number_input"
         DATE_PICKER = "date_picker"
         DROPDOWN = "dropdown"
-        MULTI_DROPDOWN = "multi_dropdown"
         HTML_BLOCK = "html_block"  # Renders existing HTML template/component
 
     # Data type to UI component mapping (1:1, extensible)
@@ -94,8 +91,7 @@ class DynamicField(db.Model, BaseMixin):
         TEXT: [UIComponent.INPUT],
         LONG_TEXT: [UIComponent.TEXTAREA],
         NUMBER: [UIComponent.NUMBER_INPUT],
-        SINGLE_SELECT: [UIComponent.DROPDOWN],
-        MULTI_SELECT: [UIComponent.MULTI_DROPDOWN],
+        SELECT: [UIComponent.DROPDOWN],
         DATETIME: [UIComponent.DATE_PICKER],
         HTML_BLOCK: [UIComponent.HTML_BLOCK],  # Maps to existing HTML template
     }
@@ -105,8 +101,7 @@ class DynamicField(db.Model, BaseMixin):
         TEXT: "varchar(255)",  # Short text input
         LONG_TEXT: "text",  # Long text area
         NUMBER: "integer",  # Numeric input
-        SINGLE_SELECT: "varchar(255)[]",  # Single choice (stores array with ≤1 element)
-        MULTI_SELECT: "varchar(255)[]",  # Multiple choice (stores array of values)
+        SELECT: "varchar(255)[]",  # Select field (array storage for both single/multi)
         DATETIME: "timestamp with time zone",  # Date and time
     }
 
@@ -115,8 +110,7 @@ class DynamicField(db.Model, BaseMixin):
         TEXT: String(255),  # Short text input
         LONG_TEXT: Text,  # Long text area
         NUMBER: Integer,  # Numeric input
-        SINGLE_SELECT: SQLArray(String(255)),  # Single choice (array with ≤1 element)
-        MULTI_SELECT: SQLArray(String(255)),  # Multiple choice selection
+        SELECT: SQLArray(String(255)),  # Select field (array storage)
         DATETIME: DateTime(timezone=True),  # Date and time
     }
 
@@ -204,7 +198,7 @@ class DynamicField(db.Model, BaseMixin):
 
         # Validate options if select fields (skip for core fields)
         if (
-            self.field_type in [self.SINGLE_SELECT, self.MULTI_SELECT]
+            self.field_type == self.SELECT
             and not self.options
             and not self.core  # Skip validation for core fields
         ):
@@ -235,7 +229,7 @@ class DynamicField(db.Model, BaseMixin):
             self._validated = True
 
         # Ensure options have IDs for select fields
-        if self.field_type in [self.SINGLE_SELECT, self.MULTI_SELECT]:
+        if self.field_type == self.SELECT:
             self.ensure_option_ids()
 
         return super().save()
@@ -267,8 +261,8 @@ class DynamicField(db.Model, BaseMixin):
             # Create indexes if needed
             if self.searchable:
                 idx_name = f"ix_{table_name}_{self.name}"
-                if self.field_type in [DynamicField.SINGLE_SELECT, DynamicField.MULTI_SELECT]:
-                    # Use GIN index for array columns (both single and multi-select)
+                if self.field_type == DynamicField.SELECT:
+                    # Use GIN index for array columns (select fields)
                     db.session.execute(
                         text(
                             f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table_name} USING gin ({self.name})"
@@ -340,8 +334,7 @@ class DynamicField(db.Model, BaseMixin):
             cls.TEXT,  # Short text input
             cls.LONG_TEXT,  # Long text area
             cls.NUMBER,  # Numeric input
-            cls.SINGLE_SELECT,  # Single choice dropdown
-            cls.MULTI_SELECT,  # Multiple choice selection
+            cls.SELECT,  # Select field (single/multi)
             cls.DATETIME,  # Date and time
             cls.HTML_BLOCK,  # Existing HTML template/component
         ]
@@ -386,14 +379,14 @@ class DynamicField(db.Model, BaseMixin):
     def _serialize_value(field_type: str, value):
         """Serialize a dynamic field value based on its type."""
         if value is None:
-            if field_type == DynamicField.MULTI_SELECT:
+            if field_type == DynamicField.SELECT:
                 return []
             return ""
 
         if field_type == DynamicField.DATETIME:
             return DateHelper.serialize_datetime(value)
 
-        if field_type == DynamicField.MULTI_SELECT:
+        if field_type == DynamicField.SELECT:
             # Stored as a native array (e.g., varchar[]). Return as-is (or empty list).
             return list(value) if value is not None else []
 
@@ -490,7 +483,7 @@ class DynamicField(db.Model, BaseMixin):
                 updates[name] = None
             elif field.field_type == cls.DATETIME:
                 updates[name] = DateHelper.parse_datetime(value)
-            elif field.field_type == cls.MULTI_SELECT:
+            elif field.field_type == cls.SELECT:
                 updates[name] = list(value) if isinstance(value, (list, tuple)) else [value]
             elif field.field_type == cls.NUMBER:
                 try:
