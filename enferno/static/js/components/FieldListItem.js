@@ -44,7 +44,7 @@ const FieldListItem = Vue.defineComponent({
         },
         dropdownOptionsProxy: {
             get() {
-                return (this.field?.ui_component === 'dropdown' || this.field?.ui_component === 'multi_dropdown')
+                return (this.field?.ui_component === 'dropdown')
                     ? this.field?.options || [{ id: 1, label: this.translations.optionN_(1), value: 'option_1', hidden: false }]
                     : null
             },
@@ -86,18 +86,10 @@ const FieldListItem = Vue.defineComponent({
                 dropdown: {
                     component: 'v-select',
                     ...baseProps,
-                    items: field.options,
+                    items: field.options || [],
                     'item-title': 'label',
-                    'item-value': 'value',
-                    multiple: false
-                },
-                multi_dropdown: {
-                    component: 'v-select',
-                    ...baseProps,
-                    items: field.options,
-                    'item-title': 'label',
-                    'item-value': 'value',
-                    multiple: true
+                    'item-value': 'id',
+                    multiple: field.schema_config?.allow_multiple || false
                 },
                 date_picker: { component: 'v-text-field', ...baseProps },
                 html_block: { 
@@ -229,7 +221,7 @@ const FieldListItem = Vue.defineComponent({
 
                     <div class="d-flex flex-wrap ga-4">
                         <div
-                            v-if="field.ui_component === 'dropdown' || field.ui_component === 'multi_dropdown'"
+                            v-if="field.ui_component === 'dropdown'"
                             class="w-100 w-md-50"
                             style="flex: 1 1 calc(50% - 16px)"
                         >
