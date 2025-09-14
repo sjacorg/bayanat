@@ -2,6 +2,7 @@ const RelateActors = Vue.defineComponent({
   mixins: [relatedSearchMixin],
   data: () => ({
     searchEndpoint: `/admin/api/actors/?mode=2`,
+    queryFormat: 'array',
   }),
   template: /*html*/ `
     <relate-items-template
