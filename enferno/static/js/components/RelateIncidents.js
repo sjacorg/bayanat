@@ -2,6 +2,7 @@ const RelateIncidents = Vue.defineComponent({
   mixins: [relatedSearchMixin],
   data: () => ({
     searchEndpoint: `/admin/api/incidents/?mode=2`,
+    queryFormat: 'single',
   }),
   template: /*html*/ `
     <relate-items-template
