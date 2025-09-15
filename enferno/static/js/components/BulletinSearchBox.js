@@ -103,8 +103,7 @@ const BulletinSearchBox = Vue.defineComponent({
         case 'text':
         case 'long_text': return 'contains'
         case 'number': return 'eq'
-        case 'single_select': return 'eq'
-        case 'multi_select': return 'all' // default, can toggle with checkbox
+        case 'select': return 'all'
         case 'datetime': return 'between'
         default: return 'eq'
       }
@@ -540,42 +539,24 @@ const BulletinSearchBox = Vue.defineComponent({
                   control-variant="hidden"
               ></v-number-input>
               <div
-                v-else-if="['single_select'].includes(field.field_type)"
+                v-else-if="['select'].includes(field.field_type)"
               >
                 <v-autocomplete
                   :model-value="dyn.get(field.name)?.value"
-                  @update:model-value="updateDynamicField($event, field)"
-                  :item-color="'secondary'"
+                  @update:model-value="updateDynamicField(field.field_type === 'select' && field?.schema_config?.allow_multiple ? $event : [$event], field)"
+                  item-color="secondary"
                   :label="field.title"
                   :items="field.options"
                   item-title="label"
-                  item-value="value"
-                  :multiple="false"
+                  item-value="id"
+                  :multiple="Boolean(field?.schema_config?.allow_multiple)"
                   chips
                   clearable
-                  :prepend-inner-icon="'mdi-magnify'"
+                  :closable-chips="Boolean(field?.schema_config?.allow_multiple)"
+                  prepend-inner-icon="mdi-magnify"
                   :return-object="false"
                 ></v-autocomplete>
-              </div>
-              <div
-                v-else-if="['multi_select'].includes(field.field_type)"
-              >
-                <v-autocomplete
-                  :model-value="dyn.get(field.name)?.value"
-                  @update:model-value="updateDynamicField($event, field)"
-                  :item-color="'secondary'"
-                  :label="field.title"
-                  :items="field.options"
-                  item-title="label"
-                  item-value="value"
-                  multiple
-                  chips
-                  clearable
-                  closable-chips
-                  :prepend-inner-icon="'mdi-magnify'"
-                  :return-object="false"
-                ></v-autocomplete>
-                <div class="d-flex align-center flex-wrap">
+                <div v-if="Boolean(field?.schema_config?.allow_multiple)" class="d-flex align-center flex-wrap">
                   <v-checkbox :disabled="!dyn.get(field.name)?.value" :label="translations.any_" dense :model-value="dyn.get(field.name)?.op === 'any'" @update:model-value="updateDynamicField(dyn.get(field.name)?.value, field, $event ? 'any' : null)" color="primary" small
                                 class="me-4"></v-checkbox>
                 </div>

@@ -63,6 +63,19 @@ const FieldRenderer = Vue.defineComponent({
                 dropdown: {
                     component: 'v-select',
                     ...baseProps,
+                    modelValue: Array.isArray(this.modelValue)
+                                    ? this.modelValue.map(Number)
+                                    : this.modelValue != null
+                                        ? Number(this.modelValue)
+                                        : field.schema_config?.default ?? null,
+                    'onUpdate:modelValue': (newValue) => {
+                        const normalized = field.schema_config?.allow_multiple
+                            ? newValue
+                            : newValue != null
+                            ? [newValue]
+                            : [];
+                        this.$emit('update:modelValue', normalized);
+                    },
                     items: field.options || [],
                     'item-title': 'label',
                     'item-value': 'id',
@@ -83,7 +96,7 @@ const FieldRenderer = Vue.defineComponent({
             return componentMap[field.ui_component] || null;
         },
     },
-    template: /*html*/`
+    template: `
         <div>
             <component :is="componentProps.component" v-bind="componentProps"></component>
         </div>
