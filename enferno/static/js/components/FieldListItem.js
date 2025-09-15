@@ -45,7 +45,7 @@ const FieldListItem = Vue.defineComponent({
         dropdownOptionsProxy: {
             get() {
                 return (this.field?.ui_component === 'dropdown')
-                    ? this.field?.options || [{ id: 1, label: this.translations.optionN_(1), value: 'option_1', hidden: false }]
+                    ? this.field?.options || [{ id: 1, label: this.translations.optionN_(1), hidden: false }]
                     : null
             },
             set(val) {
@@ -129,7 +129,6 @@ const FieldListItem = Vue.defineComponent({
             this.dropdownOptionsProxy.push({
                 id: this.createOptionId(),
                 label: this.translations.optionN_(nextNumber),
-                value: `option_${nextNumber}`,
                 hidden: false
             });
             this.$nextTick(() => {

@@ -62,7 +62,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           ui_component,
           sort_order: nextSort,
           required: false,
-          options: (field_type === 'select') ? [{ id: 1, label: this.translations.optionN_(1), value: 'option_1', hidden: false }] : null,
+          options: (field_type === 'select') ? [{ id: 1, label: this.translations.optionN_(1), hidden: false }] : null,
           schema_config: field_type === 'select' ? { allow_multiple: false } : {},
           ui_config: { width: 'w-100', help_text: '' },
           validation_config: {},
