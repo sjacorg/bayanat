@@ -73,6 +73,7 @@ const SearchField = Vue.defineComponent({
     },
     onFocused(focused) {
       if (focused) this.startSearch(this.searchQuery)
+      else this.loading = false
     }
   },
   watch: {
