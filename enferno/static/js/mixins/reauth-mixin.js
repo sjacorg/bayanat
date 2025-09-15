@@ -21,14 +21,33 @@ const reauthMixin = {
     document.removeEventListener('authentication-required', this.showLoginDialog);
   },
   methods: {
+    async onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return; // only run when tab becomes active
+
+      // Only check if dialog is visible
+      if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
+      
+      try {
+        await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
+        this.resetState(); // Session restored - close dialog
+      } catch (error) {
+        // Still expired - keep dialog open
+      }
+    },
     showLoginDialog(event) {
       if (this.isReauthRequired(event?.detail)) {
         this.isReauthDialogVisible = true;
       } else {
         this.isSignInDialogVisible = true;
       }
+
+      // Start listening for tab focus
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
     },
     resetState() {
+      // Stop listening when dialog closes
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
+
       this.signInForm = {
         username: window.__username__ || null,
         password: null,
