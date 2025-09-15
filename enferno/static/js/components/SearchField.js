@@ -31,6 +31,7 @@ const SearchField = Vue.defineComponent({
   data: () => ({
     loading: false,
     items: [],
+    searchQuery: '',
   }),
   methods: {
     startSearch(search) {
@@ -70,6 +71,14 @@ const SearchField = Vue.defineComponent({
         this.$root?.showSnack?.('Copied to clipboard');
       }).catch(console.error);
     },
+    onFocused(focused) {
+      if (focused) this.startSearch(this.searchQuery)
+    }
+  },
+  watch: {
+    searchQuery(nextSearchQuery) {
+      this.startSearch(nextSearchQuery)
+    }
   },
   template: `
     <v-autocomplete
@@ -78,7 +87,10 @@ const SearchField = Vue.defineComponent({
       :auto-select-first="true"
       :model-value="modelValue"
       @update:model-value="$emit('update:model-value', $event)"
-      :hide-no-data="loading"
+      v-model:search="searchQuery"
+      @update:focused="onFocused"
+      hide-no-data
+      no-filter
       item-color="secondary"
       :label="label"
       :items="items"
@@ -90,9 +102,7 @@ const SearchField = Vue.defineComponent({
       :closable-chips="multiple"
       clearable
       clear-on-select
-      @update:focused="(focused) => { focused ? startSearch() : loading = false }"
       :return-object="returnObject"
-      @update:search="startSearch"
       v-bind="$attrs"
       :loading="loading"
       :rules="rules"
@@ -109,7 +119,6 @@ const LocationSearchField = Vue.defineComponent({
   methods: {
     debouncedSearch: debounce(function (search) {
       this.loading = true;
-      this.items = []; // clear previous items to avoid old selection
       api
         .post(this.api, {
           q: {
