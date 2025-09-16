@@ -85,9 +85,10 @@
                                                     label-original="{{ _('Original Title') }}"
                                                     label-translation="{{ _('Original Title (Ar)') }}"
                                                     :rules="[
-                                                    validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
-                                                    validationRules.maxLength(255),
-                                                ]">
+                                                        validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
+                                                        validationRules.maxLength(255),
+                                                    ]">
+                                                    v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
                                         </dual-field>
                                     </v-col>
     
@@ -96,7 +97,10 @@
                                                     v-model:translation="editedItem.sjac_title_ar"
                                                     label-original="{{ _('Title') }}"
                                                     label-translation="{{ _('Title (Ar)') }}"
-                                                    :rules="[validationRules.maxLength(255)]"
+                                                    :rules="[
+                                                        validationRules.maxLength(255),
+                                                    ]">
+                                                    v-bind="serverErrorPropsForDualField(serverErrors, 'item.sjac_title', 'item.sjac_title_ar')"
                                         ></dual-field>
                                     </v-col>
                                     <v-col cols="12" md="4">
@@ -230,13 +234,11 @@
                                                         :rules="[
                                                             validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
                                                             validationRules.maxLength(255),
-                                                            validationRules.urlOrNA(),
-                                                            validationRules.externalError(errorsMap?.source_link),
                                                         ]"
-                                                        @input="resetErrorFromMap('source_link', errorsMap); validateForm()"
+                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.source_link')"
                                             ></v-text-field>
     
-                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt" @change="resetErrorFromMap('source_link', errorsMap); validateForm()">
+                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt" @update:model-value="serverErrors['item.source_link'] = null">
                                             </v-checkbox>
     
                                             <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
