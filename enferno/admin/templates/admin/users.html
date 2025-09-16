@@ -639,8 +639,8 @@
                     this.isAdmin = false;
                     this.initialUsername = null;
                     this.isUsernameAvailable = false;
-                    this.serverErrors = {};
                     setTimeout(() => {
+                        this.serverErrors = {};
                         this.isStrongPassword = false;
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;
