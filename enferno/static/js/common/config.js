@@ -120,28 +120,22 @@ function isValidLength(value, limit, type) {
     return type === "max" ? length <= limit : length >= limit;
 }
 
-function mapResponseErrors(error) {
-    const errors = error?.response?.data?.errors
-    if (!errors) return
-    if (isPlainObject(errors)) {
-        return Object.fromEntries(Object.entries(errors).map(([key, value]) => [key.replace('item.', ''), value]))
-    }
-}
-
-function resetErrorFromMap(key, errorsMap) {
-    if (!errorsMap) return
-    if (key in errorsMap) errorsMap[key] = null
-}
-
 function scrollToFirstError(errors) {
-    const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
+    const invalidFieldId = errors?.find((error) => Boolean(error?.id))?.id
     const element = document.getElementById(invalidFieldId)
-    element?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-    })
-    if (element?.focus) {
+
+    if (element) {
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+        })
         setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+    } else {
+        const el = document.querySelector(".v-input--error");
+        el?.scrollIntoView?.({
+            behavior: 'smooth',
+            block: 'center',
+        });
     }
 }
 
