@@ -595,6 +595,8 @@
 
                 // Count functionality  
                 totalCount: 0,
+
+                serverErrors: {},
             }),
 
             computed: {
@@ -1444,6 +1446,7 @@
                 save() {
                     if (!this.valid) {
                         this.showSnack("{{ _('Please review the form for errors.')}}");
+                        scrollToFirstError();
                         return;
                     }
 
@@ -1458,6 +1461,9 @@
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
+                        }).finally(() => {
                             this.saving = false;
                         });
                     } else {
@@ -1471,6 +1477,9 @@
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
+                        }).finally(() => {
                             this.saving = false;
                         });
                     }

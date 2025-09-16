@@ -717,7 +717,8 @@
                     totalCount: 0,
 
                     relateActorSearchTerms: {},
-                    errorsMap: null,
+
+                    serverErrors: {},
                 }),
 
                 computed: {
@@ -923,15 +924,6 @@
                 },
 
                 methods: {
-                    resetErrorFromMap: resetErrorFromMap,
-                    validateForm() {
-                        this.$refs.form.validate().then(({ valid, errors }) => {
-                            if (!valid) {
-                                this.showSnack("{{ _('Please review the form for errors.')}}")
-                                scrollToFirstError(errors)
-                            }
-                        });
-                    },
                     validateFormAndSave() {
                         this.$refs.form.validate().then(({ valid, errors }) => {
                             if (valid) {
@@ -1612,6 +1604,7 @@
                     save() {
                         if (!this.valid) {
                             this.showSnack("{{ _('Please review the form for errors.')}}");
+                            scrollToFirstError();
                             return;
                         }
 
@@ -1627,9 +1620,10 @@
                             }).catch(err => {
                                 console.error(err);
                                 this.showSnack(handleRequestError(err));
+                                this.serverErrors = err.response?.data?.errors || {};
+                                this.$nextTick(() => scrollToFirstError());
+                            }).finally(() => {
                                 this.saving = false;
-                                this.errorsMap = mapResponseErrors(err);
-                                this.validateForm()
                             });
                         } else {
                             //create new record
@@ -1643,9 +1637,10 @@
                             }).catch(err => {
                                 console.error(err);
                                 this.showSnack(handleRequestError(err));
+                                this.serverErrors = err.response?.data?.errors || {};
+                                this.$nextTick(() => scrollToFirstError());
+                            }).finally(() => {
                                 this.saving = false;
-                                this.errorsMap = mapResponseErrors(err);
-                                this.validateForm()
                             });
                         }
                     },
