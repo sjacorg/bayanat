@@ -52,12 +52,6 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
-    externalError(error) {
-        return () => {
-          if (!error) return true;
-          return Array.isArray(error) ? error[0] : error;
-        };
-    },
     checkUsername: ({ initialUsername, onResponse }) => {
         const defaultMsg = window.translations.usernameInvalidOrAlreadyTaken_;
       
