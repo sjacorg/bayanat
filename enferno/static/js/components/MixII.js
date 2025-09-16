@@ -4,6 +4,10 @@ const MixII = Vue.defineComponent({
       type: String,
       default: '',
     },
+    errorKey: {
+      type: String,
+      default: '',
+    },
     multiple: {
       type: Boolean,
       default: false,
@@ -60,7 +64,9 @@ const MixII = Vue.defineComponent({
             </v-select>
           </div>
           <div class="flex-grow-1 ml-2">
-            <v-textarea rows="2" :label="translations.details_" v-model="mix.details"></v-textarea>
+            <v-textarea rows="2" :label="translations.details_" v-model="mix.details"
+              v-bind="$root.serverErrorPropsForField($root.serverErrors, errorKey)"
+            ></v-textarea>
 
           </div>
 
