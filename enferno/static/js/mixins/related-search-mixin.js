@@ -39,7 +39,7 @@ const relatedSearchMixin = {
       this.loading = true;
 
       const requestData = {
-          q: [this.q],
+          q: this.queryFormat === 'single' ? this.q : [this.q],
           per_page: this.perPage,
           cursor: this.nextCursor,
       };
