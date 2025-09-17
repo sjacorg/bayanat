@@ -380,17 +380,14 @@
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
 
-    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
-
-
-
-
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
-
-    <script>
+    <script type="module">
+        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
+        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
+        import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
@@ -409,6 +406,8 @@
             mixins: [mediaMixin, globalMixin, relationsMixin],
 
             data: () => ({
+                jsondiffpatch,
+                htmlFormatter,
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
@@ -752,7 +751,7 @@
                         this.roles = [];
                         console.log(e.message);
                     });
-                {% endif  %}
+                {% endif %}
 
                 // Load initial data
                 this.refresh();
@@ -1304,7 +1303,7 @@
                         this.showSnack("{{ _('This item is restricted.')}}")
                         return
                     }
-                    path = `/admin/actors/${item.id}`;
+                    const path = `/admin/actors/${item.id}`;
                     if (this.$route.path !== path)
                         this.$router.push(path);
 
@@ -1368,8 +1367,8 @@
                 },
 
                 has_role(user, role) {
-                    for (r of user.roles) {
-                        if (r.name == role) {
+                    for (const r of user.roles) {
+                        if (r.name === role) {
                             return true
                         }
                     }
