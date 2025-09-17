@@ -772,17 +772,10 @@
 
             methods: {
                 handleRoute({ initialLoad = false } = {}) {
-                    // Use URLSearchParams to reliably read query strings on initial page load 
-                    const params = new URLSearchParams(window.location.search);
-                    const id = this.$route.params.id;
-                    const reltob = params.get('reltob');
-                    const reltoa = params.get('reltoa');
-                    const reltoi = params.get('reltoi');
-
-                    if (id) this.showActor(id);
-                    if (reltob) return this.filter_related_to_bulletin(reltob);
-                    if (reltoa) return this.filter_related_to_actor(reltoa);
-                    if (reltoi) return this.filter_related_to_incident(reltoi);
+                    if (this.$route.params.id) this.showActor(this.$route.params.id);
+                    if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
+                    if (this.$route.query.reltoa) return this.filter_related_to_actor(this.$route.query.reltoa);
+                    if (this.$route.query.reltoi) return this.filter_related_to_incident(this.$route.query.reltoi);
 
                     // Only refresh on initial page load
                     if (initialLoad) this.refresh();
@@ -1714,8 +1707,10 @@
         app.component('mp-card', MPCard);
         app.component('vue-dropzone', VueDropzone);
 
-
-        app.use(router).use(vuetify).mount('#app');
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}
