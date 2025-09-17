@@ -116,6 +116,7 @@ const GlobalMap = Vue.defineComponent({
         btn.addEventListener('click', () => {
           navigator.clipboard.writeText(btn.getAttribute('data-copy'))
             .then(() => this.$root.showSnack(t.copiedToClipboard_))
+            .catch(() => this.$root.showSnack(t.failedToCopyCoordinates_))
         });
       }
 
