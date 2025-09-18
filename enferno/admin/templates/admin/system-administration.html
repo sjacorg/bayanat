@@ -3,25 +3,24 @@
 
     <v-main class="system-admin">
         <div class="pa-4">
-            <v-card class="pa-4" elevation="2" height="calc(100dvh - 96px)">
+            <v-card :class="['pa-4', { 'overflow-y-auto': this.$vuetify.display.width <= 960 }]" elevation="2" height="calc(100dvh - 96px)">
                 <h1 class="text-h6 mb-5">{{ _('Administration Dashboard') }}</h1>
 
                 <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px);">
 
                     <!-- Left navigation menu -->
-                    <v-card class="py-5 h-fit overflow-y-auto" elevation="2" style="min-width: 255px;">
+                    <scrollable-card :container-props="{ style: 'height: calc(100% - 88px); max-height: fit-content;' }" :card-props="{ class: 'py-5', style: 'max-height: fit-content; height: 100%; min-height: 200px' }">
                         <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
                             <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
                                 class="px-7 justify-start text-none text-subtitle-2">
                                 ${tab.text}
                             </v-tab>
                         </v-tabs>
-                    </v-card>
+                    </scrollable-card>
 
 
                     <!-- Main content -->
-                    <v-card elevation="2" class="w-100 overflow-y-auto">
-
+                    <v-card elevation="2" class="w-100 overflow-y-auto" :style="$vuetify.display.width <= 960 ? { minHeight: '400px' } : {}">
                         <!-- Main content header -->
                         <v-card-title class="d-flex flex-column pa-0 px-4 position-sticky top-0 z-1 bg-surface">
                             <div class="d-flex my-3">
@@ -1114,6 +1113,7 @@
     <script src="/static/js/diff-tool.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/ShowDetails.js"></script>
+    <script src="/static/js/components/ScrollableCard.js"></script>
     <script src="/static/js/components/DiffRenderer.js"></script>
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
@@ -1450,9 +1450,10 @@
                 }
             }
         });
-        app.component('geo-map', GeoMap);
-        app.component('show-details', ShowDetails);
-        app.component('diff-renderer', DiffRenderer);
+        app.component('GeoMap', GeoMap);
+        app.component('ShowDetails', ShowDetails);
+        app.component('DiffRenderer', DiffRenderer);
+        app.component('ScrollableCard', ScrollableCard);
         
         app.use(router).use(vuetify).mount('#app');
 
