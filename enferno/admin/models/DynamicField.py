@@ -245,6 +245,11 @@ class DynamicField(db.Model, BaseMixin):
             if not sql_type:
                 raise ValueError(f"Invalid field type: {self.field_type}")
 
+            # Respect max_length for TEXT fields
+            if self.field_type == DynamicField.TEXT and self.schema_config.get("max_length"):
+                max_len = int(self.schema_config["max_length"])
+                sql_type = f"varchar({max_len})"
+
             # Always add the column as nullable initially to avoid NOT NULL violations
             # on existing rows. If required, we will backfill defaults and then enforce NOT NULL.
             full_sql_type = f"{sql_type}".strip()
