@@ -19,30 +19,35 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           field_type: 'text',
           ui_component: 'input',
           icon: 'mdi-text-short',
+          description: 'Up to 255 characters',
         },
         {
           label: window.translations.longText_,
-          field_type: 'long_text', 
+          field_type: 'long_text',
           ui_component: 'textarea',
           icon: 'mdi-text-long',
+          description: 'Unlimited text length',
         },
         {
           label: window.translations.number_,
           field_type: 'number',
           ui_component: 'number_input',
           icon: 'mdi-numeric',
+          description: 'Whole numbers only',
         },
         {
           label: window.translations.dropdown_,
           field_type: 'select',
           ui_component: 'dropdown',
           icon: 'mdi-chevron-down-circle-outline',
+          description: 'Single or multiple choice',
         },
         {
           label: window.translations.dateAndTime_,
           field_type: 'datetime',
           ui_component: 'date_picker',
           icon: 'mdi-calendar-blank-outline',
+          description: 'Date with optional time',
         },
       ]
     };
@@ -87,10 +92,11 @@ const SelectFieldTypeDialog = Vue.defineComponent({
         </v-card-title>
         <v-card-text class="px-7 pb-7">
           <v-row :dense="false">
-            <v-col v-for="({ label, field_type, ui_component, icon }) in componentTypes" cols="12" md="4">
+            <v-col v-for="({ label, field_type, ui_component, icon, description }) in componentTypes" cols="12" md="4">
               <v-card class="rounded-10 border border-opacity-25" rounded="10" variant="outlined" @click="create({ field_type, ui_component })">
                 <v-card-text>
                   <v-icon size="large" class="mr-2" color="primary">{{ icon }}</v-icon>{{ label }}
+                  <div v-if="description" class="text-caption text-grey-lighten-1 font-italic">{{ description }}</div>
                 </v-card-text>
               </v-card>
             </v-col>
