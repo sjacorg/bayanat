@@ -18,6 +18,10 @@ const FieldRenderer = Vue.defineComponent({
             const maxLength = Number(field?.validation_config?.max_length)
             const required = Boolean(field?.required)
 
+            // If field is text input limit to 255 chars
+            if (field.field_type === 'text') {
+                rules.push(this.validationRules.maxLength(255))
+            }
             if (maxLength > 0) {
                 rules.push(this.validationRules.maxLength(maxLength))
             }

@@ -63,8 +63,8 @@
             
             <div class="d-flex justify-center w-100"></div>
 
-            <div v-if="filteredDynamicFields.length" ref="mainList" class="d-flex flex-wrap">
-              <div v-for="(field, index) in filteredDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
+            <div v-if="filteredMovableDynamicFields.length" ref="mainList" class="d-flex flex-wrap">
+              <div v-for="(field, index) in filteredMovableDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
                   'drop-line': dragDrop.dropLine.id == field.id,
                   [dragDrop.dropLine.cls]: dragDrop.dropLine.id == field.id
                 }]">
@@ -72,10 +72,16 @@
                   @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(dragDrop.draggingId)" />
               </div>
             </div>
-            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!formBuilder.loading && !ui.search">
+            <div v-if="filteredFixedDynamicFields.length" class="d-flex flex-wrap">
+              <div v-for="(field, index) in filteredFixedDynamicFields" :key="field.id" :class="[field?.ui_config?.width || 'w-100']">
+                <field-list-item :field="field" hide-drag-handle
+                  @toggle-visibility="toggleFieldVisibility" @delete="deleteField" />
+              </div>
+            </div>
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-if="!filteredDynamicFields.length && !formBuilder.loading && !ui.search">
               {{ _("No fields yet. Start by creating your first field to get started!") }}
             </v-container>
-            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-else-if="!formBuilder.loading && ui.search">
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-if="!filteredDynamicFields.length && !formBuilder.loading && ui.search">
               {{ _("We couldn't find any fields for that search. Try another keyword.") }}
             </v-container>
 
@@ -136,6 +142,16 @@
         if (!this.ui.search) return this.formBuilder.dynamicFields
 
         return this.formBuilder.dynamicFields.filter(field => field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()))
+      },
+      filteredMovableDynamicFields() {
+        if (!this.ui.search) return this.movableDynamicFields
+
+        return this.movableDynamicFields.filter(field => field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()))
+      },
+      filteredFixedDynamicFields() {
+        if (!this.ui.search) return this.fixedDynamicFields
+
+        return this.fixedDynamicFields.filter(field => field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()))
       }
     },
     methods: {

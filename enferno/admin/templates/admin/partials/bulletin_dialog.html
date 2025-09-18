@@ -78,8 +78,8 @@
                             </div>
                         </template>
                         <template #right>
-                            <div v-if="formBuilder.dynamicFields.length" class="d-flex flex-wrap mt-4">
-                                <template v-for="(field, index) in formBuilder.dynamicFields" :key="field.id">
+                            <div v-if="movableDynamicFields.length" class="d-flex flex-wrap mt-4">
+                                <template v-for="(field, index) in movableDynamicFields" :key="field.id">
                                     <div v-if="isFieldActive(field, 'title')" :class="fieldClass(field)">
                                         <dual-field v-model:original="editedItem.title" v-model:translation="editedItem.title_ar"
                                             label-original="{{ _('Original Title') }}" label-translation="{{ _('Original Title (Ar)') }}" :rules="[
@@ -128,22 +128,6 @@
                                     <div v-else-if="isFieldActive(field, 'global_map')" :class="fieldClass(field)">
                                         <global-map  ref="globalmap" :model-value="compLocations"></global-map>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'source_link')" :class="fieldClass(field)">
-                                        <v-sheet class="d-flex align-center">
-                                            <v-text-field class="mx-2" :disabled="source_disabled" v-model="editedItem.source_link"
-                                                label="{{ _('Source Link') }}" :rules="[
-                                                validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
-                                                    validationRules.maxLength(255)
-                                                ]">
-                                            </v-text-field>
-                                        
-                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
-                                            </v-checkbox>
-                                        
-                                            <v-switch color="primary" class="mx-2" label="{{ _('Private') }}" v-model="editedItem.source_link_type">
-                                            </v-switch>
-                                        </v-sheet>
-                                    </div>
                                     <div v-else-if="isFieldActive(field, 'publish_date')" :class="fieldClass(field)">
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
                                             v-model="editedItem.publish_date"></pop-date-time-field>
@@ -161,16 +145,36 @@
                                     <div v-else-if="isFieldActive(field, 'related_incidents')" :class="fieldClass(field)">
                                         {% include 'admin/partials/edit_related_incidents.html' %}
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
-                                        <v-textarea required :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
-                                            label="{{ _('Comments') }}">
-                                        </v-textarea>
-                                    </div>
                                     <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
                                         <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"
                                             v-model="editedItem.status" label="{{ _('Status') }}"></v-select>
                                     </div>
                                     <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="fieldClass(field)"></field-renderer>
+                                </template>
+                            </div>
+                            <div v-if="fixedDynamicFields.length" class="d-flex flex-wrap mt-4">
+                                <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
+                                    <div v-if="isFieldActive(field, 'source_link')" :class="fieldClass(field)">
+                                        <v-sheet class="d-flex align-center">
+                                            <v-text-field class="mx-2" :disabled="source_disabled" v-model="editedItem.source_link"
+                                                label="{{ _('Source Link') }}" :rules="[
+                                                validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
+                                                    validationRules.maxLength(255)
+                                                ]">
+                                            </v-text-field>
+                                        
+                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
+                                            </v-checkbox>
+                                        
+                                            <v-switch color="primary" class="mx-2" label="{{ _('Private') }}" v-model="editedItem.source_link_type">
+                                            </v-switch>
+                                        </v-sheet>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
+                                        <v-textarea required :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
+                                            label="{{ _('Comments') }}">
+                                        </v-textarea>
+                                    </div>
                                 </template>
                             </div>
 

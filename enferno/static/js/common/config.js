@@ -501,7 +501,7 @@ const aggregateBulletinLocations = function (bulletin) {
     // Use map to create a new array with modifications
     let locs =
         bulletin.locations?.map((loc) => {
-            return {...loc, color: '#00a1f1', parentId: bulletin.id};
+            return { ...loc, color: '#00a1f1', parentId: bulletin.id, class_type: 'bulletin' };
         }) || [];
 
     locations = locations.concat(locs);
@@ -514,6 +514,7 @@ const aggregateBulletinLocations = function (bulletin) {
                 number: i + 1,
                 color: '#ffbb00',
                 parentId: bulletin.id,
+                class_type: 'bulletin',
                 type: loc.type?.title,
             };
         }) || [];
@@ -522,7 +523,7 @@ const aggregateBulletinLocations = function (bulletin) {
 
     // event locations
     if (bulletin.events?.length) {
-        const eventLocations = prepareEventLocations(bulletin.id, bulletin.events);
+        const eventLocations = prepareEventLocations(bulletin.id, bulletin.events, 'bulletin');
         locations = locations.concat(eventLocations);
     }
     return locations;
@@ -538,6 +539,7 @@ const aggregateActorLocations = function (actor) {
                 type: type,
                 color: '#00a1f1',
                 parentId: actor.id,
+                class_type: 'actor',
                 lat: place.latlng.lat,
                 lng: place.latlng.lng,
             });
@@ -550,7 +552,7 @@ const aggregateActorLocations = function (actor) {
     if (actor.events?.length) {
 
 
-        const eventLocations = prepareEventLocations(actor.id, actor.events);
+        const eventLocations = prepareEventLocations(actor.id, actor.events, 'actor');
 
         locations = locations.concat(eventLocations);
     }
@@ -559,7 +561,7 @@ const aggregateActorLocations = function (actor) {
     return locations;
 };
 
-function prepareEventLocations(parentId, events) {
+function prepareEventLocations(parentId, events, class_type) {
     let output = events.filter((x) => x.location && x.location.latlng);
 
     // sort events by from/to date and leave null date events at the end
@@ -584,10 +586,14 @@ function prepareEventLocations(parentId, events) {
         x.location.title = x.title;
         x.location.type = 'Event';
         x.location.parentId = parentId;
+        x.location.class_type = class_type;
         x.location.color = '#00f166';
         x.location.lat = x.location.latlng.lat;
         x.location.lng = x.location.latlng.lng;
         x.location.zombie = x.from_date === null && x.to_date === null;
+        x.location.from_date = x.from_date ?? null;
+        x.location.to_date = x.to_date ?? null;
+        x.location.estimated = Boolean(x.estimated);
         x.location.eventtype = x.eventtype?.title;
         return x.location;
     });
@@ -622,15 +628,23 @@ function normalizeDropzoneResponse(dzFile) {
 }
 
 function getBulletinLocations(ids) {
-    promises = [];
-    ids.forEach((x) => {
-        promises.push(
-            api.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
-                return aggregateBulletinLocations(response.data);
-            }),
-        );
-    });
-    return Promise.all(promises);
+    return Promise.all(
+        ids.map(id =>
+            api.get(`/admin/api/bulletin/${id}?mode=3`).then(res =>
+                aggregateBulletinLocations(res.data)
+            )
+        )
+    );
+}
+
+function getActorLocations(ids) {
+    return Promise.all(
+        ids.map(id =>
+            api.get(`/admin/api/actor/${id}?mode=3`).then(res =>
+                aggregateActorLocations(res.data)
+            )
+        )
+    );
 }
 
 var aggregateIncidentLocations = function (incident) {
@@ -640,6 +654,7 @@ var aggregateIncidentLocations = function (incident) {
         let locs = incident.locations.filter((x) => x.lat && x.lng);
         locs.map((x) => {
             x.color = '#00a1f1';
+            x.class_type = 'incident';
             return x;
         });
         locations = locations.concat(locs);
@@ -656,6 +671,7 @@ var aggregateIncidentLocations = function (incident) {
                 x.location.number = i + 1;
                 x.location.title = x.title;
                 x.location.color = '#00f166';
+                x.location.class_type = 'incident';
                 return x.location;
             });
 
