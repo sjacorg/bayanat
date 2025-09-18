@@ -72,7 +72,7 @@ const globalMixin = {
       if (!date) return '';
 
       let d = dayjs(date);
-      
+
       if (options.utc) {
         d = d.utc();
       } else if (options.local) {

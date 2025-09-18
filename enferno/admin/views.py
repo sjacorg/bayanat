@@ -7114,3 +7114,16 @@ def api_dynamic_fields_bulk_save(entity_type: str) -> Response:
         logger.error(f"Error in bulk UI save: {str(e)}")
         db.session.rollback()
         return HTTPResponse.error("An error occurred while updating field layout", status=500)
+
+@admin.route("/api/session-check")
+@auth_required("session")
+def api_session_check() -> Response:
+    """
+    Lightweight endpoint to check if current session is still valid.
+    Used by frontend to detect when session is restored after expiration.
+
+    Returns:
+        - 200: Session is valid
+        - 401: Session expired (handled by auth decorator)
+    """
+    return jsonify({"status": "valid"})
