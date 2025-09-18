@@ -97,22 +97,6 @@ BULLETIN_CORE_FIELDS = {
             {"label": "Archived", "value": "archived"},
         ],
     },
-    "source_link": {
-        "title": "Source Link",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 12,
-        "visible": True,
-        "core": True,
-    },
-    "comments": {
-        "title": "Comments",
-        "field_type": "long_text",
-        "ui_component": "textarea",
-        "sort_order": 13,
-        "visible": True,
-        "core": True,
-    },
     # === Complex HTML Block Fields (Phase 1) ===
     # These render existing components but are managed through the dynamic fields system
     "events_section": {
@@ -168,6 +152,22 @@ BULLETIN_CORE_FIELDS = {
         "visible": True,
         "core": True,
         "html_template": "related_incidents",
+    },
+    "source_link": {
+        "title": "Source Link",
+        "field_type": "text",
+        "ui_component": "input",
+        "sort_order": 26,
+        "visible": True,
+        "core": True,
+    },
+    "comments": {
+        "title": "Comments",
+        "field_type": "long_text",
+        "ui_component": "textarea",
+        "sort_order": 27,
+        "visible": True,
+        "core": True,
     },
 }
 
