@@ -245,11 +245,9 @@ class DynamicField(db.Model, BaseMixin):
             if not sql_type:
                 raise ValueError(f"Invalid field type: {self.field_type}")
 
-            constraints = []
-            if self.schema_config.get("required", False):
-                constraints.append("NOT NULL")
-
-            full_sql_type = f"{sql_type} {' '.join(constraints)}".strip()
+            # Always add the column as nullable initially to avoid NOT NULL violations
+            # on existing rows. If required, we will backfill defaults and then enforce NOT NULL.
+            full_sql_type = f"{sql_type}".strip()
 
             # Execute DDL for column creation
             db.session.execute(
@@ -286,7 +284,7 @@ class DynamicField(db.Model, BaseMixin):
             if self.field_type == DynamicField.TEXT and self.schema_config.get("max_length"):
                 column_type = String(self.schema_config["max_length"])
 
-            column_args = {"nullable": not self.schema_config.get("required", False)}
+            column_args = {"nullable": True}  # Always nullable to match DDL
             setattr(model_class, self.name, Column(self.name, column_type, **column_args))
 
             logger.info(f"Successfully created column {self.name} in {table_name}")
