@@ -9,7 +9,7 @@
                 <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px);">
 
                     <!-- Left navigation menu -->
-                    <scrollable-card :container-props="{ style: 'height: calc(100% - 88px); max-height: fit-content;' }" :card-props="{ class: 'py-5', style: 'max-height: fit-content; height: 100%; min-height: 200px' }">
+                    <scrollable-card :container-props="{ style: 'height: calc(100% - 88px); max-height: fit-content;' }" :card-props="{ class: 'py-5 h-100', style: 'max-height: fit-content; min-height: 200px' }">
                         <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
                             <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
                                 class="px-7 justify-start text-none text-subtitle-2">
