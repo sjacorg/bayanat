@@ -6866,6 +6866,17 @@ def api_dynamic_field_update(field_id: int) -> Response:
             if "required" in field_data:
                 schema_config["required"] = field_data["required"]
 
+            # Prevent max_length changes after field creation (immutable after creation)
+            if field.field_type == "text":
+                old_max_length = field.schema_config.get("max_length")
+                new_max_length = schema_config.get("max_length")
+
+                if old_max_length != new_max_length:
+                    return HTTPResponse.error(
+                        "Cannot change max_length after field creation. Create a new field instead.",
+                        status=400,
+                    )
+
             # Dynamic fields can update everything
             field.name = field_data["name"]
             field.title = field_data["title"]
@@ -7103,6 +7114,7 @@ def api_dynamic_fields_bulk_save(entity_type: str) -> Response:
         logger.error(f"Error in bulk UI save: {str(e)}")
         db.session.rollback()
         return HTTPResponse.error("An error occurred while updating field layout", status=500)
+
 
 @admin.route("/api/session-check")
 @auth_required("session")
