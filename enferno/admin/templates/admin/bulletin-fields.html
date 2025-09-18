@@ -104,7 +104,6 @@
   const { createApp } = Vue;
   const { createVuetify } = Vuetify;
   const vuetify = createVuetify(vuetifyConfig);
-  const FIXED_FIELDS = ['source_link', 'comments'];
 
   const app = createApp({
     delimiters: delimiters,
@@ -138,12 +137,6 @@
       hasChanges() {
         const changes = this.computeChanges();
         return Boolean(changes.create.length || changes.update.length || changes.delete.length);
-      },
-      fixedDynamicFields() {
-        return this.formBuilder.dynamicFields.filter(field => FIXED_FIELDS.includes(field.name))        
-      },
-      movableDynamicFields() {
-        return this.formBuilder.dynamicFields.filter(field => !FIXED_FIELDS.includes(field.name))        
       },
       filteredDynamicFields() {
         if (!this.ui.search) return this.formBuilder.dynamicFields

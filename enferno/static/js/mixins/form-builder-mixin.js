@@ -5,14 +5,21 @@ const formBuilderMixin = {
       searchableDynamicFields: [],
       dynamicFields: [],
       originalFields: []
-    }
+    },
+    fixedFields: ['source_link', 'comments'],
   }),
   computed: {
     dynamicFieldsBulletinCard() {
       // Keys omited since they are rendered somewhere else in the drawer
       const omitedKeys = ['source_link', 'status', 'tags', 'comments', 'geo_locations']
       return this.formBuilder.dynamicFields.filter(field => !omitedKeys.includes(field.name))
-    }
+    },
+    fixedDynamicFields() {
+      return this.formBuilder.dynamicFields.filter(field => this.fixedFields.includes(field.name))        
+    },
+    movableDynamicFields() {
+      return this.formBuilder.dynamicFields.filter(field => !this.fixedFields.includes(field.name))        
+    },
   },
   methods: {
     fieldClass(field) {
