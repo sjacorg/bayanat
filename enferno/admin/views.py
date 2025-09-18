@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import time
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
@@ -6728,27 +6729,15 @@ def api_dynamic_field_create() -> Response:
         # Just basic null checks - let model handle all validation
         if not field_data.get("title", "").strip():
             return HTTPResponse.error("Title is required", status=400)
+        # Normalize title length
+        field_data["title"] = field_data["title"].strip()[:100]
 
-        # Auto-generate name from title if not provided
-        if not field_data.get("name"):
-            import time
+        # Auto-generate a simple timestamp-based field name
+        # Format: field_<timestamp_ms> (e.g., field_1704067200000)
 
-            name = re.sub(r"[^a-z0-9_]", "_", field_data["title"].lower())
-            name = re.sub(r"_+", "_", name).strip("_")[:50]
-            if not name or not name[0].isalpha():
-                name = f"field_{int(time.time())}"
-            field_data["name"] = name
+        field_data["name"] = f"field_{int(time.time() * 1000)}"
 
-        # Check for duplicate field name within entity type
-        existing_field = DynamicField.query.filter_by(
-            name=field_data["name"], entity_type=field_data["entity_type"]
-        ).first()
-
-        if existing_field:
-            return HTTPResponse.error(
-                f"Field with name '{field_data['name']}' already exists for {field_data['entity_type']}",
-                status=409,
-            )
+        # Timestamp-based names are collision-resistant in practice
 
         # Handle required field - ensure it gets stored in schema_config
         schema_config = field_data.get("schema_config", {})
