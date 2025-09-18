@@ -2,6 +2,7 @@ const RelateBulletins = Vue.defineComponent({
   mixins: [relatedSearchMixin],
   data: () => ({
     searchEndpoint: `/admin/api/bulletins/?mode=2`,
+    queryFormat: 'array',
   }),
   template: /*html*/ `
     <relate-items-template
