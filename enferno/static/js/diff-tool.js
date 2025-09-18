@@ -50,7 +50,18 @@ const DiffTool = {
             return value;
         };
 
+        const toTitleCase = (str) => {
+            return str
+                .replace(/_/g, ' ') // replace underscores with spaces
+                .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+        };
+
         const translateKey = (key) => {
+            const customLabels = {
+                IN_APP_ENABLED: window.translations.inApp_,
+                EMAIL_ENABLED: window.translations.email_
+            }
+
             const parts = key.toUpperCase().split('.');
             if (parts.length > 1) {
                 const nextKey = key.toUpperCase().replaceAll('.', '_')
@@ -59,7 +70,7 @@ const DiffTool = {
                 } else {
                     const [top, ...rest] = parts;
                     const topLabel = labels[top] || top;
-                    const subPath = rest.join(' → ');
+                    const subPath = rest.map(pathKey => customLabels?.[pathKey] || toTitleCase(pathKey)).join(' → ');
                     return `${topLabel} <b>(${subPath})</b>`;
                 }
 
