@@ -222,7 +222,7 @@ class MediaImport:
             - text content of the image file.
         """
         try:
-            if not cfg.HAS_TESSERACT:
+            if not Config.get("HAS_TESSERACT"):
                 logger.warning("pytesseract not available, skipping OCR.")
                 # Raise the error so it is logged in data_import as well
                 raise ModuleNotFoundError(name="pytesseract")
@@ -244,7 +244,7 @@ class MediaImport:
             - old_path: video path
 
         Returns:
-            - True/Flase: whether op is successful
+            - True/False: whether op is successful
             - new_filename: optimized video filename
             - new_filepath: optimized video file path
             - new_etag: optimized video md5 hash

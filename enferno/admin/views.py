@@ -6587,3 +6587,17 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return HTTPResponse.success(data={"batch_id": data_import.batch_id}, status=202)
+
+
+@admin.route("/api/session-check")
+@auth_required("session")
+def api_session_check() -> Response:
+    """
+    Lightweight endpoint to check if current session is still valid.
+    Used by frontend to detect when session is restored after expiration.
+
+    Returns:
+        - 200: Session is valid
+        - 401: Session expired (handled by auth decorator)
+    """
+    return jsonify({"status": "valid"})
