@@ -1,7 +1,17 @@
 const MixI = Vue.defineComponent({
   props: {
-    title: String,
-    modelValue: Object,
+    title: {
+      type: String,
+      default: '',
+    },
+    modelValue: {
+      type: Object,
+      default: () => ({}),
+    },
+    errorKey: {
+      type: String,
+      default: '',
+    },
   },
     emits: ['update:modelValue'],
   data: function () {
@@ -48,7 +58,9 @@ const MixI = Vue.defineComponent({
         </v-radio-group>
         </div>
       <div class="flex-grow-1 ml-2">
-      <v-textarea rows="1" :label="translations.details_" v-model="mix.details" > </v-textarea>
+        <v-textarea rows="1" :label="translations.details_" v-model="mix.details"
+          v-bind="$root.serverErrorPropsForField($root.serverErrors, errorKey)"
+        ></v-textarea>
       
         </div>
       
