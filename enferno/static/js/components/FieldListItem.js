@@ -148,13 +148,7 @@ const FieldListItem = Vue.defineComponent({
         }
     },
     watch: {
-        'field.title'(nextTitle) {
-            const originalField = this.$root.formBuilder.originalFields.find(of => of.id === this.field.id)
-            if (!originalField?.name) {
-                const slugTitle = slugify(nextTitle)
-                this.field.name = slugTitle
-            }
-        }
+        // Name is opaque and server-generated now; avoid mutating it from title
     },
     template: /*html*/`
     <v-hover v-if="componentProps">
