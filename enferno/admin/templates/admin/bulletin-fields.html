@@ -6,8 +6,8 @@
 <confirm-dialog ref="reviewAndConfirmDialog">
   <div class="mb-4">{{ _('Please review your updates before applying them to the form.') }}</div>
   <v-data-table hide-default-footer :items="changes.table" :headers="[
-      { title: 'Field Name', value: 'title' },
-      { title: 'Change Type', value: 'type' },
+      { title: `{{ _('Field Name') }}`, value: 'title' },
+      { title: `{{ _('Change Type') }}`, value: 'type' },
     ]"
   >
     <template #[`item.type`]="{ item }">
@@ -156,17 +156,17 @@
     methods: {
       discardChanges() {
         this.$confirm({
-          title: "You\'re about to discard changes",
-          message: "Discarding will remove all unsaved edits you've made to this form.\r\n\r\nDo you want to continue?",
+          title: "{{ _('You\'re about to discard changes') }}",
+          message: "{{ _('Discarding will remove all unsaved edits you\'ve made to this form.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
           acceptProps: {
-            text: 'Discard Changes',
+            text: "{{ _('Discard Changes') }}",
             color: 'red'
           },
           dialogProps: { width: 780 },
           onAccept: () => {
             this.formBuilder.dynamicFields = deepClone(this.formBuilder.originalFields)
             this.$toast({
-              message: `All unsaved edits in Bulletin Form have been discarded.`,
+              message: "{{ _('All unsaved edits in Bulletin Form have been discarded.') }}",
               hideActions: true,
               snackbarProps: {
                 color: 'green-lighten-5',
@@ -211,7 +211,7 @@
         }
 
         this.changes.table = Object.entries(this.changes.diff).flatMap(([changeType, change]) =>
-          change.map(item => ({ title: item.item.title || 'New Field', type: changeTypeTranslations[changeType], key: changeType }))
+          change.map(item => ({ title: item.item.title || "{{ _('New Field') }}", type: changeTypeTranslations[changeType], key: changeType }))
         )
       },
 
@@ -452,29 +452,43 @@
             arr.splice(insertIndex, 0, moved);
 
             resetUI();
-            this.reindexFields();
+            this.reindexFields(fromIdx, tgtIdx);
           },
         });
 
         this.dragDrop.sortables.main = sortable;
       },
+      reindexFields(fromIndex, toIndex) {
+        // Copy the array so we don't mutate while iterating
+        const fields = [...this.formBuilder.dynamicFields];
 
+        if (fromIndex < toIndex) {
+          // Moving down: reindex from fromIndex to toIndex
+          for (let i = fromIndex; i <= toIndex; i++) {
+            fields[i] = { ...fields[i], sort_order: i + 1 };
+          }
+        } else {
+          // Moving up: reindex from fromIndex down to toIndex
+          for (let i = fromIndex; i >= toIndex; i--) {
+            fields[i] = { ...fields[i], sort_order: i + 1 };
+          }
+        }
 
-      reindexFields() {
-        this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.map((field, index) => ({ ...field, sort_order: index + 1 }))
+        this.formBuilder.dynamicFields = fields;
       },
       async deleteField({ field }) {
         this.$confirm({
-          title: "You're about to delete a field",
-          message: `Deleting the field '${field.title || 'New Field'}' will remove it from your form.\r\n\r\nDo you want to continue?`,
-          acceptProps: { text: 'Delete Field', color: 'red' },
+          title: "{{ _('You\'re about to delete a field') }}",
+          message: `${window.translations.deletingTheFieldWillRemoveItFromYourForm_(field.title || "{{ _('New Field') }}")}\r\n\r\n{{ _('Do you want to continue?') }}`,
+          acceptProps: { text: "{{ _('Delete Field') }}", color: 'red' },
           dialogProps: { width: 780 },
           onAccept: () => {
             const dynamicField = this.formBuilder.dynamicFields.find(dynamicField => dynamicField.id === field.id)
+            dynamicField.active = false;
             dynamicField.delete = true;
 
             this.$toast({
-              message: `Field "${field.title || 'New Field'}" has been deleted successfully.`,
+              message: window.translations.fieldHasBeenDeletedSuccessfully_(field.title || "{{ _('New Field') }}"),
               hideActions: true,
               snackbarProps: {
                 color: 'green-lighten-5',
