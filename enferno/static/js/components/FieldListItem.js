@@ -279,13 +279,15 @@ const FieldListItem = Vue.defineComponent({
                                     v-model="field.ui_config.help_text"
                                     clearable
                                 ></v-text-field>
-                                <v-text-field
+                                <v-number-input
                                     v-if="field.ui_component === 'input'"
                                     variant="filled"
                                     :label="translations.maxLength_"
                                     v-model="field.validation_config.max_length"
                                     clearable
-                                ></v-text-field>
+                                    control-variant="hidden"
+                                    :max="255"
+                                ></v-number-input>
                             </div>
                         </div>
                     </div>
