@@ -23,14 +23,7 @@ const formBuilderMixin = {
   },
   methods: {
     getResponsiveWidth(width) {
-      switch (width) {
-        case 'w-50':
-          return 'field-50'; // flex width: 50%, wraps to 100% if container is too small
-        case 'w-33':
-          return 'field-33'; // flex width: 33.33%, wraps to 100% if container is too small
-        default:
-          return 'field-100'; // full width
-      }
+      return width || 'w-100'
     },
     fieldClass(field) {
       return [this.getResponsiveWidth(field?.ui_config?.width), 'px-3 py-2']
