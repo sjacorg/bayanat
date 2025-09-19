@@ -67,7 +67,7 @@ const DiffTool = {
             if (parts.length > 1) {
                 const nextKey = key.toUpperCase().replaceAll('.', '_')
                 if (labels[nextKey]) {
-                    return customLabels?.[key] || toTitleCase(labels[nextKey])
+                    return customLabels?.[key] || labels[nextKey]
                 } else {
                     const [top, ...rest] = parts;
                     const topLabel = labels[top] || top;
@@ -76,7 +76,7 @@ const DiffTool = {
                 }
 
             }
-            return customLabels?.[key] || toTitleCase(labels[key] || key);
+            return customLabels?.[key] || labels[key] || toTitleCase(key);
         };
 
         const diffEntries = Object.entries(diff);
