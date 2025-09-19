@@ -101,14 +101,8 @@ const FieldListItem = Vue.defineComponent({
 
             return componentMap[field.ui_component] || null;
         },
-        updateDropdownOption(nextValue, option, index) {
-            const originalField = this.$root.formBuilder.originalFields.find(of => of.id === this.field.id)
-            const originalOption = originalField?.options?.[index]
-
+        updateDropdownOption(nextValue, option) {
             option.label = nextValue;
-            if (!originalOption?.value) {
-                option.value = slugify(nextValue);
-            }
         },
         openEditMode() {
             // If it's a core field dont allow editing
@@ -117,6 +111,7 @@ const FieldListItem = Vue.defineComponent({
             this.editingMode = true
         },
         createOptionId() {
+            // Create option id by finding the largest number + 1
             const optionIdList = this.dropdownOptionsProxy
                 .map(option => Number(option.id))
                 .filter(id => !isNaN(id)); // remove NaN values
@@ -147,10 +142,7 @@ const FieldListItem = Vue.defineComponent({
             this.field.schema_config.allow_multiple = !this.field.schema_config.allow_multiple;
         }
     },
-    watch: {
-        // Name is opaque and server-generated now; avoid mutating it from title
-    },
-    template: /*html*/`
+    template: `
     <v-hover v-if="componentProps">
         <template v-slot:default="{ isHovering, props }">
             <div v-bind="props" v-click-outside="() => this.editingMode = false" class="d-flex flex-column ga-1 px-6 pb-6 position-relative rounded-16 overflow-hidden">
@@ -246,7 +238,7 @@ const FieldListItem = Vue.defineComponent({
                                                 <v-text-field
                                                     :label="translations.optionN_(index + 1)"
                                                     :model-value="option.label"
-                                                    @update:model-value="updateDropdownOption($event, option, index)"
+                                                    @update:model-value="updateDropdownOption($event, option)"
                                                     variant="filled"
                                                     hide-details
                                                     :disabled="option.hidden"
