@@ -22,11 +22,21 @@ const formBuilderMixin = {
     },
   },
   methods: {
+    getResponsiveWidth(width) {
+      switch (width) {
+        case 'w-50':
+          return 'field-50'; // flex width: 50%, wraps to 100% if container is too small
+        case 'w-33':
+          return 'field-33'; // flex width: 33.33%, wraps to 100% if container is too small
+        default:
+          return 'field-100'; // full width
+      }
+    },
     fieldClass(field) {
-      return [field?.ui_config?.width || 'w-100', 'px-3 py-2']
+      return [this.getResponsiveWidth(field?.ui_config?.width), 'px-3 py-2']
     },
     fieldClassDrawer(field) {
-      return [field?.ui_config?.width || 'w-100']
+      return [this.getResponsiveWidth(field?.ui_config?.width)]
     },
     isFieldActive(field, name) {
       if (!name) return field.active

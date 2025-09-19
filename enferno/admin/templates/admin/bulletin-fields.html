@@ -64,7 +64,7 @@
             <div class="d-flex justify-center w-100"></div>
 
             <div v-if="filteredMovableDynamicFields.length" ref="mainList" class="d-flex flex-wrap">
-              <div v-for="(field, index) in filteredMovableDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[field?.ui_config?.width || 'w-100' ,{
+              <div v-for="(field, index) in filteredMovableDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[this.getResponsiveWidth(field?.ui_config?.width) ,{
                   'drop-line': dragDrop.dropLine.id == field.id,
                   [dragDrop.dropLine.cls]: dragDrop.dropLine.id == field.id
                 }]">
@@ -73,7 +73,7 @@
               </div>
             </div>
             <div v-if="filteredFixedDynamicFields.length" class="d-flex flex-wrap">
-              <div v-for="(field, index) in filteredFixedDynamicFields" :key="field.id" :class="[field?.ui_config?.width || 'w-100']">
+              <div v-for="(field, index) in filteredFixedDynamicFields" :key="field.id" :class="[this.getResponsiveWidth(field?.ui_config?.width)]">
                 <field-list-item :field="field" hide-drag-handle
                   @toggle-visibility="toggleFieldVisibility" @delete="deleteField" />
               </div>
