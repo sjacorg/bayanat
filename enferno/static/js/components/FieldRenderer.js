@@ -79,7 +79,7 @@ const FieldRenderer = Vue.defineComponent({
                             : [];
                         this.$emit('update:modelValue', normalized);
                     },
-                    items: field.options || [],
+                    items: field?.options?.filter(option => !option.hidden) || [],
                     'item-title': 'label',
                     'item-value': 'id',
                     chips: true,
