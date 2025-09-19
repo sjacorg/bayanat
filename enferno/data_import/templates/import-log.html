@@ -96,6 +96,7 @@
 
 <script src="/static/js/mixins/media-mixin.js"></script>
 <script src="/static/js/mixins/relations-mixin.js"></script>
+<script src="/static/js/mixins/form-builder-mixin.js"></script>
 <script src="/static/js/components/BulletinCard.js"></script>
 <script src="/static/js/components/ActorProfiles.js"></script>
 <script src="/static/js/components/ActorCard.js"></script>
@@ -141,7 +142,7 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [globalMixin, mediaMixin, relationsMixin],
+            mixins: [globalMixin, mediaMixin, relationsMixin, formBuilderMixin],
             data: () => ({
 
                 translations: translations,
