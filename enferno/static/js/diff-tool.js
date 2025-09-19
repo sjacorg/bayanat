@@ -59,14 +59,15 @@ const DiffTool = {
         const translateKey = (key) => {
             const customLabels = {
                 IN_APP_ENABLED: window.translations.inApp_,
-                EMAIL_ENABLED: window.translations.email_
+                EMAIL_ENABLED: window.translations.email_,
+                GOOGLE_OAUTH_ENABLED: window.translations.googleOauth_,
             }
 
             const parts = key.toUpperCase().split('.');
             if (parts.length > 1) {
                 const nextKey = key.toUpperCase().replaceAll('.', '_')
                 if (labels[nextKey]) {
-                    return labels[nextKey]
+                    return customLabels?.[key] || toTitleCase(labels[nextKey])
                 } else {
                     const [top, ...rest] = parts;
                     const topLabel = labels[top] || top;
@@ -75,7 +76,7 @@ const DiffTool = {
                 }
 
             }
-            return labels[key] || key;
+            return customLabels?.[key] || toTitleCase(labels[key] || key);
         };
 
         const diffEntries = Object.entries(diff);
