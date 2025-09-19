@@ -74,8 +74,7 @@
             </div>
             <div v-if="filteredFixedDynamicFields.length" class="d-flex flex-wrap">
               <div v-for="(field, index) in filteredFixedDynamicFields" :key="field.id" :class="[this.getResponsiveWidth(field?.ui_config?.width)]">
-                <field-list-item :field="field" hide-drag-handle
-                  @toggle-visibility="toggleFieldVisibility" @delete="deleteField" />
+                <field-list-item :field="field" hide-drag-handle @toggle-visibility="toggleFieldVisibility" />
               </div>
             </div>
             <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-if="!filteredDynamicFields.length && !formBuilder.loading && !ui.search">
@@ -302,6 +301,16 @@
         const originalMap = new Map(this.formBuilder.originalFields.map(f => [f.id, f]));
 
         for (const field of this.formBuilder.dynamicFields) {
+          // If field is marked for deletion, push to delete array
+          if (field.delete) {
+            if (field.id) {
+              changes.delete.push({ id: field.id, item: field });
+              originalMap.delete(field.id);
+            }
+            continue; // skip further processing
+          }
+
+          // New field
           if (!field.id || field.id?.startsWith?.('temp-')) {
             changes.create.push({ item: field });
           } else {
@@ -312,13 +321,6 @@
               }
               originalMap.delete(field.id);
             }
-          }
-        }
-
-        // Remaining originals are deleted (dynamic only)
-        for (const field of originalMap.values()) {
-          if (!field.core) {
-            changes.delete.push({ id: field.id, item: field });
           }
         }
 
@@ -469,7 +471,7 @@
           dialogProps: { width: 780 },
           onAccept: () => {
             const dynamicField = this.formBuilder.dynamicFields.find(dynamicField => dynamicField.id === field.id)
-            dynamicField.active = false;
+            dynamicField.delete = true;
 
             this.$toast({
               message: `Field "${field.title || 'New Field'}" has been deleted successfully.`,
