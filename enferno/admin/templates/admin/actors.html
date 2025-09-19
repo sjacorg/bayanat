@@ -102,7 +102,7 @@
                                                 @click="selected=[]"
                                                 class="mr-3 ml-1"
                                                 density="compact"
-                                                :="props">
+                                                v-bind="props">
                                             </v-btn>
                                         </template>
                                     </v-tooltip>
@@ -204,7 +204,7 @@
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
                                 <template v-slot:activator="{props}">
                                     <v-icon
-                                            :="props"
+                                            v-bind="props"
                                             size="small"
                                             :color="role.color || 'grey-lighten-1'"
                                             icon="mdi-shield-lock"
