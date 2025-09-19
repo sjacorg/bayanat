@@ -969,19 +969,19 @@
 
 
                 filter_related_to_bulletin(id) {
-                    this.bulletinDrawer = false;
+                    this.actorDrawer = false;
                     this.search = [{rel_to_bulletin: id}];
                     this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
-                    this.bulletinDrawer = false;
+                    this.actorDrawer = false;
                     this.search = [{rel_to_actor: id}];
                     this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
-                    this.bulletinDrawer = false;
+                    this.actorDrawer = false;
                     this.search = [{rel_to_incident: id}];
                     this.goToFirstPage();
                 },
