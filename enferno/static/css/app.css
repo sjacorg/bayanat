@@ -849,6 +849,9 @@ div.jsondiffpatch-child-node-type-array:after {
 .rounded-16 { border-radius: var(--v-rounded-16) !important; }
 .rounded-12 { border-radius: var(--v-rounded-12) !important; }
 .rounded-10 { border-radius: var(--v-rounded-10) !important; }
+.field-33 { flex: var(--v-flex-33); min-width: 300px; }
+.field-50 { flex: var(--v-flex-50); min-width: 300px; }
+.field-100 { flex: var(--v-flex-100); }
 
 /* wrap chips */
 .flex-chips {
@@ -923,17 +926,4 @@ div.jsondiffpatch-child-node-type-array:after {
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-/* flexible widths */
-.field-33 {
-  flex: 1 1 33.3333%;
-  min-width: 300px;
-}
-.field-50 {
-  flex: 1 1 50%;
-  min-width: 300px;
-}
-.field-100 {
-  flex: 1 1 100%;
 }
