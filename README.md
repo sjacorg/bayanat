@@ -4,6 +4,8 @@
   </a>
 </p>
 
+<!-- Test update system - 2025-09-21 -->
+
 [![Semgrep](https://github.com/sjacorg/bayanat/actions/workflows/semgrep.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/semgrep.yml)
 [![pip-audit](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml)
 [![Tests](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml)
