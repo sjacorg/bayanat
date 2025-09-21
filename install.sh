@@ -84,15 +84,26 @@ EOF
 
 cat > /etc/systemd/system/bayanat.service << 'EOF'
 [Unit]
-Description=Bayanat Application
+Description=UWSGI instance to serve Bayanat
 After=network.target
 
 [Service]
 User=bayanat
+Group=bayanat
 WorkingDirectory=/opt/bayanat
 EnvironmentFile=/opt/bayanat/.env
 ExecStart=/opt/bayanat/.venv/bin/uwsgi --ini uwsgi.ini
 Restart=always
+RestartSec=1
+StartLimitIntervalSec=0
+Type=notify
+KillMode=mixed
+KillSignal=SIGQUIT
+TimeoutStopSec=5
+TimeoutStartSec=30
+StandardOutput=journal
+StandardError=journal
+NotifyAccess=all
 
 [Install]
 WantedBy=multi-user.target
