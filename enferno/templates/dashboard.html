@@ -34,14 +34,14 @@
                     <v-alert-title>{{ _('Update Available') }}</v-alert-title>
 
                     <div class="d-flex justify-space-between my-2">
-                        <span>{{ _('Current') }}: <strong>{% raw %}{{ updateInfo.current_version }}{% endraw %}</strong></span>
-                        <span>{{ _('Latest') }}: <strong>{% raw %}{{ updateInfo.latest_version }}{% endraw %}</strong></span>
+                        <span>{{ _('Current') }}: <strong>${updateInfo.current_version}</strong></span>
+                        <span>{{ _('Latest') }}: <strong>${updateInfo.latest_version}</strong></span>
                     </div>
 
                     <v-expansion-panels v-if="updateInfo.release_notes" variant="accordion" class="my-2">
                         <v-expansion-panel>
                             <v-expansion-panel-title>{{ _('Release Notes') }}</v-expansion-panel-title>
-                            <v-expansion-panel-text>{% raw %}{{ updateInfo.release_notes }}{% endraw %}</v-expansion-panel-text>
+                            <v-expansion-panel-text>${updateInfo.release_notes}</v-expansion-panel-text>
                         </v-expansion-panel>
                     </v-expansion-panels>
 
@@ -53,7 +53,7 @@
                 </v-alert>
 
                 <v-alert v-if="updateInfo && updateInfo.error" type="warning" class="my-3">
-                    {{ _('Update check failed') }}: {% raw %}{{ updateInfo.error }}{% endraw %}
+                    {{ _('Update check failed') }}: ${updateInfo.error}
                 </v-alert>
                 
                 {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
