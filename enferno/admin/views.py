@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import requests
 import shutil
 import unicodedata
 from datetime import datetime, timedelta
@@ -6587,6 +6588,28 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return HTTPResponse.success(data={"batch_id": data_import.batch_id}, status=202)
+
+
+@admin.route("/api/system/update", methods=["POST"])
+@auth_required("session")
+@roles_required("Admin")
+def api_trigger_system_update() -> Response:
+    """
+    Trigger system update using Flask commands.
+
+    Returns:
+        - JSON response with success/error status
+    """
+    try:
+        from enferno.commands import update_system
+
+        # Call the update_system command directly
+        update_system(skip_backup=False)
+
+        return jsonify({"success": True, "message": "System updated successfully"})
+    except Exception as e:
+        current_app.logger.error(f"System update failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @admin.route("/api/session-check")

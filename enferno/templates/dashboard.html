@@ -32,7 +32,7 @@
                         <pre>{{ update_info.release_notes }}</pre>
                             </v-card-text>
                         <v-card-actions>
-                        <v-btn color="primary" variant="elevated" href="{{ update_info.download_url }}" target="_blank">{{ _('Download Update') }}</v-btn>
+                        <v-btn color="primary" variant="elevated" @click="triggerUpdate" :loading="updating">{{ _('Update Now') }}</v-btn>
                             </v-card-actions>
                     </v-card>
 
@@ -168,6 +168,7 @@
 
             data: () => ({
                 drawer: drawer,
+                updating: false,
             }),
 
             methods: {
@@ -177,6 +178,31 @@
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
+                },
+
+                triggerUpdate() {
+                    if (!confirm('This will update the system and restart services. Continue?')) {
+                        return;
+                    }
+
+                    this.updating = true;
+
+                    axios.post('/admin/api/system/update')
+                        .then(response => {
+                            if (response.data.success) {
+                                this.showSnack('System updated successfully! Page will reload in 3 seconds.');
+                                setTimeout(() => location.reload(), 3000);
+                            } else {
+                                this.showSnack('Update failed: ' + response.data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.log(error);
+                            this.showSnack('Update request failed: ' + (error.response?.data?.error || error.message));
+                        })
+                        .finally(() => {
+                            this.updating = false;
+                        });
                 },
             },
         });
