@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import click
 import shutil
 from datetime import datetime, timedelta
@@ -6600,15 +6601,25 @@ def api_trigger_system_update() -> Response:
         - JSON response with success/error status
     """
     try:
-        from enferno.commands import update_system
-
-        # Get skip_backup option from request
         data = request.get_json() or {}
         skip_backup = data.get("skip_backup", False)
 
-        # Create Click context and invoke command properly
-        ctx = click.Context(update_system, info_name="update_system")
-        ctx.invoke(update_system, skip_backup=skip_backup)
+        cmd = ["uv", "run", "flask", "update-system"]
+        if skip_backup:
+            cmd.append("--skip-backup")
+
+        try:
+            completed = subprocess.run(
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            if completed.stdout:
+                current_app.logger.info(completed.stdout.strip())
+        except subprocess.CalledProcessError as process_error:
+            error_output = process_error.stderr or process_error.stdout or str(process_error)
+            raise RuntimeError(error_output.strip()) from process_error
 
         return jsonify({"success": True, "message": "System updated successfully"})
     except Exception as e:
