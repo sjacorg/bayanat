@@ -32,6 +32,7 @@
                         <pre>{{ update_info.release_notes }}</pre>
                             </v-card-text>
                         <v-card-actions>
+                            <v-checkbox v-model="skipBackup" label="{{ _('Skip backup (faster)') }}" class="mr-4"></v-checkbox>
                         <v-btn color="primary" variant="elevated" @click="triggerUpdate" :loading="updating">{{ _('Update Now') }}</v-btn>
                             </v-card-actions>
                     </v-card>
@@ -169,6 +170,7 @@
             data: () => ({
                 drawer: drawer,
                 updating: false,
+                skipBackup: false,
             }),
 
             methods: {
@@ -187,7 +189,9 @@
 
                     this.updating = true;
 
-                    axios.post('/admin/api/system/update')
+                    axios.post('/admin/api/system/update', {
+                            skip_backup: this.skipBackup
+                        })
                         .then(response => {
                             if (response.data.success) {
                                 this.showSnack('System updated successfully! Page will reload in 3 seconds.');

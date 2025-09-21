@@ -863,6 +863,11 @@ def update_system(skip_backup: bool = False) -> None:
         click.echo("Update completed successfully")
         logger.info("System update completed")
 
+        # Clear Redis cache so dashboard shows correct version
+        from enferno.extensions import rds
+
+        rds.delete("bayanat:update_info")
+
     except Exception as e:
         click.echo(f"Update failed: {str(e)}")
         logger.error(f"Update failed: {str(e)}")

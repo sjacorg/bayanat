@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import os
-import requests
+import click
 import shutil
-import unicodedata
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
@@ -6601,12 +6600,15 @@ def api_trigger_system_update() -> Response:
         - JSON response with success/error status
     """
     try:
-        import click
         from enferno.commands import update_system
 
+        # Get skip_backup option from request
+        data = request.get_json() or {}
+        skip_backup = data.get("skip_backup", False)
+
         # Create Click context and invoke command properly
-        ctx = click.Context(update_system)
-        ctx.invoke(update_system, skip_backup=False)
+        ctx = click.Context(update_system, info_name="update_system")
+        ctx.invoke(update_system, skip_backup=skip_backup)
 
         return jsonify({"success": True, "message": "System updated successfully"})
     except Exception as e:
