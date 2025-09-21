@@ -98,6 +98,23 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
+cat > /etc/systemd/system/bayanat-celery.service << 'EOF'
+[Unit]
+Description=Bayanat Celery Service
+After=network.target
+
+[Service]
+User=bayanat
+Group=bayanat
+WorkingDirectory=/opt/bayanat
+EnvironmentFile=/opt/bayanat/.env
+ExecStart=/opt/bayanat/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 # Configure web server
 [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && SITE_ADDR="http://$DOMAIN" || SITE_ADDR="$DOMAIN"
 
@@ -196,7 +213,7 @@ sudo -u bayanat-daemon git config --global --add safe.directory /opt/bayanat
 
 # Start services
 systemctl daemon-reload
-systemctl enable --now bayanat bayanat-api.socket
+systemctl enable --now bayanat bayanat-celery bayanat-api.socket
 systemctl enable caddy
 systemctl restart caddy  # Restart to trigger certificate acquisition
 sleep 5
@@ -206,4 +223,4 @@ echo ""
 echo "✅ Bayanat Installation Complete!"
 echo "🌐 Access: ${DOMAIN/127.0.0.1/http://127.0.0.1}"
 echo "🔧 API: curl localhost:8080/health"
-systemctl is-active bayanat caddy bayanat-api.socket | paste <(echo -e "Bayanat\nCaddy\nAPI") - | column -t
+systemctl is-active bayanat bayanat-celery caddy bayanat-api.socket | paste <(echo -e "Bayanat\nCelery\nCaddy\nAPI") - | column -t
