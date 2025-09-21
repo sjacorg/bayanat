@@ -138,7 +138,7 @@ then
     echo "" >> ./$env_file
 fi
 
-echo "BAYANAT_REPO=sjacorg/bayanat" >> ./$env_file
+echo "BAYANAT_REPO=${REPO:-sjacorg/bayanat}" >> ./$env_file
 echo "" >> ./$env_file
 
 echo "Completed environment file generation"
