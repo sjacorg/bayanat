@@ -1437,62 +1437,8 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
     return graph
 
 
-REPO_NAME = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
-GITHUB_API_URL = f"https://api.github.com/repos/{REPO_NAME}/tags"
-REDIS_KEY = "bayanat:update_info"
-
-
-@celery.task
-def check_for_updates() -> Optional[dict]:
-    """
-    Check for Bayanat updates using the GitHub Tags API.
-
-    This task fetches the latest tag information from the Bayanat GitHub repository,
-    compares it with the current version, and stores the update information in Redis.
-
-    Returns:
-        dict: A dictionary containing update information, or None if the check failed.
-    """
-    try:
-        response = requests.get(GITHUB_API_URL)
-        response.raise_for_status()  # Raise an exception for bad responses
-        tags = response.json()
-
-        if not tags:
-            logger.warning("No tags found in repository")
-            return None
-
-        # Get latest tag (first in the list)
-        latest_tag = tags[0]
-        latest_version = latest_tag["name"].lstrip("v")
-        current_version = cfg.VERSION
-        print(current_version)
-
-        # Use packaging.version for proper version comparison
-        update_available = version.parse(latest_version) > version.parse(current_version)
-
-        update_info = {
-            "current_version": current_version,
-            "latest_version": latest_version,
-            "update_available": update_available,
-            "tag_name": latest_tag["name"],
-            "commit_sha": latest_tag["commit"]["sha"],
-            "commit_url": latest_tag["commit"]["url"],
-        }
-
-        # Store update info in Redis
-        rds.set(REDIS_KEY, json.dumps(update_info))
-
-        logger.info(
-            f"Update check completed. Current version: {current_version}, Latest version: {latest_version}, Update available: {update_available} [TEST MODE]"
-        )
-        return update_info
-    except requests.RequestException as e:
-        logger.error(f"Failed to check for updates: {e}")
-        return None
-    except (KeyError, ValueError) as e:
-        logger.error(f"Error parsing update information: {e}")
-        return None
+# Note: Update checking is now handled via real-time API endpoint in admin/views.py
+# This removes the Redis caching approach for better reliability
 
 
 @celery.task

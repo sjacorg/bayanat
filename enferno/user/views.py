@@ -15,7 +15,8 @@ from enferno.settings import Config
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User, Session, Role
 from enferno.admin.models.Notification import Notification
-from enferno.tasks import check_for_updates
+
+# Note: check_for_updates removed - now using real-time API endpoint
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import rds
 from flask_login import user_logged_out
@@ -176,17 +177,8 @@ def account() -> str:
     """
     Main dashboard endpoint.
     """
-
-    update_info_bytes = rds.get("bayanat:update_info")
-    update_info = None
-    if update_info_bytes is not None:
-        try:
-            update_info = json.loads(update_info_bytes.decode())
-        except json.JSONDecodeError as e:
-            update_info = update_info_bytes.decode()
-            current_app.logger.error(f"Failed to parse update_information: {str(e)}")
-
-    return render_template("dashboard.html", update_info=update_info)
+    # Update info is now fetched via API call from frontend
+    return render_template("dashboard.html")
 
 
 @bp_user.route("/settings/")
@@ -300,11 +292,7 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
         user.logout_other_sessions()
         logger.info(f"Other sessions terminated for user ID: {user.id}")
 
-    # Check for updates if user is admin
-    if user.has_role(Role.ADMIN):
-        logger.info("Checking for updates...")
-        check_for_updates.delay()
-        logger.info("Update check triggered successfully.")
+    # Note: Update checking now happens in dashboard via real-time API call
 
 
 @tf_profile_changed.connect

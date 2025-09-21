@@ -19,25 +19,36 @@
                 </v-card-subtitle>
                 {% endif %}
 
-                {% if update_info %}
+                <!-- System Updates -->
+                <v-alert v-if="updateInfo && updateInfo.update_available"
+                         type="info"
+                         variant="tonal"
+                         icon="mdi-update"
+                         class="my-3">
+                    <v-alert-title>{{ _('Update Available') }}</v-alert-title>
 
-                <v-card icon="mdi-update"  class="my-3 pa-2 bg-lime-lighten-5 ">
+                    <div class="d-flex justify-space-between my-2">
+                        <span>{{ _('Current') }}: <strong>{% raw %}{{ updateInfo.current_version }}{% endraw %}</strong></span>
+                        <span>{{ _('Latest') }}: <strong>{% raw %}{{ updateInfo.latest_version }}{% endraw %}</strong></span>
+                    </div>
 
-                        <v-card-title>{{ _('Update Available!') }}</v-card-title>
-                    <v-divider></v-divider>
-                        <v-card-item>{{ _('Current Version') }}: {{ update_info.current_version }}</v-card-item>
-                        <v-card-item>{{ _('Latest Version') }}: {{ update_info.latest_version }}</v-card-item>
-                        <v-card-item>{{ _('Release Notes') }}:</v-card-item>
-                        <v-card-text>
-                        <pre>{{ update_info.release_notes }}</pre>
-                            </v-card-text>
-                        <v-card-actions>
-                            <v-checkbox v-model="skipBackup" label="{{ _('Skip backup (faster)') }}" class="mr-4"></v-checkbox>
-                        <v-btn color="primary" variant="elevated" @click="triggerUpdate" :loading="updating">{{ _('Update Now') }}</v-btn>
-                            </v-card-actions>
-                    </v-card>
+                    <v-expansion-panels v-if="updateInfo.release_notes" variant="accordion" class="my-2">
+                        <v-expansion-panel>
+                            <v-expansion-panel-title>{{ _('Release Notes') }}</v-expansion-panel-title>
+                            <v-expansion-panel-text>{% raw %}{{ updateInfo.release_notes }}{% endraw %}</v-expansion-panel-text>
+                        </v-expansion-panel>
+                    </v-expansion-panels>
 
-                {% endif %}
+                    <div class="d-flex align-center mt-3">
+                        <v-checkbox v-model="skipBackup" label="{{ _('Skip backup') }}" density="compact"></v-checkbox>
+                        <v-spacer></v-spacer>
+                        <v-btn color="primary" @click="triggerUpdate" :loading="updating">{{ _('Update Now') }}</v-btn>
+                    </div>
+                </v-alert>
+
+                <v-alert v-if="updateInfo && updateInfo.error" type="warning" class="my-3">
+                    {{ _('Update check failed') }}: {% raw %}{{ updateInfo.error }}{% endraw %}
+                </v-alert>
                 
                 {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
                 <v-card-text>
@@ -171,9 +182,36 @@
                 drawer: drawer,
                 updating: false,
                 skipBackup: false,
+                updateInfo: null,
+                checkingUpdates: false,
             }),
 
+            mounted() {
+                // Check for updates when page loads (only for admins)
+                {% if current_user.has_role('Admin') %}
+                this.checkForUpdates();
+                {% endif %}
+            },
+
             methods: {
+                checkForUpdates() {
+                    this.checkingUpdates = true;
+
+                    axios.get('/admin/api/system/status')
+                        .then(response => {
+                            if (response.data.success) {
+                                this.updateInfo = response.data;
+                            }
+                        })
+                        .catch(error => {
+                            console.warn('Update check failed:', error);
+                            // Silently fail - don't show update card if check fails
+                            this.updateInfo = null;
+                        })
+                        .finally(() => {
+                            this.checkingUpdates = false;
+                        });
+                },
                 completeSetup() {
                     this.settings.setupCompleted = true;
                     this.saveSettings();
