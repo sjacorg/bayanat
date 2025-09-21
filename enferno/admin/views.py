@@ -6601,10 +6601,12 @@ def api_trigger_system_update() -> Response:
         - JSON response with success/error status
     """
     try:
+        import click
         from enferno.commands import update_system
 
-        # Call the update_system command directly
-        update_system(skip_backup=False)
+        # Create Click context and invoke command properly
+        ctx = click.Context(update_system)
+        ctx.invoke(update_system, skip_backup=False)
 
         return jsonify({"success": True, "message": "System updated successfully"})
     except Exception as e:
