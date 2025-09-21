@@ -37,6 +37,9 @@ const notificationMixin = {
   }),
 
   async mounted() {
+    // If user is not authenticated exit
+    if (!window.__username__) return
+
     this.refetchNotifications(); // Initial fetch
     this.startPolling();
     document.addEventListener('visibilitychange', this.handleVisibilityChange);

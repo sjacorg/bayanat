@@ -273,7 +273,7 @@
                         if (!item) return null;
 
                         item = JSON.parse(item);
-                        item.timestampFmt = formatDate(item.timestamp * 1000, `${dateFormats.standardDate} h:mm:ss A`);
+                        item.timestampFmt = this.formatDate(item.timestamp * 1000, `${this.dateFormats.standardDate} h:mm:ss A`);
 
                         if (item.message.includes("endpoint:")) {
                             const parts = item.message.split(" ");

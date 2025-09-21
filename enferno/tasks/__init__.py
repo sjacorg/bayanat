@@ -1413,13 +1413,9 @@ def get_result_set(query_json: Any, entity_type: str, type_map: dict) -> Any:
         - Result set.
     """
     search_util = SearchUtils(query_json, cls=entity_type)
-    if entity_type == "incident":
-        query = search_util.get_query()
-    else:
-        queries, operations = search_util.get_query()
-        query = queries.pop(0)
-    model = type_map[entity_type]
-    return model.query.filter(*query)
+    query = search_util.get_query()
+    result = db.session.execute(query)
+    return result
 
 
 def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> Optional[str]:
@@ -1435,7 +1431,7 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         - Merged graph data.
     """
     graph = None
-    for item in result_set.all():
+    for item in result_set.scalars().unique().all():
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph

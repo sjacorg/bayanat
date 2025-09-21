@@ -18,6 +18,7 @@ from enferno.admin.models.Notification import Notification
 from enferno.tasks import check_for_updates
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import rds
+from flask_login import user_logged_out
 
 from enferno.utils.http_response import HTTPResponse
 
@@ -321,3 +322,9 @@ def after_tf_profile_change(sender, user, **extra_args) -> None:
         "Two-Factor Profile Changed",
         "Your two-factor profile has been changed. If you didn't make this change, please contact an administrator immediately.",
     )
+
+
+@user_logged_out.connect
+def user_logged_out_handler(app, user, **extra_args) -> None:
+    """Clear session completely on logout to force new session on next login."""
+    session.clear()
