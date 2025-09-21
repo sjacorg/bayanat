@@ -20,6 +20,12 @@
                 {% endif %}
 
                 <!-- System Updates -->
+                <!-- Subtle loading indicator while checking -->
+                <div v-if="checkingUpdates && !updateInfo" class="text-center my-3">
+                    <v-progress-circular indeterminate size="20" width="2" color="grey"></v-progress-circular>
+                    <span class="ml-2 text-grey">{{ _('Checking for updates...') }}</span>
+                </div>
+
                 <v-alert v-if="updateInfo && updateInfo.update_available"
                          type="info"
                          variant="tonal"
@@ -187,17 +193,18 @@
             }),
 
             mounted() {
-                // Check for updates when page loads (only for admins)
+                // Show dashboard immediately with loading state, check in background
                 {% if current_user.has_role('Admin') %}
-                this.checkForUpdates();
+                this.checkingUpdates = true;
+                this.checkForUpdates().finally(() => {
+                    this.checkingUpdates = false;
+                });
                 {% endif %}
             },
 
             methods: {
                 checkForUpdates() {
-                    this.checkingUpdates = true;
-
-                    axios.get('/admin/api/system/status')
+                    return axios.get('/admin/api/system/status')
                         .then(response => {
                             if (response.data.success) {
                                 this.updateInfo = response.data;
@@ -207,9 +214,6 @@
                             console.warn('Update check failed:', error);
                             // Silently fail - don't show update card if check fails
                             this.updateInfo = null;
-                        })
-                        .finally(() => {
-                            this.checkingUpdates = false;
                         });
                 },
                 completeSetup() {
