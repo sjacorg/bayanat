@@ -793,7 +793,7 @@ def disable_maintenance():
         logger.error("Failed to disable maintenance mode via CLI.")
 
 
-def run_system_update(skip_backup: bool = False) -> None:
+def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> None:
     """
     Update system: git pull, dependencies, migrations, and restart services.
     Uses socket API for service restart (maintains security model).
@@ -878,11 +878,19 @@ def run_system_update(skip_backup: bool = False) -> None:
         apply_migrations()
 
         # 5. Restart service via socket API (maintains security model)
-        click.echo("Restarting service...")
-        response = requests.post(
-            "http://localhost:8080/restart-service", json={"service": "bayanat"}, timeout=30
-        )
-        response.raise_for_status()
+        def trigger_restart() -> None:
+            try:
+                requests.post(
+                    "http://localhost:8080/restart-service",
+                    json={"service": "bayanat"},
+                    timeout=30,
+                )
+            except Exception as restart_error:
+                logger.error(f"Service restart failed: {restart_error}")
+
+        if restart_service:
+            click.echo("Restarting service...")
+            trigger_restart()
 
         click.echo("Update completed successfully")
         logger.info("System update completed")
