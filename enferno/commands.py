@@ -812,7 +812,7 @@ def disable_maintenance():
         logger.error("Failed to disable maintenance mode via CLI.")
 
 
-@click.command()
+@click.command(name="update-system")
 @click.option("--skip-backup", is_flag=True, help="Skip database backup")
 @with_appcontext
 def update_system(skip_backup: bool = False) -> None:
