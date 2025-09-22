@@ -4,6 +4,8 @@ import os
 import subprocess
 import click
 import shutil
+import contextlib
+from io import StringIO
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
@@ -24,6 +26,8 @@ from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
+
+from enferno import commands
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
@@ -6604,19 +6608,37 @@ def api_trigger_system_update() -> Response:
         data = request.get_json() or {}
         skip_backup = data.get("skip_backup", False)
 
-        cmd = ["uv", "run", "flask", "update-system"]
-        if skip_backup:
-            cmd.append("--skip-backup")
+        cli_args = ["--skip-backup"] if skip_backup else []
+        stdout_buffer = StringIO()
+        stderr_buffer = StringIO()
 
         try:
-            completed = subprocess.run(
-                cmd, check=True, capture_output=True, text=True, cwd="/opt/bayanat"
-            )
-            if completed.stdout:
-                current_app.logger.info(completed.stdout.strip())
-        except subprocess.CalledProcessError as process_error:
-            error_output = process_error.stderr or process_error.stdout or str(process_error)
-            raise RuntimeError(error_output.strip()) from process_error
+            with (
+                contextlib.redirect_stdout(stdout_buffer),
+                contextlib.redirect_stderr(stderr_buffer),
+            ):
+                commands.update_system.main(
+                    args=cli_args,
+                    prog_name="flask update-system",
+                    standalone_mode=False,
+                )
+        except click.ClickException as click_error:
+            error_output = stderr_buffer.getvalue().strip() or stdout_buffer.getvalue().strip()
+            error_output = error_output or str(click_error)
+            raise RuntimeError(error_output) from click_error
+        except Exception as exc:
+            error_output = stderr_buffer.getvalue().strip() or stdout_buffer.getvalue().strip()
+            error_output = error_output or str(exc)
+            raise RuntimeError(error_output) from exc
+
+        std_output = stdout_buffer.getvalue().strip()
+        err_output = stderr_buffer.getvalue().strip()
+
+        if std_output:
+            current_app.logger.info(std_output)
+
+        if err_output:
+            current_app.logger.warning(err_output)
 
         return jsonify({"success": True, "message": "System updated successfully"})
     except Exception as e:
