@@ -827,16 +827,28 @@ def update_system(skip_backup: bool = False) -> None:
     logger.info("Starting system update")
 
     try:
+        project_root = Path(current_app.root_path).parent
+
         # 1. Backup database
         if not skip_backup:
             click.echo("Creating database backup...")
-            if not backup_db(timeout=300):
+            try:
+                # Call backup as subprocess to avoid Click context issues
+                backup_result = subprocess.run(
+                    ["uv", "run", "flask", "backup-db", "--timeout", "300"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    timeout=320,
+                    cwd=project_root,
+                )
+                click.echo("Database backup completed")
+            except subprocess.CalledProcessError:
                 click.echo("Backup failed")
                 return
 
         # 2. Handle git conflicts and pull
         click.echo("Pulling code updates...")
-        project_root = Path(current_app.root_path).parent
 
         # Check for local changes and stash if needed
         status_result = subprocess.run(
