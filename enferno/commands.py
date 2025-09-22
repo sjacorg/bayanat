@@ -10,7 +10,7 @@ from flask.cli import with_appcontext
 from flask_security.utils import hash_password
 from flask import current_app
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 import tomli
 
 from enferno.settings import Config
@@ -165,38 +165,32 @@ def import_data() -> None:
         logger.error("Error importing data.")
 
 
-@click.command()
-@click.option("--dry-run", is_flag=True, help="Check for pending migrations without applying them")
-@with_appcontext
-def apply_migrations(dry_run: bool = False) -> None:
-    """
-    Apply all pending SQL migrations in the correct order and mark them as applied.
-    This should be run during application updates when new migrations are present.
-    """
+def run_migrations(dry_run: bool = False) -> list[str]:
+    """Apply pending SQL migrations or list them in dry-run mode."""
     migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
 
     if not os.path.exists(migration_dir):
-        click.echo(f"Error: Migration directory '{migration_dir}' not found.")
-        sys.exit(1)
+        raise RuntimeError(f"Migration directory '{migration_dir}' not found.")
 
     migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
     pending_migrations = [f for f in migration_files if not MigrationHistory.is_applied(f)]
 
     if not pending_migrations:
         click.echo("No pending migrations to apply.")
-        return
+        return []
 
     if dry_run:
         click.echo("Pending migrations:")
         for migration in pending_migrations:
             click.echo(f"  - {migration}")
-        return
+        return pending_migrations
 
     connection = db.session.connection()
     trans = connection.begin()
+    applied: list[str] = []
 
     try:
-        click.echo("Starting migration process...")
+        click.echo("Applying migrations...")
         for migration_file in pending_migrations:
             migration_path = os.path.join(migration_dir, migration_file)
             with open(migration_path, "r") as sql_file:
@@ -204,22 +198,33 @@ def apply_migrations(dry_run: bool = False) -> None:
 
             problematic_commands = ["CREATE DATABASE", "DROP DATABASE", "VACUUM"]
             if any(cmd in migration_sql.upper() for cmd in problematic_commands):
-                click.echo(
-                    f"Warning: Migration {migration_file} contains commands that cannot be rolled back!"
-                )
-                click.echo("Consider splitting these operations into separate migrations.")
+                click.echo(f"Warning: Migration {migration_file} contains non-rollback commands!")
 
             connection.execute(text(migration_sql))
-            click.echo(f"Applied migration: {migration_file}")
+            click.echo(f"Applied: {migration_file}")
             MigrationHistory.record_migration(migration_file)
+            applied.append(migration_file)
 
         trans.commit()
-        click.echo("[Success] All pending migrations have been applied.")
+        click.echo("All migrations applied successfully.")
+        return applied
 
     except Exception as e:
         trans.rollback()
-        click.echo("[Failed] Rolling back all migrations due to error.")
-        click.echo(f"Error details: {str(e)}")
+        click.echo(f"Migration failed: {e}")
+        logger.error(f"Migration failed: {e}")
+        raise
+
+
+@click.command()
+@click.option("--dry-run", is_flag=True, help="Check for pending migrations without applying them")
+@with_appcontext
+def apply_migrations(dry_run: bool = False) -> None:
+    """Apply pending SQL migrations."""
+    try:
+        run_migrations(dry_run=dry_run)
+    except Exception as e:
+        click.echo(f"Error: {e}")
         sys.exit(1)
 
 
@@ -227,55 +232,35 @@ def apply_migrations(dry_run: bool = False) -> None:
 @click.argument("version", required=True)
 @with_appcontext
 def set_version(version: str) -> None:
-    """
-    Set the current application version in the database.
-    Note: This only updates the database record, not the actual application version.
-    The canonical version is always defined in pyproject.toml.
-
-    Args:
-        version: The version string to set in the database
-    """
-    # Load version from pyproject.toml for comparison
+    """Set application version in database."""
     pyproject_path = Path(Config.PROJECT_ROOT) / "pyproject.toml"
     with open(pyproject_path, "rb") as f:
         pyproject_data = tomli.load(f)
         settings_version = pyproject_data["project"]["version"]
 
-    # Warn if version doesn't match pyproject.toml
     if version != settings_version:
-        click.echo(
-            f"Warning: The version you're setting ({version}) doesn't match pyproject.toml ({settings_version})."
-        )
-        click.echo(
-            "The canonical version is defined in pyproject.toml and should be updated there."
-        )
-        confirm = click.confirm("Do you want to proceed with updating only the database version?")
-        if not confirm:
-            click.echo("Operation cancelled.")
+        click.echo(f"Warning: Setting {version} but pyproject.toml has {settings_version}")
+        if not click.confirm("Continue?"):
             return
 
     try:
-        # Get existing entry or create new one
         version_entry = SystemInfo.query.filter_by(key="app_version").first()
         if version_entry:
             version_entry.value = version
         else:
-            version_entry = SystemInfo(key="app_version", value=version)
-            db.session.add(version_entry)
+            db.session.add(SystemInfo(key="app_version", value=version))
 
-        # Add update timestamp
         update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
         update_time = datetime.now().isoformat()
         if update_time_entry:
             update_time_entry.value = update_time
         else:
-            update_time_entry = SystemInfo(key="last_update_time", value=update_time)
-            db.session.add(update_time_entry)
+            db.session.add(SystemInfo(key="last_update_time", value=update_time))
 
         db.session.commit()
-        click.echo(f"Successfully set database version to {version}")
+        click.echo(f"Version set to {version}")
     except Exception as e:
-        click.echo(f"Error setting version: {str(e)}")
+        click.echo(f"Error: {e}")
         sys.exit(1)
 
 
@@ -534,35 +519,22 @@ def generate_config() -> None:
 
 
 def parse_pg_uri(db_uri: str) -> dict:
-    """
-    Parse a PostgreSQL connection URI into its components using SQLAlchemy.
-
-    Args:
-        db_uri: The PostgreSQL connection URI
-
-    Returns:
-        Dictionary with connection parameters
-    """
-
-    # Initialize with empty values
-    result = {"username": None, "password": None, "host": None, "port": None, "dbname": None}
-
-    # Handle empty URI
+    """Parse PostgreSQL URI into connection parameters."""
     if not db_uri:
-        logger.warning("Empty database URI provided")
-        return result
+        return {"username": None, "password": None, "host": None, "port": None, "dbname": None}
 
     try:
         url = make_url(db_uri)
-        result["username"] = url.username
-        result["password"] = url.password
-        result["host"] = url.host
-        result["port"] = url.port
-        result["dbname"] = url.database
+        return {
+            "username": url.username,
+            "password": url.password,
+            "host": url.host,
+            "port": url.port,
+            "dbname": url.database,
+        }
     except Exception as e:
         logger.error(f"Error parsing database URI: {e}")
-
-    return result
+        return {"username": None, "password": None, "host": None, "port": None, "dbname": None}
 
 
 @click.command()
@@ -572,95 +544,44 @@ def parse_pg_uri(db_uri: str) -> dict:
 )
 @with_appcontext
 def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
-    """
-    Create a backup of the PostgreSQL database.
+    return backup_db_impl(output=output, timeout=timeout)
 
-    Args:
-        output: Optional custom output path for the backup file
-        timeout: Timeout in seconds for the backup operation (default: 300)
 
-    Returns:
-        Path to the created backup file or None if backup failed
-    """
-    logger.info("Creating database backup.")
-
-    # Get timestamp for the backup filename
+def backup_db_impl(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    """Create a PostgreSQL database backup."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    # Create backup directory if it doesn't exist
-    backup_dir = Path(current_app.root_path) / ".." / "backups"
+    backup_dir = Path(current_app.root_path).parent / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
 
-    # Get database URI from app config
+    backup_file = output or str(backup_dir / f"{timestamp}_bayanat_backup.dump")
+
     db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
     if not db_uri:
-        logger.error("Database URI not found in application config.")
-        click.echo("Error: Database URI not found in application config.")
+        click.echo("Error: No database URI configured")
         return None
 
-    # Parse the database URI
     db_info = parse_pg_uri(db_uri)
-
-    # Use provided output path or create one in backups directory
-    if output:
-        backup_file = output
-    else:
-        # Put timestamp at the beginning for better sorting
-        backup_file = str(backup_dir / f"{timestamp}_bayanat_backup.dump")
-
-    # Build the pg_dump command with custom format (compressed)
     cmd = ["pg_dump", "-Fc", "-f", backup_file]
 
-    # Add connection parameters only if they exist
     if db_info["username"]:
         cmd.extend(["-U", db_info["username"]])
-
     if db_info["host"]:
         cmd.extend(["-h", db_info["host"]])
-
     if db_info["port"]:
         cmd.extend(["-p", str(db_info["port"])])
-
-    # Add database name
     if db_info["dbname"]:
         cmd.append(db_info["dbname"])
 
-    # Execute the command
     try:
-        # Set PGPASSWORD environment variable if password exists
         env = os.environ.copy()
         if db_info["password"]:
             env["PGPASSWORD"] = db_info["password"]
 
-        logger.info(f"Running database backup command: {' '.join(cmd)}")
-        click.echo(f"Creating database backup at: {backup_file}")
-
-        # Run the command with timeout
-        process = subprocess.run(
-            cmd,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True,
-            timeout=timeout,
-        )
-
-        logger.info(f"Database backup created successfully at {backup_file}")
-        click.echo(f"Database backup created successfully at {backup_file}")
+        subprocess.run(cmd, env=env, check=True, timeout=timeout)
+        click.echo(f"Backup created: {backup_file}")
         return backup_file
-
-    except subprocess.TimeoutExpired:
-        logger.error(f"Database backup timed out after {timeout} seconds")
-        click.echo(f"Database backup timed out after {timeout} seconds")
-        return None
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Database backup failed: {e.stderr}")
-        click.echo(f"Database backup failed: {e.stderr}")
-        return None
     except Exception as e:
-        logger.error(f"Error creating database backup: {str(e)}")
-        click.echo(f"Error creating database backup: {str(e)}")
+        click.echo(f"Backup failed: {e}")
         return None
 
 
@@ -799,116 +720,75 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
     Uses socket API for service restart (maintains security model).
     """
     import subprocess
-    import requests
     from pathlib import Path
 
     logger.info("Starting system update")
 
-    try:
-        project_root = Path(current_app.root_path).parent
+    project_root = Path(current_app.root_path).parent
+    stashed = False
 
-        # 1. Backup database
+    try:
+        # 1) Backup database
         if not skip_backup:
             click.echo("Creating database backup...")
-            try:
-                # Simple inline backup without Click context issues
-                from datetime import datetime
-                import os
+            created = backup_db_impl(timeout=300)
+            if not created:
+                raise RuntimeError("Database backup failed")
 
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                backup_dir = project_root / "backups"
-                backup_dir.mkdir(parents=True, exist_ok=True)
-                backup_file = backup_dir / f"{timestamp}_bayanat_backup.dump"
-
-                # Get database config
-                db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
-                if "postgresql" in db_uri:
-                    # Simple pg_dump call
-                    env = os.environ.copy()
-                    subprocess.run(
-                        ["pg_dump", "-Fc", "-f", str(backup_file), "bayanat"],
-                        env=env,
-                        check=True,
-                        timeout=300,
-                    )
-                    click.echo(f"Database backup created: {backup_file}")
-                else:
-                    click.echo("Skipping backup - not PostgreSQL")
-            except Exception as e:
-                click.echo(f"Backup failed: {e}")
-                return
-
-        # 2. Handle git conflicts and pull
-        click.echo("Pulling code updates...")
-
-        # Check for local changes and stash if needed
-        status_result = subprocess.run(
+        # 2) Git: stash local changes if any, then pull
+        status = subprocess.run(
             ["git", "status", "--porcelain"], capture_output=True, text=True, cwd=project_root
         )
-
-        if status_result.stdout.strip():
-            click.echo("Local changes detected, stashing...")
-            subprocess.run(["git", "stash"], check=True, cwd=project_root)
+        if status.stdout.strip():
+            click.echo("Stashing local changes...")
+            subprocess.run(
+                ["git", "stash", "push", "-m", "auto-update stash"], check=True, cwd=project_root
+            )
             stashed = True
-        else:
-            stashed = False
 
-        # Pull latest changes
-        result = subprocess.run(
-            ["git", "pull"],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=60,
-            cwd=project_root,
-        )
+        click.echo("Pulling code updates...")
+        subprocess.run(["git", "pull", "--ff-only"], check=True, timeout=120, cwd=project_root)
 
-        already_up_to_date = "Already up to date" in result.stdout
-        if already_up_to_date:
-            click.echo("Already up to date")
-        else:
-            click.echo("Code updated successfully")
-
-        # 3. Install dependencies with UV
+        # 3) Dependencies
         click.echo("Installing dependencies...")
-        subprocess.run(["uv", "sync", "--frozen"], check=True, timeout=300, cwd=project_root)
+        subprocess.run(["uv", "sync", "--frozen"], check=True, timeout=600, cwd=project_root)
 
-        # 4. Apply migrations
-        click.echo("Applying migrations...")
-        apply_migrations()
+        # 4) Migrations
+        run_migrations()
 
-        # 5. Restart service via socket API (maintains security model)
-        def trigger_restart() -> None:
+        # 5) Restart
+        if restart_service:
+            click.echo("Restarting service...")
             try:
+                import requests
+
                 requests.post(
-                    "http://localhost:8080/restart-service",
-                    json={"service": "bayanat"},
-                    timeout=30,
+                    "http://localhost:8080/restart-service", json={"service": "bayanat"}, timeout=30
                 )
             except Exception as restart_error:
                 logger.error(f"Service restart failed: {restart_error}")
 
-        if restart_service:
-            click.echo("Restarting service...")
-            trigger_restart()
-
         click.echo("Update completed successfully")
         logger.info("System update completed")
 
-        # Restore stashed changes after successful update
-        if stashed:
-            click.echo("Restoring stashed changes...")
-            subprocess.run(["git", "stash", "pop"], check=True, cwd=project_root)
-
     except subprocess.CalledProcessError as e:
-        error_msg = f"Command failed: {e.cmd} (exit code {e.returncode})"
-        if e.stderr:
-            error_msg += f"\nError: {e.stderr}"
-        click.echo(error_msg)
-        logger.error(error_msg)
+        stderr_msg = e.stderr.strip() if hasattr(e, "stderr") and e.stderr else ""
+        msg = f"Command failed: {e.cmd} (exit {e.returncode})"
+        if stderr_msg:
+            msg = f"{msg}\nError: {stderr_msg}"
+        logger.error(msg)
+        raise RuntimeError(msg) from e
     except Exception as e:
-        click.echo(f"Update failed: {str(e)}")
         logger.error(f"Update failed: {str(e)}")
+        raise
+    finally:
+        if stashed:
+            try:
+                click.echo("Restoring stashed changes...")
+                subprocess.run(["git", "stash", "pop"], check=True, cwd=project_root)
+            except subprocess.CalledProcessError as pop_err:
+                logger.warning(f"Stash restore failed (likely due to build artifacts): {pop_err}")
+                click.echo("Note: Stash preserved - run 'git stash list' to see saved changes.")
 
 
 @click.command()
