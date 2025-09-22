@@ -882,14 +882,11 @@ def run_system_update(skip_backup: bool = False) -> None:
             cwd=project_root,
         )
 
-        if "Already up to date" in result.stdout:
+        already_up_to_date = "Already up to date" in result.stdout
+        if already_up_to_date:
             click.echo("Already up to date")
-            if stashed:
-                click.echo("Restoring stashed changes...")
-                subprocess.run(["git", "stash", "pop"], check=True, cwd=project_root)
-            return
-
-        click.echo("Code updated successfully")
+        else:
+            click.echo("Code updated successfully")
 
         # 3. Install dependencies with UV
         click.echo("Installing dependencies...")
