@@ -101,6 +101,7 @@ dependencies = [
     "redis>=6.2.0",
     "requests>=2.32.0",
     "s3transfer>=0.13.0",
+    "tomli>=2.0.0",
     "Shapely>=2.1.0",
     "shortuuid>=1.0.0",
     "six>=1.17.0",
