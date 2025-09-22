@@ -70,7 +70,7 @@ const DiffTool = {
                     return customLabels?.[key] || labels[nextKey]
                 } else {
                     const [top, ...rest] = parts;
-                    const topLabel = labels[top] || top;
+                    const topLabel = customLabels?.[top] || labels[top] || top;
                     const subPath = rest.map(pathKey => customLabels?.[pathKey] || toTitleCase(pathKey)).join(' → ');
                     return `${topLabel} <b>(${subPath})</b>`;
                 }
