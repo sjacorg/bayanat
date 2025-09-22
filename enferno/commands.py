@@ -285,26 +285,7 @@ def get_version() -> None:
     """
     Get the current application version from both settings and database.
     """
-    # Get version from pyproject.toml (single source of truth)
-    pyproject_path = Path(Config.PROJECT_ROOT) / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        project_data = tomli.load(f)
-        settings_version = project_data["project"]["version"]
-
-    version_entry = SystemInfo.query.filter_by(key="app_version").first()
-    db_version = version_entry.value if version_entry else "Not set"
-
-    click.echo(f"Settings version: {settings_version}")
-    click.echo(f"Database version: {db_version}")
-
-    # Show last update time if available
-    update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
-    if update_time_entry:
-        click.echo(f"Last updated: {update_time_entry.value}")
-
-    if settings_version != db_version and db_version != "Not set":
-        click.echo("\nWarning: The version in settings doesn't match the version in the database.")
-        click.echo("This could indicate incomplete migrations or an inconsistent state.")
+    click.echo(f"Config version: {Config.VERSION}")
 
 
 @click.command()
