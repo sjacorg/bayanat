@@ -6604,48 +6604,12 @@ def api_trigger_system_update() -> Response:
         - JSON response with success/error status
     """
     try:
-        data = request.get_json() or {}
-        skip_backup = data.get("skip_backup", False)
+        data = request.get_json(silent=True) or {}
+        skip_backup = bool(data.get("skip_backup", False))
 
-        stdout_buffer = StringIO()
-        stderr_buffer = StringIO()
+        run_system_update(skip_backup=skip_backup, restart_service=True)
 
-        try:
-            with (
-                contextlib.redirect_stdout(stdout_buffer),
-                contextlib.redirect_stderr(stderr_buffer),
-            ):
-                run_system_update(skip_backup=skip_backup, restart_service=False)
-        except Exception as exc:
-            error_output = stderr_buffer.getvalue().strip() or stdout_buffer.getvalue().strip()
-            error_output = error_output or str(exc)
-            raise RuntimeError(error_output) from exc
-
-        std_output = stdout_buffer.getvalue().strip()
-        err_output = stderr_buffer.getvalue().strip()
-
-        if std_output:
-            current_app.logger.info(std_output)
-
-        if err_output:
-            current_app.logger.warning(err_output)
-
-        response = jsonify({"success": True, "message": "System updated successfully"})
-
-        def schedule_restart() -> None:
-            import requests
-
-            try:
-                requests.post(
-                    "http://127.0.0.1:8080/restart-service",
-                    json={"service": "bayanat"},
-                    timeout=30,
-                )
-            except Exception as exc:
-                current_app.logger.error(f"Deferred service restart failed: {exc}")
-
-        response.call_on_close(schedule_restart)
-        return response
+        return jsonify({"success": True, "message": "System updated successfully"})
     except Exception as e:
         current_app.logger.error(f"System update failed: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
