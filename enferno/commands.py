@@ -818,6 +818,7 @@ def disable_maintenance():
 def update_system(skip_backup: bool = False) -> None:
     """
     Update system: git pull, dependencies, migrations, and restart services.
+    Uses socket API for service restart (maintains security model).
     """
     import subprocess
     import requests
@@ -833,27 +834,50 @@ def update_system(skip_backup: bool = False) -> None:
                 click.echo("Backup failed")
                 return
 
-        # 2. Git pull
+        # 2. Handle git conflicts and pull
         click.echo("Pulling code updates...")
+        project_root = Path(current_app.root_path).parent
+
+        # Check for local changes and stash if needed
+        status_result = subprocess.run(
+            ["git", "status", "--porcelain"], capture_output=True, text=True, cwd=project_root
+        )
+
+        if status_result.stdout.strip():
+            click.echo("Local changes detected, stashing...")
+            subprocess.run(["git", "stash"], check=True, cwd=project_root)
+            stashed = True
+        else:
+            stashed = False
+
+        # Pull latest changes
         result = subprocess.run(
-            ["git", "pull"], capture_output=True, text=True, check=True, timeout=60
+            ["git", "pull"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=60,
+            cwd=project_root,
         )
 
         if "Already up to date" in result.stdout:
             click.echo("Already up to date")
+            if stashed:
+                click.echo("Restoring stashed changes...")
+                subprocess.run(["git", "stash", "pop"], check=True, cwd=project_root)
             return
 
-        # 3. Install dependencies
+        click.echo("Code updated successfully")
+
+        # 3. Install dependencies with UV
         click.echo("Installing dependencies...")
-        venv_pip = Path(current_app.root_path).parent / "env" / "bin" / "pip"
-        requirements = Path(current_app.root_path).parent / "requirements" / "main.txt"
-        subprocess.run([str(venv_pip), "install", "-r", str(requirements)], check=True, timeout=300)
+        subprocess.run(["uv", "sync", "--frozen"], check=True, timeout=300, cwd=project_root)
 
         # 4. Apply migrations
         click.echo("Applying migrations...")
         apply_migrations()
 
-        # 5. Restart service
+        # 5. Restart service via socket API (maintains security model)
         click.echo("Restarting service...")
         response = requests.post(
             "http://localhost:8080/restart-service", json={"service": "bayanat"}, timeout=30
@@ -863,6 +887,17 @@ def update_system(skip_backup: bool = False) -> None:
         click.echo("Update completed successfully")
         logger.info("System update completed")
 
+        # Restore stashed changes after successful update
+        if stashed:
+            click.echo("Restoring stashed changes...")
+            subprocess.run(["git", "stash", "pop"], check=True, cwd=project_root)
+
+    except subprocess.CalledProcessError as e:
+        error_msg = f"Command failed: {e.cmd} (exit code {e.returncode})"
+        if e.stderr:
+            error_msg += f"\nError: {e.stderr}"
+        click.echo(error_msg)
+        logger.error(error_msg)
     except Exception as e:
         click.echo(f"Update failed: {str(e)}")
         logger.error(f"Update failed: {str(e)}")
