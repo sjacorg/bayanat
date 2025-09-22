@@ -6610,10 +6610,7 @@ def api_trigger_system_update() -> Response:
 
         try:
             completed = subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                text=True,
+                cmd, check=True, capture_output=True, text=True, cwd="/opt/bayanat"
             )
             if completed.stdout:
                 current_app.logger.info(completed.stdout.strip())
