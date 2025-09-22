@@ -812,7 +812,7 @@ def disable_maintenance():
         logger.error("Failed to disable maintenance mode via CLI.")
 
 
-@click.command(name="update-system")
+@click.command()
 @click.option("--skip-backup", is_flag=True, help="Skip database backup")
 @with_appcontext
 def update_system(skip_backup: bool = False) -> None:
@@ -833,18 +833,31 @@ def update_system(skip_backup: bool = False) -> None:
         if not skip_backup:
             click.echo("Creating database backup...")
             try:
-                # Call backup as subprocess to avoid Click context issues
-                backup_result = subprocess.run(
-                    ["uv", "run", "flask", "backup-db", "--timeout", "300"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                    timeout=320,
-                    cwd=project_root,
-                )
-                click.echo("Database backup completed")
-            except subprocess.CalledProcessError:
-                click.echo("Backup failed")
+                # Simple inline backup without Click context issues
+                from datetime import datetime
+                import os
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_dir = project_root / "backups"
+                backup_dir.mkdir(parents=True, exist_ok=True)
+                backup_file = backup_dir / f"{timestamp}_bayanat_backup.dump"
+
+                # Get database config
+                db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+                if "postgresql" in db_uri:
+                    # Simple pg_dump call
+                    env = os.environ.copy()
+                    subprocess.run(
+                        ["pg_dump", "-Fc", "-f", str(backup_file), "bayanat"],
+                        env=env,
+                        check=True,
+                        timeout=300,
+                    )
+                    click.echo(f"Database backup created: {backup_file}")
+                else:
+                    click.echo("Skipping backup - not PostgreSQL")
+            except Exception as e:
+                click.echo(f"Backup failed: {e}")
                 return
 
         # 2. Handle git conflicts and pull
