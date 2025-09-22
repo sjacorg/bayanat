@@ -812,10 +812,7 @@ def disable_maintenance():
         logger.error("Failed to disable maintenance mode via CLI.")
 
 
-@click.command()
-@click.option("--skip-backup", is_flag=True, help="Skip database backup")
-@with_appcontext
-def update_system(skip_backup: bool = False) -> None:
+def run_system_update(skip_backup: bool = False) -> None:
     """
     Update system: git pull, dependencies, migrations, and restart services.
     Uses socket API for service restart (maintains security model).
@@ -926,3 +923,11 @@ def update_system(skip_backup: bool = False) -> None:
     except Exception as e:
         click.echo(f"Update failed: {str(e)}")
         logger.error(f"Update failed: {str(e)}")
+
+
+@click.command()
+@click.option("--skip-backup", is_flag=True, help="Skip database backup")
+@with_appcontext
+def update_system(skip_backup: bool = False) -> None:
+    """CLI entry point that delegates to the shared update implementation."""
+    run_system_update(skip_backup=skip_backup)

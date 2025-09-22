@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import click
 import shutil
 import contextlib
 from io import StringIO
@@ -27,7 +26,7 @@ from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
 
-from enferno import commands
+from enferno.commands import run_system_update
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
@@ -6608,7 +6607,6 @@ def api_trigger_system_update() -> Response:
         data = request.get_json() or {}
         skip_backup = data.get("skip_backup", False)
 
-        cli_args = ["--skip-backup"] if skip_backup else []
         stdout_buffer = StringIO()
         stderr_buffer = StringIO()
 
@@ -6617,15 +6615,7 @@ def api_trigger_system_update() -> Response:
                 contextlib.redirect_stdout(stdout_buffer),
                 contextlib.redirect_stderr(stderr_buffer),
             ):
-                commands.update_system.main(
-                    args=cli_args,
-                    prog_name="flask update-system",
-                    standalone_mode=False,
-                )
-        except click.ClickException as click_error:
-            error_output = stderr_buffer.getvalue().strip() or stdout_buffer.getvalue().strip()
-            error_output = error_output or str(click_error)
-            raise RuntimeError(error_output) from click_error
+                run_system_update(skip_backup=skip_backup)
         except Exception as exc:
             error_output = stderr_buffer.getvalue().strip() or stdout_buffer.getvalue().strip()
             error_output = error_output or str(exc)
