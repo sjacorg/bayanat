@@ -4,8 +4,8 @@ set -e
 log() { echo "[$(date '+%H:%M:%S')] $1"; }
 error() { echo "[ERROR] $1" >&2; exit 1; }
 
-# Get domain and repository  
-DOMAIN="${1:-localhost}"
+# Get domain and repository
+DOMAIN="${DOMAIN:-${1:-localhost}}"
 REPO="${REPO:-https://github.com/sjacorg/bayanat.git}"
 log "Installing Bayanat for: $DOMAIN"
 log "Repository: $REPO"
