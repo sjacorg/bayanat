@@ -256,8 +256,8 @@
                   })
                   .then(response => {
                       if (response.data.success) {
-                          this.showSnack('System updated successfully! Page will reload in 3 seconds.');
-                          setTimeout(() => location.reload(), 3000);
+                          this.showSnack('System updated successfully! Page will reload in 10 seconds.');
+                          setTimeout(() => location.reload(), 10000);
                       } else {
                           this.showSnack('Update failed: ' + response.data.error);
                       }
