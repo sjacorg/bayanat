@@ -4,8 +4,8 @@ set -e
 log() { echo "[$(date '+%H:%M:%S')] $1"; }
 error() { echo "[ERROR] $1" >&2; exit 1; }
 
-# Get domain and repository
-DOMAIN="${DOMAIN:-${1:-$(curl -s https://ipinfo.io/ip 2>/dev/null || echo 127.0.0.1)}}"
+# Get domain and repository  
+DOMAIN="${1:-localhost}"
 REPO="${REPO:-https://github.com/sjacorg/bayanat.git}"
 log "Installing Bayanat for: $DOMAIN"
 log "Repository: $REPO"
@@ -25,7 +25,7 @@ apt-get install -y -qq \
 # Install uv globally
 log "Installing uv..."
 curl -LsSf https://astral.sh/uv/install.sh | sh
-cp ~/.cargo/bin/uv /usr/local/bin/ 2>/dev/null || cp ~/.local/bin/uv /usr/local/bin/
+cp ~/.local/bin/uv /usr/local/bin/ 2>/dev/null || cp ~/.cargo/bin/uv /usr/local/bin/
 chmod 755 /usr/local/bin/uv
 
 # Install Caddy
@@ -44,9 +44,9 @@ sudo -u postgres createuser -s bayanat 2>/dev/null || true
 sudo -u postgres createdb bayanat -O bayanat 2>/dev/null || true
 
 # Configure PostgreSQL trust auth
-PG_CONFIG=$(find /etc/postgresql -name pg_hba.conf | head -1)
-grep -q "local.*bayanat.*trust" "$PG_CONFIG" 2>/dev/null || {
-    sed -i '/^local.*all.*postgres.*peer/a local   all             bayanat                                 trust' "$PG_CONFIG"
+PG_CONFIG="/etc/postgresql/*/main/pg_hba.conf"
+grep -q "local.*bayanat.*trust" $PG_CONFIG 2>/dev/null || {
+    sed -i '/^local.*all.*postgres.*peer/a local   all             bayanat                                 trust' $PG_CONFIG
     systemctl reload postgresql
 }
 
@@ -127,10 +127,8 @@ WantedBy=multi-user.target
 EOF
 
 # Configure web server
-[[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && SITE_ADDR="http://$DOMAIN" || SITE_ADDR="$DOMAIN"
-
 cat > /etc/caddy/Caddyfile << EOF
-$SITE_ADDR {
+$DOMAIN {
     reverse_proxy 127.0.0.1:5000
 
     handle_path /static/* {
@@ -148,7 +146,8 @@ mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 
 # Setup daemon permissions (CRITICAL SECURITY FEATURE)
 cat > /etc/sudoers.d/bayanat-daemon << 'EOF'
-bayanat-daemon ALL=(ALL) NOPASSWD: /bin/systemctl restart bayanat, /bin/systemctl restart caddy, /bin/systemctl is-active bayanat, /bin/systemctl is-active caddy
+bayanat-daemon ALL=(ALL) NOPASSWD: /bin/systemctl is-active bayanat
+bayanat-daemon ALL=(ALL) NOPASSWD: /bin/systemd-run --on-active=1s systemctl restart bayanat, /bin/systemd-run --on-active=1s systemctl restart caddy, /bin/systemd-run --on-active=1s systemctl restart bayanat-celery
 bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat pull
 EOF
 
@@ -175,14 +174,16 @@ case "$path" in
         echo "$git_output" | grep -q "Already up to date" && { respond '{"success":true,"message":"Already up to date"}'; exit; }
         sudo -u bayanat bash -c "cd /opt/bayanat && PATH=/usr/local/bin:\$PATH uv sync --frozen"
         sudo -u bayanat bash -c "cd /opt/bayanat && PATH=/usr/local/bin:\$PATH FLASK_APP=run.py uv run flask apply-migrations"
-        sudo systemctl restart bayanat
-        respond '{"success":true,"message":"Updated successfully"}'
+        respond '{"success":true,"message":"Updated successfully, restarting service"}'
+        # Use systemd-run for reliable delayed restart
+        sudo systemd-run --on-active=1s systemctl restart bayanat
         ;;
     "/restart-service")
         service=$(echo "$body" | sed -n 's/.*"service":"\([^"]*\)".*/\1/p')
-        [[ "$service" =~ ^(bayanat|caddy)$ ]] && {
-            sudo systemctl restart "$service"
-            respond "{\"success\":true,\"message\":\"$service restarted\"}"
+        [[ "$service" =~ ^(bayanat|caddy|bayanat-celery)$ ]] && {
+            respond "{\"success\":true,\"message\":\"$service restarting\"}"
+            # Use systemd-run for reliable delayed restart
+            sudo systemd-run --on-active=1s systemctl restart "$service"
         } || respond '{"success":false,"error":"Invalid service"}'
         ;;
     "/health")
@@ -225,13 +226,11 @@ sudo -u bayanat-daemon git config --global --add safe.directory /opt/bayanat
 # Start services
 systemctl daemon-reload
 systemctl enable --now bayanat bayanat-celery bayanat-api.socket
-systemctl enable caddy
-systemctl restart caddy  # Restart to trigger certificate acquisition
-sleep 5
+systemctl enable --now caddy
 
 # Status
 echo ""
 echo "✅ Bayanat Installation Complete!"
-echo "🌐 Access: ${DOMAIN/127.0.0.1/http://127.0.0.1}"
+echo "🌐 Access: $DOMAIN"
 echo "🔧 API: curl localhost:8080/health"
-systemctl is-active bayanat bayanat-celery caddy bayanat-api.socket | paste <(echo -e "Bayanat\nCelery\nCaddy\nAPI") - | column -t
+echo "📊 Services: $(systemctl is-active bayanat bayanat-celery caddy bayanat-api.socket | tr '\n' ' ')"
