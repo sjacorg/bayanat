@@ -50,7 +50,7 @@ def generate_core_fields():
                 entity_type="bulletin",
                 field_type=field_config["field_type"],
                 ui_component=field_config["ui_component"],
-                schema_config={},
+                schema_config=field_config.get("schema_config", {}),
                 ui_config={},
                 validation_config={},
                 options=field_config.get("options", []),
