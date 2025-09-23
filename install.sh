@@ -146,8 +146,7 @@ mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 
 # Setup daemon permissions (CRITICAL SECURITY FEATURE)
 cat > /etc/sudoers.d/bayanat-daemon << 'EOF'
-bayanat-daemon ALL=(ALL) NOPASSWD: /bin/systemctl is-active bayanat
-bayanat-daemon ALL=(ALL) NOPASSWD: /bin/systemd-run --on-active=1s systemctl restart bayanat, /bin/systemd-run --on-active=1s systemctl restart caddy, /bin/systemd-run --on-active=1s systemctl restart bayanat-celery
+bayanat-daemon ALL=(ALL) NOPASSWD: /bin/systemctl is-active bayanat, /bin/systemd-run --on-active=1s systemctl restart bayanat, /bin/systemd-run --on-active=1s systemctl restart caddy, /bin/systemd-run --on-active=1s systemctl restart bayanat-celery
 bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat pull
 EOF
 
@@ -175,14 +174,12 @@ case "$path" in
         sudo -u bayanat bash -c "cd /opt/bayanat && PATH=/usr/local/bin:\$PATH uv sync --frozen"
         sudo -u bayanat bash -c "cd /opt/bayanat && PATH=/usr/local/bin:\$PATH FLASK_APP=run.py uv run flask apply-migrations"
         respond '{"success":true,"message":"Updated successfully, restarting service"}'
-        # Use systemd-run for reliable delayed restart
         sudo systemd-run --on-active=1s systemctl restart bayanat
         ;;
     "/restart-service")
         service=$(echo "$body" | sed -n 's/.*"service":"\([^"]*\)".*/\1/p')
         [[ "$service" =~ ^(bayanat|caddy|bayanat-celery)$ ]] && {
             respond "{\"success\":true,\"message\":\"$service restarting\"}"
-            # Use systemd-run for reliable delayed restart
             sudo systemd-run --on-active=1s systemctl restart "$service"
         } || respond '{"success":false,"error":"Invalid service"}'
         ;;
