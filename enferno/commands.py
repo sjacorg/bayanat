@@ -760,10 +760,21 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         if restart_service:
             click.echo("Restarting service...")
             try:
-                import requests
-
-                requests.post(
-                    "http://localhost:8080/restart-service", json={"service": "bayanat"}, timeout=30
+                subprocess.run(
+                    [
+                        "curl",
+                        "-s",
+                        "-X",
+                        "POST",
+                        "-H",
+                        "Content-Type: application/json",
+                        "-d",
+                        '{"service":"bayanat"}',
+                        "http://127.0.0.1:8080/restart-service",
+                    ],
+                    check=True,
+                    timeout=30,
+                    cwd=project_root,
                 )
             except Exception as restart_error:
                 logger.error(f"Service restart failed: {restart_error}")
