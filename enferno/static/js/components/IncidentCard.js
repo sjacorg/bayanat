@@ -75,7 +75,7 @@ const IncidentCard = Vue.defineComponent({
     showDiff(e, index) {
       this.diffDialog = true;
       //calculate diff
-      const dp = this.$root.jsondiffpatch.create({
+      const dp = this.$jsondiffpatch.create({
         arrays: {
           detectMove: true,
         },
@@ -88,7 +88,7 @@ const IncidentCard = Vue.defineComponent({
       if (!delta) {
         this.diffResult = 'Both items are Identical :)';
       } else {
-        this.diffResult = this.$root.htmlFormatter.format(delta);
+        this.diffResult = this.$htmlFormatter.format(delta);
       }
     },
   },

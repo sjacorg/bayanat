@@ -468,8 +468,6 @@
                 data: () => ({
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
-                    jsondiffpatch,
-                    htmlFormatter,
 
                     valid: false,
                     leftDialogProps: {
@@ -1692,6 +1690,8 @@
             })
         ;
 
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
 
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);

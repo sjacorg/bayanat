@@ -187,8 +187,6 @@
 
             },
             data: () => ({
-                jsondiffpatch,
-                htmlFormatter,
                 validationRules: validationRules,
                 translations: window.translations,
                 adminValid: false,
@@ -534,6 +532,10 @@
                 }
             }
         });
+
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
+        
         app.component('location-card', LocationCard);
         app.component('location-search-box', LocationSearchBox);
         app.component('uni-field', UniField);

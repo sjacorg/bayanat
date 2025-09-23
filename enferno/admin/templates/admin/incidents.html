@@ -388,8 +388,6 @@
             },
             mixins: [globalMixin, relationsMixin],
             data: () => ({
-                jsondiffpatch,
-                htmlFormatter,
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
@@ -1510,6 +1508,8 @@
             }
         });
 
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
 
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
