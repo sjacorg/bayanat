@@ -72,7 +72,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           ui_config: { width: 'w-100', help_text: '' },
           validation_config: {},
           active: true,
-          searchable: false,
+          searchable: true,
           core: false,
         };
 
