@@ -89,20 +89,6 @@ BULLETIN_CORE_FIELDS = {
         "visible": True,
         "core": True,
     },
-    "status": {
-        "title": "Status",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 11,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": False},
-        "options": [
-            {"label": "Draft", "value": "draft"},
-            {"label": "Published", "value": "published"},
-            {"label": "Archived", "value": "archived"},
-        ],
-    },
     # === Complex HTML Block Fields (Phase 1) ===
     # These render existing components but are managed through the dynamic fields system
     "events_section": {
@@ -174,6 +160,20 @@ BULLETIN_CORE_FIELDS = {
         "sort_order": 27,
         "visible": True,
         "core": True,
+    },
+    "status": {
+        "title": "Status",
+        "field_type": "select",
+        "ui_component": "dropdown",
+        "sort_order": 28,
+        "visible": True,
+        "core": True,
+        "schema_config": {"allow_multiple": False},
+        "options": [
+            {"id": 1, "label": "Draft"},
+            {"id": 2, "label": "Published"},
+            {"id": 3, "label": "Archived"},
+        ],
     },
 }
 
