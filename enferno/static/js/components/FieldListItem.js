@@ -134,13 +134,13 @@ const FieldListItem = Vue.defineComponent({
                 });
             })
         },
-        toggleAllowMultiple() {
+        toggleAllowMultiple(nextValue) {
             // Initialize schema_config if it doesn't exist
             if (!this.field.schema_config) {
                 this.field.schema_config = {};
             }
             // Toggle the allow_multiple property
-            this.field.schema_config.allow_multiple = !this.field.schema_config.allow_multiple;
+            this.field.schema_config.allow_multiple = !nextValue;
         }
     },
     template: `
@@ -178,14 +178,6 @@ const FieldListItem = Vue.defineComponent({
                                 <v-btn v-bind="props" :disabled="field.core" @click="field.searchable = !field.searchable" density="comfortable" :color="field.searchable ? 'primary' : null" variant="flat" icon size="small"><v-icon>mdi-magnify</v-icon></v-btn>
                             </template>
                             {{ translations.markFieldAsSearchable_ }}
-                        </v-tooltip>
-                        <v-tooltip v-if="field.ui_component === 'dropdown'" location="top">
-                            <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" :disabled="field.core" @click="toggleAllowMultiple" density="comfortable" :color="field.schema_config?.allow_multiple ? 'primary' : null" variant="flat" icon size="small">
-                                    <v-icon>{{ field.schema_config?.allow_multiple ? 'mdi-format-list-checks' : 'mdi-format-list-bulleted' }}</v-icon>
-                                </v-btn>
-                            </template>
-                            {{ field.schema_config?.allow_multiple ? 'Multiple Selection' : 'Single Selection' }}
                         </v-tooltip>
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
@@ -228,7 +220,11 @@ const FieldListItem = Vue.defineComponent({
                             style="flex: 1 1 calc(50% - 16px)"
                         >
                             <div class="d-flex flex-column">
-                                <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldOptions_ }}</div>
+                                <div class="d-flex justify-space-between align-center">
+                                    <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldOptions_ }}</div>
+
+                                    <v-checkbox class="text-medium-emphasis" :label="translations.oneSelectionOnly_" hide-details :model-value="!Boolean(field?.schema_config?.allow_multiple)" @update:model-value="toggleAllowMultiple"></v-checkbox>
+                                </div>
 
                                 <div class="mt-2">
                                     <draggable ref="optionsRef" v-model="dropdownOptionsProxy" :item-key="'id'" class="d-flex flex-column ga-1 overflow-y-auto" handle=".drag-handle" style="max-height: 260px;">
