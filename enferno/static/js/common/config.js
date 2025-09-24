@@ -141,11 +141,6 @@ const variables = {
     // Pointer events
     'pointer-events-none': 'none',
     'pointer-events-auto': 'auto',
-
-    // Flex width
-    'flex-33': '1 1 33.3333%',
-    'flex-50': '1 1 50%',
-    'flex-100': '1 1 100%',
 }
 const vuetifyConfig = {
     defaults: {

@@ -28,6 +28,7 @@ const FieldListItem = Vue.defineComponent({
         return {
             translations: window.translations,
             editingMode: false,
+            nonHideableFields: ['title', 'comments']
         }
     },
     computed: {
@@ -188,7 +189,7 @@ const FieldListItem = Vue.defineComponent({
                         </v-tooltip>
                         <v-tooltip location="top">
                             <template v-slot:activator="{ props }">
-                                <v-btn v-bind="props" density="comfortable" variant="flat" icon @click="$emit('toggle-visibility', { field, componentProps })" size="small"><v-icon>{{ componentProps.disabled ? 'mdi-eye-outline' : 'mdi-eye-off-outline' }}</v-icon></v-btn>
+                                <v-btn v-bind="props" :disabled="nonHideableFields.includes(field.name)" density="comfortable" variant="flat" icon @click="$emit('toggle-visibility', { field, componentProps })" size="small"><v-icon>{{ componentProps.disabled ? 'mdi-eye-outline' : 'mdi-eye-off-outline' }}</v-icon></v-btn>
                             </template>
                             {{ field.active ? translations.hideField_ : translations.showField_ }}
                         </v-tooltip>
