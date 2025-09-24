@@ -6,7 +6,7 @@ const formBuilderMixin = {
       dynamicFields: [],
       originalFields: []
     },
-    fixedFields: ['source_link', 'comments'],
+    fixedFields: ['source_link', 'comments', 'status'],
   }),
   computed: {
     dynamicFieldsBulletinCard() {
