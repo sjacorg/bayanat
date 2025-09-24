@@ -5,7 +5,7 @@ from enferno.admin.models.DynamicField import DynamicField
 
 BULLETIN_CORE_FIELDS = {
     "title": {
-        "title": "Title",
+        "title": "Original Title",
         "field_type": "text",
         "ui_component": "input",
         "sort_order": 1,
@@ -13,7 +13,7 @@ BULLETIN_CORE_FIELDS = {
         "core": True,
     },
     "sjac_title": {
-        "title": "SJAC Title",
+        "title": "Title",
         "field_type": "text",
         "ui_component": "input",
         "sort_order": 2,
