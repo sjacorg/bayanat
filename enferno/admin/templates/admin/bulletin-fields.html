@@ -216,7 +216,7 @@
       },
 
       showSaveDialog() {
-        this.changes.diff = this.computeChanges();
+        this.changes.diff = this.computeChanges({ ignoreSortOrder: true });
         this.buildChangesTable()
 
         this.$refs.reviewAndConfirmDialog.show({
@@ -230,11 +230,13 @@
 
       async save() {
         this.ui.saving = true;
+        const diffChanges = this.computeChanges()
+
         try {
           const requests = [];
 
           // Create
-          for (const { item } of this.changes.diff.create) {
+          for (const { item } of diffChanges.create) {
             const { id, ...payload } = item
 
             requests.push(
@@ -247,7 +249,7 @@
           }
 
           // Update
-          for (const { id, item } of this.changes.diff.update) {
+          for (const { id, item } of diffChanges.update) {
             requests.push(
               api.put(`/admin/api/dynamic-fields/${id}`, { item })
                 .then(res => {
@@ -259,7 +261,7 @@
           }
 
           // Delete
-          for (const { id, item } of this.changes.diff.delete) {
+          for (const { id, item } of diffChanges.delete) {
             if (!id || id?.startsWith?.('temp-')) continue;
 
             requests.push(
@@ -280,7 +282,7 @@
             console.log('Some requests failed:', failed);
             this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
             // recompute changes so dialog only shows unsaved
-            this.changes.diff = this.computeChanges();
+            this.changes.diff = this.computeChanges({ ignoreSortOrder: true });
             this.buildChangesTable();
             throw failed?.[0]?.reason
           } else {
@@ -296,29 +298,44 @@
         }
       },
 
-      computeChanges() {
+      computeChanges(options) {
         const changes = { create: [], update: [], delete: [] };
         const originalMap = new Map(this.formBuilder.originalFields.map(f => [f.id, f]));
 
         for (const field of this.formBuilder.dynamicFields) {
-          // If field is marked for deletion, push to delete array
+          // Deletions
           if (field.delete) {
             if (field.id) {
               changes.delete.push({ id: field.id, item: field });
               originalMap.delete(field.id);
             }
-            continue; // skip further processing
+            continue;
           }
 
-          // New field
+          // Creations
           if (!field.id || field.id?.startsWith?.('temp-')) {
             changes.create.push({ item: field });
           } else {
             const orig = originalMap.get(field.id);
             if (orig) {
-              if (JSON.stringify(field) !== JSON.stringify(orig)) {
+              let fieldToCompare = field;
+              let origToCompare = orig;
+
+              // 🔧 Optionally ignore sort_order
+              if (options?.ignoreSortOrder) {
+                const { sort_order, ...restField } = field;
+                const { sort_order: __, ...restOrig } = orig;
+                fieldToCompare = restField;
+                origToCompare = restOrig;
+              }
+
+              const isDifferent = JSON.stringify(fieldToCompare) !== JSON.stringify(origToCompare);
+
+              // ✅ Show if real diff OR if moved was flagged
+              if (isDifferent || field.moved) {
                 changes.update.push({ id: field.id, item: field });
               }
+
               originalMap.delete(field.id);
             }
           }
@@ -451,30 +468,18 @@
             const [moved] = arr.splice(fromIdx, 1);
             arr.splice(insertIndex, 0, moved);
 
+            // Mark field as moved so we can display it as modified on diff dialog
+            moved.moved = true;
+
             resetUI();
-            this.reindexFields(fromIdx, tgtIdx);
+            this.reindexFields();
           },
         });
 
         this.dragDrop.sortables.main = sortable;
       },
-      reindexFields(fromIndex, toIndex) {
-        // Copy the array so we don't mutate while iterating
-        const fields = [...this.formBuilder.dynamicFields];
-
-        if (fromIndex < toIndex) {
-          // Moving down: reindex from fromIndex to toIndex
-          for (let i = fromIndex; i <= toIndex; i++) {
-            fields[i] = { ...fields[i], sort_order: i + 1 };
-          }
-        } else {
-          // Moving up: reindex from fromIndex down to toIndex
-          for (let i = fromIndex; i >= toIndex; i--) {
-            fields[i] = { ...fields[i], sort_order: i + 1 };
-          }
-        }
-
-        this.formBuilder.dynamicFields = fields;
+      reindexFields() {
+        this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.map((field, index) => ({ ...field, sort_order: index + 1 }))
       },
       async deleteField({ field }) {
         this.$confirm({
