@@ -8,6 +8,10 @@ const MixI = Vue.defineComponent({
       type: Object,
       default: () => ({}),
     },
+    serverErrors: {
+      type: Object,
+      default: () => ({}),
+    },
     errorKey: {
       type: String,
       default: '',
@@ -59,7 +63,7 @@ const MixI = Vue.defineComponent({
         </div>
       <div class="flex-grow-1 ml-2">
         <v-textarea rows="1" :label="translations.details_" v-model="mix.details"
-          v-bind="$root.serverErrorPropsForField($root.serverErrors, errorKey)"
+          v-bind="$root.serverErrorPropsForField(serverErrors, errorKey)"
         ></v-textarea>
       
         </div>

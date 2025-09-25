@@ -603,11 +603,12 @@
                                                                 </v-col>
                                                                 <v-col md="6">
                                                                     <mix-i title="{{ _('Seen in a detention center?') }}"
-                                                                           v-model="profile.seen_in_detention" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"></mix-i>
+                                                                           v-model="profile.seen_in_detention" :serverErrors="serverErrors" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"></mix-i>
                                                                 </v-col>
                                                                 <v-col md="6">
                                                                     <mix-i v-model="profile.injured"
                                                                            title="{{ _('Injured around time of disappearance?') }}"
+                                                                           :serverErrors="serverErrors"
                                                                            :error-key="`item.actor_profiles.${index}.injured.details`"
                                                                     ></mix-i>
                                                                 </v-col>
@@ -616,6 +617,7 @@
                                                                 <v-col md="6">
                                                                     <mix-i v-model="profile.known_dead"
                                                                            title="{{ _('Known to be dead?') }}"
+                                                                           :serverErrors="serverErrors"
                                                                            :error-key="`item.actor_profiles.${index}.known_dead.details`"
                                                                     ></mix-i>
                                                                 </v-col>
@@ -755,6 +757,7 @@
                                                                             item-value="en"
                                                                             multiple
                                                                             v-model="profile.skin_markings"
+                                                                            :serverErrors="serverErrors"
                                                                             :error-key="`item.actor_profiles.${index}.skin_markings`"
                                                                     ></mix-ii>
                                                                 </v-col>
@@ -930,6 +933,7 @@
 
                                                                     <mix-iii
                                                                             v-model="profile.reporters"
+                                                                            :serverErrors="serverErrors"
                                                                             :error-key="`item.actor_profiles.${index}.reporters`"
                                                                     ></mix-iii>
 
