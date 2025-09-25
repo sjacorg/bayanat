@@ -566,7 +566,7 @@
                             }
                         ).catch(
                             err => {
-                                this.$refs.form.setErrors({username: [err.response.data]});
+                                this.$refs.form.setErrors({'item.username': [err.response.data]});
                             }
                         ).finally(
                             () => {
@@ -658,7 +658,7 @@
                             // Override email message for something simpler
                             if (this.serverErrors?.['item.email']) this.serverErrors['item.email'] = [translations.emailInvalid_];
                             if (this.serverErrors?.['item.username']) this.serverErrors['item.username'] = [translations.usernameInvalid_];
-                            if (usernameAlreadyTaken) this.serverErrors = { ...this.serverErrors, username: [translations.usernameAlreadyTaken_]};
+                            if (usernameAlreadyTaken) this.serverErrors = { ...this.serverErrors, ['item.username']: [translations.usernameAlreadyTaken_]};
 
                             this.$nextTick(() => scrollToFirstError())
                             this.showSnack("{{ _('Please review the form for errors.')}}")
