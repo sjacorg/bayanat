@@ -851,7 +851,6 @@
 
                 },
                 mounted: function () {
-
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
                         api.get('/admin/api/roles/').then(res => {
@@ -861,9 +860,6 @@
                             console.error(e.message);
                         });
                     {% endif  %}
-                    
-                    // Load initial data
-                    this.refresh();
 
                     // display confirmation alert if edit dialog is open.
                     let self = this;
@@ -876,52 +872,22 @@
                         }
                     });
 
-
-                    if (this.$route.params.id) {
-                        this.showBulletin(this.$route.params.id);
-                    }
-
-                    if (this.$route.query.reltob) {
-                        this.filter_related_to_bulletin(this.$route.query.reltob);
-
-                    }
-
-                    if (this.$route.query.reltoa) {
-                        this.filter_related_to_actor(this.$route.query.reltoa);
-                    }
-
-                    if (this.$route.query.reltoi) {
-                        this.filter_related_to_incident(this.$route.query.reltoi);
-                    }
-
-
-                    this.$router.afterEach((to, from) => {
-
-
-                        if (this.$route.query.reltob) {
-                            this.filter_related_to_bulletin(this.$route.query.reltob);
-                        }
-
-                        if (this.$route.query.reltoa) {
-                            this.filter_related_to_actor(this.$route.query.reltoa);
-                        }
-
-                        if (this.$route.query.reltoi) {
-                            this.filter_related_to_incident(this.$route.query.reltoi);
-                        }
-
-
-                        if (this.$route.params.id) {
-
-                            this.showBulletin(this.$route.params.id);
-                        } else {
-                            this.bulletinDrawer = false;
-                        }
-
-                    })
+                    this.handleRoute({ initialLoad: true });
+                    this.$router.afterEach(() => {
+                        this.handleRoute();
+                    });
                 },
 
                 methods: {
+                    handleRoute({ initialLoad = false } = {}) {
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
+                        if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
+                        if (this.$route.query.reltoa) return this.filter_related_to_actor(this.$route.query.reltoa);
+                        if (this.$route.query.reltoi) return this.filter_related_to_incident(this.$route.query.reltoi);
+
+                        // Only refresh on initial page load
+                        if (initialLoad) this.refresh();
+                    },
                     validateForm() {
                         this.$refs.form.validate().then(({ valid, errors }) => {
                             if (valid) {
@@ -1784,9 +1750,10 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
 
-        app.use(router);
-        app.use(vuetify).mount('#app');
-
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}

@@ -743,7 +743,6 @@
                 },
             },
             mounted: function () {
-
                 // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
                     api.get('/admin/api/roles/').then(res => {
@@ -753,9 +752,6 @@
                         console.log(e.message);
                     });
                 {% endif  %}
-
-                // Load initial data
-                this.refresh();
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -768,48 +764,22 @@
                     }
                 });
 
-
-                if (this.$route.params.id) {
-                    this.showActor(this.$route.params.id);
-                }
-
-                if (this.$route.query.reltob) {
-                    this.filter_related_to_bulletin(this.$route.query.reltob);
-                }
-
-                if (this.$route.query.reltoa) {
-                    this.filter_related_to_actor(this.$route.query.reltoa);
-                }
-
-                if (this.$route.query.reltoi) {
-                    this.filter_related_to_incident(this.$route.query.reltoi);
-                }
-
-                this.$router.afterEach((to, from) => {
-
-                    if (this.$route.query.reltob) {
-                        this.filter_related_to_bulletin(this.$route.query.reltob);
-                    }
-
-                    if (this.$route.query.reltoa) {
-                        this.filter_related_to_actor(this.$route.query.reltoa);
-                    }
-
-                    if (this.$route.query.reltoi) {
-                        this.filter_related_to_incident(this.$route.query.reltoi);
-                    }
-
-
-                    if (this.$route.params.id) {
-                        this.showActor(this.$route.params.id);
-                    }
-
-                })
-
-
+                this.handleRoute({ initialLoad: true });
+                this.$router.afterEach(() => {
+                    this.handleRoute();
+                });
             },
 
             methods: {
+                handleRoute({ initialLoad = false } = {}) {
+                    if (this.$route.params.id) this.showActor(this.$route.params.id);
+                    if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
+                    if (this.$route.query.reltoa) return this.filter_related_to_actor(this.$route.query.reltoa);
+                    if (this.$route.query.reltoi) return this.filter_related_to_incident(this.$route.query.reltoi);
+
+                    // Only refresh on initial page load
+                    if (initialLoad) this.refresh();
+                },
                 fetchIdNumberTypes() {
                     // If already loaded the exit
                     if (this.idNumberTypes.length) return
@@ -1737,8 +1707,10 @@
         app.component('mp-card', MPCard);
         app.component('vue-dropzone', VueDropzone);
 
-
-        app.use(router).use(vuetify).mount('#app');
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}
