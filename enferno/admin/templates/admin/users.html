@@ -225,6 +225,7 @@
                                                                     validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
                                                                 ]"
                                                               @input="isUsernameAvailable = false"
+                                                              v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
