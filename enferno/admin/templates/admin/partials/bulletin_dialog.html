@@ -87,9 +87,9 @@
                                                     :rules="[
                                                         validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
                                                         validationRules.maxLength(255),
-                                                    ]">
+                                                    ]"
                                                     v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
-                                        </dual-field>
+                                        ></dual-field>
                                     </v-col>
     
                                     <v-col cols="12" md="4">
@@ -99,7 +99,7 @@
                                                     label-translation="{{ _('Title (Ar)') }}"
                                                     :rules="[
                                                         validationRules.maxLength(255),
-                                                    ]">
+                                                    ]"
                                                     v-bind="serverErrorPropsForDualField(serverErrors, 'item.sjac_title', 'item.sjac_title_ar')"
                                         ></dual-field>
                                     </v-col>

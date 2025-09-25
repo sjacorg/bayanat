@@ -259,9 +259,9 @@ const ShortActorDialog = Vue.defineComponent({
                                 v-model:translation="editedItem.middle_name_ar"
                                 :label-original="translations.middleName_"
                                 :label-translation="translations.middleNameAr_"
-                                :rules="[validationRules.maxLength(255)]">
+                                :rules="[validationRules.maxLength(255)]"
                                 v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.middle_name', 'item.middle_name_ar')"
-                              </dual-field>
+                              ></dual-field>
                           </div>
                           <div style="min-width: 0;">
                               <dual-field
