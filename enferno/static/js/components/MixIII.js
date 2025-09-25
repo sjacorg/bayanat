@@ -6,7 +6,7 @@ const MixIII = Vue.defineComponent({
       default: () => ([]),
     },
     serverErrors: {
-      type: Array,
+      type: Object,
       default: () => ({}),
     },
     items: {
@@ -72,6 +72,7 @@ const MixIII = Vue.defineComponent({
             
           </v-toolbar>
           <v-card-text>
+            {{serverErrors}}
             <v-text-field :label="translations.name_" v-model="reporter.name"
               v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.name')"
             ></v-text-field>
