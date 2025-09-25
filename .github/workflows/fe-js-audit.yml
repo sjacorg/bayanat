@@ -1,0 +1,26 @@
+name: Static JS Libraries Scan
+
+on:
+  pull_request: {}
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+      - stable
+    paths:
+      - enferno/static/js/**
+
+jobs:
+  retirejs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Retire.js scan
+        run: |
+          npx retire --path ./enferno/static/ --outputformat text
