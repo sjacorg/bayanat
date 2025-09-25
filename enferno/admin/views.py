@@ -6633,6 +6633,7 @@ def parse_sort(args):
     Use '-field' for descending order.
     Example: ?sort=ui_config.sort_order or ?sort=-name
     """
+
     sort = args.get("sort")
     if not sort:
         return DynamicField.id.asc()
@@ -6640,10 +6641,12 @@ def parse_sort(args):
     if sort.startswith("-"):
         direction = desc
         sort = sort[1:]
+
+    # Block JSONB subfield sorting (not used in app, potential security risk)
     if "." in sort:
-        field, subfield = sort.split(".", 1)
-        if hasattr(DynamicField, field):
-            return direction(text(f"{field} ->> '{subfield}'"))
+        return DynamicField.id.asc()
+
+    # Handle regular field sorting
     if hasattr(DynamicField, sort):
         return direction(getattr(DynamicField, sort))
     return DynamicField.id.asc()
@@ -6665,6 +6668,7 @@ def api_dynamic_fields():
     Returns a JSON response with 'data' (list of fields) and 'meta' (pagination info).
     """
     try:
+
         filters = parse_filters(request.args)
         sort_clause = parse_sort(request.args)
         try:
