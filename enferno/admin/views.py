@@ -6675,7 +6675,7 @@ def api_dynamic_fields():
             limit = int(request.args.get("limit", 25))
             offset = int(request.args.get("offset", 0))
         except ValueError:
-            return jsonify({"errors": [{"message": "Invalid limit or offset"}]}), 400
+            return HTTPResponse.error("Invalid limit or offset", status=400)
         stmt = (
             select(DynamicField).where(*filters).order_by(sort_clause).offset(offset).limit(limit)
         )
@@ -6691,10 +6691,10 @@ def api_dynamic_fields():
         # No special handling needed - they're included in the main query
 
         meta = {"total": total, "limit": limit, "offset": offset}
-        return jsonify({"data": data, "meta": meta})
+        return HTTPResponse.success(data={"data": data, "meta": meta})
     except Exception as e:
         # Log the error and return a generic server error response
-        return jsonify({"errors": [{"message": str(e)}]}), 500
+        return HTTPResponse.error(str(e), status=500)
 
 
 @admin.get("/api/dynamic-fields/<int:field_id>")
@@ -6707,11 +6707,11 @@ def api_dynamic_field(field_id):
         stmt = select(DynamicField).where(DynamicField.id == field_id)
         field = db.session.execute(stmt).scalars().first()
         if not field:
-            return jsonify({"errors": [{"message": "Not found"}]}), 404
-        return jsonify({"data": field.to_dict(), "meta": {}})
+            return HTTPResponse.not_found("Field not found")
+        return HTTPResponse.success(data={"data": field.to_dict(), "meta": {}})
     except Exception as e:
         # Log the error and return a generic server error response
-        return jsonify({"errors": [{"message": str(e)}]}), 500
+        return HTTPResponse.error(str(e), status=500)
 
 
 @admin.post("/api/dynamic-fields/")
