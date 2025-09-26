@@ -40,7 +40,8 @@ const FieldRenderer = Vue.defineComponent({
                 disabled: !field.active,
                 hint: field?.ui_config?.help_text,
                 rules: this.buildValidationRules(field),
-                variant: 'outlined'
+                variant: 'outlined',
+                class: 'h-100'
             };
 
             const numberProps = {

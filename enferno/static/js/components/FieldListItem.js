@@ -68,7 +68,8 @@ const FieldListItem = Vue.defineComponent({
                 prependInnerIcon: iconMap[field.ui_component],
                 'data-field-id': field.id,
                 readonly: true,
-                bgColor: !this.$vuetify.theme.global.current.dark && field.core ? 'core-field-accent' : undefined
+                bgColor: !this.$vuetify.theme.global.current.dark && field.core ? 'core-field-accent' : undefined,
+                class: 'h-100'
             };
 
             const numberProps = {
@@ -146,7 +147,7 @@ const FieldListItem = Vue.defineComponent({
     template: `
     <v-hover v-if="componentProps">
         <template v-slot:default="{ isHovering, props }">
-            <div v-bind="props" v-click-outside="() => this.editingMode = false" class="d-flex flex-column ga-1 px-6 pb-6 position-relative rounded-16 overflow-hidden">
+            <div v-bind="props" v-click-outside="() => this.editingMode = false" class="d-flex flex-column ga-1 px-6 pb-6 position-relative rounded-16 overflow-hidden h-100">
                 <v-slide-x-transition>
                     <div v-if="editingMode" class="position-absolute top-0 left-0 h-100 bg-primary" style="width: 10px;"></div>
                 </v-slide-x-transition>
@@ -196,8 +197,8 @@ const FieldListItem = Vue.defineComponent({
                     </div>
                 </div>
 
-                <div v-if="!editingMode" :class="{'cursor-pointer': !dragging }" @click="openEditMode">
-                    <div class="pointer-events-none">
+                <div v-if="!editingMode" :class="['h-100', {'cursor-pointer': !dragging }]" @click="openEditMode">
+                    <div class="h-100 pointer-events-none">
                         <component :is="componentProps.component" v-bind="componentProps">
                             <template #append-inner>
                                 <v-chip v-if="field.core" variant="outlined" color="purple-lighten-1" class="rounded">
