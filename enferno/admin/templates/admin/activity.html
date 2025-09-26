@@ -307,7 +307,7 @@
 
     methods: {
          has_role(user, role) {
-          for (r of user.roles) {
+          for (const r of user.roles) {
               if (r.name == role) {
                   return true
               }
