@@ -5,7 +5,11 @@ const BulletinCard = Vue.defineComponent({
   watch: {
     bulletin: function (val, old) {
 
-      this.mapLocations = aggregateBulletinLocations(this.bulletin);
+      this.$nextTick(() => {
+        requestAnimationFrame(() => {
+          this.mapLocations = aggregateBulletinLocations(this.bulletin);
+        });
+      });
     },
   },
 
@@ -13,7 +17,11 @@ const BulletinCard = Vue.defineComponent({
     this.$root.fetchDynamicFields({ entityType: 'bulletin' })
 
     if (this.bulletin?.id) {
-      this.mapLocations = aggregateBulletinLocations(this.bulletin);
+      this.$nextTick(() => {
+        requestAnimationFrame(() => {
+          this.mapLocations = aggregateBulletinLocations(this.bulletin);
+        });
+      });
     }
   },
 
