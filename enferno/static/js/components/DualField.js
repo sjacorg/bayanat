@@ -9,6 +9,14 @@ const DualField = Vue.defineComponent({
       type: String,
       default: '',
     },
+    errorMessagesOriginal: {
+      type: [Array, String] ,
+      default: () => [],
+    },
+    errorMessagesTranslation: {
+      type: [Array, String],
+      default: () => [],
+    },
     rules: {
       type: Array,
       default: () => [],
@@ -78,6 +86,7 @@ const DualField = Vue.defineComponent({
           append-inner-icon="mdi-web"
           @click:append-inner="toggleField"
           :rules="[...rulesOriginal, ...rules]"
+          :error-messages="errorMessagesOriginal"
       >
         <template v-slot:append v-if="allowUnknown">
           <v-tooltip location="top" :text="unknownTooltip">
@@ -98,6 +107,7 @@ const DualField = Vue.defineComponent({
           append-inner-icon="mdi-web"
           @click:append-inner="toggleField"
           :rules="[...rulesTranslation, ...rules]"
+          :error-messages="errorMessagesTranslation"
       ></v-text-field>
     </v-sheet>
   `,
