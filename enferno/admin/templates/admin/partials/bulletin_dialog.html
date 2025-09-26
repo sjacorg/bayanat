@@ -78,9 +78,9 @@
                             </div>
                         </template>
                         <template #right>
-                            <div v-if="movableDynamicFields.length" class="d-flex flex-wrap mt-4">
+                            <div v-if="movableDynamicFields.length" class="form-grid mt-4">
                                 <template v-for="(field, index) in movableDynamicFields" :key="field.id">
-                                    <div v-if="isFieldActive(field, 'title')" :class="fieldClass(field)">
+                                    <div v-if="isFieldActive(field, 'title')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <dual-field v-model:original="editedItem.title" v-model:translation="editedItem.title_ar"
                                             label-original="{{ _('Original Title') }}" label-translation="{{ _('Original Title (Ar)') }}" :rules="[
                                                 validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
@@ -88,69 +88,69 @@
                                             ]">
                                         </dual-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'sjac_title')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'sjac_title')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <dual-field v-model:original="editedItem.sjac_title" v-model:translation="editedItem.sjac_title_ar"
                                             label-original="{{ _('Title') }}" label-translation="{{ _('Title (Ar)') }}"
                                             :rules="[validationRules.maxLength(255)]"></dual-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'tags')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'tags')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'sources')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'sources')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <search-field v-model="editedItem.sources" api="/admin/api/sources/" item-title="title" item-value="id"
                                             :multiple="true" label="{{ _('Sources') }}"></search-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'description')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'description')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <tinymce-editor :init="tinyConfig" :key="descKey" v-model="editedItem.description"></tinymce-editor>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'labels')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <search-field v-model="editedItem.labels" api="/admin/api/labels/" :query-params="{ typ: 'for_bulletin' }"
                                             item-title="title" item-value="id" :multiple="true" :show-copy-icon="advFeatures"
                                             label="{{ _('Labels') }}"></search-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'ver_labels')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'ver_labels')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <search-field v-model="editedItem.verLabels" api="/admin/api/labels/"
                                             :query-params="{ fltr: 'verified', typ: 'for_bulletin' }" item-title="title" item-value="id" :multiple="true"
                                             :show-copy-icon="advFeatures" label="{{ _('Verified Labels') }}"></search-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'locations')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'locations')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <location-search-field v-model="editedItem.locations" api="/admin/api/locations/" item-title="full_string"
                                             item-value="id" :multiple="true" :show-copy-icon="advFeatures" label="{{ _('Locations') }}"></location-search-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'events_section')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'events_section')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <events-section :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures"
                                         :event-params="eventParams"></events-section>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'geo_locations')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'geo_locations')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <geo-locations @locations-updated="geoLocationsUpdated" :others="editedItem.geoLocations"
                                             v-model="editedItem.geoLocations" :dialog-props="rightContainedDialogProps"></geo-locations>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'global_map')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'global_map')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <global-map  ref="globalmap" :model-value="compLocations"></global-map>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'publish_date')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'publish_date')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
                                             v-model="editedItem.publish_date"></pop-date-time-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'documentation_date')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'documentation_date')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
                                             v-model="editedItem.documentation_date"></pop-date-time-field>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'related_bulletins')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'related_bulletins')" :class="[fieldClass(field), 'px-3 py-2']">
                                         {% include 'admin/partials/edit_related_bulletins.html' %}
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'related_actors')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'related_actors')" :class="[fieldClass(field), 'px-3 py-2']">
                                         {% include 'admin/partials/edit_related_actors.html' %}
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'related_incidents')" :class="fieldClass(field)">
+                                    <div v-else-if="isFieldActive(field, 'related_incidents')" :class="[fieldClass(field), 'px-3 py-2']">
                                         {% include 'admin/partials/edit_related_incidents.html' %}
                                     </div>
-                                    <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="fieldClass(field)"></field-renderer>
+                                    <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
                                 </template>
                             </div>
-                            <div v-if="fixedDynamicFields.length" class="d-flex flex-wrap mt-4">
+                            <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
                                 <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
-                                    <div v-if="isFieldActive(field, 'source_link')" :class="fieldClass(field)">
+                                    <div v-if="isFieldActive(field, 'source_link')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <v-sheet class="d-flex align-center">
                                             <v-text-field class="mx-2" :disabled="source_disabled" v-model="editedItem.source_link"
                                                 label="{{ _('Source Link') }}" :rules="[

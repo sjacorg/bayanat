@@ -23,13 +23,22 @@ const formBuilderMixin = {
   },
   methods: {
     getResponsiveWidth(width) {
-      return width || 'w-100'
+      if (width === 'w-50') return 'grid-col-span-1'
+      if (width === 'w-100') return 'grid-col-span-2'
+      return 'grid-col-span-2'
+    },
+    getResponsiveHeight(height) {
+      if (height === 2) return 'grid-row-span-2'
+      return 'grid-row-span-1'
     },
     fieldClass(field) {
-      return [this.getResponsiveWidth(field?.ui_config?.width), 'px-3 py-2']
+      return [
+        this.getResponsiveWidth(field?.ui_config?.width),
+        this.getResponsiveHeight(field?.field_type === 'long_text' ? 2 : 1),
+      ]
     },
     fieldClassDrawer(field) {
-      return [this.getResponsiveWidth(field?.ui_config?.width)]
+      return [field?.ui_config?.width || 'w-100']
     },
     isFieldActive(field, name) {
       if (!name) return field.active
