@@ -127,7 +127,26 @@ WantedBy=multi-user.target
 EOF
 
 # Configure web server
-cat > /etc/caddy/Caddyfile << EOF
+if [ "$DOMAIN" = "localhost" ]; then
+    # For localhost/IP-only access
+    cat > /etc/caddy/Caddyfile << 'EOF'
+:80 {
+    reverse_proxy 127.0.0.1:5000
+
+    handle_path /static/* {
+        root * /opt/bayanat/enferno/static
+        file_server
+    }
+
+    request_body {
+        max_size 100MB
+    }
+}
+EOF
+else
+    # For domain-based access with automatic HTTPS
+    # Note: Only configure the domain, Caddy will handle HTTP->HTTPS redirect automatically
+    cat > /etc/caddy/Caddyfile << EOF
 $DOMAIN {
     reverse_proxy 127.0.0.1:5000
 
@@ -141,6 +160,7 @@ $DOMAIN {
     }
 }
 EOF
+fi
 
 mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 
@@ -225,9 +245,18 @@ systemctl daemon-reload
 systemctl enable --now bayanat bayanat-celery bayanat-api.socket
 systemctl enable --now caddy
 
+# Restart Caddy to reload the custom configuration
+systemctl restart caddy
+
 # Status
 echo ""
 echo "✅ Bayanat Installation Complete!"
-echo "🌐 Access: $DOMAIN"
+if [ "$DOMAIN" = "localhost" ]; then
+    echo "🌐 Access: http://$(hostname -I | awk '{print $1}')"
+else
+    echo "🌐 Access: https://$DOMAIN"
+    echo "   Note: Caddy will automatically redirect HTTP to HTTPS"
+    echo "   First access may take a few seconds while obtaining SSL certificate"
+fi
 echo "🔧 API: curl localhost:8080/health"
 echo "📊 Services: $(systemctl is-active bayanat bayanat-celery caddy bayanat-api.socket | tr '\n' ' ')"
