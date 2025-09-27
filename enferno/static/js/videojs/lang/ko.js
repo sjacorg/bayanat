@@ -16,7 +16,7 @@ videojs.addLanguage('ko', {
   "Progress Bar": "진행 표시줄",
   "progress bar timing: currentTime={1} duration={2}": "{2} 중 {1}",
   "Fullscreen": "전체 화면",
-  "Non-Fullscreen": "전체 화면 해제",
+  "Exit Fullscreen": "전체 화면 해제",
   "Mute": "음소거",
   "Unmute": "소리 활성화하기",
   "Playback Rate": "재생 속도",
@@ -68,7 +68,7 @@ videojs.addLanguage('ko', {
   "Raised": "글자 위치 올림",
   "Depressed": "글자 위치 내림",
   "Uniform": "균일",
-  "Dropshadow": "그림자 효과 넣기",
+  "Drop shadow": "그림자 효과 넣기",
   "Font Family": "폰트 모음",
   "Proportional Sans-Serif": "비례 산세리프체",
   "Monospace Sans-Serif": "고정폭 산세리프체",
@@ -86,5 +86,9 @@ videojs.addLanguage('ko', {
   "{1} is loading.": "{1}이(가) 로딩 중입니다.",
   "Exit Picture-in-Picture": "Picture-in-Picture 종료",
   "Picture-in-Picture": "Picture-in-Picture",
-  "No content": "콘텐츠 없음"
+  "No content": "콘텐츠 없음",
+  "Color": "색상",
+  "Opacity": "투명도",
+  "Text Background": "텍스트 배경",
+  "Caption Area Background": "자막 배경"
 });

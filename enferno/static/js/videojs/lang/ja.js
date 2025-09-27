@@ -16,7 +16,7 @@ videojs.addLanguage('ja', {
   "Progress Bar": "シークバー",
   "progress bar timing: currentTime={1} duration={2}": "{2}の{1}",
   "Fullscreen": "フルスクリーン",
-  "Non-Fullscreen": "フルスクリーン以外",
+  "Exit Fullscreen": "フルスクリーン以外",
   "Mute": "ミュート",
   "Unmute": "サウンドをオン",
   "Playback Rate": "再生レート",
@@ -68,7 +68,7 @@ videojs.addLanguage('ja', {
   "Raised": "浮き出し",
   "Depressed": "浮き彫り",
   "Uniform": "均一",
-  "Dropshadow": "影付き",
+  "Drop shadow": "影付き",
   "Font Family": "フォントの種類",
   "Proportional Sans-Serif": "セリフなし可変幅フォント",
   "Monospace Sans-Serif": "セリフなし等幅フォント",
@@ -86,5 +86,11 @@ videojs.addLanguage('ja', {
   "{1} is loading.": "{1}は読み込み中です。",
   "Exit Picture-in-Picture": "ピクチャーインピクチャー機能の終了",
   "Picture-in-Picture": "ピクチャーインピクチャー",
-  "No content": "コンテンツなし"
+  "No content": "コンテンツなし",
+  "Color": "色",
+  "Opacity": "不透明度",
+  "Text Background": "テキスト背景",
+  "Caption Area Background": "キャプション領域背景",
+  "Skip forward {1} seconds": "{1}秒進む",
+  "Skip backward {1} seconds": "{1}秒戻る"
 });

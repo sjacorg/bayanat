@@ -1,14 +1,8 @@
-.leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
-	-webkit-transition: -webkit-transform 0.3s ease-out, opacity 0.3s ease-in;
-	-moz-transition: -moz-transform 0.3s ease-out, opacity 0.3s ease-in;
-	-o-transition: -o-transform 0.3s ease-out, opacity 0.3s ease-in;
-	transition: transform 0.3s ease-out, opacity 0.3s ease-in;
-}
-
-.leaflet-cluster-spider-leg {
-	/* stroke-dashoffset (duration and function) should match with leaflet-marker-icon transform in order to track it exactly */
-	-webkit-transition: -webkit-stroke-dashoffset 0.3s ease-out, -webkit-stroke-opacity 0.3s ease-in;
-	-moz-transition: -moz-stroke-dashoffset 0.3s ease-out, -moz-stroke-opacity 0.3s ease-in;
-	-o-transition: -o-stroke-dashoffset 0.3s ease-out, -o-stroke-opacity 0.3s ease-in;
-	transition: stroke-dashoffset 0.3s ease-out, stroke-opacity 0.3s ease-in;
-}
+/**
+ * Minified by jsDelivr using clean-css v5.3.3.
+ * Original file: /npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+.leaflet-cluster-anim .leaflet-marker-icon,.leaflet-cluster-anim .leaflet-marker-shadow{-webkit-transition:-webkit-transform .3s ease-out,opacity .3s ease-in;-moz-transition:-moz-transform .3s ease-out,opacity .3s ease-in;-o-transition:-o-transform .3s ease-out,opacity .3s ease-in;transition:transform .3s ease-out,opacity .3s ease-in}.leaflet-cluster-spider-leg{-webkit-transition:-webkit-stroke-dashoffset .3s ease-out,-webkit-stroke-opacity .3s ease-in;-moz-transition:-moz-stroke-dashoffset .3s ease-out,-moz-stroke-opacity .3s ease-in;-o-transition:-o-stroke-dashoffset .3s ease-out,-o-stroke-opacity .3s ease-in;transition:stroke-dashoffset .3s ease-out,stroke-opacity .3s ease-in}
+/*# sourceMappingURL=/sm/5ea4d37ba829f27588ed3c9f85b156b03b23db14f70dadd4b48c5fe9f8370e5a.map */

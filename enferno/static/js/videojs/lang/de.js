@@ -10,7 +10,7 @@ videojs.addLanguage('de', {
   "Loaded": "Geladen",
   "Progress": "Status",
   "Fullscreen": "Vollbild",
-  "Non-Fullscreen": "Vollbildmodus beenden",
+  "Exit Fullscreen": "Vollbildmodus beenden",
   "Mute": "Stumm schalten",
   "Unmute": "Ton einschalten",
   "Playback Rate": "Wiedergabegeschwindigkeit",
@@ -61,7 +61,7 @@ videojs.addLanguage('de', {
   "Raised": "Erhoben",
   "Depressed": "Gedrückt",
   "Uniform": "Uniform",
-  "Dropshadow": "Schlagschatten",
+  "Drop shadow": "Schlagschatten",
   "Font Family": "Schriftfamilie",
   "Proportional Sans-Serif": "Proportionale Sans-Serif",
   "Monospace Sans-Serif": "Monospace Sans-Serif",
@@ -86,5 +86,12 @@ videojs.addLanguage('de', {
   "Seek to live, currently playing live": "Zur Live-Übertragung wechseln. Es wird aktuell live abgespielt.",
   "Exit Picture-in-Picture": "Bild-im-Bild-Modus beenden",
   "Picture-in-Picture": "Bild-im-Bild-Modus",
-  "No content": "Kein Inhalt"
+  "No content": "Kein Inhalt",
+  "Color": "Farbe",
+  "Opacity": "Deckkraft",
+  "Text Background": "Texthintergrund",
+  "Caption Area Background": "Hintergrund des Untertitelbereichs",
+  "Playing in Picture-in-Picture": "Wird im Bild-im-Bild-Modus wiedergegeben",
+  "Skip forward {1} seconds": "{1} Sekunden vorwärts",
+  "Skip backward {1} seconds": "{1} Sekunden zurück"
 });

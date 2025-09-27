@@ -16,7 +16,7 @@ videojs.addLanguage('fr', {
   "Progress Bar": "Barre de progression",
   "progress bar timing: currentTime={1} duration={2}": "{1} de {2}",
   "Fullscreen": "Plein écran",
-  "Non-Fullscreen": "Fenêtré",
+  "Exit Fullscreen": "Fenêtré",
   "Mute": "Mettre en sourdine",
   "Unmute": "Activer le son",
   "Playback Rate": "Vitesse de lecture",
@@ -68,7 +68,7 @@ videojs.addLanguage('fr', {
   "Raised": "Élevé",
   "Depressed": "Enfoncé",
   "Uniform": "Uniforme",
-  "Dropshadow": "Ombre portée",
+  "Drop shadow": "Ombre portée",
   "Font Family": "Famille de polices",
   "Proportional Sans-Serif": "Polices à chasse variable sans empattement (Proportional Sans-Serif)",
   "Monospace Sans-Serif": "Polices à chasse fixe sans empattement (Monospace Sans-Serif)",
@@ -86,5 +86,11 @@ videojs.addLanguage('fr', {
   "Exit Picture-in-Picture": "Quitter le mode image dans l'image",
   "Picture-in-Picture": "Image dans l'image",
   "{1} is loading.": "{1} en cours de chargement.",
-  "No content": "Aucun contenu"
+  "No content": "Aucun contenu",
+  "Color": "Couleur",
+  "Opacity": "Opacité",
+  "Text Background": "Arrière-plan du texte",
+  "Caption Area Background": "Arrière-plan de la zone de sous-titre",
+  "Skip backward {1} seconds": "Reculer de {1} secondes",
+  "Skip forward {1} seconds": "Avancer de {1} secondes"
 });
