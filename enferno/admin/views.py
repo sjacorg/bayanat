@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import shutil
-import unicodedata
+import contextlib
+from io import StringIO
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
@@ -23,6 +25,8 @@ from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
+
+from enferno.commands import run_system_update
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
@@ -6587,6 +6591,97 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return HTTPResponse.success(data={"batch_id": data_import.batch_id}, status=202)
+
+
+@admin.route("/api/system/update", methods=["POST"])
+@auth_required("session")
+@roles_required("Admin")
+def api_trigger_system_update() -> Response:
+    """
+    Trigger system update using Flask commands.
+
+    Returns:
+        - JSON response with success/error status
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        skip_backup = bool(data.get("skip_backup", False))
+
+        run_system_update(skip_backup=skip_backup, restart_service=True)
+
+        return jsonify({"success": True, "message": "System updated successfully"})
+    except Exception as e:
+        current_app.logger.error(f"System update failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin.route("/api/system/status", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_system_status() -> Response:
+    """
+    Get current system status including version information.
+    Reliable endpoint with proper timeouts and graceful degradation.
+
+    Returns:
+        - JSON response with version info and update availability
+    """
+    import os
+    import requests
+    from packaging import version
+    from enferno.settings import Config
+
+    current_version = Config.VERSION
+
+    try:
+        # Get repository from environment with fallback
+        repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
+        github_api_url = f"https://api.github.com/repos/{repo_name}/tags"
+
+        # Quick timeout to prevent hanging (3 seconds total)
+        response = requests.get(
+            github_api_url, timeout=3, headers={"Accept": "application/vnd.github.v3+json"}
+        )
+        response.raise_for_status()
+
+        tags = response.json()
+        if not tags:
+            raise ValueError("No tags found")
+
+        # Get latest tag
+        latest_tag = tags[0]["name"].lstrip("v")
+
+        # Compare versions safely
+        try:
+            update_available = version.parse(latest_tag) > version.parse(current_version)
+        except Exception:
+            # If version parsing fails, assume no update
+            update_available = False
+
+        return jsonify(
+            {
+                "success": True,
+                "current_version": current_version,
+                "latest_version": latest_tag,
+                "update_available": update_available,
+                "repository": repo_name,
+            }
+        )
+
+    except (requests.RequestException, ValueError, KeyError) as e:
+        # Graceful degradation - if GitHub is down/slow, assume no updates
+        current_app.logger.warning(f"Could not check for updates: {str(e)}")
+
+        return jsonify(
+            {
+                "success": True,
+                "current_version": current_version,
+                "latest_version": current_version,  # Assume current is latest
+                "update_available": False,
+                "repository": os.environ.get("BAYANAT_REPO", "sjacorg/bayanat"),
+                "error": "Could not check for updates",
+            }
+        )
 
 
 @admin.route("/api/session-check")

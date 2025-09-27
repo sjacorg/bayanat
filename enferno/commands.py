@@ -1,29 +1,102 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
-
+import sys
+from datetime import datetime
+import subprocess
 import click
 from flask.cli import AppGroup
 from flask.cli import with_appcontext
 from flask_security.utils import hash_password
+from flask import current_app
+from pathlib import Path
+from typing import Optional, Callable
+import tomli
 
 from enferno.settings import Config
 from enferno.extensions import db
 from enferno.user.models import User, Role
-from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import (
     import_default_data,
     generate_user_roles,
     generate_workflow_statues,
     create_default_location_data,
 )
+from enferno.utils.config_utils import ConfigManager
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
-from sqlalchemy import text
+from enferno.admin.models import MigrationHistory, SystemInfo
+from sqlalchemy import event, MetaData, text
+from sqlalchemy.engine.url import make_url
 
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
+
+
+# Function to log table creation
+def log_table_creation(target, connection, tables=None, **kw):
+    if tables is not None:
+        for table in tables:
+            logger.info(f"Creating table: {table.name}")
+
+
+def _initialize_db_state() -> None:
+    """
+    Internal function to initialize database state on first setup.
+    This handles both marking migrations as applied and setting initial version info.
+    """
+    # Step 1: Mark migrations as applied
+    # The migrations directory is inside the enferno package
+    migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
+
+    # Ensure the directory exists
+    if not os.path.exists(migration_dir):
+        click.echo(f"Error: Migration directory '{migration_dir}' not found.")
+        return
+
+    # Get all .sql files in the migrations directory, sorted by timestamp prefix
+    migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
+
+    # Loop through each migration file and mark it as applied
+    for migration_file in migration_files:
+        if not MigrationHistory.is_applied(migration_file):
+            # Record the migration in the database
+            MigrationHistory.record_migration(migration_file)
+            click.echo(f"Migration {migration_file} marked as applied.")
+
+    # Step 2: Initialize version information
+    try:
+        # Set initial app version
+        version_entry = SystemInfo(key="app_version", value=Config.VERSION)
+        db.session.add(version_entry)
+
+        # Add initial timestamp
+        update_time = datetime.now().isoformat()
+        update_time_entry = SystemInfo(key="last_update_time", value=update_time)
+        db.session.add(update_time_entry)
+
+        # Commit all changes in one transaction
+        db.session.commit()
+
+        click.echo("All valid SQL migrations have been marked as applied.")
+        click.echo(f"System version set to {Config.VERSION}")
+    except Exception as e:
+        db.session.rollback()
+        click.echo(f"Warning: Could not fully initialize database state: {str(e)}")
+        # Try at least to commit the migrations
+        db.session.commit()
+
+
+@click.command()
+@with_appcontext
+def mark_migrations_applied() -> None:
+    """
+    Command wrapper to initialize database state.
+    This marks all migrations as applied and sets up version tracking.
+    Should be run when initializing the system for the first time.
+    """
+    _initialize_db_state()
 
 
 @click.command()
@@ -40,12 +113,19 @@ def create_db(create_exts: bool) -> None:
         None
     """
     logger.info("Creating database structure")
+
+    # Attach the event listener for table creation
+    metadata = db.metadata
+    event.listen(metadata, "before_create", log_table_creation)
+
     # create db exts if required, needs superuser db permissions
     if create_exts:
         with db.engine.connect() as conn:
             conn.execute(text("CREATE EXTENSION if not exists pg_trgm ;"))
             click.echo("Trigram extension installed successfully")
+            logger.info("Trigram extension installed successfully")
             conn.execute(text("CREATE EXTENSION if not exists postgis ;"))
+            logger.info("Postgis extension installed successfully")
             click.echo("Postgis extension installed successfully")
             conn.commit()
 
@@ -62,6 +142,12 @@ def create_db(create_exts: bool) -> None:
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
 
+    # Initialize database state (mark migrations and set version)
+    _initialize_db_state()
+
+    # Remove the event listener after creation
+    event.remove(metadata, "before_create", log_table_creation)
+
 
 @click.command()
 @with_appcontext
@@ -77,6 +163,114 @@ def import_data() -> None:
     except:
         click.echo("Error importing data.")
         logger.error("Error importing data.")
+
+
+def run_migrations(dry_run: bool = False) -> list[str]:
+    """Apply pending SQL migrations or list them in dry-run mode."""
+    migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
+
+    if not os.path.exists(migration_dir):
+        raise RuntimeError(f"Migration directory '{migration_dir}' not found.")
+
+    migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
+    pending_migrations = [f for f in migration_files if not MigrationHistory.is_applied(f)]
+
+    if not pending_migrations:
+        click.echo("No pending migrations to apply.")
+        return []
+
+    if dry_run:
+        click.echo("Pending migrations:")
+        for migration in pending_migrations:
+            click.echo(f"  - {migration}")
+        return pending_migrations
+
+    connection = db.session.connection()
+    trans = connection.begin()
+    applied: list[str] = []
+
+    try:
+        click.echo("Applying migrations...")
+        for migration_file in pending_migrations:
+            migration_path = os.path.join(migration_dir, migration_file)
+            with open(migration_path, "r") as sql_file:
+                migration_sql = sql_file.read()
+
+            problematic_commands = ["CREATE DATABASE", "DROP DATABASE", "VACUUM"]
+            if any(cmd in migration_sql.upper() for cmd in problematic_commands):
+                click.echo(f"Warning: Migration {migration_file} contains non-rollback commands!")
+
+            connection.execute(text(migration_sql))
+            click.echo(f"Applied: {migration_file}")
+            MigrationHistory.record_migration(migration_file)
+            applied.append(migration_file)
+
+        trans.commit()
+        click.echo("All migrations applied successfully.")
+        return applied
+
+    except Exception as e:
+        trans.rollback()
+        click.echo(f"Migration failed: {e}")
+        logger.error(f"Migration failed: {e}")
+        raise
+
+
+@click.command()
+@click.option("--dry-run", is_flag=True, help="Check for pending migrations without applying them")
+@with_appcontext
+def apply_migrations(dry_run: bool = False) -> None:
+    """Apply pending SQL migrations."""
+    try:
+        run_migrations(dry_run=dry_run)
+    except Exception as e:
+        click.echo(f"Error: {e}")
+        sys.exit(1)
+
+
+@click.command()
+@click.argument("version", required=True)
+@with_appcontext
+def set_version(version: str) -> None:
+    """Set application version in database."""
+    pyproject_path = Path(Config.PROJECT_ROOT) / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        pyproject_data = tomli.load(f)
+        settings_version = pyproject_data["project"]["version"]
+
+    if version != settings_version:
+        click.echo(f"Warning: Setting {version} but pyproject.toml has {settings_version}")
+        if not click.confirm("Continue?"):
+            return
+
+    try:
+        version_entry = SystemInfo.query.filter_by(key="app_version").first()
+        if version_entry:
+            version_entry.value = version
+        else:
+            db.session.add(SystemInfo(key="app_version", value=version))
+
+        update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
+        update_time = datetime.now().isoformat()
+        if update_time_entry:
+            update_time_entry.value = update_time
+        else:
+            db.session.add(SystemInfo(key="last_update_time", value=update_time))
+
+        db.session.commit()
+        click.echo(f"Version set to {version}")
+    except Exception as e:
+        click.echo(f"Error: {e}")
+        sys.exit(1)
+
+
+@click.command()
+@with_appcontext
+def get_version() -> None:
+    """
+    Get the current application version from both settings and database.
+    """
+    click.echo(f"Config version: {Config.VERSION}")
 
 
 @click.command()
@@ -322,3 +516,295 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
+
+
+def parse_pg_uri(db_uri: str) -> dict:
+    """Parse PostgreSQL URI into connection parameters."""
+    if not db_uri:
+        return {"username": None, "password": None, "host": None, "port": None, "dbname": None}
+
+    try:
+        url = make_url(db_uri)
+        return {
+            "username": url.username,
+            "password": url.password,
+            "host": url.host,
+            "port": url.port,
+            "dbname": url.database,
+        }
+    except Exception as e:
+        logger.error(f"Error parsing database URI: {e}")
+        return {"username": None, "password": None, "host": None, "port": None, "dbname": None}
+
+
+@click.command()
+@click.option("--output", "-o", help="Custom output file path for the backup", default=None)
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the backup operation", default=300, type=int
+)
+@with_appcontext
+def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    return backup_db_impl(output=output, timeout=timeout)
+
+
+def backup_db_impl(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    """Create a PostgreSQL database backup."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = Path(current_app.root_path).parent / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    backup_file = output or str(backup_dir / f"{timestamp}_bayanat_backup.dump")
+
+    db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not db_uri:
+        click.echo("Error: No database URI configured")
+        return None
+
+    db_info = parse_pg_uri(db_uri)
+    cmd = ["pg_dump", "-Fc", "-f", backup_file]
+
+    if db_info["username"]:
+        cmd.extend(["-U", db_info["username"]])
+    if db_info["host"]:
+        cmd.extend(["-h", db_info["host"]])
+    if db_info["port"]:
+        cmd.extend(["-p", str(db_info["port"])])
+    if db_info["dbname"]:
+        cmd.append(db_info["dbname"])
+
+    try:
+        env = os.environ.copy()
+        if db_info["password"]:
+            env["PGPASSWORD"] = db_info["password"]
+
+        subprocess.run(cmd, env=env, check=True, timeout=timeout)
+        click.echo(f"Backup created: {backup_file}")
+        return backup_file
+    except Exception as e:
+        click.echo(f"Backup failed: {e}")
+        return None
+
+
+@click.command()
+@click.argument("backup_file", type=click.Path(exists=True))
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the restore operation", default=3600, type=int
+)
+@with_appcontext
+def restore_db(backup_file: str, timeout: int = 3600) -> bool:
+    """
+    Restore PostgreSQL database from a backup file.
+
+    Args:
+        backup_file: Path to the backup file
+        timeout: Timeout in seconds for the restore operation (default: 3600)
+
+    Returns:
+        True if restoration was successful, False otherwise
+    """
+    logger.info(f"Restoring database from backup: {backup_file}")
+    click.echo(f"Restoring database from backup: {backup_file}")
+
+    # Get database URI from app config
+    db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not db_uri:
+        logger.error("Database URI not found in application config.")
+        click.echo("Error: Database URI not found in application config.")
+        return False
+
+    # Parse the database URI
+    db_info = parse_pg_uri(db_uri)
+
+    # Build the pg_restore command for custom format
+    cmd = ["pg_restore", "--clean", "--if-exists"]
+
+    # Add database name if present
+    if db_info["dbname"]:
+        cmd.extend(["-d", db_info["dbname"]])
+
+    # Add connection parameters only if they exist
+    if db_info["username"]:
+        cmd.extend(["-U", db_info["username"]])
+
+    if db_info["host"]:
+        cmd.extend(["-h", db_info["host"]])
+
+    if db_info["port"]:
+        cmd.extend(["-p", db_info["port"]])
+
+    # Add the backup file
+    cmd.append(backup_file)
+
+    # Execute the command
+    try:
+        # Set PGPASSWORD environment variable if password exists
+        env = os.environ.copy()
+        if db_info["password"]:
+            env["PGPASSWORD"] = db_info["password"]
+
+        logger.info(f"Running database restore command: {' '.join(cmd)}")
+        click.echo("Restoring database... This may take a while.")
+
+        # Run the command with timeout
+        process = subprocess.run(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+            timeout=timeout,
+        )
+
+        if process.returncode == 0:
+            logger.info("Database restored successfully.")
+            click.echo("Database restored successfully.")
+            return True
+        else:
+            logger.error(f"Database restoration failed: {process.stderr}")
+            click.echo(f"Database restoration failed: {process.stderr}")
+            return False
+    except subprocess.TimeoutExpired:
+        logger.error(f"Database restoration timed out after {timeout} seconds")
+        click.echo(f"Database restoration timed out after {timeout} seconds")
+        return False
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Database restoration failed: {e.stderr}")
+        click.echo(f"Database restoration failed: {e.stderr}")
+        return False
+    except Exception as e:
+        logger.error(f"Error restoring database: {str(e)}")
+        click.echo(f"Error restoring database: {str(e)}")
+        return False
+
+
+@click.command(name="lock")
+@click.option("--reason", "-r", help="Reason for maintenance", default="System maintenance")
+@with_appcontext
+def enable_maintenance(reason):
+    """
+    Enable maintenance mode (lock the application).
+
+    Args:
+        reason: Reason for enabling maintenance mode
+    """
+    from enferno.utils.maintenance import enable_maintenance as em
+
+    if em(reason):
+        click.echo("Maintenance mode enabled. System is locked.")
+        logger.info("Maintenance mode enabled via CLI.")
+    else:
+        click.echo("Failed to enable maintenance mode.")
+        logger.error("Failed to enable maintenance mode via CLI.")
+
+
+@click.command(name="unlock")
+@with_appcontext
+def disable_maintenance():
+    """
+    Disable maintenance mode (unlock the application).
+    """
+    from enferno.utils.maintenance import disable_maintenance as dm
+
+    if dm():
+        click.echo("Maintenance mode disabled. System is unlocked.")
+        logger.info("Maintenance mode disabled via CLI.")
+    else:
+        click.echo("Failed to disable maintenance mode.")
+        logger.error("Failed to disable maintenance mode via CLI.")
+
+
+def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> None:
+    """
+    Update system: git pull, dependencies, migrations, and restart services.
+    Uses socket API for service restart (maintains security model).
+    """
+    import subprocess
+    from pathlib import Path
+
+    logger.info("Starting system update")
+
+    project_root = Path(current_app.root_path).parent
+    stashed = False
+
+    try:
+        # 1) Backup database
+        if not skip_backup:
+            click.echo("Creating database backup...")
+            created = backup_db_impl(timeout=300)
+            if not created:
+                raise RuntimeError("Database backup failed")
+
+        # 2) Git: stash local changes if any, then pull
+        status = subprocess.run(
+            ["git", "status", "--porcelain"], capture_output=True, text=True, cwd=project_root
+        )
+        if status.stdout.strip():
+            click.echo("Stashing local changes...")
+            subprocess.run(
+                ["git", "stash", "push", "-m", "auto-update stash"], check=True, cwd=project_root
+            )
+            stashed = True
+
+        click.echo("Pulling code updates...")
+        subprocess.run(["git", "pull", "--ff-only"], check=True, timeout=120, cwd=project_root)
+
+        # 3) Dependencies
+        click.echo("Installing dependencies...")
+        subprocess.run(["uv", "sync", "--frozen"], check=True, timeout=600, cwd=project_root)
+
+        # 4) Migrations
+        run_migrations()
+
+        # 5) Restart
+        if restart_service:
+            click.echo("Restarting service...")
+            try:
+                subprocess.run(
+                    [
+                        "curl",
+                        "-s",
+                        "-X",
+                        "POST",
+                        "-H",
+                        "Content-Type: application/json",
+                        "-d",
+                        '{"service":"bayanat"}',
+                        "http://127.0.0.1:8080/restart-service",
+                    ],
+                    check=True,
+                    timeout=30,
+                    cwd=project_root,
+                )
+            except Exception as restart_error:
+                logger.error(f"Service restart failed: {restart_error}")
+
+        click.echo("Update completed successfully")
+        logger.info("System update completed")
+
+    except subprocess.CalledProcessError as e:
+        stderr_msg = e.stderr.strip() if hasattr(e, "stderr") and e.stderr else ""
+        msg = f"Command failed: {e.cmd} (exit {e.returncode})"
+        if stderr_msg:
+            msg = f"{msg}\nError: {stderr_msg}"
+        logger.error(msg)
+        raise RuntimeError(msg) from e
+    except Exception as e:
+        logger.error(f"Update failed: {str(e)}")
+        raise
+    finally:
+        if stashed:
+            try:
+                click.echo("Restoring stashed changes...")
+                subprocess.run(["git", "stash", "pop"], check=True, cwd=project_root)
+            except subprocess.CalledProcessError as pop_err:
+                logger.warning(f"Stash restore failed (likely due to build artifacts): {pop_err}")
+                click.echo("Note: Stash preserved - run 'git stash list' to see saved changes.")
+
+
+@click.command()
+@click.option("--skip-backup", is_flag=True, help="Skip database backup")
+@with_appcontext
+def update_system(skip_backup: bool = False) -> None:
+    """CLI entry point that delegates to the shared update implementation."""
+    run_system_update(skip_backup=skip_backup)

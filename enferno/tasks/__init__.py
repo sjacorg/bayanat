@@ -13,9 +13,11 @@ from datetime import datetime, timedelta, date, timezone
 
 import boto3
 import pandas as pd
+import requests
 from celery import Celery, chain, chord, group
 from celery.schedules import crontab
 from celery.signals import worker_ready, worker_process_init
+from packaging import version
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -1433,6 +1435,10 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
+
+
+# Note: Update checking is now handled via real-time API endpoint in admin/views.py
+# This removes the Redis caching approach for better reliability
 
 
 @celery.task

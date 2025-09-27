@@ -1,0 +1,8 @@
+CREATE TABLE migration_history (
+    id SERIAL PRIMARY KEY,
+    migration_file VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
+);
+

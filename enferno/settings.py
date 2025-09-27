@@ -26,6 +26,13 @@ def uia_username_mapper(identity):
 class Config(object):
     """Base configuration."""
 
+    # Read version from pyproject.toml (single source of truth)
+    from pathlib import Path
+    import tomli
+
+    with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as f:
+        VERSION = tomli.load(f)["project"]["version"]
+
     BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5000/")
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
