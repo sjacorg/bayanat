@@ -1,49 +1,8 @@
-.leaflet-control {
-    cursor: pointer;
-}
-
-a.polyline-measure-controlOnBgColor, a.polyline-measure-controlOnBgColor:hover {
-    background-color: #8f8;
-}
-
-.polyline-measure-unicode-icon {
-    font-size: 19px;
-    font-weight: bold;
-}
-
-a.polyline-measure-clearControl:active {
-    background-color: #f88;
-}
-
-.polyline-measure-tooltip {
-    font: 10px Arial, Helvetica, sans-serif;
-    line-height: 10px;
-    background-color: rgba(255, 255, 170, 0.7);
-    border-radius: 3px;
-    box-shadow: 1px 1px 4px #888;
-    margin: 0;
-    padding: 2px;
-    width: auto !important;
-    height: auto !important;
-    white-space: nowrap;
-    text-align: right;
-}
-
-.polyline-measure-tooltip-end {
-    background-color: rgba(255, 255, 40, 0.7);
-}
-
-.polyline-measure-tooltip-total {
-    color: #006;
-    font-weight: bold;
-}
-
-.polyline-measure-tooltip-difference {
-    color: #060;
-    font-style: italic;
-}
-
-.polyline-measure-popupTooltip {
-    font: 11px Arial, Helvetica, sans-serif;
-    line-height: 11px;
-}
+/**
+ * Minified by jsDelivr using clean-css v5.3.3.
+ * Original file: /npm/leaflet.polylinemeasure@3.0.0/Leaflet.PolylineMeasure.css
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+.leaflet-control{cursor:pointer}a.polyline-measure-controlOnBgColor,a.polyline-measure-controlOnBgColor:hover{background-color:#8f8}.polyline-measure-unicode-icon{font-size:19px;font-weight:700}a.polyline-measure-clearControl:active{background-color:#f88}.polyline-measure-tooltip{font:10px Arial,Helvetica,sans-serif;line-height:10px;background-color:rgba(255,255,170,.7);border-radius:3px;box-shadow:1px 1px 4px #888;margin:0;padding:2px;width:auto!important;height:auto!important;white-space:nowrap;text-align:right}.polyline-measure-tooltip-end{background-color:rgba(255,255,40,.7)}.polyline-measure-tooltip-total{color:#006;font-weight:700}.polyline-measure-tooltip-difference{color:#060;font-style:italic}.polyline-measure-popupTooltip{font:11px Arial,Helvetica,sans-serif;line-height:11px}
+/*# sourceMappingURL=/sm/98eead5381407d7926ed6cf378674530e83c9674a4f5d7fc293b20236ac88f34.map */
