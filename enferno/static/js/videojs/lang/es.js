@@ -10,7 +10,7 @@ videojs.addLanguage('es', {
   "Loaded": "Cargado",
   "Progress": "Progreso",
   "Fullscreen": "Pantalla completa",
-  "Non-Fullscreen": "Pantalla no completa",
+  "Exit Fullscreen": "Pantalla no completa",
   "Mute": "Desactivar el sonido",
   "Unmute": "Activar el sonido",
   "Playback Rate": "Velocidad de reproducción",
@@ -68,7 +68,7 @@ videojs.addLanguage('es', {
   "Raised": "En relieve",
   "Depressed": "Hundido",
   "Uniform": "Uniforme",
-  "Dropshadow": "Sombra paralela",
+  "Drop shadow": "Sombra paralela",
   "Font Family": "Familia de fuente",
   "Proportional Sans-Serif": "Sans-Serif proporcional",
   "Monospace Sans-Serif": "Sans-Serif monoespacio",
@@ -86,5 +86,11 @@ videojs.addLanguage('es', {
   "{1} is loading.": "{1} se está cargando.",
   "Exit Picture-in-Picture": "Salir de imagen sobre imagen",
   "Picture-in-Picture": "Imagen sobre imagen",
-  "No content": "Sin contenido"
+  "No content": "Sin contenido",
+  "Color": "Color",
+  "Opacity": "Opacidad",
+  "Text Background": "Fondo del texto",
+  "Caption Area Background": "Fondo del área de subtítulos",
+  "Skip forward {1} seconds": "Avanza {1} segundos",
+  "Skip backward {1} seconds": "Retrocede {1} segundos"
 });

@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
 {% endblock %}
 
 {% block content %}
@@ -17,7 +17,7 @@
                     <v-btn
                             elevation="16"
                             color="primary"
-                            :="props"
+                            v-bind="props"
                             @click.stop="visualizeResults"
                             v-if="showVisualize"
                             :loading="visualizeLoading"
@@ -104,7 +104,7 @@
                                                 @click="selected=[]"
                                                 class="mr-3 ml-1"
                                                 density="compact"
-                                                :="props">
+                                                v-bind="props">
                                             </v-btn>
                                         </template>
                                     </v-tooltip>
@@ -188,7 +188,7 @@
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
                                 <template v-slot:activator="{props}">
                                     <v-icon
-                                            :="props"
+                                            v-bind="props"
                                             size="small"
                                             :color="role.color || 'grey-lighten-1'"
                                             icon="mdi-shield-lock"
@@ -209,7 +209,7 @@
                             <v-tooltip text="{{ _('Edit') }}" location="top">
                                 <template #activator="{ props }">
                                     <v-icon
-                                            :="props"
+                                            v-bind="props"
                                             color="ov"
                                             class="mr-2"
                                             @click.stop="editItem(item)"
@@ -223,7 +223,7 @@
                             <v-tooltip text="{{ _('Assign to self') }}">
                                 <template #activator="{ props }">
                                     <v-icon
-                                            :="props"
+                                            v-bind="props"
                                             color="primary lighten-1"
                                             class="mr-2"
 
@@ -238,7 +238,7 @@
 
                             <v-tooltip text="{{ _('Add Review') }}" location="top">
                                 <template #activator="{ props }">
-                                    <v-icon :="props"
+                                    <v-icon v-bind="props"
                                             v-if="reviewAllowed(item)"
                                             @click.stop="addReview(item)"
                                             color="gv darken-1"
@@ -353,26 +353,24 @@
     <script src="/static/js/components/RelationEditorCard.js"></script>
     <script src="/static/js/components/EventsSection.js"></script>
 
-    <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
-    <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
 
     <script src="/static/js/components/MPCard.js"></script>
 
     <script src="/static/js/videojs/video.min.js"></script>
 
-    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
-
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
-    <script>
-
+    <script type="module">
+        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
+        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
+        import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
@@ -820,19 +818,19 @@
                 },
 
                 filter_related_to_bulletin(id) {
-                    this.bulletinDrawer = false;
+                    this.incidentDrawer = false;
                     this.search = {rel_to_bulletin: id};
                     this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
-                    this.bulletinDrawer = false;
+                    this.incidentDrawer = false;
                     this.search = {rel_to_actor: id};
                     this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
-                    this.bulletinDrawer = false;
+                    this.incidentDrawer = false;
                     this.search = {rel_to_incident: id};
                     this.goToFirstPage();
                 },
@@ -1099,7 +1097,7 @@
                         this.showSnack("{{_('This item is restricted.')}}")
                         return
                     }
-                    path = `/admin/incidents/${item.id}`;
+                    const path = `/admin/incidents/${item.id}`;
                     if (this.$route.path !== path)
                         this.$router.push(path);
 
@@ -1161,8 +1159,8 @@
 
 
                 has_role(user, role) {
-                    for (r of user.roles) {
-                        if (r.name == role) {
+                    for (const r of user.roles) {
+                        if (r.name === role) {
                             return true
                         }
                     }
@@ -1508,6 +1506,8 @@
             }
         });
 
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
 
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
