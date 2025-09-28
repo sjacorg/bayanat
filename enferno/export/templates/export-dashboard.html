@@ -75,7 +75,7 @@
                                         <v-tooltip location="top" text="{{ _('Do not include Media') }}">
                                             <template #activator="{ props }">
 
-                                        <v-icon :="props" class="ml-2"
+                                        <v-icon v-bind="props" class="ml-2"
                                                 v-if="!item.include_media">mdi-close-circle
                                         </v-icon>
                                             </template>
