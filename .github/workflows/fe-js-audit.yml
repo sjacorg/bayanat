@@ -11,6 +11,8 @@ on:
       - stable
     paths:
       - enferno/static/js/**
+  schedule:
+    - cron: 29 20 * * *
 
 jobs:
   retirejs:
