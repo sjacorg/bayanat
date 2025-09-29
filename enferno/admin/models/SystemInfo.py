@@ -31,13 +31,27 @@ class MigrationHistory(db.Model, BaseMixin):
     migration_file = db.Column(db.String(255), unique=True, nullable=False)
 
     @classmethod
-    def is_applied(cls, migration_file: str) -> bool:
-        """Check if a specific migration file has been applied."""
-        return cls.query.filter_by(migration_file=migration_file).first() is not None
+    def is_applied(cls, migration_file: str, session) -> bool:
+        """Check if a specific migration file has been applied.
+
+        Convention: migration_history table exists (created during initial deployment).
+
+        Args:
+            migration_file: Name of the migration file to check
+            session: Session to use (required for transaction consistency).
+        """
+        return session.query(cls).filter_by(migration_file=migration_file).first() is not None
 
     @classmethod
-    def record_migration(cls, migration_file: str):
-        """Record a migration file as applied."""
+    def record_migration(cls, migration_file: str, session):
+        """Record a migration file as applied.
+
+        Convention: Always called within a transaction with a session provided.
+
+        Args:
+            migration_file: Name of the migration file
+            session: Session to use (required - caller manages transaction).
+        """
         migration = cls(migration_file=migration_file)
-        db.session.add(migration)
-        db.session.commit()
+        session.add(migration)
+        # Transaction boundary handles the commit
