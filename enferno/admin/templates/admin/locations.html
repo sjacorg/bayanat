@@ -180,12 +180,6 @@
         const app = createApp({
             delimiters: delimiters,
             mixins: [globalMixin],
-
-            components: {
-                "tinymce-editor": Editor, // <- Important part,
-
-
-            },
             data: () => ({
                 validationRules: validationRules,
                 translations: window.translations,
@@ -536,13 +530,14 @@
         app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
         app.config.globalProperties.$htmlFormatter = htmlFormatter;
         
-        app.component('location-card', LocationCard);
-        app.component('location-search-box', LocationSearchBox);
-        app.component('uni-field', UniField);
-        app.component('search-field', SearchField);
-        app.component('location-search-field', LocationSearchField);
-        app.component('dual-field', DualField);
-        app.component('geo-map', GeoMap);
+        app.component("TinymceEditor", Editor);
+        app.component('LocationCard', LocationCard);
+        app.component('LocationSearchBox', LocationSearchBox);
+        app.component('UniField', UniField);
+        app.component('SearchField', SearchField);
+        app.component('LocationSearchField', LocationSearchField);
+        app.component('DualField', DualField);
+        app.component('GeoMap', GeoMap);
         app.component('GlobalMap', GlobalMap);
         app.component('ReadMore', ReadMore);
         app.use(router).use(vuetify).mount('#app');

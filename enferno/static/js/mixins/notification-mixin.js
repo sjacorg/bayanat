@@ -1,6 +1,6 @@
 const notificationMixin = {
   components: {
-    'NotificationsList': NotificationsList,
+    NotificationsList,
   },
   computed: {
     hasUnreadNotifications() {
