@@ -34,8 +34,6 @@ class MigrationHistory(db.Model, BaseMixin):
     def is_applied(cls, migration_file: str, session) -> bool:
         """Check if a specific migration file has been applied.
 
-        Convention: migration_history table exists (created during initial deployment).
-
         Args:
             migration_file: Name of the migration file to check
             session: Session to use (required for transaction consistency).
