@@ -166,54 +166,49 @@ def import_data() -> None:
 
 
 def run_migrations(dry_run: bool = False) -> list[str]:
-    """Apply pending SQL migrations or list them in dry-run mode."""
-    migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
+    """Apply pending SQL migrations atomically."""
+    from pathlib import Path
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import text
 
-    if not os.path.exists(migration_dir):
-        raise RuntimeError(f"Migration directory '{migration_dir}' not found.")
+    migrations_dir = Path(__file__).parent / "migrations"
+    Session = sessionmaker(bind=db.engine)
 
-    migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
-    pending_migrations = [f for f in migration_files if not MigrationHistory.is_applied(f)]
+    with Session() as session:
+        # Get pending migrations
+        migration_files = sorted(migrations_dir.glob("*.sql"))
+        pending = [
+            f.name for f in migration_files if not MigrationHistory.is_applied(f.name, session)
+        ]
 
-    if not pending_migrations:
-        click.echo("No pending migrations to apply.")
-        return []
+        if not pending:
+            click.echo("✓ Database is up to date.")
+            return []
 
-    if dry_run:
-        click.echo("Pending migrations:")
-        for migration in pending_migrations:
-            click.echo(f"  - {migration}")
-        return pending_migrations
+        if dry_run:
+            click.echo(f"Found {len(pending)} pending migrations:")
+            click.echo("\n".join(f"  - {name}" for name in pending))
+            return pending
 
-    connection = db.session.connection()
-    trans = connection.begin()
-    applied: list[str] = []
+        # Apply migrations atomically
+        with session.begin():
+            applied = []
 
-    try:
-        click.echo("Applying migrations...")
-        for migration_file in pending_migrations:
-            migration_path = os.path.join(migration_dir, migration_file)
-            with open(migration_path, "r") as sql_file:
-                migration_sql = sql_file.read()
+            for i, migration_name in enumerate(pending, 1):
+                migration_file = migrations_dir / migration_name
+                migration_sql = migration_file.read_text(encoding="utf-8").strip()
 
-            problematic_commands = ["CREATE DATABASE", "DROP DATABASE", "VACUUM"]
-            if any(cmd in migration_sql.upper() for cmd in problematic_commands):
-                click.echo(f"Warning: Migration {migration_file} contains non-rollback commands!")
+                if not migration_sql:
+                    continue
 
-            connection.execute(text(migration_sql))
-            click.echo(f"Applied: {migration_file}")
-            MigrationHistory.record_migration(migration_file)
-            applied.append(migration_file)
+                click.echo(f"[{i}/{len(pending)}] Applying {migration_name}...")
 
-        trans.commit()
-        click.echo("All migrations applied successfully.")
+                session.execute(text(migration_sql))
+                MigrationHistory.record_migration(migration_name, session)
+                applied.append(migration_name)
+
+        click.echo(f"✓ Applied {len(applied)} migrations successfully.")
         return applied
-
-    except Exception as e:
-        trans.rollback()
-        click.echo(f"Migration failed: {e}")
-        logger.error(f"Migration failed: {e}")
-        raise
 
 
 @click.command()
