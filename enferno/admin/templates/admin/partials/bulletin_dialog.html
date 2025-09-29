@@ -145,12 +145,7 @@
                                     <div v-else-if="isFieldActive(field, 'related_incidents')" :class="[fieldClass(field), 'px-3 py-2']">
                                         {% include 'admin/partials/edit_related_incidents.html' %}
                                     </div>
-                                    <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
-                                </template>
-                            </div>
-                            <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
-                                <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
-                                    <div v-if="isFieldActive(field, 'source_link')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <div v-else-if="isFieldActive(field, 'source_link')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <v-sheet class="d-flex align-center">
                                             <v-text-field class="mx-2" :disabled="source_disabled" v-model="editedItem.source_link"
                                                 label="{{ _('Source Link') }}" :rules="[
@@ -166,8 +161,13 @@
                                             </v-switch>
                                         </v-sheet>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
-                                        <v-textarea required :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
+                                    <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
+                                </template>
+                            </div>
+                            <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
+                                <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
+                                    <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
+                                        <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
                                             label="{{ _('Comments') }}">
                                         </v-textarea>
                                     </div>
@@ -176,21 +176,21 @@
                                             v-model="editedItem.status" label="{{ _('Status') }}"></v-select>
                                     </div>
                                 </template>
+                                {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
+                                <div class="grid-col-span-1 px-3 py-2" v-if="!editedItem.id">
+                                    <v-select :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
+                                        :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'" chips :disabled="unrestricted"
+                                        item-title="name" return-object :items="allowedRoles" multiple v-model="editedItem.roles"
+                                        label="{{ _('Restrict Bulletin to Access Group(s)') }}" :rules="
+                                                                                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
+                                                                                                                " clearable></v-select>
+                                    <v-checkbox color="error" @change="unrestricted? editedItem.roles = [] : null" class="mx-2"
+                                        label="{{ _('No Access Groups') }}" v-model="unrestricted">
+                                    </v-checkbox>
+                                </div>
+                                {% endif %}
                             </div>
 
-                            {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
-                            <v-row class="w-100 ma-0" v-if="!editedItem.id">
-                                <v-select :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
-                                    :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'" chips :disabled="unrestricted"
-                                    item-title="name" return-object :items="allowedRoles" multiple v-model="editedItem.roles"
-                                    label="{{ _('Restrict Bulletin to Access Group(s)') }}" :rules="
-                                                                                                                !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
-                                                                                                            " clearable></v-select>
-                                <v-checkbox color="error" @change="unrestricted? editedItem.roles = [] : null" class="mx-2"
-                                    label="{{ _('No Access Groups') }}" v-model="unrestricted">
-                                </v-checkbox>
-                            </v-row>
-                            {% endif %}
 
                             <v-row class="w-100 ma-0" v-if="editedItem.review">
                                 <v-col cols="12" md="12">

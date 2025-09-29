@@ -938,6 +938,9 @@ div.jsondiffpatch-child-node-type-array:after {
 .grid-col-span-2 {
   grid-column: span 2;
 }
+.grid-col-2 {
+  grid-column: 2;
+}
 
 .grid-row-span-1 {
   grid-row: span 1;

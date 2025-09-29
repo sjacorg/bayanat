@@ -6,7 +6,7 @@ const formBuilderMixin = {
       dynamicFields: [],
       originalFields: []
     },
-    fixedFields: ['source_link', 'comments', 'status'],
+    fixedFields: ['comments', 'status'],
   }),
   computed: {
     dynamicFieldsBulletinCard() {
@@ -22,9 +22,14 @@ const formBuilderMixin = {
     },
   },
   methods: {
-    getResponsiveWidth(width) {
-      if (width === 'w-50') return 'grid-col-span-1'
-      if (width === 'w-100') return 'grid-col-span-2'
+    getResponsiveWidth(ui_config) {
+      if (ui_config?.width === 'w-50') {
+        if (ui_config?.align === 'right') {
+          return 'grid-col-2'
+        }
+        return 'grid-col-span-1'
+      }
+      if (ui_config?.width === 'w-100') return 'grid-col-span-2'
       return 'grid-col-span-2'
     },
     getResponsiveHeight(height) {
@@ -33,7 +38,7 @@ const formBuilderMixin = {
     },
     fieldClass(field) {
       return [
-        this.getResponsiveWidth(field?.ui_config?.width),
+        this.getResponsiveWidth(field?.ui_config),
         this.getResponsiveHeight(field?.field_type === 'long_text' ? 2 : 1),
       ]
     },
