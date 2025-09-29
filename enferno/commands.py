@@ -174,8 +174,8 @@ def run_migrations(dry_run: bool = False) -> list[str]:
     migrations_dir = Path(__file__).parent / "migrations"
     Session = sessionmaker(bind=db.engine)
 
+    # Check pending migrations
     with Session() as session:
-        # Get pending migrations
         migration_files = sorted(migrations_dir.glob("*.sql"))
         pending = [
             f.name for f in migration_files if not MigrationHistory.is_applied(f.name, session)
@@ -190,7 +190,8 @@ def run_migrations(dry_run: bool = False) -> list[str]:
             click.echo("\n".join(f"  - {name}" for name in pending))
             return pending
 
-        # Apply migrations atomically
+    # Apply migrations with fresh session
+    with Session() as session:
         with session.begin():
             applied = []
 
