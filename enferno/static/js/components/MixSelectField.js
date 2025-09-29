@@ -1,4 +1,4 @@
-const MixII = Vue.defineComponent({
+const MixSelectField = Vue.defineComponent({
   props: {
     title: {
       type: String,
