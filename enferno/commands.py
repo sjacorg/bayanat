@@ -51,7 +51,7 @@ def generate_core_fields():
                 field_type=field_config["field_type"],
                 ui_component=field_config["ui_component"],
                 schema_config=field_config.get("schema_config", {}),
-                ui_config={},
+                ui_config=field_config.get("ui_config", {}),
                 validation_config={},
                 options=field_config.get("options", []),
                 active=field_config["visible"],
