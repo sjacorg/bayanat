@@ -732,7 +732,7 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 },
@@ -1415,12 +1415,6 @@
                 },
 
                 save() {
-                    if (!this.valid) {
-                        this.showSnack("{{ _('Please review the form for errors.')}}");
-                        scrollToFirstError();
-                        return;
-                    }
-
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record

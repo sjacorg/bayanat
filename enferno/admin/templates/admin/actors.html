@@ -809,7 +809,7 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 },
@@ -1541,12 +1541,6 @@
                 },
 
                 save() {
-                    if (!this.valid) {
-                        this.showSnack("{{ _('Please review the form for errors.')}}");
-                        scrollToFirstError();
-                        return;
-                    }
-
                     const payload = {
                         ...this.editedItem,
                         id_number: this.simpleIdNumberValue

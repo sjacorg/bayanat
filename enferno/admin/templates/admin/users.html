@@ -152,6 +152,7 @@
                                                     :rules="[
                                                         validationRules.required(),
                                                     ]"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.name')"
                                             ></v-text-field>
 
                                         </v-col>
@@ -446,7 +447,7 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 },
@@ -661,7 +662,7 @@
                             if (usernameAlreadyTaken) this.serverErrors = { ...this.serverErrors, ['item.username']: [translations.usernameAlreadyTaken_]};
 
                             this.$nextTick(() => scrollToFirstError())
-                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            this.showSnack(handleRequestError(err))
                         }
                     }
 
