@@ -137,7 +137,7 @@ const ShortActorDialog = Vue.defineComponent({
           this.save();
         } else {
           this.$root.showSnack(translations.pleaseReviewFormForErrors_);
-          scrollToFirstError(errors);
+          scrollToFirstError();
         }
       });
     },

@@ -114,23 +114,14 @@ function isValidLength(value, limit, type) {
     return type === "max" ? length <= limit : length >= limit;
 }
 
-function scrollToFirstError(errors) {
-    const invalidFieldId = errors?.find((error) => Boolean(error?.id))?.id
-    const element = document.getElementById(invalidFieldId)
+function scrollToFirstError() {
+  const wrapper = document.querySelector(".v-input--error");
+  if (!wrapper) return;
 
-    if (element) {
-        element.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-        })
-        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
-    } else {
-        const el = document.querySelector(".v-input--error");
-        el?.scrollIntoView?.({
-            behavior: 'smooth',
-            block: 'center',
-        });
-    }
+  wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const input = wrapper.querySelector("input, textarea, select");
+  if (input) setTimeout(() => input.focus(), 300);
 }
 
 // global vuetify config object passed to most pages of the system
@@ -311,6 +302,10 @@ function isPlainObject(val) {
     return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
+function isEmptyObject(obj) {
+  return !obj || Object.keys(obj).length === 0;
+}
+
 function getInfraMessage(status) {
     switch (status) {
         case 502:
@@ -337,7 +332,7 @@ function getInfraMessage(status) {
         const fieldName = field.startsWith('item.') ? field.slice(5) : field;
         const label = fieldName.includes('__root__') ? 'Validation Error' : fieldName;
         return `<span class="font-weight-bold text-red">[${label}]</span>: ${message}`;
-      }).join('\n') || 'An error occurred.';
+      }).join('<br />') || 'An error occurred.';
     }
 
     if (response?.data?.message) {

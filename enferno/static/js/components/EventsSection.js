@@ -63,7 +63,7 @@ const EventsSection = Vue.defineComponent({
           this.saveEvent();
         } else {
           this.$root.showSnack(translations.pleaseReviewFormForErrors_);
-          scrollToFirstError(errors);
+          scrollToFirstError();
         }
       });
     },
