@@ -2,16 +2,17 @@
 """Click commands."""
 import os
 import sys
-from datetime import datetime
 import subprocess
+import tomli
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Callable
+
 import click
+from flask import current_app
 from flask.cli import AppGroup
 from flask.cli import with_appcontext
 from flask_security.utils import hash_password
-from flask import current_app
-from pathlib import Path
-from typing import Optional, Callable
-import tomli
 
 from enferno.settings import Config
 from enferno.extensions import db
@@ -39,64 +40,6 @@ def log_table_creation(target, connection, tables=None, **kw):
     if tables is not None:
         for table in tables:
             logger.info(f"Creating table: {table.name}")
-
-
-def _initialize_db_state() -> None:
-    """
-    Internal function to initialize database state on first setup.
-    This handles both marking migrations as applied and setting initial version info.
-    """
-    # Step 1: Mark migrations as applied
-    # The migrations directory is inside the enferno package
-    migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
-
-    # Ensure the directory exists
-    if not os.path.exists(migration_dir):
-        click.echo(f"Error: Migration directory '{migration_dir}' not found.")
-        return
-
-    # Get all .sql files in the migrations directory, sorted by timestamp prefix
-    migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
-
-    # Loop through each migration file and mark it as applied
-    for migration_file in migration_files:
-        if not MigrationHistory.is_applied(migration_file):
-            # Record the migration in the database
-            MigrationHistory.record_migration(migration_file)
-            click.echo(f"Migration {migration_file} marked as applied.")
-
-    # Step 2: Initialize version information
-    try:
-        # Set initial app version
-        version_entry = SystemInfo(key="app_version", value=Config.VERSION)
-        db.session.add(version_entry)
-
-        # Add initial timestamp
-        update_time = datetime.now().isoformat()
-        update_time_entry = SystemInfo(key="last_update_time", value=update_time)
-        db.session.add(update_time_entry)
-
-        # Commit all changes in one transaction
-        db.session.commit()
-
-        click.echo("All valid SQL migrations have been marked as applied.")
-        click.echo(f"System version set to {Config.VERSION}")
-    except Exception as e:
-        db.session.rollback()
-        click.echo(f"Warning: Could not fully initialize database state: {str(e)}")
-        # Try at least to commit the migrations
-        db.session.commit()
-
-
-@click.command()
-@with_appcontext
-def mark_migrations_applied() -> None:
-    """
-    Command wrapper to initialize database state.
-    This marks all migrations as applied and sets up version tracking.
-    Should be run when initializing the system for the first time.
-    """
-    _initialize_db_state()
 
 
 @click.command()
@@ -142,9 +85,6 @@ def create_db(create_exts: bool) -> None:
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
 
-    # Initialize database state (mark migrations and set version)
-    _initialize_db_state()
-
     # Remove the event listener after creation
     event.remove(metadata, "before_create", log_table_creation)
 
@@ -167,7 +107,6 @@ def import_data() -> None:
 
 def run_migrations(dry_run: bool = False) -> list[str]:
     """Apply pending SQL migrations atomically."""
-    from pathlib import Path
     from sqlalchemy.orm import sessionmaker
     from sqlalchemy import text
 
