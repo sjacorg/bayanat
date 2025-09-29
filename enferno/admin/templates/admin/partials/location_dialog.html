@@ -41,6 +41,7 @@
                                             validationRules.required('{{_('Title or Title (Ar) is required')}}'),
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="$root.serverErrorPropsForDualField($root.serverErrors, 'item.title', 'item.title_ar')"
                             ></dual-field>
                         </v-col>
 
@@ -119,7 +120,9 @@
                             <v-text-field
                                     variant="solo"
                                 v-model="editedItem.postal_code"
-                                label="{{ _('Postal Code') }}">
+                                label="{{ _('Postal Code') }}"
+                                v-bind="$root.serverErrorPropsForField($root.serverErrors, 'item.postal_code')"
+                            >
                             </v-text-field>
                         </v-col>
                         

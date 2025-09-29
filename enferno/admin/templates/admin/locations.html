@@ -239,7 +239,8 @@
                     parent: null,
                 },
                 location: {},
-                locationLoader: false
+                locationLoader: false,
+                serverErrors: {},
             }),
 
             computed: {
@@ -483,14 +484,11 @@
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.editedIndex = -1;
+                        this.serverErrors = {};
                     }, 300);
                 },
 
                 save() {
-                    if(!this.valid || !this.adminValid){
-                        this.showSnack("{{ _('Please review the form for errors.') }}");
-                        return;
-                    }
                     if (!this.editedItem.latlng?.lat) {
                         this.editedItem.latlng = null;
                     }
@@ -503,7 +501,10 @@
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
+                            console.error(err.response?.data);
                             this.showSnack(handleRequestError(err));
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
                         })
                     } else {
                         //create new record
@@ -513,7 +514,10 @@
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
+                            console.error(err.response?.data);
                             this.showSnack(handleRequestError(err));
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
                         })
                     }
                 },
@@ -524,7 +528,7 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 }
