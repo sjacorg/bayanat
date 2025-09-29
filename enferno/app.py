@@ -242,7 +242,6 @@ def register_commands(app):
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
-    app.cli.add_command(commands.mark_migrations_applied)
     app.cli.add_command(commands.apply_migrations)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.backup_db)
