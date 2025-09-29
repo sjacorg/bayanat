@@ -929,7 +929,6 @@ div.jsondiffpatch-child-node-type-array:after {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 cols */
   grid-auto-rows: minmax(60px, auto);
-  gap: 1rem;
 }
 
 .grid-col-span-1 {
