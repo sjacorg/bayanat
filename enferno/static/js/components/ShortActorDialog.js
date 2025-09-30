@@ -142,12 +142,6 @@ const ShortActorDialog = Vue.defineComponent({
       });
     },
     save() {
-      if (!this.valid) {
-        this.$root.showSnack(translations.pleaseReviewFormForErrors_);
-        scrollToFirstError();
-        return;
-      }
-
       this.saving = true;
 
       // If parent id is present create relation immediately
