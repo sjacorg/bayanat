@@ -1002,6 +1002,7 @@
                                         v-model="editedItem.comments"
                                         :rules="[validationRules.required()]"
                                         label="{{ _('Comments') }}"
+                                        v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
                                 ></v-textarea>
                             </v-col>
 
