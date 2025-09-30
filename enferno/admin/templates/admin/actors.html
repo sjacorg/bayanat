@@ -318,6 +318,7 @@
     <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
+    <script src="/static/js/mixins/form-builder-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -401,7 +402,7 @@
                 "tinymce-editor": Editor,
             },
 
-            mixins: [mediaMixin, globalMixin, relationsMixin],
+            mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin],
 
             data: () => ({
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
@@ -1651,9 +1652,6 @@
                 }
             }
         });
-
-        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
-        app.config.globalProperties.$htmlFormatter = htmlFormatter;
 
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
