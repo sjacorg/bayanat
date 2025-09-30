@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block css %}
 <link rel="stylesheet" href="/static/css/dropzone.min.css">
-    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
 
 
 {% endblock %}
@@ -69,7 +69,7 @@
 
                                                     <v-tooltip location="top">
                                                         <template v-slot:activator="{props}">
-                                                            <v-btn :disabled="mode==2" size="small" :="props"
+                                                            <v-btn :disabled="mode==2" size="small" v-bind="props"
                                                                    class="mx-3 hidden-sm-and-down"
                                                                    @click="uploadFiles"
                                                                    color="primary"
@@ -86,7 +86,7 @@
                                                         <template v-slot:activator="{props}">
                                                             <v-btn :disabled="mode==1 || !etlPathImport"
                                                                    @click="selectPath" size="small"
-                                                                   :="props" color="primary" class="hidden-sm-and-down">
+                                                                   v-bind="props" color="primary" class="hidden-sm-and-down">
                                                                 <v-icon left> mdi-folder-open</v-icon>
                                                                 {{ _('Process path') }}
                                                             </v-btn>
