@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
+from datetime import datetime, timezone
 
 import click
 from flask.cli import AppGroup
@@ -20,10 +21,53 @@ from enferno.utils.data_helpers import (
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
+from enferno.admin.models import Bulletin
+from enferno.admin.models.DynamicField import DynamicField
+from enferno.utils.date_helper import DateHelper
 
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
+
+
+def generate_core_fields():
+    """Generate core fields as DynamicField records in the database."""
+    from enferno.admin.models.core_fields import BULLETIN_CORE_FIELDS
+
+    # Check if core fields already exist
+    existing_core_fields = DynamicField.query.filter_by(core=True, entity_type="bulletin").count()
+    if existing_core_fields > 0:
+        logger.info("Core fields already exist, skipping generation")
+        return
+
+    logger.info("Generating core fields as DynamicField records")
+
+    for field_name, field_config in BULLETIN_CORE_FIELDS.items():
+        try:
+            core_field = DynamicField(
+                name=field_name,
+                title=field_config["title"],
+                entity_type="bulletin",
+                field_type=field_config["field_type"],
+                ui_component=field_config["ui_component"],
+                schema_config=field_config.get("schema_config", {}),
+                ui_config=field_config.get("ui_config", {}),
+                validation_config={},
+                options=field_config.get("options", []),
+                active=field_config["visible"],
+                searchable=False,
+                sort_order=field_config["sort_order"],
+                core=True,  # Mark as core field
+            )
+            core_field.save()
+            logger.info(f"Created core field: {field_name}")
+
+        except Exception as e:
+            logger.error(f"Error creating core field {field_name}: {str(e)}")
+            continue
+
+    db.session.commit()
+    logger.info("Core fields generation completed")
 
 
 @click.command()
@@ -61,6 +105,9 @@ def create_db(create_exts: bool) -> None:
     create_default_location_data()
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
+    generate_core_fields()
+    click.echo("Generated core fields successfully.")
+    logger.info("Generated core fields successfully.")
 
 
 @click.command()

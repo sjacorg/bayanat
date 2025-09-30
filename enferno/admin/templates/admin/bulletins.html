@@ -93,6 +93,9 @@
                                 ></v-text-field>
 
                                 <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','Mod']) %}
+                                    <v-btn href="/admin/bulletin-fields/" variant="outlined" class="ma-2" prepend-icon="mdi-pencil">{{ _('Edit Bulletin Form') }}</v-btn>
+                                {% endif %}
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn
                                             @click="editItem"
@@ -378,6 +381,7 @@
     <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
+    <script src="/static/js/mixins/form-builder-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -431,6 +435,7 @@
     <script src="/static/js/components/IdNumberDynamicField.js"></script>
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
+    <script src="/static/js/components/FieldRenderer.js"></script>
 
 
     <script src="/static/js/components/MPCard.js"></script>
@@ -461,7 +466,7 @@
         const app = createApp({
                 delimiters: delimiters,
 
-                mixins: [mediaMixin, globalMixin, relationsMixin],
+                mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin],
 
                 data: () => ({
                     itemsPerPageOptions: window.itemsPerPageOptions,
@@ -1479,10 +1484,10 @@
 
                     },
 
-                    editItem(item) {
+                    async editItem(item) {
 
                         this.bulletinDrawer = false;
-
+                        this.fetchDynamicFields({ entityType: 'bulletin' });
 
                         if (!item.id) {
                             // hack to invoke deep copy and avoid passing attributes by reference
@@ -1744,6 +1749,7 @@
         app.component('ShortActorDialog', ShortActorDialog);
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
+        app.component('FieldRenderer', FieldRenderer);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

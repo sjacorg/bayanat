@@ -133,7 +133,6 @@ const EditableTable = Vue.defineComponent({
 
     this.loadItems();
   },
-  mixins: [globalMixin],
   computed: {
     dialogTitles() {
       return {

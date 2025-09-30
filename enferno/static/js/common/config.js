@@ -399,6 +399,7 @@ const routes = [
 
     {path: '/admin/bulletins/:id', name: 'bulletin', component: Vue.defineComponent({})},
     {path: '/admin/bulletins/', name: 'bulletins', component: Vue.defineComponent({})},
+    {path: '/admin/bulletin-fields/', name: 'bulletin-fields', component: Vue.defineComponent({})},
     {path: '/admin/actors/:id', name: 'actor', component: Vue.defineComponent({})},
     {path: '/admin/actors/', name: 'actors', component: Vue.defineComponent({})},
     {path: '/admin/actor-fields/', name: 'actor-fields', component: Vue.defineComponent({})},
@@ -727,15 +728,4 @@ function deepClone(value) {
     } catch (error) {
         return JSON.parse(JSON.stringify(value));
     }
-}
-
-// Turn text to slug
-function slugify(text) {
-    return text
-        .toString()
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '_')       // Replace spaces with underscores
-        .replace(/[^\w\-]+/g, '')   // Remove non-word characters
-        .replace(/\_\_+/g, '_');    // Replace multiple underscores
 }

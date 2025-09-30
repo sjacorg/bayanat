@@ -2,6 +2,7 @@ import re
 from dateutil.parser import parse
 from sqlalchemy import or_, not_, and_, any_, all_, func, text, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from datetime import datetime, time
 
 from enferno.extensions import db
 from enferno.admin.models import (
@@ -21,7 +22,12 @@ from enferno.admin.models import (
     ActorProfile,
     Activity,
 )
+from enferno.admin.models.DynamicField import DynamicField
 from enferno.user.models import Role
+from enferno.utils.logging_utils import get_logger
+
+
+logger = get_logger()
 
 
 # helper methods
@@ -356,6 +362,145 @@ class SearchUtils:
                 conditions.extend(
                     [Bulletin.events.any(condition) for condition in event_conditions]
                 )
+
+        # Dynamic custom fields
+        # Accept a permissive list of dicts under key "dyn"
+        # Example: {"name": "case_number", "op": "contains", "value": "2024-"}
+        try:
+            dyn_filters = q.get("dyn", []) or []
+            if isinstance(dyn_filters, list) and dyn_filters:
+                # Preload searchable field meta for bulletins
+                searchable_meta = {
+                    f.name: f
+                    for f in db.session.query(DynamicField)
+                    .filter(
+                        DynamicField.entity_type == "bulletin",
+                        DynamicField.active.is_(True),
+                        DynamicField.searchable.is_(True),
+                    )
+                    .all()
+                }
+
+                for item in dyn_filters:
+                    if not isinstance(item, dict):
+                        logger.warning("dyn filter skipped: invalid item", extra={"item": item})
+                        continue
+                    name = item.get("name")
+                    op = (item.get("op") or "eq").lower()
+                    value = item.get("value")
+                    if not name or name not in searchable_meta:
+                        logger.warning(
+                            "dyn filter skipped: invalid dynamic field name",
+                            extra={"field_name": name},
+                        )
+                        continue
+
+                    df = searchable_meta[name]
+                    # Skip SQLAlchemy column check - use raw SQL for dynamic fields
+                    # This avoids issues with dynamic columns not being in the model metadata
+
+                    # Contains for TEXT, LONG_TEXT, and SELECT
+                    if (
+                        df.field_type
+                        in (
+                            DynamicField.TEXT,
+                            DynamicField.LONG_TEXT,
+                            DynamicField.SELECT,
+                        )
+                        and op == "contains"
+                    ):
+                        if isinstance(value, str) and value:
+                            # For SELECT fields, search in array values
+                            if df.field_type == DynamicField.SELECT:
+                                conditions.append(
+                                    text(f"array_to_string({name}, ' ') ILIKE :val").bindparams(
+                                        val=f"%{value}%"
+                                    )
+                                )
+                            else:
+                                conditions.append(
+                                    text(f"{name} ILIKE :val").bindparams(val=f"%{value}%")
+                                )
+                        continue
+
+                    # SELECT equality (for both single and multi-select)
+                    if df.field_type == DynamicField.SELECT and op == "eq":
+                        if value is not None:
+                            # Use array containment for equality check
+                            conditions.append(text(f":val = ANY({name})").bindparams(val=value))
+                        continue
+
+                    # NUMBER equality
+                    if df.field_type == DynamicField.NUMBER and op == "eq":
+                        try:
+                            num = int(value) if value is not None else None
+                            if num is not None:
+                                conditions.append(text(f"{name} = :val").bindparams(val=num))
+                        except (TypeError, ValueError):
+                            logger.warning(
+                                "dyn filter number cast failed",
+                                extra={"field": name, "value": value},
+                            )
+                        continue
+
+                    # DATETIME between
+                    if df.field_type == DynamicField.DATETIME and op == "between":
+                        if isinstance(value, (list, tuple)) and len(value) >= 1:
+                            dates = [d for d in value[:2] if d]
+                            if dates:
+                                # Use raw SQL for datetime between
+
+                                start_date = parse(dates[0]).date()
+                                end_date = parse(dates[1]).date() if len(dates) > 1 else start_date
+                                start_datetime = datetime.combine(start_date, time.min)
+                                end_datetime = datetime.combine(end_date, time.max)
+                                conditions.append(
+                                    text(f"{name} BETWEEN :start_dt AND :end_dt").bindparams(
+                                        start_dt=start_datetime, end_dt=end_datetime
+                                    )
+                                )
+                        continue
+
+                    # SELECT array operations (handles both single and multi-select)
+                    if df.field_type == DynamicField.SELECT:
+                        if op == "any":
+                            # OR logic - at least one value must be present
+                            if isinstance(value, list) and value:
+                                # Use PostgreSQL ANY operator for OR logic with unique parameter names
+                                or_conditions = []
+                                for i, val in enumerate(value):
+                                    param_name = f"val_{name}_{i}"
+                                    or_conditions.append(
+                                        text(f":{param_name} = ANY({name})").bindparams(
+                                            **{param_name: val}
+                                        )
+                                    )
+                                conditions.append(or_(*or_conditions))
+                            elif isinstance(value, str) and value:
+                                # Single value check
+                                conditions.append(text(f":val = ANY({name})").bindparams(val=value))
+                        elif op in ["all", "contains"]:
+                            # AND logic - ALL values must be present (array containment)
+                            if isinstance(value, list) and value:
+                                # Use PostgreSQL array containment operator @> with explicit casting
+                                # Cast the parameter to varchar[] to match the column type (character varying[])
+                                conditions.append(
+                                    text(f"{name} @> CAST(:search_values AS varchar[])").bindparams(
+                                        search_values=value
+                                    )
+                                )
+                            elif isinstance(value, str) and value:
+                                # Single value - array must contain this exact value
+                                # Ensure ARRAY literal is typed as varchar[]
+                                conditions.append(
+                                    text(f"{name} @> (ARRAY[:search_value])::varchar[]").bindparams(
+                                        search_value=value
+                                    )
+                                )
+                        continue
+        except Exception as e:
+            # Fail-safe: dynamic filters should never break search
+            logger.warning("dyn filters evaluation failed", exc_info=e)
 
         # Access Roles
         if roles := q.get("roles"):
