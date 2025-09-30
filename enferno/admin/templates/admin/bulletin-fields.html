@@ -63,7 +63,7 @@
             
             <div class="d-flex justify-center w-100"></div>
 
-            <div v-if="filteredMovableDynamicFields.length" ref="mainList" class="form-grid">
+            <div ref="mainList" class="form-grid">
               <div v-for="(field, index) in filteredMovableDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[this.fieldClass(field) ,{
                   'drop-line': dragDrop.dropLine.id == field.id,
                   [dragDrop.dropLine.cls]: dragDrop.dropLine.id == field.id
@@ -72,7 +72,7 @@
                   @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(dragDrop.draggingId)" />
               </div>
             </div>
-            <div v-if="filteredFixedDynamicFields.length" class="form-grid">
+            <div class="form-grid">
               <div v-for="(field, index) in filteredFixedDynamicFields" :key="field.id" :class="[this.fieldClass(field)]">
                 <field-list-item :field="field" hide-drag-handle @toggle-visibility="toggleFieldVisibility" />
               </div>
