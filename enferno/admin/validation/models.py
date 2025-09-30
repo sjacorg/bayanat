@@ -219,7 +219,7 @@ class PartialMediaModel(BaseValidationModel):
 
 class BulletinValidationModel(StrictValidationModel):
     originid: Optional[str] = None
-    title: int
+    title: str = Field(min_length=1)
     sjac_title: Optional[str] = None
     assigned_to: Optional[PartialUserModel] = None
     first_peer_reviewer: Optional[PartialUserModel] = None
@@ -311,7 +311,7 @@ class PartialClaimedViolationModel(BaseValidationModel):
 
 
 class IncidentValidationModel(StrictValidationModel):
-    title: int
+    title: str = Field(min_length=1)
     title_ar: Optional[str] = None
     description: Optional[SanitizedField] = None
     labels: list[PartialLabelModel] = Field(default_factory=list)
@@ -634,7 +634,7 @@ class PartialActorProfileModel(BaseValidationModel):
 
 class ActorValidationModel(StrictValidationModel):
     type: str = DEFAULT_STRING_FIELD  # type: ignore
-    name: int
+    name: Optional[str] = DEFAULT_STRING_FIELD
     name_ar: Optional[str] = DEFAULT_STRING_FIELD
     first_name: Optional[str] = DEFAULT_STRING_FIELD
     first_name_ar: Optional[str] = DEFAULT_STRING_FIELD
@@ -860,7 +860,7 @@ class LocationTypeModel(BaseValidationModel):
 
 
 class LocationValidationModel(one_must_exist(["title", "title_ar"])):
-    title: int
+    title: Optional[str] = None
     title_ar: Optional[str] = None
     description: Optional[SanitizedField] = None
     parent: Optional[PartialLocationModel] = None
@@ -1401,7 +1401,7 @@ class UserValidationModel(StrictValidationModel):
     email: Optional[str] = None
     username: str = Field(min_length=4, max_length=32)
     password: Optional[str] = None  # Optional on PUT, required on POST
-    name: int
+    name: str = Field(min_length=1)
     roles: list[PartialRoleModel] = Field(default_factory=list)
     view_usernames: Optional[bool] = None
     view_full_history: Optional[bool] = None

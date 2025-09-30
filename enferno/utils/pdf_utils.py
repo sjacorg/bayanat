@@ -1,5 +1,6 @@
 from typing import Optional
 from flask import render_template
+from weasyprint import HTML
 from flask import current_app
 
 
