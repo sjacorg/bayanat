@@ -84,6 +84,9 @@
 
 
                                 <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','Mod']) %}
+                                    <v-btn href="/admin/actor-fields/" variant="outlined" class="ma-2" prepend-icon="mdi-pencil">{{ _('Edit Actor Form') }}</v-btn>
+                                {% endif %}
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn @click="editItem" color="primary" variant="elevated"
                                            class="ma-2">{{ _('New Actor') }}</v-btn>
