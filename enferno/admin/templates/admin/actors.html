@@ -1470,7 +1470,7 @@
 
                 editItem(item) {
                     this.actorDrawer = false;
-
+                    this.fetchDynamicFields({ entityType: 'actor' });
                     this.fetchIdNumberTypes();
 
                     if (!item.id) {

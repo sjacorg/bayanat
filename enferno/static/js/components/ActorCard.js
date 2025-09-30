@@ -3,6 +3,7 @@ const ActorCard = Vue.defineComponent({
   emits: ['edit', 'close'],
   mixins: [mediaMixin],
   mounted() {
+    this.$root.fetchDynamicFields({ entityType: 'actor' });
     this.fetchData();
   },
 
