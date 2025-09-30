@@ -92,18 +92,56 @@ function isValidLength(value, limit, type) {
 }
 
 function scrollToFirstError(errors) {
+    // Try to get id first, fallback to name
     const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
-    const element = document.getElementById(invalidFieldId)
-    element?.scrollIntoView({
+    if (!invalidFieldId) return
+
+    let element = null
+    if (invalidFieldId) {
+        element = document.getElementById(invalidFieldId)
+    }
+
+    if (!element && invalidFieldId) {
+        element = document.querySelector(`[name="${invalidFieldId}"]`)
+    }
+
+    if (!element) return
+
+    element.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
     })
-    if (element?.focus) {
-        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+
+    if (element.focus) {
+        setTimeout(() => element.focus(), 300) // give time for scroll
     }
 }
 
+
 // global vuetify config object passed to most pages of the system
+const variables = {
+    // Border radius
+    'rounded-10': '10px',
+    'rounded-12': '12px',
+    'rounded-16': '16px',
+
+    // Overflow
+    'overflow-unset': 'unset',
+
+    // Z-index
+    'z-1': '1',
+    'z-100': '100',
+
+    // Position
+    'left-auto': 'auto',
+
+    // Height
+    'h-fit': 'fit-content',
+
+    // Pointer events
+    'pointer-events-none': 'none',
+    'pointer-events-auto': 'auto',
+}
 const vuetifyConfig = {
     defaults: {
         VRow: {
@@ -125,6 +163,9 @@ const vuetifyConfig = {
             variant: 'outlined'
         },
         VAutocomplete: {
+            variant: 'outlined'
+        },
+        VNumberInput: {
             variant: 'outlined'
         },
         VBtn: {
@@ -181,8 +222,10 @@ const vuetifyConfig = {
                     muted: '#79747E',
                     border: '#D9D9D9',
                     'table-header': '#9E9E9E',
-                    'table-body': '#666666'
+                    'table-body': '#666666',
+                    'core-field-accent': '#ebebf0'
                 },
+                variables
             },
             dark: {
                 dark: true, // Explicitly set the dark theme as dark
@@ -201,6 +244,7 @@ const vuetifyConfig = {
                     'table-header': '#B0B0B0',
                     'table-body': '#ffffffb3'
                 },
+                variables
             },
         },
     },
@@ -357,6 +401,7 @@ const routes = [
     {path: '/admin/bulletins/', name: 'bulletins', component: Vue.defineComponent({})},
     {path: '/admin/actors/:id', name: 'actor', component: Vue.defineComponent({})},
     {path: '/admin/actors/', name: 'actors', component: Vue.defineComponent({})},
+    {path: '/admin/actor-fields/', name: 'actor-fields', component: Vue.defineComponent({})},
     {path: '/admin/incidents/:id', name: 'incident', component: Vue.defineComponent({})},
     {path: '/admin/incidents/', name: 'incidents', component: Vue.defineComponent({})},
     {path: '/admin/locations/:id', name: 'location', component: Vue.defineComponent({})},
@@ -682,4 +727,15 @@ function deepClone(value) {
     } catch (error) {
         return JSON.parse(JSON.stringify(value));
     }
+}
+
+// Turn text to slug
+function slugify(text) {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '_')       // Replace spaces with underscores
+        .replace(/[^\w\-]+/g, '')   // Remove non-word characters
+        .replace(/\_\_+/g, '_');    // Replace multiple underscores
 }
