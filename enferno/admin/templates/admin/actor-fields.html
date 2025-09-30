@@ -49,13 +49,7 @@
       </v-card-text>
 
       <div class="d-flex">
-        <div class="ml-1">
-          <v-card class="h-fit ma-3 flex-shrink-0 rounded-10 border border-opacity-25">
-            <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
-          </v-card>
-        </div>
-        <v-divider vertical></v-divider>
-        <v-card variant="flat" class="ml-3 w-100">
+        <v-card variant="flat" class="w-100">
           <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0 px-0" style="height: calc(100vh - 176px);">
             <v-container v-if="formBuilder.loading && !formBuilder.dynamicFields.length" height="130px" class="d-flex justify-center align-center">
               <v-progress-circular indeterminate ></v-progress-circular>
