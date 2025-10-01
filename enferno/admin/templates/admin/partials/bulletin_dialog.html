@@ -60,7 +60,7 @@
                 </v-toolbar-title>
 
                 <template #append>
-                    <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
+                    <v-btn @click="validateFormAndSave" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>
                     <v-btn icon="mdi-close" @click="confirmClose"></v-btn>
@@ -85,10 +85,11 @@
                                                     label-original="{{ _('Original Title') }}"
                                                     label-translation="{{ _('Original Title (Ar)') }}"
                                                     :rules="[
-                                                    validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
-                                                    validationRules.maxLength(255),
-                                                ]">
-                                        </dual-field>
+                                                        validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
+                                                        validationRules.maxLength(255),
+                                                    ]"
+                                                    v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
+                                        ></dual-field>
                                     </v-col>
     
                                     <v-col cols="12" md="4">
@@ -96,7 +97,10 @@
                                                     v-model:translation="editedItem.sjac_title_ar"
                                                     label-original="{{ _('Title') }}"
                                                     label-translation="{{ _('Title (Ar)') }}"
-                                                    :rules="[validationRules.maxLength(255)]"
+                                                    :rules="[
+                                                        validationRules.maxLength(255),
+                                                    ]"
+                                                    v-bind="serverErrorPropsForDualField(serverErrors, 'item.sjac_title', 'item.sjac_title_ar')"
                                         ></dual-field>
                                     </v-col>
                                     <v-col cols="12" md="4">
@@ -229,12 +233,12 @@
                                                         label="{{ _('Source Link') }}"
                                                         :rules="[
                                                             validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
-                                                            validationRules.maxLength(255)
+                                                            validationRules.maxLength(255),
                                                         ]"
+                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.source_link')"
                                             ></v-text-field>
     
-    
-                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
+                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt" @update:model-value="serverErrors['item.source_link'] = null">
                                             </v-checkbox>
     
                                             <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
@@ -273,6 +277,7 @@
                                                 outlined
                                                 v-model="editedItem.comments"
                                                 label="{{ _('Comments') }}"
+                                                v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
                                         >
     
                                         </v-textarea>
