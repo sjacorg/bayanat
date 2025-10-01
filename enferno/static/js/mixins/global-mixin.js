@@ -147,8 +147,26 @@ const globalMixin = {
       this.settings.language = l
       this.saveSettings();
       setTimeout(() => {
-        window.location.reload();
-    }, 1000);
+          window.location.reload();
+      }, 1000);
+    },
+    serverErrorPropsForField(serverErrors, key) {
+      return {
+        "error-messages": serverErrors?.[key],
+        "onUpdate:modelValue": () => (serverErrors[key] = null),
+      }
+    },
+    serverErrorPropsForDualField(
+      serverErrors,
+      originalKey,
+      translationKey
+    ) {
+      return {
+        "error-messages-original": serverErrors?.[originalKey],
+        "onUpdate:original": () => (serverErrors[originalKey] = null),
+        "error-messages-translation": serverErrors?.[translationKey],
+        "onUpdate:translation": () => (serverErrors[translationKey] = null),
+      }
     },
   },
 };
