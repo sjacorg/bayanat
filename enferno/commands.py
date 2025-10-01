@@ -472,6 +472,38 @@ def parse_pg_uri(db_uri: str) -> dict:
         return {"username": None, "password": None, "host": None, "port": None, "dbname": None}
 
 
+def verify_backup(backup_file: str) -> None:
+    """Verify backup file integrity using pg_restore --list."""
+    backup_path = Path(backup_file)
+
+    # Check file exists and is not empty
+    if not backup_path.exists():
+        raise RuntimeError(f"Backup file not found: {backup_file}")
+
+    if backup_path.stat().st_size == 0:
+        raise RuntimeError("Backup file is empty")
+
+    # Verify backup structure using pg_restore --list (fast, reads TOC only)
+    try:
+        result = subprocess.run(
+            ["pg_restore", "--list", backup_file],
+            capture_output=True,
+            timeout=5,  # TOC read is very fast, 5s is generous
+            check=True,
+        )
+        # If pg_restore can read the TOC, the backup structure is valid
+        if not result.stdout:
+            raise RuntimeError("Backup file appears corrupted")
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Backup verification timed out (file may be corrupted)")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Backup file is not a valid PostgreSQL dump: {e.stderr.decode()}")
+    except FileNotFoundError:
+        # pg_restore not in PATH - fall back to basic checks only
+        logger.warning("pg_restore not found, skipping detailed backup verification")
+        pass
+
+
 @click.command()
 @click.option("--output", "-o", help="Custom output file path for the backup", default=None)
 @click.option(
@@ -479,10 +511,6 @@ def parse_pg_uri(db_uri: str) -> dict:
 )
 @with_appcontext
 def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
-    return backup_db_impl(output=output, timeout=timeout)
-
-
-def backup_db_impl(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
     """Create a PostgreSQL database backup."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_dir = Path(current_app.root_path).parent / "backups"
@@ -514,6 +542,10 @@ def backup_db_impl(output: Optional[str] = None, timeout: int = 300) -> Optional
 
         subprocess.run(cmd, env=env, check=True, timeout=timeout)
         click.echo(f"Backup created: {backup_file}")
+
+        # Verify backup integrity
+        verify_backup(backup_file)
+
         return backup_file
     except Exception as e:
         click.echo(f"Backup failed: {e}")
@@ -666,7 +698,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         # 1) Backup database
         if not skip_backup:
             click.echo("Creating database backup...")
-            created = backup_db_impl(timeout=300)
+            created = backup_db(timeout=300)
             if not created:
                 raise RuntimeError("Database backup failed")
 
