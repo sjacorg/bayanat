@@ -2,7 +2,7 @@
 
 {% block css %}
     <link rel="stylesheet" href="/static/css/dropzone.min.css">
-    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 
 {% endblock %}
@@ -420,13 +420,11 @@
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
     
-    <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/SnapshotDialog.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
-    <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
     <script src="/static/js/dropzone.min.js"></script>
     <script src="/static/js/components/VueDropzone.js"></script>
@@ -444,19 +442,14 @@
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
 
-    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
-
-
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
-
-
-
-
-
-    <script>
+    <script type="module">
+        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
+        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
+        import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
@@ -1695,6 +1688,8 @@
             })
         ;
 
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
 
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
