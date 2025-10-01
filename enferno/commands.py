@@ -480,8 +480,11 @@ def verify_backup(backup_file: str) -> None:
     if not backup_path.exists():
         raise RuntimeError(f"Backup file not found: {backup_file}")
 
-    if backup_path.stat().st_size == 0:
+    file_size = backup_path.stat().st_size
+    if file_size == 0:
         raise RuntimeError("Backup file is empty")
+
+    logger.info(f"Verifying backup: {backup_file} ({file_size / 1024 / 1024:.1f}MB)")
 
     # Verify backup structure using pg_restore --list (fast, reads TOC only)
     try:
@@ -494,6 +497,8 @@ def verify_backup(backup_file: str) -> None:
         # If pg_restore can read the TOC, the backup structure is valid
         if not result.stdout:
             raise RuntimeError("Backup file appears corrupted")
+
+        logger.info("Backup verification successful")
     except subprocess.TimeoutExpired:
         raise RuntimeError("Backup verification timed out (file may be corrupted)")
     except subprocess.CalledProcessError as e:
