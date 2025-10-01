@@ -50,21 +50,35 @@ const DiffTool = {
             return value;
         };
 
+        const toTitleCase = (str) =>
+            str.replace(/_/g, ' ')
+            .replace(/\w\S*/g, (txt) =>
+                txt === txt.toUpperCase() && txt.length > 1
+                    ? txt
+                    : txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase()
+            );
+
         const translateKey = (key) => {
+            const customLabels = {
+                IN_APP_ENABLED: window.translations.inApp_,
+                EMAIL_ENABLED: window.translations.email_,
+                GOOGLE_OAUTH_ENABLED: window.translations.googleOauth_,
+            }
+
             const parts = key.toUpperCase().split('.');
             if (parts.length > 1) {
                 const nextKey = key.toUpperCase().replaceAll('.', '_')
                 if (labels[nextKey]) {
-                    return labels[nextKey]
+                    return customLabels?.[key] || labels[nextKey]
                 } else {
                     const [top, ...rest] = parts;
-                    const topLabel = labels[top] || top;
-                    const subPath = rest.join(' → ');
+                    const topLabel = customLabels?.[top] || labels[top] || top;
+                    const subPath = rest.map(pathKey => customLabels?.[pathKey] || toTitleCase(pathKey)).join(' → ');
                     return `${topLabel} <b>(${subPath})</b>`;
                 }
 
             }
-            return labels[key] || key;
+            return customLabels?.[key] || labels[key] || toTitleCase(key);
         };
 
         const diffEntries = Object.entries(diff);
