@@ -715,6 +715,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             backup_file = backup_db(timeout=300)
             if not backup_file:
                 raise RuntimeError("Database backup failed")
+            logger.info(f"Backup created: {backup_file}")
 
         # 2) Git: stash local changes if any, then pull
         status = subprocess.run(
@@ -729,20 +730,27 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
 
         click.echo("Pulling code updates...")
         subprocess.run(["git", "pull", "--ff-only"], check=True, timeout=120, cwd=project_root)
+        new_commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=project_root
+        ).stdout.strip()
+        logger.info(f"Pulled to commit: {new_commit[:8]}")
 
         # 3) Dependencies
         click.echo("Installing dependencies...")
         subprocess.run(["uv", "sync", "--frozen"], check=True, timeout=600, cwd=project_root)
+        logger.info("Dependencies installed")
 
         # 4) Migrations
         run_migrations()
+        logger.info("Migrations completed")
 
         # 5) Restart
         if restart_service:
             click.echo("Restarting service...")
             restart("bayanat")
+            logger.info("Service restarted")
 
-        logger.info("System update completed")
+        logger.info("System update completed successfully")
 
     except Exception as e:
         # ROLLBACK on any failure
@@ -754,15 +762,18 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
                 ["git", "reset", "--hard", git_commit_before], cwd=project_root, check=False
             )
             subprocess.run(["uv", "sync", "--frozen"], cwd=project_root, check=False)
+            logger.info(f"Rolled back code to: {git_commit_before[:8]}")
 
         if backup_file and Path(backup_file).exists():
             try:
                 restore_db(backup_file)
+                logger.info(f"Database restored from: {backup_file}")
             except Exception as restore_error:
                 logger.error(f"Database rollback failed: {restore_error}")
 
         if restart_service:
             restart("bayanat")
+            logger.info("Service restarted after rollback")
 
         raise RuntimeError(f"Update failed and rolled back: {e}")
     finally:
