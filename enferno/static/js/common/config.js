@@ -4,7 +4,6 @@ let checkUsernameTimeout;
 let passwordCheckTimeout;
 
 const validationRules = {
-
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
     },
@@ -15,6 +14,36 @@ const validationRules = {
         const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
         return v => isValidLength(v, max, "max") || message || defaultMessage;
     },
+    date(message = window.translations.invalidDate_) {
+        return v => {
+            if (!v) return true; // allow empty values
+            return dayjs(v).isValid() || message;
+        };
+    },
+    urlOrNA(message = window.translations.mustBeAValidUrlOrNa_) {
+        return v => {
+            if (!v) return true; // allow empty if not required
+            if (v === 'NA') return true;
+            try {
+                new URL(v);
+                return true;
+            } catch {
+                return message;
+            }
+        };
+    },
+    dateBeforeOtherDate(otherDate, message = window.translations.fromDateMustBeBeforeTheToDate_) {
+        return v => {
+            if (!v || !otherDate) return true;
+            return dayjs(v).isSameOrBefore(dayjs(otherDate)) || message;
+        };
+    },
+    dateAfterOtherDate(otherDate, message = window.translations.toDateMustBeAfterTheFromDate_) {
+        return v => {
+            if (!v || !otherDate) return true;
+            return dayjs(v).isSameOrAfter(dayjs(otherDate)) || message;
+        };
+    },
     minLength: (min, message) => {
         const defaultMessage = window.translations.mustBeAtLeastCharacters_(min);
         return v => isValidLength(v, min, "min") || message || defaultMessage;
@@ -22,12 +51,6 @@ const validationRules = {
     integer: (message) => {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
-    },
-    externalError(error) {
-        return () => {
-          if (!error) return true;
-          return Array.isArray(error) ? error[0] : error;
-        };
     },
     checkUsername: ({ initialUsername, onResponse }) => {
         const defaultMsg = window.translations.usernameInvalidOrAlreadyTaken_;
@@ -91,16 +114,14 @@ function isValidLength(value, limit, type) {
     return type === "max" ? length <= limit : length >= limit;
 }
 
-function scrollToFirstError(errors) {
-    const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
-    const element = document.getElementById(invalidFieldId)
-    element?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-    })
-    if (element?.focus) {
-        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
-    }
+function scrollToFirstError() {
+  const wrapper = document.querySelector(".v-input--error");
+  if (!wrapper) return;
+
+  wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const input = wrapper.querySelector("input, textarea, select");
+  if (input) setTimeout(() => input.focus(), 300);
 }
 
 // global vuetify config object passed to most pages of the system
@@ -281,6 +302,10 @@ function isPlainObject(val) {
     return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
+function isEmptyObject(obj) {
+  return !obj || Object.keys(obj).length === 0;
+}
+
 function getInfraMessage(status) {
     switch (status) {
         case 502:
@@ -295,10 +320,6 @@ function getInfraMessage(status) {
   
  function handleRequestError(error) {
     const response = error?.response;
-
-    if (response?.data?.message) {
-        return response.data.message;
-    }
   
     // Handle known API error format
     if (response?.data?.response?.errors) {
@@ -310,28 +331,32 @@ function getInfraMessage(status) {
       return Object.entries(errors).map(([field, message]) => {
         const fieldName = field.startsWith('item.') ? field.slice(5) : field;
         const label = fieldName.includes('__root__') ? 'Validation Error' : fieldName;
-        return `[${label}]: ${message}`;
-      }).join('\n') || 'An error occurred.';
+        return `<span class="font-weight-bold text-red">[${label}]</span>: ${message}`;
+      }).join('<br />') || 'An error occurred.';
     }
-  
-    // Check for HTML response by Content-Type header
-    const ct = response?.headers?.['content-type'] || '';
-    if (ct.includes('text/html') && response?.status) {
-      return getInfraMessage(response.status);
+
+    if (response?.data?.message) {
+        return response.data.message;
     }
-  
-    // Fallback: detect HTML content via DOMParser
-    if (typeof response?.data === 'string') {
-      try {
-        const doc = new DOMParser().parseFromString(response.data, 'text/html');
-        if (doc.body.children.length && response?.status) {
-          return getInfraMessage(response.status);
-        }
-        return response.data; // It's a plain string, safe to show
-      } catch {
-        return 'Unexpected error occurred while processing server response.';
-      }
-    }
+
+     // Check for HTML response by Content-Type header
+     const ct = response?.headers?.['content-type'] || '';
+     if (ct.includes('text/html') && response?.status) {
+         return getInfraMessage(response.status);
+     }
+
+     // Fallback: detect HTML content via DOMParser
+     if (typeof response?.data === 'string') {
+         try {
+             const doc = new DOMParser().parseFromString(response.data, 'text/html');
+             if (doc.body.children.length && response?.status) {
+                 return getInfraMessage(response.status);
+             }
+             return response.data; // It's a plain string, safe to show
+         } catch {
+             return 'Unexpected error occurred while processing server response.';
+         }
+     }
   
     // No response from server (network issue, timeout, etc.)
     if (error.request) {
