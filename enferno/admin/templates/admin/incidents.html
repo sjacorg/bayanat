@@ -593,6 +593,8 @@
 
                 // Count functionality  
                 totalCount: 0,
+
+                serverErrors: {},
             }),
 
             computed: {
@@ -728,7 +730,7 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 },
@@ -1406,15 +1408,11 @@
                         this.ir_loaded = false;
                         this.ar_loaded = false;
                         this.saving = false;
+                        this.serverErrors = {}
                     }, 300);
                 },
 
                 save() {
-                    if (!this.valid) {
-                        this.showSnack("{{ _('Please review the form for errors.')}}");
-                        return;
-                    }
-
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
@@ -1426,6 +1424,9 @@
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
+                        }).finally(() => {
                             this.saving = false;
                         });
                     } else {
@@ -1439,6 +1440,9 @@
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
+                        }).finally(() => {
                             this.saving = false;
                         });
                     }
