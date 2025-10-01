@@ -1,35 +1,34 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
-import sys
 import subprocess
-import tomli
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Callable
 
 import click
+import tomli
 from flask import current_app
-from flask.cli import AppGroup
-from flask.cli import with_appcontext
+from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
-
-from enferno.settings import Config
-from enferno.extensions import db
-from enferno.user.models import User, Role
-from enferno.utils.data_helpers import (
-    import_default_data,
-    generate_user_roles,
-    generate_workflow_statues,
-    create_default_location_data,
-)
-from enferno.utils.config_utils import ConfigManager
-from enferno.utils.db_alignment_helpers import DBAlignmentChecker
-from enferno.utils.logging_utils import get_logger
-from enferno.admin.models import MigrationHistory, SystemInfo
 from sqlalchemy import event, MetaData, text
 from sqlalchemy.engine.url import make_url
 
+from enferno.admin.models import MigrationHistory, SystemInfo
+from enferno.extensions import db
+from enferno.settings import Config
+from enferno.tasks import restart_service as restart
+from enferno.user.models import User, Role
+from enferno.utils.config_utils import ConfigManager
+from enferno.utils.data_helpers import (
+    create_default_location_data,
+    generate_user_roles,
+    generate_workflow_statues,
+    import_default_data,
+)
+from enferno.utils.db_alignment_helpers import DBAlignmentChecker
+from enferno.utils.logging_utils import get_logger
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
@@ -689,22 +688,32 @@ def disable_maintenance():
 def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> None:
     """
     Update system: git pull, dependencies, migrations, and restart services.
-    Uses socket API for service restart (maintains security model).
+    Automatically rolls back on failure.
     """
-    import subprocess
-    from pathlib import Path
-
     logger.info("Starting system update")
 
     project_root = Path(current_app.root_path).parent
     stashed = False
+    backup_file = None
+    git_commit_before = None
 
     try:
+        # Record current git commit for rollback
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=project_root,
+        )
+        git_commit_before = result.stdout.strip()
+        logger.info(f"Current commit: {git_commit_before[:8]}")
+
         # 1) Backup database
         if not skip_backup:
             click.echo("Creating database backup...")
-            created = backup_db(timeout=300)
-            if not created:
+            backup_file = backup_db(timeout=300)
+            if not backup_file:
                 raise RuntimeError("Database backup failed")
 
         # 2) Git: stash local changes if any, then pull
@@ -731,39 +740,31 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         # 5) Restart
         if restart_service:
             click.echo("Restarting service...")
-            try:
-                subprocess.run(
-                    [
-                        "curl",
-                        "-s",
-                        "-X",
-                        "POST",
-                        "-H",
-                        "Content-Type: application/json",
-                        "-d",
-                        '{"service":"bayanat"}',
-                        "http://127.0.0.1:8080/restart-service",
-                    ],
-                    check=True,
-                    timeout=30,
-                    cwd=project_root,
-                )
-            except Exception as restart_error:
-                logger.error(f"Service restart failed: {restart_error}")
+            restart("bayanat")
 
-        click.echo("Update completed successfully")
         logger.info("System update completed")
 
-    except subprocess.CalledProcessError as e:
-        stderr_msg = e.stderr.strip() if hasattr(e, "stderr") and e.stderr else ""
-        msg = f"Command failed: {e.cmd} (exit {e.returncode})"
-        if stderr_msg:
-            msg = f"{msg}\nError: {stderr_msg}"
-        logger.error(msg)
-        raise RuntimeError(msg) from e
     except Exception as e:
-        logger.error(f"Update failed: {str(e)}")
-        raise
+        # ROLLBACK on any failure
+        logger.error(f"Update failed, rolling back: {e}")
+        click.echo(f"Update failed: {e}")
+
+        if git_commit_before:
+            subprocess.run(
+                ["git", "reset", "--hard", git_commit_before], cwd=project_root, check=False
+            )
+            subprocess.run(["uv", "sync", "--frozen"], cwd=project_root, check=False)
+
+        if backup_file and Path(backup_file).exists():
+            try:
+                restore_db(backup_file)
+            except Exception as restore_error:
+                logger.error(f"Database rollback failed: {restore_error}")
+
+        if restart_service:
+            restart("bayanat")
+
+        raise RuntimeError(f"Update failed and rolled back: {e}")
     finally:
         if stashed:
             try:
