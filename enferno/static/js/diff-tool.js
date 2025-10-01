@@ -50,11 +50,13 @@ const DiffTool = {
             return value;
         };
 
-        const toTitleCase = (str) => {
-            return str
-                .replace(/_/g, ' ') // replace underscores with spaces
-                .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
-        };
+        const toTitleCase = (str) =>
+            str.replace(/_/g, ' ')
+            .replace(/\w\S*/g, (txt) =>
+                txt === txt.toUpperCase() && txt.length > 1
+                    ? txt
+                    : txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase()
+            );
 
         const translateKey = (key) => {
             const customLabels = {
