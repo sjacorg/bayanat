@@ -1661,6 +1661,9 @@
             }
         });
 
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
+
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
         app.component('UniField', UniField);
