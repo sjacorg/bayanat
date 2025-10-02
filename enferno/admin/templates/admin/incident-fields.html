@@ -224,20 +224,25 @@
 
       async save() {
         this.ui.saving = true;
-        const diffChanges = this.computeChanges()
+        const diffChanges = this.computeChanges();
+        const failedItems = { create: [], update: [], delete: [] };
 
         try {
           const requests = [];
 
           // Create
           for (const { item } of diffChanges.create) {
-            const { id, ...payload } = item
+            const { id, ...payload } = item;
 
             requests.push(
               api.post(`/admin/api/dynamic-fields/`, { item: payload })
                 .then(res => {
                   // ✅ mark as saved
                   this.formBuilder.originalFields.push(res.data.item);
+                })
+                .catch(err => {
+                  failedItems.create.push({ item });
+                  throw err;
                 })
             );
           }
@@ -247,23 +252,29 @@
             requests.push(
               api.put(`/admin/api/dynamic-fields/${id}`, { item })
                 .then(res => {
-                  // ✅ replace in originalFields
                   const idx = this.formBuilder.originalFields.findIndex(f => f.id === id);
                   if (idx !== -1) this.formBuilder.originalFields[idx] = res.data.item;
+                })
+                .catch(err => {
+                  failedItems.update.push({ id, item });
+                  throw err;
                 })
             );
           }
 
           // Delete
           for (const { id, item } of diffChanges.delete) {
-            if (!id || id?.startsWith?.('temp-')) continue;
+            if (!id || id.startsWith?.('temp-')) continue;
 
             requests.push(
               api.delete(`/admin/api/dynamic-fields/${id}`)
                 .then(() => {
-                  // ✅ disable from originalFields
-                  const originalField = this.formBuilder.originalFields.find(originalField => originalField.id === id)
-                  originalField.active = false;
+                  const originalField = this.formBuilder.originalFields.find(f => f.id === id);
+                  if (originalField) originalField.active = false;
+                })
+                .catch(err => {
+                  failedItems.delete.push({ id, item });
+                  throw err;
                 })
             );
           }
@@ -274,14 +285,24 @@
           const failed = results.filter(r => r.status === 'rejected');
           if (failed.length > 0) {
             console.log('Some requests failed:', failed);
-            this.showSnack(failed.map(request => handleRequestError(request.reason)).join('<br />'));
-            // recompute changes so dialog only shows unsaved
-            this.changes.diff = this.computeChanges({ ignoreSortOrder: true });
+            this.showSnack(failed.map(r => handleRequestError(r.reason)).join('<br />'));
+
+            this.formBuilder.dynamicFields = this.mergeFailedItems(
+              this.formBuilder.originalFields,
+              failedItems
+            );
+
+            // Only keep failed items in the diff
+            this.changes.diff = {
+              create: failedItems.create,
+              update: failedItems.update,
+              delete: failedItems.delete
+            };
             this.buildChangesTable();
             throw failed?.[0]?.reason
           } else {
             this.showSnack('{{ _("Fields saved successfully") }}');
-            await this.fetchDynamicFields({ entityType: 'incident' }); // reload fresh
+            await this.fetchDynamicFields({ entityType: 'incident' });
           }
         } catch (err) {
           console.error(err);
@@ -336,6 +357,31 @@
         }
 
         return changes;
+      },
+
+      mergeFailedItems(dynamicFields, failedItems) {
+        const merged = [...dynamicFields];
+
+        // Failed creates: add directly
+        for (const { item } of failedItems.create) {
+          merged.push(item);
+        }
+
+        // Failed updates: overwrite by id with edited version
+        for (const { id, item } of failedItems.update) {
+          const idx = merged.findIndex(f => f.id === id);
+          if (idx !== -1) merged[idx] = item;
+          else merged.push(item);
+        }
+
+        // Failed deletes: mark as inactive
+        for (const { id, item } of failedItems.delete) {
+          const idx = merged.findIndex(f => f.id === id);
+          if (idx !== -1) merged[idx] = { ...item, active: false };
+          else merged.push({ ...item, active: false });
+        }
+
+        return merged;
       },
 
       isTargetRowHorizontal(target) {
@@ -504,6 +550,9 @@
       async toggleFieldVisibility({ field }) {
           const matchingField = this.formBuilder.dynamicFields.find(dynamicField => dynamicField.id === field.id)
           matchingField.active = !matchingField.active
+          if (matchingField.active && matchingField?.delete) {
+            delete matchingField.delete;
+          }
       },
       closeDrawer(open) {
         this.ui.selectFieldTypeDialog = open;
