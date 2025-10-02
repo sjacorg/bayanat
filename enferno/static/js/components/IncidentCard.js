@@ -3,6 +3,9 @@ const IncidentCard = Vue.defineComponent({
   emits: ['edit', 'close'],
 
   methods: {
+    mounted() {
+      this.$root.fetchDynamicFields({ entityType: 'incident' })
+    },
     async loadGeoMap() {
       this.geoMapLoading = true;
       this.geoMapOn = true;
