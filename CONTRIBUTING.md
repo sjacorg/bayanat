@@ -34,7 +34,7 @@ These tools are integrated into our development workflow via pre-commit hooks.
 
 ### Prerequisites
 
-The required libraries and hooks are defined in `requirements/dev.txt` and `package.json`.
+The required libraries and hooks are defined in `requirements/dev.txt`.
 
 
 ### Installation
@@ -45,13 +45,7 @@ The required libraries and hooks are defined in `requirements/dev.txt` and `pack
    pip install -r requirements/dev.txt
    ```
 
-2. Install Node.js dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Install the Pre-commit Hooks:
+2. Install the Pre-commit Hooks:
 
    Navigate to the root directory of bayanat and run:
    ```bash
@@ -73,7 +67,7 @@ The pre-commit hooks will automatically format your staged files when you run `g
 
    To format a specific file:
    ```bash
-   prettier --write path/to/file.js
+   npx prettier --write path/to/file.js
    ```
 
 ### Configuration

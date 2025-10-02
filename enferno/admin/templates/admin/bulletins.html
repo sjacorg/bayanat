@@ -715,6 +715,8 @@
                     totalCount: 0,
 
                     relateActorSearchTerms: {},
+
+                    serverErrors: {},
                 }),
 
                 computed: {
@@ -886,13 +888,13 @@
                         // Only refresh on initial page load
                         if (initialLoad) this.refresh();
                     },
-                    validateForm() {
+                    validateFormAndSave() {
                         this.$refs.form.validate().then(({ valid, errors }) => {
                             if (valid) {
                                 this.save();
                             } else {
                                 this.showSnack("{{ _('Please review the form for errors.')}}")
-                                scrollToFirstError(errors)
+                                scrollToFirstError()
                             }
                         });
                     },
@@ -1554,6 +1556,7 @@
                             this.unrestricted = false;
                             this.editedIndex = -1;
                             this.saving = false;
+                            this.serverErrors = {}
                         }, 300);
                     },
 
@@ -1564,11 +1567,6 @@
                     },
 
                     save() {
-                        if (!this.valid) {
-                            this.showSnack("{{ _('Please review the form for errors.')}}");
-                            return;
-                        }
-
                         this.saving = true;
                         if (this.editedItem.id) {
                             //update record
@@ -1581,6 +1579,9 @@
                             }).catch(err => {
                                 console.error(err);
                                 this.showSnack(handleRequestError(err));
+                                this.serverErrors = err.response?.data?.errors || {};
+                                this.$nextTick(() => scrollToFirstError());
+                            }).finally(() => {
                                 this.saving = false;
                             });
                         } else {
@@ -1595,6 +1596,9 @@
                             }).catch(err => {
                                 console.error(err);
                                 this.showSnack(handleRequestError(err));
+                                this.serverErrors = err.response?.data?.errors || {};
+                                this.$nextTick(() => scrollToFirstError());
+                            }).finally(() => {
                                 this.saving = false;
                             });
                         }

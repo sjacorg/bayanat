@@ -60,7 +60,7 @@
                 </v-toolbar-title>
 
                 <template #append>
-                    <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
+                    <v-btn @click="validateFormAndSave" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>
                     <v-btn icon="mdi-close" @click="confirmClose"></v-btn>
@@ -85,13 +85,16 @@
                                             label-original="{{ _('Original Title') }}" label-translation="{{ _('Original Title (Ar)') }}" :rules="[
                                                 validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
                                                 validationRules.maxLength(255),
-                                            ]">
-                                        </dual-field>
+                                            ]"
+                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
+                                        ></dual-field>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'sjac_title')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <dual-field v-model:original="editedItem.sjac_title" v-model:translation="editedItem.sjac_title_ar"
                                             label-original="{{ _('Title') }}" label-translation="{{ _('Title (Ar)') }}"
-                                            :rules="[validationRules.maxLength(255)]"></dual-field>
+                                            :rules="[validationRules.maxLength(255)]"
+                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.sjac_title', 'item.sjac_title_ar')"
+                                        ></dual-field>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'tags')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
@@ -151,8 +154,9 @@
                                                 label="{{ _('Source Link') }}" :rules="[
                                                 validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
                                                     validationRules.maxLength(255)
-                                                ]">
-                                            </v-text-field>
+                                                ]"
+                                                v-bind="serverErrorPropsForField(serverErrors, 'item.source_link')"
+                                            ></v-text-field>
                                         
                                             <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
                                             </v-checkbox>
@@ -168,7 +172,7 @@
                                 <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
                                     <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
                                         <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
-                                            label="{{ _('Comments') }}">
+                                            label="{{ _('Comments') }}" v-bind="serverErrorPropsForField(serverErrors, 'item.comments')">
                                         </v-textarea>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">

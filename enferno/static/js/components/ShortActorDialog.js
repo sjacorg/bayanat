@@ -77,6 +77,7 @@ const ShortActorDialog = Vue.defineComponent({
       { id: 3, title: window.translations.missingPerson_, fields: ['source', 'mp'] }, // Missing Person Profile
     ],
     saving: false,
+    serverErrors: {},
   }),
   computed: {
     formTitle() {
@@ -127,6 +128,7 @@ const ShortActorDialog = Vue.defineComponent({
         this.editedItem = getDefaultActorData();
         this.unrestricted = false;
         this.saving = false;
+        this.serverErrors = {}
       }, 300);
     },
     validateForm() {
@@ -135,16 +137,11 @@ const ShortActorDialog = Vue.defineComponent({
           this.save();
         } else {
           this.$root.showSnack(translations.pleaseReviewFormForErrors_);
-          scrollToFirstError(errors);
+          scrollToFirstError();
         }
       });
     },
     save() {
-      if (!this.valid) {
-        this.$root.showSnack(translations.pleaseReviewFormForErrors_);
-        return;
-      }
-
       this.saving = true;
 
       // If parent id is present create relation immediately
@@ -186,6 +183,9 @@ const ShortActorDialog = Vue.defineComponent({
         .catch((err) => {
           console.error(err.response?.data);
           this.$root.showSnack(handleRequestError(err));
+          this.serverErrors = err.response?.data?.errors || {};
+          this.$nextTick(() => scrollToFirstError());
+        }).finally(() => {
           this.saving = false;
         });
     },
@@ -244,6 +244,7 @@ const ShortActorDialog = Vue.defineComponent({
                                     validationRules.required(),
                                     validationRules.maxLength(255),
                                   ]"
+                                  v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.first_name', 'item.first_name_ar')"
                               />
                           </div>
                           <div style="min-width: 0;">
@@ -252,8 +253,9 @@ const ShortActorDialog = Vue.defineComponent({
                                 v-model:translation="editedItem.middle_name_ar"
                                 :label-original="translations.middleName_"
                                 :label-translation="translations.middleNameAr_"
-                                :rules="[validationRules.maxLength(255)]">
-                              </dual-field>
+                                :rules="[validationRules.maxLength(255)]"
+                                v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.middle_name', 'item.middle_name_ar')"
+                              ></dual-field>
                           </div>
                           <div style="min-width: 0;">
                               <dual-field
@@ -266,6 +268,7 @@ const ShortActorDialog = Vue.defineComponent({
                                       validationRules.required(),
                                       validationRules.maxLength(255),
                                   ]"
+                                  v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.last_name', 'item.last_name_ar')"
                               ></dual-field>
                           </div>
                           <div style="min-width: 0;">
@@ -277,6 +280,7 @@ const ShortActorDialog = Vue.defineComponent({
                               :rules="[
                                   validationRules.maxLength(255),
                               ]"
+                              v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.nickname', 'item.nickname_ar')"
                             ></dual-field>
                           </div>
                           <div style="min-width: 0;">
@@ -288,6 +292,7 @@ const ShortActorDialog = Vue.defineComponent({
                               :rules="[
                                   validationRules.maxLength(255),
                               ]"
+                              v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.father_name', 'item.father_name_ar')"
                             ></dual-field>
                           </div>
                           <div style="min-width: 0;">
@@ -299,6 +304,7 @@ const ShortActorDialog = Vue.defineComponent({
                               :rules="[
                                   validationRules.maxLength(255),
                               ]"
+                              v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.mother_name', 'item.mother_name_ar')"
                             ></dual-field>
                           </div>
 
@@ -341,6 +347,7 @@ const ShortActorDialog = Vue.defineComponent({
                               :rules="[
                                   validationRules.maxLength(255),
                               ]"
+                              v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.occupation', 'item.occupation_ar')"
                             ></dual-field>
                           </div>
                           <div style="min-width: 0;">
@@ -352,6 +359,7 @@ const ShortActorDialog = Vue.defineComponent({
                               :rules="[
                                   validationRules.maxLength(255),
                               ]"
+                              v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.position', 'item.position_ar')"
                             ></dual-field>
                           </div>
                           <div style="min-width: 0;">
@@ -367,7 +375,9 @@ const ShortActorDialog = Vue.defineComponent({
                           <div style="min-width: 0;">
                             <v-text-field :label="translations.noOfChildren_"
                               v-model="editedItem.no_children"
-                              :rules="[validationRules.integer()]"></v-text-field>
+                              :rules="[validationRules.integer()]"
+                              v-bind="$root.serverErrorPropsForField(serverErrors, 'item.no_children')"
+                            ></v-text-field>
                           </div>
                           <div style="min-width: 0;">
                             <search-field
@@ -401,7 +411,9 @@ const ShortActorDialog = Vue.defineComponent({
                                       <v-card class="pa-3" variant="text">
                                           <!-- Source Link -->
                                           <v-card-text v-if="shouldDisplayField(profile.mode, 'source')">
-                                              <v-text-field class="mx-2" variant="outlined" v-model="profile.originid" :disabled="profile.originidDisabled" :label="translations.originId_"></v-text-field>
+                                              <v-text-field class="mx-2" variant="outlined" v-model="profile.originid" :disabled="profile.originidDisabled" :label="translations.originId_"
+                                                v-bind="$root.serverErrorPropsForField(serverErrors, 'item.actor_profiles.'+index+'.originid')"
+                                            ></v-text-field>
                                           </v-card-text>
 
                                           <v-card-text>
