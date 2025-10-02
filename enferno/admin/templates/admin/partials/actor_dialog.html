@@ -65,6 +65,7 @@
                                             validationRules.required(),
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.name', 'item.name_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'nickname')" :class="[fieldClass(field), 'px-3 py-2']">
@@ -76,10 +77,8 @@
                                         :rules="[
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.nickname', 'item.nickname_ar')"
                                     ></dual-field>
-                                </div>
-                                <div v-else-if="isFieldActive(field, 'tags') && editedItem.type === 'Entity'" :class="[fieldClass(field), 'px-3 py-2']">
-                                    <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'first_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
@@ -92,6 +91,7 @@
                                             validationRules.required(),
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.first_name', 'item.first_name_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'middle_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -103,6 +103,7 @@
                                         :rules="[
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.middle_name', 'item.middle_name_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'last_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -116,6 +117,7 @@
                                             validationRules.required(),
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.last_name', 'item.last_name_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'father_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -127,6 +129,7 @@
                                         :rules="[
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.father_name', 'item.father_name_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'mother_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -138,6 +141,7 @@
                                         :rules="[
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.mother_name', 'item.mother_name_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'sex') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -190,6 +194,7 @@
                                         :rules="[
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.occupation', 'item.occupation_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'position') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -201,6 +206,7 @@
                                         :rules="[
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.position', 'item.position_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'family_status') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -211,10 +217,11 @@
                                         item-value="en"
                                         v-model="editedItem.family_status"
                                         label="{{ _('Family Status') }}"
+                                        v-bind="serverErrorPropsForField(serverErrors, 'item.family_status')"
                                     ></v-autocomplete>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'no_children') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
-                                    <v-text-field label="{{ _('No of Children') }}" v-model="editedItem.no_children" :rules="[validationRules.integer()]"></v-text-field>
+                                    <v-text-field label="{{ _('No of Children') }}" v-model="editedItem.no_children" :rules="[validationRules.integer()]" v-bind="serverErrorPropsForField(serverErrors, 'item.no_children')"></v-text-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'ethnographies') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <search-field
@@ -249,7 +256,7 @@
                                         label="{{ _('Dialects') }}"
                                     ></search-field>
                                 </div>
-                                <div v-else-if="isFieldActive(field, 'tags') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
+                                <div v-else-if="isFieldActive(field, 'tags')" :class="[fieldClass(field), 'px-3 py-2']">
                                     <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'id_number') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -337,6 +344,7 @@
                                                                                 v-model="profile.originid"
                                                                                 :disabled="profile.originidDisabled"
                                                                                 label="{{ _('Origin ID') }}"
+                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.originid`)"
                                                                 ></v-text-field>
                                                             </v-col>
 
@@ -346,6 +354,7 @@
                                                                                 v-model="profile.source_link"
                                                                                 label="{{ _('Source Link') }}"
                                                                                 :rules="[validationRules.maxLength(255)]"
+                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.source_link`)"
                                                                 ></v-text-field>
                                                             </v-col>
 
@@ -443,11 +452,15 @@
                                                                         <v-row>
                                                                             <v-col cols="12" md="4">
                                                                                 <v-text-field label="{{ _('Last Address') }}"
-                                                                                            v-model="profile.last_address"></v-text-field>
+                                                                                            v-model="profile.last_address"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.last_address`)"
+                                                                                ></v-text-field>
                                                                             </v-col>
                                                                             <v-col md="4">
                                                                                 <v-text-field label="{{ _('Marriage History') }}"
-                                                                                            v-model="profile.marriage_history"></v-text-field>
+                                                                                            v-model="profile.marriage_history"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.marriage_history`)"
+                                                                                ></v-text-field>
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
@@ -466,6 +479,7 @@
                                                                                 <v-text-field
                                                                                     label="{{ _('Months Pregnant at time of disappearance') }}"
                                                                                     v-model="profile.months_pregnant" :rules="[validationRules.integer()]"
+                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.months_pregnant`)"
                                                                                 ></v-text-field>
 
                                                                             </v-col>
@@ -486,47 +500,64 @@
                                                                                     </v-card-title>
                                                                                     <v-card-text>
                                                                                         <v-textarea rows="1" label="{{ _('Name') }}"
-                                                                                                    v-model="profile.saw_name"></v-textarea>
+                                                                                                    v-model="profile.saw_name"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_name`)"
+                                                                                        ></v-textarea>
                                                                                         <v-textarea rows="1"
                                                                                                     label="{{ _('Address') }}"
-                                                                                                    v-model="profile.saw_address"></v-textarea>
+                                                                                                    v-model="profile.saw_address"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_address`)"
+                                                                                        ></v-textarea>
                                                                                         <v-text-field label="{{ _('Phone') }}"
-                                                                                                    v-model="profile.saw_phone"></v-text-field>
-
-
+                                                                                                    v-model="profile.saw_phone"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_phone`)"
+                                                                                        ></v-text-field>
                                                                                         <v-text-field label="{{ _('Email') }}"
-                                                                                                    v-model="profile.saw_email"></v-text-field>
+                                                                                                    v-model="profile.saw_email"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_email`)"
+                                                                                        ></v-text-field>
 
                                                                                     </v-card-text>
                                                                                 </v-card>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <mix-i title="{{ _('Seen in a detention center?') }}"
-                                                                                    v-model="profile.seen_in_detention"></mix-i>
+                                                                                    v-model="profile.seen_in_detention"
+                                                                                    :server-errors="serverErrors" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"
+                                                                                ></mix-i>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <mix-i v-model="profile.injured"
                                                                                     title="{{ _('Injured around time of disappearance?') }}"
+                                                                                    :server-errors="serverErrors"
+                                                                                    :error-key="`item.actor_profiles.${index}.injured.details`"
                                                                                 ></mix-i>
                                                                             </v-col>
 
 
                                                                             <v-col md="6">
                                                                                 <mix-i v-model="profile.known_dead"
-                                                                                    title="{{ _('Known to be dead?') }}"></mix-i>
+                                                                                    title="{{ _('Known to be dead?') }}"
+                                                                                    :server-errors="serverErrors"
+                                                                                    :error-key="`item.actor_profiles.${index}.known_dead.details`"
+                                                                                ></mix-i>
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Details about circumstances of death') }}"
-                                                                                            v-model="profile.death_details"></v-textarea>
+                                                                                            v-model="profile.death_details"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.death_details`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
 
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Personal Items (watch,ring,chains etc)') }}"
-                                                                                            v-model="profile.personal_items"></v-textarea>
+                                                                                            v-model="profile.personal_items"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.personal_items`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
 
                                                                         </v-row>
@@ -536,6 +567,7 @@
                                                                                             label="{{ _('Height') }}"
                                                                                             suffix="cm"
                                                                                             :rules="[validationRules.integer()]"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.height`)"
                                                                                 ></v-text-field>
 
 
@@ -545,6 +577,7 @@
                                                                                             label="{{ _('Weight') }}"
                                                                                             suffix="kg"
                                                                                             :rules="[validationRules.integer()]"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.weight`)"
                                                                                 ></v-text-field>
 
 
@@ -616,6 +649,7 @@
                                                                                 <v-textarea rows="1"
                                                                                             v-model="profile.posture"
                                                                                             label="{{ _('Notes on posture and walking style') }}"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.posture`)"
                                                                                 ></v-textarea>
                                                                                 <v-select label="{{ _('Handness') }}"
                                                                                         clearable
@@ -642,7 +676,10 @@
                                                                                         item-title="tr"
                                                                                         item-value="en"
                                                                                         multiple
-                                                                                        v-model="profile.skin_markings"></mix-ii>
+                                                                                        v-model="profile.skin_markings"
+                                                                                        :server-errors="serverErrors"
+                                                                                        :error-key="`item.actor_profiles.${index}.skin_markings`"
+                                                                                ></mix-ii>
                                                                             </v-col>
 
                                                                         </v-row>
@@ -652,24 +689,32 @@
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Distinctive characteristics (congenital)') }}"
-                                                                                            v-model="profile.dist_char_con"></v-textarea>
+                                                                                            v-model="profile.dist_char_con"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dist_char_con`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Distinctive characteristics (acquired)') }}"
-                                                                                            v-model="profile.dist_char_acq"></v-textarea>
+                                                                                            v-model="profile.dist_char_acq"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dist_char_acq`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Physical habits') }}"
-                                                                                            v-model="profile.physical_habits"></v-textarea>
+                                                                                            v-model="profile.physical_habits"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.physical_habits`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Other comments') }}"
-                                                                                            v-model="profile.other"></v-textarea>
+                                                                                            v-model="profile.other"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.other`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                         </v-row>
 
@@ -677,12 +722,15 @@
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Physician’s name and contact') }}"
-                                                                                            v-model="profile.phys_name_contact"></v-textarea>
+                                                                                            v-model="profile.phys_name_contact"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.phys_name_contact`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)') }}"
                                                                                             v-model="profile.injuries"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.injuries`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
                                                                         </v-row>
@@ -690,12 +738,15 @@
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age') }}"
-                                                                                            v-model="profile.implants"></v-textarea>
+                                                                                            v-model="profile.implants"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.implants`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Congenital malformations (indicate type and whether there is more than one relative with the same pathology)') }}"
                                                                                             v-model="profile.malforms"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.malforms`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
                                                                         </v-row>
@@ -703,12 +754,15 @@
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Pain and/or ailments') }}"
-                                                                                            v-model="profile.pain"></v-textarea>
+                                                                                            v-model="profile.pain"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.pain`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Other medical conditions (specify type and age of occurrence)') }}"
                                                                                             v-model="profile.other_conditions"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.other_conditions`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
                                                                         </v-row>
@@ -716,12 +770,15 @@
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Accidents (indicate age of occurrence)') }}"
-                                                                                            v-model="profile.accidents"></v-textarea>
+                                                                                            v-model="profile.accidents"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.accidents`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Prescription drugs taken (indicate at what age and reason)') }}"
                                                                                             v-model="profile.pres_drugs"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.pres_drugs`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
                                                                         </v-row>
@@ -745,12 +802,16 @@
                                                                             <v-col cols="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dentist\’s name and contact') }}"
-                                                                                            v-model="profile.dentist_info"></v-textarea>
+                                                                                            v-model="profile.dentist_info"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dentist_info`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col cols="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)') }}"
-                                                                                            v-model="profile.teeth_features"></v-textarea>
+                                                                                            v-model="profile.teeth_features"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.teeth_features`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
 
                                                                         </v-row>
@@ -759,17 +820,23 @@
                                                                             <v-col md="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dental problems (absences, infections, bleeding, etc...)') }}"
-                                                                                            v-model="profile.dental_problems"></v-textarea>
+                                                                                            v-model="profile.dental_problems"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_problems`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dental treatments (extractions, fillings, etc...) with dates') }}"
-                                                                                            v-model="profile.dental_treatments"></v-textarea>
+                                                                                            v-model="profile.dental_treatments"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_treatments`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dental habits (toothpicks, smoking, etc...)') }}"
-                                                                                            v-model="profile.dental_habits"></v-textarea>
+                                                                                            v-model="profile.dental_habits"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_habits`)"
+                                                                                ></v-textarea>
                                                                             </v-col>
                                                                             <v-col md="3">
                                                                                 <v-select label="{{ _('Case status') }}"
@@ -783,10 +850,11 @@
                                                                         </v-row>
                                                                         <v-row>
                                                                             <v-col>
-
                                                                                 <mix-iii
-                                                                                        v-model="profile.reporters"></mix-iii>
-
+                                                                                        v-model="profile.reporters"
+                                                                                        :server-errors="serverErrors"
+                                                                                        :error-key="`item.actor_profiles.${index}.reporters`"
+                                                                                ></mix-iii>
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
@@ -794,6 +862,7 @@
                                                                                 <v-text-field
                                                                                         label="{{ _('Identified by (responsible institution)') }}"
                                                                                         v-model="profile.identified_by"
+                                                                                        v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.identified_by`)"
                                                                                 ></v-text-field>
                                                                             </v-col>
                                                                             <v-col md="4">
@@ -805,7 +874,9 @@
                                                                             <v-col md="4">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Location of reburial (full address)') }}"
-                                                                                            v-model="profile.reburial_location"></v-textarea>
+                                                                                            v-model="profile.reburial_location"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.reburial_location`)"
+                                                                                ></v-textarea>
 
                                                                             </v-col>
                                                                         </v-row>
@@ -842,8 +913,9 @@
                             <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
                                 <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
                                     <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
-                                        label="{{ _('Comments') }}">
-                                    </v-textarea>
+                                        label="{{ _('Comments') }}"
+                                        v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
+                                    ></v-textarea>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
                                     <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"

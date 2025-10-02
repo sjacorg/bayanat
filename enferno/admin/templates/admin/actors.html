@@ -638,6 +638,8 @@
                 // Count functionality  
                 totalCount: 0,
                 idNumberTypes: [],
+
+                serverErrors: {},
             }),
 
             computed: {
@@ -807,7 +809,7 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 },
@@ -1533,16 +1535,12 @@
                         this.editedIndex = -1;
                         this.unrestricted = false;
                         this.saving = false;
+                        this.serverErrors = {}
                     }, 300);
 
                 },
 
                 save() {
-                    if (!this.valid) {
-                        this.showSnack("{{ _('Please review the form for errors.')}}");
-                        return;
-                    }
-
                     const payload = {
                         ...this.editedItem,
                         id_number: this.simpleIdNumberValue
@@ -1560,6 +1558,9 @@
                         }).catch(err => {
                             console.error(err.response?.data);
                             this.showSnack(handleRequestError(err));
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
+                        }).finally(() => {
                             this.saving = false;
                         });
                     } else {
@@ -1574,7 +1575,10 @@
                         }).catch(err => {
                             console.error(err.response?.data);
                             this.showSnack(handleRequestError(err));
-                            this.saving = false
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
+                        }).finally(() => {
+                            this.saving = false;
                         });
                     }
                 },
