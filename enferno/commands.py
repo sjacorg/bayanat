@@ -508,14 +508,8 @@ def verify_backup(backup_file: str) -> None:
         pass
 
 
-@click.command()
-@click.option("--output", "-o", help="Custom output file path for the backup", default=None)
-@click.option(
-    "--timeout", "-t", help="Timeout in seconds for the backup operation", default=300, type=int
-)
-@with_appcontext
-def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
-    """Create a PostgreSQL database backup."""
+def create_backup(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    """Internal function to create a PostgreSQL database backup."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_dir = Path(current_app.root_path).parent / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
@@ -554,6 +548,17 @@ def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]
     except Exception as e:
         click.echo(f"Backup failed: {e}")
         return None
+
+
+@click.command()
+@click.option("--output", "-o", help="Custom output file path for the backup", default=None)
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the backup operation", default=300, type=int
+)
+@with_appcontext
+def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    """Create a PostgreSQL database backup (CLI command)."""
+    return create_backup(output, timeout)
 
 
 @click.command()
@@ -712,7 +717,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         # 1) Backup database
         if not skip_backup:
             click.echo("Creating database backup...")
-            backup_file = backup_db(timeout=300)
+            backup_file = create_backup(timeout=300)
             if not backup_file:
                 raise RuntimeError("Database backup failed")
             logger.info(f"Backup created: {backup_file}")
