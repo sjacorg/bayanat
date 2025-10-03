@@ -46,7 +46,7 @@ FROM (
         ('related_actors', 'Related Actors', 'incident', 'html_block', FALSE, 'html_block', '{}'::jsonb, '{"html_template": "related_actors"}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 9, TRUE),
         ('related_incidents', 'Related Incidents', 'incident', 'html_block', FALSE, 'html_block', '{}'::jsonb, '{"html_template": "related_incidents"}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 10, TRUE),
         ('comments', 'Comments', 'incident', 'long_text', FALSE, 'textarea', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 11, TRUE),
-        ('status', 'Status', 'incident', 'single_select', FALSE, 'dropdown', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[{"label": "Draft", "value": "draft"}, {"label": "Published", "value": "published"}, {"label": "Archived", "value": "archived"}]'::jsonb, TRUE, 12, TRUE)
+        ('status', 'Status', 'incident', 'single_select', FALSE, 'dropdown', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 12, TRUE)
 ) AS payload (
     name,
     title,

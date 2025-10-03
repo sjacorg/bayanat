@@ -178,11 +178,6 @@ BULLETIN_CORE_FIELDS = {
         "core": True,
         "schema_config": {"allow_multiple": False},
         "ui_config": {"width": "w-50"},
-        "options": [
-            {"id": 1, "label": "Draft"},
-            {"id": 2, "label": "Published"},
-            {"id": 3, "label": "Archived"},
-        ],
     },
 }
 
@@ -294,11 +289,6 @@ INCIDENT_CORE_FIELDS = {
         "core": True,
         "schema_config": {"allow_multiple": False},
         "ui_config": {"width": "w-50"},
-        "options": [
-            {"id": 1, "label": "Draft"},
-            {"id": 2, "label": "Published"},
-            {"id": 3, "label": "Archived"},
-        ],
     },
 }
 
