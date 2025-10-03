@@ -6224,12 +6224,16 @@ def graph_visualize(validated_data: dict) -> Response:
     user_id = current_user.id
     # Get the type from URL query parameter
     graph_type = request.args.get("type")
+    q = validated_data.get("q", None)
+
+    if not q:
+        return HTTPResponse.error("No query provided")
 
     # Check if the type is valid
     if graph_type not in ["actor", "bulletin", "incident"]:
         return HTTPResponse.error("Invalid type provided")
 
-    task_id = generate_graph.delay(validated_data, graph_type, user_id)
+    task_id = generate_graph.delay(q, graph_type, user_id)
     return HTTPResponse.success(data={"task_id": task_id.id})
 
 
