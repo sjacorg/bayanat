@@ -164,48 +164,28 @@ def apply_migrations(dry_run: bool = False) -> None:
 
 
 @click.command()
-@click.argument("version", required=True)
-@with_appcontext
-def set_version(version: str) -> None:
-    """Set application version in database."""
-    pyproject_path = Path(Config.PROJECT_ROOT) / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        pyproject_data = tomli.load(f)
-        settings_version = pyproject_data["project"]["version"]
-
-    if version != settings_version:
-        click.echo(f"Warning: Setting {version} but pyproject.toml has {settings_version}")
-        if not click.confirm("Continue?"):
-            return
-
-    try:
-        version_entry = SystemInfo.query.filter_by(key="app_version").first()
-        if version_entry:
-            version_entry.value = version
-        else:
-            db.session.add(SystemInfo(key="app_version", value=version))
-
-        update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
-        update_time = datetime.now().isoformat()
-        if update_time_entry:
-            update_time_entry.value = update_time
-        else:
-            db.session.add(SystemInfo(key="last_update_time", value=update_time))
-
-        db.session.commit()
-        click.echo(f"Version set to {version}")
-    except Exception as e:
-        click.echo(f"Error: {e}")
-        sys.exit(1)
-
-
-@click.command()
 @with_appcontext
 def get_version() -> None:
     """
     Get the current application version from both settings and database.
     """
-    click.echo(f"Config version: {Config.VERSION}")
+    click.echo(f"Desired version (pyproject.toml): {Config.VERSION}")
+
+    # Get deployed version from database
+    deployed_version = SystemInfo.get_value("app_version")
+    last_update = SystemInfo.get_value("last_update_time")
+
+    if deployed_version:
+        click.echo(f"Deployed version (database): {deployed_version}")
+        if last_update:
+            click.echo(f"Last update: {last_update}")
+
+        if deployed_version == Config.VERSION:
+            click.echo("System is up to date")
+        else:
+            click.echo("System is not up to date - run 'flask update-system' to update")
+    else:
+        click.echo("Deployed version: Not recorded (fresh installation?)")
 
 
 @click.command()
@@ -761,7 +741,29 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         run_migrations()
         logger.info("Migrations completed")
 
-        # 5) Restart
+        # 5) Update version in database
+        pyproject_path = project_root / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            pyproject_data = tomli.load(f)
+            new_version = pyproject_data["project"]["version"]
+
+        # Update version and timestamp in one go
+        version_entry = SystemInfo.query.filter_by(key="app_version").first()
+        if version_entry:
+            version_entry.value = new_version
+        else:
+            db.session.add(SystemInfo(key="app_version", value=new_version))
+
+        update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
+        if update_time_entry:
+            update_time_entry.value = datetime.now().isoformat()
+        else:
+            db.session.add(SystemInfo(key="last_update_time", value=datetime.now().isoformat()))
+
+        db.session.commit()
+        logger.info(f"Version updated to {new_version}")
+
+        # 6) Restart
         if restart_service:
             click.echo("Restarting service...")
             restart("bayanat")
@@ -782,13 +784,13 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             logger.info(f"Rolled back code to: {git_commit_before[:8]}")
 
         if backup_file and Path(backup_file).exists():
-            # Ensure no lingering SQLAlchemy session blocks pg_restore
+            # Clean up database connections
             with suppress(Exception):
                 db.session.rollback()
-            db.session.remove()
-            db.engine.dispose()
+                db.session.remove()
+                db.engine.dispose()
 
-            # Force-terminate ALL PostgreSQL connections before restore
+            # Terminate connections
             with suppress(Exception):
                 with db.engine.begin() as conn:
                     conn.execute(
@@ -801,6 +803,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
                     )
                 logger.info("Terminated active database connections")
 
+            # Restore database (don't suppress errors)
             try:
                 restore_backup(backup_file, timeout=600)
                 logger.info(f"Database restored from: {backup_file}")
