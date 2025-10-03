@@ -75,18 +75,17 @@ const formBuilderMixin = {
   methods: {
     discardChanges() {
       this.$confirm({
-        title: "{{ _('You're about to discard changes') }}",
-        message:
-          "{{ _('Discarding will remove all unsaved edits you've made to this form.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+        title: window.translations.youreAboutToDiscardChanges_,
+        message: `${window.translations.discardingWillRemoveAllUnsavedEdits_}\r\n\r\n${window.translations.doYouWantToContinue_}`,
         acceptProps: {
-          text: "{{ _('Discard Changes') }}",
+          text: window.translations.discardChanges_,
           color: 'red',
         },
         dialogProps: { width: 780 },
         onAccept: () => {
           this.formBuilder.dynamicFields = deepClone(this.formBuilder.originalFields);
           this.$toast({
-            message: "{{ _('All unsaved edits in Bulletin Form have been discarded.') }}",
+            message: window.translations.allUnsavedEditsHaveBeenDiscarded_,
             hideActions: true,
             snackbarProps: {
               color: 'green-lighten-5',
@@ -136,7 +135,7 @@ const formBuilderMixin = {
 
       this.changes.table = Object.entries(this.changes.diff).flatMap(([changeType, change]) =>
         change.map((item) => ({
-          title: item.item.title || "{{ _('New Field') }}",
+          title: item.item.title || window.translations.newField_,
           type: changeTypeTranslations[changeType],
           key: changeType,
         })),
@@ -148,7 +147,7 @@ const formBuilderMixin = {
       this.buildChangesTable();
 
       this.$refs.reviewAndConfirmDialog.show({
-        title: "{{ _('Review & Confirm Changes') }}",
+        title: window.translations.reviewAndConfirmChanges_,
         dialogProps: { width: 780 },
         onAccept: async () => {
           await this.save({ entityType });
@@ -187,11 +186,11 @@ const formBuilderMixin = {
     },
     async deleteField({ field }) {
       this.$root.$confirm({
-        title: "{{ _('You're about to delete a field') }}",
+        title: window.translations.youreAboutToDeleteAField_,
         message: `${window.translations.deletingTheFieldWillRemoveItFromYourForm_(
-          field.title || "{{ _('New Field') }}",
-        )}\r\n\r\n{{ _('Do you want to continue?') }}`,
-        acceptProps: { text: "{{ _('Delete Field') }}", color: 'red' },
+          field.title || window.translations.newField_,
+        )}\r\n\r\n${window.translations.doYouWantToContinue_}`,
+        acceptProps: { text: window.translations.deleteField_, color: 'red' },
         dialogProps: { width: 780 },
         onAccept: () => {
           const dynamicField = this.formBuilder.dynamicFields.find(
@@ -202,7 +201,7 @@ const formBuilderMixin = {
 
           this.$root.$toast({
             message: window.translations.fieldHasBeenDeletedSuccessfully_(
-              field.title || "{{ _('New Field') }}",
+              field.title || window.translations.newField_,
             ),
             hideActions: true,
             snackbarProps: {
@@ -509,7 +508,7 @@ const formBuilderMixin = {
           this.buildChangesTable();
           throw failed?.[0]?.reason;
         } else {
-          this.showSnack('{{ _("Fields saved successfully") }}');
+          this.showSnack(window.translations.fieldsSavedSuccessfully_);
           await this.fetchDynamicFields({ entityType });
         }
       } catch (err) {
