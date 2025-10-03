@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Callable
@@ -781,8 +782,27 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             logger.info(f"Rolled back code to: {git_commit_before[:8]}")
 
         if backup_file and Path(backup_file).exists():
+            # Ensure no lingering SQLAlchemy session blocks pg_restore
+            with suppress(Exception):
+                db.session.rollback()
+            db.session.remove()
+            db.engine.dispose()
+
+            # Force-terminate ALL PostgreSQL connections before restore
+            with suppress(Exception):
+                with db.engine.begin() as conn:
+                    conn.execute(
+                        text(
+                            "SELECT pg_terminate_backend(pid) "
+                            "FROM pg_stat_activity "
+                            "WHERE datname = :dbname AND pid <> pg_backend_pid()"
+                        ),
+                        {"dbname": db.engine.url.database},
+                    )
+                logger.info("Terminated active database connections")
+
             try:
-                restore_backup(backup_file)
+                restore_backup(backup_file, timeout=600)
                 logger.info(f"Database restored from: {backup_file}")
             except Exception as restore_error:
                 logger.error(f"Database rollback failed: {restore_error}")
