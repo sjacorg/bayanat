@@ -558,18 +558,15 @@ def create_backup(output: Optional[str] = None, timeout: int = 300) -> Optional[
 @with_appcontext
 def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
     """Create a PostgreSQL database backup (CLI command)."""
-    return create_backup(output, timeout)
+    backup_file = create_backup(output, timeout)
+    if not backup_file:
+        raise click.ClickException("Backup creation failed")
+    return backup_file
 
 
-@click.command()
-@click.argument("backup_file", type=click.Path(exists=True))
-@click.option(
-    "--timeout", "-t", help="Timeout in seconds for the restore operation", default=3600, type=int
-)
-@with_appcontext
-def restore_db(backup_file: str, timeout: int = 3600) -> bool:
+def restore_backup(backup_file: str, timeout: int = 3600) -> bool:
     """
-    Restore PostgreSQL database from a backup file.
+    Internal function to restore PostgreSQL database from a backup file.
 
     Args:
         backup_file: Path to the backup file
@@ -652,6 +649,20 @@ def restore_db(backup_file: str, timeout: int = 3600) -> bool:
         logger.error(f"Error restoring database: {str(e)}")
         click.echo(f"Error restoring database: {str(e)}")
         return False
+
+
+@click.command()
+@click.argument("backup_file", type=click.Path(exists=True))
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the restore operation", default=3600, type=int
+)
+@with_appcontext
+def restore_db(backup_file: str, timeout: int = 3600) -> bool:
+    """Restore PostgreSQL database from a backup file (CLI command)."""
+    success = restore_backup(backup_file, timeout)
+    if not success:
+        raise click.ClickException("Database restoration failed")
+    return success
 
 
 @click.command(name="lock")
@@ -771,7 +782,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
 
         if backup_file and Path(backup_file).exists():
             try:
-                restore_db(backup_file)
+                restore_backup(backup_file)
                 logger.info(f"Database restored from: {backup_file}")
             except Exception as restore_error:
                 logger.error(f"Database rollback failed: {restore_error}")
