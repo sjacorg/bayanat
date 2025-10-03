@@ -138,7 +138,7 @@ const formBuilderMixin = {
       );
     },
 
-    showSaveDialog() {
+    showSaveDialog({ entityType }) {
       this.changes.diff = this.computeChanges({ ignoreSortOrder: true });
       this.buildChangesTable();
 
@@ -146,7 +146,7 @@ const formBuilderMixin = {
         title: "{{ _('Review & Confirm Changes') }}",
         dialogProps: { width: 780 },
         onAccept: async () => {
-          await this.save({ entityType: 'bulletin' });
+          await this.save({ entityType });
         },
       });
     },
