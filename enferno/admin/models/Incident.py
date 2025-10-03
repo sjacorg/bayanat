@@ -362,6 +362,16 @@ class Incident(db.Model, BaseMixin):
         if "status" in json:
             self.status = json["status"]
 
+        # Dynamic fields: apply values via a central helper for simplicity
+        try:
+            from enferno.admin.models.DynamicField import DynamicField as DF
+
+            DF.apply_values(self, json)
+        except Exception as e:
+            logger.error(
+                f"Failed to apply dynamic fields on Incident {self.id}: {e}", exc_info=True
+            )
+
         return self
 
     # Compact dict for relationships
