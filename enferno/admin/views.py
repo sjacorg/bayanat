@@ -6745,12 +6745,10 @@ def api_dynamic_field_create() -> Response:
         # Normalize title length
         field_data["title"] = field_data["title"].strip()[:100]
 
-        # Auto-generate a simple timestamp-based field name
-        # Format: field_<timestamp_ms> (e.g., field_1704067200000)
-
-        field_data["name"] = f"field_{int(time.time() * 1000)}"
-
-        # Timestamp-based names are collision-resistant in practice
+        # Generate unique field name: timestamp_ms + random suffix to prevent concurrent collisions
+        timestamp_ms = int(time.time() * 1000)
+        random_suffix = uuid4().hex[:6]
+        field_data["name"] = f"field_{timestamp_ms}_{random_suffix}"
 
         # Handle required field - ensure it gets stored in schema_config
         schema_config = field_data.get("schema_config", {})

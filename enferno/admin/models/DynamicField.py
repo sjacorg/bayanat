@@ -4,17 +4,13 @@ from sqlalchemy import (
     Text,
     Integer,
     DateTime,
-    Boolean,
-    Float,
     ARRAY as SQLArray,
-    ForeignKey,
     Table,
     MetaData,
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import text
-from enferno.admin.models import Incident
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.logging_utils import get_logger
@@ -359,7 +355,7 @@ class DynamicField(db.Model, BaseMixin):
 
     def get_entity_model(self):
         """Get the model class for this field's entity type"""
-        from enferno.admin.models import Bulletin, Actor
+        from enferno.admin.models import Bulletin, Actor, Incident
 
         models = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}
 
