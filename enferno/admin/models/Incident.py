@@ -571,7 +571,7 @@ class Incident(db.Model, BaseMixin):
             for relation in self.incident_relations:
                 incident_relations_dict.append(relation.to_dict(exclude=self))
 
-        return {
+        data = {
             "class": self.__tablename__,
             "id": self.id,
             "title": self.title or None,
@@ -598,6 +598,19 @@ class Incident(db.Model, BaseMixin):
             "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
             "roles": [role.to_dict() for role in self.roles] if self.roles else [],
         }
+
+        # Merge dynamic fields (non-core) into the response
+        try:
+            from enferno.admin.models.DynamicField import DynamicField
+
+            dynamic_values = DynamicField.extract_values_for(self)
+            if dynamic_values:
+                data.update(dynamic_values)
+        except Exception:
+            # Fail-safe: never break serialization because of dynamic fields
+            logger.error("Failed to merge dynamic fields for Incident %s", self.id, exc_info=True)
+
+        return data
 
     # custom serialization mode
     def to_mode2(self) -> dict[str, Any]:
