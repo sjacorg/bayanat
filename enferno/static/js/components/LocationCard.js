@@ -170,7 +170,7 @@ const LocationCard = Vue.defineComponent({
         </v-card-text>
       </v-card>
       <v-dialog v-model="diffDialog" max-width="770px">
-        <v-card class="pa-5">
+        <v-card class="pa-5 overflow-auto">
           <v-card-text>
             <div v-html="diffResult">
             </div>
