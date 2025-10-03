@@ -1,4 +1,4 @@
-const MPField = Vue.defineComponent({
+const MissingPersonField = Vue.defineComponent({
   props: {
     title: String,
     field: [String, Boolean, Array, Object],
