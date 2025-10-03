@@ -51,6 +51,7 @@ from enferno.admin.models import (
     LocationAdminLevel,
     LocationType,
     AppConfig,
+    SystemInfo,
     AtobInfo,
     AtoaInfo,
     BtobInfo,
@@ -6631,7 +6632,8 @@ def api_system_status() -> Response:
     from packaging import version
     from enferno.settings import Config
 
-    current_version = Config.VERSION
+    # Use deployed version from database (source of truth for what's actually running)
+    current_version = SystemInfo.get_value("app_version") or Config.VERSION
 
     try:
         # Get repository from environment with fallback
