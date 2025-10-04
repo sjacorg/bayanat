@@ -942,10 +942,6 @@
                 log: []
 
             }),
-            components: {
-                vueDropzone: VueDropzone,
-
-            },
 
             mounted() {
                 this.loadMaps();
@@ -1458,9 +1454,10 @@
             }
         });
 
-        app.component('search-field', SearchField);
-        app.component('drop-field', DropField);
-        app.component('draggable', draggable);
+        app.component('VueDropzone', VueDropzone);
+        app.component('SearchField', SearchField);
+        app.component('DropField', DropField);
+        app.component('Draggable', draggable);
 
 
         app.use(vuetify).mount('#app');

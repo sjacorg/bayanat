@@ -435,9 +435,6 @@
                     active: false
                 }
             }),
-            components: {
-                vueDropzone: VueDropzone,
-            },
 
             computed: {},
 
@@ -628,8 +625,9 @@
             }
         });
 
-        app.component('search-field', SearchField);
-        app.component('location-search-field', LocationSearchField);
+        app.component('VueDropzone', VueDropzone);
+        app.component('SearchField', SearchField);
+        app.component('LocationSearchField', LocationSearchField);
 
         app.use(vuetify).mount('#app');
 

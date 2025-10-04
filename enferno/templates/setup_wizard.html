@@ -501,9 +501,6 @@
 
         const app = createApp({
             delimiters: ['${', '}'],
-            components: {
-                EditableTable
-            },
             data() {
                 return {
                     languages: languages,
@@ -667,7 +664,8 @@
             },
         });
 
-        app.component('geo-map', GeoMap);
+        app.component('EditableTable', EditableTable);
+        app.component('GeoMap', GeoMap);
 
         app.use(vuetify).mount('#app');
 
