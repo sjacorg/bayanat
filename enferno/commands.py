@@ -483,6 +483,7 @@ def create_backup(output: Optional[str] = None, timeout: int = 300) -> Optional[
     cmd = ["pg_dump", "-Fc", "-f", backup_file, f"--dbname={db_uri}"]
 
     try:
+        logger.info("Starting database backup operation")
         subprocess.run(cmd, check=True, timeout=timeout)
         click.echo(f"Backup created: {backup_file}")
 
@@ -535,7 +536,7 @@ def restore_backup(backup_file: str, timeout: int = 3600) -> bool:
 
     # Execute the command
     try:
-        logger.info(f"Running database restore command: {' '.join(cmd)}")
+        logger.info("Starting database restore operation")
         click.echo("Restoring database... This may take a while.")
 
         # Run the command with timeout
