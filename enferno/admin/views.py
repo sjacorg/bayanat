@@ -6604,16 +6604,17 @@ def api_trigger_system_update() -> Response:
     Returns:
         - JSON response with success/error status
     """
-    try:
-        data = request.get_json(silent=True) or {}
-        skip_backup = bool(data.get("skip_backup", False))
+    data = request.get_json(silent=True) or {}
+    skip_backup = bool(data.get("skip_backup", False))
 
-        run_system_update(skip_backup=skip_backup, restart_service=True)
+    success, message = run_system_update(skip_backup=skip_backup, restart_service=True)
 
-        return jsonify({"success": True, "message": "System updated successfully"})
-    except Exception as e:
-        current_app.logger.error(f"System update failed: {str(e)}")
-        return jsonify({"success": False, "error": str(e)}), 500
+    if success:
+        current_app.logger.info("System update completed successfully")
+        return jsonify({"success": True, "message": message})
+    else:
+        current_app.logger.warning(f"System update failed but rolled back: {message}")
+        return jsonify({"success": False, "error": message}), 500
 
 
 @admin.route("/api/system/status", methods=["GET"])

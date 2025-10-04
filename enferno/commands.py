@@ -598,10 +598,13 @@ def disable_maintenance():
         say("Failed to disable maintenance mode.", "error")
 
 
-def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> None:
+def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> tuple[bool, str]:
     """
     Update system: git pull, dependencies, migrations, and restart services.
     Automatically rolls back on failure.
+
+    Returns:
+        tuple[bool, str]: (success, message)
     """
     logger.info("Starting system update")
 
@@ -686,6 +689,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             logger.info("Service restarted")
 
         logger.info("System update completed successfully")
+        return (True, "System updated successfully")
 
     except Exception as e:
         # ROLLBACK on any failure
@@ -730,7 +734,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             restart("bayanat")
             logger.info("Service restarted after rollback")
 
-        raise RuntimeError(f"Update failed and rolled back: {e}")
+        return (False, f"Update failed and rolled back: {e}")
     finally:
         if stashed:
             try:
@@ -746,4 +750,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
 @with_appcontext
 def update_system(skip_backup: bool = False) -> None:
     """CLI entry point that delegates to the shared update implementation."""
-    run_system_update(skip_backup=skip_backup)
+    success, message = run_system_update(skip_backup=skip_backup)
+    click.echo(message)
+    if not success:
+        raise click.ClickException(message)
