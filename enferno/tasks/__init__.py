@@ -13,9 +13,11 @@ from datetime import datetime, timedelta, date, timezone
 
 import boto3
 import pandas as pd
+import requests
 from celery import Celery, chain, chord, group
 from celery.schedules import crontab
 from celery.signals import worker_ready, worker_process_init
+from packaging import version
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -910,16 +912,40 @@ def process_row(
     si.import_row()
 
 
-def reload_app():
+def restart_service(service_name="bayanat"):
+    """Unified restart logic: systemd → socket API → signal fallback."""
     import os
     import signal
+    import shutil
+    import requests
+    from flask import current_app
 
+    # Production mode = systemctl command exists
+    is_production = shutil.which("systemctl") is not None
+
+    if is_production:
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8080/restart-service", json={"service": service_name}, timeout=2
+            )
+            if response.status_code == 200:
+                return
+        except:
+            pass  # Fall through to signal
+
+    # Dev mode or fallback: SIGHUP parent process
+    if current_app:
+        current_app.logger.info(f"Dev restart: {service_name} via SIGHUP")
     os.kill(os.getppid(), signal.SIGHUP)
+
+
+def reload_app():
+    restart_service("bayanat")
 
 
 @celery.task
 def reload_celery():
-    reload_app()
+    restart_service("bayanat-celery")
 
 
 # ---- Export tasks ----
@@ -1433,6 +1459,10 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
+
+
+# Note: Update checking is now handled via real-time API endpoint in admin/views.py
+# This removes the Redis caching approach for better reliability
 
 
 @celery.task

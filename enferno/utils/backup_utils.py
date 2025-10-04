@@ -11,22 +11,13 @@ logger = get_logger()
 
 
 def pg_dump(filepath):
-    # localhost with no password set
-    if Config.get("POSTGRES_HOST") == "localhost" and not Config.get("POSTGRES_PASSWORD"):
-        cmd = ["pg_dump", "-Fc", f"{Config.get("POSTGRES_DB")}", "-f", f"{filepath}"]
-        return check_output(cmd)
-    else:
-        cmd = [
-            "pg_dump",
-            "-Fc",
-            f"{Config.get("POSTGRES_DB")}",
-            "-h",
-            f"{Config.get("POSTGRES_HOST")}",
-            "-U",
-            f"{Config.get("POSTGRES_USER")}" "-f",
-            f"{filepath}",
-        ]
-        return check_output(cmd, env={"PGPASSWORD": Config.get("POSTGRES_PASSWORD")})
+    """Create a PostgreSQL dump using connection info from database URI."""
+    db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not db_uri:
+        raise RuntimeError("No database URI configured")
+
+    cmd = ["pg_dump", "-Fc", "-f", filepath, f"--dbname={db_uri}"]
+    return check_output(cmd)
 
 
 def upload_to_s3(filepath):
