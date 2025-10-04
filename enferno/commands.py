@@ -14,7 +14,6 @@ from flask import current_app
 from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
 from sqlalchemy import event, MetaData, text
-from sqlalchemy.engine.url import make_url
 
 from enferno.admin.models import MigrationHistory, SystemInfo
 from enferno.extensions import db
@@ -29,6 +28,7 @@ from enferno.utils.data_helpers import (
     import_default_data,
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
+from enferno.utils.db_utils import parse_pg_uri
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.validation_utils import validate_password_policy
 
@@ -429,25 +429,6 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
-
-
-def parse_pg_uri(db_uri: str) -> dict:
-    """Parse PostgreSQL URI into connection parameters."""
-    if not db_uri:
-        return {"username": None, "password": None, "host": None, "port": None, "dbname": None}
-
-    try:
-        url = make_url(db_uri)
-        return {
-            "username": url.username,
-            "password": url.password,
-            "host": url.host,
-            "port": url.port,
-            "dbname": url.database,
-        }
-    except Exception as e:
-        logger.error(f"Error parsing database URI: {e}")
-        return {"username": None, "password": None, "host": None, "port": None, "dbname": None}
 
 
 def verify_backup(backup_file: str) -> None:
