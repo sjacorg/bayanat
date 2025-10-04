@@ -28,7 +28,6 @@ from enferno.utils.data_helpers import (
     import_default_data,
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
-from enferno.utils.db_utils import parse_pg_uri
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.validation_utils import validate_password_policy
 
@@ -481,24 +480,10 @@ def create_backup(output: Optional[str] = None, timeout: int = 300) -> Optional[
         click.echo("Error: No database URI configured")
         return None
 
-    db_info = parse_pg_uri(db_uri)
-    cmd = ["pg_dump", "-Fc", "-f", backup_file]
-
-    if db_info["username"]:
-        cmd.extend(["-U", db_info["username"]])
-    if db_info["host"]:
-        cmd.extend(["-h", db_info["host"]])
-    if db_info["port"]:
-        cmd.extend(["-p", str(db_info["port"])])
-    if db_info["dbname"]:
-        cmd.append(db_info["dbname"])
+    cmd = ["pg_dump", "-Fc", "-f", backup_file, f"--dbname={db_uri}"]
 
     try:
-        env = os.environ.copy()
-        if db_info["password"]:
-            env["PGPASSWORD"] = db_info["password"]
-
-        subprocess.run(cmd, env=env, check=True, timeout=timeout)
+        subprocess.run(cmd, check=True, timeout=timeout)
         click.echo(f"Backup created: {backup_file}")
 
         # Verify backup integrity
@@ -545,49 +530,16 @@ def restore_backup(backup_file: str, timeout: int = 3600) -> bool:
         click.echo("Error: Database URI not found in application config.")
         return False
 
-    # Parse the database URI
-    db_info = parse_pg_uri(db_uri)
-
     # Build the pg_restore command for custom format
-    cmd = ["pg_restore", "--clean", "--if-exists"]
-
-    # Add database name if present
-    if db_info["dbname"]:
-        cmd.extend(["-d", db_info["dbname"]])
-
-    # Add connection parameters only if they exist
-    if db_info["username"]:
-        cmd.extend(["-U", db_info["username"]])
-
-    if db_info["host"]:
-        cmd.extend(["-h", db_info["host"]])
-
-    if db_info["port"]:
-        cmd.extend(["-p", db_info["port"]])
-
-    # Add the backup file
-    cmd.append(backup_file)
+    cmd = ["pg_restore", "--clean", "--if-exists", f"--dbname={db_uri}", backup_file]
 
     # Execute the command
     try:
-        # Set PGPASSWORD environment variable if password exists
-        env = os.environ.copy()
-        if db_info["password"]:
-            env["PGPASSWORD"] = db_info["password"]
-
         logger.info(f"Running database restore command: {' '.join(cmd)}")
         click.echo("Restoring database... This may take a while.")
 
         # Run the command with timeout
-        subprocess.run(
-            cmd,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True,
-            timeout=timeout,
-        )
+        subprocess.run(cmd, check=True, timeout=timeout)
 
         # If we reach here, the command succeeded
         logger.info("Database restored successfully.")

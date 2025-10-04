@@ -5,7 +5,6 @@ import boto3
 from flask import current_app
 
 from enferno.settings import Config
-from enferno.utils.db_utils import parse_pg_uri
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger()
@@ -17,26 +16,8 @@ def pg_dump(filepath):
     if not db_uri:
         raise RuntimeError("No database URI configured")
 
-    db_info = parse_pg_uri(db_uri)
-
-    # Build pg_dump command
-    cmd = ["pg_dump", "-Fc", "-f", filepath]
-
-    if db_info["username"]:
-        cmd.extend(["-U", db_info["username"]])
-    if db_info["host"]:
-        cmd.extend(["-h", db_info["host"]])
-    if db_info["port"]:
-        cmd.extend(["-p", str(db_info["port"])])
-    if db_info["dbname"]:
-        cmd.append(db_info["dbname"])
-
-    # Set password in environment if present
-    env = os.environ.copy()
-    if db_info["password"]:
-        env["PGPASSWORD"] = db_info["password"]
-
-    return check_output(cmd, env=env)
+    cmd = ["pg_dump", "-Fc", "-f", filepath, f"--dbname={db_uri}"]
+    return check_output(cmd)
 
 
 def upload_to_s3(filepath):
