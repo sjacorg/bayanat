@@ -35,6 +35,12 @@ from enferno.utils.validation_utils import validate_password_policy
 logger = get_logger()
 
 
+def say(message: str, level: str = "info") -> None:
+    """Say a message (log and echo)."""
+    getattr(logger, level)(message)
+    click.echo(message)
+
+
 # Function to log table creation
 def log_table_creation(target, connection, tables=None, **kw):
     if tables is not None:
@@ -65,25 +71,19 @@ def create_db(create_exts: bool) -> None:
     if create_exts:
         with db.engine.connect() as conn:
             conn.execute(text("CREATE EXTENSION if not exists pg_trgm ;"))
-            click.echo("Trigram extension installed successfully")
-            logger.info("Trigram extension installed successfully")
+            say("Trigram extension installed successfully")
             conn.execute(text("CREATE EXTENSION if not exists postgis ;"))
-            logger.info("Postgis extension installed successfully")
-            click.echo("Postgis extension installed successfully")
+            say("Postgis extension installed successfully")
             conn.commit()
 
     db.create_all()
-    click.echo("Database structure created successfully")
-    logger.info("Database structure created successfully")
+    say("Database structure created successfully")
     generate_user_roles()
-    click.echo("Generated user roles successfully.")
-    logger.info("Generated user roles successfully.")
+    say("Generated user roles successfully.")
     generate_workflow_statues()
-    click.echo("Generated system workflow statues successfully.")
-    logger.info("Generated system workflow statues successfully.")
+    say("Generated system workflow statues successfully.")
     create_default_location_data()
-    click.echo("Generated location metadata successfully.")
-    logger.info("Generated location metadata successfully.")
+    say("Generated location metadata successfully.")
 
     # Remove the event listener after creation
     event.remove(metadata, "before_create", log_table_creation)
@@ -98,11 +98,9 @@ def import_data() -> None:
     logger.info("Importing data.")
     try:
         import_default_data()
-        click.echo("Imported data successfully.")
-        logger.info("Imported data successfully.")
+        say("Imported data successfully.")
     except:
-        click.echo("Error importing data.")
-        logger.error("Error importing data.")
+        say("Error importing data.", "error")
 
 
 def run_migrations(dry_run: bool = False) -> list[str]:
@@ -197,8 +195,7 @@ def install() -> None:
 
     # check if there's an existing admin
     if admin_role.users.all():
-        click.echo("An admin user is already installed.")
-        logger.error("An admin user is already installed.")
+        say("An admin user is already installed.", "error")
         return
 
     # to make sure username doesn't already exist
@@ -221,11 +218,9 @@ def install() -> None:
     user.roles.append(admin_role)
     check = user.save()
     if check:
-        click.echo("Admin user installed successfully.")
-        logger.info("Admin user installed successfully.")
+        say("Admin user installed successfully.")
     else:
-        click.echo("Error installing admin user.")
-        logger.error("Error installing admin user.")
+        say("Error installing admin user.", "error")
 
 
 @click.command()
@@ -249,8 +244,7 @@ def create(username: str, password: str) -> None:
         return
     user = User.query.filter(User.username == username).first()
     if user:
-        click.echo("User already exists!")
-        logger.error("User already exists!")
+        say("User already exists!", "error")
         return
     try:
         password = validate_password_policy(password)
@@ -259,11 +253,9 @@ def create(username: str, password: str) -> None:
         return
     user = User(username=username, password=hash_password(password), active=1)
     if user.save():
-        click.echo("User created successfully")
-        logger.info("User created successfully")
+        say("User created successfully")
     else:
-        click.echo("Error creating user.")
-        logger.error("Error creating user.")
+        say("Error creating user.", "error")
 
 
 @click.command()
@@ -287,8 +279,7 @@ def add_role(username: str, role: str) -> None:
     user = User.query.filter(User.username == username).first()
 
     if not user:
-        click.echo("Sorry, this user does not exist!")
-        logger.error("User does not exist.")
+        say("Sorry, this user does not exist!", "error")
     else:
         r = Role.query.filter(Role.name == role).first()
         if not role:
@@ -298,8 +289,7 @@ def add_role(username: str, role: str) -> None:
                 r = Role(name=role).save()
         # add role to user
         user.roles.append(r)
-        click.echo("Role {} added successfully to user {}".format(username, role))
-        logger.info("Role {} added successfully to user {}".format(username, role))
+        say("Role {} added successfully to user {}".format(username, role))
 
 
 @click.command()
@@ -322,8 +312,7 @@ def reset(username: str, password: str) -> None:
     logger.info("Resetting password for user: {}".format(username))
     user = User.query.filter(User.username == username).first()
     if not user:
-        click.echo("Specified user does not exist!")
-        logger.error("Specified user does not exist!")
+        say("Specified user does not exist!", "error")
     else:
         try:
             password = validate_password_policy(password)
@@ -332,11 +321,9 @@ def reset(username: str, password: str) -> None:
             return
         user.password = hash_password(password)
         user.save()
-        click.echo("User password has been reset successfully.")
-        logger.info("User password has been reset successfully.")
+        say("User password has been reset successfully.")
         if not user.active:
-            click.echo("Warning: User is not active!")
-            logger.warning("User is not active!")
+            say("Warning: User is not active!", "warning")
 
 
 @click.command()
@@ -369,7 +356,12 @@ def extract() -> None:
         None
     """
     logger.info("Extracting translatable strings.")
-    if os.system("pybabel extract -F babel.cfg -k _l -o messages.pot ."):
+    try:
+        subprocess.run(
+            ["pybabel", "extract", "-F", "babel.cfg", "-k", "_l", "-o", "messages.pot", "."],
+            check=True,
+        )
+    except subprocess.CalledProcessError:
         logger.error("Extract command failed")
         raise RuntimeError("Extract command failed")
 
@@ -386,7 +378,11 @@ def update() -> None:
         None
     """
     logger.info("Updating translations.")
-    if os.system("pybabel update -i messages.pot -d enferno/translations"):
+    try:
+        subprocess.run(
+            ["pybabel", "update", "-i", "messages.pot", "-d", "enferno/translations"], check=True
+        )
+    except subprocess.CalledProcessError:
         logger.error("Update command failed")
         raise RuntimeError("Update command failed")
 
@@ -403,7 +399,9 @@ def compile() -> None:
         None
     """
     logger.info("Compiling translations.")
-    if os.system("pybabel compile -d enferno/translations"):
+    try:
+        subprocess.run(["pybabel", "compile", "-d", "enferno/translations"], check=True)
+    except subprocess.CalledProcessError:
         logger.error("Compile command failed")
         raise RuntimeError("Compile command failed")
 
@@ -647,11 +645,9 @@ def enable_maintenance(reason):
     from enferno.utils.maintenance import enable_maintenance as em
 
     if em(reason):
-        click.echo("Maintenance mode enabled. System is locked.")
-        logger.info("Maintenance mode enabled via CLI.")
+        say("Maintenance mode enabled. System is locked.")
     else:
-        click.echo("Failed to enable maintenance mode.")
-        logger.error("Failed to enable maintenance mode via CLI.")
+        say("Failed to enable maintenance mode.", "error")
 
 
 @click.command(name="unlock")
@@ -663,11 +659,9 @@ def disable_maintenance():
     from enferno.utils.maintenance import disable_maintenance as dm
 
     if dm():
-        click.echo("Maintenance mode disabled. System is unlocked.")
-        logger.info("Maintenance mode disabled via CLI.")
+        say("Maintenance mode disabled. System is unlocked.")
     else:
-        click.echo("Failed to disable maintenance mode.")
-        logger.error("Failed to disable maintenance mode via CLI.")
+        say("Failed to disable maintenance mode.", "error")
 
 
 def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> None:
