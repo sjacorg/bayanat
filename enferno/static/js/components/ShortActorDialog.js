@@ -434,6 +434,20 @@ const ShortActorDialog = Vue.defineComponent({
                                               <!-- Labels -->
                                               <search-field v-model="profile.labels" api="/admin/api/labels/" item-title="title" item-value="id" :multiple="true" :show-copy-icon="advFeatures" :label="translations.labels_"></search-field>
                                           </v-card-text>
+
+                                          <v-card-text>
+                                              <!-- Verified Labels -->
+                                              <search-field
+                                                    v-model="profile.ver_labels"
+                                                    api="/admin/api/labels/"
+                                                    :query-params="{ fltr: 'verified', typ: 'for_actor' }"
+                                                    item-title="title"
+                                                    item-value="id"
+                                                    :multiple="true"
+                                                    :show-copy-icon="advFeatures"
+                                                    :label="translations.verifiedLabels_"
+                                            ></search-field>
+                                          </v-card-text>
                                       </v-card>
                                   </v-window-item>
                               </v-window>

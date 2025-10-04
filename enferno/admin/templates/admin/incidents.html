@@ -359,7 +359,7 @@
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
 
-    <script src="/static/js/components/MPCard.js"></script>
+    <script src="/static/js/components/MissingPersonCard.js"></script>
 
     <script src="/static/js/videojs/video.min.js"></script>
 
@@ -380,10 +380,6 @@
 
         const app = createApp({
             delimiters: delimiters,
-            components: {
-                "tinymce-editor": Editor, // <- Important part,
-
-            },
             mixins: [globalMixin, relationsMixin],
             data: () => ({
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
@@ -1513,6 +1509,7 @@
         app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
         app.config.globalProperties.$htmlFormatter = htmlFormatter;
 
+        app.component("TinymceEditor", Editor);
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
         app.component('UniField', UniField);
@@ -1539,7 +1536,7 @@
         app.component('ActorCard', ActorCard);
         app.component('ActorProfiles', ActorProfiles);
         app.component('IncidentCard', IncidentCard);
-        app.component('mp-card', MPCard);
+        app.component('MissingPersonCard', MissingPersonCard);
         app.component('EventCard', EventCard);
         app.component('PopDateField', PopDateField);
         app.component('PopDateTimeField', PopDateTimeField);
