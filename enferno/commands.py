@@ -614,17 +614,9 @@ def restore_backup(backup_file: str, timeout: int = 3600) -> bool:
         logger.info("Database restored successfully.")
         click.echo("Database restored successfully.")
         return True
-    except subprocess.TimeoutExpired:
-        logger.error(f"Database restoration timed out after {timeout} seconds")
-        click.echo(f"Database restoration timed out after {timeout} seconds")
-        return False
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Database restoration failed: {e.stderr}")
-        click.echo(f"Database restoration failed: {e.stderr}")
-        return False
     except Exception as e:
-        logger.error(f"Error restoring database: {str(e)}")
-        click.echo(f"Error restoring database: {str(e)}")
+        logger.error(f"Database restoration failed: {str(e)}")
+        click.echo(f"Database restoration failed: {str(e)}")
         return False
 
 
