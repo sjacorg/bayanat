@@ -600,7 +600,7 @@ def restore_backup(backup_file: str, timeout: int = 3600) -> bool:
         click.echo("Restoring database... This may take a while.")
 
         # Run the command with timeout
-        process = subprocess.run(
+        subprocess.run(
             cmd,
             env=env,
             stdout=subprocess.PIPE,
@@ -610,14 +610,10 @@ def restore_backup(backup_file: str, timeout: int = 3600) -> bool:
             timeout=timeout,
         )
 
-        if process.returncode == 0:
-            logger.info("Database restored successfully.")
-            click.echo("Database restored successfully.")
-            return True
-        else:
-            logger.error(f"Database restoration failed: {process.stderr}")
-            click.echo(f"Database restoration failed: {process.stderr}")
-            return False
+        # If we reach here, the command succeeded
+        logger.info("Database restored successfully.")
+        click.echo("Database restored successfully.")
+        return True
     except subprocess.TimeoutExpired:
         logger.error(f"Database restoration timed out after {timeout} seconds")
         click.echo(f"Database restoration timed out after {timeout} seconds")
