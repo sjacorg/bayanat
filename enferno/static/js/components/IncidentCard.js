@@ -3,33 +3,39 @@ const IncidentCard = Vue.defineComponent({
   emits: ['edit', 'close'],
 
   methods: {
-    loadGeoMap() {
+    async loadGeoMap() {
       this.geoMapLoading = true;
-      //load again all bulletin relations without paging (soft limit is 1000 bulletin)
+      this.geoMapOn = true;
 
-      axios
-        .get(
-          `/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`,
-        )
-        .then((res) => {
-          // Check if there are related bulletins / then fetch their full data to visualize location
-          let relatedBulletins = res.data.items;
+      try {
+        const [bulletinsRes, actorsRes] = await Promise.all([
+          axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`),
+          axios.get(`/admin/api/incident/relations/${this.incident.id}?class=actor&page=1&per_page=1000`),
+        ]);
 
-          if (relatedBulletins && relatedBulletins.length) {
-            getBulletinLocations(relatedBulletins.map((x) => x.bulletin.id)).then((res) => {
-              this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
-              this.geoMapOn = true;
-            });
-          } else {
-            this.mapLocations = aggregateIncidentLocations(this.incident);
-            this.geoMapOn = true;
-          }
-        })
-        .catch((err) => {
-          console.log(err.toJSON());
-        }).finally(() => {
-          this.geoMapLoading = false;
-        })
+        const baseLocations = aggregateIncidentLocations(this.incident);
+
+        let bulletinLocations = [];
+        if (bulletinsRes.data.items?.length) {
+          bulletinLocations = await getBulletinLocations(bulletinsRes.data.items.map(x => x.bulletin.id));
+          bulletinLocations = bulletinLocations?.flat()?.map(location => ({ ...location, show_parent_id: true }))
+        }
+
+        let actorLocations = [];
+        if (actorsRes.data.items?.length) {
+          actorLocations = await getActorLocations(actorsRes.data.items.map(x => x.actor.id));
+          actorLocations = actorLocations?.flat()?.map(location => ({ ...location, show_parent_id: true }))
+        }
+
+        // 🔥 Combine bulletins and actor locations
+        this.mapLocations = baseLocations.concat(bulletinLocations, actorLocations);
+
+      } catch (err) {
+        console.error(err);
+        this.geoMapOn = false;
+      } finally {
+        this.geoMapLoading = false;
+      }
     },
 
     translate_status(status) {
@@ -69,7 +75,7 @@ const IncidentCard = Vue.defineComponent({
     showDiff(e, index) {
       this.diffDialog = true;
       //calculate diff
-      const dp = jsondiffpatch.create({
+      const dp = this.$jsondiffpatch.create({
         arrays: {
           detectMove: true,
         },
@@ -82,7 +88,7 @@ const IncidentCard = Vue.defineComponent({
       if (!delta) {
         this.diffResult = 'Both items are Identical :)';
       } else {
-        this.diffResult = jsondiffpatch.formatters.html.format(delta);
+        this.diffResult = this.$htmlFormatter.format(delta);
       }
     },
   },

@@ -41,6 +41,7 @@
                                             validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
                                             validationRules.maxLength(255),
                                         ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
                                 ></dual-field>
                             </v-col>
 
@@ -226,6 +227,7 @@
                                         v-model="editedItem.comments"
                                         :rules="[validationRules.required()]"
                                         label="{{ _('Comments') }}"
+                                        v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
                                 >
                                 </v-textarea>
 

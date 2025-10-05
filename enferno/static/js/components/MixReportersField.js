@@ -1,13 +1,21 @@
-const MixIII = Vue.defineComponent({
+const MixReportersField = Vue.defineComponent({
   props: {
     title: String,
     modelValue: {
       type: Array,
       default: () => ([]),
     },
+    serverErrors: {
+      type: Object,
+      default: () => ({}),
+    },
     items: {
       type: Array,
       default: () => ([]),
+    },
+    errorKey: {
+      type: String,
+      default: '',
     },
   },
   emits: ['update:modelValue'],
@@ -64,9 +72,15 @@ const MixIII = Vue.defineComponent({
             
           </v-toolbar>
           <v-card-text>
-            <v-text-field :label="translations.name_" v-model="reporter.name"></v-text-field>
-            <v-textarea rows="1" :label="translations.contactInfo_" v-model="reporter.contact"></v-textarea>
-            <v-textarea rows="1" :label="translations.relationship_" v-model="reporter.relationship"></v-textarea>
+            <v-text-field :label="translations.name_" v-model="reporter.name"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.name')"
+            ></v-text-field>
+            <v-textarea rows="1" :label="translations.contactInfo_" v-model="reporter.contact"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.contact')"
+            ></v-textarea>
+            <v-textarea rows="1" :label="translations.relationship_" v-model="reporter.relationship"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.relationship')"
+            ></v-textarea>
           </v-card-text>
         </v-card>
       </v-card-text>

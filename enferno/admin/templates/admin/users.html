@@ -152,6 +152,7 @@
                                                     :rules="[
                                                         validationRules.required(),
                                                     ]"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.name')"
                                             ></v-text-field>
 
                                         </v-col>
@@ -159,13 +160,11 @@
 
                                             <div class="d-flex">
 
-
                                                 <v-text-field
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
-                                                        :rules="disableEmail ? [] : [validationRules.externalError(errorsMap?.email)]"
-                                                        @input="resetError('email')"
+                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.email')"
                                                         type="email"
                                                 ></v-text-field>
                                                 <v-btn @click.stop="enableEmail"
@@ -227,6 +226,7 @@
                                                                     validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
                                                                 ]"
                                                               @input="isUsernameAvailable = false"
+                                                              v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
@@ -309,7 +309,7 @@
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
                                 <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="validateAndSave" color="primary" variant="elevated">
+                                <v-btn @click="validateFormAndSave" color="primary" variant="elevated">
                                     {{ _('Save') }}
                                 </v-btn>
                             </v-card-actions>
@@ -374,10 +374,10 @@
                 user: null,
                 session_id: '{{ session.sid }}',
                 valid: false,
-                errorsMap: {},
                 initialUsername: null,
                 isUsernameAvailable: false,
                 isStrongPassword: false,
+                serverErrors: {}
             }),
 
             mixins: [globalMixin],
@@ -437,21 +437,17 @@
                         this.isUsernameAvailable = response === true
                     }
                 },
-                resetError(key) {
-                    if (!this.errorsMap) return
-                    if (key in this.errorsMap) this.errorsMap[key] = null
-                },
                 onPasswordCheckResponse(response) {
                     this.isStrongPassword = response === true
                 },
 
-                validateAndSave() {
+                validateFormAndSave() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 },
@@ -571,7 +567,7 @@
                             }
                         ).catch(
                             err => {
-                                this.$refs.form.setErrors({username: [err.response.data]});
+                                this.$refs.form.setErrors({'item.username': [err.response.data]});
                             }
                         ).finally(
                             () => {
@@ -645,8 +641,9 @@
                     this.isAdmin = false;
                     this.initialUsername = null;
                     this.isUsernameAvailable = false;
-                    this.errorsMap = null;
                     setTimeout(() => {
+                        this.serverErrors = {};
+                        this.isStrongPassword = false;
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;
                         this.editedIndex = -1;
@@ -658,17 +655,14 @@
                         const usernameAlreadyTaken = err?.response?.status === 409
                         const errors = err?.response?.data?.errors
                         if (errors || usernameAlreadyTaken) {
-                            // Normalize: convert { "item.field": "message" } => { field: ["message"] }
-                            let nextErrors = Object.fromEntries(Object.entries(errors ?? {}).map(([key, value]) => ([key.replace('item.', ''), [value]])))
+                            this.serverErrors = errors
                             // Override email message for something simpler
-                            if (nextErrors?.email) nextErrors.email = [translations.emailInvalid_];
-                            if (nextErrors?.username) nextErrors.username = [translations.usernameInvalid_];
-                            if (usernameAlreadyTaken) nextErrors = { ...nextErrors, username: [translations.usernameAlreadyTaken_]};
+                            if (this.serverErrors?.['item.email']) this.serverErrors['item.email'] = [translations.emailInvalid_];
+                            if (this.serverErrors?.['item.username']) this.serverErrors['item.username'] = [translations.usernameInvalid_];
+                            if (usernameAlreadyTaken) this.serverErrors = { ...this.serverErrors, ['item.username']: [translations.usernameAlreadyTaken_]};
 
-                            this.errorsMap = { ...nextErrors }
-                            this.$refs.form.validate()
-                        } else {
-                            // this.showSnack(handleRequestError(err));
+                            this.$nextTick(() => scrollToFirstError())
+                            this.showSnack(handleRequestError(err))
                         }
                     }
 
@@ -697,7 +691,7 @@
             }
         });
 
-        app.component('user-card', UserCard);
+        app.component('UserCard', UserCard);
         app.use(router).use(vuetify).mount('#app')
     </script>
 {% endblock %}

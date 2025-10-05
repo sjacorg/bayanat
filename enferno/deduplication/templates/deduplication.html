@@ -141,14 +141,13 @@
 <script src="/static/js/components/InlineMediaRenderer.js"></script>
 
 <script src="/static/js/components/Visualization.js"></script>
-<script src="/static/js/element-resize-detector.min.js"></script>
 <script src="/static/js/force-graph.min.js"></script>
 
-<script src="/static/js/components/MPCard.js"></script>
-<script src="/static/js/components/MPField.js"></script>
-<script src="/static/js/components/MixI.js"></script>
-<script src="/static/js/components/MixII.js"></script>
-<script src="/static/js/components/MixIII.js"></script>
+<script src="/static/js/components/MissingPersonCard.js"></script>
+<script src="/static/js/components/MissingPersonField.js"></script>
+<script src="/static/js/components/MixYesNoField.js"></script>
+<script src="/static/js/components/MixSelectField.js"></script>
+<script src="/static/js/components/MixReportersField.js"></script>
 
 <script src="/static/js/videojs/video.min.js"></script>
 
@@ -350,11 +349,11 @@
 
     app.component('Visualization', Visualization);
 
-    app.component('mix-i', MixI);
-    app.component('mix-ii', MixII);
-    app.component('mix-iii', MixIII);
-    app.component('mp-field', MPField);
-    app.component('mp-card', MPCard);
+    app.component('MixYesNoField', MixYesNoField);
+    app.component('MixSelectField', MixSelectField);
+    app.component('MixReportersField', MixReportersField);
+    app.component('MissingPersonField', MissingPersonField);
+    app.component('MissingPersonCard', MissingPersonCard);
 
     app.use(vuetify).mount('#app');
 
