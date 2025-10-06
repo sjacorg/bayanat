@@ -124,7 +124,7 @@
 <script src="/static/js/components/PreviewCard.js"></script>
 <script src="/static/js/components/ImportLogStatus.js"></script>
 <script src="/static/js/components/ImportLogCard.js"></script>
-<script src="/static/js/components/MPCard.js"></script>
+<script src="/static/js/components/MissingPersonCard.js"></script>
 <script src="/static/js/components/MediaGrid.js"></script>
 
 {% if config.GOOGLE_MAPS_API_KEY %}
@@ -293,32 +293,32 @@
     });
 
 
-        app.component('import-log-status', ImportLogStatus);
-        app.component('media-card', MediaCard);
-        app.component('bulletin-result', BulletinResult);
-        app.component('actor-result', ActorResult);
-        app.component('incident-result', IncidentResult);
-        app.component('uni-field', UniField);
-        app.component('pdf-viewer', PdfViewer);
+        app.component('ImportLogStatus', ImportLogStatus);
+        app.component('MediaCard', MediaCard);
+        app.component('BulletinResult', BulletinResult);
+        app.component('ActorResult', ActorResult);
+        app.component('IncidentResult', IncidentResult);
+        app.component('UniField', UniField);
+        app.component('PdfViewer', PdfViewer);
         app.component('ImageViewer', ImageViewer);
         app.component('InlineMediaRenderer', InlineMediaRenderer);
-        app.component('global-map', GlobalMap);
-        app.component('visualization', Visualization);
-        app.component('preview-card', PreviewCard);
-        app.component('import-log-card', ImportLogCard);
-        app.component('bulletin-card', BulletinCard);
-        app.component('actor-profiles', ActorProfiles);
-        app.component('actor-card', ActorCard);
+        app.component('GlobalMap', GlobalMap);
+        app.component('Visualization', Visualization);
+        app.component('PreviewCard', PreviewCard);
+        app.component('ImportLogCard', ImportLogCard);
+        app.component('BulletinCard', BulletinCard);
+        app.component('ActorProfiles', ActorProfiles);
+        app.component('ActorCard', ActorCard);
         app.component('ReadMore', ReadMore);
-        app.component('incident-card', IncidentCard);
-        app.component('event-card', EventCard);
-        app.component('media-grid', MediaGrid);
+        app.component('IncidentCard', IncidentCard);
+        app.component('EventCard', EventCard);
+        app.component('MediaGrid', MediaGrid);
 
-        app.component('related-incidents-card', RelatedBulletinsCard);
-        app.component('related-actors-card', RelatedActorsCard);
-        app.component('related-bulletins-card', RelatedIncidentsCard);
+        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
+        app.component('RelatedActorsCard', RelatedActorsCard);
+        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
 
-        app.component('mp-card', MPCard);
+        app.component('MissingPersonCard', MissingPersonCard);
 
         app.use(router);
         app.use(vuetify).mount('#app');

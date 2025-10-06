@@ -1,4 +1,4 @@
-const MixIII = Vue.defineComponent({
+const MixReportersField = Vue.defineComponent({
   props: {
     title: String,
     modelValue: {
