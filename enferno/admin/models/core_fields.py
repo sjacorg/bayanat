@@ -552,7 +552,7 @@ ACTOR_CORE_FIELDS = {
 
 def seed_core_fields():
     """
-    Seed core fields into the database for bulletin and incident entities (idempotent).
+    Seed core fields into the database for bulletin, incident, and actor entities (idempotent).
     This includes both simple fields and complex HTML block fields.
     Can be run multiple times safely.
     """
@@ -618,3 +618,32 @@ def seed_core_fields():
             print(f"✅ Created incident core field: {name}")
         else:
             print(f"✓ Incident core field already exists: {name}")
+
+    # Seed actor core fields
+    for name, config in ACTOR_CORE_FIELDS.items():
+        # Check if core field already exists
+        existing = DynamicField.query.filter_by(name=name, entity_type="actor", core=True).first()
+
+        # Create ui_config with html_template if specified
+        ui_config = {}
+        if config.get("html_template"):
+            ui_config["html_template"] = config["html_template"]
+
+        if not existing:
+            # Create new core field
+            field = DynamicField(
+                name=name,
+                title=config["title"],
+                entity_type="actor",
+                field_type=config["field_type"],
+                ui_component=config["ui_component"],
+                sort_order=config["sort_order"],
+                core=True,
+                active=config.get("visible", True),
+                ui_config=ui_config,
+                options=config.get("options", []),
+            )
+            field.save()
+            print(f"✅ Created actor core field: {name}")
+        else:
+            print(f"✓ Actor core field already exists: {name}")
