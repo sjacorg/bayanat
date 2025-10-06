@@ -369,7 +369,7 @@ ACTOR_CORE_FIELDS = {
     "age": {
         "title": "Age",
         "field_type": "number",
-        "ui_component": "input",
+        "ui_component": "number_input",
         "sort_order": 9,
         "visible": True,
         "core": True,
@@ -378,7 +378,7 @@ ACTOR_CORE_FIELDS = {
     "civilian": {
         "title": "Civilian",
         "field_type": "select",
-        "ui_component": "checkbox",
+        "ui_component": "dropdown",
         "sort_order": 10,
         "visible": True,
         "core": True,
@@ -424,7 +424,7 @@ ACTOR_CORE_FIELDS = {
     "no_children": {
         "title": "Number of Children",
         "field_type": "number",
-        "ui_component": "input",
+        "ui_component": "number_input",
         "sort_order": 15,
         "visible": True,
         "core": True,
