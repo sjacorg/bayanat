@@ -1,11 +1,10 @@
 const IncidentCard = Vue.defineComponent({
   props: ['incident', 'close', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
-
+  mounted() {
+    this.$root.fetchDynamicFields({ entityType: 'incident' })
+  },
   methods: {
-    mounted() {
-      this.$root.fetchDynamicFields({ entityType: 'incident' })
-    },
     async loadGeoMap() {
       this.geoMapLoading = true;
       this.geoMapOn = true;
