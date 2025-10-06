@@ -1066,6 +1066,9 @@ class SearchUtils:
                 path = f'$[*] ? (@.number like_regex "{number_value}" flag "i")'
                 conditions.append(func.jsonb_path_exists(Actor.id_number, path))
 
+        # Dynamic custom fields
+        self._apply_dynamic_field_filters(conditions, q, "actor")
+
         # Related to bulletin search
         if rel_to_bulletin := q.get("rel_to_bulletin"):
             bulletin = db.session.get(Bulletin, int(rel_to_bulletin))
