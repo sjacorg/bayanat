@@ -32,12 +32,11 @@
 
             <v-sheet
                     id="card-content"
-                    max-height="100vh"
+                    style="height: calc(100vh - 64px);"
                     class="overflow-y-auto">
 
                 <v-card-text>
                     <v-container fluid>
-
                         <v-row>
                             <v-col md="2">
                                 <v-btn-toggle v-model="editedItem.type" tile mandatory>
@@ -53,1004 +52,905 @@
                             </v-col>
                         </v-row>
 
-                        <template v-if="editedItem.type === 'Entity'">
-                            <v-row>
-                                <v-col cols="12" md="6">
+                        <div v-if="movableDynamicFields.length" class="form-grid mt-4">
+                            <template v-for="(field, index) in movableDynamicFields" :key="field.id">
+                                <div v-if="isFieldActive(field, 'name') && editedItem.type === 'Entity'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.name"
-                                            v-model:translation="editedItem.name_ar"
-                                            label-original="{{ _('Name') }}"
-                                            label-translation="{{ _('Name (AR)') }}"
-                                            :allow-unknown="true"
-                                            :rules="[
-                                                validationRules.required(),
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.name', 'item.name_ar')"
+                                        v-model:original="editedItem.name"
+                                        v-model:translation="editedItem.name_ar"
+                                        label-original="{{ _('Name') }}"
+                                        label-translation="{{ _('Name (AR)') }}"
+                                        :allow-unknown="true"
+                                        :rules="[
+                                            validationRules.required(),
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.name', 'item.name_ar')"
                                     ></dual-field>
-                                </v-col>
-
-                                <v-col cols="12" md="6">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'nickname')" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.nickname"
-                                            v-model:translation="editedItem.nickname_ar"
-                                            label-original="{{ _('Nickname') }}"
-                                            label-translation="{{ _('Nickname (AR)') }}"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.nickname', 'item.nickname_ar')"
+                                        v-model:original="editedItem.nickname"
+                                        v-model:translation="editedItem.nickname_ar"
+                                        label-original="{{ _('Nickname') }}"
+                                        label-translation="{{ _('Nickname (AR)') }}"
+                                        :rules="[
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.nickname', 'item.nickname_ar')"
                                     ></dual-field>
-                                </v-col>
-
-                                <v-col cols="12" md="4">
-                                    <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
-                                </v-col>
-                            </v-row>
-                        </template>
-
-                        <template v-if="editedItem.type === 'Person'">
-                            <v-row>
-                                <v-col cols="12" md="4">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'first_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.first_name"
-                                            v-model:translation="editedItem.first_name_ar"
-                                            label-original="{{ _('First Name') }}"
-                                            label-translation="{{ _('First Name (AR)') }}"
-                                            :allow-unknown="true"
-                                            :rules="[
-                                                validationRules.required(),
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.first_name', 'item.first_name_ar')"
+                                        v-model:original="editedItem.first_name"
+                                        v-model:translation="editedItem.first_name_ar"
+                                        label-original="{{ _('First Name') }}"
+                                        label-translation="{{ _('First Name (AR)') }}"
+                                        :allow-unknown="true"
+                                        :rules="[
+                                            validationRules.required(),
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.first_name', 'item.first_name_ar')"
                                     ></dual-field>
-                                </v-col>
-                                <v-col cols="12" md="4">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'middle_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.middle_name"
-                                            v-model:translation="editedItem.middle_name_ar"
-                                            label-original="{{ _('Middle Name') }}"
-                                            label-translation="{{ _('Middle Name (AR)') }}"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.middle_name', 'item.middle_name_ar')"
+                                        v-model:original="editedItem.middle_name"
+                                        v-model:translation="editedItem.middle_name_ar"
+                                        label-original="{{ _('Middle Name') }}"
+                                        label-translation="{{ _('Middle Name (AR)') }}"
+                                        :rules="[
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.middle_name', 'item.middle_name_ar')"
                                     ></dual-field>
-                                </v-col>
-                                <v-col cols="12" md="4">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'last_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.last_name"
-                                            v-model:translation="editedItem.last_name_ar"
-                                            label-original="{{ _('Last Name') }}"
-                                            label-translation="{{ _('Last Name (AR)') }}"
-                                            :allow-unknown="true"
-                                            :rules="[
-                                                validationRules.required(),
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.last_name', 'item.last_name_ar')"
+                                        v-model:original="editedItem.last_name"
+                                        v-model:translation="editedItem.last_name_ar"
+                                        label-original="{{ _('Last Name') }}"
+                                        label-translation="{{ _('Last Name (AR)') }}"
+                                        :allow-unknown="true"
+                                        :rules="[
+                                            validationRules.required(),
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.last_name', 'item.last_name_ar')"
                                     ></dual-field>
-                                </v-col>
-                            </v-row>
-                            <v-row>
-                                <v-col cols="12" md="4">
-
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'father_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.nickname"
-                                            v-model:translation="editedItem.nickname_ar"
-                                            label-original="{{ _('Nickname') }}"
-                                            label-translation="{{ _('Nickname (AR)') }}"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.nickname', 'item.nickname_ar')"
+                                        v-model:original="editedItem.father_name"
+                                        v-model:translation="editedItem.father_name_ar"
+                                        label-original="{{ _('Father\'s Name') }}"
+                                        label-translation="{{ _('Father\'s Name (AR)') }}"
+                                        :rules="[
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.father_name', 'item.father_name_ar')"
                                     ></dual-field>
-
-
-                                </v-col>
-
-                                <v-col cols="12" md="4">
-
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'mother_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.father_name"
-                                            v-model:translation="editedItem.father_name_ar"
-                                            label-original="{{ _('Father\'s Name') }}"
-                                            label-translation="{{ _('Father\'s Name (AR)') }}"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.father_name', 'item.father_name_ar')"
+                                        v-model:original="editedItem.mother_name"
+                                        v-model:translation="editedItem.mother_name_ar"
+                                        label-original="{{ _('Mother\'s Name') }}"
+                                        label-translation="{{ _('Mother\'s Name (AR)') }}"
+                                        :rules="[
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.mother_name', 'item.mother_name_ar')"
                                     ></dual-field>
-
-
-                                </v-col>
-
-                                <v-col cols="12" md="4">
-                                    <dual-field
-                                            v-model:original="editedItem.mother_name"
-                                            v-model:translation="editedItem.mother_name_ar"
-                                            label-original="{{ _('Mother\'s Name') }}"
-                                            label-translation="{{ _('Mother\'s Name (AR)') }}"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.mother_name', 'item.mother_name_ar')"
-                                    ></dual-field>
-
-
-                                </v-col>
-
-                            </v-row>
-
-                            <v-row>
-                                <v-col cols="12" md="2">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'sex') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <v-select
-                                            :items="translations.actorSex"
-                                            item-title="tr"
-                                            item-value="en"
-                                            v-model="editedItem.sex"
-                                            clearable
-                                            label="{{ _('Sex') }}"
-                                            v-bind="serverErrorPropsForField(serverErrors, 'item.sex')"
+                                        :items="translations.actorSex"
+                                        item-title="tr"
+                                        item-value="en"
+                                        v-model="editedItem.sex"
+                                        clearable
+                                        label="{{ _('Sex') }}"
                                     ></v-select>
-                                </v-col>
-
-                                <v-col cols="12" md="2">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'age') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <v-select
-                                            :items="translations.actorAge"
-                                            item-title="tr"
-                                            item-value="en"
-                                            v-model="editedItem.age"
-                                            clearable
-                                            label="{{ _('Minor/Adult') }}"
-                                            v-bind="serverErrorPropsForField(serverErrors, 'item.age')"
+                                        :items="translations.actorAge"
+                                        item-title="tr"
+                                        item-value="en"
+                                        v-model="editedItem.age"
+                                        clearable
+                                        label="{{ _('Minor/Adult') }}"
                                     ></v-select>
-                                </v-col>
-
-                                <v-col cols="12" md="3">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'civilian') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <v-select
-                                            :items="translations.actorCivilian"
-                                            v-model="editedItem.civilian"
-                                            item-title="tr"
-                                            item-value="en"
-                                            clearable
-                                            label="{{ _('Civilian/Non Civilian') }}"
-                                            v-bind="serverErrorPropsForField(serverErrors, 'item.civilian')"
+                                        :items="translations.actorCivilian"
+                                        v-model="editedItem.civilian"
+                                        item-title="tr"
+                                        item-value="en"
+                                        clearable
+                                        label="{{ _('Civilian/Non Civilian') }}"
                                     ></v-select>
-                                </v-col>
-
-                                <v-col cols="12" md="5">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'origin_place') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <location-search-field
-                                            v-model="editedItem.origin_place"
-                                            api="/admin/api/locations/"
-                                            item-title="full_string"
-                                            item-value="id"
-                                            :multiple="false"
-                                            :show-copy-icon="advFeatures"
-                                            label="{{ _('Place of Origin') }}"
+                                        v-model="editedItem.origin_place"
+                                        api="/admin/api/locations/"
+                                        item-title="full_string"
+                                        item-value="id"
+                                        :multiple="false"
+                                        :show-copy-icon="advFeatures"
+                                        label="{{ _('Place of Origin') }}"
                                     ></location-search-field>
-                                </v-col>
-                            </v-row>
-
-                            <v-row>
-
-                                <v-col cols="12" md="5">
-
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'occupation') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.occupation"
-                                            v-model:translation="editedItem.occupation_ar"
-                                            label-original="{{ _('Occupation') }}"
-                                            label-translation="{{ _('Occupation (AR)') }}"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.occupation', 'item.occupation_ar')"
+                                        v-model:original="editedItem.occupation"
+                                        v-model:translation="editedItem.occupation_ar"
+                                        label-original="{{ _('Occupation') }}"
+                                        label-translation="{{ _('Occupation (AR)') }}"
+                                        :rules="[
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.occupation', 'item.occupation_ar')"
                                     ></dual-field>
-
-                                </v-col>
-
-
-                                <v-col cols="12" md="5">
-
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'position') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
-                                            v-model:original="editedItem.position"
-                                            v-model:translation="editedItem.position_ar"
-                                            label-original="{{ _('Position') }}"
-                                            label-translation="{{ _('Position (AR)') }}"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
-                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.position', 'item.position_ar')"
+                                        v-model:original="editedItem.position"
+                                        v-model:translation="editedItem.position_ar"
+                                        label-original="{{ _('Position') }}"
+                                        label-translation="{{ _('Position (AR)') }}"
+                                        :rules="[
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.position', 'item.position_ar')"
                                     ></dual-field>
-
-
-                                </v-col>
-
-                            </v-row>
-                            <v-row>
-
-                                <v-col cols="12" md="4">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'family_status') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <v-autocomplete
-                                            :items="translations.actorFamilyStatuses"
-                                            clearable
-                                            item-title="tr"
-                                            item-value="en"
-                                            v-model="editedItem.family_status"
-                                            label="{{ _('Family Status') }}"
-                                            v-bind="serverErrorPropsForField(serverErrors, 'item.family_status')"
+                                        :items="translations.actorFamilyStatuses"
+                                        clearable
+                                        item-title="tr"
+                                        item-value="en"
+                                        v-model="editedItem.family_status"
+                                        label="{{ _('Family Status') }}"
+                                        v-bind="serverErrorPropsForField(serverErrors, 'item.family_status')"
                                     ></v-autocomplete>
-                                </v-col>
-
-                                <v-col md="4">
-                                    <v-text-field label="{{ _('No of Children') }}"
-                                                  v-model="editedItem.no_children"
-                                                  :rules="[validationRules.integer()]"
-                                                  v-bind="serverErrorPropsForField(serverErrors, 'item.no_children')"
-                                    ></v-text-field>
-                                </v-col>
-
-                                <v-col cols="12" md="4">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'no_children') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <v-text-field label="{{ _('No of Children') }}" v-model="editedItem.no_children" :rules="[validationRules.integer()]" v-bind="serverErrorPropsForField(serverErrors, 'item.no_children')"></v-text-field>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'ethnographies') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <search-field
-
-                                            api="/admin/api/ethnographies/"
-                                            :multiple="true"
-                                            clearable
-                                            item-title="title"
-                                            item-value="title"
-                                            v-model="editedItem.ethnographies"
-                                            label="{{ _('Ethnographic Information') }}"
+                                        api="/admin/api/ethnographies/"
+                                        :multiple="true"
+                                        clearable
+                                        item-title="title"
+                                        item-value="title"
+                                        v-model="editedItem.ethnographies"
+                                        label="{{ _('Ethnographic Information') }}"
                                     ></search-field>
-                                </v-col>
-
-                            </v-row>
-
-                            <v-row>
-
-                                <v-col cols="12" md="4">
-
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'nationalities') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <search-field
-                                            v-model="editedItem.nationalities"
-                                            api="/admin/api/countries/"
-                                            item-title="title"
-                                            item-value="title"
-                                            :multiple="true"
-                                            clearable
-                                            label="{{ _('Nationalities') }}"
+                                        v-model="editedItem.nationalities"
+                                        api="/admin/api/countries/"
+                                        item-title="title"
+                                        item-value="title"
+                                        :multiple="true"
+                                        clearable
+                                        label="{{ _('Nationalities') }}"
                                     ></search-field>
-                                </v-col>
-
-                                <v-col cols="12" md="4">
-
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'dialects') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <search-field
-                                            v-model="editedItem.dialects"
-                                            api="/admin/api/dialects/"
-                                            item-title="title"
-                                            item-value="title"
-                                            :multiple="true"
-                                            clearable
-                                            label="{{ _('Dialects') }}"
+                                        v-model="editedItem.dialects"
+                                        api="/admin/api/dialects/"
+                                        item-title="title"
+                                        item-value="title"
+                                        :multiple="true"
+                                        clearable
+                                        label="{{ _('Dialects') }}"
                                     ></search-field>
-                                </v-col>
-
-                                <v-col cols="12" md="4">
-                                    <v-combobox
-                                        chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"
-                                        v-bind="serverErrorPropsForField(serverErrors, 'item.tags')"
-                                    ></v-combobox>
-                                </v-col>
-
-                                <v-col cols="12" class="mb-4">
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'tags')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'id_number') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <!-- ID Numbers Management -->
                                     <id-number-dynamic-field
                                         :model-value="simpleIdNumberValue"
                                         @update:model-value="updateIdNumber"
                                         :id-number-types="idNumberTypes"
                                     ></id-number-dynamic-field>
-                                </v-col>
-                            </v-row>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'actor_profiles')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <v-row v-if="editedItem.actor_profiles?.length" class="position-relative">
+                                        <v-menu offset-y>
+                                            <template #activator="{ props }">
+                                                <v-btn
+                                                        icon="mdi-plus"
+                                                        class="position-absolute"
+                                                        style="right: 0"
 
-                        </template>
+                                                        size="small"
+                                                        color="primary"
+                                                        v-bind="props"
 
-                        <v-row v-if="editedItem.actor_profiles?.length" class="position-relative">
-                            <v-menu offset-y>
-                                <template #activator="{ props }">
-                                    <v-btn
-                                            icon="mdi-plus"
-                                            class="position-absolute"
-                                            style="right: 0"
+                                                >
 
-                                            size="small"
-                                            color="primary"
-                                            v-bind="props"
+                                                </v-btn>
+                                            </template>
 
-                                    >
+                                            <v-list>
+                                                <v-list-item v-for="(profileMode,i) in profileModes" :key="i"
+                                                            :disabled="profileMode.id === 2 && hasMainProfile"
+                                                            @click="createProfile(profileMode)"
+                                                            :title="profileMode.title"
+                                                >
 
-                                    </v-btn>
-                                </template>
-
-                                <v-list>
-                                    <v-list-item v-for="(profileMode,i) in profileModes" :key="i"
-                                                 :disabled="profileMode.id === 2 && hasMainProfile"
-                                                 @click="createProfile(profileMode)"
-                                                 :title="profileMode.title"
-                                    >
-
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
+                                                </v-list-item>
+                                            </v-list>
+                                        </v-menu>
 
 
-                            <v-tabs v-model="tab">
-                                <v-tab v-for="(profile, index) in editedItem.actor_profiles" :key="index">
-                                    <v-avatar size="32" style="scale:0.7"
-                                              :color="profile.mode===2 ? 'warning':'primary'" class="white--text mr-1">
-                                        ${modeName(profile.mode).getInitials()}
-                                    </v-avatar>
-                                    ${profile.sources?.length? profile.sources[0].title + " " + (index + 1) : "{{ _('Profile') }} " + (index + 1)}
-                                    <v-tooltip location="top" text="{{ _('Duplicate Profile') }}">
-                                        <template #activator="{props}">
-                                            <v-icon @click.stop="duplicateProfile(index)"
-                                                    v-bind="props"
-                                                    size="small" class="mx-2" color="grey lighten-1">
-                                                mdi-content-duplicate
-                                            </v-icon>
-                                        </template>
-                                    </v-tooltip>
-                                    <v-tooltip location="top" text="{{ _('Delete Profile') }}">
-                                        <template #activator="{props}">
-                                            <v-icon
-                                                    @click.stop="deleteProfile(index)"
-                                                    :disabled="editedItem.actor_profiles.length === 1"
-                                                    size="small" class="mx-2"
-                                                    v-bind="props"
-                                                    color="red lighten-3">
-                                                mdi-delete
-                                            </v-icon>
-                                        </template>
-                                    </v-tooltip>
-                                </v-tab>
+                                        <v-tabs v-model="tab">
+                                            <v-tab v-for="(profile, index) in editedItem.actor_profiles" :key="index">
+                                                <v-avatar size="32" style="scale:0.7"
+                                                        :color="profile.mode===2 ? 'warning':'primary'" class="white--text mr-1">
+                                                    ${modeName(profile.mode).getInitials()}
+                                                </v-avatar>
+                                                ${profile.sources?.length? profile.sources[0].title + " " + (index + 1) : "{{ _('Profile') }} " + (index + 1)}
+                                                <v-tooltip location="top" text="{{ _('Duplicate Profile') }}">
+                                                    <template #activator="{props}">
+                                                        <v-icon @click.stop="duplicateProfile(index)"
+                                                                v-bind="props"
+                                                                size="small" class="mx-2" color="grey lighten-1">
+                                                            mdi-content-duplicate
+                                                        </v-icon>
+                                                    </template>
+                                                </v-tooltip>
+                                                <v-tooltip location="top" text="{{ _('Delete Profile') }}">
+                                                    <template #activator="{props}">
+                                                        <v-icon
+                                                                @click.stop="deleteProfile(index)"
+                                                                :disabled="editedItem.actor_profiles.length === 1"
+                                                                size="small" class="mx-2"
+                                                                v-bind="props"
+                                                                color="red lighten-3">
+                                                            mdi-delete
+                                                        </v-icon>
+                                                    </template>
+                                                </v-tooltip>
+                                            </v-tab>
 
-                            </v-tabs>
-
-
-                            <v-window class="w-100 border" v-model="tab">
-                                <v-window-item v-for="(profile, index) in editedItem.actor_profiles" :key="index">
-                                    <v-card class="pa-3" variant="text">
-
-                                        <!-- Source Link -->
-                                        <v-card-text v-if="shouldDisplayField(profile.mode, 'source')">
-                                            <v-card variant="text" class="d-flex align-center">
-
-                                                <v-col cols="12" md="2">
-                                                    <v-text-field class="mx-2"
-                                                                    variant="outlined"
-                                                                    v-model="profile.originid"
-                                                                    :disabled="profile.originidDisabled"
-                                                                    label="{{ _('Origin ID') }}"
-                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.originid`)"
-                                                    ></v-text-field>
-                                                </v-col>
-
-                                                <v-col md="8">
-                                                    <v-text-field class="mx-2"
-                                                                    variant="outlined"
-                                                                    v-model="profile.source_link"
-                                                                    label="{{ _('Source Link') }}"
-                                                                    :rules="[validationRules.maxLength(255)]"
-                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.source_link`)"
-                                                    ></v-text-field>
-                                                </v-col>
-
-                                                <v-col md="2">
-                                                    <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
-                                                                v-model="profile.source_link_type"
-                                                    >
-                                                    </v-switch>
-                                                </v-col>
-
-                                            </v-card>
-
-                                        </v-card-text>
-
-                                        <v-card-text>
-                                            <div class="text-subtitle-2 pa-1 ">{{ _('Description') }}</div>
-                                            <tinymce-editor
-                                                    :key="index"
-                                                    :init="tinyConfig"
-                                                    v-model="profile.description"
-                                            ></tinymce-editor>
-                                        </v-card-text>
-
-                                        <v-card-text>
-                                            <!-- Sources -->
-                                            <search-field
-                                                    v-model="profile.sources"
-                                                    api="/admin/api/sources/"
-                                                    item-title="title"
-                                                    item-value="id"
-                                                    :multiple="true"
-                                                    label="{{ _('Sources') }}"
-                                            ></search-field>
-                                        </v-card-text>
+                                        </v-tabs>
 
 
-                                        <v-card-text>
-                                            <!-- Labels -->
-                                            <search-field
-                                                    v-model="profile.labels"
-                                                    api="/admin/api/labels/"
-                                                    item-title="title"
-                                                    item-value="id"
-                                                    :multiple="true"
-                                                    :show-copy-icon="advFeatures"
-                                                    label="{{ _('Labels') }}"
-                                            ></search-field>
-                                        </v-card-text>
-                                        <v-card-text>
-                                            <!-- Verified Labels -->
-                                            <search-field
-                                                    v-model="profile.ver_labels"
-                                                    api="/admin/api/labels/"
-                                                    :query-params="{ fltr: 'verified', typ: 'for_actor' }"
-                                                    item-title="title"
-                                                    item-value="id"
-                                                    :multiple="true"
-                                                    :show-copy-icon="advFeatures"
-                                                    label="{{ _('Verified Labels') }}"
-                                            ></search-field>
-                                        </v-card-text>
+                                        <v-window class="w-100 border" v-model="tab">
+                                            <v-window-item v-for="(profile, index) in editedItem.actor_profiles" :key="index">
+                                                <v-card class="pa-3" variant="text">
 
-                                        <v-container fluid>
-                                            <v-row>
-                                                <v-col md="6">
-                                                    <!-- Publish Date -->
+                                                    <!-- Source Link -->
+                                                    <v-card-text v-if="shouldDisplayField(profile.mode, 'source')">
+                                                        <v-card variant="text" class="d-flex align-center">
 
-                                                    <pop-date-time-field
+                                                            <v-col cols="12" md="2">
+                                                                <v-text-field class="mx-2"
+                                                                                variant="outlined"
+                                                                                v-model="profile.originid"
+                                                                                :disabled="profile.originidDisabled"
+                                                                                label="{{ _('Origin ID') }}"
+                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.originid`)"
+                                                                ></v-text-field>
+                                                            </v-col>
 
-                                                            label="{{ _('Publish Date')}}"
-                                                            v-model="profile.publish_date">
-                                                    </pop-date-time-field>
+                                                            <v-col md="8">
+                                                                <v-text-field class="mx-2"
+                                                                                variant="outlined"
+                                                                                v-model="profile.source_link"
+                                                                                label="{{ _('Source Link') }}"
+                                                                                :rules="[validationRules.maxLength(255)]"
+                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.source_link`)"
+                                                                ></v-text-field>
+                                                            </v-col>
 
-                                                </v-col>
-                                                <v-col md="6">
-                                                    <!-- Documentation Date -->
-                                                    <pop-date-time-field
-                                                            label="{{ _('Documentation Date')}}"
-                                                            v-model="profile.documentation_date">
-                                                    </pop-date-time-field>
+                                                            <v-col md="2">
+                                                                <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
+                                                                            v-model="profile.source_link_type"
+                                                                >
+                                                                </v-switch>
+                                                            </v-col>
 
-                                                </v-col>
-                                            </v-row>
+                                                        </v-card>
 
-
-                                            <v-card-text v-if="shouldDisplayField(profile.mode, 'mp')">
-
-
-                                                <v-card class="my-6"
-                                                        title="{{ _('Missing Person Profile') }}"
-                                                        v-if="editedItem.type === 'Person'">
-
-                                                    <v-card-text v-show="profile.id || profile">
-                                                        <v-container fluid>
-                                                            <v-row>
-                                                                <v-col cols="12" md="4">
-                                                                    <v-text-field label="{{ _('Last Address') }}"
-                                                                                  v-model="profile.last_address"
-                                                                                  v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.last_address`)"
-                                                                    ></v-text-field>
-                                                                </v-col>
-                                                                <v-col md="4">
-                                                                    <v-text-field label="{{ _('Marriage History') }}"
-                                                                                  v-model="profile.marriage_history"
-                                                                                  v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.marriage_history`)"
-                                                                    ></v-text-field>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="4">
-                                                                    <v-select
-                                                                            label="{{ _('Pregnant at Disappearance') }}"
-                                                                            clearable
-                                                                            item-title="tr"
-                                                                            item-value="en"
-                                                                            :items="translations.pregnant"
-                                                                            v-model="profile.pregnant_at_disappearance"
-                                                                    ></v-select>
-                                                                </v-col>
-                                                                <v-col md="4">
-                                                                    <v-text-field
-                                                                        label="{{ _('Months Pregnant at time of disappearance') }}"
-                                                                        v-model="profile.months_pregnant" :rules="[validationRules.integer()]"
-                                                                        v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.months_pregnant`)"
-                                                                    ></v-text-field>
-
-                                                                </v-col>
-                                                                <v-col md="4">
-                                                                    <v-switch label="{{ _('Missing Relatives') }}"
-                                                                              v-model="profile.missing_relatives"></v-switch>
-                                                                </v-col>
-
-                                                            </v-row>
-
-                                                            <v-row>
-
-
-                                                                <v-col md="6">
-                                                                    <v-card class="pa-3">
-                                                                        <v-card-title class="subtitle-2">
-                                                                            {{ _('Details of the person who saw them last') }}
-                                                                        </v-card-title>
-                                                                        <v-card-text>
-                                                                            <v-textarea rows="1" label="{{ _('Name') }}"
-                                                                                        v-model="profile.saw_name"
-                                                                                        v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_name`)"
-                                                                            ></v-textarea>
-                                                                            <v-textarea rows="1"
-                                                                                        label="{{ _('Address') }}"
-                                                                                        v-model="profile.saw_address"
-                                                                                        v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_address`)"
-                                                                            ></v-textarea>
-                                                                            <v-text-field label="{{ _('Phone') }}"
-                                                                                          v-model="profile.saw_phone"
-                                                                                          v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_phone`)"
-                                                                            ></v-text-field>
-                                                                            <v-text-field label="{{ _('Email') }}"
-                                                                                          v-model="profile.saw_email"
-                                                                                          v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_email`)"
-                                                                            ></v-text-field>
-                                                                        </v-card-text>
-                                                                    </v-card>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <mix-yes-no-field title="{{ _('Seen in a detention center?') }}"
-                                                                           v-model="profile.seen_in_detention" :server-errors="serverErrors" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"></mix-yes-no-field>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <mix-yes-no-field v-model="profile.injured"
-                                                                           title="{{ _('Injured around time of disappearance?') }}"
-                                                                           :server-errors="serverErrors"
-                                                                           :error-key="`item.actor_profiles.${index}.injured.details`"
-                                                                    ></mix-yes-no-field>
-                                                                </v-col>
-
-
-                                                                <v-col md="6">
-                                                                    <mix-yes-no-field v-model="profile.known_dead"
-                                                                           title="{{ _('Known to be dead?') }}"
-                                                                           :server-errors="serverErrors"
-                                                                           :error-key="`item.actor_profiles.${index}.known_dead.details`"
-                                                                    ></mix-yes-no-field>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Details about circumstances of death') }}"
-                                                                                v-model="profile.death_details"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.death_details`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Personal Items (watch,ring,chains etc)') }}"
-                                                                                v-model="profile.personal_items"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.personal_items`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="2">
-                                                                    <v-text-field v-model="profile.height"
-                                                                                  label="{{ _('Height') }}"
-                                                                                  suffix="cm"
-                                                                                  :rules="[validationRules.integer()]"
-                                                                                  v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.height`)"
-                                                                    ></v-text-field>
-
-
-                                                                </v-col>
-                                                                <v-col md="2">
-                                                                    <v-text-field v-model="profile.weight"
-                                                                                  label="{{ _('Weight') }}"
-                                                                                  suffix="kg"
-                                                                                  :rules="[validationRules.integer()]"
-                                                                                  v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.weight`)"
-                                                                    ></v-text-field>
-
-
-                                                                </v-col>
-                                                                <v-col md="4">
-                                                                    <v-select label="{{ _('Physique') }}"
-                                                                              clearable
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              v-model="profile.physique"
-                                                                              :items="translations.physique"
-                                                                    ></v-select>
-
-                                                                </v-col>
-                                                                <v-col md="4">
-                                                                    <v-select label="{{ _('Hair loss') }}"
-                                                                              clearable
-                                                                              v-model="profile.hair_loss"
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              :items="translations.hairLoss"
-                                                                    ></v-select>
-
-                                                                </v-col>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <v-col md="3">
-                                                                    <v-select label="{{ _('Hair type') }}"
-                                                                              clearable
-                                                                              v-model="profile.hair_type"
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              :items="translations.hairType"
-                                                                    ></v-select>
-                                                                </v-col>
-                                                                <v-col md="3">
-                                                                    <v-select label="{{ _('Hair length') }}"
-                                                                              clearable
-                                                                              v-model="profile.hair_length"
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              :items="translations.hairLength"
-                                                                    ></v-select>
-                                                                </v-col>
-                                                                <v-col md="3">
-                                                                    <v-select label="{{ _('Hair color') }}"
-                                                                              clearable
-                                                                              v-model="profile.hair_color"
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              :items="translations.hairColor"
-                                                                    ></v-select>
-                                                                </v-col>
-                                                                <v-col md="3">
-                                                                    <v-select label="{{ _('Facial hair') }}"
-                                                                              clearable
-                                                                              v-model="profile.facial_hair"
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              :items="translations.facialHair"
-                                                                    ></v-select>
-                                                                </v-col>
-
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                v-model="profile.posture"
-                                                                                label="{{ _('Notes on posture and walking style') }}"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.posture`)"
-                                                                    ></v-textarea>
-                                                                    <v-select label="{{ _('Handness') }}"
-                                                                              clearable
-                                                                              :items="translations.handness"
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              v-model="profile.handedness"
-                                                                    ></v-select>
-                                                                    <v-select label="{{ _('Glasses') }}"
-                                                                              clearable
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              :items="translations.glasses"
-                                                                              v-model="profile.glasses"></v-select>
-                                                                    <v-select label="{{ _('Eye color') }}"
-                                                                              clearable
-                                                                              :items="translations.eyeColor"
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              v-model="profile.eye_color"></v-select>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <mix-select-field title="{{ _('Skin Markings') }}"
-                                                                            :items="translations.skinMarkings"
-                                                                            item-title="tr"
-                                                                            item-value="en"
-                                                                            multiple
-                                                                            v-model="profile.skin_markings"
-                                                                            :server-errors="serverErrors"
-                                                                            :error-key="`item.actor_profiles.${index}.skin_markings`"
-                                                                    ></mix-select-field>
-                                                                </v-col>
-
-                                                            </v-row>
-
-
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Distinctive characteristics (congenital)') }}"
-                                                                                v-model="profile.dist_char_con"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dist_char_con`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Distinctive characteristics (acquired)') }}"
-                                                                                v-model="profile.dist_char_acq"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dist_char_acq`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Physical habits') }}"
-                                                                                v-model="profile.physical_habits"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.physical_habits`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Other comments') }}"
-                                                                                v-model="profile.other"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.other`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Physician’s name and contact') }}"
-                                                                                v-model="profile.phys_name_contact"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.phys_name_contact`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)') }}"
-                                                                                v-model="profile.injuries"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.injuries`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age') }}"
-                                                                                v-model="profile.implants"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.implants`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Congenital malformations (indicate type and whether there is more than one relative with the same pathology)') }}"
-                                                                                v-model="profile.malforms"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.malforms`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Pain and/or ailments') }}"
-                                                                                v-model="profile.pain"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.pain`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Other medical conditions (specify type and age of occurrence)') }}"
-                                                                                v-model="profile.other_conditions"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.other_conditions`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Accidents (indicate age of occurrence)') }}"
-                                                                                v-model="profile.accidents"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.accidents`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="6">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Prescription drugs taken (indicate at what age and reason)') }}"
-                                                                                v-model="profile.pres_drugs"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.pres_drugs`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col cols="3">
-                                                                    <v-select
-                                                                            clearable
-                                                                            item-title="tr"
-                                                                            item-value="en"
-                                                                            :items="translations.smoker"
-                                                                            label="{{ _('Smoker') }}"
-                                                                            v-model="profile.smoker">
-
-                                                                    </v-select>
-                                                                </v-col>
-                                                                <v-col cols="3">
-                                                                    <v-switch
-                                                                            label="{{ _('Is there a Dental Record?') }}"
-                                                                            v-model="profile.dental_record"></v-switch>
-                                                                </v-col>
-                                                                <v-col cols="3">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Dentist\’s name and contact') }}"
-                                                                                v-model="profile.dentist_info"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dentist_info`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col cols="3">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)') }}"
-                                                                                v-model="profile.teeth_features"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.teeth_features`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <v-col md="3">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Dental problems (absences, infections, bleeding, etc...)') }}"
-                                                                                v-model="profile.dental_problems"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_problems`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="3">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Dental treatments (extractions, fillings, etc...) with dates') }}"
-                                                                                v-model="profile.dental_treatments"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_treatments`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="3">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Dental habits (toothpicks, smoking, etc...)') }}"
-                                                                                v-model="profile.dental_habits"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_habits`)"
-                                                                    ></v-textarea>
-                                                                </v-col>
-                                                                <v-col md="3">
-                                                                    <v-select label="{{ _('Case status') }}"
-                                                                              v-model="profile.case_status"
-                                                                              clearable
-                                                                              item-title="tr"
-                                                                              item-value="en"
-                                                                              :items="translations.caseStatus"
-                                                                    ></v-select>
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col>
-                                                                    <mix-reporters-field
-                                                                            v-model="profile.reporters"
-                                                                            :server-errors="serverErrors"
-                                                                            :error-key="`item.actor_profiles.${index}.reporters`"
-                                                                    ></mix-reporters-field>
-
-                                                                </v-col>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <v-col md="4">
-                                                                    <v-text-field
-                                                                            label="{{ _('Identified by (responsible institution)') }}"
-                                                                            v-model="profile.identified_by"
-                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.identified_by`)"
-                                                                    ></v-text-field>
-                                                                </v-col>
-                                                                <v-col md="4">
-                                                                    <v-switch
-                                                                            label="{{ _('Was the family notified?') }}"
-                                                                            v-model="profile.family_notified"></v-switch>
-
-                                                                </v-col>
-                                                                <v-col md="4">
-                                                                    <v-textarea rows="1"
-                                                                                label="{{ _('Location of reburial (full address)') }}"
-                                                                                v-model="profile.reburial_location"
-                                                                                v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.reburial_location`)"
-                                                                    ></v-textarea>
-
-                                                                </v-col>
-                                                            </v-row>
-
-                                                        </v-container>
                                                     </v-card-text>
+
+                                                    <v-card-text>
+                                                        <div class="text-subtitle-2 pa-1 ">{{ _('Description') }}</div>
+                                                        <tinymce-editor
+                                                                :key="index"
+                                                                :init="tinyConfig"
+                                                                v-model="profile.description"
+                                                        ></tinymce-editor>
+                                                    </v-card-text>
+
+                                                    <v-card-text>
+                                                        <!-- Sources -->
+                                                        <search-field
+                                                                v-model="profile.sources"
+                                                                api="/admin/api/sources/"
+                                                                item-title="title"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                label="{{ _('Sources') }}"
+                                                        ></search-field>
+                                                    </v-card-text>
+
+
+                                                    <v-card-text>
+                                                        <!-- Labels -->
+                                                        <search-field
+                                                                v-model="profile.labels"
+                                                                api="/admin/api/labels/"
+                                                                item-title="title"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                :show-copy-icon="advFeatures"
+                                                                label="{{ _('Labels') }}"
+                                                        ></search-field>
+                                                    </v-card-text>
+                                                    <v-card-text>
+                                                        <!-- Verified Labels -->
+                                                        <search-field
+                                                                v-model="profile.ver_labels"
+                                                                api="/admin/api/labels/"
+                                                                :query-params="{ fltr: 'verified', typ: 'for_actor' }"
+                                                                item-title="title"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                :show-copy-icon="advFeatures"
+                                                                label="{{ _('Verified Labels') }}"
+                                                        ></search-field>
+                                                    </v-card-text>
+
+                                                    <v-container fluid>
+                                                        <v-row>
+                                                            <v-col md="6">
+                                                                <!-- Publish Date -->
+
+                                                                <pop-date-time-field
+
+                                                                        label="{{ _('Publish Date')}}"
+                                                                        v-model="profile.publish_date">
+                                                                </pop-date-time-field>
+
+                                                            </v-col>
+                                                            <v-col md="6">
+                                                                <!-- Documentation Date -->
+                                                                <pop-date-time-field
+                                                                        label="{{ _('Documentation Date')}}"
+                                                                        v-model="profile.documentation_date">
+                                                                </pop-date-time-field>
+
+                                                            </v-col>
+                                                        </v-row>
+
+
+                                                        <v-card-text v-if="shouldDisplayField(profile.mode, 'mp')">
+
+
+                                                            <v-card class="my-6"
+                                                                    title="{{ _('Missing Person Profile') }}"
+                                                                    v-if="editedItem.type === 'Person'">
+
+                                                                <v-card-text v-show="profile.id || profile">
+                                                                    <v-container fluid>
+                                                                        <v-row>
+                                                                            <v-col cols="12" md="4">
+                                                                                <v-text-field label="{{ _('Last Address') }}"
+                                                                                            v-model="profile.last_address"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.last_address`)"
+                                                                                ></v-text-field>
+                                                                            </v-col>
+                                                                            <v-col md="4">
+                                                                                <v-text-field label="{{ _('Marriage History') }}"
+                                                                                            v-model="profile.marriage_history"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.marriage_history`)"
+                                                                                ></v-text-field>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="4">
+                                                                                <v-select
+                                                                                        label="{{ _('Pregnant at Disappearance') }}"
+                                                                                        clearable
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.pregnant"
+                                                                                        v-model="profile.pregnant_at_disappearance">
+
+                                                                                </v-select>
+                                                                            </v-col>
+                                                                            <v-col md="4">
+                                                                                <v-text-field
+                                                                                    label="{{ _('Months Pregnant at time of disappearance') }}"
+                                                                                    v-model="profile.months_pregnant" :rules="[validationRules.integer()]"
+                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.months_pregnant`)"
+                                                                                ></v-text-field>
+
+                                                                            </v-col>
+                                                                            <v-col md="4">
+                                                                                <v-switch label="{{ _('Missing Relatives') }}"
+                                                                                        v-model="profile.missing_relatives"></v-switch>
+                                                                            </v-col>
+
+                                                                        </v-row>
+
+                                                                        <v-row>
+
+
+                                                                            <v-col md="6">
+                                                                                <v-card class="pa-3">
+                                                                                    <v-card-title class="subtitle-2">
+                                                                                        {{ _('Details of the person who saw them last') }}
+                                                                                    </v-card-title>
+                                                                                    <v-card-text>
+                                                                                        <v-textarea rows="1" label="{{ _('Name') }}"
+                                                                                                    v-model="profile.saw_name"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_name`)"
+                                                                                        ></v-textarea>
+                                                                                        <v-textarea rows="1"
+                                                                                                    label="{{ _('Address') }}"
+                                                                                                    v-model="profile.saw_address"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_address`)"
+                                                                                        ></v-textarea>
+                                                                                        <v-text-field label="{{ _('Phone') }}"
+                                                                                                    v-model="profile.saw_phone"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_phone`)"
+                                                                                        ></v-text-field>
+                                                                                        <v-text-field label="{{ _('Email') }}"
+                                                                                                    v-model="profile.saw_email"
+                                                                                                    v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.saw_email`)"
+                                                                                        ></v-text-field>
+
+                                                                                    </v-card-text>
+                                                                                </v-card>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <mix-i title="{{ _('Seen in a detention center?') }}"
+                                                                                    v-model="profile.seen_in_detention"
+                                                                                    :server-errors="serverErrors" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"
+                                                                                ></mix-i>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <mix-i v-model="profile.injured"
+                                                                                    title="{{ _('Injured around time of disappearance?') }}"
+                                                                                    :server-errors="serverErrors"
+                                                                                    :error-key="`item.actor_profiles.${index}.injured.details`"
+                                                                                ></mix-i>
+                                                                            </v-col>
+
+
+                                                                            <v-col md="6">
+                                                                                <mix-i v-model="profile.known_dead"
+                                                                                    title="{{ _('Known to be dead?') }}"
+                                                                                    :server-errors="serverErrors"
+                                                                                    :error-key="`item.actor_profiles.${index}.known_dead.details`"
+                                                                                ></mix-i>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Details about circumstances of death') }}"
+                                                                                            v-model="profile.death_details"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.death_details`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Personal Items (watch,ring,chains etc)') }}"
+                                                                                            v-model="profile.personal_items"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.personal_items`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="2">
+                                                                                <v-text-field v-model="profile.height"
+                                                                                            label="{{ _('Height') }}"
+                                                                                            suffix="cm"
+                                                                                            :rules="[validationRules.integer()]"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.height`)"
+                                                                                ></v-text-field>
+
+
+                                                                            </v-col>
+                                                                            <v-col md="2">
+                                                                                <v-text-field v-model="profile.weight"
+                                                                                            label="{{ _('Weight') }}"
+                                                                                            suffix="kg"
+                                                                                            :rules="[validationRules.integer()]"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.weight`)"
+                                                                                ></v-text-field>
+
+
+                                                                            </v-col>
+                                                                            <v-col md="4">
+                                                                                <v-select label="{{ _('Physique') }}"
+                                                                                        clearable
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        v-model="profile.physique"
+                                                                                        :items="translations.physique"
+                                                                                ></v-select>
+
+                                                                            </v-col>
+                                                                            <v-col md="4">
+                                                                                <v-select label="{{ _('Hair loss') }}"
+                                                                                        clearable
+                                                                                        v-model="profile.hair_loss"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.hairLoss"
+                                                                                ></v-select>
+
+                                                                            </v-col>
+                                                                        </v-row>
+
+                                                                        <v-row>
+                                                                            <v-col md="3">
+                                                                                <v-select label="{{ _('Hair type') }}"
+                                                                                        clearable
+                                                                                        v-model="profile.hair_type"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.hairType"
+                                                                                ></v-select>
+                                                                            </v-col>
+                                                                            <v-col md="3">
+                                                                                <v-select label="{{ _('Hair length') }}"
+                                                                                        clearable
+                                                                                        v-model="profile.hair_length"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.hairLength"
+                                                                                ></v-select>
+                                                                            </v-col>
+                                                                            <v-col md="3">
+                                                                                <v-select label="{{ _('Hair color') }}"
+                                                                                        clearable
+                                                                                        v-model="profile.hair_color"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.hairColor"
+                                                                                ></v-select>
+                                                                            </v-col>
+                                                                            <v-col md="3">
+                                                                                <v-select label="{{ _('Facial hair') }}"
+                                                                                        clearable
+                                                                                        v-model="profile.facial_hair"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.facialHair"
+                                                                                ></v-select>
+                                                                            </v-col>
+
+                                                                        </v-row>
+
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            v-model="profile.posture"
+                                                                                            label="{{ _('Notes on posture and walking style') }}"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.posture`)"
+                                                                                ></v-textarea>
+                                                                                <v-select label="{{ _('Handness') }}"
+                                                                                        clearable
+                                                                                        :items="translations.handness"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        v-model="profile.handedness"></v-select>
+                                                                                <v-select label="{{ _('Glasses') }}"
+                                                                                        clearable
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.glasses"
+                                                                                        v-model="profile.glasses"></v-select>
+                                                                                <v-select label="{{ _('Eye color') }}"
+                                                                                        clearable
+                                                                                        :items="translations.eyeColor"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        v-model="profile.eye_color"></v-select>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <mix-ii title="{{ _('Skin Markings') }}"
+                                                                                        :items="translations.skinMarkings"
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        multiple
+                                                                                        v-model="profile.skin_markings"
+                                                                                        :server-errors="serverErrors"
+                                                                                        :error-key="`item.actor_profiles.${index}.skin_markings`"
+                                                                                ></mix-ii>
+                                                                            </v-col>
+
+                                                                        </v-row>
+
+
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Distinctive characteristics (congenital)') }}"
+                                                                                            v-model="profile.dist_char_con"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dist_char_con`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Distinctive characteristics (acquired)') }}"
+                                                                                            v-model="profile.dist_char_acq"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dist_char_acq`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Physical habits') }}"
+                                                                                            v-model="profile.physical_habits"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.physical_habits`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Other comments') }}"
+                                                                                            v-model="profile.other"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.other`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                        </v-row>
+
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Physician’s name and contact') }}"
+                                                                                            v-model="profile.phys_name_contact"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.phys_name_contact`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)') }}"
+                                                                                            v-model="profile.injuries"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.injuries`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age') }}"
+                                                                                            v-model="profile.implants"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.implants`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Congenital malformations (indicate type and whether there is more than one relative with the same pathology)') }}"
+                                                                                            v-model="profile.malforms"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.malforms`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Pain and/or ailments') }}"
+                                                                                            v-model="profile.pain"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.pain`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Other medical conditions (specify type and age of occurrence)') }}"
+                                                                                            v-model="profile.other_conditions"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.other_conditions`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Accidents (indicate age of occurrence)') }}"
+                                                                                            v-model="profile.accidents"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.accidents`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="6">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Prescription drugs taken (indicate at what age and reason)') }}"
+                                                                                            v-model="profile.pres_drugs"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.pres_drugs`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col cols="3">
+                                                                                <v-select
+                                                                                        clearable
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.smoker"
+                                                                                        label="{{ _('Smoker') }}"
+                                                                                        v-model="profile.smoker">
+
+                                                                                </v-select>
+                                                                            </v-col>
+                                                                            <v-col cols="3">
+                                                                                <v-switch
+                                                                                        label="{{ _('Is there a Dental Record?') }}"
+                                                                                        v-model="profile.dental_record"></v-switch>
+                                                                            </v-col>
+                                                                            <v-col cols="3">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Dentist\’s name and contact') }}"
+                                                                                            v-model="profile.dentist_info"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dentist_info`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col cols="3">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)') }}"
+                                                                                            v-model="profile.teeth_features"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.teeth_features`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+
+                                                                        </v-row>
+
+                                                                        <v-row>
+                                                                            <v-col md="3">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Dental problems (absences, infections, bleeding, etc...)') }}"
+                                                                                            v-model="profile.dental_problems"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_problems`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="3">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Dental treatments (extractions, fillings, etc...) with dates') }}"
+                                                                                            v-model="profile.dental_treatments"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_treatments`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="3">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Dental habits (toothpicks, smoking, etc...)') }}"
+                                                                                            v-model="profile.dental_habits"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_habits`)"
+                                                                                ></v-textarea>
+                                                                            </v-col>
+                                                                            <v-col md="3">
+                                                                                <v-select label="{{ _('Case status') }}"
+                                                                                        v-model="profile.case_status"
+                                                                                        clearable
+                                                                                        item-title="tr"
+                                                                                        item-value="en"
+                                                                                        :items="translations.caseStatus"
+                                                                                ></v-select>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col>
+                                                                                <mix-iii
+                                                                                        v-model="profile.reporters"
+                                                                                        :server-errors="serverErrors"
+                                                                                        :error-key="`item.actor_profiles.${index}.reporters`"
+                                                                                ></mix-iii>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
+                                                                            <v-col md="4">
+                                                                                <v-text-field
+                                                                                        label="{{ _('Identified by (responsible institution)') }}"
+                                                                                        v-model="profile.identified_by"
+                                                                                        v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.identified_by`)"
+                                                                                ></v-text-field>
+                                                                            </v-col>
+                                                                            <v-col md="4">
+                                                                                <v-switch
+                                                                                        label="{{ _('Was the family notified?') }}"
+                                                                                        v-model="profile.family_notified"></v-switch>
+
+                                                                            </v-col>
+                                                                            <v-col md="4">
+                                                                                <v-textarea rows="1"
+                                                                                            label="{{ _('Location of reburial (full address)') }}"
+                                                                                            v-model="profile.reburial_location"
+                                                                                            v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.reburial_location`)"
+                                                                                ></v-textarea>
+
+                                                                            </v-col>
+                                                                        </v-row>
+
+                                                                    </v-container>
+                                                                </v-card-text>
+                                                            </v-card>
+                                                        </v-card-text>
+                                                    </v-container>
                                                 </v-card>
-                                            </v-card-text>
-                                        </v-container>
-                                    </v-card>
-                                </v-window-item>
-                            </v-window>
-                        </v-row>
-
-
-                        <v-row>
-                            <v-col col="12">
-                                <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
-                            </v-col>
-
-                        </v-row>
-
-
-                        <v-row>
-                            <v-col cols="12">
-                                {% include 'admin/partials/edit_related_bulletins.html' %}
-                            </v-col>
-                            <v-col cols="12">
-                                {% include 'admin/partials/edit_related_actors.html' %}
-                            </v-col>
-                            <v-col cols="12">
-                                {% include 'admin/partials/edit_related_incidents.html' %}
-                            </v-col>
-                            <v-col cols="12">
-                                {% include 'admin/partials/media_dialog.html' %}
-                            </v-col>
-                        </v-row>
-
-                        <v-row>
-                            <v-col cols="12" md="6">
-                                <v-textarea
-                                        outlined
-                                        v-model="editedItem.comments"
-                                        :rules="[validationRules.required()]"
+                                            </v-window-item>
+                                        </v-window>
+                                    </v-row>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'events_section')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'related_bulletins')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    {% include 'admin/partials/edit_related_bulletins.html' %}
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'related_actors')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    {% include 'admin/partials/edit_related_actors.html' %}
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'related_incidents')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    {% include 'admin/partials/edit_related_incidents.html' %}
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'medias')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    {% include 'admin/partials/media_dialog.html' %}
+                                </div>
+                                <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
+                            </template>
+                        </div>
+                        <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
+                            <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
+                                <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
+                                    <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
                                         label="{{ _('Comments') }}"
                                         v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
-                                ></v-textarea>
-                            </v-col>
+                                    ></v-textarea>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
+                                    <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"
+                                        v-model="editedItem.status" label="{{ _('Status') }}"></v-select>
+                                </div>
+                            </template>
 
-                            <v-col cols="12" md="6">
-                                <v-row>
+                            {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
+                                <div class="grid-col-span-1 px-3 py-2" v-if="!editedItem.id">
                                     <v-select
-                                            :disabled="statusDisabled"
-                                            item-title="tr"
-                                            item-value="en"
-                                            :items="statusItems"
-                                            class="mx-2"
-                                            v-model="editedItem.status"
-                                            label="{{ _('Status') }}"
+                                            :color="editedItem.roles?.length ? 'error' : 'blue darken-1'"
+                                            :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
+                                            chips
+                                            :disabled="unrestricted"
+                                            item-title="name"
+                                            return-object
+                                            :items="allowedRoles"
+                                            multiple
+                                            v-model="editedItem.roles"
+                                            label="{{ _('Restrict Actor to Access Group(s)') }}"
+                                            :rules="
+                                                !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
+                                            "
+                                            clearable
                                     ></v-select>
-                                </v-row>
-
-                                {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
-                                    <v-row v-if="!editedItem.id">
-                                        <v-select
-                                                :color="editedItem.roles?.length ? 'error' : 'blue darken-1'"
-                                                :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
-                                                chips
-                                                :disabled="unrestricted"
-                                                item-title="name"
-                                                return-object
-                                                :items="allowedRoles"
-                                                multiple
-                                                v-model="editedItem.roles"
-                                                label="{{ _('Restrict Actor to Access Group(s)') }}"
-                                                :rules="
-                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
-                                                "
-                                                clearable
-                                        ></v-select>
-                                        <v-checkbox
-                                                color="error"
-                                                @change="unrestricted? editedItem.roles = [] : null"
-                                                class="mx-2"
-                                                label="{{ _('No Access Access Groups') }}"
-                                                v-model="unrestricted">
-                                        </v-checkbox>
-                                    </v-row>
-                                {% endif %}
-
-                            </v-col>
-                        </v-row>
-
+                                    <v-checkbox
+                                            color="error"
+                                            @change="unrestricted? editedItem.roles = [] : null"
+                                            class="mx-2"
+                                            label="{{ _('No Access Access Groups') }}"
+                                            v-model="unrestricted">
+                                    </v-checkbox>
+                                </div>
+                            {% endif %}
+                        </div>
                     </v-container>
                 </v-card-text>
 

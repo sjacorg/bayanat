@@ -84,6 +84,9 @@
 
 
                                 <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','Mod']) %}
+                                    <v-btn href="/admin/actor-fields/" variant="outlined" class="ma-2" prepend-icon="mdi-pencil">{{ _('Edit Actor Form') }}</v-btn>
+                                {% endif %}
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn @click="editItem" color="primary" variant="elevated"
                                            class="ma-2">{{ _('New Actor') }}</v-btn>
@@ -364,6 +367,7 @@
     <script src="/static/js/components/IdNumberDynamicField.js"></script>
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
+    <script src="/static/js/components/FieldRenderer.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/SnapshotDialog.js"></script>
@@ -1464,7 +1468,7 @@
 
                 editItem(item) {
                     this.actorDrawer = false;
-
+                    this.fetchDynamicFields({ entityType: 'actor' });
                     this.fetchIdNumberTypes();
 
                     if (!item.id) {
@@ -1694,6 +1698,7 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('ReadMore', ReadMore);
+        app.component('FieldRenderer', FieldRenderer);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);

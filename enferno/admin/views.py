@@ -4198,6 +4198,11 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
     else:
         return HTTPResponse.error("Error updating Media", status=500)
 
+# Actor fields routes
+@admin.route("/actor-fields/", defaults={"id": None})
+def actor_fields(id: Optional[t.id]) -> str:
+    """Endpoint for actor fields configuration."""
+    return render_template("admin/actor-fields.html")
 
 # Actor routes
 @admin.route("/actors/", defaults={"id": None})
@@ -5474,6 +5479,11 @@ def api_role_import() -> Response:
     else:
         return HTTPResponse.error("Error")
 
+# Incident fields routes
+@admin.route("/incident-fields/", defaults={"id": None})
+def incident_fields(id: Optional[t.id]) -> str:
+    """Endpoint for incident fields configuration."""
+    return render_template("admin/incident-fields.html")
 
 # Incident routes
 @admin.route("/incidents/", defaults={"id": None})
