@@ -77,7 +77,7 @@ const BulletinSearchBox = Vue.defineComponent({
       } else {
         this.dyn.set(field.name, {
           name: field.name,
-          op: operator ?? this.getDefaultOperator(field),
+          op: operator ?? this.$root.getSearchOperatorFromFieldType(field),
           value: value
         })
       }
@@ -97,17 +97,6 @@ const BulletinSearchBox = Vue.defineComponent({
 
       this.$emit('update:modelValue', newQ)
     }, 350),
-
-    getDefaultOperator(field) {
-      switch (field.field_type) {
-        case 'text':
-        case 'long_text': return 'contains'
-        case 'number': return 'eq'
-        case 'select': return 'all'
-        case 'datetime': return 'between'
-        default: return 'eq'
-      }
-    }
   },
 
   template: `
