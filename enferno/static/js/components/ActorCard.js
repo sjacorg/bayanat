@@ -256,10 +256,10 @@ const ActorCard = Vue.defineComponent({
             <uni-field v-if="$root.isFieldActive(field, 'father_name')" :caption="translations.fathersName_" :english="actor.father_name" :arabic="actor.father_name_ar"></uni-field>
             <uni-field v-if="$root.isFieldActive(field, 'mother_name')" :caption="translations.mothersName_" :english="actor.mother_name" :arabic="actor.mother_name_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, '_sex') || $root.isFieldActive(field, '_age') || $root.isFieldActive(field, '_civilian')" :class="[...$root.fieldClassDrawer(field), 'd-flex']">
-            <uni-field v-if="$root.isFieldActive(field, '_sex')" :caption="translations.sex_" :english="actor._sex"></uni-field>
-            <uni-field v-if="$root.isFieldActive(field, '_age')" :caption="translations.age_" :english="actor._age"></uni-field>
-            <uni-field v-if="$root.isFieldActive(field, '_civilian')" :caption="translations.civilian_" :english="actor._civilian"></uni-field>
+          <div v-else-if="$root.isFieldActive(field, 'sex') || $root.isFieldActive(field, 'age') || $root.isFieldActive(field, 'civilian')" :class="[...$root.fieldClassDrawer(field), 'd-flex']">
+            <uni-field v-if="$root.isFieldActive(field, 'sex')" :caption="translations.sex_" :english="actor._sex"></uni-field>
+            <uni-field v-if="$root.isFieldActive(field, 'age')" :caption="translations.age_" :english="actor._age"></uni-field>
+            <uni-field v-if="$root.isFieldActive(field, 'civilian')" :caption="translations.civilian_" :english="actor._civilian"></uni-field>
           </div>
           <div v-else-if="$root.isFieldActive(field, 'origin_place')" :class="$root.fieldClassDrawer(field)">
             <uni-field :caption="translations.originPlace_" v-if="actor.origin_place" :english="actor.origin_place.full_string"></uni-field>
@@ -268,8 +268,8 @@ const ActorCard = Vue.defineComponent({
             <uni-field :caption="translations.familyStatus_" :english="actor.family_status"></uni-field>
           </div>
           <div v-else-if="$root.isFieldActive(field, 'occupation') || $root.isFieldActive(field, 'position')" :class="[...$root.fieldClassDrawer(field), 'd-flex']">
-            <uni-field :caption="translations.occupation_" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
-            <uni-field :caption="translations.position_" :english="actor.position" :arabic="actor.position_ar"></uni-field>
+            <uni-field v-if="$root.isFieldActive(field, 'occupation')" :caption="translations.occupation_" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
+            <uni-field v-if="$root.isFieldActive(field, 'position')" :caption="translations.position_" :english="actor.position" :arabic="actor.position_ar"></uni-field>
           </div>
           <div v-else-if="$root.isFieldActive(field, 'dialects') && actor.dialects?.length" :class="$root.fieldClassDrawer(field)">
             <v-card :subtitle="translations.spokenDialects_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
