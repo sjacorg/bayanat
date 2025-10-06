@@ -1510,6 +1510,9 @@ class IncidentQueryModel(QueryBaseModel):
     ids: list[int] = Field(default_factory=list)
     potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
     claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "field_123", "op": "contains", "value": "test"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
