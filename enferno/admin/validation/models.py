@@ -639,6 +639,9 @@ class PartialActorProfileModel(BaseValidationModel):
 
 
 class ActorValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     type: str = DEFAULT_STRING_FIELD  # type: ignore
     name: Optional[str] = DEFAULT_STRING_FIELD
     name_ar: Optional[str] = DEFAULT_STRING_FIELD
@@ -1374,6 +1377,9 @@ class ActorQueryModel(QueryBaseModel):
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "field_name", "op": "contains", "value": "test"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
     @field_validator("tags")
     def validate_tags(cls, v):
