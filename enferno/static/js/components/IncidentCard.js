@@ -187,19 +187,6 @@ const IncidentCard = Vue.defineComponent({
                 <div class="caption grey--text mb-2">{{ translations.description_ }}</div>
                 <read-more><div class="rich-description" v-html="incident.description"></div></read-more>
               </v-card>
-              </div>
-              <div v-else-if="index === 2" class="w-100">
-                <!-- Map -->
-                <v-card :loading="geoMapLoading"  class="ma-2 pa-2">
-                  <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0"
-                  color="primary lighten-2">
-                  <v-icon left>mdi-map</v-icon>
-                  {{ translations.loadGeoMap_ }}
-                </v-btn>
-                <v-card-text v-if="geoMapOn">
-                  <global-map :model-value="mapLocations"></global-map>
-                </v-card-text>
-              </v-card>
             </div>
             <div v-else-if="$root.isFieldActive(field, 'potential_violations') && incident.potential_violations && incident.potential_violations.length" :class="$root.fieldClassDrawer(field)">
               <v-card class="ma-2">
@@ -282,6 +269,19 @@ const IncidentCard = Vue.defineComponent({
               <div v-else>
                 <uni-field v-if="incident?.[field.name]" :caption="field.title" :english="$root.findFieldOptionByValue(field, incident?.[field.name])?.label ?? incident?.[field.name]"></uni-field>
               </div>
+            </div>
+            <div v-if="index === 1" class="w-100">
+              <!-- Map -->
+              <v-card :loading="geoMapLoading"  class="ma-2 pa-2">
+                <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0"
+                  color="primary lighten-2">
+                  <v-icon left>mdi-map</v-icon>
+                  {{ translations.loadGeoMap_ }}
+                </v-btn>
+                <v-card-text v-if="geoMapOn">
+                  <global-map :model-value="mapLocations"></global-map>
+                </v-card-text>
+              </v-card>
             </div>
           </template>
         </div>
