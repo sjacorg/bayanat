@@ -657,8 +657,11 @@ class SheetImport:
             idn_number = self.row.get(idn_number_col) if idn_number_col else None
 
             # Skip if number is empty/null/whitespace
-            if not idn_number or not idn_number.strip():
+            if not idn_number or not str(idn_number).strip():
                 continue
+
+            # cast to string and strip whitespace
+            idn_number = str(idn_number).strip()
 
             # Handle mismatch if type is not valid/missing
             if not idn_type or idn_type not in self.id_number_types:
@@ -666,7 +669,7 @@ class SheetImport:
                 continue
 
             # Create valid ID number entry
-            idn = {"type": idn_type, "number": idn_number.strip()}
+            idn = {"type": idn_type, "number": idn_number}
 
             self.actor.id_number.append(idn)
             self.data_import.add_to_log(f"Processed idnumber")

@@ -602,24 +602,24 @@
                                                                     </v-card>
                                                                 </v-col>
                                                                 <v-col md="6">
-                                                                    <mix-i title="{{ _('Seen in a detention center?') }}"
-                                                                           v-model="profile.seen_in_detention" :server-errors="serverErrors" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"></mix-i>
+                                                                    <mix-yes-no-field title="{{ _('Seen in a detention center?') }}"
+                                                                           v-model="profile.seen_in_detention" :server-errors="serverErrors" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"></mix-yes-no-field>
                                                                 </v-col>
                                                                 <v-col md="6">
-                                                                    <mix-i v-model="profile.injured"
+                                                                    <mix-yes-no-field v-model="profile.injured"
                                                                            title="{{ _('Injured around time of disappearance?') }}"
                                                                            :server-errors="serverErrors"
                                                                            :error-key="`item.actor_profiles.${index}.injured.details`"
-                                                                    ></mix-i>
+                                                                    ></mix-yes-no-field>
                                                                 </v-col>
 
 
                                                                 <v-col md="6">
-                                                                    <mix-i v-model="profile.known_dead"
+                                                                    <mix-yes-no-field v-model="profile.known_dead"
                                                                            title="{{ _('Known to be dead?') }}"
                                                                            :server-errors="serverErrors"
                                                                            :error-key="`item.actor_profiles.${index}.known_dead.details`"
-                                                                    ></mix-i>
+                                                                    ></mix-yes-no-field>
                                                                 </v-col>
                                                             </v-row>
                                                             <v-row>
@@ -751,7 +751,7 @@
                                                                               v-model="profile.eye_color"></v-select>
                                                                 </v-col>
                                                                 <v-col md="6">
-                                                                    <mix-ii title="{{ _('Skin Markings') }}"
+                                                                    <mix-select-field title="{{ _('Skin Markings') }}"
                                                                             :items="translations.skinMarkings"
                                                                             item-title="tr"
                                                                             item-value="en"
@@ -759,7 +759,7 @@
                                                                             v-model="profile.skin_markings"
                                                                             :server-errors="serverErrors"
                                                                             :error-key="`item.actor_profiles.${index}.skin_markings`"
-                                                                    ></mix-ii>
+                                                                    ></mix-select-field>
                                                                 </v-col>
 
                                                             </v-row>
@@ -930,11 +930,11 @@
                                                             </v-row>
                                                             <v-row>
                                                                 <v-col>
-                                                                    <mix-iii
+                                                                    <mix-reporters-field
                                                                             v-model="profile.reporters"
                                                                             :server-errors="serverErrors"
                                                                             :error-key="`item.actor_profiles.${index}.reporters`"
-                                                                    ></mix-iii>
+                                                                    ></mix-reporters-field>
 
                                                                 </v-col>
                                                             </v-row>
