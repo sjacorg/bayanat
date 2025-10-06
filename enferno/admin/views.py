@@ -4198,11 +4198,13 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
     else:
         return HTTPResponse.error("Error updating Media", status=500)
 
+
 # Actor fields routes
 @admin.route("/actor-fields/", defaults={"id": None})
 def actor_fields(id: Optional[t.id]) -> str:
     """Endpoint for actor fields configuration."""
     return render_template("admin/actor-fields.html")
+
 
 # Actor routes
 @admin.route("/actors/", defaults={"id": None})
@@ -5479,11 +5481,13 @@ def api_role_import() -> Response:
     else:
         return HTTPResponse.error("Error")
 
+
 # Incident fields routes
 @admin.route("/incident-fields/", defaults={"id": None})
 def incident_fields(id: Optional[t.id]) -> str:
     """Endpoint for incident fields configuration."""
     return render_template("admin/incident-fields.html")
+
 
 # Incident routes
 @admin.route("/incidents/", defaults={"id": None})
@@ -6899,9 +6903,11 @@ def api_dynamic_field_update(field_id: int) -> Response:
             field.entity_type = field_data["entity_type"]
             field.ui_component = field_data.get("ui_component")
             field.schema_config = schema_config
-            field.ui_config = field_data.get("ui_config", {})
-            field.validation_config = field_data.get("validation_config", {})
-            field.options = field_data.get("options", [])
+            field.ui_config = field_data.get("ui_config", field.ui_config or {})
+            field.validation_config = field_data.get(
+                "validation_config", field.validation_config or {}
+            )
+            field.options = field_data.get("options", field.options or [])
             field.active = field_data.get("active", True)
             field.searchable = field_data.get("searchable", False)
             field.sort_order = field_data.get("sort_order", field.sort_order)
