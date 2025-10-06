@@ -550,100 +550,52 @@ ACTOR_CORE_FIELDS = {
 }
 
 
+def _seed_entity_core_fields(entity_type: str, core_fields_dict: dict):
+    """
+    Seed core fields for a specific entity type (idempotent).
+
+    Args:
+        entity_type: The entity type ('bulletin', 'incident', 'actor')
+        core_fields_dict: Dictionary of core field definitions
+    """
+    for name, config in core_fields_dict.items():
+        # Check if core field already exists
+        existing = DynamicField.query.filter_by(
+            name=name, entity_type=entity_type, core=True
+        ).first()
+
+        # Create ui_config with html_template if specified
+        ui_config = {}
+        if config.get("html_template"):
+            ui_config["html_template"] = config["html_template"]
+
+        if not existing:
+            # Create new core field
+            field = DynamicField(
+                name=name,
+                title=config["title"],
+                entity_type=entity_type,
+                field_type=config["field_type"],
+                ui_component=config["ui_component"],
+                sort_order=config["sort_order"],
+                core=True,
+                active=config.get("visible", True),
+                ui_config=ui_config,
+                options=config.get("options", []),
+            )
+            field.save()
+            print(f"✅ Created {entity_type} core field: {name}")
+        else:
+            print(f"✓ {entity_type.title()} core field already exists: {name}")
+
+
 def seed_core_fields():
     """
     Seed core fields into the database for bulletin, incident, and actor entities (idempotent).
     This includes both simple fields and complex HTML block fields.
     Can be run multiple times safely.
     """
-
-    # Seed bulletin core fields
-    for name, config in BULLETIN_CORE_FIELDS.items():
-        # Check if core field already exists
-        existing = DynamicField.query.filter_by(
-            name=name, entity_type="bulletin", core=True
-        ).first()
-
-        # Create ui_config with html_template if specified
-        ui_config = {}
-        if config.get("html_template"):
-            ui_config["html_template"] = config["html_template"]
-
-        if not existing:
-            # Create new core field
-            field = DynamicField(
-                name=name,
-                title=config["title"],
-                entity_type="bulletin",
-                field_type=config["field_type"],
-                ui_component=config["ui_component"],
-                sort_order=config["sort_order"],
-                core=True,
-                active=config.get("visible", True),
-                ui_config=ui_config,
-                options=config.get("options", []),
-            )
-            field.save()
-            print(f"✅ Created bulletin core field: {name}")
-        else:
-            print(f"✓ Bulletin core field already exists: {name}")
-
-    # Seed incident core fields
-    for name, config in INCIDENT_CORE_FIELDS.items():
-        # Check if core field already exists
-        existing = DynamicField.query.filter_by(
-            name=name, entity_type="incident", core=True
-        ).first()
-
-        # Create ui_config with html_template if specified
-        ui_config = {}
-        if config.get("html_template"):
-            ui_config["html_template"] = config["html_template"]
-
-        if not existing:
-            # Create new core field
-            field = DynamicField(
-                name=name,
-                title=config["title"],
-                entity_type="incident",
-                field_type=config["field_type"],
-                ui_component=config["ui_component"],
-                sort_order=config["sort_order"],
-                core=True,
-                active=config.get("visible", True),
-                ui_config=ui_config,
-                options=config.get("options", []),
-            )
-            field.save()
-            print(f"✅ Created incident core field: {name}")
-        else:
-            print(f"✓ Incident core field already exists: {name}")
-
-    # Seed actor core fields
-    for name, config in ACTOR_CORE_FIELDS.items():
-        # Check if core field already exists
-        existing = DynamicField.query.filter_by(name=name, entity_type="actor", core=True).first()
-
-        # Create ui_config with html_template if specified
-        ui_config = {}
-        if config.get("html_template"):
-            ui_config["html_template"] = config["html_template"]
-
-        if not existing:
-            # Create new core field
-            field = DynamicField(
-                name=name,
-                title=config["title"],
-                entity_type="actor",
-                field_type=config["field_type"],
-                ui_component=config["ui_component"],
-                sort_order=config["sort_order"],
-                core=True,
-                active=config.get("visible", True),
-                ui_config=ui_config,
-                options=config.get("options", []),
-            )
-            field.save()
-            print(f"✅ Created actor core field: {name}")
-        else:
-            print(f"✓ Actor core field already exists: {name}")
+    # Seed all entity types using centralized function
+    _seed_entity_core_fields("bulletin", BULLETIN_CORE_FIELDS)
+    _seed_entity_core_fields("incident", INCIDENT_CORE_FIELDS)
+    _seed_entity_core_fields("actor", ACTOR_CORE_FIELDS)
