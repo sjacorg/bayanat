@@ -188,7 +188,7 @@ const IncidentCard = Vue.defineComponent({
                 <read-more><div class="rich-description" v-html="incident.description"></div></read-more>
               </v-card>
               </div>
-              <div v-else-if="index === 2" :class="$root.fieldClassDrawer(field)">
+              <div v-else-if="index === 2" class="w-100">
                 <!-- Map -->
                 <v-card :loading="geoMapLoading"  class="ma-2 pa-2">
                   <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0"
