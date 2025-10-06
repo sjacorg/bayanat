@@ -24,7 +24,7 @@
             <v-sheet
                     id="card-content"
                     style="height: calc(100vh - 64px);"
-                    class="overflow-y-auto pt-11">
+                    class="overflow-y-auto">
                 <v-card-text>
                     <v-container fluid>
                         <div v-if="movableDynamicFields.length" class="form-grid mt-4">
@@ -89,13 +89,78 @@
                                     <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'related_bulletins')" :class="[fieldClass(field), 'px-3 py-2']">
-                                    {% include 'admin/partials/edit_related_bulletins.html' %}
+                                    <!-- Relate Bulletins Base Card -->
+                                    <v-card>
+                                        <v-toolbar class="px-4">
+                                            <v-btn variant="outlined" :prepend-icon="br_loaded? 'mdi-chevron-down': 'mdi-chevron-right'" :loading="br_loading" :disabled="br_loaded"
+                                                @click.stop="loadBulletinRelations"
+                                            >{{ _('Load Related Bulletins') }}</v-btn>
+                                            <v-spacer></v-spacer>
+
+                                            <v-text-field
+                                                    v-if="br_loaded"
+                                                    class="mt-5"
+                                                    density="compact"
+                                                    v-model="relateBulletinTerm"
+                                                    label="{{ _('Search & Relate Bulletins') }}"
+                                                    @keydown.enter="searchRelatedBulletins"
+                                                    @click:append="searchRelatedBulletins"
+                                                    append-icon="mdi-magnify"
+                                            ></v-text-field>
+                                        </v-toolbar>
+
+
+                                        {% include 'admin/partials/related_bulletins_grid.html' %}
+                                    </v-card>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'related_actors')" :class="[fieldClass(field), 'px-3 py-2']">
-                                    {% include 'admin/partials/edit_related_actors.html' %}
+                                    <!-- Relate Actors Base Card -->
+                                    <v-card>
+                                        <v-toolbar class="px-4">
+                                            <v-btn variant="outlined" :prepend-icon="ar_loaded? 'mdi-chevron-down': 'mdi-chevron-right'"  :loading="ar_loading" :disabled="ar_loaded"
+                                                @click.stop="loadActorRelations"
+                                            >{{ _('Load Related Actors') }}</v-btn>
+
+                                            <v-spacer></v-spacer>
+
+                                            <v-text-field
+                                                    density="compact"
+                                                    v-if="ar_loaded"
+                                                    class="mt-5"
+                                                    v-model="relateActorTerm"
+                                                    label="{{ _('Search & Relate Actors') }}"
+                                                    @keydown.enter="searchRelatedActors"
+                                                    @click:append="searchRelatedActors"
+                                                    append-icon="mdi-magnify"
+                                            ></v-text-field>
+                                        </v-toolbar>
+
+                                        {% include 'admin/partials/related_actors_grid.html' %}
+                                    </v-card>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'related_incidents')" :class="[fieldClass(field), 'px-3 py-2']">
-                                    {% include 'admin/partials/edit_related_incidents.html' %}
+                                    <!-- Relate Incidents Base Card -->
+                                    <v-card>
+                                        <v-toolbar class="px-4">
+                                            <v-btn variant="outlined" :prepend-icon="ir_loaded? 'mdi-chevron-down': 'mdi-chevron-right'"  :loading="ir_loading" :disabled="ir_loaded"
+                                                @click.stop="loadIncidentRelations"
+                                            >{{ _('Load Related Incidents') }}</v-btn>
+                                            <v-spacer></v-spacer>
+
+                                            <v-text-field
+                                                    class="mt-5"
+                                                    v-if="ir_loaded"
+                                                    density="compact"
+                                                    v-model="relateIncidentTerm"
+                                                    label="{{ _('Search & Relate Incidents') }}"
+                                                    @keydown.enter="searchRelatedIncidents"
+                                                    @click:append="searchRelatedIncidents"
+                                                    append-icon="mdi-magnify"
+                                            ></v-text-field>
+                                        </v-toolbar>
+
+                                        {% include 'admin/partials/related_incidents_grid.html' %}
+                                    </v-card>
                                 </div>
                                 <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
                             </template>

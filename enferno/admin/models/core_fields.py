@@ -207,6 +207,7 @@ INCIDENT_CORE_FIELDS = {
         "visible": True,
         "core": True,
         "schema_config": {"allow_multiple": True},
+        "ui_config": {"width": "w-50"},
     },
     "claimed_violations": {
         "title": "Claimed Violations",
@@ -216,6 +217,7 @@ INCIDENT_CORE_FIELDS = {
         "visible": True,
         "core": True,
         "schema_config": {"allow_multiple": True},
+        "ui_config": {"width": "w-50"},
     },
     "labels": {
         "title": "Labels",
@@ -225,6 +227,7 @@ INCIDENT_CORE_FIELDS = {
         "visible": True,
         "core": True,
         "schema_config": {"allow_multiple": True},
+        "ui_config": {"width": "w-50"},
     },
     "locations": {
         "title": "Locations",
@@ -234,6 +237,7 @@ INCIDENT_CORE_FIELDS = {
         "visible": True,
         "core": True,
         "schema_config": {"allow_multiple": True},
+        "ui_config": {"width": "w-50"},
     },
     "events_section": {
         "title": "Events",
