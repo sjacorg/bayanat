@@ -71,7 +71,7 @@ FROM (
         ('ver_labels', 'Verified Labels', 'bulletin', 'multi_select', FALSE, 'multi_dropdown', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 8, TRUE),
         ('publish_date', 'Publish Date', 'bulletin', 'datetime', FALSE, 'date_picker', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 9, TRUE),
         ('documentation_date', 'Documentation Date', 'bulletin', 'datetime', FALSE, 'date_picker', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 10, TRUE),
-        ('status', 'Status', 'bulletin', 'single_select', FALSE, 'dropdown', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[{"label": "Draft", "value": "draft"}, {"label": "Published", "value": "published"}, {"label": "Archived", "value": "archived"}]'::jsonb, TRUE, 11, TRUE),
+        ('status', 'Status', 'bulletin', 'single_select', FALSE, 'dropdown', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 11, TRUE),
         ('events_section', 'Events', 'bulletin', 'html_block', FALSE, 'html_block', '{}'::jsonb, '{"html_template": "events_section"}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 20, TRUE),
         ('geo_locations', 'Geo Locations', 'bulletin', 'html_block', FALSE, 'html_block', '{}'::jsonb, '{"html_template": "geo_locations"}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 21, TRUE),
         ('global_map', 'Global Map', 'bulletin', 'html_block', FALSE, 'html_block', '{}'::jsonb, '{"html_template": "global_map"}'::jsonb, '{}'::jsonb, '[]'::jsonb, TRUE, 22, TRUE),

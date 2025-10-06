@@ -314,6 +314,9 @@ class PartialClaimedViolationModel(BaseValidationModel):
 
 
 class IncidentValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     title: str = Field(min_length=1)
     title_ar: Optional[str] = None
     description: Optional[SanitizedField] = None

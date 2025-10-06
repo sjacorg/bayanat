@@ -415,6 +415,7 @@ const routes = [
     {path: '/admin/actors/', name: 'actors', component: Vue.defineComponent({})},
     {path: '/admin/incidents/:id', name: 'incident', component: Vue.defineComponent({})},
     {path: '/admin/incidents/', name: 'incidents', component: Vue.defineComponent({})},
+    {path: '/admin/incident-fields/', name: 'incident-fields', component: Vue.defineComponent({})},
     {path: '/admin/locations/:id', name: 'location', component: Vue.defineComponent({})},
     {path: '/admin/locations/', name: 'locations', component: Vue.defineComponent({})},
     {path: '/admin/activity/', name: 'activity', component: Vue.defineComponent({})},
