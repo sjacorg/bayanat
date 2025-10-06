@@ -37,20 +37,16 @@
 
                 <v-card-text>
                     <v-container fluid>
-                        <v-row>
-                            <v-col md="2">
-                                <v-btn-toggle v-model="editedItem.type" tile mandatory>
-                                    <v-btn
-                                            v-for="item in ['Entity', 'Person']"
-                                            :key="item"
-                                            :value="item"
-                                            color="primary">
-                                        ${ item }
-                                    </v-btn>
-                                </v-btn-toggle>
-
-                            </v-col>
-                        </v-row>
+                        <v-btn-toggle v-model="editedItem.type" tile mandatory>
+                            <v-btn
+                                v-for="item in ['Entity', 'Person']"
+                                :key="item"
+                                :value="item"
+                                color="primary"
+                            >
+                                ${ item }
+                            </v-btn>
+                        </v-btn-toggle>
 
                         <div v-if="movableDynamicFields.length" class="form-grid mt-4">
                             <template v-for="(field, index) in movableDynamicFields" :key="field.id">
