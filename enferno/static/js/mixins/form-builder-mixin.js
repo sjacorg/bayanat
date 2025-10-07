@@ -409,11 +409,8 @@ const formBuilderMixin = {
 
     isTargetRowHorizontal(target) {
       if (!target) return false;
-      return (
-        target.classList.contains('w-50') ||
-        target.classList.contains('w-33') ||
-        target.classList.contains('w-25')
-      );
+
+      return target.classList.contains('grid-col-span-1');
     },
 
     wouldMove(fromIdx, tgtIdx, cls) {
