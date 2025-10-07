@@ -1,592 +1,260 @@
 # Core Fields Configuration
-# These are built-in Bulletin model fields that users can only show/hide/reorder
+# Built-in fields that users can show/hide/reorder but not delete
 
 from enferno.admin.models.DynamicField import DynamicField
 
-BULLETIN_CORE_FIELDS = {
-    "title": {
-        "title": "Original Title",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 1,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "sjac_title": {
-        "title": "Title",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 2,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "tags": {
-        "title": "Tags",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 3,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    "sources": {
-        "title": "Sources",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 4,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    "description": {
-        "title": "Description",
-        "field_type": "long_text",
-        "ui_component": "textarea",
-        "sort_order": 5,
-        "visible": True,
-        "core": True,
-    },
-    "labels": {
-        "title": "Labels",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 6,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-        "ui_config": {"width": "w-50"},
-    },
-    "ver_labels": {
-        "title": "Verified Labels",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 7,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-        "ui_config": {"width": "w-50"},
-    },
-    "locations": {
-        "title": "Locations",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 8,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    # === Complex HTML Block Fields (Phase 1) ===
-    # These render existing components but are managed through the dynamic fields system
-    "global_map": {
-        "title": "Global Map",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 9,
-        "visible": True,
-        "core": True,
-        "html_template": "global_map",
-    },
-    "events_section": {
-        "title": "Events",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 10,
-        "visible": True,
-        "core": True,
-        "html_template": "events_section",
-    },
-    "geo_locations": {
-        "title": "Geo Locations",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 11,
-        "visible": True,
-        "core": True,
-        "html_template": "geo_locations",
-    },
-    "related_bulletins": {
-        "title": "Related Bulletins",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 12,
-        "visible": True,
-        "core": True,
-        "html_template": "related_bulletins",
-    },
-    "related_actors": {
-        "title": "Related Actors",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 13,
-        "visible": True,
-        "core": True,
-        "html_template": "related_actors",
-    },
-    "related_incidents": {
-        "title": "Related Incidents",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 14,
-        "visible": True,
-        "core": True,
-        "html_template": "related_incidents",
-    },
-    "source_link": {
-        "title": "Source Link",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 15,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "publish_date": {
-        "title": "Publish Date",
-        "field_type": "datetime",
-        "ui_component": "date_picker",
-        "sort_order": 16,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "documentation_date": {
-        "title": "Documentation Date",
-        "field_type": "datetime",
-        "ui_component": "date_picker",
-        "sort_order": 17,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50", "align": "right"},
-    },
-    "comments": {
-        "title": "Comments",
-        "field_type": "long_text",
-        "ui_component": "textarea",
-        "sort_order": 18,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "status": {
-        "title": "Status",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 19,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": False},
-        "ui_config": {"width": "w-50"},
-    },
-}
 
-INCIDENT_CORE_FIELDS = {
-    "title": {
-        "title": "Title",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 1,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-100"},
-    },
-    "description": {
-        "title": "Description",
-        "field_type": "long_text",
-        "ui_component": "textarea",
-        "sort_order": 2,
-        "visible": True,
-        "core": True,
-    },
-    "potential_violations": {
-        "title": "Potential Violations",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 3,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-        "ui_config": {"width": "w-50"},
-    },
-    "claimed_violations": {
-        "title": "Claimed Violations",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 4,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-        "ui_config": {"width": "w-50"},
-    },
-    "labels": {
-        "title": "Labels",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 5,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-        "ui_config": {"width": "w-50"},
-    },
-    "locations": {
-        "title": "Locations",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 6,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-        "ui_config": {"width": "w-50"},
-    },
-    "events_section": {
-        "title": "Events",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 7,
-        "visible": True,
-        "core": True,
-        "html_template": "events_section",
-    },
-    "related_bulletins": {
-        "title": "Related Bulletins",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 8,
-        "visible": True,
-        "core": True,
-        "html_template": "related_bulletins",
-    },
-    "related_actors": {
-        "title": "Related Actors",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 9,
-        "visible": True,
-        "core": True,
-        "html_template": "related_actors",
-    },
-    "related_incidents": {
-        "title": "Related Incidents",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 10,
-        "visible": True,
-        "core": True,
-        "html_template": "related_incidents",
-    },
-    "comments": {
-        "title": "Comments",
-        "field_type": "long_text",
-        "ui_component": "textarea",
-        "sort_order": 11,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "status": {
-        "title": "Status",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 12,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": False},
-        "ui_config": {"width": "w-50"},
-    },
-}
+# Format: (name, title, field_type, sort_order, **kwargs)
+# kwargs can include: ui_config, schema_config, html_template
+BULLETIN_CORE_FIELDS = [
+    ("title", "Original Title", "text", 1, {"ui_config": {"width": "w-50"}}),
+    ("sjac_title", "Title", "text", 2, {"ui_config": {"width": "w-50"}}),
+    ("tags", "Tags", "select", 3, {"schema_config": {"allow_multiple": True}}),
+    ("sources", "Sources", "select", 4, {"schema_config": {"allow_multiple": True}}),
+    ("description", "Description", "long_text", 5),
+    (
+        "labels",
+        "Labels",
+        "select",
+        6,
+        {"schema_config": {"allow_multiple": True}, "ui_config": {"width": "w-50"}},
+    ),
+    (
+        "ver_labels",
+        "Verified Labels",
+        "select",
+        7,
+        {"schema_config": {"allow_multiple": True}, "ui_config": {"width": "w-50"}},
+    ),
+    ("locations", "Locations", "select", 8, {"schema_config": {"allow_multiple": True}}),
+    # HTML Blocks - complex components managed through dynamic fields
+    ("global_map", "Global Map", "html_block", 9, {"html_template": "global_map"}),
+    ("events_section", "Events", "html_block", 10, {"html_template": "events_section"}),
+    ("geo_locations", "Geo Locations", "html_block", 11, {"html_template": "geo_locations"}),
+    (
+        "related_bulletins",
+        "Related Bulletins",
+        "html_block",
+        12,
+        {"html_template": "related_bulletins"},
+    ),
+    ("related_actors", "Related Actors", "html_block", 13, {"html_template": "related_actors"}),
+    (
+        "related_incidents",
+        "Related Incidents",
+        "html_block",
+        14,
+        {"html_template": "related_incidents"},
+    ),
+    ("source_link", "Source Link", "text", 15, {"ui_config": {"width": "w-50"}}),
+    ("publish_date", "Publish Date", "datetime", 16, {"ui_config": {"width": "w-50"}}),
+    (
+        "documentation_date",
+        "Documentation Date",
+        "datetime",
+        17,
+        {"ui_config": {"width": "w-50", "align": "right"}},
+    ),
+    ("comments", "Comments", "long_text", 18, {"ui_config": {"width": "w-50"}}),
+    (
+        "status",
+        "Status",
+        "select",
+        19,
+        {"schema_config": {"allow_multiple": False}, "ui_config": {"width": "w-50"}},
+    ),
+]
 
-ACTOR_CORE_FIELDS = {
-    "name": {
-        "title": "Name",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 1,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-100"},
-    },
-    "nickname": {
-        "title": "Nickname",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 2,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "first_name": {
-        "title": "First Name",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 3,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "middle_name": {
-        "title": "Middle Name",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 4,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "last_name": {
-        "title": "Last Name",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 5,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "father_name": {
-        "title": "Father Name",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 6,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "mother_name": {
-        "title": "Mother Name",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 7,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "sex": {
-        "title": "Sex",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 8,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": False},
-        "ui_config": {"width": "w-50"},
-    },
-    "age": {
-        "title": "Age",
-        "field_type": "number",
-        "ui_component": "number_input",
-        "sort_order": 9,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "civilian": {
-        "title": "Civilian",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 10,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": False},
-    },
-    "origin_place": {
-        "title": "Origin Place",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 11,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    "occupation": {
-        "title": "Occupation",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 12,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "position": {
-        "title": "Position",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 13,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "family_status": {
-        "title": "Family Status",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 14,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": False},
-        "ui_config": {"width": "w-50"},
-    },
-    "no_children": {
-        "title": "Number of Children",
-        "field_type": "number",
-        "ui_component": "number_input",
-        "sort_order": 15,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "ethnographies": {
-        "title": "Ethnographies",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 16,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    "nationalities": {
-        "title": "Nationalities",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 17,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    "dialects": {
-        "title": "Dialects",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 18,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    "tags": {
-        "title": "Tags",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 19,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": True},
-    },
-    "id_number": {
-        "title": "ID Number",
-        "field_type": "text",
-        "ui_component": "input",
-        "sort_order": 20,
-        "visible": True,
-        "core": True,
-    },
-    "actor_profiles": {
-        "title": "Actor Profiles",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 21,
-        "visible": True,
-        "core": True,
-        "html_template": "actor_profiles",
-    },
-    "events_section": {
-        "title": "Events",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 22,
-        "visible": True,
-        "core": True,
-        "html_template": "events_section",
-    },
-    "related_bulletins": {
-        "title": "Related Bulletins",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 23,
-        "visible": True,
-        "core": True,
-        "html_template": "related_bulletins",
-    },
-    "related_actors": {
-        "title": "Related Actors",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 24,
-        "visible": True,
-        "core": True,
-        "html_template": "related_actors",
-    },
-    "related_incidents": {
-        "title": "Related Incidents",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 25,
-        "visible": True,
-        "core": True,
-        "html_template": "related_incidents",
-    },
-    "medias": {
-        "title": "Media",
-        "field_type": "html_block",
-        "ui_component": "html_block",
-        "sort_order": 26,
-        "visible": True,
-        "core": True,
-        "html_template": "medias",
-    },
-    "comments": {
-        "title": "Comments",
-        "field_type": "long_text",
-        "ui_component": "textarea",
-        "sort_order": 27,
-        "visible": True,
-        "core": True,
-        "ui_config": {"width": "w-50"},
-    },
-    "status": {
-        "title": "Status",
-        "field_type": "select",
-        "ui_component": "dropdown",
-        "sort_order": 28,
-        "visible": True,
-        "core": True,
-        "schema_config": {"allow_multiple": False},
-        "ui_config": {"width": "w-50"},
-    },
-}
+INCIDENT_CORE_FIELDS = [
+    ("title", "Title", "text", 1, {"ui_config": {"width": "w-100"}}),
+    ("description", "Description", "long_text", 2),
+    (
+        "potential_violations",
+        "Potential Violations",
+        "select",
+        3,
+        {"schema_config": {"allow_multiple": True}, "ui_config": {"width": "w-50"}},
+    ),
+    (
+        "claimed_violations",
+        "Claimed Violations",
+        "select",
+        4,
+        {"schema_config": {"allow_multiple": True}, "ui_config": {"width": "w-50"}},
+    ),
+    (
+        "labels",
+        "Labels",
+        "select",
+        5,
+        {"schema_config": {"allow_multiple": True}, "ui_config": {"width": "w-50"}},
+    ),
+    (
+        "locations",
+        "Locations",
+        "select",
+        6,
+        {"schema_config": {"allow_multiple": True}, "ui_config": {"width": "w-50"}},
+    ),
+    ("events_section", "Events", "html_block", 7, {"html_template": "events_section"}),
+    (
+        "related_bulletins",
+        "Related Bulletins",
+        "html_block",
+        8,
+        {"html_template": "related_bulletins"},
+    ),
+    ("related_actors", "Related Actors", "html_block", 9, {"html_template": "related_actors"}),
+    (
+        "related_incidents",
+        "Related Incidents",
+        "html_block",
+        10,
+        {"html_template": "related_incidents"},
+    ),
+    ("comments", "Comments", "long_text", 11, {"ui_config": {"width": "w-50"}}),
+    (
+        "status",
+        "Status",
+        "select",
+        12,
+        {"schema_config": {"allow_multiple": False}, "ui_config": {"width": "w-50"}},
+    ),
+]
+
+ACTOR_CORE_FIELDS = [
+    ("name", "Name", "text", 1, {"ui_config": {"width": "w-100"}}),
+    ("nickname", "Nickname", "text", 2, {"ui_config": {"width": "w-50"}}),
+    ("first_name", "First Name", "text", 3, {"ui_config": {"width": "w-50"}}),
+    ("middle_name", "Middle Name", "text", 4, {"ui_config": {"width": "w-50"}}),
+    ("last_name", "Last Name", "text", 5, {"ui_config": {"width": "w-50"}}),
+    ("father_name", "Father Name", "text", 6, {"ui_config": {"width": "w-50"}}),
+    ("mother_name", "Mother Name", "text", 7, {"ui_config": {"width": "w-50"}}),
+    (
+        "sex",
+        "Sex",
+        "select",
+        8,
+        {"schema_config": {"allow_multiple": False}, "ui_config": {"width": "w-50"}},
+    ),
+    ("age", "Age", "number", 9, {"ui_config": {"width": "w-50"}}),
+    ("civilian", "Civilian", "select", 10, {"schema_config": {"allow_multiple": False}}),
+    ("origin_place", "Origin Place", "select", 11, {"schema_config": {"allow_multiple": True}}),
+    ("occupation", "Occupation", "text", 12, {"ui_config": {"width": "w-50"}}),
+    ("position", "Position", "text", 13, {"ui_config": {"width": "w-50"}}),
+    (
+        "family_status",
+        "Family Status",
+        "select",
+        14,
+        {"schema_config": {"allow_multiple": False}, "ui_config": {"width": "w-50"}},
+    ),
+    ("no_children", "Number of Children", "number", 15, {"ui_config": {"width": "w-50"}}),
+    ("ethnographies", "Ethnographies", "select", 16, {"schema_config": {"allow_multiple": True}}),
+    ("nationalities", "Nationalities", "select", 17, {"schema_config": {"allow_multiple": True}}),
+    ("dialects", "Dialects", "select", 18, {"schema_config": {"allow_multiple": True}}),
+    ("tags", "Tags", "select", 19, {"schema_config": {"allow_multiple": True}}),
+    ("id_number", "ID Number", "text", 20),
+    ("actor_profiles", "Actor Profiles", "html_block", 21, {"html_template": "actor_profiles"}),
+    ("events_section", "Events", "html_block", 22, {"html_template": "events_section"}),
+    (
+        "related_bulletins",
+        "Related Bulletins",
+        "html_block",
+        23,
+        {"html_template": "related_bulletins"},
+    ),
+    ("related_actors", "Related Actors", "html_block", 24, {"html_template": "related_actors"}),
+    (
+        "related_incidents",
+        "Related Incidents",
+        "html_block",
+        25,
+        {"html_template": "related_incidents"},
+    ),
+    ("medias", "Media", "html_block", 26, {"html_template": "medias"}),
+    ("comments", "Comments", "long_text", 27, {"ui_config": {"width": "w-50"}}),
+    (
+        "status",
+        "Status",
+        "select",
+        28,
+        {"schema_config": {"allow_multiple": False}, "ui_config": {"width": "w-50"}},
+    ),
+]
 
 
-def _seed_entity_core_fields(entity_type: str, core_fields_dict: dict):
+def _create_core_field(name, title, field_type, sort_order, entity_type, **kwargs):
+    """
+    Create a core field with smart defaults.
+
+    Auto-determines ui_component from field_type using DynamicField.COMPONENT_MAP.
+    Only requires overrides for what differs from defaults.
+
+    Args:
+        name: Field name
+        title: Display title
+        field_type: Data type (text, long_text, number, select, datetime, html_block)
+        sort_order: Display order
+        entity_type: Entity type (bulletin, incident, actor)
+        **kwargs: Optional overrides (ui_config, schema_config, html_template, options)
+
+    Returns:
+        DynamicField instance
+    """
+    # Auto-determine ui_component from field_type
+    ui_component = DynamicField.COMPONENT_MAP.get(field_type, [None])[0]
+
+    # Build ui_config
+    ui_config = {}
+    if "html_template" in kwargs:
+        ui_config["html_template"] = kwargs.pop("html_template")
+    if "ui_config" in kwargs:
+        ui_config.update(kwargs.pop("ui_config"))
+
+    # Extract schema_config and options if provided
+    schema_config = kwargs.pop("schema_config", {})
+    options = kwargs.pop("options", [])
+
+    return DynamicField(
+        name=name,
+        title=title,
+        entity_type=entity_type,
+        field_type=field_type,
+        ui_component=ui_component,
+        sort_order=sort_order,
+        core=True,
+        active=True,
+        ui_config=ui_config,
+        schema_config=schema_config,
+        options=options,
+    )
+
+
+def _seed_entity_core_fields(entity_type: str, core_fields_list: list):
     """
     Seed core fields for a specific entity type (idempotent).
 
     Args:
         entity_type: The entity type ('bulletin', 'incident', 'actor')
-        core_fields_dict: Dictionary of core field definitions
+        core_fields_list: List of tuples (name, title, field_type, sort_order, kwargs)
     """
-    for name, config in core_fields_dict.items():
+    for field_spec in core_fields_list:
+        # Unpack tuple (handles both 4 and 5 element tuples)
+        if len(field_spec) == 5:
+            name, title, field_type, sort_order, kwargs = field_spec
+        else:
+            name, title, field_type, sort_order = field_spec
+            kwargs = {}
+
         # Check if core field already exists
         existing = DynamicField.query.filter_by(
             name=name, entity_type=entity_type, core=True
         ).first()
 
-        # Create ui_config with html_template if specified
-        ui_config = {}
-        if config.get("html_template"):
-            ui_config["html_template"] = config["html_template"]
-
         if not existing:
-            # Create new core field
-            field = DynamicField(
-                name=name,
-                title=config["title"],
-                entity_type=entity_type,
-                field_type=config["field_type"],
-                ui_component=config["ui_component"],
-                sort_order=config["sort_order"],
-                core=True,
-                active=config.get("visible", True),
-                ui_config=ui_config,
-                options=config.get("options", []),
-            )
+            # Create new core field using helper
+            field = _create_core_field(name, title, field_type, sort_order, entity_type, **kwargs)
             field.save()
             print(f"✅ Created {entity_type} core field: {name}")
         else:
@@ -596,10 +264,8 @@ def _seed_entity_core_fields(entity_type: str, core_fields_dict: dict):
 def seed_core_fields():
     """
     Seed core fields into the database for bulletin, incident, and actor entities (idempotent).
-    This includes both simple fields and complex HTML block fields.
     Can be run multiple times safely.
     """
-    # Seed all entity types using centralized function
     _seed_entity_core_fields("bulletin", BULLETIN_CORE_FIELDS)
     _seed_entity_core_fields("incident", INCIDENT_CORE_FIELDS)
     _seed_entity_core_fields("actor", ACTOR_CORE_FIELDS)
