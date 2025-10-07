@@ -552,6 +552,11 @@ const formBuilderMixin = {
 
       return field.active && field.name === name;
     },
+    isFieldActiveAndHasContent(field, key, value) {
+      if (!this.isFieldActive(field, key)) return false
+      if (Array.isArray(value)) return value.some(v => !!v)
+      return value != null && value !== ''
+    },
     findFieldOptionByValue(field, value) {
       if (!Array.isArray(field.options)) return;
 

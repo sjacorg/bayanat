@@ -234,70 +234,120 @@ const ActorCard = Vue.defineComponent({
 
         <div class="d-flex flex-wrap">
         <template v-for="(field) in $root.dynamicFieldsActorCard">
-          <div v-if="$root.isFieldActive(field, 'name')" :class="$root.fieldClassDrawer(field)">
+          <div
+            v-if="$root.isFieldActiveAndHasContent(field, 'name', [actor.name, actor.name_ar])"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <v-sheet class="pa-3 text-center">
               <h2 class="text-subtitle-2">{{ actor.name }} {{ actor.name_ar }}</h2>
             </v-sheet>
             <v-divider class="my-3"></v-divider>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'nickname')" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'nickname', [actor.nickname, actor.nickname_ar])"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <uni-field :caption="translations.nickName_" :english="actor.nickname" :arabic="actor.nickname_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'first_name')" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'first_name', [actor.first_name, actor.first_name_ar])"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <uni-field :caption="translations.firstName_" :english="actor.first_name" :arabic="actor.first_name_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'middle_name')" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'middle_name', [actor.middle_name, actor.middle_name_ar])"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <uni-field :caption="translations.middleName_" :english="actor.middle_name" :arabic="actor.middle_name_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'last_name')" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'last_name', [actor.last_name, actor.last_name_ar])"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <uni-field :caption="translations.lastName_" :english="actor.last_name" :arabic="actor.last_name_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'father_name') || $root.isFieldActive(field, 'mother_name')" :class="[...$root.fieldClassDrawer(field), 'd-flex']">
-            <uni-field v-if="$root.isFieldActive(field, 'father_name')" :caption="translations.fathersName_" :english="actor.father_name" :arabic="actor.father_name_ar"></uni-field>
-            <uni-field v-if="$root.isFieldActive(field, 'mother_name')" :caption="translations.mothersName_" :english="actor.mother_name" :arabic="actor.mother_name_ar"></uni-field>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'father_name', [actor.father_name, actor.father_name_ar]) || $root.isFieldActiveAndHasContent(field, 'mother_name', [actor.mother_name, actor.mother_name_ar])"
+            :class="[...$root.fieldClassDrawer(field), 'd-flex']"
+          >
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'father_name', [actor.father_name, actor.father_name_ar])" :caption="translations.fathersName_" :english="actor.father_name" :arabic="actor.father_name_ar"></uni-field>
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'mother_name', [actor.mother_name, actor.mother_name_ar])" :caption="translations.mothersName_" :english="actor.mother_name" :arabic="actor.mother_name_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'sex') || $root.isFieldActive(field, 'age') || $root.isFieldActive(field, 'civilian')" :class="[...$root.fieldClassDrawer(field), 'd-flex']">
-            <uni-field v-if="$root.isFieldActive(field, 'sex')" :caption="translations.sex_" :english="actor._sex"></uni-field>
-            <uni-field v-if="$root.isFieldActive(field, 'age')" :caption="translations.age_" :english="actor._age"></uni-field>
-            <uni-field v-if="$root.isFieldActive(field, 'civilian')" :caption="translations.civilian_" :english="actor._civilian"></uni-field>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'sex', actor._sex) || $root.isFieldActiveAndHasContent(field, 'age', actor._age) || $root.isFieldActiveAndHasContent(field, 'civilian', actor._civilian)"
+            :class="[...$root.fieldClassDrawer(field), 'd-flex']"
+          >
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'sex', actor._sex)" :caption="translations.sex_" :english="actor._sex"></uni-field>
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'age', actor._age)" :caption="translations.age_" :english="actor._age"></uni-field>
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'civilian', actor._civilian)" :caption="translations.civilian_" :english="actor._civilian"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'origin_place')" :class="$root.fieldClassDrawer(field)">
-            <uni-field :caption="translations.originPlace_" v-if="actor.origin_place" :english="actor.origin_place.full_string"></uni-field>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'origin_place', actor.origin_place?.full_string)"
+            :class="$root.fieldClassDrawer(field)"
+          >
+            <uni-field :caption="translations.originPlace_" :english="actor.origin_place.full_string"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'family_status')" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'family_status', actor.family_status)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <uni-field :caption="translations.familyStatus_" :english="actor.family_status"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'occupation') || $root.isFieldActive(field, 'position')" :class="[...$root.fieldClassDrawer(field), 'd-flex']">
-            <uni-field v-if="$root.isFieldActive(field, 'occupation')" :caption="translations.occupation_" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
-            <uni-field v-if="$root.isFieldActive(field, 'position')" :caption="translations.position_" :english="actor.position" :arabic="actor.position_ar"></uni-field>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'occupation', [actor.occupation, actor.occupation_ar]) || $root.isFieldActiveAndHasContent(field, 'position', [actor.position, actor.position_ar])"
+            :class="[...$root.fieldClassDrawer(field), 'd-flex']"
+          >
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'occupation', [actor.occupation, actor.occupation_ar])" :caption="translations.occupation_" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'position', [actor.position, actor.position_ar])" :caption="translations.position_" :english="actor.position" :arabic="actor.position_ar"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'dialects') && actor.dialects?.length" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'dialects', actor.dialects)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <v-card :subtitle="translations.spokenDialects_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
               <div class="flex-chips">
                 <v-chip size="small" v-for="e in actor.dialects" class="flex-chip">{{ e.title }}</v-chip>
               </div>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'ethnographies') && actor.ethnographies?.length" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'ethnographies', actor.ethnographies)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <v-card :subtitle="translations.ethnographicInfo_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
               <div class="flex-chips">
-                <v-chip size="small" v-for="e in actor.ethnographies" class="flex-chip">
-                  {{ e.title }}
-                </v-chip>
+                <v-chip size="small" v-for="e in actor.ethnographies" class="flex-chip">{{ e.title }}</v-chip>
               </div>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'nationalities') && actor.nationalities?.length" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'nationalities', actor.nationalities)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <v-card :subtitle="translations.nationalities_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
               <div class="flex-chips">
-                <v-chip size="small" v-for="n in actor.nationalities" class="flex-chip">
-                  {{ n.title }}
-                </v-chip>
+                <v-chip size="small" v-for="n in actor.nationalities" class="flex-chip">{{ n.title }}</v-chip>
               </div>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'id_number') && actor.id_number && actor.id_number?.length > 0" :class="$root.fieldClassDrawer(field)">
-            <!-- ID Numbers - only show if there are any -->
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'id_number', actor.id_number)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <v-card variant="flat" class="mx-8 my-2">
               <div class="d-flex flex-column">
                 <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumbers_ }}</div>
@@ -311,29 +361,41 @@ const ActorCard = Vue.defineComponent({
               </div>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'actor_profiles') && actor.id" :class="$root.fieldClassDrawer(field)">
-            <!-- profiles -->
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'actor_profiles', actor.id)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <actor-profiles :actor-id="actor.id"></actor-profiles>
           </div>
-          <div v-else-if="field.field_type === 'actor_profiles'" :class="$root.fieldClassDrawer(field)">
-            <!-- Map -->
+
+          <div
+            v-else-if="field.field_type === 'actor_profiles'"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <v-divider></v-divider>
-            <v-card variant="flat" >
+            <v-card variant="flat">
               <global-map v-model="mapLocations"></global-map>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'events')" :class="$root.fieldClassDrawer(field)">
-            <!-- Map -->
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'events', mapLocations)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <v-divider></v-divider>
-            <v-card variant="flat" >
+            <v-card variant="flat">
               <global-map v-model="mapLocations"></global-map>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'medias') && actor.medias && actor.medias.length" :class="$root.fieldClassDrawer(field)">
-            <!-- Media -->
-            <v-card class="ma-2" v-if="actor.medias && actor.medias.length">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'medias', actor.medias)"
+            :class="$root.fieldClassDrawer(field)"
+          >
+            <v-card class="ma-2">
               <v-toolbar density="compact">
-                  <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
+                <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
               </v-toolbar>
 
               <inline-media-renderer
@@ -343,33 +405,57 @@ const ActorCard = Vue.defineComponent({
                 @fullscreen="handleFullscreen"
                 @close="closeExpandedMedia"
               ></inline-media-renderer>
-              
+
               <v-card-text>
                 <media-grid prioritize-videos :medias="actor.medias" @media-click="handleExpandedMedia"></media-grid>
               </v-card-text>
             </v-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'related_bulletins')" :class="$root.fieldClassDrawer(field)">
-            <related-bulletins-card v-if="actor" :entity="actor" :relationInfo="$root.atobInfo"> </related-bulletins-card>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'related_bulletins', actor)"
+            :class="$root.fieldClassDrawer(field)"
+          >
+            <related-bulletins-card :entity="actor" :relationInfo="$root.atobInfo"></related-bulletins-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'related_actors')" :class="$root.fieldClassDrawer(field)">
-            <related-actors-card v-if="actor" :entity="actor" :relationInfo="$root.atoaInfo" ></related-actors-card>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'related_actors', actor)"
+            :class="$root.fieldClassDrawer(field)"
+          >
+            <related-actors-card :entity="actor" :relationInfo="$root.atoaInfo"></related-actors-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'related_incidents')" :class="$root.fieldClassDrawer(field)">
-            <related-incidents-card v-if="actor" :entity="actor" :relationInfo="$root.itoaInfo"></related-incidents-card>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'related_incidents', actor)"
+            :class="$root.fieldClassDrawer(field)"
+          >
+            <related-incidents-card :entity="actor" :relationInfo="$root.itoaInfo"></related-incidents-card>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'publish_date') || $root.isFieldActive(field, 'documentation_date')" :class="[...$root.fieldClassDrawer(field), 'd-flex']">
-            <uni-field v-if="$root.isFieldActive(field, 'publish_date')" :caption="translations.publishDate_" :english="$root.formatDate(actor.publish_date)"></uni-field>
-            <uni-field v-if="$root.isFieldActive(field, 'documentation_date')" :caption="translations.documentationDate_" :english="$root.formatDate(actor.documentation_date)"></uni-field>
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'publish_date', actor.publish_date) || $root.isFieldActiveAndHasContent(field, 'documentation_date', actor.documentation_date)"
+            :class="[...$root.fieldClassDrawer(field), 'd-flex']"
+          >
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'publish_date', actor.publish_date)" :caption="translations.publishDate_" :english="$root.formatDate(actor.publish_date)"></uni-field>
+            <uni-field v-if="$root.isFieldActiveAndHasContent(field, 'documentation_date', actor.documentation_date)" :caption="translations.documentationDate_" :english="$root.formatDate(actor.documentation_date)"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field, 'source_link')" :class="$root.fieldClassDrawer(field)">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, 'source_link', actor.source_link)"
+            :class="$root.fieldClassDrawer(field)"
+          >
             <uni-field :caption="translations.sourceLink_" :english="actor.source_link"></uni-field>
           </div>
-          <div v-else-if="$root.isFieldActive(field)" :class="$root.fieldClassDrawer(field)">
-            <div v-if="Array.isArray(actor?.[field.name])">
-              <v-card class="ma-2" v-if="actor?.[field.name] && actor?.[field.name].length">
+
+          <div
+            v-else-if="$root.isFieldActiveAndHasContent(field, field.name, actor?.[field.name])"
+            :class="$root.fieldClassDrawer(field)"
+          >
+            <div v-if="Array.isArray(actor?.[field.name]) && actor?.[field.name].length">
+              <v-card class="ma-2">
                 <v-toolbar density="compact">
-                    <v-toolbar-title class="text-subtitle-1">{{ field.title }}</v-toolbar-title>
+                  <v-toolbar-title class="text-subtitle-1">{{ field.title }}</v-toolbar-title>
                 </v-toolbar>
                 <v-card-text class="pt-0">
                   <div class="flex-chips">
@@ -380,11 +466,13 @@ const ActorCard = Vue.defineComponent({
                 </v-card-text>
               </v-card>
             </div>
+
             <div v-else-if="field.field_type === 'datetime'">
-              <uni-field v-if="actor?.[field.name]" :caption="field.title" :english="$root.formatDate(actor?.[field.name])"></uni-field>
+              <uni-field :caption="field.title" :english="$root.formatDate(actor?.[field.name])"></uni-field>
             </div>
+
             <div v-else>
-              <uni-field v-if="actor?.[field.name]" :caption="field.title" :english="$root.findFieldOptionByValue(field, actor?.[field.name])?.label ?? bulletin?.[field.name]"></uni-field>
+              <uni-field :caption="field.title" :english="$root.findFieldOptionByValue(field, actor?.[field.name])?.label ?? actor?.[field.name]"></uni-field>
             </div>
           </div>
         </template>
