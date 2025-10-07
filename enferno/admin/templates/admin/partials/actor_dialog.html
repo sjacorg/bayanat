@@ -37,20 +37,16 @@
 
                 <v-card-text>
                     <v-container fluid>
-                        <v-row>
-                            <v-col md="2">
-                                <v-btn-toggle v-model="editedItem.type" tile mandatory>
-                                    <v-btn
-                                            v-for="item in ['Entity', 'Person']"
-                                            :key="item"
-                                            :value="item"
-                                            color="primary">
-                                        ${ item }
-                                    </v-btn>
-                                </v-btn-toggle>
-
-                            </v-col>
-                        </v-row>
+                        <v-btn-toggle v-model="editedItem.type" tile mandatory>
+                            <v-btn
+                                v-for="item in ['Entity', 'Person']"
+                                :key="item"
+                                :value="item"
+                                color="primary"
+                            >
+                                ${ item }
+                            </v-btn>
+                        </v-btn-toggle>
 
                         <div v-if="movableDynamicFields.length" class="form-grid mt-4">
                             <template v-for="(field, index) in movableDynamicFields" :key="field.id">
@@ -66,18 +62,6 @@
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="serverErrorPropsForDualField(serverErrors, 'item.name', 'item.name_ar')"
-                                    ></dual-field>
-                                </div>
-                                <div v-else-if="isFieldActive(field, 'nickname')" :class="[fieldClass(field), 'px-3 py-2']">
-                                    <dual-field
-                                        v-model:original="editedItem.nickname"
-                                        v-model:translation="editedItem.nickname_ar"
-                                        label-original="{{ _('Nickname') }}"
-                                        label-translation="{{ _('Nickname (AR)') }}"
-                                        :rules="[
-                                            validationRules.maxLength(255),
-                                        ]"
-                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.nickname', 'item.nickname_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'first_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -118,6 +102,18 @@
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="serverErrorPropsForDualField(serverErrors, 'item.last_name', 'item.last_name_ar')"
+                                    ></dual-field>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'nickname')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <dual-field
+                                        v-model:original="editedItem.nickname"
+                                        v-model:translation="editedItem.nickname_ar"
+                                        label-original="{{ _('Nickname') }}"
+                                        label-translation="{{ _('Nickname (AR)') }}"
+                                        :rules="[
+                                            validationRules.maxLength(255),
+                                        ]"
+                                        v-bind="serverErrorPropsForDualField(serverErrors, 'item.nickname', 'item.nickname_ar')"
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'father_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
@@ -906,7 +902,7 @@
                                 <div v-else-if="isFieldActive(field, 'medias')" :class="[fieldClass(field), 'px-3 py-2']">
                                     {% include 'admin/partials/media_dialog.html' %}
                                 </div>
-                                <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
+                                <field-renderer v-else-if="isFieldActive(field) && !field.core" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
                             </template>
                         </div>
                         <div v-if="fixedDynamicFields.length" class="form-grid mt-4">

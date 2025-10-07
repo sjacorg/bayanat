@@ -165,7 +165,7 @@
                                             </v-switch>
                                         </v-sheet>
                                     </div>
-                                    <field-renderer v-else-if="isFieldActive(field)" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
+                                    <field-renderer v-else-if="isFieldActive(field) && !field.core" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
                                 </template>
                             </div>
                             <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
