@@ -220,7 +220,10 @@ class SearchUtils:
                     if df.field_type == DynamicField.SELECT and op == "eq":
                         if value is not None:
                             # Use array containment for equality check
-                            conditions.append(text(f":val = ANY({name})").bindparams(val=value))
+                            # Normalize value to string to match varchar[] column type
+                            conditions.append(
+                                text(f":val = ANY({name})").bindparams(val=str(value))
+                            )
                         continue
 
                     # NUMBER equality
@@ -260,17 +263,18 @@ class SearchUtils:
                             # OR logic - at least one value must be present
                             if isinstance(value, list) and value:
                                 # Use PostgreSQL ANY operator for OR logic with unique parameter names
+                                # Normalize all values to strings to match varchar[] column type
                                 or_conditions = []
                                 for i, val in enumerate(value):
                                     param_name = f"val_{name}_{i}"
                                     or_conditions.append(
                                         text(f":{param_name} = ANY({name})").bindparams(
-                                            **{param_name: val}
+                                            **{param_name: str(val)}
                                         )
                                     )
                                 conditions.append(or_(*or_conditions))
                             elif isinstance(value, str) and value:
-                                # Single value check
+                                # Single value check - already a string
                                 conditions.append(text(f":val = ANY({name})").bindparams(val=value))
                         elif op in ["all", "contains"]:
                             # AND logic - ALL values must be present (array containment)
