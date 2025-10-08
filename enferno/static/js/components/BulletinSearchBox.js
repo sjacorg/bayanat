@@ -57,11 +57,26 @@ const BulletinSearchBox = Vue.defineComponent({
       },
       deep: true,
     },
-    modelValue (newVal, oldVal) {
+    modelValue(newVal, oldVal) {
       if (newVal !== oldVal) {
         this.q = newVal;
       }
-    },
+
+      // Reset dyn if data cleared
+      if (!newVal || !Object.keys(newVal).length) {
+        this.dyn = new Map();
+        return;
+      }
+
+      // If dyn exists and is iterable, rebuild map
+      if (Array.isArray(newVal.dyn)) {
+        const newMap = new Map();
+        for (const query of newVal.dyn) {
+          newMap.set(query.name, query);
+        }
+        this.dyn = newMap;
+      }
+    }
   },
 
   computed: {
