@@ -43,34 +43,31 @@ const ActorSearchBox = Vue.defineComponent({
       },
       deep: true,
     },
-    modelValue(newVal, oldVal) {
-      if (newVal !== oldVal) {
+    modelValue: {
+      handler(newVal, oldVal) {
         this.q = newVal;
-
         this.id_number = {
           type: this.q?.id_number?.type || null,
           number: this.q?.id_number?.number || null,
         };
-      }
 
-      // Reset dyn if data cleared
-      if (!newVal || !Object.keys(newVal).length) {
-        this.dyn = new Map();
-        return;
-      }
-
-      // If dyn exists and is iterable, rebuild map
-      if (Array.isArray(newVal.dyn)) {
-        const newMap = new Map();
-        for (const query of newVal.dyn) {
-          newMap.set(query.name, query);
+        // Reset dyn if data cleared
+        if (!newVal || !Object.keys(newVal).length) {
+          this.dyn = new Map();
+          return;
         }
-        this.dyn = newMap;
-      }
-    },
-  },
-  created() {
-    this.q = this.modelValue;
+
+        // If dyn exists and is iterable, rebuild map
+        if (Array.isArray(newVal.dyn)) {
+          const newMap = new Map();
+          for (const query of newVal.dyn) {
+            newMap.set(query.name, query);
+          }
+          this.dyn = newMap;
+        }
+      },
+      immediate: true
+    }
   },
 
   mounted() {
