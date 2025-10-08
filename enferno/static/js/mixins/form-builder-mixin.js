@@ -409,11 +409,8 @@ const formBuilderMixin = {
 
     isTargetRowHorizontal(target) {
       if (!target) return false;
-      return (
-        target.classList.contains('w-50') ||
-        target.classList.contains('w-33') ||
-        target.classList.contains('w-25')
-      );
+
+      return target.classList.contains('grid-col-span-1');
     },
 
     wouldMove(fromIdx, tgtIdx, cls) {
@@ -551,6 +548,11 @@ const formBuilderMixin = {
       if (!name) return field.active;
 
       return field.active && field.name === name;
+    },
+    isFieldActiveAndHasContent(field, key, value) {
+      if (!this.isFieldActive(field, key)) return false
+      if (Array.isArray(value)) return value.some(v => !!v)
+      return value != null && value !== ''
     },
     findFieldOptionByValue(field, value) {
       if (!Array.isArray(field.options)) return;
