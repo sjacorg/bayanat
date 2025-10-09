@@ -33,14 +33,29 @@ const IncidentSearchBox = Vue.defineComponent({
       },
       deep: true,
     },
-    modelValue: function (newVal, oldVal) {
-      if (newVal !== oldVal) {
+    modelValue: {
+      handler(newVal, oldVal) {
         this.q = newVal;
-      }
-    },
+
+        // Reset dyn if data cleared
+        if (!newVal || !Object.keys(newVal).length) {
+          this.dyn = new Map();
+          return;
+        }
+
+        // If dyn exists and is iterable, rebuild map
+        if (Array.isArray(newVal.dyn)) {
+          const newMap = new Map();
+          for (const query of newVal.dyn) {
+            newMap.set(query.name, query);
+          }
+          this.dyn = newMap;
+        }
+      },
+      immediate: true
+    }
   },
   created() {
-    this.q = this.modelValue;
     this.fetchViolationCategories('potentialviolation', 'potentialViolationsCategories');
     this.fetchViolationCategories('claimedviolation', 'claimedViolationsCategories');
   },
