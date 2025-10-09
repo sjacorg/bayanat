@@ -21,12 +21,17 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.12"
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl libxml2-dev libxslt1-dev
+        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl libxml2-dev libxslt1-dev libgeos-dev
       - name: Install dependencies
+        env:
+          UV_PYTHON: "3.12"
         run: uv sync --extra dev
       - name: Security audit
         run: uv run pip-audit .
