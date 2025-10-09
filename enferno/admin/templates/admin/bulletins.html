@@ -14,7 +14,7 @@
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
         {% include 'admin/partials/bulk_bulletin_drawer.html' %}
-        <map-visualization></map-visualization>
+        <map-visualization v-model:open="mapVisualizationOpen"></map-visualization>
 
 
         {% include'admin/partials/export_drawer.html' %}
@@ -26,7 +26,7 @@
                             color="primary"
                             outlined
                             icon="mdi-map-outline"
-                            @click.stop="visualizeResults"
+                            @click.stop="mapVisualizationOpen = true"
                             v-bind="props"
                             v-if="showVisualize || true"
                             :loading="visualizeLoading"
@@ -486,6 +486,7 @@
                 mixins: [mediaMixin, globalMixin, relationsMixin],
 
                 data: () => ({
+                    mapVisualizationOpen: false,
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
 
