@@ -174,6 +174,19 @@ class SearchUtils:
                     .all()
                 }
 
+                def _coerce_text(raw):
+                    if raw is None:
+                        return ""
+                    return str(raw).strip()
+
+                def _normalize_select_values(raw):
+                    if raw is None:
+                        return []
+                    if isinstance(raw, (list, tuple, set)):
+                        return [str(v).strip() for v in raw if v is not None and str(v).strip()]
+                    text_value = _coerce_text(raw)
+                    return [text_value] if text_value else []
+
                 for item in dyn_filters:
                     if not isinstance(item, dict):
                         logger.warning("dyn filter skipped: invalid item", extra={"item": item})
@@ -192,37 +205,19 @@ class SearchUtils:
                     # Skip SQLAlchemy column check - use raw SQL for dynamic fields
                     # This avoids issues with dynamic columns not being in the model metadata
 
-                    # Contains for TEXT, LONG_TEXT, and SELECT
+                    # Contains for TEXT and LONG_TEXT fields
                     if (
                         df.field_type
                         in (
                             DynamicField.TEXT,
                             DynamicField.LONG_TEXT,
-                            DynamicField.SELECT,
                         )
                         and op == "contains"
                     ):
-                        if isinstance(value, str) and value:
-                            # For SELECT fields, search in array values
-                            if df.field_type == DynamicField.SELECT:
-                                conditions.append(
-                                    text(f"array_to_string({name}, ' ') ILIKE :val").bindparams(
-                                        val=f"%{value}%"
-                                    )
-                                )
-                            else:
-                                conditions.append(
-                                    text(f"{name} ILIKE :val").bindparams(val=f"%{value}%")
-                                )
-                        continue
-
-                    # SELECT equality (for both single and multi-select)
-                    if df.field_type == DynamicField.SELECT and op == "eq":
-                        if value is not None:
-                            # Use array containment for equality check
-                            # Normalize value to string to match varchar[] column type
+                        value_str = _coerce_text(value)
+                        if value_str:
                             conditions.append(
-                                text(f":val = ANY({name})").bindparams(val=str(value))
+                                text(f"{name} ILIKE :val").bindparams(val=f"%{value_str}%")
                             )
                         continue
 
@@ -257,42 +252,49 @@ class SearchUtils:
                                 )
                         continue
 
-                    # SELECT array operations (handles both single and multi-select)
+                    # SELECT field operations
                     if df.field_type == DynamicField.SELECT:
-                        if op == "any":
-                            # OR logic - at least one value must be present
-                            if isinstance(value, list) and value:
-                                # Use PostgreSQL ANY operator for OR logic with unique parameter names
-                                # Normalize all values to strings to match varchar[] column type
-                                or_conditions = []
-                                for i, val in enumerate(value):
-                                    param_name = f"val_{name}_{i}"
-                                    or_conditions.append(
-                                        text(f":{param_name} = ANY({name})").bindparams(
-                                            **{param_name: str(val)}
-                                        )
-                                    )
-                                conditions.append(or_(*or_conditions))
-                            elif isinstance(value, str) and value:
-                                # Single value check - already a string
-                                conditions.append(text(f":val = ANY({name})").bindparams(val=value))
-                        elif op in ["all", "contains"]:
-                            # AND logic - ALL values must be present (array containment)
-                            if isinstance(value, list) and value:
-                                # Use PostgreSQL array containment operator @> with explicit casting
-                                # Cast the parameter to varchar[] to match the column type (character varying[])
+                        values = _normalize_select_values(value)
+
+                        if op == "contains":
+                            lookup = values[0] if values else ""
+                            if lookup:
                                 conditions.append(
-                                    text(f"{name} @> CAST(:search_values AS varchar[])").bindparams(
-                                        search_values=value
+                                    text(f"array_to_string({name}, ' ') ILIKE :val").bindparams(
+                                        val=f"%{lookup}%"
                                     )
                                 )
-                            elif isinstance(value, str) and value:
-                                # Single value - array must contain this exact value
-                                # Ensure ARRAY literal is typed as varchar[]
+                        elif op == "eq":
+                            if values:
+                                param_name = f"{name}_eq_{len(conditions)}"
                                 conditions.append(
-                                    text(f"{name} @> (ARRAY[:search_value])::varchar[]").bindparams(
-                                        search_value=value
+                                    text(
+                                        f"{name} IS NOT NULL AND CAST(:{param_name} AS varchar) = ANY({name})"
+                                    ).bindparams(**{param_name: values[0]})
+                                )
+                        elif op == "any":
+                            if values:
+                                suffix = len(conditions)
+                                option_conditions = []
+                                for i, val in enumerate(values):
+                                    param_name = f"{name}_any_{suffix}_{i}"
+                                    option_conditions.append(
+                                        text(
+                                            f"{name} IS NOT NULL AND CAST(:{param_name} AS varchar) = ANY({name})"
+                                        ).bindparams(**{param_name: val})
                                     )
+                                if option_conditions:
+                                    if len(option_conditions) == 1:
+                                        conditions.append(option_conditions[0])
+                                    else:
+                                        conditions.append(or_(*option_conditions))
+                        elif op == "all":
+                            if values:
+                                param_name = f"{name}_all_{len(conditions)}"
+                                conditions.append(
+                                    text(
+                                        f"{name} IS NOT NULL AND {name} @> CAST(:{param_name} AS varchar[])"
+                                    ).bindparams(**{param_name: values})
                                 )
                         continue
 
