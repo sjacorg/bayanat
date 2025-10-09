@@ -216,8 +216,11 @@ class SearchUtils:
                     ):
                         value_str = _coerce_text(value)
                         if value_str:
+                            param_name = f"{name}_contains_{len(conditions)}"
                             conditions.append(
-                                text(f"{name} ILIKE :val").bindparams(val=f"%{value_str}%")
+                                text(f"{name} ILIKE :{param_name}").bindparams(
+                                    **{param_name: f"%{value_str}%"}
+                                )
                             )
                         continue
 
@@ -226,7 +229,10 @@ class SearchUtils:
                         try:
                             num = int(value) if value is not None else None
                             if num is not None:
-                                conditions.append(text(f"{name} = :val").bindparams(val=num))
+                                param_name = f"{name}_eq_{len(conditions)}"
+                                conditions.append(
+                                    text(f"{name} = :{param_name}").bindparams(**{param_name: num})
+                                )
                         except (TypeError, ValueError):
                             logger.warning(
                                 "dyn filter number cast failed",
@@ -240,14 +246,19 @@ class SearchUtils:
                             dates = [d for d in value[:2] if d]
                             if dates:
                                 # Use raw SQL for datetime between
-
                                 start_date = parse(dates[0]).date()
                                 end_date = parse(dates[1]).date() if len(dates) > 1 else start_date
                                 start_datetime = datetime.combine(start_date, time.min)
                                 end_datetime = datetime.combine(end_date, time.max)
+                                suffix = len(conditions)
                                 conditions.append(
-                                    text(f"{name} BETWEEN :start_dt AND :end_dt").bindparams(
-                                        start_dt=start_datetime, end_dt=end_datetime
+                                    text(
+                                        f"{name} BETWEEN :{name}_start_{suffix} AND :{name}_end_{suffix}"
+                                    ).bindparams(
+                                        **{
+                                            f"{name}_start_{suffix}": start_datetime,
+                                            f"{name}_end_{suffix}": end_datetime,
+                                        }
                                     )
                                 )
                         continue
