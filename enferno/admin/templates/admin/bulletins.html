@@ -14,10 +14,28 @@
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
         {% include 'admin/partials/bulk_bulletin_drawer.html' %}
+        <map-visualization></map-visualization>
 
 
         {% include'admin/partials/export_drawer.html' %}
         <v-container fluid>
+            <v-tooltip text="{{ _('Map visualization') }}">
+                <template #activator="{props}">
+                    <v-btn
+                            elevation="16"
+                            color="primary"
+                            outlined
+                            icon="mdi-map-outline"
+                            @click.stop="visualizeResults"
+                            v-bind="props"
+                            v-if="showVisualize || true"
+                            :loading="visualizeLoading"
+                            variant="elevated"
+                            class="mb-5 mr-5 position-absolute"
+                            style="right: 30px; bottom: 150px; z-index: 1000;"
+                    ></v-btn>
+                </template>
+            </v-tooltip>
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
@@ -27,7 +45,7 @@
                             icon="mdi-graph"
                             @click.stop="visualizeResults"
                             v-bind="props"
-                            v-if="showVisualize"
+                            v-if="showVisualize || true"
                             :loading="visualizeLoading"
                             variant="elevated"
                             class="mb-5 mr-5 position-absolute"
@@ -439,6 +457,9 @@
     <script src="/static/js/components/MixSelectField.js"></script>
     <script src="/static/js/components/MixReportersField.js"></script>
 
+    <script src="/static/js/components/MapVisualization.js"></script>
+    <script src="/static/js/flowmap-bundle/flowmap.bundle.min.js"></script>
+
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
 
@@ -453,6 +474,7 @@
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
+        console.log(FlowmapBundle)
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
@@ -1748,6 +1770,8 @@
         app.component('ShortActorDialog', ShortActorDialog);
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
+
+        app.component('MapVisualization', MapVisualization);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {
