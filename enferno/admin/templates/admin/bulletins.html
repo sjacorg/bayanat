@@ -567,6 +567,7 @@
                     eventParams: {typ: 'for_bulletin'},
                     reviewDialog: false,
                     reviewKey: 0,
+                    descKey: 0,
 
 
                     // search and relate bulletin dialog vars
@@ -1506,6 +1507,8 @@
                                 this.$nextTick(() => {
                                     this.loading = false
                                     this.editedItem = response.data;
+                                    //reload tinymce component hack
+                                    this.descKey += 1;
                                     if (this.editedItem.source_link == 'NA') {
                                         this.source_alt = true;
                                     } else {

@@ -104,7 +104,7 @@
                                             :multiple="true" label="{{ _('Sources') }}"></search-field>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'description')" :class="[fieldClass(field), 'px-3 py-2']">
-                                        <tinymce-editor :init="tinyConfig" v-model="editedItem.description"></tinymce-editor>
+                                        <tinymce-editor :init="tinyConfig" :key="descKey" v-model="editedItem.description"></tinymce-editor>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <search-field v-model="editedItem.labels" api="/admin/api/labels/" :query-params="{ typ: 'for_bulletin' }"
