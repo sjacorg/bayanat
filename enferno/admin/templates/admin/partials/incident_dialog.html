@@ -42,7 +42,7 @@
                                     ></dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'description')" :class="[fieldClass(field), 'px-3 py-2']">
-                                    <tinymce-editor :init="tinyConfig" :key="descKey" v-model="editedItem.description"></tinymce-editor>
+                                    <tinymce-editor :init="tinyConfig" v-model="editedItem.description"></tinymce-editor>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'potential_violations')" :class="[fieldClass(field), 'px-3 py-2']">
                                     <search-field
