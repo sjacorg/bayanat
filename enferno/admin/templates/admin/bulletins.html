@@ -458,7 +458,6 @@
     <script src="/static/js/components/MixReportersField.js"></script>
 
     <script src="/static/js/components/MapVisualization.js"></script>
-    <script src="/static/js/flowmap-bundle/flowmap.bundle.min.js"></script>
 
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
@@ -473,8 +472,6 @@
         import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
-
-        console.log(FlowmapBundle)
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;

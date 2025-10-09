@@ -4,7 +4,7 @@ const MapVisualization = Vue.defineComponent({
   },
   emits: ['update:open'],
   data: () => ({
-    MAPLIBRE_STYLE: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+    MAPLIBRE_STYLE: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
     DATA_PATH: `https://gist.githubusercontent.com/ilyabo/68d3dba61d86164b940ffe60e9d36931/raw/a72938b5d51b6df9fa7bba9aa1fb7df00cd0f06a`,
     tooltip: null,
     menu: false,
@@ -14,9 +14,18 @@ const MapVisualization = Vue.defineComponent({
   }),
   watch: {
     open(val) {
-      if (val && !this.mapInitialized) {
-        // wait for dialog to mount
-        this.$nextTick(() => this.initMap());
+      if (val) {
+        this.$nextTick(async () => {
+          if (!window.FlowmapBundle) {
+            await this.loadFlowmapScript();
+          }
+          // Clear old map if any
+          this.clearMap();
+          this.initMap();
+        });
+      } else {
+        // dialog closed
+        this.clearMap();
       }
     },
   },
@@ -29,6 +38,22 @@ const MapVisualization = Vue.defineComponent({
     });
   },
   methods: {
+    loadFlowmapScript() {
+      return new Promise((resolve, reject) => {
+        const existingScript = document.querySelector('script[data-flowmap]');
+        if (existingScript) {
+          existingScript.onload ? resolve() : existingScript.addEventListener('load', resolve);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = '/static/js/flowmap-bundle/flowmap.bundle.min.js';
+        script.setAttribute('data-flowmap', 'true');
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    },
     async fetchData() {
       return await Promise.all([
         FlowmapBundle.d3Fetch.csv(`${this.DATA_PATH}/locations.csv`, (row) => ({
@@ -45,73 +70,91 @@ const MapVisualization = Vue.defineComponent({
       ]).then(([locations, flows]) => ({ locations, flows }));
     },
 
-    async initMap() {
-      const data = await this.fetchData();
-      const { locations, flows } = data;
-      const [width, height] = [this.windowWidth, this.windowHeight];
+    clearMap() {
+    if (this.deck) {
+      this.deck.finalize(); // properly destroy Deck instance
+      this.deck = null;
+    }
+    if (this.map) {
+      this.map.remove(); // properly destroy MapLibre instance
+      this.map = null;
+    }
 
-      const initialViewState = FlowmapBundle.FlowmapData.getViewStateForLocations(
-        locations,
-        (loc) => [loc.lon, loc.lat],
-        [width, height],
-        { pad: 0.3 },
-      );
+    this.mapInitialized = false;
+    this.tooltip = null;
+    this.menu = false;
 
-      const map = new FlowmapBundle.maplibre.Map({
-        container: 'map',
-        style: this.MAPLIBRE_STYLE,
-        interactive: false,
-        center: [initialViewState.longitude, initialViewState.latitude],
-        zoom: initialViewState.zoom,
-        bearing: initialViewState.bearing,
-        pitch: initialViewState.pitch,
-      });
+    // clear DOM
+    const mapEl = document.getElementById('map');
+    if (mapEl) mapEl.innerHTML = '';
+  },
 
-      const deck = new FlowmapBundle.Deck.Deck({
-        canvas: 'deck-canvas',
-        width: '100%',
-        height: '100%',
-        initialViewState,
-        controller: true,
-        map: true,
-        onViewStateChange: ({ viewState }) => {
-          map.jumpTo({
-            center: [viewState.longitude, viewState.latitude],
-            zoom: viewState.zoom,
-            bearing: viewState.bearing,
-            pitch: viewState.pitch,
-          });
+  async initMap() {
+    const data = await this.fetchData();
+    const { locations, flows } = data;
+    const [width, height] = [this.windowWidth, this.windowHeight];
 
-          this.menu = false;
-        },
-        layers: [
-          new FlowmapBundle.FlowmapLayers.FlowmapLayer({
-            id: 'my-flowmap-layer',
-            data: { locations, flows },
-            pickable: true,
-            getLocationId: (d) => d.id,
-            getLocationLat: (d) => d.lat,
-            getLocationLon: (d) => d.lon,
-            getLocationName: (d) => d.name,
-            getFlowOriginId: (f) => f.origin,
-            getFlowDestId: (f) => f.dest,
-            getFlowMagnitude: (f) => f.count,
-            darkMode: false,
-            colorScheme: 'OrRd',
-            fadeEnabled: false,
-            fadeOpacityEnabled: false,
-            fadeAmount: 0,
-            adaptiveScalesEnabled: true,
-            clusteringEnabled: true,
-            maxTopFlowsDisplayNum: 5000,
-            highlightColor: 'orange',
-            onClick: this.onClick,
-          }),
-        ],
-      });
+    const initialViewState = FlowmapBundle.FlowmapData.getViewStateForLocations(
+      locations,
+      (loc) => [loc.lon, loc.lat],
+      [width, height],
+      { pad: 0.3 }
+    );
 
-      this.mapInitialized = true;
-    },
+    this.map = new FlowmapBundle.maplibre.Map({
+      container: 'map',
+      style: this.MAPLIBRE_STYLE,
+      interactive: false,
+      center: [initialViewState.longitude, initialViewState.latitude],
+      zoom: initialViewState.zoom,
+      bearing: initialViewState.bearing,
+      pitch: initialViewState.pitch,
+    });
+
+    this.deck = new FlowmapBundle.Deck.Deck({
+      canvas: 'deck-canvas',
+      width: '100%',
+      height: '100%',
+      initialViewState,
+      controller: true,
+      map: true,
+      onViewStateChange: ({ viewState }) => {
+        this.map.jumpTo({
+          center: [viewState.longitude, viewState.latitude],
+          zoom: viewState.zoom,
+          bearing: viewState.bearing,
+          pitch: viewState.pitch,
+        });
+        this.menu = false;
+      },
+      layers: [
+        new FlowmapBundle.FlowmapLayers.FlowmapLayer({
+          id: 'my-flowmap-layer',
+          data: { locations, flows },
+          pickable: true,
+          getLocationId: (d) => d.id,
+          getLocationLat: (d) => d.lat,
+          getLocationLon: (d) => d.lon,
+          getLocationName: (d) => d.name,
+          getFlowOriginId: (f) => f.origin,
+          getFlowDestId: (f) => f.dest,
+          getFlowMagnitude: (f) => f.count,
+          darkMode: false,
+          colorScheme: 'OrRd',
+          fadeEnabled: false,
+          fadeOpacityEnabled: false,
+          fadeAmount: 0,
+          adaptiveScalesEnabled: true,
+          clusteringEnabled: true,
+          maxTopFlowsDisplayNum: 5000,
+          highlightColor: 'orange',
+          onClick: this.onClick,
+        }),
+      ],
+    });
+
+    this.mapInitialized = true;
+  },
 
     onClick(info) {
       if (!info || !info.object) return;
@@ -179,7 +222,7 @@ const MapVisualization = Vue.defineComponent({
   template: `
     <v-dialog fullscreen :model-value="open">
       <v-toolbar color="primary" dark>
-        <v-toolbar-title>Map Flows {{ open }}</v-toolbar-title>
+        <v-toolbar-title>Map Flows</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon="mdi-close" @click="$emit('update:open', false)"></v-btn>
       </v-toolbar>
