@@ -124,7 +124,31 @@ function scrollToFirstError() {
   if (input) setTimeout(() => input.focus(), 300);
 }
 
+
 // global vuetify config object passed to most pages of the system
+const variables = {
+    // Border radius
+    'rounded-10': '10px',
+    'rounded-12': '12px',
+    'rounded-16': '16px',
+
+    // Overflow
+    'overflow-unset': 'unset',
+
+    // Z-index
+    'z-1': '1',
+    'z-100': '100',
+
+    // Position
+    'left-auto': 'auto',
+
+    // Height
+    'h-fit': 'fit-content',
+
+    // Pointer events
+    'pointer-events-none': 'none',
+    'pointer-events-auto': 'auto',
+}
 const vuetifyConfig = {
     defaults: {
         VRow: {
@@ -146,6 +170,9 @@ const vuetifyConfig = {
             variant: 'outlined'
         },
         VAutocomplete: {
+            variant: 'outlined'
+        },
+        VNumberInput: {
             variant: 'outlined'
         },
         VBtn: {
@@ -202,8 +229,10 @@ const vuetifyConfig = {
                     muted: '#79747E',
                     border: '#D9D9D9',
                     'table-header': '#9E9E9E',
-                    'table-body': '#666666'
+                    'table-body': '#666666',
+                    'core-field-accent': '#ebebf0'
                 },
+                variables
             },
             dark: {
                 dark: true, // Explicitly set the dark theme as dark
@@ -222,6 +251,7 @@ const vuetifyConfig = {
                     'table-header': '#B0B0B0',
                     'table-body': '#ffffffb3'
                 },
+                variables
             },
         },
     },
@@ -380,10 +410,13 @@ const routes = [
 
     {path: '/admin/bulletins/:id', name: 'bulletin', component: Vue.defineComponent({})},
     {path: '/admin/bulletins/', name: 'bulletins', component: Vue.defineComponent({})},
+    {path: '/admin/bulletin-fields/', name: 'bulletin-fields', component: Vue.defineComponent({})},
     {path: '/admin/actors/:id', name: 'actor', component: Vue.defineComponent({})},
     {path: '/admin/actors/', name: 'actors', component: Vue.defineComponent({})},
+    {path: '/admin/actor-fields/', name: 'actor-fields', component: Vue.defineComponent({})},
     {path: '/admin/incidents/:id', name: 'incident', component: Vue.defineComponent({})},
     {path: '/admin/incidents/', name: 'incidents', component: Vue.defineComponent({})},
+    {path: '/admin/incident-fields/', name: 'incident-fields', component: Vue.defineComponent({})},
     {path: '/admin/locations/:id', name: 'location', component: Vue.defineComponent({})},
     {path: '/admin/locations/', name: 'locations', component: Vue.defineComponent({})},
     {path: '/admin/activity/', name: 'activity', component: Vue.defineComponent({})},

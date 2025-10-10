@@ -218,6 +218,9 @@ class PartialMediaModel(BaseValidationModel):
 
 
 class BulletinValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     originid: Optional[str] = None
     title: str = Field(min_length=1)
     sjac_title: Optional[str] = None
@@ -311,6 +314,9 @@ class PartialClaimedViolationModel(BaseValidationModel):
 
 
 class IncidentValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     title: str = Field(min_length=1)
     title_ar: Optional[str] = None
     description: Optional[SanitizedField] = None
@@ -633,6 +639,9 @@ class PartialActorProfileModel(BaseValidationModel):
 
 
 class ActorValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     type: str = DEFAULT_STRING_FIELD  # type: ignore
     name: Optional[str] = DEFAULT_STRING_FIELD
     name_ar: Optional[str] = DEFAULT_STRING_FIELD
@@ -1206,6 +1215,9 @@ class BulletinQueryValidationModel(QueryBaseModel):
     childsources: Optional[bool] = False
     locTypes: Optional[list[str]] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel] = None
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "case_number", "op": "contains", "value": "2024-"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
     @field_validator("tags")
     def validate_tags(cls, v):
@@ -1365,6 +1377,9 @@ class ActorQueryModel(QueryBaseModel):
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "field_name", "op": "contains", "value": "test"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
     @field_validator("tags")
     def validate_tags(cls, v):
@@ -1501,6 +1516,9 @@ class IncidentQueryModel(QueryBaseModel):
     ids: list[int] = Field(default_factory=list)
     potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
     claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "field_123", "op": "contains", "value": "test"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
