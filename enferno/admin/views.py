@@ -86,6 +86,7 @@ from enferno.admin.validation.models import (
     EventtypeRequestModel,
     GeoLocationTypeRequestModel,
     GraphVisualizeRequestModel,
+    FlowmapVisualizeRequestModel,
     IncidentBulkUpdateRequestModel,
     IncidentQueryRequestModel,
     IncidentRequestModel,
@@ -118,6 +119,7 @@ from enferno.tasks import (
     bulk_update_actors,
     bulk_update_incidents,
     download_media_from_web,
+    generate_actor_flowmap,
     generate_graph,
     regenerate_locations,
 )
@@ -6273,6 +6275,49 @@ def check_graph_status() -> Response:
         return HTTPResponse.not_found("Graph status not found")
 
     return HTTPResponse.success(data={"status": status.decode("utf-8")})
+
+
+@admin.post("/api/flowmap/visualize")
+@validate_with(FlowmapVisualizeRequestModel)
+def flowmap_visualize(validated_data: dict) -> Response:
+    """Generate actor flowmap visualization."""
+    q = validated_data["q"]
+    if not q:
+        return HTTPResponse.error("No query provided")
+
+    task_id = generate_actor_flowmap.delay(q, current_user.id)
+    return HTTPResponse.success(data={"task_id": task_id.id})
+
+
+@admin.get("/api/flowmap/data")
+def get_flowmap_data() -> Response:
+    """Retrieve flowmap data from Redis."""
+    data_key = f"user{current_user.id}:flowmap:data"
+    flowmap_data = rds.get(data_key)
+
+    if not flowmap_data:
+        return HTTPResponse.not_found("Flowmap data not found")
+
+    return HTTPResponse.success(data=json.loads(flowmap_data))
+
+
+@admin.get("/api/flowmap/status")
+def check_flowmap_status() -> Response:
+    """Get flowmap task status."""
+    user_id = current_user.id
+    status = rds.get(f"user{user_id}:flowmap:status")
+
+    if not status:
+        return HTTPResponse.not_found("Flowmap status not found")
+
+    response_data = {"status": status.decode("utf-8")}
+
+    if response_data["status"] == "error":
+        error_msg = rds.get(f"user{user_id}:flowmap:error")
+        if error_msg:
+            response_data["error"] = error_msg.decode("utf-8")
+
+    return HTTPResponse.success(data=response_data)
 
 
 @admin.get("/system-administration/")
