@@ -16,7 +16,7 @@ from flask_security.utils import hash_password
 from sqlalchemy import event, MetaData, text
 
 from enferno.admin.models import MigrationHistory, SystemInfo
-from enferno.extensions import db
+from enferno.extensions import db, rds
 from enferno.settings import Config
 from enferno.tasks import restart_service as restart
 from enferno.user.models import User, Role
@@ -681,6 +681,10 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
 
         db.session.commit()
         logger.info(f"Version updated to {new_version}")
+
+        # Clear update notification from Redis
+        rds.delete("bayanat:update:latest")
+        logger.info("Cleared update notification")
 
         # 6) Restart
         if restart_service:
