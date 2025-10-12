@@ -118,6 +118,7 @@ from enferno.admin.validation.models import (
 )
 from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
+from enferno.settings import Config
 from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
@@ -6685,6 +6686,38 @@ def api_system_status() -> Response:
                 "error": "Could not check for updates",
             }
         )
+
+
+@admin.route("/api/system/version/check", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_version_check() -> Response:
+    """
+    Lightweight version check endpoint - reads from Redis cache.
+    Updated by Celery periodic task every 12 hours.
+    """
+    cached_update = rds.get("bayanat:update:latest")
+    current_version = Config.VERSION
+
+    if cached_update:
+        latest_version, detected_at = cached_update.decode().split("|")
+        return jsonify(
+            {
+                "update_available": True,
+                "current_version": current_version,
+                "latest_version": latest_version,
+                "detected_at": detected_at,
+            }
+        )
+
+    return jsonify(
+        {
+            "update_available": False,
+            "current_version": current_version,
+            "latest_version": current_version,
+            "detected_at": None,
+        }
+    )
 
 
 @admin.route("/api/session-check")
