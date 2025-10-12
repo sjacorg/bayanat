@@ -732,6 +732,10 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
     # session cleanup task
     sender.add_periodic_task(24 * 60 * 60, session_cleanup.s(), name="Session Cleanup Cron")
 
+    # version check task (every 12 hours)
+    sender.add_periodic_task(12 * 60 * 60, check_for_updates.s(), name="Version Check")
+    logger.info("Version check periodic task is set up (runs every 12 hours).")
+
 
 @celery.task
 def session_cleanup():
