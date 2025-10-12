@@ -53,6 +53,7 @@ from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
 import enferno.utils.typing as t
+from enferno.admin.models import SystemInfo
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
 
@@ -1461,8 +1462,35 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
     return graph
 
 
-# Note: Update checking is now handled via real-time API endpoint in admin/views.py
-# This removes the Redis caching approach for better reliability
+@celery.task
+def check_for_updates() -> None:
+    """
+    Periodic task to check for new Bayanat versions.
+    Stores latest version in Redis if newer than current.
+    """
+    current_version = cfg.VERSION
+
+    try:
+        repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
+        response = requests.get(
+            f"https://api.github.com/repos/{repo_name}/tags",
+            timeout=3,
+            headers={"Accept": "application/vnd.github.v3+json"},
+        )
+        response.raise_for_status()
+
+        tags = response.json()
+        if tags:
+            latest_tag = tags[0]["name"].lstrip("v")
+
+            if version.parse(latest_tag) > version.parse(current_version):
+                # Store in Redis
+                value = f"{latest_tag}|{datetime.now(timezone.utc).isoformat()}"
+                rds.set("bayanat:update:latest", value)
+                logger.info(f"New version detected: {latest_tag} (current: {current_version})")
+
+    except Exception as e:
+        logger.warning(f"Version check failed: {e}")
 
 
 @celery.task
