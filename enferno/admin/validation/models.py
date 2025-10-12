@@ -24,7 +24,9 @@ from enferno.utils.validation_utils import (
     validate_password_policy,
     validate_username,
     validate_username_constraints,
+    validate_field_type,
 )
+from enferno.admin.models.DynamicField import DynamicField
 from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
@@ -33,6 +35,24 @@ BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 PER_PAGE = int(Config.get("ITEMS_PER_PAGE_OPTIONS")[0])
+
+
+def validate_dynamic_fields(entity_type: str, model_instance) -> None:
+    """Validate dynamic fields against their schema definitions."""
+    # Use model_extra to get only true extra fields (not aliases)
+    dynamic_data = model_instance.model_extra or {}
+
+    if not dynamic_data:
+        return
+
+    fields = DynamicField.query.filter_by(entity_type=entity_type, active=True, core=False).all()
+    field_map = {f.name: f for f in fields}
+
+    for name, value in dynamic_data.items():
+        if name not in field_map:
+            raise ValueError(f"Unknown field '{name}' for {entity_type}")
+        validated = validate_field_type(value, field_map[name].field_type)
+        setattr(model_instance, name, validated)
 
 
 class BaseValidationModel(BaseModel):
