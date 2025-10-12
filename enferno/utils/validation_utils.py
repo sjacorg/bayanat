@@ -13,6 +13,8 @@ from pydantic import (
     Field,
     GetCoreSchemaHandler,
     ValidationError,
+    ValidationInfo,
+    field_validator,
     model_validator,
 )
 import bleach
@@ -491,3 +493,27 @@ def validate_field_type(value: Any, expected_type: str | FieldType) -> Any:
         return []
 
     return value
+
+
+BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
+
+
+class DynamicFieldValue(BaseModel):
+    """
+    Pydantic model for dynamic field with runtime type validation.
+    """
+
+    model_config = BASE_MODEL_CONFIG
+
+    name: str = Field(min_length=1)
+    field_type: FieldType
+    value: Any
+
+    @field_validator("value")
+    @classmethod
+    def validate_value_type(cls, v: Any, info: ValidationInfo) -> Any:
+        """Validate value matches declared field_type."""
+        field_type = info.data.get("field_type")
+        if field_type:
+            return validate_field_type(v, field_type)
+        return v
