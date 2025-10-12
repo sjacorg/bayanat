@@ -6,6 +6,7 @@ from zxcvbn import zxcvbn
 from functools import wraps
 from typing import Any, Type, Annotated
 from flask import request
+from enum import Enum
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -403,3 +404,19 @@ def convert_empty_strings_to_none(data: Any) -> Any:
         return None
     else:
         return data
+
+
+# =============================================================================
+# Dynamic Field Type Validation
+# =============================================================================
+
+
+class FieldType(str, Enum):
+    """Supported field types for dynamic field validation."""
+
+    TEXT = "text"
+    LONG_TEXT = "long_text"
+    NUMBER = "number"
+    DATETIME = "datetime"
+    BOOLEAN = "boolean"
+    SELECT = "select"
