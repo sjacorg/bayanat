@@ -794,6 +794,12 @@ class ActorValidationModel(StrictValidationModel):
                 raise ValueError(f"Invalid date format: {v}")
         return v
 
+    @model_validator(mode="after")
+    def validate_actor_dynamic_fields(self):
+        """Validate dynamic actor fields."""
+        validate_dynamic_fields("actor", self)
+        return self
+
 
 class ActorRequestModel(BaseValidationModel):
     item: ActorValidationModel
