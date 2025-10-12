@@ -320,6 +320,12 @@ class BulletinValidationModel(StrictValidationModel):
                 raise ValueError(f"Invalid date format: {v}")
         return v
 
+    @model_validator(mode="after")
+    def validate_bulletin_dynamic_fields(self):
+        """Validate dynamic bulletin fields."""
+        validate_dynamic_fields("bulletin", self)
+        return self
+
 
 class BulletinRequestModel(BaseValidationModel):
     item: BulletinValidationModel
