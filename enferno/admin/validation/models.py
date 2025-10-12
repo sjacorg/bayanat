@@ -465,6 +465,12 @@ class IncidentValidationModel(StrictValidationModel):
                 raise ValueError(f"Invalid date format: {v}")
         return v
 
+    @model_validator(mode="after")
+    def validate_incident_dynamic_fields(self):
+        """Validate dynamic incident fields."""
+        validate_dynamic_fields("incident", self)
+        return self
+
 
 class IncidentRequestModel(BaseValidationModel):
     item: IncidentValidationModel
