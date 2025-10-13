@@ -1,0 +1,30 @@
+{
+  "name": "local-bundles",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "prebuild": "node generate-entries.js",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rm -rf ../js/packages/* src/entries/*"
+  },
+  "dependencies": {
+    "@deck.gl/core": "^8.6.5",
+    "@deck.gl/layers": "^8.6.5",
+    "@flowmap.gl/data": "^8.0.2",
+    "@flowmap.gl/layers": "^8.0.2",
+    "maplibre-gl": "^5.9.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-replace": "^5.0.0",
+    "@rollup/plugin-terser": "^0.4.0",
+    "clean-css-cli": "^5.6.3",
+    "cssnano": "^7.1.1",
+    "postcss": "^8.5.6",
+    "rollup": "^4.0.0",
+    "rollup-plugin-postcss": "^4.0.2"
+  }
+}
