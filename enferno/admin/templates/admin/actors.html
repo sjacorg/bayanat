@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="/static/css/dropzone.min.css"/>
     <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
+    <link rel="stylesheet" href="/static/js/packages/maplibre-gl.min.css">
 {% endblock %} {% block content %}
 
 
@@ -12,7 +13,7 @@
     {% include 'admin/partials/export_drawer.html' %}
     <v-main>
         {% include 'admin/partials/actor_advsearch.html' %}
-        <map-visualization v-model:open="mapVisualizationOpen"></map-visualization>
+        <map-visualization v-model:open="mapVisualizationOpen" :query="search"></map-visualization>
 
         <v-container fluid>
             <v-tooltip text="{{ _('Map visualization') }}">
@@ -24,7 +25,7 @@
                             icon="mdi-map-outline"
                             @click.stop="mapVisualizationOpen = true"
                             v-bind="props"
-                            :loading="visualizeLoading"
+                            v-if="showMapVisualize"
                             variant="elevated"
                             class="mb-5 mr-5 position-absolute"
                             style="right: 30px; bottom: 150px; z-index: 1000;"
@@ -397,6 +398,12 @@
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
 
+    <!-- Flowmap packages -->
+    <script src="/static/js/packages/deck-gl-core.min.js"></script>
+    <script src="/static/js/packages/deck-gl-layers.min.js"></script>
+    <script src="/static/js/packages/flowmap-gl-data.min.js"></script>
+    <script src="/static/js/packages/flowmap-gl-layers.min.js"></script>
+    <script src="/static/js/packages/maplibre-gl.min.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -472,6 +479,7 @@
                 // advanced search
                 advSearchExpand: false,
 
+                showMapVisualize: false,
                 showVisualize: false,
                 visualizeLoading: false,
                 graphTimer: null,
@@ -1093,10 +1101,11 @@
                             console.log(`API call took ${duration}ms`)
 
                             this.items = response.data.items;
-                            this.showVisualize = !(
-                                this.search.length === 1 &&
-                                Object.keys(this.search[0]).length === 0
-                            );
+                            const isSearchEmpty = this.search.length === 1 && Object.keys(this.search[0]).length === 0;
+                            const hasSearched = !isSearchEmpty;
+
+                            this.showVisualize = hasSearched;
+                            this.showMapVisualize = hasSearched;
                             if ('total' in response.data) {
                                 this.totalCount = response.data.total
                                 this.countType = response.data.totalType
