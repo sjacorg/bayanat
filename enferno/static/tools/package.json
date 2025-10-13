@@ -9,11 +9,12 @@
     "clean": "rm -rf ../js/packages/* src/entries/*"
   },
   "dependencies": {
-    "@deck.gl/core": "^8.6.5",
-    "@deck.gl/layers": "^8.6.5",
-    "@flowmap.gl/data": "^8.0.2",
-    "@flowmap.gl/layers": "^8.0.2",
-    "maplibre-gl": "^5.9.0"
+    "@deck.gl/core": "^8.9.28",
+    "@deck.gl/layers": "^8.9.28",
+    "@flowmap.gl/data": "8.0.1",
+    "@flowmap.gl/layers": "8.0.1",
+    "@math.gl/web-mercator": "^4.1.0",
+    "maplibre-gl": "^3.3.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.0",

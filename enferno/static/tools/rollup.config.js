@@ -101,7 +101,80 @@ const configs = packages.map(pkg => ({
     })
   ],
   external: [],
+
   onwarn
 }));
+
+configs.push({
+  input: `src/index.js`,
+  output: {
+    file: `../js/packages/flowmap-bundle.min.js`,
+    format: 'umd',
+    name: 'FlowmapBundle',
+    globals: {},
+    sourcemap: false,
+    banner: `
+      if (typeof global === 'undefined') {
+        var global = globalThis;
+      }
+      if (typeof process === 'undefined') {
+        var process = {
+          env: { NODE_ENV: 'production' },
+          browser: true,
+          version: 'v16.0.0',
+          versions: {},
+          platform: 'browser'
+        };
+      }
+    `
+  },
+  plugins: [
+    // Replace Node.js globals with browser-safe alternatives
+    replace({
+      preventAssignment: true,
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.browser': 'true',
+      'process.version': JSON.stringify('v16.0.0'),
+      'process.versions': JSON.stringify({}),
+      'process.platform': JSON.stringify('browser'),
+      'process.env': JSON.stringify({ NODE_ENV: 'production' }),
+      'typeof process': JSON.stringify('object'),
+      'global': 'globalThis',
+      '__dirname': '""',
+      '__filename': '""'
+    }),
+    
+    // Resolve node modules
+    resolve({
+      browser: true,
+      preferBuiltins: false,
+      exportConditions: ['browser'],
+      skip: ['fs', 'path', 'os']
+    }),
+    
+    // Convert CommonJS modules to ES6
+    commonjs({
+      include: ['node_modules/**'],
+      transformMixedEsModules: true
+    }),
+    
+    // Handle JSON imports
+    json(),
+    
+    // Always minify
+    terser({
+      compress: {
+        drop_console: false,
+        drop_debugger: true
+      },
+      format: {
+        comments: false
+      }
+    })
+  ],
+  external: [],
+
+  onwarn
+})
 
 export default configs;

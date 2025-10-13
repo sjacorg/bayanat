@@ -23,10 +23,8 @@ const MapVisualization = Vue.defineComponent({
   watch: {
     open(val) {
       if (val) {
-        this.$nextTick(async () => {
-          this.clearMap();
-          this.initMap();
-        });
+        this.clearMap();
+        this.initMap();
       } else {
         this.clearMap();
       }
@@ -100,7 +98,7 @@ const MapVisualization = Vue.defineComponent({
       // Initial view state
       const initialViewState =
         locations.length > 0
-          ? FlowmapData.getViewStateForLocations(
+          ? FlowmapBundle.FlowmapData.getViewStateForLocations(
               locations.filter((l) => Number.isFinite(l.lon) && Number.isFinite(l.lat)),
               (loc) => [loc.lon, loc.lat],
               [width, height],
@@ -115,7 +113,7 @@ const MapVisualization = Vue.defineComponent({
             };
 
       // Initialize Maplibre
-      this.map = new MaplibreGL.Map({
+      this.map = new FlowmapBundle.MaplibreGL.Map({
         container: 'map',
         style: this.MAPLIBRE_STYLE,
         interactive: false,
@@ -129,7 +127,7 @@ const MapVisualization = Vue.defineComponent({
 
       if (locations.length > 0 && flows.length > 0) {
         layers.push(
-          new FlowmapLayers.FlowmapLayer({
+          new FlowmapBundle.FlowmapLayers.FlowmapLayer({
             id: 'my-flowmap-layer',
             data: { locations, flows },
             pickable: true,
@@ -150,7 +148,7 @@ const MapVisualization = Vue.defineComponent({
       }
 
       // Initialize Deck
-      this.deck = new DeckCore.Deck({
+      this.deck = new FlowmapBundle.DeckCore.Deck({
         canvas: 'deck-canvas',
         width: '100%',
         height: '100%',

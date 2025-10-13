@@ -28,6 +28,7 @@ const packageDefinitions = [
   { import: '@deck.gl/layers', globalName: 'DeckLayers' },
   { import: '@flowmap.gl/data', globalName: 'FlowmapData' },
   { import: '@flowmap.gl/layers', globalName: 'FlowmapLayers' },
+  { import: '@math.gl/web-mercator', globalName: 'webMercator' },
   { import: 'maplibre-gl', globalName: 'MaplibreGL' }
 ];
 
