@@ -12,7 +12,25 @@
     {% include 'admin/partials/export_drawer.html' %}
     <v-main>
         {% include 'admin/partials/actor_advsearch.html' %}
+        <map-visualization v-model:open="mapVisualizationOpen"></map-visualization>
+
         <v-container fluid>
+            <v-tooltip text="{{ _('Map visualization') }}">
+                <template #activator="{props}">
+                    <v-btn
+                            elevation="16"
+                            color="primary"
+                            outlined
+                            icon="mdi-map-outline"
+                            @click.stop="mapVisualizationOpen = true"
+                            v-bind="props"
+                            :loading="visualizeLoading"
+                            variant="elevated"
+                            class="mb-5 mr-5 position-absolute"
+                            style="right: 30px; bottom: 150px; z-index: 1000;"
+                    ></v-btn>
+                </template>
+            </v-tooltip>
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template v-slot:activator="{ props }">
                     <v-btn
@@ -369,6 +387,7 @@
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
 
+    <script src="/static/js/components/MapVisualization.js"></script>
 
     <script src="/static/js/components/MissingPersonCard.js"></script>
     <script src="/static/js/components/MissingPersonField.js"></script>
@@ -377,6 +396,7 @@
     <script src="/static/js/components/MixReportersField.js"></script>
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
+
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -399,6 +419,7 @@
             mixins: [mediaMixin, globalMixin, relationsMixin],
 
             data: () => ({
+                mapVisualizationOpen: false,
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
@@ -1704,6 +1725,8 @@
         app.component('MissingPersonField', MissingPersonField);
         app.component('MissingPersonCard', MissingPersonCard);
         app.component('VueDropzone', VueDropzone);
+
+        app.component('MapVisualization', MapVisualization);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

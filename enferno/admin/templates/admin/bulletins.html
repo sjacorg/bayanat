@@ -14,28 +14,8 @@
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
         {% include 'admin/partials/bulk_bulletin_drawer.html' %}
-        <map-visualization v-model:open="mapVisualizationOpen"></map-visualization>
-
-
         {% include'admin/partials/export_drawer.html' %}
         <v-container fluid>
-            <v-tooltip text="{{ _('Map visualization') }}">
-                <template #activator="{props}">
-                    <v-btn
-                            elevation="16"
-                            color="primary"
-                            outlined
-                            icon="mdi-map-outline"
-                            @click.stop="mapVisualizationOpen = true"
-                            v-bind="props"
-                            v-if="showVisualize || true"
-                            :loading="visualizeLoading"
-                            variant="elevated"
-                            class="mb-5 mr-5 position-absolute"
-                            style="right: 30px; bottom: 150px; z-index: 1000;"
-                    ></v-btn>
-                </template>
-            </v-tooltip>
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
@@ -483,7 +463,6 @@
                 mixins: [mediaMixin, globalMixin, relationsMixin],
 
                 data: () => ({
-                    mapVisualizationOpen: false,
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
 
@@ -1768,8 +1747,6 @@
         app.component('ShortActorDialog', ShortActorDialog);
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
-
-        app.component('MapVisualization', MapVisualization);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {
