@@ -127,7 +127,7 @@ const MapVisualization = Vue.defineComponent({
 
       const layers = [];
 
-      if (locations.length > 0 || flows.length > 0) {
+      if (locations.length > 0 && flows.length > 0) {
         layers.push(
           new FlowmapLayers.FlowmapLayer({
             id: 'my-flowmap-layer',
@@ -261,15 +261,17 @@ const MapVisualization = Vue.defineComponent({
           </v-overlay>
 
           <!-- Error Message -->
-          <v-card
-            v-if="errorMessage"
-            class="absolute d-flex flex-column align-center justify-center text-center pa-6"
-            style="inset:0; z-index:100;"
-          >
-            <v-icon color="error" size="64">mdi-alert-circle-outline</v-icon>
-            <div class="text-h6 mt-2">{{ errorMessage }}</div>
-            <v-btn class="mt-4" color="primary" @click="retry">Retry</v-btn>
-          </v-card>
+          <v-container>
+            <v-card
+              v-if="errorMessage"
+              class="d-flex flex-column align-center justify-center text-center pa-6"
+              style="inset:0; z-index:100;"
+            >
+              <v-icon color="error" size="64">mdi-alert-circle-outline</v-icon>
+              <div class="text-h6 mt-2">{{ errorMessage }}</div>
+              <v-btn class="mt-4" color="primary" @click="retry">Retry</v-btn>
+            </v-card>
+          </v-container>
         </div>
       </v-sheet>
     </v-dialog>
