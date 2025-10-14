@@ -1532,6 +1532,10 @@ class GraphVisualizeRequestModel(BaseValidationModel):
     q: list[dict[str, Any]] | dict[str, Any]
 
 
+class FlowmapVisualizeRequestModel(BaseValidationModel):
+    q: list[dict[str, Any]]
+
+
 class DefaultMapCenterModel(BaseValidationModel):
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)

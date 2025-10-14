@@ -895,3 +895,17 @@ div.jsondiffpatch-child-node-type-array:after {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+#container {
+    height: calc(100vh - 64px);
+}
+
+#container > #map,#deck-canvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+#map {
+    opacity: 1;
+}
