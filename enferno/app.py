@@ -250,6 +250,7 @@ def register_commands(app):
     app.cli.add_command(commands.disable_maintenance)
     app.cli.add_command(commands.get_version)
     app.cli.add_command(commands.update_system)
+    app.cli.add_command(commands.check_updates)
 
 
 def register_errorhandlers(app):

@@ -18,7 +18,7 @@ from sqlalchemy import event, MetaData, text
 from enferno.admin.models import MigrationHistory, SystemInfo
 from enferno.extensions import db, rds
 from enferno.settings import Config
-from enferno.tasks import restart_service as restart
+from enferno.tasks import restart_service as restart, perform_version_check
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import (
@@ -758,3 +758,26 @@ def update_system(skip_backup: bool = False) -> None:
     click.echo(message)
     if not success:
         raise click.ClickException(message)
+
+
+@click.command()
+@with_appcontext
+def check_updates() -> None:
+    """
+    Check for new Bayanat versions and display update status.
+    Useful for testing the update check mechanism.
+    """
+    click.echo(f"Current version: {Config.VERSION}")
+    click.echo("Checking for updates...")
+
+    result = perform_version_check()
+
+    if result:
+        if result["update_available"]:
+            click.echo(f"✓ Update available: {result['latest_version']}")
+            click.echo(f"  Checked at: {result['checked_at']}")
+            click.echo(f"  Repository: {result['repository']}")
+        else:
+            click.echo(f"✓ System is up to date (latest: {result['latest_version']})")
+    else:
+        click.echo("✗ Update check failed (see logs for details)", err=True)
