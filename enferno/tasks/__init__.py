@@ -1466,11 +1466,17 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
     return graph
 
 
-@celery.task
-def check_for_updates() -> None:
+def perform_version_check() -> Optional[dict]:
     """
-    Periodic task to check for new Bayanat versions.
+    Check for new Bayanat versions.
     Stores latest version in Redis if newer than current.
+
+    This is a regular function (not a Celery task) so it can be called
+    from CLI without triggering Celery initialization overhead.
+
+    Returns:
+        dict with 'latest_version', 'current_version', 'update_available', 'checked_at'
+        or None if check fails
     """
     current_version = cfg.VERSION
 
@@ -1486,15 +1492,35 @@ def check_for_updates() -> None:
         tags = response.json()
         if tags:
             latest_tag = tags[0]["name"].lstrip("v")
+            checked_at = datetime.now(timezone.utc).isoformat()
+            update_available = version.parse(latest_tag) > version.parse(current_version)
 
-            if version.parse(latest_tag) > version.parse(current_version):
+            if update_available:
                 # Store in Redis
-                value = f"{latest_tag}|{datetime.now(timezone.utc).isoformat()}"
+                value = f"{latest_tag}|{checked_at}"
                 rds.set("bayanat:update:latest", value)
                 logger.info(f"New version detected: {latest_tag} (current: {current_version})")
 
+            return {
+                "latest_version": latest_tag,
+                "current_version": current_version,
+                "update_available": update_available,
+                "checked_at": checked_at,
+                "repository": repo_name,
+            }
+
     except Exception as e:
         logger.warning(f"Version check failed: {e}")
+        return None
+
+
+@celery.task
+def check_for_updates() -> None:
+    """
+    Periodic Celery task to check for new Bayanat versions.
+    Delegates to perform_version_check() which contains the actual logic.
+    """
+    perform_version_check()
 
 
 @celery.task
