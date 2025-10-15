@@ -496,8 +496,19 @@ class DynamicField(db.Model, BaseMixin):
                 updates[name] = array_value
             elif field.field_type == cls.NUMBER:
                 try:
-                    updates[name] = int(value) if value is not None else None
-                except (TypeError, ValueError):
+                    if value is None:
+                        updates[name] = None
+                    else:
+                        num_value = int(value)
+                        # PostgreSQL INTEGER range validation
+                        if num_value < -2147483648 or num_value > 2147483647:
+                            raise ValueError(
+                                f"Field {field.name}: Number must be between -2,147,483,648 and 2,147,483,647"
+                            )
+                        updates[name] = num_value
+                except (TypeError, ValueError) as e:
+                    if "must be between" in str(e):
+                        raise  # Re-raise our validation error
                     updates[name] = None
             else:
                 updates[name] = value
