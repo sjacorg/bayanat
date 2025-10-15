@@ -5115,7 +5115,7 @@ def api_user_create(
             f"User {username} has been created by {current_user.username} successfully.",
         )
         return HTTPResponse.created(
-            message=f"User {username} has been created successfully",
+            message=f"New User '{user.name}' successfully added!",
             data={"item": user.to_dict()},
         )
     else:
