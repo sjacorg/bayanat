@@ -3,6 +3,7 @@ const ToggleButton = Vue.defineComponent({
     modelValue: {
       type: Boolean,
       required: true,
+      default: false,
     },
     activeColor: {
       type: String,
