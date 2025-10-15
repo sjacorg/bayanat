@@ -49,6 +49,7 @@ const globalMixin = {
     checkingUpdates: false,
     updateError: null,
     updatePollIntervalId: null,
+    updating: false,
   }),
   created () {
     document.addEventListener('global-axios-error', this.showSnack);
@@ -226,7 +227,7 @@ const globalMixin = {
       if (this.updateError) {
         return 'mdi-alert-circle-outline';
       }
-      if (this.checkingUpdates) {
+      if (this.updating || this.checkingUpdates) {
         return 'mdi-refresh';
       }
       if (this.updateInfo && this.updateInfo.update_available) {
@@ -236,8 +237,44 @@ const globalMixin = {
     },
     getUpdateIconClasses() {
       return {
-        'mdi-spin': this.checkingUpdates,
+        'mdi-spin': this.checkingUpdates || this.updating,
       };
+    },
+    async handleUpdateClick() {
+      if (!this.isAdminUser()) return;
+
+      if (this.updateInfo && this.updateInfo.update_available) {
+        if (this.updating) return;
+
+        const confirmUpdate = confirm('This will update the system and restart services. Continue?');
+        if (!confirmUpdate) {
+          return;
+        }
+
+        this.updating = true;
+
+        try {
+          const response = await axios.post('/admin/api/system/update', { skip_backup: false });
+
+          if (response?.data?.success) {
+            this.showSnack(response.data.message || 'System update initiated. Reloading shortly.');
+            setTimeout(() => {
+              window.location.reload();
+            }, 10000);
+          } else {
+            const error = response?.data?.error || 'System update failed.';
+            this.showSnack(error);
+          }
+        } catch (error) {
+          const message = error?.response?.data?.error || error.message || 'System update request failed.';
+          this.showSnack(message);
+        } finally {
+          this.updating = false;
+          this.fetchUpdateInfo();
+        }
+      } else {
+        this.fetchUpdateInfo();
+      }
     },
   },
 };

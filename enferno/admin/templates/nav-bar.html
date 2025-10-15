@@ -21,7 +21,7 @@
       <v-btn
         v-bind="props"
         icon
-        @click.prevent="fetchUpdateInfo"
+        @click.prevent="handleUpdateClick"
         :aria-label="updateInfo && updateInfo.update_available ? '{{ _('New version available') }}' : '{{ _('System is up to date') }}'"
       >
         <v-badge
