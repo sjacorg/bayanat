@@ -277,6 +277,7 @@ const FieldListItem = Vue.defineComponent({
                                     clearable
                                     control-variant="hidden"
                                     :max="255"
+                                    :min="1"
                                 ></v-number-input>
                             </div>
                         </div>
