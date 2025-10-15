@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bayanat"
-version = "2.9.45"
+version = "2.9.46"
 description = "Open source data management solution for processing human rights violations and war crimes data"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
