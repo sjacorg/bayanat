@@ -15,53 +15,6 @@
         <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
       </v-card-subtitle>
       {% endif %}
-
-      <!-- System Updates -->
-      <!-- Subtle loading indicator while checking -->
-      <div v-if="checkingUpdates && !updateInfo" class="text-center my-3">
-        <v-progress-circular indeterminate size="20" width="2" color="grey"></v-progress-circular>
-        <span class="ml-2 text-grey">{{ _('Checking for updates...') }}</span>
-      </div>
-
-      <v-card
-        v-if="updateInfo && updateInfo.update_available"
-        type="info"
-        color="grey lighten-2"
-        elevation="1"
-        icon="mdi-update"
-        class="mx-4 mt-5 w-auto pa-3"
-      >
-        <v-card-title>{{ _('Update Available') }}</v-card-title>
-
-        <v-card-text class="d-flex justify-space-between my-2">
-          <span>{{ _('Current') }}: <strong>${updateInfo.current_version}</strong></span>
-          <span>{{ _('Latest') }}: <strong>${updateInfo.latest_version}</strong></span>
-        </v-card-text>
-        <v-card-text>
-          <v-expansion-panels v-if="updateInfo.release_notes" variant="accordion" class="my-2">
-            <v-expansion-panel>
-              <v-expansion-panel-title>{{ _('Release Notes') }}</v-expansion-panel-title>
-              <v-expansion-panel-text>${updateInfo.release_notes}</v-expansion-panel-text>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-card-text>
-        <v-card-actions class="">
-          <v-checkbox
-            v-model="skipBackup"
-            label="{{ _('Skip backup') }}"
-            density="compact"
-          ></v-checkbox>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="elevated" @click="triggerUpdate" :loading="updating"
-            >{{ _('Update Now') }}</v-btn
-          >
-        </v-card-actions>
-      </v-card>
-
-      <v-alert v-if="updateInfo && updateInfo.error" type="warning" class="my-3">
-        {{ _('Update check failed') }}: ${updateInfo.error}
-      </v-alert>
-
       {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
       <v-card-text>
         <v-icon>mdi-alert</v-icon>
@@ -206,36 +159,9 @@
 
       data: () => ({
           drawer: drawer,
-          updating: false,
-          skipBackup: false,
-          updateInfo: null,
-          checkingUpdates: false,
       }),
 
-      mounted() {
-          // Show dashboard immediately with loading state, check in background
-          {% if current_user.has_role('Admin') %}
-          this.checkingUpdates = true;
-          this.checkForUpdates().finally(() => {
-              this.checkingUpdates = false;
-          });
-          {% endif %}
-      },
-
       methods: {
-          checkForUpdates() {
-              return axios.get('/admin/api/system/status')
-                  .then(response => {
-                      if (response.data.success) {
-                          this.updateInfo = response.data;
-                      }
-                  })
-                  .catch(error => {
-                      console.warn('Update check failed:', error);
-                      // Silently fail - don't show update card if check fails
-                      this.updateInfo = null;
-                  });
-          },
           completeSetup() {
               this.settings.setupCompleted = true;
               this.saveSettings();
@@ -244,32 +170,6 @@
               }, 1000);
           },
 
-          triggerUpdate() {
-              if (!confirm('This will update the system and restart services. Continue?')) {
-                  return;
-              }
-
-              this.updating = true;
-
-              axios.post('/admin/api/system/update', {
-                      skip_backup: this.skipBackup
-                  })
-                  .then(response => {
-                      if (response.data.success) {
-                          this.showSnack('System updated successfully! Page will reload in 10 seconds.');
-                          setTimeout(() => location.reload(), 10000);
-                      } else {
-                          this.showSnack('Update failed: ' + response.data.error);
-                      }
-                  })
-                  .catch(error => {
-                      console.log(error);
-                      this.showSnack('Update request failed: ' + (error.response?.data?.error || error.message));
-                  })
-                  .finally(() => {
-                      this.updating = false;
-                  });
-          },
       },
   });
 
