@@ -20,17 +20,38 @@
                     >
                         <template v-slot:top>
                             <v-toolbar flat color="white">
-                                <v-toolbar-title>{{ _('System Users') }}</v-toolbar-title>
-
-                                <v-spacer></v-spacer>
-
-                                <v-btn @click.once="forceGlobalReset" class="ma-2" color="error" variant="elevated">
-                                    {{ _('Force Global Password Reset') }}
-                                </v-btn>
-
-                                <v-btn @click="createItem" class="ma-2" color="primary" variant="elevated">
-                                    {{ _('New User') }}
-                                </v-btn>
+                                <div class="d-flex align-center ga-10 w-100 py-2 px-7">
+                                    <v-toolbar-title class="flex-0-0">{{ _('System Users') }}</v-toolbar-title>
+    
+                                    <v-text-field
+                                        class="flex-grow-1"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        hide-details
+                                        prepend-inner-icon="mdi-magnify"
+                                        placeholder="{{ _('Search for a system user') }}"
+                                    ></v-text-field>
+    
+                                    <div class="d-flex align-center ga-3">
+                                        <v-btn
+                                            @click.once="forceGlobalReset"
+                                            color="error"
+                                            variant="elevated"
+                                            prepend-icon="mdi-lock-reset"
+                                        >
+                                            {{ _('Force Global Password Reset') }}
+                                        </v-btn>
+        
+                                        <v-btn
+                                            @click="createItem"
+                                            color="primary"
+                                            variant="elevated"
+                                            prepend-icon="mdi-plus"
+                                        >
+                                            {{ _('New User') }}
+                                        </v-btn>
+                                    </div>
+                                </div>
                             </v-toolbar>
                         </template>
 
@@ -83,22 +104,26 @@
                             <v-tooltip location="top"
                                        :text="item.two_factor_devices && item.two_factor_devices.length > 0 ? '{{ _('2FA Active') }}' : '{{ _('2FA Inactive') }}'">
                                 <template #activator="{props}">
-                                    <v-icon
-                                            v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
+                                    <div v-if="item.two_factor_devices && item.two_factor_devices.length > 0" class="d-flex ga-2 justify-center font-weight-medium text-warning">
+                                        <v-icon
                                             color="success"
                                             v-bind="props"
                                             size="small"
-                                    >
-                                        mdi-lock-check
-                                    </v-icon>
-                                    <v-icon
-                                            v-else
-                                            color="error"
-                                            v-bind="props"
-                                            size="small"
-                                    >
-                                        mdi-lock-open-alert
-                                    </v-icon>
+                                        >
+                                            mdi-lock-check
+                                        </v-icon>
+                                        {{ _('2FA Active') }}
+                                    </div>
+                                    <div v-else class="d-flex ga-2 justify-center font-weight-medium text-warning">
+                                        <v-icon
+                                                color="warning"
+                                                v-bind="props"
+                                                size="small"
+                                        >
+                                            mdi-lock-open-alert
+                                        </v-icon>
+                                        {{ _('2FA Inactive') }}
+                                    </div>
                                 </template>
                             </v-tooltip>
                         </template>
@@ -354,7 +379,7 @@
                     {title: "{{_('Name')}}", value: "name"},
                     {title: "{{_('Account Status')}}", value: "active_status"},
                     {title: "{{_('Groups')}}", value: "roles"},
-                    {title: "{{_('Two Factor Authentication')}}", value: "2fa"},
+                    {title: "{{_('Two-Factor Authentication')}}", value: "2fa"},
                     {title: "{{_('Actions')}}", value: "action", sortable: false}
                 ],
 
