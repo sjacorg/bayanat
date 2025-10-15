@@ -1,3 +1,5 @@
+const UPDATE_POLL_INTERVAL = 60000; // Poll every minute for update indicator
+
 const globalMixin = {
   mixins: [reauthMixin, notificationMixin],
   data: () => ({
@@ -42,7 +44,11 @@ const globalMixin = {
       utc: { utc: true },
       timezone: { timezone: 'UTC' },
       locale: { locale: 'en' }
-    }
+    },
+    updateInfo: null,
+    checkingUpdates: false,
+    updateError: null,
+    updatePollIntervalId: null,
   }),
   created () {
     document.addEventListener('global-axios-error', this.showSnack);
@@ -53,8 +59,18 @@ const globalMixin = {
       this.settings = res.data;
     });
   },
+  mounted() {
+    if (!window.__username__) return;
+    if (!this.isAdminUser()) return;
+
+    this.fetchUpdateInfo();
+    this.startUpdatePolling();
+    document.addEventListener('visibilitychange', this.handleUpdateVisibilityChangeForUpdates);
+  },
   beforeUnmount() {
     document.removeEventListener('global-axios-error', this.showSnack);
+    document.removeEventListener('visibilitychange', this.handleUpdateVisibilityChangeForUpdates);
+    this.stopUpdatePolling();
   },
   methods: {
     /**
@@ -149,6 +165,79 @@ const globalMixin = {
       setTimeout(() => {
         window.location.reload();
     }, 1000);
+    },
+    isAdminUser() {
+      return Boolean(window.__is_admin__);
+    },
+    startUpdatePolling() {
+      if (this.updatePollIntervalId) return;
+      this.updatePollIntervalId = setInterval(() => {
+        this.fetchUpdateInfo();
+      }, UPDATE_POLL_INTERVAL);
+    },
+    stopUpdatePolling() {
+      if (!this.updatePollIntervalId) return;
+      clearInterval(this.updatePollIntervalId);
+      this.updatePollIntervalId = null;
+    },
+    handleUpdateVisibilityChangeForUpdates() {
+      if (!this.isAdminUser()) return;
+      if (document.visibilityState === 'visible') {
+        this.fetchUpdateInfo();
+        this.startUpdatePolling();
+      } else {
+        this.stopUpdatePolling();
+      }
+    },
+    fetchUpdateInfo() {
+      if (!this.isAdminUser()) {
+        return Promise.resolve(null);
+      }
+
+      if (this._updateCheckInFlight) {
+        return this._updateCheckInFlight;
+      }
+
+      this.checkingUpdates = true;
+      this.updateError = null;
+
+      this._updateCheckInFlight = axios
+        .get('/admin/api/system/version/check', {
+          params: { _ts: Date.now() },
+          suppressGlobalErrorHandler: true,
+        })
+        .then((response) => {
+          this.updateInfo = response.data;
+          return response.data;
+        })
+        .catch((error) => {
+          console.warn('Update check failed:', error);
+          this.updateError = error;
+          return null;
+        })
+        .finally(() => {
+          this.checkingUpdates = false;
+          this._updateCheckInFlight = null;
+        });
+
+      return this._updateCheckInFlight;
+    },
+    getUpdateIcon() {
+      if (this.updateError) {
+        return 'mdi-alert-circle-outline';
+      }
+      if (this.checkingUpdates) {
+        return 'mdi-refresh';
+      }
+      if (this.updateInfo && this.updateInfo.update_available) {
+        return 'mdi-download';
+      }
+      return 'mdi-check';
+    },
+    getUpdateIconClasses() {
+      return {
+        'mdi-spin': this.checkingUpdates,
+      };
     },
   },
 };

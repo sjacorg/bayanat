@@ -15,6 +15,41 @@
   </v-toolbar-title>
   <v-spacer></v-spacer>
 
+  {% if current_user.has_role('Admin') %}
+  <v-tooltip location="bottom">
+    <template v-slot:activator="{ props }">
+      <v-btn
+        v-bind="props"
+        icon
+        @click.prevent="fetchUpdateInfo"
+        :aria-label="updateInfo && updateInfo.update_available ? '{{ _('New version available') }}' : '{{ _('System is up to date') }}'"
+      >
+        <v-badge
+          color="error"
+          content="1"
+          :model-value="Boolean(updateInfo && updateInfo.update_available)"
+          offset-x="6"
+          offset-y="6"
+        >
+          <v-icon :icon="getUpdateIcon()" :class="getUpdateIconClasses()" color="white" size="22"></v-icon>
+        </v-badge>
+      </v-btn>
+    </template>
+    <template v-if="updateInfo && updateInfo.update_available">
+      {{ _('New version available') }}
+    </template>
+    <template v-else-if="checkingUpdates">
+      {{ _('Checking for updates…') }}
+    </template>
+    <template v-else-if="updateError">
+      {{ _('Update status unavailable') }}
+    </template>
+    <template v-else>
+      {{ _('System is up to date') }}
+    </template>
+  </v-tooltip>
+  {% endif %}
+
   <v-tooltip location="bottom">
     <template v-slot:activator="{ props }">
       <v-btn v-bind="props" icon="mdi-file-document" href="https://docs.bayanat.org/" target="_blank"></v-btn>
@@ -57,7 +92,6 @@
       </v-list-item>
     </v-list>
   </v-menu>
-
   <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
         <v-btn v-bind="props" icon @click="toggleNotificationsDrawer()">
