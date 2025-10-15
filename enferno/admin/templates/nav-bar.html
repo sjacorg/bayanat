@@ -28,10 +28,9 @@
           color="error"
           content="1"
           :model-value="Boolean(updateInfo && updateInfo.update_available)"
-          location="top end"
-          offset-x="12"
-          offset-y="12"
-          floating
+        
+          offset-x="-4"
+          offset-y="-4"
         >
           <v-icon :icon="getUpdateIcon()" :class="getUpdateIconClasses()" color="white" size="22"></v-icon>
         </v-badge>
