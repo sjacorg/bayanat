@@ -28,7 +28,7 @@ const FieldListItem = Vue.defineComponent({
         return {
             translations: window.translations,
             editingMode: false,
-            nonHideableFields: ['title', 'comments', 'status']
+            nonHideableFields: ['title', 'source_link', 'comments', 'status']
         }
     },
     computed: {
