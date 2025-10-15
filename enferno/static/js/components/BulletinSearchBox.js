@@ -538,6 +538,8 @@ const BulletinSearchBox = Vue.defineComponent({
                   :model-value="dyn.get(field.name)?.value"
                   @update:model-value="updateDynamicField($event, field)"
                   control-variant="hidden"
+                  :min="-2147483648"
+                  :max="2147483647"
               ></v-number-input>
               <div
                 v-else-if="['select'].includes(field.field_type)"
