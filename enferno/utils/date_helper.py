@@ -46,7 +46,7 @@ class DateHelper:
     @staticmethod
     def parse_datetime(dt: Any) -> Optional[datetime]:
         """
-        Parse a datetime string in the format "YYYY-MM-DDTHH:mm".
+        Parse a datetime string in the format "YYYY-MM-DDTHH:mm" or "YYYY-MM-DDTHH:mm:ss".
 
         Args:
             - dt (Any): The datetime string to parse.
@@ -54,12 +54,21 @@ class DateHelper:
         Returns:
             - datetime: The parsed datetime object.
         """
-        try:
-            d = arrow.get(dt, "YYYY-MM-DDTHH:mm").datetime.replace(tzinfo=None) if dt else None
-            return d
-        except Exception as e:
-            logger.error(e, exc_info=True)
+        if not dt:
             return None
+
+        try:
+            # Try with seconds first (more specific)
+            d = arrow.get(dt, "YYYY-MM-DDTHH:mm:ss").datetime.replace(tzinfo=None)
+            return d
+        except Exception:
+            try:
+                # Fall back to format without seconds
+                d = arrow.get(dt, "YYYY-MM-DDTHH:mm").datetime.replace(tzinfo=None)
+                return d
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                return None
 
     @staticmethod
     def parse_date(str_date: str) -> Optional[str]:
