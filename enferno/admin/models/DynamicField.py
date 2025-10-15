@@ -481,7 +481,8 @@ class DynamicField(db.Model, BaseMixin):
             if value is None:
                 updates[name] = None
             elif field.field_type == cls.DATETIME:
-                updates[name] = DateHelper.parse_datetime(value)
+                # Let PostgreSQL handle date parsing (like core fields)
+                updates[name] = value if value else None
             elif field.field_type == cls.SELECT:
                 # Always store as array, validate length for single-select
                 array_value = (
