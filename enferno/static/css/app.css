@@ -897,10 +897,6 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 /* Diff dialog */
-.diff-dialog-content .jsondiffpatch-delta {
-    width: 100%;
-}
 .diff-dialog-content .jsondiffpatch-delta pre {
-    width: 100%;
     white-space: normal;
 }
