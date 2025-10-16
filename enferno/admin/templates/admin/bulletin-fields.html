@@ -33,18 +33,8 @@
             _('Discard Changes') }}</v-btn>
           <v-btn @click="showSaveDialog({ entityType: 'bulletin' })" prepend-icon="mdi-check" variant="outlined" :loading="ui.saving"
           :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
-          <v-menu>
-            <template v-slot:activator="{ props }">
-              <v-btn v-bind="props" prepend-icon="mdi-plus" append-icon="mdi-menu-down" variant="flat" color="primary">{{
+          <v-btn @click="ui.selectFieldTypeDialog = true" prepend-icon="mdi-plus" variant="flat" color="primary">{{
                 _('Add New') }}</v-btn>
-            </template>
-      
-            <v-list>
-              <v-list-item @click="ui.selectFieldTypeDialog = true">
-                <v-list-item-title>{{ _('Field') }}</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
         </div>
       </v-card-text>
 
