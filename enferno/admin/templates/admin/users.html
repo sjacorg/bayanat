@@ -24,6 +24,8 @@
                                     <v-toolbar-title class="flex-0-0">{{ _('System Users') }}</v-toolbar-title>
     
                                     <v-text-field
+                                        :model-value="search"
+                                        @update:model-value="searchUsers"
                                         class="flex-grow-1"
                                         variant="outlined"
                                         density="comfortable"
@@ -357,6 +359,7 @@
                 translations: window.translations,
                 validationRules: validationRules,
                 options: {},
+                search: '',
 
                 headers: [
                     {title: "{{_('ID')}}", value: "id"},
@@ -617,14 +620,27 @@
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
-                    api.get(`/admin/api/users/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
-                        this.items = res.data.items;
-                        this.itemsLength = res.data.total;
-                    }).catch(err => {
-                        console.error(err?.response?.data);
-                    }).finally(() => {
-                        this.loading = false;
+
+                    const params = new URLSearchParams({
+                        page: this.options.page,
+                        per_page: this.options.itemsPerPage,
                     });
+
+                    if (this.options.q) {
+                        params.append('q', this.options.q);
+                    }
+
+                    api.get(`/admin/api/users/?${params.toString()}`)
+                        .then(res => {
+                            this.items = res.data.items;
+                            this.itemsLength = res.data.total;
+                        })
+                        .catch(err => {
+                            console.error(err?.response?.data);
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
                 },
 
                 createItem() {
@@ -710,8 +726,13 @@
                     } else {
                         this.editedItem.roles.push(role) // add
                     }
-                }
+                },
+                searchUsers: debounce(function (evt) {
+                    this.loading = true;
+                    this.search = evt;
 
+                    this.refresh({ q: evt })
+                }, 350),
             }
         });
 
