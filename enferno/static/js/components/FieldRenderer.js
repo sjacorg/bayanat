@@ -42,6 +42,7 @@ const FieldRenderer = Vue.defineComponent({
                 'onUpdate:modelValue': (newValue) => this.$emit('update:modelValue', newValue),
                 disabled: !field.active,
                 hint: field?.ui_config?.help_text,
+                persistentHint: false,
                 rules: this.buildValidationRules(field),
                 variant: 'outlined',
                 class: 'h-100'
@@ -112,7 +113,13 @@ const FieldRenderer = Vue.defineComponent({
     },
     template: `
         <div>
-            <component :is="componentProps.component" v-bind="componentProps"></component>
+            <v-hover>
+                <template v-slot:default="{ isHovering, props }">
+                    <div v-bind="props">
+                        <component :is="componentProps.component" v-bind="{ ...componentProps, persistentHint: isHovering }"></component>
+                    </div>
+                </template>
+            </v-hover>
         </div>
     `,
 });
