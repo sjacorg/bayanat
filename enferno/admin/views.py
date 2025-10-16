@@ -5202,7 +5202,7 @@ def api_user_update(
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
             )
-            return HTTPResponse.success(message=f"Saved User {user.id} {user.name}")
+            return HTTPResponse.success(message=f"User '{user.name}' updated successfully.")
         else:
             return HTTPResponse.error(f"Error saving User {user.id} {user.name}", status=500)
     else:

@@ -59,9 +59,18 @@
 
 
                         <template v-slot:item.action="{ item }">
-                            <v-icon class="mr-2" @click.stop="editItem(item)">
-                                mdi-pencil
-                            </v-icon>
+                            <v-tooltip location="top" text="{{ _('Edit User') }}">
+                                <template #activator="{props}">
+                                    <div v-bind="props" class="d-inline-block">
+                                        <v-btn
+                                            @click.stop="editItem(item)"
+                                            variant="plain"
+                                            size="small"
+                                            icon="mdi-pencil">
+                                        </v-btn>
+                                    </div>
+                                </template>
+                            </v-tooltip>
                             <v-tooltip location="top"
                                        :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset') }}'">
                                 <template #activator="{props}">
@@ -165,9 +174,13 @@
                                     <v-btn @click="close" variant="outlined">
                                         {{ _('Cancel') }}
                                     </v-btn>
-                                    <v-btn @click="validateFormAndSave" prepend-icon="mdi-plus" color="primary" variant="flat">
-                                        {{ _('Add User') }}
-                                    </v-btn>
+                                    <v-btn
+                                        @click="validateFormAndSave"
+                                        :prepend-icon="isNewUser ? 'mdi-plus' : 'mdi-check'"
+                                        color="primary"
+                                        variant="flat"
+                                        :text="isNewUser ? '{{ _('Add User') }}' : '{{ _('Save Changes') }}'"
+                                    ></v-btn>
                                     <v-btn icon density="comfortable" @click="close">
                                         <v-icon>mdi-close</v-icon>
                                     </v-btn>
@@ -194,79 +207,49 @@
                                                 </v-text-field>
                                             </v-col>
                                             <v-col>
-                                                <div class="d-flex">
-                                                    <v-text-field
-                                                        variant="filled"
-                                                        :class="isUsernameAvailable ? 'text-success' : undefined"
-                                                        :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
-                                                        :disabled="disableUsername"
-                                                        v-model="editedItem.username"
-                                                        :rules="disableUsername ? [] : [
-                                                            validationRules.required(),
-                                                            validationRules.minLength(4),
-                                                            validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
-                                                        ]"
-                                                        @input="isUsernameAvailable = false"
-                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
-                                                    >
-                                                        <template #label>{{ _('Username') }}<span class="text-red">*</span></template>
-                                                    </v-text-field>
-                                                    <v-btn @click.stop="enableUsername"
-                                                        v-if="editedItem.id" class="my-auto mx-1"
-                                                        icon="mdi-pencil"
-                                                        size="small"
-                                                        variant="plain"
-                                                    >
-                                                    </v-btn>
-                                                </div>
+                                                <v-text-field
+                                                    variant="filled"
+                                                    :class="isUsernameAvailable ? 'text-success' : undefined"
+                                                    :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
+                                                    v-model="editedItem.username"
+                                                    :rules="[
+                                                        validationRules.required(),
+                                                        validationRules.minLength(4),
+                                                        validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
+                                                    ]"
+                                                    @input="isUsernameAvailable = false"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
+                                                >
+                                                    <template #label>{{ _('Username') }}<span class="text-red">*</span></template>
+                                                </v-text-field>
                                             </v-col>
-                                            <v-col cols="12" md="6">
-                                                <div class="d-flex">
-                                                    <v-text-field
-                                                        variant="filled"
-                                                        label="{{ _('Email') }}"
-                                                        :disabled="disableEmail"
-                                                        v-model="editedItem.email"
-                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.email')"
-                                                        type="email"
-                                                    ></v-text-field>
-                                                    <v-btn @click.stop="enableEmail"
-                                                        v-if="editedItem.id" class="my-auto mx-1"
-                                                        icon="mdi-pencil"
-                                                        size="small"
-                                                        variant="plain"
-                                                    >
-                                                    </v-btn>
-                                                </div>
+                                            <v-col cols="12" :md="isNewUser ? 6 : 12">
+                                                <v-text-field
+                                                    variant="filled"
+                                                    label="{{ _('Email') }}"
+                                                    v-model="editedItem.email"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.email')"
+                                                    type="email"
+                                                ></v-text-field>
                                             </v-col>
-                                            <v-col cols="12" md="6">
-                                                <div class="d-flex align-center">
-                                                    <v-text-field
-                                                        variant="filled"
-                                                        :class="isStrongPassword ? 'text-success' : undefined"
-                                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
-                                                        :disabled="disablePassword"
-                                                        v-model="editedItem.password"
-                                                        :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                                                        :type="showPassword ? 'text' : 'password'"
-                                                        @click:append-inner="showPassword = !showPassword"
-                                                        :rules="disablePassword ? [] : [
-                                                            validationRules.required(),
-                                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
-                                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
-                                                        ]"
-                                                        @input="isStrongPassword = false"
-                                                    >
-                                                        <template #label>{{ _('Password') }}<span class="text-red">*</span></template>
-                                                    </v-text-field>
-                                                    <v-btn @click.stop="enablePassword"
-                                                        v-if="editedItem.id" class="mb-3 mx-1"
-                                                        icon="mdi-pencil"
-                                                        size="small"
-                                                        variant="plain"
-                                                    >
-                                                    </v-btn>
-                                                </div>
+                                            <v-col v-if="isNewUser" cols="12" md="6">
+                                                <v-text-field
+                                                    variant="filled"
+                                                    :class="isStrongPassword ? 'text-success' : undefined"
+                                                    :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
+                                                    v-model="editedItem.password"
+                                                    :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                                    :type="showPassword ? 'text' : 'password'"
+                                                    @click:append-inner="showPassword = !showPassword"
+                                                    :rules="[
+                                                        validationRules.required(),
+                                                        validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                        validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                                    ]"
+                                                    @input="isStrongPassword = false"
+                                                >
+                                                    <template #label>{{ _('Password') }}<span class="text-red">*</span></template>
+                                                </v-text-field>
                                             </v-col>
                                         </v-row>
                                         <v-switch color="primary" class="text-medium-emphasis" label="{{ _('Account is Active') }}"
@@ -318,11 +301,6 @@
                                 <v-card-text class="text-center">
                                     <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
                                         {{ _('Revoke 2FA') }}
-                                    </v-btn>
-
-                                    <v-btn v-if="editedItem?.id" @click.once="logoutAllUserSessions(editedItem.id)" color="error">
-                                        <v-icon left>mdi-logout</v-icon>
-                                        {{ _('Logout All Sessions') }}
                                     </v-btn>
                                 </v-card-text>
                             </v-form>
@@ -380,9 +358,6 @@
                 defaultItem: {
                     active: false
                 },
-                disableUsername: true,
-                disablePassword: true,
-                disableEmail: true,
                 isAdmin: false,
                 userDrawer: false,
                 user: null,
@@ -397,8 +372,11 @@
             mixins: [globalMixin],
 
             computed: {
+                isNewUser() {
+                    return !this.editedItem?.id;
+                },
                 formTitle() {
-                    return this.editedItem?.id ? "{{_('Edit User')}}" : "{{_('Add New User')}}";
+                    return this.isNewUser ? "{{_('Add New User')}}" : "{{_('Edit User')}}";
                 },
             },
 
@@ -561,18 +539,6 @@
                     }
                 },
 
-                enableUsername() {
-                    this.disableUsername = false;
-                },
-
-                enablePassword() {
-                    this.disablePassword = false;
-                },
-
-                enableEmail() {
-                    this.disableEmail = false;
-                },
-
                 checkUsername:
                     debounce(function (evt) {
                         api.post('/admin/api/checkuser/', {item: this.editedItem.username}, { suppressGlobalErrorHandler: true }).then(
@@ -645,8 +611,6 @@
 
                 createItem() {
                     this.editedItem = {...this.defaultItem};
-                    // enable fields
-                    this.disableUsername = this.disablePassword = this.disableEmail = false;
                     this.dialog = true;
 
                 },
@@ -657,7 +621,6 @@
                     this.editedItem = {...item};
                     this.isUsernameAvailable = false;
                     this.initialUsername = item.username;
-                    this.disableUsername = this.disablePassword = this.disableEmail = true;
                     this.dialog = true;
                 },
 
@@ -672,7 +635,6 @@
                         this.serverErrors = {};
                         this.isStrongPassword = false;
                         this.editedItem = Object.assign({}, this.defaultItem);
-                        this.disableUsername = this.disablePassword = this.disableEmail = true;
                         this.editedIndex = -1;
                     }, 300);
                 },
