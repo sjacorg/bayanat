@@ -31,6 +31,9 @@ const FieldRenderer = Vue.defineComponent({
             return rules
         },
         mapFieldToComponent(field) {
+            const POSTGRES_INT_MIN = -2147483648
+            const POSTGRES_INT_MAX = 2147483647
+
             const baseProps = {
                 fieldId: field.id,
                 label: field.title || this.translations.newField_,
@@ -48,8 +51,15 @@ const FieldRenderer = Vue.defineComponent({
                 precision: field.field_type === 'float'
                     ? Number(field?.validation_config?.precision) || null
                     : 0,
-                min: field?.validation_config?.min,
-                max: field?.validation_config?.max,
+                // always enforce Postgres integer range, but allow stricter overrides
+                min: Math.max(
+                    field?.validation_config?.min ?? POSTGRES_INT_MIN,
+                    POSTGRES_INT_MIN
+                ),
+                max: Math.min(
+                    field?.validation_config?.max ?? POSTGRES_INT_MAX,
+                    POSTGRES_INT_MAX
+                ),
                 controlVariant: 'hidden',
                 modelValue: (() => {
                     const value = this.modelValue ?? field.schema_config?.default
