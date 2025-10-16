@@ -37,14 +37,22 @@ const formBuilderMixin = {
       return this.formBuilder.dynamicFields.filter(field => !omitedKeys.includes(field.name))
     },
     fixedDynamicFields() {
-      return this.formBuilder.dynamicFields.filter((field) =>
+      const fields = this.formBuilder.dynamicFields.filter((field) =>
         this.fixedFields.includes(field.name),
       );
+
+      if (this.ui.search) return fields.filter(field => field.active)
+
+      return fields
     },
     movableDynamicFields() {
-      return this.formBuilder.dynamicFields.filter(
+      const fields = this.formBuilder.dynamicFields.filter(
         (field) => !this.fixedFields.includes(field.name),
       );
+
+      if (this.ui.search) return fields.filter(field => field.active)
+
+      return fields
     },
     hasChanges() {
       const changes = this.computeChanges();
@@ -54,7 +62,7 @@ const formBuilderMixin = {
       if (!this.ui.search) return this.formBuilder.dynamicFields;
 
       return this.formBuilder.dynamicFields.filter((field) =>
-        field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()),
+        field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()) && field.active
       );
     },
     filteredMovableDynamicFields() {
