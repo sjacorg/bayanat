@@ -266,33 +266,33 @@
                                                 ${role.name}
                                             </toggle-button>
                                         </div>
-                                        <div class="mb-3">{{ _('User Permissions') }}</div>
+                                        <div class="mb-3">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default )') }}</span></div>
                                         <div class="d-flex flex-wrap ga-3 mb-7">
-                                            <toggle-button v-model="editedItem.view_usernames">
+                                            <toggle-button :model-value="editedItem.view_usernames || editedUserHasAdminRole" @update:model-value="editedItem.view_usernames = $event">
                                                 {{ _('Can View Usernames') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_full_history">
+                                            <toggle-button :model-value="editedItem.view_full_history || editedUserHasAdminRole" @update:model-value="editedItem.view_full_history = $event">
                                                 {{ _('Can View Full History') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_simple_history">
+                                            <toggle-button :model-value="editedItem.view_simple_history || editedUserHasAdminRole" @update:model-value="editedItem.view_simple_history = $event">
                                                 {{ _('Can View Simple History') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_self_assign">
+                                            <toggle-button :model-value="editedItem.can_self_assign || editedUserHasAdminRole" @update:model-value="editedItem.can_self_assign = $event">
                                                 {{ _('Can Self-Assign') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_edit_locations">
+                                            <toggle-button :model-value="editedItem.can_edit_locations || editedUserHasAdminRole" @update:model-value="editedItem.can_edit_locations = $event">
                                                 {{ _('Can Edit Locations') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_export">
+                                            <toggle-button :model-value="editedItem.can_export || editedUserHasAdminRole" @update:model-value="editedItem.can_export = $event">
                                                 {{ _('Can Request Exports') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_import_web">
+                                            <toggle-button :model-value="editedItem.can_import_web || editedUserHasAdminRole" @update:model-value="editedItem.can_import_web = $event">
                                                 {{ _('Can Import From Web') }}
                                             </toggle-button>
                                         </div>
@@ -372,6 +372,10 @@
             mixins: [globalMixin],
 
             computed: {
+                editedUserHasAdminRole() {
+                    const adminRoleId = 1;
+                    return this.editedItem?.roles?.some(role => role.id === adminRoleId) ?? false;
+                },
                 isNewUser() {
                     return !this.editedItem?.id;
                 },
