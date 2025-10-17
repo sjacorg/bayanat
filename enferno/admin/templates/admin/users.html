@@ -59,63 +59,78 @@
 
 
                         <template v-slot:item.action="{ item }">
-                            <v-tooltip location="top" text="{{ _('Edit User') }}">
-                                <template #activator="{props}">
-                                    <div v-bind="props" class="d-inline-block">
+                            <div class="d-flex">
+                                <v-tooltip location="top" text="{{ _('Edit User') }}">
+                                    <template #activator="{props}">
+                                        <div v-bind="props" class="d-inline-block">
+                                            <v-btn
+                                                @click.stop="editItem(item)"
+                                                variant="plain"
+                                                size="small"
+                                                icon="mdi-pencil">
+                                            </v-btn>
+                                        </div>
+                                    </template>
+                                </v-tooltip>
+                                <v-tooltip
+                                    location="top"
+                                    text="{{ _('Change Password') }}"
+                                >
+                                    <template #activator="{props}">
+                                        <div v-bind="props">
                                         <v-btn
-                                            @click.stop="editItem(item)"
+                                            density="comfortable"
                                             variant="plain"
-                                            size="small"
-                                            icon="mdi-pencil">
-                                        </v-btn>
-                                    </div>
-                                </template>
-                            </v-tooltip>
-                            <v-tooltip location="top"
-                                       :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset') }}'">
-                                <template #activator="{props}">
-                                    <div v-bind="props" class="d-inline-block">
+                                            icon="mdi-form-textbox-password"
+                                        ></v-btn>
+                                        </div>
+                                    </template>
+                                </v-tooltip>
+                                <v-tooltip location="top"
+                                        :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset') }}'">
+                                    <template #activator="{props}">
+                                        <div v-bind="props" class="d-inline-block">
+                                            <v-btn
+                                                :disabled="item.force_reset != null"
+                                                @click.stop="forcePassReset(item)"
+                                                variant="plain"
+                                                size="small"
+                                                icon="mdi-lock-reset">
+                                            </v-btn>
+                                        </div>
+                                    </template>
+                                </v-tooltip>
+
+                                <v-tooltip location="top"
+                                        v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
+                                        :text="'{{ _('Revoke 2FA') }}'">
+                                    <template #activator="{props}">
                                         <v-btn
-                                            :disabled="item.force_reset != null"
-                                            @click.stop="forcePassReset(item)"
-                                            variant="plain"
-                                            size="small"
-                                            icon="mdi-lock-reset">
+                                                @click.stop="revoke2fa(item.id)"
+                                                variant="plain"
+                                                color="warning"
+                                                v-bind="props"
+                                                size="small"
+                                                icon="mdi-lock-remove">
                                         </v-btn>
-                                    </div>
-                                </template>
-                            </v-tooltip>
+                                    </template>
+                                </v-tooltip>
 
-                            <v-tooltip location="top"
-                                    v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
-                                    :text="'{{ _('Revoke 2FA') }}'">
-                                <template #activator="{props}">
-                                    <v-btn
-                                            @click.stop="revoke2fa(item.id)"
-                                            variant="plain"
-                                            color="warning"
-                                            v-bind="props"
-                                            size="small"
-                                            icon="mdi-lock-remove">
-                                    </v-btn>
-                                </template>
-                            </v-tooltip>
-
-                            <v-tooltip location="top" text="{{ _('Password reset requested.') }}">
-                                <template #activator="{props}">
-                                    <v-btn icon="mdi-exclamation-thick" size="small" color="error" variant="plain"
-                                           v-bind="props" v-if="item.force_reset">
-                                    </v-btn>
-                                </template>
-                            </v-tooltip>
-
+                                <v-tooltip location="top" text="{{ _('Password reset requested.') }}">
+                                    <template #activator="{props}">
+                                        <v-btn icon="mdi-exclamation-thick" size="small" color="error" variant="plain"
+                                            v-bind="props" v-if="item.force_reset">
+                                        </v-btn>
+                                    </template>
+                                </v-tooltip>
+                            </div>
                         </template>
 
                         <template v-slot:item.2fa="{ item }">
                             <v-tooltip location="top"
                                        :text="item.two_factor_devices && item.two_factor_devices.length > 0 ? '{{ _('2FA Active') }}' : '{{ _('2FA Inactive') }}'">
                                 <template #activator="{props}">
-                                    <div v-if="item.two_factor_devices && item.two_factor_devices.length > 0" class="d-flex ga-2 justify-center font-weight-medium text-warning">
+                                    <div v-if="item.two_factor_devices && item.two_factor_devices.length > 0" class="d-flex ga-2 font-weight-medium text-warning">
                                         <v-icon
                                             color="success"
                                             v-bind="props"
@@ -125,7 +140,7 @@
                                         </v-icon>
                                         {{ _('2FA Active') }}
                                     </div>
-                                    <div v-else class="d-flex ga-2 justify-center font-weight-medium text-warning">
+                                    <div v-else class="d-flex ga-2 font-weight-medium text-warning">
                                         <v-icon
                                                 color="warning"
                                                 v-bind="props"
@@ -192,7 +207,7 @@
                             <v-form ref="form" v-model="valid">
                                 <v-card-text>
                                     <v-container>
-                                        <div class="mb-3">{{ _('User Details') }}</div>
+                                        <div class="mb-3 text-body-1">{{ _('User Details') }}</div>
                                         <v-row>
                                             <v-col cols="12" md="6">
                                                 <v-text-field
@@ -255,7 +270,7 @@
                                         <v-switch color="primary" class="text-medium-emphasis" label="{{ _('Account is Active') }}"
                                                 v-model="editedItem.active"></v-switch>
 
-                                        <div class="mb-3">{{ _('User Roles') }}</div>
+                                        <div class="mb-3 text-body-1">{{ _('User Roles') }}</div>
                                         <div class="d-flex flex-wrap ga-3 mb-7">
                                             <toggle-button
                                                 v-for="role in roles"
@@ -266,7 +281,7 @@
                                                 ${role.name}
                                             </toggle-button>
                                         </div>
-                                        <div class="mb-3">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default )') }}</span></div>
+                                        <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default )') }}</span></div>
                                         <div class="d-flex flex-wrap ga-3 mb-7">
                                             <toggle-button v-model="editedItem.view_usernames">
                                                 {{ _('Can View Usernames') }}
