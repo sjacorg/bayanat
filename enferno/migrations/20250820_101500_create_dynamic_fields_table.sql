@@ -35,9 +35,11 @@ CREATE TABLE IF NOT EXISTS dynamic_form_history (
     entity_type VARCHAR(50) NOT NULL,
     fields_snapshot JSONB NOT NULL,
     user_id INTEGER REFERENCES "user"(id),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted BOOLEAN NOT NULL DEFAULT FALSE
+    
+    -- Base columns from BaseMixin
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
 );
 
 CREATE INDEX IF NOT EXISTS ix_dynamic_form_history_entity_type ON dynamic_form_history (entity_type);
