@@ -549,6 +549,11 @@ const formBuilderMixin = {
 
       return field.active && field.name === name;
     },
+    isFieldActiveByName(name) {
+      const matchingField = this.formBuilder.dynamicFields.find(field => field?.name === name);
+
+      return Boolean(matchingField?.active);
+    },
     isFieldActiveAndHasContent(field, key, value) {
       if (!this.isFieldActive(field, key)) return false
       if (Array.isArray(value)) return value.some(v => !!v)

@@ -38,6 +38,7 @@ const BulletinSearchBox = Vue.defineComponent({
   },
 
   mounted() {
+    this.$root.fetchDynamicFields({ entityType: 'bulletin' });
     this.$root.fetchSearchableDynamicFields({ entityType: 'bulletin' });
     this.q.locTypes = this.q.locTypes || this.translations.bulletinLocTypes_.map((x) => x.code);
     
@@ -148,6 +149,7 @@ const BulletinSearchBox = Vue.defineComponent({
                   clearable
               ></v-text-field>
               
+              <template v-if="$root.isFieldActiveByName('tags')">
               <v-combobox
                   v-model="q.tags"
                   :label="translations.inTags_"
@@ -182,20 +184,21 @@ const BulletinSearchBox = Vue.defineComponent({
                 <v-checkbox :label="translations.exactMatch_" dense v-model="q.exExact" color="primary" small
                             class="me-4"></v-checkbox>
               </div>
+              </template>
 
 
             </v-col>
           </v-row>
 
           <v-row>
-            <v-col cols="12">
+            <v-col v-if="$root.isFieldActiveByName('publish_date')" cols="12">
                 <pop-date-range-field
                     :label="translations.publishDate_"
                     v-model="q.pubdate"
                 />
             </v-col>
 
-            <v-col cols="12">
+            <v-col v-if="$root.isFieldActiveByName('documentation_date')" cols="12">
                 <pop-date-range-field
                     :label="translations.documentationDate_"
                     v-model="q.docdate"
@@ -220,7 +223,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col md="12">
+            <v-col v-if="$root.isFieldActiveByName('events_section')" md="12">
               <v-card class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
@@ -371,7 +374,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
           <v-row>
 
-            <v-col>
+            <v-col v-if="$root.isFieldActiveByName('sources')">
               <search-field
                     v-model="q.sources"
                     api="/admin/api/sources/"
@@ -403,7 +406,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col>
+            <v-col v-if="$root.isFieldActiveByName('labels')">
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
@@ -434,7 +437,7 @@ const BulletinSearchBox = Vue.defineComponent({
             </v-col>
           </v-row>
           <v-row>
-            <v-col>
+            <v-col v-if="$root.isFieldActiveByName('ver_labels')">
                 <search-field
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
@@ -464,7 +467,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col>
+            <v-col v-if="$root.isFieldActiveByName('locations')">
                 <location-search-field
                     v-model="q.locations"
                     api="/admin/api/locations/"
@@ -492,7 +495,7 @@ const BulletinSearchBox = Vue.defineComponent({
             </v-col>
           </v-row>
 
-          <v-sheet class="ma-4">
+          <v-sheet v-if="$root.isFieldActiveByName('geo_locations')" class="ma-4">
             <span class="caption pt-2">{{ translations.geospatial_ }}</span>
 
 

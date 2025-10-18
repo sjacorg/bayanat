@@ -60,6 +60,7 @@ const IncidentSearchBox = Vue.defineComponent({
     this.fetchViolationCategories('claimedviolation', 'claimedViolationsCategories');
   },
   mounted() {
+    this.$root.fetchDynamicFields({ entityType: 'incident' });
     this.$root.fetchSearchableDynamicFields({ entityType: 'incident' });
   },
   methods: {
@@ -141,7 +142,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-            <v-col cols="12">
+            <v-col v-if="$root.isFieldActiveByName('events_section')" cols="12">
               <v-card class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
@@ -278,7 +279,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col cols="12">
+              <v-col v-if="$root.isFieldActiveByName('potential_violations')" cols="12">
                 <span class="caption pt-2">{{ translations.potentialViolationsCategories_ }}</span>
                 <v-chip-group
                     column
@@ -299,7 +300,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col cols="12">
+              <v-col v-if="$root.isFieldActiveByName('claimed_violations')" cols="12">
                 <span class="caption pt-2">{{ translations.claimedViolationsCategories_ }}</span>
                 <v-chip-group
                     column
@@ -320,7 +321,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col>
+              <v-col v-if="$root.isFieldActiveByName('labels')">
                 <div class="d-flex">
                   <search-field
                       v-model="q.labels"
@@ -351,7 +352,7 @@ const IncidentSearchBox = Vue.defineComponent({
 
 
             <v-row>
-              <v-col>
+              <v-col v-if="$root.isFieldActiveByName('locations')">
                 <div class="d-flex">
                   <location-search-field
                       v-model="q.locations"
