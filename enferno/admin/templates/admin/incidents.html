@@ -84,6 +84,9 @@
 
 
                                 <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','Mod']) %}
+                                    <v-btn href="/admin/incident-fields/" variant="outlined" class="ma-2" prepend-icon="mdi-pencil">{{ _('Edit Incident Form') }}</v-btn>
+                                {% endif %}
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn @click="editItem" color="primary" variant="elevated" class="ma-2"
                                     >{{ _('New Incident') }}</v-btn
@@ -309,6 +312,7 @@
     <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
+    <script src="/static/js/mixins/form-builder-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -352,6 +356,7 @@
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
     <script src="/static/js/components/EventsSection.js"></script>
+    <script src="/static/js/components/FieldRenderer.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
@@ -380,7 +385,7 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [globalMixin, relationsMixin],
+            mixins: [globalMixin, relationsMixin, formBuilderMixin],
             data: () => ({
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
@@ -1334,6 +1339,7 @@
 
 
                 editItem(item) {
+                    this.fetchDynamicFields({ entityType: 'incident' });
 
 
                     if (!item.id) {
@@ -1552,6 +1558,7 @@
         app.component('PreviewCard', PreviewCard);
         app.component('RelationEditorCard', RelationEditorCard);
         app.component('EventsSection', EventsSection);
+        app.component('FieldRenderer', FieldRenderer);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

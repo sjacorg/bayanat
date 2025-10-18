@@ -6,12 +6,15 @@ from zxcvbn import zxcvbn
 from functools import wraps
 from typing import Any, Type, Annotated
 from flask import request
+from enum import Enum
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
     GetCoreSchemaHandler,
     ValidationError,
+    ValidationInfo,
+    field_validator,
     model_validator,
 )
 import bleach
@@ -403,3 +406,114 @@ def convert_empty_strings_to_none(data: Any) -> Any:
         return None
     else:
         return data
+
+
+# =============================================================================
+# Dynamic Field Type Validation
+# =============================================================================
+
+
+class FieldType(str, Enum):
+    """Supported field types for dynamic field validation."""
+
+    TEXT = "text"
+    LONG_TEXT = "long_text"
+    NUMBER = "number"
+    DATETIME = "datetime"
+    BOOLEAN = "boolean"
+    SELECT = "select"
+
+
+def validate_field_type(value: Any, expected_type: str | FieldType) -> Any:
+    """
+    Validate and coerce a dynamic field value against an expected type.
+
+    Raises ValueError on type mismatch or unknown type.
+    Returns ISO strings for datetime, preserves falsy values for select fields.
+    """
+    if value is None or value == "":
+        return None
+
+    # Convert string to FieldType if needed
+    if isinstance(expected_type, str):
+        try:
+            expected_type = FieldType(expected_type)
+        except ValueError:
+            # Fail fast on unknown types to catch misconfigurations
+            raise ValueError(f"Unknown field type: {expected_type}")
+
+    # Text types
+    if expected_type in (FieldType.TEXT, FieldType.LONG_TEXT):
+        if not isinstance(value, str):
+            raise ValueError(f"Expected text, got {type(value).__name__}")
+        return value.strip()
+
+    # Numeric types
+    if expected_type == FieldType.NUMBER:
+        if isinstance(value, (int, float)):
+            return value
+        try:
+            val_str = str(value).strip()
+            return float(val_str) if "." in val_str else int(val_str)
+        except (ValueError, TypeError):
+            raise ValueError(f"Cannot convert '{value}' to number")
+
+    # Date types - validate and return ISO string for JSON compatibility
+    if expected_type == FieldType.DATETIME:
+        if isinstance(value, str):
+            try:
+                from dateutil.parser import parse as parse_date
+
+                # Validate format by parsing, but return ISO string for JSON serialization
+                parsed = parse_date(value)
+                return parsed.isoformat()
+            except Exception:
+                raise ValueError(f"Invalid date format: {value}")
+        raise ValueError(f"Expected date string, got {type(value).__name__}")
+
+    # Boolean types
+    if expected_type == FieldType.BOOLEAN:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lower = value.lower().strip()
+            if lower in ("true", "1", "yes", "t", "y"):
+                return True
+            if lower in ("false", "0", "no", "f", "n"):
+                return False
+        raise ValueError(f"Cannot convert '{value}' to boolean")
+
+    # Array types (select fields)
+    if expected_type == FieldType.SELECT:
+        if isinstance(value, list):
+            return [str(v).strip() for v in value if v is not None and str(v).strip()]
+        # Single value -> convert to list (check None explicitly, not truthiness)
+        if value is not None:
+            return [str(value).strip()]
+        return []
+
+    return value
+
+
+BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
+
+
+class DynamicFieldValue(BaseModel):
+    """
+    Pydantic model for dynamic field with runtime type validation.
+    """
+
+    model_config = BASE_MODEL_CONFIG
+
+    name: str = Field(min_length=1)
+    field_type: FieldType
+    value: Any
+
+    @field_validator("value")
+    @classmethod
+    def validate_value_type(cls, v: Any, info: ValidationInfo) -> Any:
+        """Validate value matches declared field_type."""
+        field_type = info.data.get("field_type")
+        if field_type:
+            return validate_field_type(v, field_type)
+        return v
