@@ -1,5 +1,5 @@
--- Migration: Create dynamic_fields table and seed bulletin core fields
--- Ensures compatibility with DynamicField model introduced in dynamic-content-fresh branch.
+-- Migration: Create dynamic_fields and dynamic_form_history tables, seed bulletin core fields
+-- Ensures compatibility with DynamicField model and audit trail introduced in dynamic-content-fresh branch.
 
 BEGIN;
 
@@ -28,6 +28,21 @@ CREATE INDEX IF NOT EXISTS ix_dynamic_fields_entity_type ON dynamic_fields (enti
 CREATE INDEX IF NOT EXISTS ix_dynamic_fields_entity_active ON dynamic_fields (entity_type, active);
 CREATE INDEX IF NOT EXISTS ix_dynamic_fields_entity_core ON dynamic_fields (entity_type, core);
 CREATE INDEX IF NOT EXISTS ix_dynamic_fields_entity_sort ON dynamic_fields (entity_type, sort_order);
+
+-- Create dynamic_form_history table for audit trail
+CREATE TABLE IF NOT EXISTS dynamic_form_history (
+    id SERIAL PRIMARY KEY,
+    entity_type VARCHAR(50) NOT NULL,
+    fields_snapshot JSONB NOT NULL,
+    user_id INTEGER REFERENCES "user"(id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS ix_dynamic_form_history_entity_type ON dynamic_form_history (entity_type);
+CREATE INDEX IF NOT EXISTS ix_dynamic_form_history_created_at ON dynamic_form_history (created_at DESC);
+CREATE INDEX IF NOT EXISTS ix_dynamic_form_history_entity_created ON dynamic_form_history (entity_type, created_at DESC);
 
 -- Seed core bulletin fields so existing deployments remain functional after upgrade
 INSERT INTO dynamic_fields (
@@ -107,6 +122,7 @@ COMMIT;
 -- Rollback script:
 /*
 BEGIN;
+DROP TABLE IF EXISTS dynamic_form_history;
 DROP TABLE IF EXISTS dynamic_fields;
 COMMIT;
 */
