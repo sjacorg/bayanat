@@ -120,6 +120,7 @@ from enferno.tasks import (
 from enferno.user.models import User, Role, Session
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import get_file_hash
+from enferno.utils.form_history_utils import record_form_history
 from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
@@ -7109,6 +7110,13 @@ def api_dynamic_fields_bulk_save(entity_type: str) -> Response:
 
         # Commit all changes
         db.session.commit()
+
+        # Record form history snapshot after successful save
+        try:
+            record_form_history(entity_type, current_user.id)
+        except Exception as e:
+            # Log but don't fail the request if history recording fails
+            logger.warning(f"Failed to record form history for {entity_type}: {e}")
 
         # Log activity for bulk operation
         Activity.create(
