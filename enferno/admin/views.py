@@ -125,6 +125,7 @@ from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
 from enferno.admin.models.DynamicField import DynamicField
+from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
 
 
 root = os.path.abspath(os.path.dirname(__file__))
@@ -7136,6 +7137,65 @@ def api_dynamic_fields_bulk_save(entity_type: str) -> Response:
         logger.error(f"Error in bulk UI save: {str(e)}")
         db.session.rollback()
         return HTTPResponse.error("An error occurred while updating field layout", status=500)
+
+
+@admin.get("/api/dynamic-fields/history/<entity_type>")
+def api_dynamic_fields_history(entity_type):
+    """
+    Get history of dynamic form changes for an entity type.
+
+    Args:
+        entity_type: The entity type (actor, bulletin, incident)
+
+    Query params:
+        page: Page number (default 1)
+        per_page: Items per page (default 20)
+
+    Returns:
+        Paginated list of history snapshots ordered by created_at DESC
+    """
+    try:
+        # Validate entity_type
+        if entity_type not in ["actor", "bulletin", "incident"]:
+            return HTTPResponse.error("Invalid entity type", status=400)
+
+        # Get pagination params
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 20, type=int)
+
+        if page < 1 or per_page < 1 or per_page > 100:
+            return HTTPResponse.error("Invalid pagination parameters", status=400)
+
+        # Query history with pagination
+        stmt = (
+            select(DynamicFormHistory)
+            .where(DynamicFormHistory.entity_type == entity_type)
+            .order_by(DynamicFormHistory.created_at.desc())
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+        )
+
+        count_stmt = (
+            select(func.count())
+            .select_from(DynamicFormHistory)
+            .where(DynamicFormHistory.entity_type == entity_type)
+        )
+
+        total = db.session.execute(count_stmt).scalar_one()
+        items = db.session.execute(stmt).scalars().all()
+
+        return HTTPResponse.success(
+            data={
+                "items": [item.to_dict() for item in items],
+                "total": total,
+                "page": page,
+                "per_page": per_page,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error fetching history for {entity_type}: {str(e)}")
+        return HTTPResponse.error("Failed to fetch history", status=500)
 
 
 @admin.route("/api/session-check")
