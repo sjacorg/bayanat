@@ -104,7 +104,7 @@
                                 </v-tooltip>
 
                                 <v-tooltip location="top"
-                                        v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
+                                        v-if="item?.two_factor_devices?.length > 0"
                                         :text="'{{ _('Revoke 2FA') }}'">
                                     <template #activator="{props}">
                                         <v-btn
@@ -345,7 +345,7 @@
                             </v-form>
                             <v-card-actions class="px-7 pb-7 pt-0">
                                 <v-btn @click="closeChangePasswordDialog()" variant="outlined">{{ _('Cancel') }}</v-btn>
-                                <v-btn @click="validateChangePasswordFormAndSave()" color="primary" variant="flat">{{ _('Change Password') }}</v-btn>
+                                <v-btn @click="validateChangePasswordFormAndSave()" :loading="saving" color="primary" variant="flat">{{ _('Change Password') }}</v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -759,6 +759,7 @@
                 },
                 async changePassword() {
                     try {
+                        this.saving = true;
                         const response = await api.put(`/admin/api/user/`, { item: this.editedItem }, { suppressGlobalErrorHandler: true });
                         this.showSnack(response.data);
 
@@ -770,6 +771,8 @@
                         this.closeChangePasswordDialog();
                     } catch (err) {
                         this.showSnack(handleRequestError(err))
+                    } finally {
+                        this.saving = false;
                     }
                 },
                 isRoleSelected(role) {
