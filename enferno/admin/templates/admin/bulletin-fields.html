@@ -17,6 +17,34 @@
     </template>
   </v-data-table>
 </confirm-dialog>
+<!-- Revision history sidebar -->
+<v-navigation-drawer
+  v-model="formBuilder.showRevisions"
+  location="right"
+  temporary
+  width="630"
+  clipped
+>
+    <v-card flat>
+        <v-card-title class="pa-6">{{ _('Revision history') }}</v-card-title>
+        <v-card-text class="px-6">
+            <v-infinite-scroll empty-text="{{ _('No more items in history') }}" :items="formBuilder.historyState.items">
+                <v-timeline density="compact" side="end" align="start">
+                    <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="index" dot-color="primary" size="10">
+                        <div class="mt-n1">
+                            <!-- <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Current settings)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
+                            <div v-if="index > 0 && !DiffTool.hasDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('No changes in this configuration') }}</div>
+                            <show-details v-else-if="DiffTool.hasDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config)" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+                                <diff-renderer :diff="DiffTool.getAndRenderDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config, configLabels)"></diff-renderer>
+                            </show-details>
+                            <v-btn v-if="index !== 0 && DiffTool.hasDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config)" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Revert to this version') }}</v-btn> -->
+                        </div>
+                    </v-timeline-item>
+                </v-timeline>
+            </v-infinite-scroll>
+        </v-card-text>
+    </v-card>
+</v-navigation-drawer>
 
 <v-main>
   <div class="pa-4">
@@ -29,6 +57,14 @@
           hide-details v-model="ui.search" clearable></v-text-field>
       
         <div class="d-flex ga-4 align-center">
+          <v-btn
+            class="outlined-btn"
+            prepend-icon="mdi-history"
+            variant="outlined"
+            @click="openRevisionHistoryDrawer({ entityType: 'bulletin' })"
+          >
+            {{ _('Revision history') }}
+          </v-btn>
           <v-btn :disabled="!hasChanges" variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
             _('Discard Changes') }}</v-btn>
           <v-btn @click="showSaveDialog({ entityType: 'bulletin' })" prepend-icon="mdi-check" variant="outlined" :loading="ui.saving"

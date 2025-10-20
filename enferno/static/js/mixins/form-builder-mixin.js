@@ -2,9 +2,11 @@ const formBuilderMixin = {
   data: () => ({
     formBuilder: {
       loading: false,
+      showRevisions: false,
       searchableDynamicFields: [],
       dynamicFields: [],
       originalFields: [],
+      historyState: { items: [], total: 0, page: 1, per_page: 20 },
     },
     fixedFields: ['comments', 'status'],
     dragDrop: {
@@ -73,6 +75,10 @@ const formBuilderMixin = {
     },
   },
   methods: {
+    openRevisionHistoryDrawer({ entityType }) {
+      this.formBuilder.showRevisions = true;
+      this.fetchDynamicFieldsHistory({ entityType });
+    },
     discardChanges() {
       this.$confirm({
         title: window.translations.youreAboutToDiscardChanges_,
@@ -568,6 +574,18 @@ const formBuilderMixin = {
       return fields.sort((a, b) => {
         return a.sort_order - b.sort_order; // normal sort
       });
+    },
+    async fetchDynamicFieldsHistory({ entityType }) {
+      try {
+        this.formBuilder.loading = true;
+        const response = await api.get(`/admin/api/dynamic-fields/history/${entityType}`);
+        this.formBuilder.historyState = response.data;
+      } catch (err) {
+        console.error(err);
+        this.showSnack(handleRequestError(err));
+      } finally {
+        this.formBuilder.loading = false;
+      }
     },
     async fetchDynamicFields({ entityType }) {
       try {
