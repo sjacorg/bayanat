@@ -19,10 +19,10 @@
                             class="elevation-1"
                     >
                         <template v-slot:top>
-                            <v-toolbar flat color="white">
-                                <div class="d-flex align-center ga-10 w-100 py-2 px-7">
+                            <div class="d-flex flex-column ga-10 w-100 py-2 px-7">
+                                <div class="d-flex align-center ga-10 w-100">
                                     <v-toolbar-title class="flex-0-0">{{ _('System Users') }}</v-toolbar-title>
-    
+
                                     <v-text-field
                                         :model-value="search"
                                         @update:model-value="searchUsers"
@@ -33,7 +33,7 @@
                                         prepend-inner-icon="mdi-magnify"
                                         placeholder="{{ _('Search for a system user') }}"
                                     ></v-text-field>
-    
+
                                     <div class="d-flex align-center ga-3">
                                         <v-btn
                                             @click.once="forceGlobalReset"
@@ -54,7 +54,128 @@
                                         </v-btn>
                                     </div>
                                 </div>
-                            </v-toolbar>
+                                <div class="d-flex align-center ga-5 w-100">
+                                    <div>{{ _('Filter') }}
+                                        <v-tooltip v-if="activeCount('twoFactor') || activeCount('roles') || activeCount('accountStatus')" location="top" text="{{ _('Clear filters') }}">
+                                            <template #activator="{props}">
+                                                <v-btn v-bind="props" icon="mdi-filter-off-outline" size="small"
+                                                    @click="filters = { accountStatus: null, roles: [], twoFactor: null }"
+                                                ></v-btn>
+                                            </template>
+                                        </v-tooltip>
+                                    </div>
+
+                                    <!-- Account Status -->
+                                    <v-menu>
+                                        <template #activator="{ props }">
+                                            <v-btn
+                                                variant="outlined"
+                                                append-icon="mdi-menu-down"
+                                                v-bind="props"
+                                            >
+                                            <v-badge
+                                                v-if="activeCount('accountStatus')"
+                                                location="top right"
+                                                :offset-x="-14"
+                                                :offset-y="4"
+                                                color="primary"
+                                                dot
+                                                class="mr-4"
+                                            >
+                                                {{ _('Account Status') }}
+                                            </v-badge>
+                                            <template v-else>{{ _('Account Status') }}</template>
+                                            </v-btn>
+                                        </template>
+
+                                        <v-list>
+                                            <v-list-item
+                                                v-for="option in accountStatusOptions"
+                                                :key="option.value"
+                                                @click="filters.accountStatus = option.value"
+                                                :active="filters.accountStatus === option.value"
+                                            >
+                                                <v-list-item-title>${option.title}</v-list-item-title>
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-menu>
+
+                                    <!-- Roles (multi-select) -->
+                                    <v-menu>
+                                        <template #activator="{ props }">
+                                            <v-btn
+                                                variant="outlined"
+                                                append-icon="mdi-menu-down"
+                                                v-bind="props"
+                                            >
+                                            <v-badge
+                                                v-if="activeCount('roles')"
+                                                location="top right"
+                                                :offset-x="-14"
+                                                :offset-y="activeCount('roles') === 1 ? 4 : 5"
+                                                color="primary"
+                                                :content="activeCount('roles')"
+                                                :dot="activeCount('roles') === 1"
+                                                class="mr-4"
+                                            >
+                                                {{ _('Roles') }}
+                                            </v-badge>
+                                            <template v-else>{{ _('Roles') }}</template>
+                                            </v-btn>
+                                        </template>
+
+                                        <v-list>
+                                            <v-list-item
+                                                v-for="role in roles"
+                                                :key="role.id"
+                                                @click="setRoleFilters(role.id)"
+                                                :active="filters.roles.includes(role.id)"
+                                            >
+                                            <v-checkbox
+                                                :model-value="filters.roles.includes(role.id)"
+                                                :label="role.name"
+                                                hide-details
+                                            />
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-menu>
+
+                                    <!-- Two-Factor Authentication -->
+                                    <v-menu>
+                                        <template #activator="{ props }">
+                                            <v-btn
+                                            variant="outlined"
+                                            append-icon="mdi-menu-down"
+                                            v-bind="props"
+                                            >
+                                            <v-badge
+                                                v-if="activeCount('twoFactor')"
+                                                location="top right"
+                                                :offset-x="-14"
+                                                :offset-y="4"
+                                                color="primary"
+                                                dot
+                                                class="mr-4"
+                                            >
+                                                {{ _('Two-Factor Authentication') }}
+                                            </v-badge>
+                                            <template v-else>{{ _('Two-Factor Authentication') }}</template>
+                                            </v-btn>
+                                        </template>
+
+                                        <v-list>
+                                            <v-list-item
+                                                v-for="option in twoFactorOptions"
+                                                :key="option.value"
+                                                @click="filters.twoFactor = option.value"
+                                                :active="filters.twoFactor === option.value"
+                                            >
+                                                <v-list-item-title>${option.title}</v-list-item-title>
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-menu>
+                                </div>
+                            </div>
                         </template>
 
 
@@ -429,6 +550,20 @@
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
                 forceResetDialog: false,
+
+                filters: {
+                    accountStatus: null,
+                    roles: [],
+                    twoFactor: null,
+                },
+                accountStatusOptions: [
+                    { title: 'Active', value: 'active' },
+                    { title: 'Inactive', value: 'inactive' },
+                ],
+                twoFactorOptions: [
+                    { title: 'Active', value: 'active' },
+                    { title: 'Inactive', value: 'inactive' },
+                ],
             }),
 
             mixins: [globalMixin],
@@ -485,6 +620,20 @@
 
 
             methods: {
+                activeCount(key) {
+                    const val = this.filters[key]
+                    if (Array.isArray(val)) return val.length
+                    return val ? 1 : 0
+                },
+                setRoleFilters(role) {
+                    const roles = this.filters.roles
+                    if (roles.includes(role)) {
+                        this.filters.roles = roles.filter((r) => r !== role)
+                    } else {
+                        this.filters.roles.push(role)
+                    }
+
+                },
                 onUsernameCheckResponse(response) {
                     if (this.editedItem.username === this.initialUsername) {
                         this.isUsernameAvailable = false
