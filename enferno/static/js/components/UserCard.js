@@ -1,6 +1,6 @@
 const UserCard = Vue.defineComponent({
   props: ['user', 'closable'],
-  emits: ['close', 'edit', 'resetPassword', 'revoke2fa', 'logoutAll'],
+  emits: ['close', 'edit', 'resetPassword', 'revoke2fa', 'logoutAll', 'changePassword'],
   watch: {
     user: function (val, old) {
       this.resetSessions();
@@ -183,7 +183,7 @@ const UserCard = Vue.defineComponent({
                         color="warning"
                         density="comfortable"
                         icon="mdi-form-textbox-password"
-                        @click="$emit('resetPassword', user)"
+                        @click="$emit('changePassword', user)"
                       ></v-btn>
                     </div>
                   </template>
@@ -242,7 +242,7 @@ const UserCard = Vue.defineComponent({
                     :key="index"
                     read-only
                     hide-icon
-                    :model-value="role.id"
+                    :model-value="true"
                   >
                     {{ role.name }}
                   </toggle-button>
