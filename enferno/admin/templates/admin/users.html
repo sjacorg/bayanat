@@ -88,7 +88,7 @@
                                     </template>
                                 </v-tooltip>
                                 <v-tooltip location="top"
-                                        :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset') }}'">
+                                        :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force Password Reset') }}'">
                                     <template #activator="{props}">
                                         <div v-bind="props" class="d-inline-block">
                                             <v-btn
@@ -98,6 +98,7 @@
                                                 size="small"
                                                 icon="mdi-lock-reset">
                                             </v-btn>
+                                            <v-icon v-if="item.force_reset" class="ml-n3" color="error">mdi-exclamation-thick</v-icon>
                                         </div>
                                     </template>
                                 </v-tooltip>
@@ -109,19 +110,11 @@
                                         <v-btn
                                                 @click.stop="revoke2fa(item.id)"
                                                 variant="plain"
-                                                color="warning"
                                                 v-bind="props"
                                                 size="small"
                                                 icon="mdi-lock-remove">
                                         </v-btn>
-                                    </template>
-                                </v-tooltip>
-
-                                <v-tooltip location="top" text="{{ _('Password reset requested.') }}">
-                                    <template #activator="{props}">
-                                        <v-btn icon="mdi-exclamation-thick" size="small" color="error" variant="plain"
-                                            v-bind="props" v-if="item.force_reset">
-                                        </v-btn>
+                                        
                                     </template>
                                 </v-tooltip>
                             </div>
@@ -131,7 +124,7 @@
                             <v-tooltip location="top"
                                        :text="item.two_factor_devices && item.two_factor_devices.length > 0 ? '{{ _('2FA Active') }}' : '{{ _('2FA Inactive') }}'">
                                 <template #activator="{props}">
-                                    <div v-if="item.two_factor_devices && item.two_factor_devices.length > 0" class="d-flex ga-2 font-weight-medium text-warning">
+                                    <div v-if="item.two_factor_devices && item.two_factor_devices.length > 0" class="d-flex ga-2 font-weight-medium text-success">
                                         <v-icon
                                             color="success"
                                             v-bind="props"
@@ -196,6 +189,7 @@
                                         color="primary"
                                         variant="flat"
                                         :text="isNewUser ? '{{ _('Add User') }}' : '{{ _('Save Changes') }}'"
+                                        :loading="saving"
                                     ></v-btn>
                                     <v-btn icon density="comfortable" @click="close">
                                         <v-icon>mdi-close</v-icon>
@@ -379,6 +373,7 @@
             data: () => ({
                 dialog: dialog,
                 loading: true,
+                saving: false,
                 showPassword: false,
                 drawer: drawer,
                 translations: window.translations,
@@ -731,6 +726,8 @@
                         }
                     }
 
+                    this.saving = true;
+
                     // edit mode
                     if (this.editedItem.id) {
                         api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
@@ -739,7 +736,10 @@
                                 this.showSnack(response.data);
                                 this.close();
                                 options?.callback?.()
-                            }).catch(handleError);
+                            }).catch(handleError)
+                            .finally(() => {
+                                this.saving = false;
+                            });
 
                     } else {
                         // create mode
@@ -749,7 +749,11 @@
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(handleError);
+                            })
+                            .catch(handleError)
+                            .finally(() => {
+                                this.saving = false;
+                            });;
                     }
 
                 },
