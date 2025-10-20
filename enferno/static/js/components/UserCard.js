@@ -251,23 +251,31 @@ const UserCard = Vue.defineComponent({
               <v-col cols="12" md="6">
                 <div class="mb-3 text-body-1">{{ translations.twoFactorAuthentication_ }}</div>
                 <div class="d-flex flex-wrap ga-3">
-                  <v-chip
-                    v-for="device in user.two_factor_devices"
-                    :key="device.id"
-                    :prepend-icon="device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive'"
-                    color="primary"
+                  <div
+                    v-if="user?.two_factor_devices?.length > 0"
+                    class="d-flex flex-column ga-2 font-weight-medium text-success"
                   >
-                    {{ device.name }}
-                  </v-chip>
+                    <div
+                      v-for="device in user.two_factor_devices"
+                      :key="device.id"
+                      class="d-flex align-center ga-2"
+                    >
+                      <v-icon
+                        :icon="device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive'"
+                        color="success"
+                        size="small"
+                      />
+                      {{ device.name }}
+                    </div>
+                  </div>
 
-                  <v-chip
-                    v-if="user.two_factor_devices.length == 0"
-                    prepend-icon="mdi-lock-open-alert"
-                    color="error"
-                    label
+                  <div
+                    v-else
+                    class="d-flex align-center ga-2 font-weight-medium text-warning"
                   >
+                    <v-icon color="warning" size="small">mdi-lock-open-alert</v-icon>
                     {{ translations.noTwoFactorMethods_ }}
-                  </v-chip>
+                  </div>
                 </div>
               </v-col>
             </v-row>
@@ -359,7 +367,7 @@ const UserCard = Vue.defineComponent({
             </v-table>
           </v-card-text>
           <v-card-text class="text-center">
-            <v-btn icon="mdi-dots-horizontal" variant="plain" v-if="more" fab small @click="fetchSessions(page, perPage)"></v-btn>
+            <v-btn variant="outlined" v-if="more" @click="fetchSessions(page, perPage)">{{ translations.loadMore_ }}</v-btn>
           </v-card-text>
         </v-card>
       </v-card>
