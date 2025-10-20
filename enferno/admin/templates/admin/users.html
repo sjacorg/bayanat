@@ -93,7 +93,7 @@
                                         <div v-bind="props" class="d-inline-block">
                                             <v-btn
                                                 :disabled="item.force_reset != null"
-                                                @click.stop="forcePassReset(item)"
+                                                @click.stop="openForceResetDialog(item)"
                                                 variant="plain"
                                                 size="small"
                                                 icon="mdi-lock-reset">
@@ -321,7 +321,7 @@
                         <v-card rounded="lg">
                             <v-form ref="changePasswordForm" v-model="valid">
                                 <v-card-text class="pa-7">
-                                    <div class="text-h6 mb-4">${translations.changePasswordForUser_(editedItem.name || user.name)}</div>
+                                    <div class="text-h6 mb-4">${translations.changePasswordForUser_(editedItem.name)}</div>
                                     <div class="mb-3">{{ _('Set a temporary password for this user.') }}</div>
                                     <v-text-field
                                         variant="filled"
@@ -346,6 +346,22 @@
                             <v-card-actions class="px-7 pb-7 pt-0">
                                 <v-btn @click="closeChangePasswordDialog()" variant="outlined">{{ _('Cancel') }}</v-btn>
                                 <v-btn @click="validateChangePasswordFormAndSave()" :loading="saving" color="primary" variant="flat">{{ _('Change Password') }}</v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-dialog v-model="forceResetDialog" persistent max-width="780">
+                        <v-card rounded="lg">
+                            <v-form ref="forceResetForm" v-model="valid">
+                                <v-card-text class="pa-7">
+                                    <div class="text-h6 mb-4">${translations.youreAboutToForceAPasswordResetForUser_(editedItem.name)}</div>
+                                    <div class="mb-6">{{ _('After this action, user will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}</div>
+                                    <div class="mb-3">{{ _('Do you want to continue?') }}</div>
+                                </v-card-text>
+                            </v-form>
+                            <v-card-actions class="px-7 pb-7 pt-0">
+                                <v-btn @click="closeForceResetDialog()" variant="outlined">{{ _('Cancel') }}</v-btn>
+                                <v-btn @click="forcePasswordReset(editedItem)" :loading="saving" color="error" variant="flat">{{ _('Force Password Reset') }}</v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -412,6 +428,7 @@
                 adminRoleId: 1,
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
+                forceResetDialog: false,
             }),
 
             mixins: [globalMixin],
@@ -543,21 +560,20 @@
 
                 },
 
-                forcePassReset(item) {
-                    if (confirm(`{{ _('Are you sure you want to force password reset for user ')}}${item.username}?`)) {
-                        api.post('/admin/api/user/force-reset',
-                            {item: item}
-                        ).then(res => {
-                            this.showSnack(res.data);
-                            this.refresh();
-                            this.close();
-                            if (this.userDrawer) this.refreshUser(item.id);
-                        }).catch(err => {
-                            console.error(err?.response?.data);
-                            this.showsnack(this.parseValidationError(err?.response?.data));
-                        })
-                    }
-
+                forcePasswordReset(item) {
+                    this.saving = true
+                    api.post('/admin/api/user/force-reset',
+                        {item: item}
+                    ).then(res => {
+                        this.showSnack(res.data);
+                        this.refresh();
+                        this.closeForceResetDialog();
+                        if (this.userDrawer) this.refreshUser(item.id);
+                    }).catch(err => {
+                        console.error(err?.response?.data);
+                    }).finally(() => {
+                        this.saving = false;
+                    })
                 },
 
                 forceGlobalReset() {
@@ -671,6 +687,11 @@
                     this.askUserToChangePassword = true;
                 },
 
+                openForceResetDialog(item) {
+                    this.editedItem = { ...(item || {}), password: '' };
+                    this.forceResetDialog = true;
+                },
+
                 createItem() {
                     this.editedItem = {...this.defaultItem};
                     this.dialog = true;
@@ -706,6 +727,13 @@
                         this.askUserToChangePassword = true;
                         this.serverErrors = {};
                         this.isStrongPassword = false;
+                        this.editedItem = Object.assign({}, this.defaultItem);
+                    }, 300);
+                },
+
+                closeForceResetDialog() {
+                    this.forceResetDialog = false;
+                    setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                     }, 300);
                 },

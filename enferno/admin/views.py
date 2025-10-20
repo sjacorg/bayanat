@@ -5251,7 +5251,7 @@ def api_user_force_reset(validated_data: dict) -> Response:
         message = f"Forced password reset already requested: {reset_key}"
         return HTTPResponse.error(message)
     user.set_security_reset_key()
-    message = f"Forced password reset has been set for user {user.username}"
+    message = f"User ‘{user.name}’ will reset password at next sign-in."
     return HTTPResponse.success(message=message)
 
 
