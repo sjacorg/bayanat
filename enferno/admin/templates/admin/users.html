@@ -671,7 +671,6 @@
                 },
 
                 openChangePasswordDialog(item) {
-                    this.refreshUser(item.id);
                     this.editedItem = { ...(item || {}), password: '' };
                     this.changePasswordDialog = true;
                     this.askUserToChangePassword = true;
@@ -759,7 +758,7 @@
                         const response = await api.put(`/admin/api/user/`, { item: this.editedItem }, { suppressGlobalErrorHandler: true });
                         this.showSnack(response.data);
 
-                        if (this.askUserToChangePassword && this.user?.force_reset === null) {
+                        if (this.askUserToChangePassword && this.editedItem?.force_reset === null) {
                             await api.post('/admin/api/user/force-reset', { item: this.editedItem });
                         }
 

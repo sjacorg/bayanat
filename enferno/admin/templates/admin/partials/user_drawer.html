@@ -14,7 +14,7 @@
             @reset-password="forcePassReset"
             @revoke2fa="revoke2fa"
             @logout-all="logoutAllUserSessions"
-            @change-password="openChangePasswordDialog()"
+            @change-password="openChangePasswordDialog($event)"
             :user="user"
         ></user-card>
     </v-card>
