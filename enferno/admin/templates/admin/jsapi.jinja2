@@ -571,6 +571,7 @@ passwordResetRequested_: "{{ _('Password Reset Requested.') }}",
 forcePasswordReset_: "{{ _('Force password reset') }}",
 revoke2fa_: "{{ _('Revoke 2FA') }}",
 changePassword_: "{{ _('Change Password') }}",
+changePasswordForUser_: (name) => "{{ _('Change Password for user “{name}”') }}".replace("{name}", name),
 
 // validations
 mustBeMaxCharactersOrFewer_: (max) => "{{ _('Must be {max} characters or fewer.') }}".replace("{max}", max),

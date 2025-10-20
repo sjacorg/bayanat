@@ -268,7 +268,7 @@
                                                 </v-text-field>
                                             </v-col>
                                         </v-row>
-                                        <v-switch color="primary" class="text-medium-emphasis" label="{{ _('Account is Active') }}"
+                                        <v-switch color="blue" class="text-medium-emphasis" label="{{ _('Account is Active') }}"
                                                 v-model="editedItem.active"></v-switch>
 
                                         <div class="mb-3 text-body-1">{{ _('User Roles') }}</div>
@@ -325,31 +325,33 @@
 
                     <v-dialog v-model="changePasswordDialog" persistent max-width="780">
                         <v-card rounded="lg">
-                            <v-card-text class="pa-7">
-                                <div class="text-h6 mb-4">{{ _('Change Password for user “Luca Bergström.”') }}</div>
-                                <div class="mb-3">{{ _('Set a temporary password for this user.') }}</div>
-                                <v-text-field
-                                    variant="filled"
-                                    :class="isStrongPassword ? 'text-success' : undefined"
-                                    :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
-                                    v-model="editedItem.password"
-                                    :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                                    :type="showPassword ? 'text' : 'password'"
-                                    @click:append="showPassword = !showPassword"
-                                    :rules="[
-                                        validationRules.required(),
-                                        validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
-                                        validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
-                                    ]"
-                                    @input="isStrongPassword = false"
-                            >
-                                <template #label>{{ _('Temporary Password') }}<span class="text-red">*</span></template>
-                            </v-text-field>
-                                <v-checkbox v-model="askUserToChangePassword" color="blue" class="text-medium-emphasis text-body-2" label="{{ _('Ask user to change password when they sign in') }}"></v-checkbox>
-                            </v-card-text>
+                            <v-form ref="changePasswordForm" v-model="valid">
+                                <v-card-text class="pa-7">
+                                    <div class="text-h6 mb-4">${translations.changePasswordForUser_(editedItem.name || user.name)}</div>
+                                    <div class="mb-3">{{ _('Set a temporary password for this user.') }}</div>
+                                    <v-text-field
+                                        variant="filled"
+                                        :class="isStrongPassword ? 'text-success' : undefined"
+                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
+                                        v-model="editedItem.password"
+                                        :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                        :type="showPassword ? 'text' : 'password'"
+                                        @click:append-inner="showPassword = !showPassword"
+                                        :rules="[
+                                            validationRules.required(),
+                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                        ]"
+                                        @input="isStrongPassword = false"
+                                >
+                                    <template #label>{{ _('Temporary Password') }}<span class="text-red">*</span></template>
+                                </v-text-field>
+                                    <v-checkbox v-model="askUserToChangePassword" color="blue" class="text-medium-emphasis text-body-2" label="{{ _('Ask user to change password when they sign in') }}"></v-checkbox>
+                                </v-card-text>
+                            </v-form>
                             <v-card-actions class="px-7 pb-7 pt-0">
                                 <v-btn @click="closeChangePasswordDialog()" variant="outlined">{{ _('Cancel') }}</v-btn>
-                                <v-btn @click="validateFormAndSave(askUserToChangePassword ? { callback: api.post('/admin/api/user/force-reset', { item: editedItem }) } : {})" color="primary" variant="flat">{{ _('Change Password') }}</v-btn>
+                                <v-btn @click="validateChangePasswordFormAndSave()" color="primary" variant="flat">{{ _('Change Password') }}</v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -414,6 +416,7 @@
                 serverErrors: {},
                 adminRoleId: 1,
                 changePasswordDialog: false,
+                askUserToChangePassword: true,
             }),
 
             mixins: [globalMixin],
@@ -485,6 +488,16 @@
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
                             this.save(options);
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError()
+                        }
+                    });
+                },
+                validateChangePasswordFormAndSave(options) {
+                    this.$refs.changePasswordForm.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.changePassword(options);
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
                             scrollToFirstError()
@@ -658,6 +671,7 @@
                 },
 
                 openChangePasswordDialog(item) {
+                    this.refreshUser(item.id);
                     this.editedItem = { ...(item || {}), password: '' };
                     this.changePasswordDialog = true;
                     this.askUserToChangePassword = true;
@@ -740,34 +754,20 @@
                     }
 
                 },
-                changePassword(options) {
-                    const handleError = (err) => {
-                        const usernameAlreadyTaken = err?.response?.status === 409
-                        const errors = err?.response?.data?.errors
-                        if (errors || usernameAlreadyTaken) {
-                            this.serverErrors = errors
-                            // Override email message for something simpler
-                            if (this.serverErrors?.['item.email']) this.serverErrors['item.email'] = [translations.emailInvalid_];
-                            if (this.serverErrors?.['item.username']) this.serverErrors['item.username'] = [translations.usernameInvalid_];
-                            if (usernameAlreadyTaken) this.serverErrors = { ...this.serverErrors, ['item.username']: [translations.usernameAlreadyTaken_]};
+                async changePassword() {
+                    try {
+                        const response = await api.put(`/admin/api/user/`, { item: this.editedItem }, { suppressGlobalErrorHandler: true });
+                        this.showSnack(response.data);
 
-                            this.$nextTick(() => scrollToFirstError())
-                            this.showSnack(handleRequestError(err))
+                        if (this.askUserToChangePassword && this.user?.force_reset === null) {
+                            await api.post('/admin/api/user/force-reset', { item: this.editedItem });
                         }
+
+                        await this.refresh();
+                        this.closeChangePasswordDialog();
+                    } catch (err) {
+                        this.showSnack(handleRequestError(err))
                     }
-
-                    if (this.editedItem.id) {
-                        api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
-                            .then(response => {
-                                this.showSnack(response.data);
-                                api.post('/admin/api/user/force-reset',
-                                    {item: editItem}
-                                )
-                                this.closeChangePasswordDialog();
-                            }).catch(handleError);
-
-                    }
-
                 },
                 isRoleSelected(role) {
                     return this.editedItem?.roles?.some(r => r.id === role.id)
