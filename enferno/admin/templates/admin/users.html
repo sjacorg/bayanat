@@ -298,27 +298,27 @@
                         <template v-slot:no-data></template>
                     </v-data-table-server>
                     <v-dialog v-model="dialog" max-width="1200px">
-                        <v-toolbar :title="formTitle">
-                            <template #append>
-                                <div class="d-flex align-center ga-2 mr-2">
-                                    <v-btn @click="close" variant="outlined">
-                                        {{ _('Cancel') }}
-                                    </v-btn>
-                                    <v-btn
-                                        @click="validateFormAndSave"
-                                        :prepend-icon="isNewUser ? 'mdi-plus' : 'mdi-check'"
-                                        color="primary"
-                                        variant="flat"
-                                        :text="isNewUser ? '{{ _('Add User') }}' : '{{ _('Save Changes') }}'"
-                                        :loading="saving"
-                                    ></v-btn>
-                                    <v-btn icon density="comfortable" @click="close">
-                                        <v-icon>mdi-close</v-icon>
-                                    </v-btn>
-                                </div>
-                            </template>
-                        </v-toolbar>
-                        <v-card tile elevation="0">
+                        <v-card rounded="lg">
+                            <v-toolbar :title="formTitle">
+                                <template #append>
+                                    <div class="d-flex align-center ga-2 mr-2">
+                                        <v-btn @click="close" variant="outlined">
+                                            {{ _('Cancel') }}
+                                        </v-btn>
+                                        <v-btn
+                                            @click="validateFormAndSave"
+                                            :prepend-icon="isNewUser ? 'mdi-plus' : 'mdi-check'"
+                                            color="primary"
+                                            variant="flat"
+                                            :text="isNewUser ? '{{ _('Add User') }}' : '{{ _('Save Changes') }}'"
+                                            :loading="saving"
+                                        ></v-btn>
+                                        <v-btn icon density="comfortable" @click="close">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </div>
+                                </template>
+                            </v-toolbar>
                             <v-divider></v-divider>
                             <v-form ref="form" v-model="valid">
                                 <v-card-text>
