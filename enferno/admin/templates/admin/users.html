@@ -214,7 +214,7 @@
                                         <div v-bind="props" class="d-inline-block">
                                             <v-btn
                                                 :disabled="item.force_reset != null"
-                                                @click.stop="openForceResetDialog(item)"
+                                                @click.stop="openForcePasswordResetDialog(item)"
                                                 variant="plain"
                                                 size="small"
                                                 icon="mdi-lock-reset">
@@ -470,22 +470,6 @@
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
-
-                    <v-dialog v-model="forceResetDialog" persistent max-width="780">
-                        <v-card rounded="lg">
-                            <v-form ref="forceResetForm" v-model="valid">
-                                <v-card-text class="pa-7">
-                                    <div class="text-h6 mb-4">${translations.youreAboutToForceAPasswordResetForUser_(editedItem.name)}</div>
-                                    <div class="mb-6">{{ _('After this action, user will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}</div>
-                                    <div class="mb-3">{{ _('Do you want to continue?') }}</div>
-                                </v-card-text>
-                            </v-form>
-                            <v-card-actions class="px-7 pb-7 pt-0">
-                                <v-btn @click="closeForceResetDialog()" variant="outlined">{{ _('Cancel') }}</v-btn>
-                                <v-btn @click="forcePasswordReset(editedItem)" :loading="saving" color="error" variant="flat">{{ _('Force Password Reset') }}</v-btn>
-                            </v-card-actions>
-                        </v-card>
-                    </v-dialog>
                 </v-card-text>
             </v-card>
 
@@ -549,7 +533,6 @@
                 adminRoleId: 1,
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
-                forceResetDialog: false,
 
                 filters: {
                     accountStatus: null,
@@ -716,7 +699,6 @@
                     ).then(res => {
                         this.showSnack(res.data);
                         this.refresh();
-                        this.closeForceResetDialog();
                         if (this.userDrawer) this.refreshUser(item.id);
                     }).catch(err => {
                         console.error(err?.response?.data);
@@ -836,9 +818,16 @@
                     this.askUserToChangePassword = true;
                 },
 
-                openForceResetDialog(item) {
-                    this.editedItem = { ...(item || {}), password: '' };
-                    this.forceResetDialog = true;
+                openForcePasswordResetDialog(item) {
+                    this.$root.$confirm({
+                        title: translations.youreAboutToForceAPasswordResetForUser_(item.name),
+                        message: "{{ _('After this action, user will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+                        acceptProps: { text: "{{ _('Force Password Reset') }}", color: 'error' },
+                        dialogProps: { width: 780 },
+                        onAccept: () => {
+                            this.forcePasswordReset(item);
+                        },
+                    });
                 },
 
                 createItem() {
@@ -876,13 +865,6 @@
                         this.askUserToChangePassword = true;
                         this.serverErrors = {};
                         this.isStrongPassword = false;
-                        this.editedItem = Object.assign({}, this.defaultItem);
-                    }, 300);
-                },
-
-                closeForceResetDialog() {
-                    this.forceResetDialog = false;
-                    setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                     }, 300);
                 },
