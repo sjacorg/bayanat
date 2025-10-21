@@ -77,28 +77,31 @@ const UserCard = Vue.defineComponent({
         });
     },
 
-    logoutSession(id) {
-      if (window.confirm(this.translations.logoutSessionConfirmation_)) {
-        axios
-          .delete('/admin/api/session/logout', {
-            data: {
-              sessid: id,
-            },
-          })
-          .then((response) => {
-            console.log('Logged out session');
-            if (response.data.redirect) {
-              // Perform the redirection to the root path
-              window.location.href = '/';
-            } else {
-              this.resetSessions();
-              this.fetchSessions();
-            }
-          })
-          .catch((err) => {
-            console.error('Error logging out session', err);
-          });
-      }
+    openLogoutSessionDialog(id) {
+      this.$root.$confirm({
+        title: translations.youreAboutToEndThisSession_,
+        message: `${translations.afterThisActionTheUserWillBeSignedOut_}\r\n\r\n${translations.doYouWantToContinue_}`,
+        acceptProps: { text: translations.endSession_, color: 'error' },
+        dialogProps: { width: 780 },
+        onAccept: () => {
+          axios
+            .delete('/admin/api/session/logout', {
+              data: { sessid: id },
+            })
+            .then((response) => {
+              console.log('Logged out session');
+              if (response.data.redirect) {
+                window.location.href = '/';
+              } else {
+                this.resetSessions();
+                this.fetchSessions();
+              }
+            })
+            .catch((err) => {
+              console.error('Error logging out session', err);
+            });
+        },
+      });
     },
   },
 
@@ -358,7 +361,7 @@ const UserCard = Vue.defineComponent({
                   <v-btn
                     icon="mdi-logout"
                     variant="plain" v-if="session.details?._fresh"
-                    @click.once="logoutSession(session.id)" :disabled="!session.is_active"
+                    @click.once="openLogoutSessionDialog(session.id)" :disabled="!session.is_active"
                     color="error"
                   ></v-btn>
                 </td>

@@ -13,7 +13,7 @@
             @edit="editItem($event)"
             @reset-password="openForcePasswordResetDialog($event)"
             @revoke2fa="revoke2fa($event)"
-            @logout-all="logoutAllUserSessions($event)"
+            @logout-all="openLogoutAllUserSessionsDialog($event)"
             @change-password="openChangePasswordDialog($event)"
             :user="user"
         ></user-card>
