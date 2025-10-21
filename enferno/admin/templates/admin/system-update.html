@@ -165,20 +165,14 @@
                     :key="update.id"
                     class="d-flex ga-3 pa-3 bg-surface">
 
-                    <v-icon
-                        :icon="update.status === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle'"
-                        :color="update.status === 'success' ? 'success' : 'error'">
-                    </v-icon>
+                    <v-icon icon="mdi-check-circle" color="success"></v-icon>
 
                     <div class="flex-grow-1">
                         <div class="font-weight-bold">
-                            ${ update.version_from } → ${ update.version_to }
+                            Updated to version ${ update.version_to }
                         </div>
                         <div class="text-caption text-disabled">
-                            ${ formatDate(update.completed_at) }
-                        </div>
-                        <div v-if="update.duration_seconds" class="text-caption">
-                            {{ _('Duration:') }} ${ formatDuration(update.duration_seconds) }
+                            ${ formatDate(update.created_at) }
                         </div>
                     </div>
                 </div>
