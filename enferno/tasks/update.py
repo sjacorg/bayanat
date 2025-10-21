@@ -1,7 +1,11 @@
 """Background system update task with locking and progress tracking."""
 
 from enferno.utils.maintenance import disable_maintenance, enable_maintenance
-from enferno.utils.update_utils import start_update, end_update, set_update_message
+from enferno.utils.update_utils import (
+    start_update,
+    end_update,
+    set_update_message,
+)
 from enferno.admin.models import SystemInfo
 from enferno.settings import Config
 
@@ -20,9 +24,10 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
     lock_acquired = False
 
     try:
-        # Lock system (prevents concurrent updates)
+        # Acquire lock - prevents concurrent updates
         if not start_update("Acquiring lock..."):
             return {"success": False, "error": "Update already running"}
+        lock_acquired = True
 
         set_update_message("Enabling maintenance mode...")
         if not enable_maintenance("System is being updated. Please wait..."):

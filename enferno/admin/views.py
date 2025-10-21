@@ -27,7 +27,7 @@ from flask_security.twofactor import tf_disable
 import shortuuid
 
 from enferno.tasks import perform_system_update
-from enferno.utils.update_utils import get_update_status, start_update, is_update_running
+from enferno.utils.update_utils import get_update_status, is_update_running
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
@@ -6605,15 +6605,14 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
 @roles_required("Admin")
 def api_trigger_system_update() -> Response:
     """Trigger system update in the background via Celery."""
-    # Atomically reserve the update lock - prevents race condition
-    if not start_update("Updating system..."):
-        return HTTPResponse.error("Update already in progress", 409)
-
     data = request.get_json(silent=True) or {}
     skip_backup = bool(data.get("skip_backup", False))
 
-    # Queue task after lock is acquired
-    task = perform_system_update.delay(skip_backup=skip_backup)
+    try:
+        task = perform_system_update.delay(skip_backup=skip_backup)
+    except Exception as e:
+        current_app.logger.error(f"Failed to queue update task: {str(e)}")
+        return HTTPResponse.error(f"Failed to queue update task: {str(e)}", 500)
 
     return HTTPResponse.success(data={"task_id": task.id}, message="Update started", status=202)
 
