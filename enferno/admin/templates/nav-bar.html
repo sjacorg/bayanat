@@ -21,14 +21,14 @@
       <v-btn
         v-bind="props"
         icon
-        @click.prevent="handleUpdateClick"
+        href="/admin/system-update/"
         :aria-label="updateInfo && updateInfo.update_available ? '{{ _('New version available') }}' : '{{ _('System is up to date') }}'"
       >
         <v-badge
           color="error"
           content="1"
           :model-value="Boolean(updateInfo && updateInfo.update_available)"
-        
+
           offset-x="-4"
           offset-y="-4"
         >
