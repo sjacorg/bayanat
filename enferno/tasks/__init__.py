@@ -1472,41 +1472,29 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
 
 
 def perform_version_check() -> Optional[dict]:
-    """Check GitHub for new Bayanat version. Returns result dict or None on error."""
+    """Check manifest for new Bayanat version. Returns result dict or None on error."""
     try:
         repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
-        response = requests.get(
-            f"https://api.github.com/repos/{repo_name}/tags",
-            timeout=3,
-            headers={"Accept": "application/vnd.github.v3+json"},
+        manifest_url = os.environ.get(
+            "BAYANAT_UPDATE_MANIFEST_URL",
+            f"https://raw.githubusercontent.com/{repo_name}/main/updates/latest.json",
         )
+
+        response = requests.get(manifest_url, timeout=3)
         response.raise_for_status()
 
-        tags = response.json()
-        if not tags:
-            return None
-
-        # Find latest stable version by parsing all tags
-        latest_tag = None
-        latest_parsed = None
-        current_version = cfg.VERSION
-
-        for tag in tags:
-            tag_name = tag["name"].lstrip("v")
-            try:
-                parsed = version.parse(tag_name)
-                # Skip pre-releases, keep latest stable
-                if not parsed.is_prerelease and (latest_parsed is None or parsed > latest_parsed):
-                    latest_tag = tag_name
-                    latest_parsed = parsed
-            except Exception:
-                continue
-
+        manifest = response.json()
+        latest_tag = manifest.get("version")
         if not latest_tag:
             return None
 
-        update_available = latest_parsed > version.parse(current_version)
+        current_version = cfg.VERSION
         checked_at = datetime.now(timezone.utc).isoformat()
+
+        try:
+            update_available = version.parse(latest_tag) > version.parse(current_version)
+        except Exception:
+            update_available = False
 
         if update_available:
             # Check if already notified about this version
