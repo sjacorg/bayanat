@@ -25,8 +25,7 @@ const ToggleButton = Vue.defineComponent({
       :color="modelValue ? activeColor : undefined"
       @click="$emit('update:modelValue', !modelValue)"
       :class="['font-weight-medium', { 'text-medium-emphasis cursor-default': readOnly }]"
-      read-only
-      :ripple="!readOnly"
+      :readonly="readOnly"
     >
       <template v-if="!hideIcon">
         <v-icon v-if="modelValue" start size="small">mdi-check</v-icon>

@@ -399,31 +399,31 @@
                                         </div>
                                         <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
                                         <div class="d-flex flex-wrap ga-3 mb-7">
-                                            <toggle-button v-model="editedItem.view_usernames">
+                                            <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole">
                                                 {{ _('Can View Usernames') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_full_history">
+                                            <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole">
                                                 {{ _('Can View Full History') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_simple_history">
+                                            <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole">
                                                 {{ _('Can View Simple History') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_self_assign">
+                                            <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole">
                                                 {{ _('Can Self-Assign') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_edit_locations">
+                                            <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole">
                                                 {{ _('Can Edit Locations') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_export">
+                                            <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole">
                                                 {{ _('Can Request Exports') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_import_web">
+                                            <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole">
                                                 {{ _('Can Import From Web') }}
                                             </toggle-button>
                                         </div>
@@ -767,7 +767,7 @@
                 },
 
                 checkRoles() {
-                    this.isAdmin = this.editedItem.roles?.some(r => r.name === "Admin") || false;
+                    this.isAdmin = this.editedUserHasAdminRole;
                     if (this.isAdmin) {
                         this.editedItem.view_usernames = true;
                         this.editedItem.view_simple_history = true;
