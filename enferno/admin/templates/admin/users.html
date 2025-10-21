@@ -931,7 +931,7 @@
                         this.showSnack(response.data);
 
                         if (this.askUserToChangePassword && this.editedItem?.force_reset === null) {
-                            await api.post('/admin/api/user/force-reset', { item: this.editedItem });
+                            await this.forcePasswordReset({ item: this.editedItem });
                         }
 
                         await this.refresh();
