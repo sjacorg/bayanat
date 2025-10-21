@@ -56,7 +56,6 @@ import enferno.utils.typing as t
 from enferno.admin.models import SystemInfo
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
-from enferno.tasks.update import perform_system_update_task
 
 # Simple test detection - use TestConfig if in test environment
 import os
@@ -86,9 +85,6 @@ celery.conf.broker_connection_retry_on_startup = True
 celery.conf.add_defaults(cfg)
 
 logger = get_logger("celery.tasks")
-
-# Register tasks from separate modules
-perform_system_update = celery.task(perform_system_update_task)
 
 # Global variable to store the Flask app instance
 _flask_app = None
@@ -123,6 +119,11 @@ class ContextTask(celery.Task):
 
 
 celery.Task = ContextTask
+
+# Register tasks from separate modules (after ContextTask is set)
+from enferno.tasks.update import perform_system_update_task
+
+perform_system_update = celery.task(perform_system_update_task)
 
 # splitting db operations for performance
 BULK_CHUNK_SIZE = 250
@@ -1471,19 +1472,7 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
 
 
 def perform_version_check() -> Optional[dict]:
-    """
-    Check for new Bayanat versions.
-    Stores latest version in Redis if newer than current.
-
-    This is a regular function (not a Celery task) so it can be called
-    from CLI without triggering Celery initialization overhead.
-
-    Returns:
-        dict with 'latest_version', 'current_version', 'update_available', 'checked_at'
-        or None if check fails
-    """
-    current_version = cfg.VERSION
-
+    """Check GitHub for new Bayanat version. Returns result dict or None on error."""
     try:
         repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
         response = requests.get(
@@ -1494,24 +1483,55 @@ def perform_version_check() -> Optional[dict]:
         response.raise_for_status()
 
         tags = response.json()
-        if tags:
-            latest_tag = tags[0]["name"].lstrip("v")
-            checked_at = datetime.now(timezone.utc).isoformat()
-            update_available = version.parse(latest_tag) > version.parse(current_version)
+        if not tags:
+            return None
 
-            if update_available:
-                # Store in Redis
-                value = f"{latest_tag}|{checked_at}"
-                rds.set("bayanat:update:latest", value)
-                logger.info(f"New version detected: {latest_tag} (current: {current_version})")
+        # Find latest stable version by parsing all tags
+        latest_tag = None
+        latest_parsed = None
+        current_version = cfg.VERSION
 
-            return {
-                "latest_version": latest_tag,
-                "current_version": current_version,
-                "update_available": update_available,
-                "checked_at": checked_at,
-                "repository": repo_name,
-            }
+        for tag in tags:
+            tag_name = tag["name"].lstrip("v")
+            try:
+                parsed = version.parse(tag_name)
+                # Skip pre-releases, keep latest stable
+                if not parsed.is_prerelease and (latest_parsed is None or parsed > latest_parsed):
+                    latest_tag = tag_name
+                    latest_parsed = parsed
+            except Exception:
+                continue
+
+        if not latest_tag:
+            return None
+
+        update_available = latest_parsed > version.parse(current_version)
+        checked_at = datetime.now(timezone.utc).isoformat()
+
+        if update_available:
+            # Check if already notified about this version
+            cached = rds.get("bayanat:update:latest")
+            cached_version = cached.decode().split("|")[0] if cached else None
+
+            if cached_version != latest_tag:
+                Notification.send_admin_notification_for_event(
+                    Constants.NotificationEvent.SYSTEM_UPDATE_AVAILABLE,
+                    "System update available",
+                    f"Bayanat {latest_tag} is available (current: {current_version}).",
+                    category=Constants.NotificationCategories.UPDATE.value,
+                )
+
+            # Cache the latest version
+            rds.set("bayanat:update:latest", f"{latest_tag}|{checked_at}")
+            logger.info(f"New version available: {latest_tag}")
+
+        return {
+            "latest_version": latest_tag,
+            "current_version": current_version,
+            "update_available": update_available,
+            "checked_at": checked_at,
+            "repository": repo_name,
+        }
 
     except Exception as e:
         logger.warning(f"Version check failed: {e}")
