@@ -229,7 +229,7 @@
                                         :text="'{{ _('Revoke 2FA') }}'">
                                     <template #activator="{props}">
                                         <v-btn
-                                                @click.stop="revoke2fa(item.id)"
+                                                @click.stop="openRevoke2FADialog(item.id)"
                                                 variant="plain"
                                                 v-bind="props"
                                                 size="small"
@@ -430,7 +430,7 @@
                                     </v-container>
                                 </v-card-text>
                                 <v-card-text class="text-center">
-                                    <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
+                                    <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="openRevoke2FADialog(editedItem.id)">
                                         {{ _('Revoke 2FA') }}
                                     </v-btn>
                                 </v-card-text>
@@ -664,23 +664,29 @@
                     })
                 },
 
-                revoke2fa(userId) {
-                    if (confirm(`{{ _('Are you sure you want to revoke 2FA for this user?') }}`)) {
-                        api.delete(`/admin/api/user/revoke_2fa`, {
-                            params: {user_id: userId}
-                        })
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh();
-                                this.dialog = false;
-
-                                if (this.userDrawer) this.refreshUser(userId);
+                openRevoke2FADialog(userId) {
+                    this.$root.$confirm({
+                        title: "{{ _('You’re about to revoke two-factor authentication for this user') }}",
+                        message: "{{ _('After this action, the user’s registered 2FA devices will be removed. They will no longer be required to use two-factor authentication until it is reconfigured.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+                        acceptProps: { text: "{{ _('Revoke 2FA') }}", color: 'error' },
+                        dialogProps: { width: 780 },
+                        onAccept: () => {
+                            api.delete(`/admin/api/user/revoke_2fa`, {
+                                params: {user_id: userId}
                             })
-                            .catch(err => {
-                                console.error(err);
-                                this.showSnack(this.parseValidationError(err?.response?.data));
-                            });
-                    }
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh();
+                                    this.dialog = false;
+
+                                    if (this.userDrawer) this.refreshUser(userId);
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    this.showSnack(this.parseValidationError(err?.response?.data));
+                                });
+                        },
+                    });
                 },
 
 

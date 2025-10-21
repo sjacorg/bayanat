@@ -12,7 +12,7 @@
             @close="userDrawer=false"
             @edit="editItem($event)"
             @reset-password="openForcePasswordResetDialog($event)"
-            @revoke2fa="revoke2fa($event)"
+            @revoke2fa="openRevoke2FADialog($event)"
             @logout-all="openLogoutAllUserSessionsDialog($event)"
             @change-password="openChangePasswordDialog($event)"
             :user="user"
