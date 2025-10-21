@@ -331,8 +331,8 @@ const UserCard = Vue.defineComponent({
               <thead>
               <tr>
                 <th class="text-left">{{ translations.session_ }}</th>
-                <th class="text-left">{{ translations.ip_ }}</th>
-                <th class="text-left">{{ translations.userAgent_ }}</th>
+                <th class="text-left">{{ translations.device_ }}</th>
+                <th class="text-left">{{ translations.browser_ }}</th>
                 <th class="text-left">{{ translations.started_ }}</th>
                 <th class="text-left">{{ translations.logOffThisDevice_ }}</th>
               </tr>
@@ -362,10 +362,10 @@ const UserCard = Vue.defineComponent({
 
                 </td>
                 <td>
-                  <v-chip label>{{ session.ip_address }}</v-chip>
+                  {{ session.meta.os }}
                 </td>
                 <td class="text-caption">
-                  {{ session.meta.device }}
+                  {{ session.meta.browser }}
                 </td>
                 <td class="text-caption">{{ $root.formatDate(session.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}</td>
                 <td>
