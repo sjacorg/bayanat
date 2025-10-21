@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
 {% endblock %}
 
 {% block content %}
@@ -192,17 +192,14 @@
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
 
-    <script src="/static/js/actorConfig.js"></script>
-
     <script src="/static/js/components/Visualization.js"></script>
-    <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
 
-    <script src="/static/js/components/MPCard.js"></script>
-    <script src="/static/js/components/MPField.js"></script>
-    <script src="/static/js/components/MixI.js"></script>
-    <script src="/static/js/components/MixII.js"></script>
-    <script src="/static/js/components/MixIII.js"></script>
+    <script src="/static/js/components/MissingPersonCard.js"></script>
+    <script src="/static/js/components/MissingPersonField.js"></script>
+    <script src="/static/js/components/MixYesNoField.js"></script>
+    <script src="/static/js/components/MixSelectField.js"></script>
+    <script src="/static/js/components/MixReportersField.js"></script>
 
     <script src="/static/js/videojs/video.min.js"></script>
 
@@ -310,7 +307,7 @@
 
     methods: {
          has_role(user, role) {
-          for (r of user.roles) {
+          for (const r of user.roles) {
               if (r.name == role) {
                   return true
               }
@@ -436,12 +433,12 @@
 
   app.component('Visualization', Visualization);
 
-  app.component('mix-i', MixI);
-  app.component('mix-ii', MixII);
-  app.component('mix-iii', MixIII);
-  app.component('mp-field', MPField);
-  app.component('mp-card', MPCard);
-  app.component('vue-dropzone', VueDropzone);
+  app.component('MixYesNoField', MixYesNoField);
+  app.component('MixSelectField', MixSelectField);
+  app.component('MixReportersField', MixReportersField);
+  app.component('MissingPersonField', MissingPersonField);
+  app.component('MissingPersonCard', MissingPersonCard);
+  app.component('VueDropzone', VueDropzone);
 
   app.use(router);
   app.use(vuetify).mount('#app');

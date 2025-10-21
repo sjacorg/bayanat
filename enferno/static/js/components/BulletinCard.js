@@ -64,7 +64,7 @@ const BulletinCard = Vue.defineComponent({
     showDiff(e, index) {
       this.diffDialog = true;
       //calculate diff
-      const dp = jsondiffpatch.create({
+      const dp = this.$jsondiffpatch.create({
         arrays: {
           detectMove: true,
         },
@@ -77,7 +77,7 @@ const BulletinCard = Vue.defineComponent({
       if (!delta) {
         this.diffResult = 'Both items are Identical :)';
       } else {
-        this.diffResult = jsondiffpatch.formatters.html.format(delta);
+        this.diffResult = this.$htmlFormatter.format(delta);
       }
     },
   },

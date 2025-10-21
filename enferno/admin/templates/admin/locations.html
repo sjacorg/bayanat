@@ -159,7 +159,6 @@
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/LocationSearchBox.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
-    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -167,7 +166,10 @@
     {% endif %}
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
-    <script>
+    <script type="module">
+        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
+        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
+        import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
 
@@ -178,12 +180,6 @@
         const app = createApp({
             delimiters: delimiters,
             mixins: [globalMixin],
-
-            components: {
-                "tinymce-editor": Editor, // <- Important part,
-
-
-            },
             data: () => ({
                 validationRules: validationRules,
                 translations: window.translations,
@@ -239,7 +235,8 @@
                     parent: null,
                 },
                 location: {},
-                locationLoader: false
+                locationLoader: false,
+                serverErrors: {},
             }),
 
             computed: {
@@ -483,14 +480,11 @@
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.editedIndex = -1;
+                        this.serverErrors = {};
                     }, 300);
                 },
 
                 save() {
-                    if(!this.valid || !this.adminValid){
-                        this.showSnack("{{ _('Please review the form for errors.') }}");
-                        return;
-                    }
                     if (!this.editedItem.latlng?.lat) {
                         this.editedItem.latlng = null;
                     }
@@ -503,7 +497,10 @@
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
+                            console.error(err.response?.data);
                             this.showSnack(handleRequestError(err));
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
                         })
                     } else {
                         //create new record
@@ -513,7 +510,10 @@
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
+                            console.error(err.response?.data);
                             this.showSnack(handleRequestError(err));
+                            this.serverErrors = err.response?.data?.errors || {};
+                            this.$nextTick(() => scrollToFirstError());
                         })
                     }
                 },
@@ -524,19 +524,24 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
+                            scrollToFirstError()
                         }
                     });
                 }
             }
         });
-        app.component('location-card', LocationCard);
-        app.component('location-search-box', LocationSearchBox);
-        app.component('uni-field', UniField);
-        app.component('search-field', SearchField);
-        app.component('location-search-field', LocationSearchField);
-        app.component('dual-field', DualField);
-        app.component('geo-map', GeoMap);
+
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
+        
+        app.component("TinymceEditor", Editor);
+        app.component('LocationCard', LocationCard);
+        app.component('LocationSearchBox', LocationSearchBox);
+        app.component('UniField', UniField);
+        app.component('SearchField', SearchField);
+        app.component('LocationSearchField', LocationSearchField);
+        app.component('DualField', DualField);
+        app.component('GeoMap', GeoMap);
         app.component('GlobalMap', GlobalMap);
         app.component('ReadMore', ReadMore);
         app.use(router).use(vuetify).mount('#app');

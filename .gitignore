@@ -31,3 +31,4 @@ dist/
 .cursorrules
 .windsurfrules
 cookies.txt
+*.egg-info/

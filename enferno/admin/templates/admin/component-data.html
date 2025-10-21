@@ -289,10 +289,6 @@
     const app = createApp({
         delimiters: delimiters,
         mixins: [globalMixin],
-
-        components: {
-            EditableTable
-        },
         mounted() {
             this.setInitialTabStateKey()
 
@@ -482,7 +478,8 @@
             }
         }
     });
-    app.component('draggable', draggable);
+    app.component('EditableTable', EditableTable);
+    app.component('Draggable', draggable);
     app.use(router).use(vuetify).mount('#app');
 </script>
 {% endblock %}
