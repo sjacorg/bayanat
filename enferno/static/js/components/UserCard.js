@@ -240,15 +240,26 @@ const UserCard = Vue.defineComponent({
               <v-col cols="12" md="6">
                 <div class="mb-3 text-body-1">{{ translations.userRole_ }}</div>
                 <div class="d-flex flex-wrap ga-3">
-                  <toggle-button
-                    v-for="(role, index) in user.roles"
-                    :key="index"
-                    read-only
-                    hide-icon
-                    :model-value="true"
-                  >
-                    {{ role.name }}
-                  </toggle-button>
+                  <template v-if="user.roles.length">
+                    <toggle-button
+                      v-for="(role, index) in user.roles"
+                      :key="index"
+                      read-only
+                      hide-icon
+                      :model-value="true"
+                    >
+                      {{ role.name }}
+                    </toggle-button>
+                  </template>
+                  <template v-else>
+                    <toggle-button
+                      read-only
+                      hide-icon
+                      :model-value="true"
+                    >
+                      {{ translations.viewOnly_ }}
+                    </toggle-button>
+                  </template>
                 </div>
               </v-col>
               <v-col cols="12" md="6">
