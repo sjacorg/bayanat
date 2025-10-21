@@ -6681,7 +6681,7 @@ def api_get_system_update_history() -> Response:
         from enferno.admin.models import UpdateHistory
 
         # Get recent 10 updates
-        updates = UpdateHistory.get_recent(limit=10)
+        updates = UpdateHistory.query.order_by(desc(UpdateHistory.created_at)).limit(10).all()
         history = [update.to_dict() for update in updates]
         return HTTPResponse.success(data={"updates": history})
     except Exception as e:
