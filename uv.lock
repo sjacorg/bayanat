@@ -86,7 +86,7 @@ wheels = [
 
 [[package]]
 name = "bayanat"
-version = "2.9.49"
+version = "2.9.50"
 source = { editable = "." }
 dependencies = [
     { name = "amqp" },
