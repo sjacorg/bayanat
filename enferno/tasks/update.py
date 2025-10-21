@@ -20,11 +20,6 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
     lock_acquired = False
 
     try:
-        # Check if already updating
-        current = get_status()
-        if current.get("in_progress"):
-            return {"error": "Update already in progress", "status": current}
-
         # Lock system
         set_status("Acquiring lock", 1, 6)
         if not enable_maintenance("System is being updated. Please wait..."):
