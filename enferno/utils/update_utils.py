@@ -1,37 +1,35 @@
-import json
 from datetime import datetime, timezone
+import json
 from enferno.extensions import rds
 
-REDIS_KEY = "bayanat:update:status"
-REDIS_TTL = 3600
+STATUS_KEY = "bayanat:update:status"
+LOCK_TTL = 3600
 
 
-def set_status(step, step_number, total_steps, error=None):
-    """Update Redis with current update step."""
-    status = {
-        "in_progress": True,
-        "step": step,
-        "step_number": step_number,
-        "total_steps": total_steps,
-        "start_time": datetime.now(timezone.utc).isoformat(),
-        "last_error": error,
-    }
-    rds.setex(REDIS_KEY, REDIS_TTL, json.dumps(status))
+def is_update_running():
+    """Check if update is currently running."""
+    return bool(rds.get(STATUS_KEY))
 
 
-def set_complete(success, error=None, new_version=None):
-    """Mark update as complete."""
-    status = {
-        "in_progress": False,
-        "success": success,
-        "error": error,
-        "new_version": new_version,
-        "end_time": datetime.now(timezone.utc).isoformat(),
-    }
-    rds.setex(REDIS_KEY, REDIS_TTL, json.dumps(status))
+def start_update(message="Updating system"):
+    """Start update. Returns False if already running (prevents concurrent updates)."""
+    if not rds.set(STATUS_KEY, message, nx=True, ex=LOCK_TTL):
+        return False
+    return True
 
 
-def get_status():
-    """Get current update status."""
-    data = rds.get(REDIS_KEY)
-    return json.loads(data) if data else {"in_progress": False}
+def end_update():
+    """End update and clear status."""
+    rds.delete(STATUS_KEY)
+
+
+def set_update_message(message):
+    """Update the status message without clearing the lock."""
+    if is_update_running():
+        rds.set(STATUS_KEY, message, ex=LOCK_TTL)
+
+
+def get_update_status():
+    """Get current update status message or None if not running."""
+    data = rds.get(STATUS_KEY)
+    return data.decode() if data else None
