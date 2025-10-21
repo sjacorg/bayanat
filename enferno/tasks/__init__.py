@@ -56,6 +56,7 @@ import enferno.utils.typing as t
 from enferno.admin.models import SystemInfo
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
+from enferno.tasks.update import perform_system_update_task
 
 # Simple test detection - use TestConfig if in test environment
 import os
@@ -85,6 +86,9 @@ celery.conf.broker_connection_retry_on_startup = True
 celery.conf.add_defaults(cfg)
 
 logger = get_logger("celery.tasks")
+
+# Register tasks from separate modules
+perform_system_update = celery.task(perform_system_update_task)
 
 # Global variable to store the Flask app instance
 _flask_app = None
