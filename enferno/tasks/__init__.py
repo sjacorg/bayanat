@@ -1496,11 +1496,12 @@ def perform_version_check() -> Optional[dict]:
         except Exception:
             update_available = False
 
-        if update_available:
-            # Check if already notified about this version
-            cached = rds.get("bayanat:update:latest")
-            cached_version = cached.decode().split("|")[0] if cached else None
+        # Always cache the checked version to prevent stale data
+        cached = rds.get("bayanat:update:latest")
+        cached_version = cached.decode().split("|")[0] if cached else None
 
+        if update_available:
+            # Only notify if version changed
             if cached_version != latest_tag:
                 Notification.send_admin_notification_for_event(
                     Constants.NotificationEvent.SYSTEM_UPDATE_AVAILABLE,
@@ -1508,10 +1509,10 @@ def perform_version_check() -> Optional[dict]:
                     f"Bayanat {latest_tag} is available (current: {current_version}).",
                     category=Constants.NotificationCategories.UPDATE.value,
                 )
-
-            # Cache the latest version
-            rds.set("bayanat:update:latest", f"{latest_tag}|{checked_at}")
             logger.info(f"New version available: {latest_tag}")
+
+        # Update cache on every check (keeps dashboard accurate)
+        rds.set("bayanat:update:latest", f"{latest_tag}|{checked_at}")
 
         return {
             "latest_version": latest_tag,
