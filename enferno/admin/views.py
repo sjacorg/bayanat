@@ -6622,11 +6622,18 @@ def api_trigger_system_update() -> Response:
 @roles_required("Admin")
 def api_get_system_update_status() -> Response:
     """Return the current background update status."""
-    status = get_update_status()
-    return HTTPResponse.success(data={"status": status, "running": is_update_running()}, status=200)
+    status_message = get_update_status()
+    return HTTPResponse.success(
+        data={
+            "status_message": status_message or "Update in progress",
+            "running": is_update_running(),
+        },
+        status=200,
+    )
 
 
 @admin.route("/api/system/status", methods=["GET"])
+@admin.route("/api/system/version/check", methods=["GET"])
 @auth_required("session")
 @roles_required("Admin")
 def api_system_status() -> Response:
@@ -6655,6 +6662,31 @@ def api_system_status() -> Response:
             "update_available": False,
         }
     )
+
+
+@admin.route("/system-update/", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def system_update_page():
+    """System update management page."""
+    return render_template("admin/system-update.html")
+
+
+@admin.route("/api/system/update-history", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_get_system_update_history() -> Response:
+    """Get system update history."""
+    try:
+        from enferno.admin.models import UpdateHistory
+
+        # Get recent 10 updates
+        updates = UpdateHistory.get_recent(limit=10)
+        history = [update.to_dict() for update in updates]
+        return HTTPResponse.success(data={"updates": history})
+    except Exception as e:
+        current_app.logger.error(f"Failed to get update history: {str(e)}")
+        return HTTPResponse.error(f"Failed to get update history: {str(e)}", 500)
 
 
 @admin.route("/api/session-check")
