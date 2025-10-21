@@ -783,28 +783,31 @@
 
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
-                    this.loading = true;
 
-                    const params = new URLSearchParams({
-                        page: this.options.page,
-                        per_page: this.options.itemsPerPage,
-                    });
-
-                    if (this.options.q) {
-                        params.append('q', this.options.q);
+                    if (this.advSearchOpen) {
+                        this.advSearchOpen = false;
                     }
 
-                    api.get(`/admin/api/users/?${params.toString()}`)
-                        .then(res => {
-                            this.items = res.data.items;
-                            this.itemsLength = res.data.total;
-                        })
-                        .catch(err => {
-                            console.error(err?.response?.data);
-                        })
-                        .finally(() => {
-                            this.loading = false;
-                        });
+                    this.loading = true;
+
+                    api.post(`/admin/api/users/`, {
+                        q: {
+                            ...(this.q || {}),
+                            ...(this.filters || {}),
+                        },
+                        page: this.options?.page ?? 1,
+                        per_page: this.options?.itemsPerPage ?? 10,
+                    })
+                    .then(res => {
+                        this.items = res.data.items;
+                        this.itemsLength = res.data.total;
+                    })
+                    .catch(err => {
+                        console.error(err?.response?.data || err);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
                 },
 
                 openChangePasswordDialog(item) {
