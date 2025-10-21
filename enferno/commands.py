@@ -19,6 +19,7 @@ from enferno.admin.models import MigrationHistory, SystemInfo
 from enferno.extensions import db, rds
 from enferno.settings import Config
 from enferno.tasks import restart_service as restart, perform_version_check
+from enferno.tasks.update import perform_system_update_task
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import (
@@ -753,10 +754,11 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
 @click.option("--skip-backup", is_flag=True, help="Skip database backup")
 @with_appcontext
 def update_system(skip_backup: bool = False) -> None:
-    """CLI entry point that delegates to the shared update implementation."""
-    success, message = run_system_update(skip_backup=skip_backup)
+    """CLI command to perform system update. Blocks until completion."""
+    result = perform_system_update_task(skip_backup=skip_backup)
+    message = result.get("message") or result.get("error", "System update completed")
     click.echo(message)
-    if not success:
+    if not result.get("success"):
         raise click.ClickException(message)
 
 
@@ -764,11 +766,11 @@ def update_system(skip_backup: bool = False) -> None:
 @with_appcontext
 def check_updates() -> None:
     """
-    Check for new Bayanat versions and display update status.
-    Useful for testing the update check mechanism.
+    Check for new Bayanat versions from GitHub and cache result.
+    Called by: periodic task (every 12h) and CLI for manual testing.
     """
     click.echo(f"Current version: {Config.VERSION}")
-    click.echo("Checking for updates...")
+    click.echo("Checking for updates from GitHub...")
 
     result = perform_version_check()
 
