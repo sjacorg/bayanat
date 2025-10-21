@@ -665,7 +665,7 @@
                 },
 
                 openRevoke2FADialog(userId) {
-                    this.$root.$confirm({
+                    this.$confirm({
                         title: "{{ _('You’re about to revoke two-factor authentication for this user') }}",
                         message: "{{ _('After this action, the user’s registered 2FA devices will be removed. They will no longer be required to use two-factor authentication until it is reconfigured.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
                         acceptProps: { text: "{{ _('Revoke 2FA') }}", color: 'error' },
@@ -718,7 +718,7 @@
                         .delete(`/admin/api/user/${userId}/sessions/logout`)
                         .then((response) => {
                             console.log('All sessions logged out successfully for user ID:', userId);
-                            this.$root.showSnack(this.translations.allSessionsLoggedOut_);
+                            this.showSnack(this.translations.allSessionsLoggedOut_);
                         })
                         .catch((err) => {
                             console.error('Error logging out all sessions for user ID:', userId, err);
@@ -726,7 +726,7 @@
                 },
 
                 openLogoutAllUserSessionsDialog(userId) {
-                    this.$root.$confirm({
+                    this.$confirm({
                         title: "{{ _('You’re about to log out all active sessions for this user') }}",
                         message: "{{ _('After this action, the user will be signed out from all devices and will need to log in again. This will not affect their data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
                         acceptProps: { text: "{{ _('Log Out All Sessions') }}", color: 'error' },
@@ -817,7 +817,7 @@
                 },
 
                 openForcePasswordResetDialog(item) {
-                    this.$root.$confirm({
+                    this.$confirm({
                         title: translations.youreAboutToForceAPasswordResetForUser_(item.name),
                         message: "{{ _('After this action, user will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
                         acceptProps: { text: "{{ _('Force Password Reset') }}", color: 'error' },
@@ -829,7 +829,7 @@
                 },
 
                 openForcePasswordResetAllDialog() {
-                    this.$root.$confirm({
+                    this.$confirm({
                         title: "{{ _('You’re about to force a password reset for all users') }}",
                         message: "{{ _('After this action, all users will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
                         acceptProps: { text: "{{ _('Force All Password Resets') }}", color: 'error' },
