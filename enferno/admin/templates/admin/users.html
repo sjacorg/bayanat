@@ -712,7 +712,6 @@
                     axios
                         .delete(`/admin/api/user/${userId}/sessions/logout`)
                         .then((response) => {
-                            console.log('All sessions logged out successfully for user ID:', userId);
                             this.showSnack(this.translations.allSessionsLoggedOut_);
                         })
                         .catch((err) => {
@@ -817,7 +816,6 @@
                 },
 
                 openForcePasswordResetAllDialog() {
-                    console.log('Opening force password reset all dialog');
                     this.$confirm({
                         title: "{{ _('You’re about to force a password reset for all users') }}",
                         message: "{{ _('After this action, all users will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
