@@ -410,7 +410,7 @@
                                                 :model-value="isAccessRoleSelected(role)"
                                                 @update:model-value="toggleAccessRole(role)"
                                             >
-                                                ${role.title}
+                                                ${role.name}
                                             </toggle-button>
                                         </div>
 
@@ -547,9 +547,9 @@
                 askUserToChangePassword: true,
 
                 accessRoles: [
-                    { title: "{{ _('Incident Access') }}", value: 'incident_access' },
-                    { title: "{{ _('Actor Access') }}", value: 'actor_access' },
-                    { title: "{{ _('Bulletin Access') }}", value: 'bulletin_access' },
+                    { name: "{{ _('Incident Access') }}", value: 'incident_access' },
+                    { name: "{{ _('Actor Access') }}", value: 'actor_access' },
+                    { name: "{{ _('Bulletin Access') }}", value: 'bulletin_access' },
                 ],
                 filters: {
                     accountStatus: null,
