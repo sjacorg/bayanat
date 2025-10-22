@@ -28,21 +28,24 @@
     <v-card flat>
         <v-card-title class="pa-6">{{ _('Revision history') }}</v-card-title>
         <v-card-text class="px-6">
-          ${formBuilder.historyState}
-            <!-- <v-infinite-scroll empty-text="{{ _('No more items in history') }}" :items="formBuilder.historyState.items">
-                <v-timeline density="compact" side="end" align="start">
-                    <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="index" dot-color="primary" size="10">
-                        <div class="mt-n1">
-                            <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Current settings)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
-                            <div v-if="index > 0 && !DiffTool.hasDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('No changes in this configuration') }}</div>
-                            <show-details v-else-if="DiffTool.hasDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config)" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-                                <diff-renderer :diff="DiffTool.getAndRenderDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config, configLabels)"></diff-renderer>
-                            </show-details>
-                            <v-btn v-if="index !== 0 && DiffTool.hasDiff(formBuilder.historyState?.items?.[index + 1]?.config, item?.config)" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Revert to this version') }}</v-btn>
+            <v-timeline v-if="formBuilder.historyState.items?.length" density="compact" side="end" align="start">
+                <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="item.id" dot-color="primary" size="10">
+                    <div class="mt-n1">
+                        <div>
+                            <b>${item.user?.username || 'Unknown'}</b> {{ _('saved changes') }}
+                            <b v-if="index === 0">{{ _('(Latest)') }}</b>
+                            <div class="text-caption text-medium-emphasis">${item.created_at}</div>
                         </div>
-                    </v-timeline-item>
-                </v-timeline>
-            </v-infinite-scroll> -->
+                        <div class="text-caption mt-2">
+                            ${ item.fields_snapshot?.length || 0 } {{ _('fields in snapshot') }}
+                        </div>
+                        <!-- TODO: Add diff comparison between versions and revert functionality -->
+                    </div>
+                </v-timeline-item>
+            </v-timeline>
+            <v-container v-else height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center">
+              {{ _("No revision history yet") }}
+            </v-container>
         </v-card-text>
     </v-card>
 </v-navigation-drawer>
