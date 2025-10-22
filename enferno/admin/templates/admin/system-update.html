@@ -262,11 +262,29 @@
         }),
 
         methods: {
+            applyVersionInfo(data) {
+                this.currentVersion = data.current_version || '';
+                this.latestVersion = data.latest_version || '';
+                this.isUpToDate = !data.update_available;
+                if (data.checked_at) {
+                    const checkDate = new Date(data.checked_at);
+                    this.lastCheckTime = checkDate.toLocaleString();
+                }
+            },
+
             checkForUpdates() {
                 this.checking = true;
-                this.fetchUpdateInfo().finally(() => {
-                    this.checking = false;
-                });
+                api.get('/admin/api/system/version/check?fresh=true')
+                    .then(response => {
+                        this.applyVersionInfo(response.data);
+                        this.showSnack('Version check completed', 'success');
+                    })
+                    .catch(error => {
+                        this.showSnack(error.response?.data?.message || 'Failed to check versions', 'error');
+                    })
+                    .finally(() => {
+                        this.checking = false;
+                    });
             },
 
             confirmUpdate() {
@@ -356,17 +374,8 @@
         mounted() {
             // Fetch and populate update info
             this.fetchUpdateInfo().then(() => {
-                // After fetching, populate local data
                 if (this.updateInfo) {
-                    this.currentVersion = this.updateInfo.current_version || '';
-                    this.latestVersion = this.updateInfo.latest_version || '';
-                    this.isUpToDate = !this.updateInfo.update_available;
-
-                    // Format the last checked time
-                    if (this.updateInfo.checked_at) {
-                        const checkDate = new Date(this.updateInfo.checked_at);
-                        this.lastCheckTime = checkDate.toLocaleString();
-                    }
+                    this.applyVersionInfo(this.updateInfo);
                 }
             }).catch(error => {
                 console.error('Failed to fetch update info:', error);

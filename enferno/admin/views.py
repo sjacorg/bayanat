@@ -26,7 +26,7 @@ from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
 
-from enferno.tasks import perform_system_update
+from enferno.tasks import perform_system_update, perform_version_check
 from enferno.utils.update_utils import get_update_status, is_update_running
 
 from enferno.admin.constants import Constants
@@ -6637,10 +6637,32 @@ def api_get_system_update_status() -> Response:
 @auth_required("session")
 @roles_required("Admin")
 def api_system_status() -> Response:
-    """Get system status - version info from periodic cache check."""
+    """Get system status - version info from cache or fresh GitHub check.
+
+    Query params:
+        fresh (bool): If true, checks GitHub directly instead of using cache
+    """
     from enferno.settings import Config
 
     current_version = SystemInfo.get_value("app_version") or Config.VERSION
+
+    # Check if fresh check is requested
+    fresh_check = request.args.get("fresh", "").lower() == "true"
+
+    if fresh_check:
+        # Fresh check directly from GitHub
+        try:
+            result = perform_version_check()
+            return (
+                HTTPResponse.success(data=result)
+                if result
+                else HTTPResponse.error("Failed to check version", 503)
+            )
+        except Exception as e:
+            current_app.logger.error(f"Fresh version check failed: {str(e)}")
+            return HTTPResponse.error(f"Version check error: {str(e)}", 500)
+
+    # Use cached data
     cached_update = rds.get("bayanat:update:latest")
 
     if cached_update:
