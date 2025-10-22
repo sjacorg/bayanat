@@ -6,7 +6,7 @@ from enferno.utils.update_utils import (
     end_update,
     set_update_message,
 )
-from enferno.admin.models import SystemInfo
+from enferno.admin.models import SystemInfo, UpdateHistory
 from enferno.settings import Config
 
 
@@ -40,6 +40,7 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
         if success:
             new_version = SystemInfo.get_value("app_version") or Config.VERSION
             set_update_message(f"Update complete: {new_version}")
+            UpdateHistory(version_to=new_version).save()
         else:
             set_update_message(f"Update failed: {message}")
 
