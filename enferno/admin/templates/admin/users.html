@@ -36,7 +36,7 @@
 
                                     <div class="d-flex align-center ga-3">
                                         <v-btn
-                                            @click.once="openForcePasswordResetAllDialog()"
+                                            @click="openForcePasswordResetAllDialog()"
                                             color="error"
                                             variant="elevated"
                                             prepend-icon="mdi-lock-reset"
@@ -829,6 +829,7 @@
                 },
 
                 openForcePasswordResetAllDialog() {
+                    console.log('Opening force password reset all dialog');
                     this.$confirm({
                         title: "{{ _('You’re about to force a password reset for all users') }}",
                         message: "{{ _('After this action, all users will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",

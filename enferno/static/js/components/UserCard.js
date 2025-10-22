@@ -372,7 +372,7 @@ const UserCard = Vue.defineComponent({
                   <v-btn
                     icon="mdi-logout"
                     variant="plain" v-if="session.details?._fresh"
-                    @click.once="openLogoutSessionDialog(session.id)" :disabled="!session.is_active"
+                    @click="openLogoutSessionDialog(session.id)" :disabled="!session.is_active"
                     color="error"
                   ></v-btn>
                 </td>
