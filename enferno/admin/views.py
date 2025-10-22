@@ -6817,6 +6817,11 @@ def api_dynamic_field_create() -> Response:
             "dynamic_field",
         )
 
+        try:
+            record_form_history(field.entity_type, current_user.id)
+        except Exception as e:
+            logger.warning(f"Failed to record form history for {field.entity_type}: {e}")
+
         return HTTPResponse.created(
             message=f"Created dynamic field '{field.name}'", data={"item": field.to_dict()}
         )
@@ -6932,6 +6937,11 @@ def api_dynamic_field_update(field_id: int) -> Response:
             "dynamic_field",
         )
 
+        try:
+            record_form_history(field.entity_type, current_user.id)
+        except Exception as e:
+            logger.warning(f"Failed to record form history for {field.entity_type}: {e}")
+
         return HTTPResponse.success(
             message=f"Updated dynamic field '{field.name}'", data={"item": field.to_dict()}
         )
@@ -6984,6 +6994,11 @@ def api_dynamic_field_delete(field_id: int) -> Response:
                     "dynamic_field",
                 )
 
+                try:
+                    record_form_history(field_entity, current_user.id)
+                except Exception as e:
+                    logger.warning(f"Failed to record form history for {field_entity}: {e}")
+
                 return HTTPResponse.success(
                     message=f"Permanently deleted dynamic field '{field_name}'"
                 )
@@ -7016,135 +7031,17 @@ def api_dynamic_field_delete(field_id: int) -> Response:
                 "dynamic_field",
             )
 
+            try:
+                record_form_history(field.entity_type, current_user.id)
+            except Exception as e:
+                logger.warning(f"Failed to record form history for {field.entity_type}: {e}")
+
             return HTTPResponse.success(message=f"Deactivated dynamic field '{field_name}'")
 
     except Exception as e:
         logger.error(f"Error deleting dynamic field: {str(e)}")
         db.session.rollback()
         return HTTPResponse.error("An error occurred while deleting the field", status=500)
-
-
-@admin.put("/api/dynamic-fields/entity/<entity_type>")
-@roles_required("Admin")
-def api_dynamic_fields_bulk_save(entity_type: str) -> Response:
-    """
-    Simplified bulk save for UI layout changes only.
-    Used by the "Save changes" button for drag-and-drop reordering and visibility toggles.
-
-    Expected payload:
-    {
-        "fields": [
-            {
-                "id": 123,
-                "sort_order": 1,
-                "active": true,
-                "title": "Company Name"  // optional: simple title updates
-            },
-            {
-                "id": 124,
-                "sort_order": 2,
-                "active": false,
-                "title": "Lead Owner"
-            }
-            // missing field IDs will be soft deleted (removed from UI)
-        ]
-    }
-
-    Note: Complex field configuration (schema_config, validation_config, options, etc.)
-    should be handled via individual PUT /api/dynamic-fields/<id> endpoints.
-    """
-    try:
-        data = request.get_json()
-        if not data:
-            return HTTPResponse.error("No JSON data provided", status=400)
-
-        submitted_fields = data.get("fields", [])
-
-        # Get existing active fields for this entity
-        existing_fields = DynamicField.query.filter_by(entity_type=entity_type, active=True).all()
-        existing_field_ids = {f.id for f in existing_fields}
-        submitted_field_ids = {
-            f.get("id")
-            for f in submitted_fields
-            if f.get("id") and isinstance(f.get("id"), int) and f.get("id") in existing_field_ids
-        }
-
-        updated_count = 0
-        deleted_count = 0
-
-        # Update existing fields with simple UI changes
-        for field_data in submitted_fields:
-            field_id = field_data.get("id")
-
-            if not field_id or field_id not in existing_field_ids:
-                logger.info(
-                    f"Skipping non-existing field ID: {field_id} (existing: {existing_field_ids})"
-                )
-                continue  # Skip invalid field IDs
-
-            field = DynamicField.query.get(field_id)
-            if not field:
-                continue
-
-            # Update only simple UI properties
-            if "sort_order" in field_data:
-                field.sort_order = field_data["sort_order"]
-
-            if "active" in field_data:
-                field.active = bool(field_data["active"])
-
-            if "title" in field_data and field_data["title"].strip():
-                field.title = field_data["title"].strip()
-
-            field.save()
-            updated_count += 1
-
-        # Soft delete fields that were removed from UI
-        fields_to_delete = existing_field_ids - submitted_field_ids
-        for field_id in fields_to_delete:
-            field = DynamicField.query.get(field_id)
-            if field and field.active:
-                field.active = False
-                field.save()
-                deleted_count += 1
-
-        # Commit all changes
-        db.session.commit()
-
-        # Record form history snapshot after successful save
-        try:
-            record_form_history(entity_type, current_user.id)
-        except Exception as e:
-            # Log but don't fail the request if history recording fails
-            logger.warning(f"Failed to record form history for {entity_type}: {e}")
-
-        # Log activity for bulk operation
-        Activity.create(
-            current_user,
-            Activity.ACTION_UPDATE,
-            Activity.STATUS_SUCCESS,
-            {
-                "entity_type": entity_type,
-                "updated_fields": updated_count,
-                "deleted_fields": deleted_count,
-                "action": "bulk_ui_update",
-            },
-            "dynamic_field",
-        )
-
-        return HTTPResponse.success(
-            message=f"Updated field layout for {entity_type}",
-            data={
-                "updated": updated_count,
-                "deleted": deleted_count,
-                "total_processed": len(submitted_fields),
-            },
-        )
-
-    except Exception as e:
-        logger.error(f"Error in bulk UI save: {str(e)}")
-        db.session.rollback()
-        return HTTPResponse.error("An error occurred while updating field layout", status=500)
 
 
 @admin.get("/api/dynamic-fields/history/<entity_type>")
