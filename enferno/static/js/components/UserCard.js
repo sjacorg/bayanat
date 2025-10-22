@@ -245,7 +245,7 @@ const UserCard = Vue.defineComponent({
                       v-for="(role, index) in user.roles"
                       :key="index"
                       read-only
-                      hide-icon
+                      hide-left-icon
                       :model-value="true"
                     >
                       {{ role.name }}
@@ -254,7 +254,7 @@ const UserCard = Vue.defineComponent({
                   <template v-else>
                     <toggle-button
                       read-only
-                      hide-icon
+                      hide-left-icon
                       :model-value="true"
                     >
                       {{ translations.viewOnly_ }}

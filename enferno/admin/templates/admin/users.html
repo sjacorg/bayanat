@@ -386,17 +386,34 @@
                                         <v-switch v-if="editedItem.id !== {{ current_user.id }}" color="blue" class="text-medium-emphasis" label="{{ _('Account is Active') }}"
                                                 v-model="editedItem.active"></v-switch>
 
-                                        <div class="mb-3 text-body-1">{{ _('User Roles') }}</div>
+                                        <div class="mb-3 text-body-1">{{ _('System Role') }}</div>
                                         <div class="d-flex flex-wrap ga-3 mb-7">
                                             <toggle-button
                                                 v-for="role in roles"
                                                 :key="role.id"
                                                 :model-value="isRoleSelected(role)"
                                                 @update:model-value="toggleRole(role)"
+                                                :closable="isRoleSelected(role)"
+                                                :disabled="Boolean(editedItem.roles?.length && editedItem.roles?.some(r => r.id !== role.id))"
+                                                @close="editedItem.roles = []"
+                                                hide-left-icon
                                             >
                                                 ${role.name}
                                             </toggle-button>
                                         </div>
+
+                                        <div class="mb-3 text-body-1">{{ _('Access Role') }}</div>
+                                        <div class="d-flex flex-wrap ga-3 mb-7">
+                                            <toggle-button
+                                                v-for="role in accessRoles"
+                                                :key="role.id"
+                                                :model-value="isAccessRoleSelected(role)"
+                                                @update:model-value="toggleAccessRole(role)"
+                                            >
+                                                ${role.title}
+                                            </toggle-button>
+                                        </div>
+
                                         <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
                                         <div class="d-flex flex-wrap ga-3 mb-7">
                                             <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole">
@@ -529,6 +546,11 @@
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
 
+                accessRoles: [
+                    { title: "{{ _('Incident Access') }}", value: 'incident_access' },
+                    { title: "{{ _('Actor Access') }}", value: 'actor_access' },
+                    { title: "{{ _('Bulletin Access') }}", value: 'bulletin_access' },
+                ],
                 filters: {
                     accountStatus: null,
                     roles: [],
@@ -943,14 +965,20 @@
                 },
                 toggleRole(role) {
                     if (!this.editedItem?.roles) this.editedItem.roles = []
-
-                    const index = this.editedItem.roles.findIndex(r => r.id === role.id)
+                    this.editedItem.roles = [role]
+                    this.checkRoles();
+                },
+                isAccessRoleSelected(role) {
+                    return this.editedItem?.access_roles?.some(r => r.value === role.value)
+                },
+                toggleAccessRole(role) {
+                    if (!this.editedItem?.access_roles) this.editedItem.access_roles = []
+                    
+                    const index = this.editedItem.access_roles.findIndex(r => r.value === role.value)
                     if (index !== -1) {
-                        this.editedItem.roles.splice(index, 1) // remove
+                        this.editedItem.access_roles.splice(index, 1) // remove
                     } else {
-                        this.editedItem.roles.push(role) // add
-                        
-                        this.checkRoles();
+                        this.editedItem.access_roles.push(role) // add
                     }
                 },
                 searchUsers: debounce(function (evt) {
