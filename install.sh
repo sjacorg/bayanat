@@ -6,7 +6,8 @@ error() { echo "[ERROR] $1" >&2; exit 1; }
 
 # Get domain and repository
 DOMAIN="${DOMAIN:-${1:-localhost}}"
-REPO="${REPO:-https://github.com/sjacorg/bayanat.git}"
+REPO="${REPO:-sjacorg/bayanat}"
+GIT_URL="https://github.com/${REPO}.git"
 log "Installing Bayanat for: $DOMAIN"
 log "Repository: $REPO"
 
@@ -54,7 +55,7 @@ grep -q "local.*bayanat.*trust" $PG_CONFIG 2>/dev/null || {
 log "Setting up application..."
 [ -f /opt/bayanat/run.py ] || {
     rm -rf /opt/bayanat
-    git clone "$REPO" /opt/bayanat
+    git clone "$GIT_URL" /opt/bayanat
 }
 chown -R bayanat:bayanat /opt/bayanat
 
