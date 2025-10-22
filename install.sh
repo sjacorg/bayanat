@@ -21,18 +21,21 @@ apt-get install -y -qq \
     git postgresql postgresql-contrib postgis redis-server \
     python3 python3-pip python3-venv python3-dev build-essential \
     libpq-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev \
-    libjpeg-dev libzip-dev libimage-exiftool-perl ffmpeg curl wget
+    libjpeg-dev libzip-dev libimage-exiftool-perl ffmpeg curl wget jq
 
 # Install uv globally
 log "Installing uv..."
+set -o pipefail
 curl -LsSf https://astral.sh/uv/install.sh | sh
+set +o pipefail
 cp ~/.local/bin/uv /usr/local/bin/ 2>/dev/null || cp ~/.cargo/bin/uv /usr/local/bin/
 chmod 755 /usr/local/bin/uv
 
 # Install Caddy
 log "Installing Caddy..."
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' > /etc/apt/sources.list.d/caddy-stable.list
+rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' > /etc/apt/sources.list.d/caddy-stable.list
 apt-get update -qq && apt-get install -y -qq caddy
 
 # Setup users and database
@@ -59,7 +62,7 @@ log "Setting up application..."
 }
 chown -R bayanat:bayanat /opt/bayanat
 
-sudo -u bayanat bash << 'SETUP'
+sudo -u bayanat REPO="$REPO" bash << 'SETUP'
 cd /opt/bayanat && export PATH=/usr/local/bin:$PATH
 
 uv sync --frozen
@@ -168,7 +171,7 @@ mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 # Setup daemon permissions (CRITICAL SECURITY FEATURE)
 cat > /etc/sudoers.d/bayanat-daemon << 'EOF'
 bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active bayanat, /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat, /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart caddy, /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat-celery
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat pull
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat pull, /usr/local/bin/uv --directory /opt/bayanat sync --frozen, /usr/local/bin/bayanat-apply-migrations.sh
 EOF
 
 # Create API handler
@@ -179,7 +182,7 @@ log() { echo "$(date -Iseconds) $*" >> "$LOG_FILE"; }
 
 read -r method path protocol
 while IFS= read -r line && [ "$line" != $'\r' ]; do
-    [[ "$line" =~ ^Content-Length:\ ([0-9]+) ]] && content_length="${BASH_REMATCH[1]}"
+    [[ "$line" =~ ^Content-Length:[[:space:]]*([0-9]+) ]] && content_length="${BASH_REMATCH[1]}"
 done
 
 body=""
@@ -189,20 +192,28 @@ respond() { printf "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent
 
 case "$path" in
     "/update-bayanat")
-        log "Starting update" && cd /opt/bayanat
-        git_output=$(sudo -u bayanat git pull 2>&1)
+        log "Starting update"
+        git_output=$(sudo -u bayanat /usr/bin/git -C /opt/bayanat pull 2>&1)
         echo "$git_output" | grep -q "Already up to date" && { respond '{"success":true,"message":"Already up to date"}'; exit; }
-        sudo -u bayanat bash -c "cd /opt/bayanat && PATH=/usr/local/bin:\$PATH uv sync --frozen"
-        sudo -u bayanat bash -c "cd /opt/bayanat && PATH=/usr/local/bin:\$PATH FLASK_APP=run.py uv run flask apply-migrations"
+        log "Running uv sync"
+        sudo -u bayanat /usr/local/bin/uv --directory /opt/bayanat sync --frozen
+        log "Applying migrations"
+        sudo -u bayanat /usr/local/bin/bayanat-apply-migrations.sh
         respond '{"success":true,"message":"Updated successfully, restarting service"}'
         sudo /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat
         ;;
     "/restart-service")
-        service=$(echo "$body" | sed -n 's/.*"service":"\([^"]*\)".*/\1/p')
+        log "Restart request - body='$body'"
+        service=$(echo "$body" | jq -r '.service // empty')
+        log "Extracted service: '$service'"
         [[ "$service" =~ ^(bayanat|caddy|bayanat-celery)$ ]] && {
+            log "Restarting $service"
             respond "{\"success\":true,\"message\":\"$service restarting\"}"
             sudo /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart "$service"
-        } || respond '{"success":false,"error":"Invalid service"}'
+        } || {
+            log "Invalid service: '$service'"
+            respond '{"success":false,"error":"Invalid service"}'
+        }
         ;;
     "/health")
         sudo /usr/bin/systemctl is-active bayanat >/dev/null 2>&1 &&
@@ -215,6 +226,16 @@ HANDLER
 
 chmod +x /usr/local/bin/bayanat-handler.sh
 mkdir -p /var/log/bayanat && chown -R bayanat-daemon:bayanat-daemon /var/log/bayanat
+
+# Create migration wrapper script
+cat > /usr/local/bin/bayanat-apply-migrations.sh << 'MIGRATIONS'
+#!/bin/bash
+cd /opt/bayanat
+export FLASK_APP=run.py
+exec /usr/local/bin/uv run flask apply-migrations
+MIGRATIONS
+chmod +x /usr/local/bin/bayanat-apply-migrations.sh
+chown root:root /usr/local/bin/bayanat-apply-migrations.sh
 
 # Create socket services (CRITICAL API FEATURE)
 cat > /etc/systemd/system/bayanat-api.socket << 'EOF'
