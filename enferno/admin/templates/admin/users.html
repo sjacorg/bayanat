@@ -429,11 +429,6 @@
                                         </div>
                                     </v-container>
                                 </v-card-text>
-                                <v-card-text class="text-center">
-                                    <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="openRevoke2FADialog(editedItem.id)">
-                                        {{ _('Revoke 2FA') }}
-                                    </v-btn>
-                                </v-card-text>
                             </v-form>
                         </v-card>
                     </v-dialog>
@@ -790,14 +785,7 @@
 
                     this.loading = true;
 
-                    api.post(`/admin/api/users/`, {
-                        q: {
-                            ...(this.filters || {}),
-                            ...(this.search ? { search: this.search } : {}),
-                        },
-                        page: this.options?.page ?? 1,
-                        per_page: this.options?.itemsPerPage ?? 10,
-                    })
+                    api.get(`/admin/api/users/`)
                     .then(res => {
                         this.items = res.data.items;
                         this.itemsLength = res.data.total;
