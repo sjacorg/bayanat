@@ -7,7 +7,7 @@
             <v-card>
                 <v-card-text>
                     <v-data-table-server
-                            height="calc(100vh - 260px)"
+                            height="calc(100vh - 331px)"
                             fixed-header
                             :headers="headers"
                             :items="items"
@@ -792,8 +792,8 @@
 
                     api.post(`/admin/api/users/`, {
                         q: {
-                            ...(this.q || {}),
                             ...(this.filters || {}),
+                            ...(this.search ? { search: this.search } : {}),
                         },
                         page: this.options?.page ?? 1,
                         per_page: this.options?.itemsPerPage ?? 10,
