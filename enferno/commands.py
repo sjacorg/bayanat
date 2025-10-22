@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 from contextlib import suppress
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Callable
 
@@ -683,9 +683,11 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         db.session.commit()
         logger.info(f"Version updated to {new_version}")
 
-        # Clear update notification from Redis
-        rds.delete("bayanat:update:latest")
-        logger.info("Cleared update notification")
+        # Update cache to reflect new version (maintains accuracy)
+        # Use current timestamp so UI knows update just completed
+        checked_at = datetime.now(timezone.utc).isoformat()
+        rds.set("bayanat:update:latest", f"{new_version}|{checked_at}")
+        logger.info(f"Updated version cache to {new_version}")
 
         # 6) Restart
         if restart_service:
