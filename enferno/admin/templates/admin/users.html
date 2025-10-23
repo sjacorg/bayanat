@@ -307,10 +307,10 @@
                                         </v-btn>
                                         <v-btn
                                             @click="validateFormAndSave"
-                                            :prepend-icon="isNewUser ? 'mdi-plus' : 'mdi-check'"
+                                            prepend-icon="mdi-check"
                                             color="primary"
                                             variant="flat"
-                                            :text="isNewUser ? '{{ _('Add User') }}' : '{{ _('Save Changes') }}'"
+                                            text="{{ _('Save Changes') }}"
                                             :loading="saving"
                                         ></v-btn>
                                         <v-btn icon density="comfortable" @click="close">
