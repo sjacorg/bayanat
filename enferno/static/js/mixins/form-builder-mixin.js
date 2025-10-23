@@ -49,7 +49,7 @@ const formBuilderMixin = {
       );
     },
     hasChanges() {
-      const changes = this.computeChanges();
+      const changes = this.computeChanges({ originalFields: this.formBuilder.originalFields, dynamicFields: this.formBuilder.dynamicFields });
       return Boolean(changes.create.length || changes.update.length || changes.delete.length);
     },
     filteredDynamicFields() {
@@ -139,7 +139,7 @@ const formBuilderMixin = {
         delete: translations.deleted_,
       };
 
-      this.changes.table = Object.entries(this.changes.diff).flatMap(([changeType, change]) =>
+      return Object.entries(this.changes.diff).flatMap(([changeType, change]) =>
         change.map((item) => ({
           title: item.item.title || window.translations.newField_,
           type: changeTypeTranslations[changeType],
@@ -149,8 +149,8 @@ const formBuilderMixin = {
     },
 
     showSaveDialog({ entityType }) {
-      this.changes.diff = this.computeChanges({ ignoreSortOrder: true });
-      this.buildChangesTable();
+      this.changes.diff = this.computeChanges({ ignoreSortOrder: true, originalFields: this.formBuilder.originalFields, dynamicFields: this.formBuilder.dynamicFields });
+      this.changes.table = this.buildChangesTable();
 
       this.$refs.reviewAndConfirmDialog.show({
         title: window.translations.reviewAndConfirmChanges_,
@@ -344,9 +344,9 @@ const formBuilderMixin = {
     },
     computeChanges(options) {
       const changes = { create: [], update: [], delete: [] };
-      const originalMap = new Map(this.formBuilder.originalFields.map((f) => [f.id, f]));
+      const originalMap = new Map(options.originalFields.map((f) => [f.id, f]));
 
-      for (const field of this.formBuilder.dynamicFields) {
+      for (const field of options.dynamicFields) {
         // Deletions
         if (field.delete) {
           if (field.id) {
@@ -431,7 +431,7 @@ const formBuilderMixin = {
     },
     async save({ entityType }) {
       this.ui.saving = true;
-      const diffChanges = this.computeChanges();
+      const diffChanges = this.computeChanges({ originalFields: this.formBuilder.originalFields, dynamicFields: this.formBuilder.dynamicFields });
       const failedItems = { create: [], update: [], delete: [] };
 
       try {
@@ -508,7 +508,7 @@ const formBuilderMixin = {
             update: failedItems.update,
             delete: failedItems.delete,
           };
-          this.buildChangesTable();
+          this.changes.table = this.buildChangesTable();
           throw failed?.[0]?.reason;
         } else {
           this.showSnack(window.translations.fieldsSavedSuccessfully_);

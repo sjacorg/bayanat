@@ -35,11 +35,12 @@
                             <b>${item.user?.username || 'Unknown'}</b> {{ _('saved changes') }}
                             <b v-if="index === 0">{{ _('(Latest)') }}</b>
                             <div class="text-caption text-medium-emphasis">${formatDate(item.created_at)}</div>
+                            <div class="text-caption mt-2">
+                                ${ item.fields_snapshot?.length || 0 } {{ _('fields in snapshot') }}
+                            </div>
+                            <!-- TODO: Add diff comparison between versions and revert functionality -->
+                            <v-btn variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Revert to this version') }}</v-btn>
                         </div>
-                        <div class="text-caption mt-2">
-                            ${ item.fields_snapshot?.length || 0 } {{ _('fields in snapshot') }}
-                        </div>
-                        <!-- TODO: Add diff comparison between versions and revert functionality -->
                     </div>
                 </v-timeline-item>
             </v-timeline>
