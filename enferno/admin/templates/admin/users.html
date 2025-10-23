@@ -127,7 +127,7 @@
 
                                         <v-list>
                                             <v-list-item
-                                                v-for="role in roles"
+                                                v-for="role in [{ 'id': 0, 'name': 'View Only'}, ...roles]"
                                                 :key="role.id"
                                                 @click="setRoleFilters(role.id); refresh()"
                                                 :active="Boolean(options?.roles?.includes(role.id))"
@@ -773,12 +773,7 @@
 
                     api.get(`/admin/api/roles/`).then(response => {
 
-                        this.roles = [{
-                            "id": 0,
-                            "name": "View Only",
-                            "description": "System role with read-only access",
-                            "color": ""
-                        }, ...response.data.items];
+                        this.roles = response.data.items;
                     });
 
                 },
