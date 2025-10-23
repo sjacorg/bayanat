@@ -4834,7 +4834,15 @@ def api_locationhistory(locationid: t.id) -> Response:
 @roles_accepted("Admin", "Mod")
 def api_users() -> Response:
     """
-    API endpoint to feed users data in json format , supports paging and search.
+    API endpoint to feed users data in json format, supports paging, search, and filtering.
+
+    Query Parameters:
+        - page: Page number (default: 1)
+        - per_page: Items per page (default: PER_PAGE)
+        - q: Search term (searches username, email, name)
+        - active: Filter by account status (true/false)
+        - twoFactor: Filter by 2FA status (true/false)
+        - roles: Comma-separated role IDs for filtering
 
     Returns:
         - json feed of users / error.
@@ -4842,9 +4850,42 @@ def api_users() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
     q = request.args.get("q")
+    active = request.args.get("active")
+    two_factor = request.args.get("twoFactor")
+    roles = request.args.get("roles")
+
     query = []
+
+    # Search filter (username, email, name)
     if q is not None:
-        query.append(User.name.ilike("%" + q + "%"))
+        search_term = f"%{q}%"
+        query.append(
+            or_(
+                User.username.ilike(search_term),
+                User.email.ilike(search_term),
+                User.name.ilike(search_term),
+            )
+        )
+
+    # Account status filter
+    if active is not None:
+        is_active = active.lower() == "true"
+        query.append(User.active == is_active)
+
+    # 2FA status filter
+    if two_factor is not None:
+        has_2fa = two_factor.lower() == "true"
+        if has_2fa:
+            query.append(or_(User.tf_primary_method.isnot(None), User.webauthn.any()))
+        else:
+            query.append(User.tf_primary_method.is_(None), ~User.webauthn.any())
+
+    # Roles filter (multi-select)
+    if roles:
+        role_ids = [int(r.strip()) for r in roles.split(",") if r.strip().isdigit()]
+        if role_ids:
+            query.append(User.roles.any(Role.id.in_(role_ids)))
+
     result = (
         User.query.filter(*query)
         .order_by(User.username)
