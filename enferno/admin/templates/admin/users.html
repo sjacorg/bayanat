@@ -24,7 +24,7 @@
                                     <v-toolbar-title class="flex-0-0">{{ _('System Users') }}</v-toolbar-title>
 
                                     <v-text-field
-                                        :model-value="search"
+                                        v-model="search"
                                         @update:model-value="searchUsers"
                                         class="flex-grow-1"
                                         variant="outlined"
@@ -32,6 +32,7 @@
                                         hide-details
                                         prepend-inner-icon="mdi-magnify"
                                         placeholder="{{ _('Search for a system user') }}"
+                                        clearable
                                     ></v-text-field>
 
                                     <div class="d-flex align-center ga-3">
@@ -56,10 +57,10 @@
                                 </div>
                                 <div class="d-flex align-center ga-5 w-100">
                                     <div>{{ _('Filter') }}
-                                        <v-tooltip v-if="activeCount('twoFactor') || activeCount('roles') || activeCount('accountStatus')" location="top" text="{{ _('Clear filters') }}">
+                                        <v-tooltip v-if="activeCount('twoFactor') || activeCount('roles') || activeCount('active')" location="top" text="{{ _('Clear filters') }}">
                                             <template #activator="{props}">
                                                 <v-btn v-bind="props" icon="mdi-filter-off-outline" size="small"
-                                                    @click="filters = { accountStatus: null, roles: [], twoFactor: null }"
+                                                    @click="options = {}; refresh()"
                                                 ></v-btn>
                                             </template>
                                         </v-tooltip>
@@ -74,7 +75,7 @@
                                                 v-bind="props"
                                             >
                                             <v-badge
-                                                v-if="activeCount('accountStatus')"
+                                                v-if="activeCount('active')"
                                                 location="top right"
                                                 :offset-x="-14"
                                                 :offset-y="4"
@@ -92,10 +93,10 @@
                                             <v-list-item
                                                 v-for="option in accountStatusOptions"
                                                 :key="option.value"
-                                                @click="filters.accountStatus = option.value"
-                                                :active="filters.accountStatus === option.value"
+                                                @click="options.active = option.value; refresh()"
+                                                :active="options.active === option.value"
                                             >
-                                                <v-list-item-title>${option.title}</v-list-item-title>
+                                                <v-list-item-title>${option.name}</v-list-item-title>
                                             </v-list-item>
                                         </v-list>
                                     </v-menu>
@@ -128,11 +129,11 @@
                                             <v-list-item
                                                 v-for="role in roles"
                                                 :key="role.id"
-                                                @click="setRoleFilters(role.id)"
-                                                :active="filters.roles.includes(role.id)"
+                                                @click="setRoleFilters(role.id); refresh()"
+                                                :active="Boolean(options?.roles?.includes(role.id))"
                                             >
                                             <v-checkbox
-                                                :model-value="filters.roles.includes(role.id)"
+                                                :model-value="Boolean(options?.roles?.includes(role.id))"
                                                 :label="role.name"
                                                 hide-details
                                             />
@@ -167,10 +168,10 @@
                                             <v-list-item
                                                 v-for="option in twoFactorOptions"
                                                 :key="option.value"
-                                                @click="filters.twoFactor = option.value"
-                                                :active="filters.twoFactor === option.value"
+                                                @click="options.twoFactor = option.value; refresh()"
+                                                :active="options.twoFactor === option.value"
                                             >
-                                                <v-list-item-title>${option.title}</v-list-item-title>
+                                                <v-list-item-title>${option.name}</v-list-item-title>
                                             </v-list-item>
                                         </v-list>
                                     </v-menu>
@@ -307,10 +308,10 @@
                                         </v-btn>
                                         <v-btn
                                             @click="validateFormAndSave"
-                                            :prepend-icon="isNewUser ? 'mdi-plus' : 'mdi-check'"
+                                            prepend-icon="mdi-check"
                                             color="primary"
                                             variant="flat"
-                                            :text="isNewUser ? '{{ _('Add User') }}' : '{{ _('Save Changes') }}'"
+                                            text="{{ _('Save Changes') }}"
                                             :loading="saving"
                                         ></v-btn>
                                         <v-btn icon density="comfortable" @click="close">
@@ -551,18 +552,13 @@
                     { name: "{{ _('Actor Access') }}", value: 'actor_access' },
                     { name: "{{ _('Bulletin Access') }}", value: 'bulletin_access' },
                 ],
-                filters: {
-                    accountStatus: null,
-                    roles: [],
-                    twoFactor: null,
-                },
                 accountStatusOptions: [
-                    { title: 'Active', value: 'active' },
-                    { title: 'Inactive', value: 'inactive' },
+                    { name: 'Active', value: 'true' },
+                    { name: 'Inactive', value: 'false' },
                 ],
                 twoFactorOptions: [
-                    { title: 'Active', value: 'active' },
-                    { title: 'Inactive', value: 'inactive' },
+                    { name: 'Active', value: 'true' },
+                    { name: 'Inactive', value: 'false' },
                 ],
             }),
 
@@ -621,18 +617,19 @@
 
             methods: {
                 activeCount(key) {
-                    const val = this.filters[key]
+                    const val = this.options?.[key]
                     if (Array.isArray(val)) return val.length
                     return val ? 1 : 0
                 },
                 setRoleFilters(role) {
-                    const roles = this.filters.roles
-                    if (roles.includes(role)) {
-                        this.filters.roles = roles.filter((r) => r !== role)
-                    } else {
-                        this.filters.roles.push(role)
-                    }
+                    if (!this.options?.roles) this.options.roles = []
 
+                    const roles = this.options.roles
+                    if (roles.includes(role)) {
+                        this.options.roles = roles.filter((r) => r !== role)
+                    } else {
+                        this.options.roles.push(role)
+                    }
                 },
                 onUsernameCheckResponse(response) {
                     if (this.editedItem.username === this.initialUsername) {
@@ -776,8 +773,12 @@
 
                     api.get(`/admin/api/roles/`).then(response => {
 
-
-                        this.roles = response.data.items;
+                        this.roles = [{
+                            "id": 0,
+                            "name": "View Only",
+                            "description": "System role with read-only access",
+                            "color": ""
+                        }, ...response.data.items];
                     });
 
                 },
@@ -800,24 +801,29 @@
 
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
-
-                    if (this.advSearchOpen) {
-                        this.advSearchOpen = false;
-                    }
-
                     this.loading = true;
 
-                    api.get(`/admin/api/users/`)
-                    .then(res => {
-                        this.items = res.data.items;
-                        this.itemsLength = res.data.total;
-                    })
-                    .catch(err => {
-                        console.error(err?.response?.data || err);
-                    })
-                    .finally(() => {
-                        this.loading = false;
+                    const params = new URLSearchParams({
+                        page: this.options?.page ?? 1,
+                        per_page: this.options.itemsPerPage ?? 10,
                     });
+
+                    if (this.options?.q) params.append('q', this.options.q);
+                    if (this.options?.active) params.append('active', this.options.active);
+                    if (this.options?.roles?.length) params.append('roles', this.options.roles);
+                    if (this.options?.twoFactor) params.append('twoFactor', this.options.twoFactor);
+
+                    api.get(`/admin/api/users/?${params.toString()}`)
+                        .then(res => {
+                            this.items = res.data.items;
+                            this.itemsLength = res.data.total;
+                        })
+                        .catch(err => {
+                            console.error(err?.response?.data);
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
                 },
 
                 openChangePasswordDialog(item) {
@@ -983,10 +989,7 @@
                     }
                 },
                 searchUsers: debounce(function (evt) {
-                    this.loading = true;
-                    this.search = evt;
-
-                    this.refresh({ q: evt })
+                    this.refresh({ ...this.options, q: evt })
                 }, 350),
             }
         });
