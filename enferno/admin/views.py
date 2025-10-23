@@ -17,7 +17,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, select, func, text
+from sqlalchemy import desc, or_, and_, select, func, text
 from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
@@ -4842,7 +4842,7 @@ def api_users() -> Response:
         - q: Search term (searches username, email, name)
         - active: Filter by account status (true/false)
         - twoFactor: Filter by 2FA status (true/false)
-        - roles: Comma-separated role IDs for filtering
+        - roles: Comma-separated role IDs for filtering (use 0 for users without roles)
 
     Returns:
         - json feed of users / error.
@@ -4878,13 +4878,26 @@ def api_users() -> Response:
         if has_2fa:
             query.append(or_(User.tf_primary_method.isnot(None), User.webauthn.any()))
         else:
-            query.append(User.tf_primary_method.is_(None), ~User.webauthn.any())
+            query.append(and_(User.tf_primary_method.is_(None), ~User.webauthn.any()))
 
     # Roles filter (multi-select)
     if roles:
         role_ids = [int(r.strip()) for r in roles.split(",") if r.strip().isdigit()]
         if role_ids:
-            query.append(User.roles.any(Role.id.in_(role_ids)))
+            # Support id 0 for users without roles
+            if 0 in role_ids:
+                actual_role_ids = [rid for rid in role_ids if rid > 0]
+                if actual_role_ids:
+                    # Users with no roles OR users with selected roles
+                    query.append(
+                        or_(~User.roles.any(), User.roles.any(Role.id.in_(actual_role_ids)))
+                    )
+                else:
+                    # Only users with no roles
+                    query.append(~User.roles.any())
+            else:
+                # Only users with selected roles
+                query.append(User.roles.any(Role.id.in_(role_ids)))
 
     result = (
         User.query.filter(*query)
