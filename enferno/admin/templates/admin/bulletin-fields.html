@@ -32,12 +32,10 @@
                 <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="item.id" dot-color="primary" size="10">
                     <div class="mt-n1">
                         <div>
-                            <b>${item.user?.username || 'Unknown'}</b> {{ _('saved changes') }}
-                            <b v-if="index === 0">{{ _('(Latest)') }}</b>
-                            <div class="text-caption text-medium-emphasis">${formatDate(item.created_at)}</div>
-                            <div class="text-caption mt-2">
-                                ${ item.fields_snapshot?.length || 0 } {{ _('fields in snapshot') }}
-                            </div>
+                            <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
+                            <show-details show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+                                Hola
+                            </show-details>
                             <!-- TODO: Add diff comparison between versions and revert functionality -->
                             <v-btn variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Revert to this version') }}</v-btn>
                         </div>
@@ -129,6 +127,7 @@
 <script src="/static/js/mixins/form-builder-mixin.js"></script>
 <script src="/static/js/components/FieldListItem.js"></script>
 <script src="/static/js/components/SelectFieldTypeDialog.js"></script>
+<script src="/static/js/components/ShowDetails.js"></script>
 
 <script>
   const { createApp } = Vue;
@@ -150,7 +149,8 @@
 
   app.component('FieldListItem', FieldListItem);
   app.component('SelectFieldTypeDialog', SelectFieldTypeDialog);
-  app.component('draggable', vuedraggable);
+  app.component('Draggable', vuedraggable);
+  app.component('ShowDetails', ShowDetails);
 
   app.use(router);
   app.use(vuetify).mount('#app');
