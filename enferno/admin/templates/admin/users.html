@@ -773,8 +773,12 @@
 
                     api.get(`/admin/api/roles/`).then(response => {
 
-
-                        this.roles = response.data.items;
+                        this.roles = [{
+                            "id": 0,
+                            "name": "View Only",
+                            "description": "System role with read-only access",
+                            "color": ""
+                        }, ...response.data.items];
                     });
 
                 },
