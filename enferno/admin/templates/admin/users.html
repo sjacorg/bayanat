@@ -24,7 +24,7 @@
                                     <v-toolbar-title class="flex-0-0">{{ _('System Users') }}</v-toolbar-title>
 
                                     <v-text-field
-                                        :model-value="search"
+                                        v-model="search"
                                         @update:model-value="searchUsers"
                                         class="flex-grow-1"
                                         variant="outlined"
@@ -32,6 +32,7 @@
                                         hide-details
                                         prepend-inner-icon="mdi-magnify"
                                         placeholder="{{ _('Search for a system user') }}"
+                                        clearable
                                     ></v-text-field>
 
                                     <div class="d-flex align-center ga-3">
@@ -984,9 +985,6 @@
                     }
                 },
                 searchUsers: debounce(function (evt) {
-                    this.loading = true;
-                    this.search = evt;
-
                     this.refresh({ ...this.options, q: evt })
                 }, 350),
             }
