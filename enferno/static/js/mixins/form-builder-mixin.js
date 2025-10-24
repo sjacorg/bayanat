@@ -453,8 +453,6 @@ const formBuilderMixin = {
         }
       }
 
-      console.log({ changes, previousFields, currentFields, ok });
-
       return changes;
     },
 

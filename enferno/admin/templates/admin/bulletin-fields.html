@@ -24,8 +24,8 @@
   <template #default="{ data }">
     <div class="mb-4">{{ _('Version settings changed by') }} <b>@${data.snapshot?.user?.username}</b> - ${formatDate(data.snapshot?.created_at, dateFormats.standardDatetime, dateOptions.local)}.</div>
     <show-details show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-      <v-sheet border color="background" class="change-item pa-2 my-1 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
-        <v-data-table class="mb-4 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeSnapshotChanges({ ok: 2, previousFields: formBuilder.dynamicFields || [], currentFields: data?.snapshot?.fields_snapshot }))" :headers="[
+      <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
+        <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeSnapshotChanges({ previousFields: formBuilder.dynamicFields || [], currentFields: data?.snapshot?.fields_snapshot }))" :headers="[
             { title: `{{ _('Field Name') }}`, value: 'title' },
             { title: `{{ _('Change Type') }}`, value: 'type' },
           ]"
@@ -60,8 +60,8 @@
                         <div>
                             <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
                             <show-details show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-                              <v-sheet border color="background" class="change-item pa-2 my-1 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
-                                <v-data-table class="mb-4 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeSnapshotChanges({ previousFields: formBuilder.historyState.items?.[index + 1]?.fields_snapshot || [], currentFields: item.fields_snapshot }))" :headers="[
+                              <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
+                                <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeSnapshotChanges({ previousFields: formBuilder.historyState.items?.[index + 1]?.fields_snapshot || [], currentFields: item.fields_snapshot }))" :headers="[
                                     { title: `{{ _('Field Name') }}`, value: 'title' },
                                     { title: `{{ _('Change Type') }}`, value: 'type' },
                                   ]"
