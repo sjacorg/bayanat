@@ -95,8 +95,9 @@
                                                 :key="option.value"
                                                 @click="options.active = option.value; refresh()"
                                                 :active="options.active === option.value"
+                                                color="primary"
                                             >
-                                                <v-list-item-title>${option.name}</v-list-item-title>
+                                                <v-list-item-title><v-icon v-if="options.active === option.value" start>mdi-check</v-icon>${option.name}</v-list-item-title>
                                             </v-list-item>
                                         </v-list>
                                     </v-menu>
@@ -131,6 +132,7 @@
                                                 :key="role.id"
                                                 @click="setRoleFilters(role.id); refresh()"
                                                 :active="Boolean(options?.roles?.includes(role.id))"
+                                                color="primary"
                                             >
                                             <v-checkbox
                                                 :model-value="Boolean(options?.roles?.includes(role.id))"
@@ -170,8 +172,9 @@
                                                 :key="option.value"
                                                 @click="options.twoFactor = option.value; refresh()"
                                                 :active="options.twoFactor === option.value"
+                                                color="primary"
                                             >
-                                                <v-list-item-title>${option.name}</v-list-item-title>
+                                                <v-list-item-title><v-icon v-if="options.twoFactor === option.value" start>mdi-check</v-icon>${option.name}</v-list-item-title>
                                             </v-list-item>
                                         </v-list>
                                     </v-menu>
