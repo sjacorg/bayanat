@@ -617,17 +617,40 @@ const formBuilderMixin = {
         return a.sort_order - b.sort_order; // normal sort
       });
     },
-    async fetchDynamicFieldsHistory({ entityType }) {
-      try {
-        this.formBuilder.loading = true;
-        const response = await api.get(`/admin/api/dynamic-fields/history/${entityType}`);
-        this.formBuilder.historyState = response.data;
-      } catch (err) {
-        console.error(err);
-        this.showSnack(handleRequestError(err));
-      } finally {
-        this.formBuilder.loading = false;
+    loadHistory(options) {
+      if (options?.done) {
+        this.infiniteScrollCallback = options.done;
       }
+
+      const params = {
+        page: this.formBuilder.historyState.page,
+        per_page: this.formBuilder.historyState.per_page,
+      };
+
+      this.formBuilder.loading = true;
+
+      api.get(`/admin/api/dynamic-fields/history/${options.entityType}`, { params })
+        .then(response => {
+          this.formBuilder.historyState.total = response.data.total;
+
+          if (params.page === 1) {
+            this.formBuilder.historyState.items = response.data.items;
+          } else {
+            this.formBuilder.historyState.items.push(...response.data.items);
+          }
+
+          const hasMore = this.formBuilder.historyState.items.length < response.data.total;
+          if (hasMore) this.formBuilder.historyState.page++;
+
+          options?.done?.(hasMore ? 'ok' : 'empty');
+        })
+        .catch(err => {
+          console.error(err);
+          options?.done?.('error');
+        })
+        .finally(() => {
+          this.formBuilder.loading = false;
+        });
     },
     async fetchDynamicFields({ entityType }) {
       try {
