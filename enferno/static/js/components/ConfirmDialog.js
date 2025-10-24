@@ -1,6 +1,7 @@
 const ConfirmDialog = Vue.defineComponent({
   data() {
     return {
+      data: null,
       open: false,
       title: '',
       message: '',
@@ -26,6 +27,7 @@ const ConfirmDialog = Vue.defineComponent({
       dialogProps = {},
       onAccept = null,
       onReject = null,
+      data = null,
     } = {}) {
       Object.assign(this, {
         title,
@@ -37,6 +39,7 @@ const ConfirmDialog = Vue.defineComponent({
         onReject,
         loading: false,
         open: true,
+        data,
       });
 
       return new Promise((resolve, rejectPromise) => {
@@ -77,6 +80,7 @@ const ConfirmDialog = Vue.defineComponent({
         this.cancelProps = { text: 'Cancel', variant: 'outlined' };
         this.acceptProps = { text: 'Confirm', color: 'primary', variant: 'flat' };
         this.dialogProps = {};
+        this.data = null;
       }, 300)
     },
   },
@@ -84,15 +88,15 @@ const ConfirmDialog = Vue.defineComponent({
     <v-dialog v-model="open" v-bind="{ persistent: loading, ...dialogProps}">
       <v-card rounded="12">
         <v-card-title class="px-7 pt-6 pb-0">
-          <slot name="title">{{ title }}</slot>
+          <slot name="title" :data="data">{{ title }}</slot>
         </v-card-title>
 
         <v-card-text class="px-7 pb-7 pt-2 text-pre-wrap">
-          <slot>{{ message }}</slot>
+          <slot :data="data">{{ message }}</slot>
         </v-card-text>
 
         <v-card-actions class="justify-end pb-7 px-7 pt-0">
-          <slot name="actions">
+          <slot name="actions" :data="data">
             <v-btn
               :disabled="loading"
               @click="cancel"
