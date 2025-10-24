@@ -132,14 +132,14 @@ const formBuilderMixin = {
       this.formBuilder.dynamicFields = this.sortFields(this.formBuilder.dynamicFields);
     },
 
-    buildChangesTable() {
+    buildChangesTable(diff) {
       const changeTypeTranslations = {
         create: translations.added_,
         update: translations.modified_,
         delete: translations.deleted_,
       };
 
-      return Object.entries(this.changes.diff).flatMap(([changeType, change]) =>
+      return Object.entries(diff).flatMap(([changeType, change]) =>
         change.map((item) => ({
           title: item.item.title || window.translations.newField_,
           type: changeTypeTranslations[changeType],
@@ -150,13 +150,22 @@ const formBuilderMixin = {
 
     showSaveDialog({ entityType }) {
       this.changes.diff = this.computeChanges({ ignoreSortOrder: true, originalFields: this.formBuilder.originalFields, dynamicFields: this.formBuilder.dynamicFields });
-      this.changes.table = this.buildChangesTable();
+      this.changes.table = this.buildChangesTable(this.changes.diff);
 
       this.$refs.reviewAndConfirmDialog.show({
         title: window.translations.reviewAndConfirmChanges_,
         dialogProps: { width: 780 },
         onAccept: async () => {
           await this.save({ entityType });
+        },
+      });
+    },
+    showRevertDialog(snapshot) {
+      this.$refs.revertConfirmDialog.show({
+        dialogProps: { width: 780 },
+        data: { snapshot },
+        onAccept: async () => {
+          this.formBuilder.dynamicFields = snapshot.fields_snapshot;
         },
       });
     },
@@ -387,6 +396,51 @@ const formBuilderMixin = {
 
       return changes;
     },
+    computeSnapshotChanges({ previousFields, currentFields, ignoreSortOrder = false, ok }) {
+      const changes = { create: [], update: [], delete: [] };
+
+      const previousMap = new Map(previousFields?.map(f => [f.id, f]));
+      const currentMap = new Map(currentFields?.map(f => [f.id, f]));
+
+      // 1️⃣ Detect deletions
+      for (const [id, prevField] of previousMap.entries()) {
+        if (!currentMap.has(id)) {
+          changes.delete.push({ id, item: prevField });
+        }
+      }
+
+      // 2️⃣ Detect creations and updates
+      for (const [id, currField] of currentMap.entries()) {
+        const prevField = previousMap.get(id);
+
+        // New field (doesn’t exist in previous)
+        if (!prevField) {
+          changes.create.push({ id, item: currField });
+          continue;
+        }
+
+        // Compare existing field content
+        let fieldToCompare = currField;
+        let prevToCompare = prevField;
+
+        if (ignoreSortOrder) {
+          const { sort_order, ...restCurr } = currField;
+          const { sort_order: __, ...restPrev } = prevField;
+          fieldToCompare = restCurr;
+          prevToCompare = restPrev;
+        }
+
+        const isDifferent = JSON.stringify(fieldToCompare) !== JSON.stringify(prevToCompare);
+
+        if (isDifferent) {
+          changes.update.push({ id, item: currField });
+        }
+      }
+
+      console.log({changes, previousFields, currentFields, ok});
+
+      return changes;
+    },
 
     mergeFailedItems(dynamicFields, failedItems) {
       const merged = [...dynamicFields];
@@ -508,7 +562,7 @@ const formBuilderMixin = {
             update: failedItems.update,
             delete: failedItems.delete,
           };
-          this.changes.table = this.buildChangesTable();
+          this.changes.table = this.buildChangesTable(this.changes.diff)
           throw failed?.[0]?.reason;
         } else {
           this.showSnack(window.translations.fieldsSavedSuccessfully_);
