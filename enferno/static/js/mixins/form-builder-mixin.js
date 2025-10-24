@@ -402,6 +402,20 @@ const formBuilderMixin = {
       const previousMap = new Map(previousFields?.map(f => [f.id, f]));
       const currentMap = new Map(currentFields?.map(f => [f.id, f]));
 
+      const sortObjectKeys = (obj) => {
+        if (Array.isArray(obj)) {
+          return obj.map(sortObjectKeys);
+        } else if (obj && typeof obj === "object") {
+          return Object.keys(obj)
+            .sort()
+            .reduce((acc, key) => {
+              acc[key] = sortObjectKeys(obj[key]);
+              return acc;
+            }, {});
+        }
+        return obj;
+      };
+
       // 1️⃣ Detect deletions
       for (const [id, prevField] of previousMap.entries()) {
         if (!currentMap.has(id)) {
@@ -419,10 +433,9 @@ const formBuilderMixin = {
           continue;
         }
 
-        // Compare existing field content
+        // Ignore sort order if requested
         let fieldToCompare = currField;
         let prevToCompare = prevField;
-
         if (ignoreSortOrder) {
           const { sort_order, ...restCurr } = currField;
           const { sort_order: __, ...restPrev } = prevField;
@@ -430,14 +443,17 @@ const formBuilderMixin = {
           prevToCompare = restPrev;
         }
 
-        const isDifferent = JSON.stringify(fieldToCompare) !== JSON.stringify(prevToCompare);
+        // Normalize key order before comparing
+        const normalizedCurr = sortObjectKeys(fieldToCompare);
+        const normalizedPrev = sortObjectKeys(prevToCompare);
 
+        const isDifferent = JSON.stringify(normalizedCurr) !== JSON.stringify(normalizedPrev);
         if (isDifferent) {
           changes.update.push({ id, item: currField });
         }
       }
 
-      console.log({changes, previousFields, currentFields, ok});
+      console.log({ changes, previousFields, currentFields, ok });
 
       return changes;
     },
