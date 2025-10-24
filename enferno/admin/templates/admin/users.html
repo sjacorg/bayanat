@@ -301,18 +301,15 @@
 
                         <template v-slot:no-data></template>
                     </v-data-table-server>
-                    <v-dialog v-model="dialog" max-width="1200px">
+
+                    <v-dialog v-model="dialog" fullscreen>
                         <v-card rounded="lg">
-                            <v-toolbar :title="formTitle">
+                            <v-toolbar :title="formTitle" color="dark-primary">
                                 <template #append>
                                     <div class="d-flex align-center ga-2 mr-2">
-                                        <v-btn @click="close" variant="outlined">
-                                            {{ _('Cancel') }}
-                                        </v-btn>
                                         <v-btn
                                             @click="validateFormAndSave"
                                             prepend-icon="mdi-check"
-                                            color="primary"
                                             variant="flat"
                                             text="{{ _('Save Changes') }}"
                                             :loading="saving"
@@ -387,67 +384,87 @@
                                                 </v-text-field>
                                             </v-col>
                                         </v-row>
-                                        <v-switch v-if="editedItem.id !== {{ current_user.id }}" color="blue" class="text-medium-emphasis" label="{{ _('Account is Active') }}"
-                                                v-model="editedItem.active"></v-switch>
 
-                                        <div class="mb-3 text-body-1">{{ _('System Role') }}</div>
-                                        <div class="d-flex flex-wrap ga-3 mb-7">
-                                            <toggle-button
-                                                v-for="role in roles"
-                                                :key="role.id"
-                                                :model-value="isRoleSelected(role)"
-                                                @update:model-value="toggleRole(role)"
-                                                :closable="isRoleSelected(role)"
-                                                :disabled="Boolean(editedItem.roles?.length && editedItem.roles?.some(r => r.id !== role.id))"
-                                                @close="editedItem.roles = []"
-                                                hide-left-icon
-                                            >
-                                                ${role.name}
-                                            </toggle-button>
+                                        <div class="mb-3 text-body-1">{{ _('Access Levels') }}</div>
+                                        <div class="mb-7">
+                                            <div class="d-flex flex-wrap ga-3 mb-2">
+                                                <v-btn-toggle
+                                                    :model-value="Math.max(accessLevels.findIndex(level => level.value === editedItem?.access_level?.value), 0)"
+                                                    @update:model-value="updateAccessLevel($event)"
+                                                    variant="outlined"
+                                                    divided
+                                                    color="primary"
+                                                >
+                                                    <v-btn v-for="(accessLevel) in accessLevels" :key="accessLevel.value">${accessLevel.name}</v-btn>
+                                                </v-btn-toggle>
+                                            </div>
+                                            <span class="text-caption text-medium-emphasis">${editedItem.access_level?.description || accessLevels[0]?.description}</span>
                                         </div>
 
-                                        <div class="mb-3 text-body-1">{{ _('Access Role') }}</div>
-                                        <div class="d-flex flex-wrap ga-3 mb-7">
-                                            <toggle-button
-                                                v-for="role in accessRoles"
-                                                :key="role.id"
-                                                :model-value="isAccessRoleSelected(role)"
-                                                @update:model-value="toggleAccessRole(role)"
-                                            >
-                                                ${role.name}
-                                            </toggle-button>
-                                        </div>
+                                        <v-row>
+                                            <v-col v-if="['full_access'].includes(editedItem.access_level?.value)" cols="12" md="6">
+                                                <div class="mb-3 text-body-1">{{ _('System Role') }}</div>
+                                                <div class="d-flex flex-wrap ga-3 mb-7">
+                                                    <toggle-button
+                                                        v-for="role in roles"
+                                                        :key="role.id"
+                                                        :model-value="isRoleSelected(role)"
+                                                        @update:model-value="toggleRole(role)"
+                                                        @close="editedItem.roles = []"
+                                                        hide-left-icon
+                                                    >
+                                                        ${role.name}
+                                                    </toggle-button>
+                                                </div>
+                                            </v-col>
+                                            <v-col v-if="['view_only', 'full_access'].includes(editedItem.access_level?.value)" cols="12" md="6">
+                                                <div class="mb-3 text-body-1">{{ _('Access Role') }}</div>
+                                                <div class="d-flex flex-wrap ga-3 mb-7">
+                                                    <toggle-button
+                                                        v-for="role in accessRoles"
+                                                        :key="role.id"
+                                                        :model-value="isAccessRoleSelected(role)"
+                                                        @update:model-value="toggleAccessRole(role)"
+                                                    >
+                                                        ${role.name}
+                                                    </toggle-button>
+                                                </div>
+                                            </v-col>
+                                        </v-row>
 
-                                        <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
-                                        <div class="d-flex flex-wrap ga-3 mb-7">
-                                            <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole">
-                                                {{ _('Can View Usernames') }}
-                                            </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole">
-                                                {{ _('Can View Full History') }}
-                                            </toggle-button>
+                                        <template v-if="['view_only', 'full_access'].includes(editedItem.access_level?.value)">
+                                            <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
+                                            <div class="d-flex flex-wrap ga-3 mb-7">
+                                                <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole">
+                                                    {{ _('Can View Usernames') }}
+                                                </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole">
-                                                {{ _('Can View Simple History') }}
-                                            </toggle-button>
+                                                <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole">
+                                                    {{ _('Can View Full History') }}
+                                                </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole">
-                                                {{ _('Can Self-Assign') }}
-                                            </toggle-button>
+                                                <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole">
+                                                    {{ _('Can View Simple History') }}
+                                                </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole">
-                                                {{ _('Can Edit Locations') }}
-                                            </toggle-button>
+                                                <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole">
+                                                    {{ _('Can Self-Assign') }}
+                                                </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole">
-                                                {{ _('Can Request Exports') }}
-                                            </toggle-button>
+                                                <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole">
+                                                    {{ _('Can Edit Locations') }}
+                                                </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole">
-                                                {{ _('Can Import From Web') }}
-                                            </toggle-button>
-                                        </div>
+                                                <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole">
+                                                    {{ _('Can Request Exports') }}
+                                                </toggle-button>
+
+                                                <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole">
+                                                    {{ _('Can Import From Web') }}
+                                                </toggle-button>
+                                            </div>
+                                        </template>
                                     </v-container>
                                 </v-card-text>
                             </v-form>
@@ -550,6 +567,12 @@
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
 
+                accessLevels: [
+                    { name: "{{ _('Disabled') }}", value: 'disabled', description: "{{ _('User cannot access Bayanat unless their access level is changed.') }}" },
+                    { name: "{{ _('Write Only') }}", value: 'write_only', description: "{{ _('Users can add items in Actors, Bulletins, and Incidents but cannot view existing database content.') }}" },
+                    { name: "{{ _('View Only') }}", value: 'view_only', description: "{{ _('Users can view items in Actors, Bulletins, and Incidents but cannot edit or add new items.') }}" },
+                    { name: "{{ _('Full Access') }}", value: 'full_access', description: "{{ _('User can view, add, and modify data in the database according to their system role.') }}" },
+                ],
                 accessRoles: [
                     { name: "{{ _('Incident Access') }}", value: 'incident_access' },
                     { name: "{{ _('Actor Access') }}", value: 'actor_access' },
@@ -918,9 +941,11 @@
 
                     this.saving = true;
 
+                    const payload = this.applyAccessLevelRules({...this.editedItem});
+
                     // edit mode
-                    if (this.editedItem.id) {
-                        api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
+                    if (payload.id) {
+                        api.put(`/admin/api/user/`, {item: payload}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
@@ -934,7 +959,7 @@
                     } else {
                         // create mode
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
+                            .post("/admin/api/user/", {item: payload}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
@@ -989,6 +1014,27 @@
                 searchUsers: debounce(function (evt) {
                     this.refresh({ ...this.options, q: evt })
                 }, 350),
+                updateAccessLevel(index) {
+                    const selectedAccessLevel = this.accessLevels[index] || this.accessLevels[0];
+                    this.editedItem.access_level = selectedAccessLevel;
+                },
+                applyAccessLevelRules(item) {
+                    const { value } = item.access_level;
+
+                    if (value === 'disabled') {
+                        item.active = false;
+                        item.roles = [];
+                    } else if (value === 'view_only') {
+                        item.active = true;
+                        item.roles = [];
+                    } else if (value === 'write_only') {
+                        item.active = true;
+                    } else if (value === 'full_access') {
+                        item.active = true;
+                    }
+
+                    return item
+                }
             }
         });
 
