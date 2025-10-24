@@ -54,7 +54,7 @@
     <v-card flat>
         <v-card-title class="pa-6">{{ _('Revision history') }}</v-card-title>
         <v-card-text class="px-6">
-          <v-infinite-scroll empty-text="{{ _('No more items in history') }}" :items="formBuilder.historyState.items" @load="loadHistory({ ...$event, entityType: 'incident' })">
+          <v-infinite-scroll :empty-text="!formBuilder.historyState.items?.length ? '{{ _("No revision history yet") }}' : '{{ _('No more items in history') }}'" :items="formBuilder.historyState.items" @load="loadHistory({ ...$event, entityType: 'incident' })">
             <v-timeline density="compact" side="end" align="start">
                 <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="item.id" dot-color="primary" size="10">
                     <div class="mt-n1">
