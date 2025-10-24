@@ -237,8 +237,33 @@ const UserCard = Vue.defineComponent({
         <v-card variant="flat">
           <v-card-text class="px-6">
             <v-row>
-              <v-col cols="12" md="6">
-                <div class="mb-3 text-body-1">{{ translations.userRole_ }}</div>
+              <v-col cols="12" sm="6" md="4">
+                <div class="mb-3 text-body-1">{{ translations.accessLevel_ }}</div>
+                <div class="d-flex flex-wrap ga-3">
+                  <template v-if="user?.access_level">
+                    <toggle-button
+                      read-only
+                      hide-left-icon
+                      :model-value="true"
+                    >
+                      <v-icon start size="x-large">{{ $root.getIconFromAccessLevel(user?.access_level) }}</v-icon>
+                      {{ user?.access_level?.name }}
+                    </toggle-button>
+                  </template>
+                  <template v-else>
+                    <toggle-button
+                      read-only
+                      hide-left-icon
+                      :model-value="true"
+                    >
+                      <v-icon start size="x-large">mdi-account-cancel</v-icon>
+                      {{ translations.disabled_ }}
+                    </toggle-button>
+                  </template>
+                </div>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <div class="mb-3 text-body-1">{{ translations.systemRole_ }}</div>
                 <div class="d-flex flex-wrap ga-3">
                   <template v-if="user.roles.length">
                     <toggle-button
@@ -251,18 +276,48 @@ const UserCard = Vue.defineComponent({
                       {{ role.name }}
                     </toggle-button>
                   </template>
-                  <template v-else>
+                </div>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <div class="mb-3 text-body-1">{{ translations.accessRole_ }}</div>
+                <div class="d-flex flex-wrap ga-3">
+                  <template v-if="user?.access_roles?.length">
                     <toggle-button
+                      v-for="(role, index) in user.access_roles"
+                      :key="index"
                       read-only
                       hide-left-icon
                       :model-value="true"
                     >
-                      {{ translations.viewOnly_ }}
+                      {{ role.name }}
                     </toggle-button>
                   </template>
                 </div>
               </v-col>
-              <v-col cols="12" md="6">
+            </v-row>
+          </v-card-text>
+        </v-card>
+
+        <v-card variant="flat">
+          <v-card-text class="px-6">
+            <div class="mb-3 text-body-1">{{ translations.userPermissions_ }}</div>
+            <div class="d-flex flex-wrap ga-3">
+              <toggle-button
+                v-for="(permission, index) in permissions"
+                :key="index"
+                read-only
+                :model-value="permission.value"
+              >
+                {{ permission.label }}
+              </toggle-button>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <v-card variant="flat">
+          <v-card-text class="px-6">
+            <v-row>
+              <v-col cols="12" md="4">
                 <div class="mb-3 text-body-1">{{ translations.twoFactorAuthentication_ }}</div>
                 <div class="d-flex flex-wrap ga-3">
                   <div
@@ -293,22 +348,6 @@ const UserCard = Vue.defineComponent({
                 </div>
               </v-col>
             </v-row>
-          </v-card-text>
-        </v-card>
-
-        <v-card variant="flat">
-          <v-card-text class="px-6">
-            <div class="mb-3 text-body-1">{{ translations.userPermissions_ }}</div>
-            <div class="d-flex flex-wrap ga-3">
-              <toggle-button
-                v-for="(permission, index) in permissions"
-                :key="index"
-                read-only
-                :model-value="permission.value"
-              >
-                {{ permission.label }}
-              </toggle-button>
-            </div>
           </v-card-text>
         </v-card>
 

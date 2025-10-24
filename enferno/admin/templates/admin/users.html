@@ -273,30 +273,25 @@
                             </v-tooltip>
                         </template>
 
-                        <template v-slot:item.active_status="{ item }">
-                            <v-tooltip location="top"
-                                       :text="item.active === true ? '{{ _('Active') }}' : '{{ _('Inactive') }}'">
-                                <template #activator="{props}">
-                                    <v-icon
-                                        :color="item.active ? 'success' : 'grey'"
-                                        :icon="item.active ? 'mdi-account-check' : 'mdi-account-cancel'"
-                                        v-bind="props"
-                                        size="small"
-                                    />
-                                </template>
-                            </v-tooltip>
+                        <template v-slot:item.access_level="{ item }">
+                            <template v-if="item.access_level">
+                                <v-chip v-for="level in item?.access_level" class="ma-1">
+                                    <v-icon start size="x-large">${getIconFromAccessLevel(level)}</v-icon>
+                                    ${level.name}
+                                </v-chip>
+                            </template>
+                            <template v-else>
+                                <v-chip class="ma-1">
+                                    <v-icon start size="x-large">mdi-account-cancel</v-icon>
+                                    {{ _('Disabled') }}
+                                </v-chip>
+                            </template>
                         </template>
 
                         <template v-slot:item.roles="{ item }">
-
-                            <v-chip size="small" v-for="role in item.roles" class="ma-1">
+                            <v-chip v-for="role in item.roles" class="ma-1">
                                 ${role.name}
                             </v-chip>
-                            <v-chip class="ma-1" v-if="!item.roles.length" size="small" color="grey"
-                            >{{ _('View Only') }}
-                            </v-chip>
-
-
                         </template>
 
                         <template v-slot:no-data></template>
@@ -541,7 +536,7 @@
                     {title: "{{_('Username')}}", value: "username"},
                     {title: "{{_('Email')}}", value: "email"},
                     {title: "{{_('Name')}}", value: "name"},
-                    {title: "{{_('Account Status')}}", value: "active_status"},
+                    {title: "{{_('Access Level')}}", value: "access_level"},
                     {title: "{{_('Groups')}}", value: "roles"},
                     {title: "{{_('Two-Factor Authentication')}}", value: "2fa"},
                     {title: "{{_('Actions')}}", value: "action", sortable: false}
@@ -643,6 +638,12 @@
 
 
             methods: {
+                getIconFromAccessLevel(level) {
+                    if (level.value === 'disabled') return 'mdi-account-cancel';
+                    if (level.value === 'view_only') return 'mdi-eye';
+                    if (level.value === 'write_only') return 'mdi-pencil';
+                    if (level.value === 'full_access') return 'mdi-account-key';
+                },
                 activeCount(key) {
                     const val = this.options?.[key]
                     if (Array.isArray(val)) return val.length
