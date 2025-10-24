@@ -35,8 +35,8 @@ const formBuilderMixin = {
     },
     dynamicFieldsActorCard() {
       // Keys omited since they are rendered somewhere else in the drawer
-      const omitedKeys = ['source_link', 'status', 'tags', 'roles', 'comments', 'geo_locations']
-      return this.formBuilder.dynamicFields.filter(field => !omitedKeys.includes(field.name))
+      const omitedKeys = ['source_link', 'status', 'tags', 'roles', 'comments', 'geo_locations'];
+      return this.formBuilder.dynamicFields.filter((field) => !omitedKeys.includes(field.name));
     },
     fixedDynamicFields() {
       return this.formBuilder.dynamicFields.filter((field) =>
@@ -49,7 +49,10 @@ const formBuilderMixin = {
       );
     },
     hasChanges() {
-      const changes = this.computeChanges({ originalFields: this.formBuilder.originalFields, dynamicFields: this.formBuilder.dynamicFields });
+      const changes = this.computeChanges({
+        originalFields: this.formBuilder.originalFields,
+        dynamicFields: this.formBuilder.dynamicFields,
+      });
       return Boolean(changes.create.length || changes.update.length || changes.delete.length);
     },
     filteredDynamicFields() {
@@ -149,7 +152,11 @@ const formBuilderMixin = {
     },
 
     showSaveDialog({ entityType }) {
-      this.changes.diff = this.computeChanges({ ignoreSortOrder: true, originalFields: this.formBuilder.originalFields, dynamicFields: this.formBuilder.dynamicFields });
+      this.changes.diff = this.computeChanges({
+        ignoreSortOrder: true,
+        originalFields: this.formBuilder.originalFields,
+        dynamicFields: this.formBuilder.dynamicFields,
+      });
       this.changes.table = this.buildChangesTable(this.changes.diff);
 
       this.$refs.reviewAndConfirmDialog.show({
@@ -354,6 +361,21 @@ const formBuilderMixin = {
     computeChanges(options) {
       const changes = { create: [], update: [], delete: [] };
       const originalMap = new Map(options.originalFields.map((f) => [f.id, f]));
+      const currentMap = new Map(options.dynamicFields.map((f) => [f.id, f]));
+
+      const sortObjectKeys = (obj) => {
+        if (Array.isArray(obj)) {
+          return obj.map(sortObjectKeys);
+        } else if (obj && typeof obj === 'object') {
+          return Object.keys(obj)
+            .sort()
+            .reduce((acc, key) => {
+              acc[key] = sortObjectKeys(obj[key]);
+              return acc;
+            }, {});
+        }
+        return obj;
+      };
 
       for (const field of options.dynamicFields) {
         // Deletions
@@ -382,15 +404,21 @@ const formBuilderMixin = {
               origToCompare = restOrig;
             }
 
-            const isDifferent = JSON.stringify(fieldToCompare) !== JSON.stringify(origToCompare);
+            const normalizedField = sortObjectKeys(fieldToCompare);
+            const normalizedOrig = sortObjectKeys(origToCompare);
+            const isDifferent = JSON.stringify(normalizedField) !== JSON.stringify(normalizedOrig);
 
-            // ✅ Show if real diff OR if moved was flagged
             if (isDifferent || field.moved) {
               changes.update.push({ id: field.id, item: field });
             }
-
-            originalMap.delete(field.id);
           }
+        }
+      }
+
+      // 🗑️ Deletions — any original item not found in current fields
+      for (const [id, origField] of originalMap.entries()) {
+        if (!currentMap.has(id)) {
+          changes.delete.push({ id, item: origField });
         }
       }
 
@@ -399,13 +427,13 @@ const formBuilderMixin = {
     computeSnapshotChanges({ previousFields, currentFields, ignoreSortOrder = false, ok }) {
       const changes = { create: [], update: [], delete: [] };
 
-      const previousMap = new Map(previousFields?.map(f => [f.id, f]));
-      const currentMap = new Map(currentFields?.map(f => [f.id, f]));
+      const previousMap = new Map(previousFields?.map((f) => [f.id, f]));
+      const currentMap = new Map(currentFields?.map((f) => [f.id, f]));
 
       const sortObjectKeys = (obj) => {
         if (Array.isArray(obj)) {
           return obj.map(sortObjectKeys);
-        } else if (obj && typeof obj === "object") {
+        } else if (obj && typeof obj === 'object') {
           return Object.keys(obj)
             .sort()
             .reduce((acc, key) => {
@@ -499,7 +527,10 @@ const formBuilderMixin = {
     },
     async save({ entityType }) {
       this.ui.saving = true;
-      const diffChanges = this.computeChanges({ originalFields: this.formBuilder.originalFields, dynamicFields: this.formBuilder.dynamicFields });
+      const diffChanges = this.computeChanges({
+        originalFields: this.formBuilder.originalFields,
+        dynamicFields: this.formBuilder.dynamicFields,
+      });
       const failedItems = { create: [], update: [], delete: [] };
 
       try {
@@ -576,7 +607,7 @@ const formBuilderMixin = {
             update: failedItems.update,
             delete: failedItems.delete,
           };
-          this.changes.table = this.buildChangesTable(this.changes.diff)
+          this.changes.table = this.buildChangesTable(this.changes.diff);
           throw failed?.[0]?.reason;
         } else {
           this.showSnack(window.translations.fieldsSavedSuccessfully_);
@@ -624,14 +655,14 @@ const formBuilderMixin = {
       return field.active && field.name === name;
     },
     isFieldActiveByName(name) {
-      const matchingField = this.formBuilder.dynamicFields.find(field => field?.name === name);
+      const matchingField = this.formBuilder.dynamicFields.find((field) => field?.name === name);
 
       return Boolean(matchingField?.active);
     },
     isFieldActiveAndHasContent(field, key, value) {
-      if (!this.isFieldActive(field, key)) return false
-      if (Array.isArray(value)) return value.some(v => !!v)
-      return value != null && value !== ''
+      if (!this.isFieldActive(field, key)) return false;
+      if (Array.isArray(value)) return value.some((v) => !!v);
+      return value != null && value !== '';
     },
     findFieldOptionByValue(field, value) {
       if (!Array.isArray(field.options)) return;
