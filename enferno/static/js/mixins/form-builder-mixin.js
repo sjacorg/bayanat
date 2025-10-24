@@ -8,6 +8,7 @@ const formBuilderMixin = {
       originalFields: [],
       historyState: { items: [], total: 0, page: 1, per_page: 20 },
     },
+    infiniteScrollCallback: null,
     fixedFields: ['comments', 'status'],
     dragDrop: {
       dropLine: { id: null, cls: '' },
@@ -78,9 +79,8 @@ const formBuilderMixin = {
     },
   },
   methods: {
-    openRevisionHistoryDrawer({ entityType }) {
+    openRevisionHistoryDrawer() {
       this.formBuilder.showRevisions = true;
-      this.fetchDynamicFieldsHistory({ entityType });
     },
     discardChanges() {
       this.$confirm({
@@ -531,6 +531,7 @@ const formBuilderMixin = {
           );
         }
 
+        this.resetHistory();
         // Run all in parallel, but don’t throw
         const results = await Promise.allSettled(requests);
 
@@ -651,6 +652,10 @@ const formBuilderMixin = {
         .finally(() => {
           this.formBuilder.loading = false;
         });
+    },
+    resetHistory() {
+      this.formBuilder.historyState = { items: [], total: 0, page: 1, per_page: 20 },
+      this.infiniteScrollCallback?.('ok');
     },
     async fetchDynamicFields({ entityType }) {
       try {

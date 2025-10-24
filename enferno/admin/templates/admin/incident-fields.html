@@ -17,6 +17,76 @@
     </template>
   </v-data-table>
 </confirm-dialog>
+<confirm-dialog ref="revertConfirmDialog">
+  <template #title>
+    {{ _('Are you sure you want to revert to this version?') }}
+  </template>
+  <template #default="{ data }">
+    <div class="mb-4">{{ _('Version settings changed by') }} <b>@${data.snapshot?.user?.username}</b> - ${formatDate(data.snapshot?.created_at, dateFormats.standardDatetime, dateOptions.local)}.</div>
+    <show-details show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+      <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
+        <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeChanges({ previousFields: formBuilder.dynamicFields || [], currentFields: data?.snapshot?.fields_snapshot }))" :headers="[
+            { title: `{{ _('Field Name') }}`, value: 'title' },
+            { title: `{{ _('Change Type') }}`, value: 'type' },
+          ]"
+        >
+          <template #[`item.title`]="{ item }">
+            <span class="text-caption">${item.title}</span>
+          </template>
+          <template #[`item.type`]="{ item }">
+            <span v-if="item.key === 'create'" class="text-caption text-green">${item.type}</span>
+            <span v-if="item.key === 'update'" class="text-caption text-orange">${item.type}</span>
+            <span v-if="item.key === 'delete'" class="text-caption text-red">${item.type}</span>
+          </template>
+        </v-data-table>
+      </v-sheet>
+    </show-details>
+  </template>
+</confirm-dialog>
+<!-- Revision history sidebar -->
+<v-navigation-drawer
+  v-model="formBuilder.showRevisions"
+  location="right"
+  temporary
+  width="630"
+  clipped
+>
+    <v-card flat>
+        <v-card-title class="pa-6">{{ _('Revision history') }}</v-card-title>
+        <v-card-text class="px-6">
+          <v-infinite-scroll empty-text="{{ _('No more items in history') }}" :items="formBuilder.historyState.items" @load="loadHistory({ ...$event, entityType: 'incident' })">
+            <v-timeline density="compact" side="end" align="start">
+                <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="item.id" dot-color="primary" size="10">
+                    <div class="mt-n1">
+                        <div>
+                            <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
+                            <show-details show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+                              <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
+                                <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeChanges({ previousFields: formBuilder.historyState.items?.[index + 1]?.fields_snapshot || [], currentFields: item.fields_snapshot }))" :headers="[
+                                    { title: `{{ _('Field Name') }}`, value: 'title' },
+                                    { title: `{{ _('Change Type') }}`, value: 'type' },
+                                  ]"
+                                >
+                                  <template #[`item.title`]="{ item }">
+                                    <span class="text-caption">${item.title}</span>
+                                  </template>
+                                  <template #[`item.type`]="{ item }">
+                                    <span v-if="item.key === 'create'" class="text-caption text-green">${item.type}</span>
+                                    <span v-if="item.key === 'update'" class="text-caption text-orange">${item.type}</span>
+                                    <span v-if="item.key === 'delete'" class="text-caption text-red">${item.type}</span>
+                                  </template>
+                                </v-data-table>
+                              </v-sheet>
+                            </show-details>
+                            <v-btn v-if="index !== 0" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="showRevertDialog(item)">{{ _('Revert to this version') }}</v-btn>
+                        </div>
+                    </div>
+                </v-timeline-item>
+            </v-timeline>
+          </v-infinite-scroll>
+        </v-card-text>
+    </v-card>
+</v-navigation-drawer>
 
 <v-main>
   <div class="pa-4">
@@ -29,6 +99,14 @@
           hide-details v-model="ui.search" clearable></v-text-field>
       
         <div class="d-flex ga-4 align-center">
+          <v-btn
+            class="outlined-btn"
+            prepend-icon="mdi-history"
+            variant="outlined"
+            @click="openRevisionHistoryDrawer({ entityType: 'incident' })"
+          >
+            {{ _('Revision history') }}
+          </v-btn>
           <v-btn :disabled="!hasChanges" variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
             _('Discard Changes') }}</v-btn>
           <v-btn @click="showSaveDialog({ entityType: 'incident' })" prepend-icon="mdi-check" variant="outlined" :loading="ui.saving"
@@ -82,6 +160,7 @@
 <script src="/static/js/mixins/form-builder-mixin.js"></script>
 <script src="/static/js/components/FieldListItem.js"></script>
 <script src="/static/js/components/SelectFieldTypeDialog.js"></script>
+<script src="/static/js/components/ShowDetails.js"></script>
 
 <script>
   const { createApp } = Vue;
@@ -103,7 +182,8 @@
 
   app.component('FieldListItem', FieldListItem);
   app.component('SelectFieldTypeDialog', SelectFieldTypeDialog);
-  app.component('draggable', vuedraggable);
+  app.component('Draggable', vuedraggable);
+  app.component('ShowDetails', ShowDetails);
 
   app.use(router);
   app.use(vuetify).mount('#app');
