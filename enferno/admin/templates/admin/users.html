@@ -425,6 +425,7 @@
                                                         :key="role.id"
                                                         :model-value="isAccessRoleSelected(role)"
                                                         @update:model-value="toggleAccessRole(role)"
+                                                        :read-only="editedUserHasAdminRole"
                                                     >
                                                         ${role.name}
                                                     </toggle-button>
