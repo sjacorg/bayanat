@@ -77,7 +77,7 @@
                                 </v-data-table>
                               </v-sheet>
                             </show-details>
-                            <v-btn variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="showRevertDialog(item)">{{ _('Revert to this version') }}</v-btn>
+                            <v-btn v-if="index !== 0" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="showRevertDialog(item)">{{ _('Revert to this version') }}</v-btn>
                         </div>
                     </div>
                 </v-timeline-item>
