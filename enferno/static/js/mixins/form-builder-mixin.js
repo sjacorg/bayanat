@@ -50,8 +50,8 @@ const formBuilderMixin = {
     },
     hasChanges() {
       const changes = this.computeChanges({
-        originalFields: this.formBuilder.originalFields,
-        dynamicFields: this.formBuilder.dynamicFields,
+        previousFields: this.formBuilder.originalFields,
+        currentFields: this.formBuilder.dynamicFields,
       });
       return Boolean(changes.create.length || changes.update.length || changes.delete.length);
     },
@@ -154,8 +154,8 @@ const formBuilderMixin = {
     showSaveDialog({ entityType }) {
       this.changes.diff = this.computeChanges({
         ignoreSortOrder: true,
-        originalFields: this.formBuilder.originalFields,
-        dynamicFields: this.formBuilder.dynamicFields,
+        previousFields: this.formBuilder.originalFields,
+        currentFields: this.formBuilder.dynamicFields,
       });
       this.changes.table = this.buildChangesTable(this.changes.diff);
 
@@ -168,11 +168,12 @@ const formBuilderMixin = {
       });
     },
     showRevertDialog(snapshot) {
+      this.formBuilder.showRevisions = false
       this.$refs.revertConfirmDialog.show({
         dialogProps: { width: 780 },
         data: { snapshot },
         onAccept: async () => {
-          this.formBuilder.dynamicFields = snapshot.fields_snapshot;
+          this.formBuilder.dynamicFields = [...snapshot.fields_snapshot];
         },
       });
     },
@@ -358,110 +359,51 @@ const formBuilderMixin = {
 
       this.dragDrop.sortables.main = sortable;
     },
-    computeChanges(options) {
+    computeChanges({
+      previousFields = [],
+      currentFields = [],
+      ignoreSortOrder = false,
+    } = {}) {
       const changes = { create: [], update: [], delete: [] };
-      const originalMap = new Map(options.originalFields.map((f) => [f.id, f]));
-      const currentMap = new Map(options.dynamicFields.map((f) => [f.id, f]));
+
+      const prevMap = new Map(previousFields.map(f => [f.id, f]));
+      const currMap = new Map(currentFields.map(f => [f.id, f]));
 
       const sortObjectKeys = (obj) => {
-        if (Array.isArray(obj)) {
-          return obj.map(sortObjectKeys);
-        } else if (obj && typeof obj === 'object') {
-          return Object.keys(obj)
-            .sort()
-            .reduce((acc, key) => {
-              acc[key] = sortObjectKeys(obj[key]);
-              return acc;
-            }, {});
-        }
+        if (Array.isArray(obj)) return obj.map(sortObjectKeys);
+        if (obj && typeof obj === 'object')
+          return Object.keys(obj).sort().reduce((acc, key) => {
+            acc[key] = sortObjectKeys(obj[key]);
+            return acc;
+          }, {});
         return obj;
       };
 
-      for (const field of options.dynamicFields) {
-        // Deletions
-        if (field.delete) {
-          if (field.id) {
-            changes.delete.push({ id: field.id, item: field });
-            originalMap.delete(field.id);
-          }
-          continue;
-        }
-
-        // Creations
-        if (!field.id || field.id?.startsWith?.('temp-')) {
-          changes.create.push({ item: field });
-        } else {
-          const orig = originalMap.get(field.id);
-          if (orig) {
-            let fieldToCompare = field;
-            let origToCompare = orig;
-
-            // 🔧 Optionally ignore sort_order
-            if (options?.ignoreSortOrder) {
-              const { sort_order, ...restField } = field;
-              const { sort_order: __, ...restOrig } = orig;
-              fieldToCompare = restField;
-              origToCompare = restOrig;
-            }
-
-            const normalizedField = sortObjectKeys(fieldToCompare);
-            const normalizedOrig = sortObjectKeys(origToCompare);
-            const isDifferent = JSON.stringify(normalizedField) !== JSON.stringify(normalizedOrig);
-
-            if (isDifferent || field.moved) {
-              changes.update.push({ id: field.id, item: field });
-            }
-          }
-        }
-      }
-
-      // 🗑️ Deletions — any original item not found in current fields
-      for (const [id, origField] of originalMap.entries()) {
-        if (!currentMap.has(id)) {
-          changes.delete.push({ id, item: origField });
-        }
-      }
-
-      return changes;
-    },
-    computeSnapshotChanges({ previousFields, currentFields, ignoreSortOrder = false, ok }) {
-      const changes = { create: [], update: [], delete: [] };
-
-      const previousMap = new Map(previousFields?.map((f) => [f.id, f]));
-      const currentMap = new Map(currentFields?.map((f) => [f.id, f]));
-
-      const sortObjectKeys = (obj) => {
-        if (Array.isArray(obj)) {
-          return obj.map(sortObjectKeys);
-        } else if (obj && typeof obj === 'object') {
-          return Object.keys(obj)
-            .sort()
-            .reduce((acc, key) => {
-              acc[key] = sortObjectKeys(obj[key]);
-              return acc;
-            }, {});
-        }
-        return obj;
-      };
-
-      // 1️⃣ Detect deletions
-      for (const [id, prevField] of previousMap.entries()) {
-        if (!currentMap.has(id)) {
+      // 🗑️ Detect deletions
+      for (const [id, prevField] of prevMap.entries()) {
+        if (!currMap.has(id)) {
           changes.delete.push({ id, item: prevField });
         }
       }
 
-      // 2️⃣ Detect creations and updates
-      for (const [id, currField] of currentMap.entries()) {
-        const prevField = previousMap.get(id);
+      // ➕ Detect creations and updates
+      for (const currField of currentFields) {
+        const id = currField.id;
+        const prevField = id ? prevMap.get(id) : null;
 
-        // New field (doesn’t exist in previous)
-        if (!prevField) {
-          changes.create.push({ id, item: currField });
+        // If it's marked as deleted (runtime case)
+        if (currField.delete) {
+          if (id) changes.delete.push({ id, item: currField });
           continue;
         }
 
-        // Ignore sort order if requested
+        // Newly created field
+        if (!id || !prevField || id.startsWith?.('temp-')) {
+          changes.create.push({ item: currField });
+          continue;
+        }
+
+        // 🧩 Optionally ignore sort_order
         let fieldToCompare = currField;
         let prevToCompare = prevField;
         if (ignoreSortOrder) {
@@ -471,12 +413,13 @@ const formBuilderMixin = {
           prevToCompare = restPrev;
         }
 
-        // Normalize key order before comparing
+        // Normalize for consistent comparison
         const normalizedCurr = sortObjectKeys(fieldToCompare);
         const normalizedPrev = sortObjectKeys(prevToCompare);
+        const isDifferent =
+          JSON.stringify(normalizedCurr) !== JSON.stringify(normalizedPrev);
 
-        const isDifferent = JSON.stringify(normalizedCurr) !== JSON.stringify(normalizedPrev);
-        if (isDifferent) {
+        if (isDifferent || currField.moved) {
           changes.update.push({ id, item: currField });
         }
       }
@@ -528,8 +471,8 @@ const formBuilderMixin = {
     async save({ entityType }) {
       this.ui.saving = true;
       const diffChanges = this.computeChanges({
-        originalFields: this.formBuilder.originalFields,
-        dynamicFields: this.formBuilder.dynamicFields,
+        previousFields: this.formBuilder.originalFields,
+        currentFields: this.formBuilder.dynamicFields,
       });
       const failedItems = { create: [], update: [], delete: [] };
 
@@ -623,7 +566,7 @@ const formBuilderMixin = {
     },
 
     closeDrawer(open) {
-      this.ui.selectFieldTypeDialog = open;
+      this.ui.selectFieldTypeDialog = Boolean(open);
       this.form.editedItem = {};
     },
     getResponsiveWidth(ui_config) {
