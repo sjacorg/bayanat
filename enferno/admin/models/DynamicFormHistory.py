@@ -35,5 +35,5 @@ class DynamicFormHistory(db.Model, BaseMixin):
             "entity_type": self.entity_type,
             "fields_snapshot": self.fields_snapshot,
             "created_at": DateHelper.serialize_datetime(self.created_at),
-            "user": self.user.to_dict() if self.user else {},
+            "user": self.user.to_dict() if self.user else {"name": "System"},
         }
