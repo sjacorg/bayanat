@@ -3235,6 +3235,11 @@ def api_bulletins(validated_data: dict) -> Response:
                         if item.assigned_to
                         else None
                     ),
+                    "first_peer_reviewer": (
+                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
+                        if item.first_peer_reviewer
+                        else None
+                    ),
                     "roles": (
                         [
                             {"id": role.id, "name": role.name, "color": role.color}
@@ -4311,6 +4316,11 @@ def api_actors(validated_data: dict) -> Response:
                     "assigned_to": (
                         {"id": item.assigned_to.id, "name": item.assigned_to.name}
                         if item.assigned_to
+                        else None
+                    ),
+                    "first_peer_reviewer": (
+                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
+                        if item.first_peer_reviewer
                         else None
                     ),
                     "roles": (
@@ -5595,6 +5605,11 @@ def api_incidents(validated_data: dict) -> Response:
                     "assigned_to": (
                         {"id": item.assigned_to.id, "name": item.assigned_to.name}
                         if item.assigned_to
+                        else None
+                    ),
+                    "first_peer_reviewer": (
+                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
+                        if item.first_peer_reviewer
                         else None
                     ),
                     "roles": (
