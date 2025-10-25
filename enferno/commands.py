@@ -23,19 +23,31 @@ from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
 from enferno.admin.models import Bulletin
 from enferno.admin.models.DynamicField import DynamicField
+from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
 from enferno.utils.date_helper import DateHelper
+from enferno.utils.form_history_utils import record_form_history
 
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
 
 
+def create_initial_snapshots():
+    """Create initial form history snapshots for all entity types."""
+    for entity_type in ["bulletin", "incident", "actor"]:
+        existing = DynamicFormHistory.query.filter_by(entity_type=entity_type).first()
+        if not existing:
+            record_form_history(entity_type, user_id=None)
+            logger.info(f"Created initial snapshot for {entity_type}")
+
+
 def generate_core_fields():
-    """Generate core fields for bulletins and incidents into the database."""
+    """Generate core fields and create initial form history snapshots."""
     from enferno.admin.models.core_fields import seed_core_fields
 
-    logger.info("Seeding core fields for bulletins and incidents...")
+    logger.info("Seeding core fields...")
     seed_core_fields()
+    create_initial_snapshots()
     logger.info("Core fields seeded successfully")
 
 
