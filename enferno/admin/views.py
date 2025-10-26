@@ -6768,11 +6768,14 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
         # All operations in single transaction
         # Creates
         for item in changes.get("create", []):
+            field_title = item.get("title", "Unknown")
             field, error = create_field(item, entity_type)
             if error:
                 db.session.rollback()
                 status = 500 if error.startswith("Database error:") else 400
-                return HTTPResponse.error(f"Failed to create field: {error}", status=status)
+                return HTTPResponse.error(
+                    f"Failed to create field '{field_title}': {error}", status=status
+                )
             created_count += 1
 
         # Updates
@@ -6780,7 +6783,9 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
             field_id = update_item.get("id")
             if not field_id:
                 continue
-            field, error = update_field(field_id, update_item.get("item", {}))
+            item_data = update_item.get("item", {})
+            field_title = item_data.get("title", f"ID {field_id}")
+            field, error = update_field(field_id, item_data)
             if error:
                 db.session.rollback()
                 if "not found" in error.lower():
@@ -6790,7 +6795,7 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
                 else:
                     status = 400
                 return HTTPResponse.error(
-                    f"Failed to update field {field_id}: {error}", status=status
+                    f"Failed to update field '{field_title}': {error}", status=status
                 )
             updated_count += 1
 
@@ -6800,7 +6805,8 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
                 continue
             field, error = delete_field(field_id)
             if error:
-                logger.warning(f"Failed to delete field {field_id}: {error}")
+                # For deletes, log warning but continue (non-blocking)
+                logger.warning(f"Failed to delete field ID {field_id}: {error}")
                 continue
             deleted_count += 1
 
