@@ -2033,3 +2033,20 @@ class WebImportValidationModel(StrictValidationModel):
             raise ValueError(f"Imports not allowed from {domain}")
 
         return str(v)
+
+
+# Dynamic Field Validation Models
+class DynamicFieldBulkSaveModel(StrictValidationModel):
+    """Validation for bulk save operations."""
+
+    entity_type: str
+    changes: Dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("entity_type")
+    @classmethod
+    def validate_entity_type(cls, v: str) -> str:
+        """Validate entity_type is one of the allowed values."""
+        allowed = ["bulletin", "actor", "incident"]
+        if v not in allowed:
+            raise ValueError(f"entity_type must be one of: {', '.join(allowed)}")
+        return v
