@@ -79,6 +79,7 @@ from enferno.admin.validation.models import (
     ComponentDataMixinRequestModel,
     ConfigRequestModel,
     CountryRequestModel,
+    DynamicFieldBulkSaveModel,
     EventtypeRequestModel,
     GeoLocationTypeRequestModel,
     GraphVisualizeRequestModel,
@@ -125,6 +126,7 @@ from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
+from enferno.utils.dynamic_field_utils import create_field, update_field, delete_field
 from enferno.admin.models.DynamicField import DynamicField
 from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
 
@@ -6734,314 +6736,115 @@ def api_dynamic_field(field_id):
         return HTTPResponse.error(str(e), status=500)
 
 
-@admin.post("/api/dynamic-fields/")
+@admin.post("/api/dynamic-fields/bulk-save")
 @roles_required("Admin")
-def api_dynamic_field_create() -> Response:
+@validate_with(DynamicFieldBulkSaveModel)
+def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
     """
-    Create a new dynamic field.
+    Bulk save dynamic fields (create, update, delete) in a single transaction.
+    Creates only one history snapshot after all changes are applied.
+
+    Request body:
+        {
+            "entity_type": "bulletin|actor|incident",
+            "changes": {
+                "create": [{ field_data }, ...],
+                "update": [{ "id": 123, "item": { field_data } }, ...],
+                "delete": [field_id, ...]
+            }
+        }
 
     Returns:
-        Response with created field data or error message
+        Response with all active fields for the entity type
     """
     try:
-        data = request.get_json()
-        if not data:
-            return HTTPResponse.error("No JSON data provided", status=400)
+        entity_type = validated_data["entity_type"]
+        changes = validated_data.get("changes", {})
 
-        field_data = data["item"]
+        created_count = 0
+        updated_count = 0
+        deleted_count = 0
 
-        # Just basic null checks - let model handle all validation
-        if not field_data.get("title", "").strip():
-            return HTTPResponse.error("Title is required", status=400)
-        # Normalize title length
-        field_data["title"] = field_data["title"].strip()[:100]
+        # All operations in single transaction
+        # Creates
+        for item in changes.get("create", []):
+            field, error = create_field(item, entity_type)
+            if error:
+                db.session.rollback()
+                status = 500 if error.startswith("Database error:") else 400
+                return HTTPResponse.error(f"Failed to create field: {error}", status=status)
+            created_count += 1
 
-        # Generate unique field name: timestamp_ms + random suffix to prevent concurrent collisions
-        timestamp_ms = int(time.time() * 1000)
-        random_suffix = uuid4().hex[:6]
-        field_data["name"] = f"field_{timestamp_ms}_{random_suffix}"
+        # Updates
+        for update_item in changes.get("update", []):
+            field_id = update_item.get("id")
+            if not field_id:
+                continue
+            field, error = update_field(field_id, update_item.get("item", {}))
+            if error:
+                db.session.rollback()
+                if "not found" in error.lower():
+                    status = 404
+                elif error.startswith("Database error:"):
+                    status = 500
+                else:
+                    status = 400
+                return HTTPResponse.error(
+                    f"Failed to update field {field_id}: {error}", status=status
+                )
+            updated_count += 1
 
-        # Handle required field - ensure it gets stored in schema_config
-        schema_config = field_data.get("schema_config", {})
-        if "required" in field_data:
-            schema_config["required"] = field_data["required"]
+        # Deletes
+        for field_id in changes.get("delete", []):
+            if not field_id or str(field_id).startswith("temp-"):
+                continue
+            field, error = delete_field(field_id)
+            if error:
+                logger.warning(f"Failed to delete field {field_id}: {error}")
+                continue
+            deleted_count += 1
 
-        # Create the dynamic field
-        field = DynamicField(
-            name=field_data["name"],
-            title=field_data["title"],
-            entity_type=field_data["entity_type"],
-            field_type=field_data["field_type"],
-            ui_component=field_data.get("ui_component"),
-            schema_config=schema_config,
-            ui_config=field_data.get("ui_config", {}),
-            validation_config=field_data.get("validation_config", {}),
-            options=field_data.get("options", []),
-            active=field_data.get("active", True),
-            searchable=field_data.get("searchable", False),
-            sort_order=field_data.get("sort_order") or 0,
-        )
-
-        # Validate using model logic before saving
-        try:
-            field.validate_field()
-        except ValueError as e:
-            return HTTPResponse.error(str(e), status=400)
-
-        # Save the field
-        if not field.save():
-            return HTTPResponse.error("Failed to save field", status=500)
-
-        # Create the database column
-        try:
-            logger.info(
-                f"Creating column for field: {field.name}, entity_type: {field.entity_type}, field_type: {field.field_type}"
-            )
-            field.create_column()
-            db.session.commit()
-        except Exception as e:
-            # Rollback field creation if column creation fails
-            field.delete()
-            db.session.rollback()
-            logger.error(
-                f"Failed to create column for field {field.name} (entity: {field.entity_type}): {str(e)}"
-            )
-            return HTTPResponse.error(f"Failed to create database column: {str(e)}", status=500)
-
-        # Log activity
-        Activity.create(
-            current_user,
-            Activity.ACTION_CREATE,
-            Activity.STATUS_SUCCESS,
-            {"id": field.id, "name": field.name, "entity_type": field.entity_type},
-            "dynamic_field",
-        )
-
-        try:
-            record_form_history(field.entity_type, current_user.id)
-        except Exception as e:
-            logger.warning(f"Failed to record form history for {field.entity_type}: {e}")
-
-        return HTTPResponse.created(
-            message=f"Created dynamic field '{field.name}'", data={"item": field.to_dict()}
-        )
-
-    except Exception as e:
-        logger.error(f"Error creating dynamic field: {str(e)}")
-        db.session.rollback()
-        return HTTPResponse.error("An error occurred while creating the field", status=500)
-
-
-@admin.put("/api/dynamic-fields/<int:field_id>")
-@roles_required("Admin")
-def api_dynamic_field_update(field_id: int) -> Response:
-    """
-    Update an existing dynamic field.
-
-    Args:
-        field_id: ID of the field to update
-
-    Returns:
-        Response with updated field data or error message
-    """
-    try:
-        data = request.get_json()
-        if not data:
-            return HTTPResponse.error("No JSON data provided", status=400)
-
-        field_data = data["item"]
-
-        # Minimal validation for update - only title can't be empty
-        if "title" in field_data:
-            if not field_data["title"].strip():
-                return HTTPResponse.error("Title cannot be empty", status=400)
-            field_data["title"] = field_data["title"].strip()[:100]
-
-        # Get the existing field
-        stmt = select(DynamicField).where(DynamicField.id == field_id)
-        field = db.session.execute(stmt).scalars().first()
-
-        if not field:
-            return HTTPResponse.error("Field not found", status=404)
-
-        # Store original values for rollback if needed
-        original_name = field.name
-        original_field_type = field.field_type
-
-        # Disable field name changes for safety
-        if field_data.get("name") and field_data["name"] != original_name:
-            return HTTPResponse.error(
-                "Field name cannot be changed. Create a new field instead.",
-                status=400,
-            )
-
-        # Check if field type is changing (not allowed for existing fields with data)
-        if field_data["field_type"] != original_field_type:
-            return HTTPResponse.error(
-                "Cannot change field type of existing field. Create a new field instead.",
-                status=400,
-            )
-
-        # Core fields can only update: title, active, sort_order
-        if field.core:
-            field.title = field_data.get("title", field.title)
-            field.active = field_data.get("active", field.active)
-            field.sort_order = field_data.get("sort_order", field.sort_order)
-        else:
-            # Handle required field - ensure it gets stored in schema_config
-            schema_config = field_data.get("schema_config", {})
-            if "required" in field_data:
-                schema_config["required"] = field_data["required"]
-
-            # Prevent max_length changes after field creation (immutable after creation)
-            if field.field_type == "text":
-                old_max_length = field.schema_config.get("max_length")
-                new_max_length = schema_config.get("max_length")
-
-                if old_max_length != new_max_length:
-                    return HTTPResponse.error(
-                        "Cannot change max_length after field creation. Create a new field instead.",
-                        status=400,
-                    )
-
-            # Dynamic fields can update everything
-            field.name = field_data["name"]
-            field.title = field_data["title"]
-            field.entity_type = field_data["entity_type"]
-            field.ui_component = field_data.get("ui_component")
-            field.schema_config = schema_config
-            field.ui_config = field_data.get("ui_config", field.ui_config or {})
-            field.validation_config = field_data.get(
-                "validation_config", field.validation_config or {}
-            )
-            field.options = field_data.get("options", field.options or [])
-            field.active = field_data.get("active", True)
-            field.searchable = field_data.get("searchable", False)
-            field.sort_order = field_data.get("sort_order", field.sort_order)
-
-        # Field name changes are disabled, so no column rename needed
-
-        # Save the updated field
-        if not field.save():
-            db.session.rollback()
-            return HTTPResponse.error("Failed to update field", status=500)
-
+        # Commit all changes at once
         db.session.commit()
 
-        # Log activity
-        Activity.create(
-            current_user,
-            Activity.ACTION_UPDATE,
-            Activity.STATUS_SUCCESS,
-            {"id": field.id, "name": field.name, "entity_type": field.entity_type},
-            "dynamic_field",
-        )
-
-        try:
-            record_form_history(field.entity_type, current_user.id)
-        except Exception as e:
-            logger.warning(f"Failed to record form history for {field.entity_type}: {e}")
-
-        return HTTPResponse.success(
-            message=f"Updated dynamic field '{field.name}'", data={"item": field.to_dict()}
-        )
-
-    except Exception as e:
-        logger.error(f"Error updating dynamic field: {str(e)}")
-        db.session.rollback()
-        return HTTPResponse.error("An error occurred while updating the field", status=500)
-
-
-@admin.delete("/api/dynamic-fields/<int:field_id>")
-@roles_required("Admin")
-def api_dynamic_field_delete(field_id: int) -> Response:
-    """
-    Delete a dynamic field (soft delete by default).
-
-    Args:
-        field_id: ID of the field to delete
-
-    Returns:
-        Response confirming deletion or error message
-    """
-    try:
-        # Get the existing field
-        stmt = select(DynamicField).where(DynamicField.id == field_id)
-        field = db.session.execute(stmt).scalars().first()
-
-        if not field:
-            return HTTPResponse.error("Field not found", status=404)
-
-        field_name = field.name
-        field_entity = field.entity_type
-
-        # Check for force delete parameter
-        force_delete = request.args.get("force", "false").lower() == "true"
-
-        if force_delete:
-            # Hard delete: remove column and field record
-            try:
-                field.drop_column()
-                field.delete()
-                db.session.commit()
-
-                # Log activity
-                Activity.create(
-                    current_user,
-                    Activity.ACTION_DELETE,
-                    Activity.STATUS_SUCCESS,
-                    {"id": field_id, "name": field_name, "entity_type": field_entity},
-                    "dynamic_field",
-                )
-
-                try:
-                    record_form_history(field_entity, current_user.id)
-                except Exception as e:
-                    logger.warning(f"Failed to record form history for {field_entity}: {e}")
-
-                return HTTPResponse.success(
-                    message=f"Permanently deleted dynamic field '{field_name}'"
-                )
-
-            except Exception as e:
-                logger.error(f"Failed to delete field {field_name}: {str(e)}")
-                db.session.rollback()
-                return HTTPResponse.error("Failed to delete field and column", status=500)
-        else:
-            # Soft delete: mark as inactive
-            field.active = False
-
-            if not field.save():
-                db.session.rollback()
-                return HTTPResponse.error("Failed to deactivate field", status=500)
-
-            db.session.commit()
-
-            # Log activity
+        # Log activity after successful commit
+        if created_count > 0 or updated_count > 0 or deleted_count > 0:
             Activity.create(
                 current_user,
                 Activity.ACTION_UPDATE,
                 Activity.STATUS_SUCCESS,
                 {
-                    "id": field.id,
-                    "name": field.name,
-                    "entity_type": field.entity_type,
-                    "action": "deactivated",
+                    "entity_type": entity_type,
+                    "created": created_count,
+                    "updated": updated_count,
+                    "deleted": deleted_count,
                 },
-                "dynamic_field",
+                "dynamic_field_bulk",
             )
 
-            try:
-                record_form_history(field.entity_type, current_user.id)
-            except Exception as e:
-                logger.warning(f"Failed to record form history for {field.entity_type}: {e}")
+        # Record single history snapshot
+        try:
+            record_form_history(entity_type, current_user.id)
+        except Exception as e:
+            logger.warning(f"Failed to record form history for {entity_type}: {e}")
 
-            return HTTPResponse.success(message=f"Deactivated dynamic field '{field_name}'")
+        # Return all active fields
+        stmt = (
+            select(DynamicField)
+            .where(DynamicField.entity_type == entity_type, DynamicField.active == True)
+            .order_by(DynamicField.sort_order)
+        )
+        fields = db.session.execute(stmt).scalars().all()
+
+        return HTTPResponse.success(
+            message=f"Bulk save completed: {created_count} created, {updated_count} updated, {deleted_count} deleted",
+            data={"fields": [f.to_dict() for f in fields]},
+        )
 
     except Exception as e:
-        logger.error(f"Error deleting dynamic field: {str(e)}")
+        logger.error(f"Error in bulk save: {str(e)}")
         db.session.rollback()
-        return HTTPResponse.error("An error occurred while deleting the field", status=500)
+        return HTTPResponse.error(f"Bulk save failed: {str(e)}", status=500)
 
 
 @admin.get("/api/dynamic-fields/history/<entity_type>")
