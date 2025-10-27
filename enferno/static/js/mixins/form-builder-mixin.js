@@ -445,34 +445,36 @@ const formBuilderMixin = {
     },
     async save({ entityType }) {
       this.ui.saving = true;
-      const diffChanges = this.computeChanges({
-        previousFields: this.formBuilder.originalFields,
-        currentFields: this.formBuilder.dynamicFields,
-      });
 
-      const payload = {
-        entity_type: entityType,
-        changes: {
-          create: diffChanges.create.map(({ item }) => item),
-          update: diffChanges.update,
-          delete: diffChanges.delete.map(({ id }) => id),
-        },
-      };
-
-      api
-        .post(`/admin/api/dynamic-fields/bulk-save`, payload)
-        .then((res) => {
-          this.formBuilder.originalFields = res.data.fields;
-          this.formBuilder.dynamicFields = res.data.fields;
-          this.resetHistory();
-          this.showSnack(res.message || window.translations.fieldsSavedSuccessfully_);
-          this.fetchDynamicFields({ entityType });
-        }).catch((err) => {
-          console.error('Bulk save error:', err);
-          this.showSnack(handleRequestError(err));
-        }).finally(() => {
-          this.ui.saving = false;
+      try {
+        const diffChanges = this.computeChanges({
+          previousFields: this.formBuilder.originalFields,
+          currentFields: this.formBuilder.dynamicFields,
         });
+
+        const payload = {
+          entity_type: entityType,
+          changes: {
+            create: diffChanges.create.map(({ item }) => item),
+            update: diffChanges.update,
+            delete: diffChanges.delete.map(({ id }) => id),
+          },
+        };
+
+        const res = await api.post(`/admin/api/dynamic-fields/bulk-save`, payload);
+
+        this.formBuilder.originalFields = res.data.fields;
+        this.formBuilder.dynamicFields = res.data.fields;
+        this.resetHistory();
+        this.showSnack(res.message || window.translations.fieldsSavedSuccessfully_);
+        this.fetchDynamicFields({ entityType });
+      } catch (err) {
+        console.error('Bulk save error:', err);
+        this.showSnack(handleRequestError(err));
+        throw err; // rethrow for confirm dialog
+      } finally {
+        this.ui.saving = false;
+      }
     },
 
     closeDrawer(open) {
