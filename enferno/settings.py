@@ -278,6 +278,9 @@ class Config(object):
     BACKUPS_AWS_SECRET_ACCESS_KEY = os.environ.get("BACKUPS_AWS_SECRET_ACCESS_KEY")
     BACKUPS_AWS_REGION = os.environ.get("BACKUPS_AWS_REGION")
 
+    # System Updates
+    UPDATE_GRACE_PERIOD_MINUTES = int(os.environ.get("UPDATE_GRACE_PERIOD_MINUTES", "15"))
+
     # Setup Wizard
     SETUP_COMPLETE = manager.get_config("SETUP_COMPLETE")
 
@@ -619,6 +622,9 @@ class TestConfig:
     BACKUPS_AWS_ACCESS_KEY_ID = None
     BACKUPS_AWS_SECRET_ACCESS_KEY = None
     BACKUPS_AWS_REGION = None
+
+    # System Updates (1 minute for fast tests)
+    UPDATE_GRACE_PERIOD_MINUTES = 1
 
     @classmethod
     def get(cls, key, default=None):
