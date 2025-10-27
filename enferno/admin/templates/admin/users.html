@@ -275,9 +275,9 @@
 
                         <template v-slot:item.access_level="{ item }">
                             <template v-if="item.access_level">
-                                <v-chip v-for="level in item?.access_level" class="ma-1">
-                                    <v-icon start size="x-large">${getIconFromAccessLevel(level)}</v-icon>
-                                    ${level.name}
+                                <v-chip class="ma-1">
+                                    <v-icon start size="x-large">${getIconFromAccessLevel(item?.access_level)}</v-icon>
+                                    ${item?.access_level?.name}
                                 </v-chip>
                             </template>
                             <template v-else>
@@ -837,9 +837,12 @@
                     if (this.options?.twoFactor) params.append('twoFactor', this.options.twoFactor);
 
                     api.get(`/admin/api/users/?${params.toString()}`)
-                        .then(res => {
-                            this.items = res.data.items;
-                            this.itemsLength = res.data.total;
+                        .then(response => {
+                            this.items = response.data.items.map(user => ({
+                                ...user,
+                                access_level: this.computeAccessLevel(user)
+                            }))
+                            this.itemsLength = response.data.total;
                         })
                         .catch(err => {
                             console.error(err?.response?.data);
@@ -894,7 +897,10 @@
                 editItem(item) {
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
-                    this.editedItem = {...item};
+                    this.editedItem = {
+                        ...item,
+                        access_level: this.computeAccessLevel(item)
+                    };
                     this.isUsernameAvailable = false;
                     this.initialUsername = item.username;
                     this.dialog = true;
@@ -944,6 +950,8 @@
                     this.saving = true;
 
                     const payload = this.applyAccessLevelRules({...this.editedItem});
+                    if (payload.access_level) delete payload.access_level; // 👈 access_level is only used on frontend
+                    if (payload.access_roles) delete payload.access_roles; // 👈 TODO: Remove this line once it's supported by backend
 
                     // edit mode
                     if (payload.id) {
@@ -1017,8 +1025,18 @@
                     this.refresh({ ...this.options, q: evt })
                 }, 350),
                 updateAccessLevel(index) {
+                    if (typeof index === 'undefined') return;
                     const selectedAccessLevel = this.accessLevels[index] || this.accessLevels[0];
                     this.editedItem.access_level = selectedAccessLevel;
+
+                    if (selectedAccessLevel.value === 'full_access') {
+                        this.roles.find(role => {
+                            if (role.name.toLowerCase() === 'admin') {
+                                this.editedItem.roles = [role];
+                                this.checkRoles();
+                            }
+                        });
+                    }
                 },
                 applyAccessLevelRules(item) {
                     const { value } = item.access_level;
@@ -1036,6 +1054,22 @@
                     }
 
                     return item
+                },
+                computeAccessLevel(user) {
+                    if (!user.active) {
+                        return { name: "Disabled", value: "disabled" };
+                    }
+
+                    const hasSystemRole = Array.isArray(user.roles) && user.roles.length > 0;
+
+                    if (hasSystemRole) {
+                        return { name: "Full Access", value: "full_access" };
+                    } else {
+                        return { name: "Read Only", value: "view_only" };
+                    }
+
+                    // Future support
+                    // if (someCondition) return { name: "Write Only", value: "write_only" };
                 }
             }
         });
