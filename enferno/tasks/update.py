@@ -1,13 +1,18 @@
 """Background system update task with locking and progress tracking."""
 
+from datetime import datetime, timedelta, timezone
+
 from enferno.utils.maintenance import disable_maintenance, enable_maintenance
 from enferno.utils.update_utils import (
     start_update,
     end_update,
     set_update_message,
+    is_update_running,
 )
-from enferno.admin.models import SystemInfo, UpdateHistory
+from enferno.admin.models import SystemInfo, UpdateHistory, Notification
+from enferno.admin.constants import Constants
 from enferno.settings import Config
+from enferno.extensions import rds
 
 
 def perform_system_update_task(skip_backup: bool = False) -> dict:
@@ -20,7 +25,6 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
     dependency (enferno.commands imports enferno.tasks).
     """
     from enferno.commands import run_system_update
-    from enferno.extensions import rds
 
     # Clear schedule flag - update is starting now, is_update_running() takes over
     rds.delete("bayanat:update:scheduled")
@@ -58,3 +62,55 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
         if lock_acquired:
             disable_maintenance()
         end_update()
+
+
+def schedule_system_update_with_grace_period(skip_backup: bool = False) -> dict:
+    """
+    Schedule a system update with grace period notification.
+
+    Notifies all users about the pending update, then schedules the actual
+    update task to run after the grace period using Celery ETA.
+
+    Args:
+        skip_backup: Whether to skip database backup during update
+
+    Returns:
+        dict with success status, message, and scheduled time
+    """
+    # Guard against concurrent updates or double-scheduling
+    schedule_key = "bayanat:update:scheduled"
+    if rds.exists(schedule_key) or is_update_running():
+        return {"success": False, "error": "Update already in progress or scheduled"}
+
+    grace_minutes = Config.UPDATE_GRACE_PERIOD_MINUTES
+    scheduled_time = datetime.now(timezone.utc) + timedelta(minutes=grace_minutes)
+
+    # Notify all users about the pending update
+    Notification.send_notification_to_all_users(
+        event=Constants.NotificationEvent.SYSTEM_UPDATE_PENDING,
+        title="System Update Scheduled",
+        message=f"Bayanat will be updated in {grace_minutes} minutes. Please save your work and log out.",
+        category=Constants.NotificationCategories.ANNOUNCEMENT.value,
+        is_urgent=True,
+    )
+
+    # Import lazily to avoid circular dependency
+    from enferno.tasks import perform_system_update
+
+    # Schedule the actual update using Celery ETA
+    # Let Celery generate task ID (avoids collision, still cancellable)
+    try:
+        task = perform_system_update.apply_async(
+            kwargs={"skip_backup": skip_backup}, eta=scheduled_time
+        )
+        # Only set Redis flag AFTER successful enqueue (prevents false blocks if Celery fails)
+        rds.setex(schedule_key, grace_minutes * 60, scheduled_time.isoformat())
+    except Exception as e:
+        return {"success": False, "error": f"Failed to schedule update: {str(e)}"}
+
+    return {
+        "success": True,
+        "message": f"Update scheduled for {grace_minutes} minutes from now",
+        "scheduled_at": scheduled_time.isoformat(),
+        "task_id": task.id,
+    }
