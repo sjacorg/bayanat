@@ -59,7 +59,7 @@
                 <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="item.id" dot-color="primary" size="10">
                     <div class="mt-n1">
                         <div>
-                            <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
+                            <div><b v-if="item?.user?.username">${item.user.username}</b><b v-else>{{ _('System') }}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
                             <show-details show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
                               <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
                                 <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeChanges({ previousFields: formBuilder.historyState.items?.[index + 1]?.fields_snapshot || [], currentFields: item.fields_snapshot }))" :headers="[
