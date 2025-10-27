@@ -142,13 +142,21 @@ const formBuilderMixin = {
         delete: translations.deleted_,
       };
 
-      return Object.entries(diff).flatMap(([changeType, change]) =>
-        change.map((item) => ({
-          title: item.item.title || window.translations.newField_,
-          type: changeTypeTranslations[changeType],
-          key: changeType,
-        })),
+      // Collect all deleted IDs first
+      const deletedIds = new Set(diff.delete?.map(item => item.id));
+
+      const changes = Object.entries(diff).flatMap(([changeType, items]) =>
+        items
+          // Skip create/update if the same field was deleted
+          .filter(item => !deletedIds.has(item.id) || changeType === 'delete')
+          .map(item => ({
+            title: item.item.title || window.translations.newField_,
+            type: changeTypeTranslations[changeType],
+            key: changeType,
+          }))
       );
+
+      return changes;
     },
 
     showSaveDialog({ entityType }) {
@@ -379,25 +387,19 @@ const formBuilderMixin = {
         return obj;
       };
 
-      // 🗑️ Detect deletions
+      // 🗑️ Detect removed items (hard deletions)
       for (const [id, prevField] of prevMap.entries()) {
         if (!currMap.has(id)) {
           changes.delete.push({ id, item: prevField });
         }
       }
 
-      // ➕ Detect creations and updates
+      // ➕ Detect creations, updates, and soft deletions
       for (const currField of currentFields) {
         const id = currField.id;
         const prevField = id ? prevMap.get(id) : null;
 
-        // If it's marked as deleted (runtime case)
-        if (currField.delete) {
-          if (id) changes.delete.push({ id, item: currField });
-          continue;
-        }
-
-        // Newly created field
+        // Newly created
         if (!id || !prevField || id.startsWith?.('temp-')) {
           changes.create.push({ item: currField });
           continue;
@@ -419,8 +421,14 @@ const formBuilderMixin = {
         const isDifferent =
           JSON.stringify(normalizedCurr) !== JSON.stringify(normalizedPrev);
 
+        // 📝 Any field differences = update
         if (isDifferent || currField.moved) {
           changes.update.push({ id, item: currField });
+        }
+
+        // 🚫 Soft delete = add to delete list as well
+        if (currField.delete) {
+          changes.delete.push({ id, item: currField });
         }
       }
 
@@ -466,7 +474,7 @@ const formBuilderMixin = {
         this.formBuilder.originalFields = res.data.fields;
         this.formBuilder.dynamicFields = res.data.fields;
         this.resetHistory();
-        this.showSnack(res.message || window.translations.fieldsSavedSuccessfully_);
+        this.showSnack(window.translations.fieldsSavedSuccessfully_);
         this.fetchDynamicFields({ entityType });
       } catch (err) {
         console.error('Bulk save error:', err);
