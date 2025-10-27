@@ -246,7 +246,7 @@ const UserCard = Vue.defineComponent({
                       hide-left-icon
                       :model-value="true"
                     >
-                      <v-icon start size="x-large">{{ $root.getIconFromAccessLevel(user?.access_level) }}</v-icon>
+                      <v-icon start size="large">{{ $root.getIconFromAccessLevel(user?.access_level) }}</v-icon>
                       {{ user?.access_level?.name }}
                     </toggle-button>
                   </template>
@@ -256,7 +256,7 @@ const UserCard = Vue.defineComponent({
                       hide-left-icon
                       :model-value="true"
                     >
-                      <v-icon start size="x-large">mdi-account-cancel</v-icon>
+                      <v-icon start size="large">mdi-account-cancel</v-icon>
                       {{ translations.disabled_ }}
                     </toggle-button>
                   </template>

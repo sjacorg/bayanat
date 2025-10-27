@@ -274,15 +274,15 @@
                         </template>
 
                         <template v-slot:item.access_level="{ item }">
-                            <template v-if="item.access_level">
+                            <template v-if="item?.access_level">
                                 <v-chip class="ma-1">
-                                    <v-icon start size="x-large">${getIconFromAccessLevel(item?.access_level)}</v-icon>
+                                    <v-icon start size="large">${getIconFromAccessLevel(item?.access_level)}</v-icon>
                                     ${item?.access_level?.name}
                                 </v-chip>
                             </template>
                             <template v-else>
                                 <v-chip class="ma-1">
-                                    <v-icon start size="x-large">mdi-account-cancel</v-icon>
+                                    <v-icon start size="large">mdi-account-cancel</v-icon>
                                     {{ _('Disabled') }}
                                 </v-chip>
                             </template>
@@ -400,16 +400,15 @@
                                             <v-col v-if="['full_access'].includes(editedItem.access_level?.value)" cols="12" md="6">
                                                 <div class="mb-3 text-body-1">{{ _('System Role') }}</div>
                                                 <div class="d-flex flex-wrap ga-3 mb-7">
-                                                    <toggle-button
-                                                        v-for="role in roles"
-                                                        :key="role.id"
-                                                        :model-value="isRoleSelected(role)"
-                                                        @update:model-value="toggleRole(role)"
-                                                        @close="editedItem.roles = []"
-                                                        hide-left-icon
+                                                    <v-btn-toggle
+                                                        :model-value="Math.max(roles.findIndex(role => editedItem?.roles?.some(r => r?.id === role?.id)), 0)"
+                                                        @update:model-value="updateSystemRole($event)"
+                                                        variant="outlined"
+                                                        divided
+                                                        color="primary"
                                                     >
-                                                        ${role.name}
-                                                    </toggle-button>
+                                                        <v-btn v-for="(role) in roles" :key="role?.id">${role.name}</v-btn>
+                                                    </v-btn-toggle>
                                                 </div>
                                             </v-col>
                                             <v-col v-if="['view_only', 'full_access'].includes(editedItem.access_level?.value)" cols="12" md="6">
@@ -588,7 +587,7 @@
 
             computed: {
                 editedUserHasAdminRole() {
-                    return this.editedItem?.roles?.some(role => role.id === this.adminRoleId) ?? false;
+                    return this.editedItem?.roles?.some(role => role?.id === this.adminRoleId) ?? false;
                 },
                 isNewUser() {
                     return !this.editedItem?.id;
@@ -1000,12 +999,10 @@
                         this.saving = false;
                     }
                 },
-                isRoleSelected(role) {
-                    return this.editedItem?.roles?.some(r => r.id === role.id)
-                },
-                toggleRole(role) {
+                updateSystemRole(index) {
+                    const selectedRole = this.roles?.[index] || this.roles[0];
                     if (!this.editedItem?.roles) this.editedItem.roles = []
-                    this.editedItem.roles = [role]
+                    this.editedItem.roles = [selectedRole];
                     this.checkRoles();
                 },
                 isAccessRoleSelected(role) {
@@ -1041,9 +1038,9 @@
                     }
                 },
                 applyAccessLevelRules(item) {
-                    const { value } = item.access_level;
+                    const { value } = item?.access_level || {};
 
-                    if (value === 'disabled') {
+                    if (!value || value === 'disabled') {
                         item.active = false;
                         item.roles = [];
                     } else if (value === 'view_only') {
@@ -1067,7 +1064,7 @@
                     if (hasSystemRole) {
                         return { name: "Full Access", value: "full_access" };
                     } else {
-                        return { name: "Read Only", value: "view_only" };
+                        return { name: "View Only", value: "view_only" };
                     }
 
                     // Future support
