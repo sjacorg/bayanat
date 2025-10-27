@@ -427,31 +427,6 @@ const formBuilderMixin = {
       return changes;
     },
 
-    mergeFailedItems(dynamicFields, failedItems) {
-      const merged = [...dynamicFields];
-
-      // Failed creates: add directly
-      for (const { item } of failedItems.create) {
-        merged.push(item);
-      }
-
-      // Failed updates: overwrite by id with edited version
-      for (const { id, item } of failedItems.update) {
-        const idx = merged.findIndex((f) => f.id === id);
-        if (idx !== -1) merged[idx] = item;
-        else merged.push(item);
-      }
-
-      // Failed deletes: mark as inactive
-      for (const { id, item } of failedItems.delete) {
-        const idx = merged.findIndex((f) => f.id === id);
-        if (idx !== -1) merged[idx] = { ...item, active: false };
-        else merged.push({ ...item, active: false });
-      }
-
-      return merged;
-    },
-
     isTargetRowHorizontal(target) {
       if (!target) return false;
 
@@ -474,96 +449,30 @@ const formBuilderMixin = {
         previousFields: this.formBuilder.originalFields,
         currentFields: this.formBuilder.dynamicFields,
       });
-      const failedItems = { create: [], update: [], delete: [] };
 
-      try {
-        const requests = [];
+      const payload = {
+        entity_type: entityType,
+        changes: {
+          create: diffChanges.create.map(({ item }) => item),
+          update: diffChanges.update,
+          delete: diffChanges.delete.map(({ id }) => id),
+        },
+      };
 
-        // Create
-        for (const { item } of diffChanges.create) {
-          const { id, ...payload } = item;
-
-          requests.push(
-            api
-              .post(`/admin/api/dynamic-fields/`, { item: payload })
-              .then((res) => {
-                // ✅ mark as saved
-                this.formBuilder.originalFields.push(res.data.item);
-              })
-              .catch((err) => {
-                failedItems.create.push({ item });
-                throw err;
-              }),
-          );
-        }
-
-        // Update
-        for (const { id, item } of diffChanges.update) {
-          requests.push(
-            api
-              .put(`/admin/api/dynamic-fields/${id}`, { item })
-              .then((res) => {
-                const idx = this.formBuilder.originalFields.findIndex((f) => f.id === id);
-                if (idx !== -1) this.formBuilder.originalFields[idx] = res.data.item;
-              })
-              .catch((err) => {
-                failedItems.update.push({ id, item });
-                throw err;
-              }),
-          );
-        }
-
-        // Delete
-        for (const { id, item } of diffChanges.delete) {
-          if (!id || id.startsWith?.('temp-')) continue;
-
-          requests.push(
-            api
-              .delete(`/admin/api/dynamic-fields/${id}`)
-              .then(() => {
-                const originalField = this.formBuilder.originalFields.find((f) => f.id === id);
-                if (originalField) originalField.active = false;
-              })
-              .catch((err) => {
-                failedItems.delete.push({ id, item });
-                throw err;
-              }),
-          );
-        }
-
-        this.resetHistory();
-        // Run all in parallel, but don’t throw
-        const results = await Promise.allSettled(requests);
-
-        const failed = results.filter((r) => r.status === 'rejected');
-        if (failed.length > 0) {
-          console.log('Some requests failed:', failed);
-          this.showSnack(failed.map((r) => handleRequestError(r.reason)).join('<br />'));
-
-          this.formBuilder.dynamicFields = this.mergeFailedItems(
-            this.formBuilder.originalFields,
-            failedItems,
-          );
-
-          // Only keep failed items in the diff
-          this.changes.diff = {
-            create: failedItems.create,
-            update: failedItems.update,
-            delete: failedItems.delete,
-          };
-          this.changes.table = this.buildChangesTable(this.changes.diff);
-          throw failed?.[0]?.reason;
-        } else {
-          this.showSnack(window.translations.fieldsSavedSuccessfully_);
-          await this.fetchDynamicFields({ entityType });
-        }
-      } catch (err) {
-        console.error(err);
-        this.showSnack(handleRequestError(err));
-        throw err;
-      } finally {
-        this.ui.saving = false;
-      }
+      api
+        .post(`/admin/api/dynamic-fields/bulk-save`, payload)
+        .then((res) => {
+          this.formBuilder.originalFields = res.data.fields;
+          this.formBuilder.dynamicFields = res.data.fields;
+          this.resetHistory();
+          this.showSnack(res.message || window.translations.fieldsSavedSuccessfully_);
+          this.fetchDynamicFields({ entityType });
+        }).catch((err) => {
+          console.error('Bulk save error:', err);
+          this.showSnack(handleRequestError(err));
+        }).finally(() => {
+          this.ui.saving = false;
+        });
     },
 
     closeDrawer(open) {
