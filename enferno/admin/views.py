@@ -27,6 +27,7 @@ from flask_security.twofactor import tf_disable
 import shortuuid
 
 from enferno.tasks import perform_system_update, perform_version_check
+from enferno.tasks.update import schedule_system_update_with_grace_period
 from enferno.utils.update_utils import get_update_status, is_update_running
 
 from enferno.admin.constants import Constants
@@ -6615,6 +6616,27 @@ def api_trigger_system_update() -> Response:
         return HTTPResponse.error(f"Failed to queue update task: {str(e)}", 500)
 
     return HTTPResponse.success(data={"task_id": task.id}, message="Update started", status=202)
+
+
+@admin.route("/api/system/update/schedule", methods=["POST"])
+@auth_required("session")
+@roles_required("Admin")
+def api_schedule_system_update() -> Response:
+    """Schedule system update with grace period - notifies all users first."""
+    data = request.get_json(silent=True) or {}
+    skip_backup = bool(data.get("skip_backup", False))
+
+    result = schedule_system_update_with_grace_period(skip_backup=skip_backup)
+
+    if result.get("success"):
+        return HTTPResponse.success(
+            data={"task_id": result["task_id"], "scheduled_at": result["scheduled_at"]},
+            message=result["message"],
+            status=202,
+        )
+    else:
+        # 409 Conflict - update already scheduled (not a server error)
+        return HTTPResponse.error(result.get("error", "Failed to schedule update"), 409)
 
 
 @admin.route("/api/system/update/status", methods=["GET"])
