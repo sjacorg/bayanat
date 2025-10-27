@@ -81,14 +81,35 @@
                     {{ _('Check for Updates') }}
                 </v-btn>
 
-                <v-btn
-                    v-if="!isUpToDate && !updating"
-                    @click="confirmUpdate"
-                    prepend-icon="mdi-download"
-                    color="primary"
-                    variant="elevated">
-                    {{ _('Update System') }}
-                </v-btn>
+                <v-menu v-if="!isUpToDate && !updating">
+                    <template v-slot:activator="{ props }">
+                        <v-btn
+                            v-bind="props"
+                            prepend-icon="mdi-download"
+                            append-icon="mdi-menu-down"
+                            color="primary"
+                            variant="elevated">
+                            {{ _('Update System') }}
+                        </v-btn>
+                    </template>
+                    <v-list>
+                        <v-list-item @click="confirmScheduledUpdate">
+                            <template v-slot:prepend>
+                                <v-icon>mdi-clock-outline</v-icon>
+                            </template>
+                            <v-list-item-title>{{ _('Schedule Update') }}</v-list-item-title>
+                            <v-list-item-subtitle>{{ _('In 15 minutes with user notification') }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item @click="confirmUpdate">
+                            <template v-slot:prepend>
+                                <v-icon>mdi-flash</v-icon>
+                            </template>
+                            <v-list-item-title>{{ _('Update Now') }}</v-list-item-title>
+                            <v-list-item-subtitle>{{ _('Immediately (no grace period)') }}</v-list-item-subtitle>
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
 
                 <v-spacer></v-spacer>
 
@@ -194,10 +215,10 @@
     </v-card>
 </v-dialog>
 
-<!-- Update Confirmation Dialog -->
+<!-- Update Confirmation Dialog (Immediate) -->
 <v-dialog v-model="showConfirm" max-width="500">
     <v-card>
-        <v-card-title>{{ _('Confirm System Update') }}</v-card-title>
+        <v-card-title>{{ _('Confirm Immediate Update') }}</v-card-title>
         <v-divider></v-divider>
 
         <v-card-text class="py-6">
@@ -205,7 +226,7 @@
                 type="warning"
                 icon="mdi-alert"
                 class="mb-4">
-                {{ _('The system will be temporarily unavailable during the update.') }}
+                {{ _('The system will be immediately unavailable during the update.') }}
             </v-alert>
 
             <p>{{ _('Update from version') }} <strong>{{ currentVersion }}</strong> {{ _('to') }} <strong>{{ latestVersion }}</strong>?</p>
@@ -223,7 +244,43 @@
                 color="primary"
                 variant="elevated"
                 :loading="updating">
-                {{ _('Proceed with Update') }}
+                {{ _('Update Now') }}
+            </v-btn>
+        </v-card-actions>
+    </v-card>
+</v-dialog>
+
+<!-- Scheduled Update Confirmation Dialog -->
+<v-dialog v-model="showScheduledConfirm" max-width="500">
+    <v-card>
+        <v-card-title>{{ _('Schedule System Update') }}</v-card-title>
+        <v-divider></v-divider>
+
+        <v-card-text class="py-6">
+            <v-alert
+                type="info"
+                icon="mdi-clock-outline"
+                class="mb-4">
+                {{ _('All users will be notified about the scheduled update.') }}
+            </v-alert>
+
+            <p>{{ _('Update from version') }} <strong>{{ currentVersion }}</strong> {{ _('to') }} <strong>{{ latestVersion }}</strong></p>
+            <p class="mt-4">{{ _('The update will start in') }} <strong>15 {{ _('minutes') }}</strong>.</p>
+            <p class="text-caption text-disabled mt-2">{{ _('Users will receive a notification to save their work and log out.') }}</p>
+        </v-card-text>
+
+        <v-divider></v-divider>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="showScheduledConfirm = false" variant="text">
+                {{ _('Cancel') }}
+            </v-btn>
+            <v-btn
+                @click="triggerScheduledUpdate"
+                color="primary"
+                variant="elevated"
+                :loading="scheduling">
+                {{ _('Schedule Update') }}
             </v-btn>
         </v-card-actions>
     </v-card>
@@ -251,10 +308,12 @@
             lastCheckTime: '',
             checking: false,
             updating: false,
+            scheduling: false,
             updateProgress: 0,
             updateStatus: 'Initializing update...',
             showHistory: false,
             showConfirm: false,
+            showScheduledConfirm: false,
             autoCheck: true,
             releaseNotes: null,
             updateHistory: [],
@@ -289,6 +348,34 @@
 
             confirmUpdate() {
                 this.showConfirm = true;
+            },
+
+            confirmScheduledUpdate() {
+                this.showScheduledConfirm = true;
+            },
+
+            triggerScheduledUpdate() {
+                this.showScheduledConfirm = false;
+                this.scheduling = true;
+
+                // Call the new scheduled update endpoint
+                api.post('/admin/api/system/update/schedule', {
+                    skip_backup: false
+                }).then(response => {
+                    this.scheduling = false;
+                    this.showSnack('Update scheduled successfully. Users have been notified.', 'success');
+
+                    // Show update as in progress
+                    this.updating = true;
+                    this.updateStatus = `Update will start in 15 minutes at ${new Date(response.data.scheduled_at).toLocaleTimeString()}`;
+
+                    // Start polling for when update actually starts
+                    this.pollUpdateStatus();
+                }).catch(error => {
+                    this.scheduling = false;
+                    const errorMsg = error.response?.data?.message || 'Failed to schedule update';
+                    this.showSnack(errorMsg, 'error');
+                });
             },
 
             triggerUpdate() {
