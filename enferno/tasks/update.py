@@ -20,6 +20,10 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
     dependency (enferno.commands imports enferno.tasks).
     """
     from enferno.commands import run_system_update
+    from enferno.extensions import rds
+
+    # Clear schedule flag - update is starting now, is_update_running() takes over
+    rds.delete("bayanat:update:scheduled")
 
     lock_acquired = False
 
