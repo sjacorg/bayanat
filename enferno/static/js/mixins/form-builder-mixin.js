@@ -401,7 +401,13 @@ const formBuilderMixin = {
 
         // Newly created
         if (!id || !prevField || id.startsWith?.('temp-')) {
-          changes.create.push({ item: currField });
+          if (!currField.delete) {
+            changes.create.push({ item: currField }); // always push create
+          } else {
+            // If deleted immediately, also push delete
+            changes.delete.push({ id: currField.id || `temp-${Math.random()}`, item: currField });
+          }
+
           continue;
         }
 
