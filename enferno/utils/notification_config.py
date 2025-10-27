@@ -125,4 +125,9 @@ NOTIFICATIONS_DEFAULT_CONFIG = {
         "email_enabled": True,
         "category": Constants.NotificationCategories.UPDATE.value,
     },
+    NotificationEvent.SYSTEM_UPDATE_PENDING.value: {
+        "in_app_enabled": True,
+        "email_enabled": False,
+        "category": Constants.NotificationCategories.ANNOUNCEMENT.value,
+    },
 }
