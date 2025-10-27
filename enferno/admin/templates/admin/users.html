@@ -693,7 +693,7 @@
 
                 showUser(user_id) {
                     api.get(`/admin/api/user/${user_id}`).then(response => {
-                        this.user = response.data;
+                        this.user = { ...response.data, access_level: this.computeAccessLevel(response.data) };
                         this.userDrawer = true;
                     }).catch(err => {
                         console.error(err);
@@ -702,7 +702,7 @@
                 },
                 refreshUser(user_id) {
                     api.get(`/admin/api/user/${user_id}`).then(response => {
-                        this.user = response.data;
+                        this.user = { ...response.data, access_level: this.computeAccessLevel(response.data) };
                     })
                 },
 
@@ -1036,6 +1036,8 @@
                                 this.checkRoles();
                             }
                         });
+                    } else {
+                        this.editedItem.roles = []
                     }
                 },
                 applyAccessLevelRules(item) {
