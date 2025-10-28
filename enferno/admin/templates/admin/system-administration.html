@@ -971,7 +971,7 @@
                             </div>
 
                             <!-- System updates tab -->
-                            <div v-if="tab === 'systemUpdates'">
+                            <div v-if="tab === 'system-updates'">
                                 <v-card :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <v-row>
                                         <v-col cols="12" lg="6">
@@ -1234,7 +1234,7 @@
                     locations: { text: "{{ _('Location') }}" },
                     notifications: { text: "{{ _('Notifications') }}" },
                     mail: { text: "{{ _('Mail') }}" },
-                    systemUpdates: { text: "{{ _('System Updates') }}" },
+                    ['system-updates']: { text: "{{ _('System Updates') }}" },
                 },
 
 
