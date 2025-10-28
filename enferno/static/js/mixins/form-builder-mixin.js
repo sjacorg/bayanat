@@ -223,11 +223,17 @@ const formBuilderMixin = {
         acceptProps: { text: window.translations.deleteField_, color: 'red' },
         dialogProps: { width: 780 },
         onAccept: () => {
-          const dynamicField = this.formBuilder.dynamicFields.find(
-            (dynamicField) => dynamicField.id === field.id,
-          );
-          dynamicField.active = false;
-          dynamicField.deleted = true;
+          if (String(field.id).startsWith('temp-')) {
+            this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.filter(
+              (dynamicField) => dynamicField.id !== field.id,
+            );
+          } else {
+            const dynamicField = this.formBuilder.dynamicFields.find(
+              (dynamicField) => dynamicField.id === field.id,
+            );
+            dynamicField.active = false;
+            dynamicField.deleted = true;
+          }
 
           this.$root.$toast({
             message: window.translations.fieldHasBeenDeletedSuccessfully_(
