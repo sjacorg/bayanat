@@ -551,6 +551,7 @@ class DynamicField(db.Model, BaseMixin):
             "validation_config": self.validation_config,
             "options": self.options,
             "active": self.active,
+            "deleted": self.deleted,
             "sort_order": self.sort_order,
             "core": self.core,
         }
