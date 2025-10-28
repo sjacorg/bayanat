@@ -116,6 +116,10 @@ def update_field(field_id, field_data):
         field.title = field_data.get("title", field.title)
         field.active = field_data.get("active", field.active)
         field.sort_order = field_data.get("sort_order", field.sort_order)
+
+        # Clear deleted flag when reactivating
+        if field.active and field.deleted:
+            field.deleted = False
     else:
         # Handle schema_config
         schema_config = field_data.get("schema_config", {})
@@ -141,6 +145,10 @@ def update_field(field_id, field_data):
         field.searchable = field_data.get("searchable", field.searchable)
         field.sort_order = field_data.get("sort_order", field.sort_order)
 
+        # Clear deleted flag when reactivating
+        if field.active and field.deleted:
+            field.deleted = False
+
         # Validate updated field (custom fields only)
         try:
             field.validate_field()
@@ -164,7 +172,7 @@ def update_field(field_id, field_data):
 
 def delete_field(field_id):
     """
-    Soft-delete a dynamic field by marking it inactive.
+    Soft-delete a dynamic field by marking it inactive and deleted.
 
     Args:
         field_id: ID of the field to delete
@@ -179,8 +187,9 @@ def delete_field(field_id):
     if not field:
         return None, "Field not found"
 
-    # Soft delete by marking inactive
+    # Soft delete: mark inactive AND deleted
     field.active = False
+    field.deleted = True
 
     try:
         db.session.add(field)
