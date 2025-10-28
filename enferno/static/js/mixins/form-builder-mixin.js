@@ -474,9 +474,17 @@ const formBuilderMixin = {
         const payload = {
           entity_type: entityType,
           changes: {
-            create: diffChanges.create.map(({ item }) => item),
-            update: diffChanges.update,
-            delete: diffChanges.delete.map(({ id }) => id).filter(id => !id.toString().startsWith('temp-')), // only existing IDs
+            create: diffChanges.create.map(({ item }) => {
+              const { deleted, ...rest } = item;
+              return rest;
+            }),
+            update: diffChanges.update.map(({ id, item }) => {
+              const { deleted, ...rest } = item;
+              return { id, item: rest };
+            }),
+            delete: diffChanges.delete
+              .map(({ id }) => id)
+              .filter(id => !id.toString().startsWith('temp-')), // only existing IDs
           },
         };
 
