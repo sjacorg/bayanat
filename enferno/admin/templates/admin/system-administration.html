@@ -969,6 +969,58 @@
                                     </v-slide-y-transition>
                                 </v-card>
                             </div>
+
+                            <!-- System updates tab -->
+                            <div v-if="tab === 'systemUpdates'">
+                                <v-card :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <v-row>
+                                        <v-col cols="12" lg="6">
+                                            <h4 class="subtitle-2 mb-n1">{{ _('Auto Update') }}</h4>
+                                            <v-switch color="primary" v-model="eitem.AUTO_UPDATE_ENABLED" hide-details></v-switch>
+                                            <div class="text-caption text-medium-emphasis" style="line-height: 1.5">{{ _('This setting will enable the system to automatically install new updates when they become available, without requiring manual action from the user.') }}</div>
+                                        </v-col>
+                                    </v-row>
+
+                                    <v-divider class="my-5"></v-divider>
+
+                                    <h4 class="subtitle-2 mb-2">{{ _('Auto Update') }}</h4>
+                                    <div class="text-caption text-medium-emphasis mb-2" style="line-height: 1.5">{{ _('This setting will enable the system to automatically install new updates when they become available, without requiring manual action from the user.') }}</div>
+                            
+                                    <v-row>
+                                        <v-col cols="12" lg="6">
+                                            <pop-date-field :prepend-icon="null" prepend-inner-icon="mdi-calendar" v-bind="inputProps" label="{{ _('Date') }}" v-model="eitem.AUTO_UPDATE_DATE" clearable></pop-date-field>
+                                        </v-col>
+                                    
+                                        <v-col cols="12" lg="6">
+                                            <v-text-field
+                                                :model-value="formatUpdateTime(eitem.AUTO_UPDATE_TIME)"
+                                                label="{{ _('Time') }}"
+                                                prepend-inner-icon="mdi-clock-time-four-outline"
+                                                readonly
+                                                v-bind="inputProps"
+                                                clearable
+                                                @click:clear="eitem.AUTO_UPDATE_TIME = null; showUpdateTimeMenu = true;"
+                                            >
+                                                <v-menu
+                                                    v-model="showUpdateTimeMenu"
+                                                    :close-on-content-click="false"
+                                                    activator="parent"
+                                                    min-width="0"
+                                                >
+                                                    <v-time-picker v-model="eitem.AUTO_UPDATE_TIME"></v-time-picker>
+                                                </v-menu>
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+
+                                    <v-divider class="my-5"></v-divider>
+
+                                    <div class="d-flex">
+                                        <v-spacer></v-spacer>
+                                        <v-btn append-icon="mdi-arrow-right" color="primary" variant="text">{{ _('Go to Updates') }}</v-btn>
+                                    </div>
+                                </v-card>
+                            </div>
                         </div>
                     </v-card>
                 </div>
@@ -1107,6 +1159,7 @@
 {% block js %}
 
     <script src="/static/js/diff-tool.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/ShowDetails.js"></script>
     <script src="/static/js/components/DiffRenderer.js"></script>
@@ -1181,6 +1234,7 @@
                     locations: { text: "{{ _('Location') }}" },
                     notifications: { text: "{{ _('Notifications') }}" },
                     mail: { text: "{{ _('Mail') }}" },
+                    systemUpdates: { text: "{{ _('System Updates') }}" },
                 },
 
 
@@ -1210,6 +1264,7 @@
                 ltItem: {},
                 translations: window.translations,
                 whisperModels: [],
+                showUpdateTimeMenu: false,
             }),
 
 
@@ -1247,6 +1302,11 @@
             },
 
             methods: {
+                formatUpdateTime(time) {
+                    const parsedDate = dayjs(time, 'HH:mm')
+                    if (!parsedDate.isValid()) return ''
+                    return parsedDate.format(this.dateFormats.standardTime)
+                },
                 loadWhisperModels(){
                     api.get('/import/api/whisper/models/').then(res => {
                         this.whisperModels = res.data.models;
@@ -1445,6 +1505,7 @@
                 }
             }
         });
+        app.component('PopDateField', PopDateField);
         app.component('GeoMap', GeoMap);
         app.component('ShowDetails', ShowDetails);
         app.component('DiffRenderer', DiffRenderer);
