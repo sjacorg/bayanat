@@ -201,13 +201,12 @@ const formBuilderMixin = {
       }
     },
     async toggleFieldVisibility({ field }) {
-      const matchingField = this.formBuilder.dynamicFields.find(
+      const fieldToUpdate = this.formBuilder.dynamicFields.find(
         (dynamicField) => dynamicField.id === field.id,
       );
-      matchingField.active = !matchingField.active;
-      if (matchingField.active && matchingField?.delete) {
-        delete matchingField.delete;
-      }
+
+      fieldToUpdate.active = !fieldToUpdate.active;
+      if (fieldToUpdate.active) fieldToUpdate.deleted = false;
     },
     reindexFields() {
       this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.map((field, index) => ({
@@ -228,7 +227,7 @@ const formBuilderMixin = {
             (dynamicField) => dynamicField.id === field.id,
           );
           dynamicField.active = false;
-          dynamicField.delete = true;
+          dynamicField.deleted = true;
 
           this.$root.$toast({
             message: window.translations.fieldHasBeenDeletedSuccessfully_(
@@ -401,7 +400,7 @@ const formBuilderMixin = {
 
         // Newly created
         if (!id || !prevField || id.startsWith?.('temp-')) {
-          if (!currField.delete) {
+          if (!currField.deleted) {
             changes.create.push({ item: currField }); // always push create
           } else {
             // If deleted immediately, also push delete
@@ -433,7 +432,7 @@ const formBuilderMixin = {
         }
 
         // 🚫 Soft delete = add to delete list as well
-        if (currField.delete) {
+        if (currField.deleted && !prevField.deleted) {
           changes.delete.push({ id, item: currField });
         }
       }

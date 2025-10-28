@@ -75,6 +75,7 @@ const SelectFieldTypeDialog = Vue.defineComponent({
           active: true,
           searchable: true,
           core: false,
+          deleted: null,
         };
 
 
