@@ -12,6 +12,9 @@ def record_form_history(entity_type: str, user_id: int) -> DynamicFormHistory:
     """
     Record a snapshot of the current form layout for an entity type.
 
+    Captures ALL fields (active, inactive, deleted) to enable accurate
+    diff comparison and complete audit trail.
+
     Args:
         entity_type: The entity being modified (bulletin, actor, incident)
         user_id: ID of the user making the change
@@ -20,7 +23,7 @@ def record_form_history(entity_type: str, user_id: int) -> DynamicFormHistory:
         The created DynamicFormHistory record
     """
     fields = (
-        DynamicField.query.filter_by(entity_type=entity_type, active=True)
+        DynamicField.query.filter_by(entity_type=entity_type)
         .order_by(DynamicField.sort_order)
         .all()
     )
