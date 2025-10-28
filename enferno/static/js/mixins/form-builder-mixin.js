@@ -470,7 +470,7 @@ const formBuilderMixin = {
           changes: {
             create: diffChanges.create.map(({ item }) => item),
             update: diffChanges.update,
-            delete: diffChanges.delete.map(({ id }) => id),
+            delete: diffChanges.delete.map(({ id }) => id).filter(id => !id.toString().startsWith('temp-')), // only existing IDs
           },
         };
 
