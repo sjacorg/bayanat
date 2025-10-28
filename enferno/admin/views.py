@@ -6297,6 +6297,13 @@ def system_admin() -> str:
     """Endpoint for system administration."""
     return render_template("admin/system-administration.html")
 
+@admin.get("/system-updates/")
+@auth_required(within=15, grace=0)
+@roles_required("Admin")
+def system_updates() -> str:
+    """Endpoint for system updates."""
+    return render_template("admin/system-updates.html")
+
 
 @admin.get("/api/appconfig/")
 @roles_required("Admin")
