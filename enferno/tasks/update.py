@@ -40,9 +40,10 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
 
         # Log out all users before maintenance mode
         set_update_message("Logging out all users...")
-        session_keys = rds.keys("session:*")
+        session_redis = current_app.config["SESSION_REDIS"]
+        session_keys = session_redis.keys("session:*")
         if session_keys:
-            rds.delete(*session_keys)
+            session_redis.delete(*session_keys)
 
         set_update_message("Enabling maintenance mode...")
         if not enable_maintenance("System is being updated. Please wait..."):
