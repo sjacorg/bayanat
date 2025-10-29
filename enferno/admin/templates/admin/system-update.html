@@ -62,7 +62,7 @@
                     <div>
                         <div class="mb-3 d-flex ga-3 align-center">
                             {{ _('System Update:') }}
-                            <span>Bayanat v${currentVersion}</span>
+                            <span>Bayanat v${latestVersion}</span>
                             <v-chip v-if="isUpToDate" color="primary">{{ _('Latest') }}</v-chip>
                             <v-chip v-else color="primary">{{ _('Available for Update') }}</v-chip>
                         </div>
@@ -148,7 +148,7 @@
                 </div> -->
                 <div class="d-flex align-center justify-space-between mb-1">
                     <div>
-                        Version: Bayanat v2.9.0
+                        Version: Bayanat v${currentVersion}
                     </div>
                     <div>
                         <v-btn append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>
@@ -239,7 +239,7 @@
                 {{ _('The system will be immediately unavailable during the update.') }}
             </v-alert>
 
-            <p>{{ _('Update from version') }} <strong>{{ currentVersion }}</strong> {{ _('to') }} <strong>{{ latestVersion }}</strong>?</p>
+            <p>{{ _('Update from version') }} <strong>${currentVersion}</strong> {{ _('to') }} <strong>${latestVersion}</strong>?</p>
             <p class="text-caption text-disabled mt-4">{{ _('This process typically takes a few minutes.') }}</p>
         </v-card-text>
 
@@ -274,7 +274,7 @@
                 {{ _('All users will be notified about the scheduled update.') }}
             </v-alert>
 
-            <p>{{ _('Update from version') }} <strong>{{ currentVersion }}</strong> {{ _('to') }} <strong>{{ latestVersion }}</strong></p>
+            <p>{{ _('Update from version') }} <strong>${currentVersion}</strong> {{ _('to') }} <strong>${latestVersion}</strong></p>
             <p class="mt-4">{{ _('The update will start in') }} <strong>15 {{ _('minutes') }}</strong>.</p>
             <p class="text-caption text-disabled mt-2">{{ _('Users will receive a notification to save their work and log out.') }}</p>
         </v-card-text>
