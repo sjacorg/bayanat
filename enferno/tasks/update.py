@@ -1,6 +1,7 @@
 """Background system update task with locking and progress tracking."""
 
 from datetime import datetime, timedelta, timezone
+from flask import current_app
 
 from enferno.utils.maintenance import disable_maintenance, enable_maintenance
 from enferno.utils.update_utils import (
@@ -36,6 +37,12 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
         if not start_update("Acquiring lock..."):
             return {"success": False, "error": "Update already running"}
         lock_acquired = True
+
+        # Log out all users before maintenance mode
+        set_update_message("Logging out all users...")
+        session_keys = rds.keys("session:*")
+        if session_keys:
+            rds.delete(*session_keys)
 
         set_update_message("Enabling maintenance mode...")
         if not enable_maintenance("System is being updated. Please wait..."):
@@ -89,7 +96,7 @@ def schedule_system_update_with_grace_period(skip_backup: bool = False) -> dict:
     Notification.send_notification_to_all_users(
         event=Constants.NotificationEvent.SYSTEM_UPDATE_PENDING,
         title="System Update Scheduled",
-        message=f"Bayanat will be updated in {grace_minutes} minutes. Please save your work and log out.",
+        message=f"Bayanat will be updated in {grace_minutes} minutes. You will be automatically logged out when the update starts. Please save your work.",
         category=Constants.NotificationCategories.ANNOUNCEMENT.value,
         is_urgent=True,
     )
