@@ -175,16 +175,6 @@ const formBuilderMixin = {
         },
       });
     },
-    showRevertDialog(snapshot) {
-      this.formBuilder.showRevisions = false
-      this.$refs.revertConfirmDialog.show({
-        dialogProps: { width: 780 },
-        data: { snapshot },
-        onAccept: async () => {
-          this.formBuilder.dynamicFields = [...snapshot.fields_snapshot];
-        },
-      });
-    },
     getSearchOperatorFromFieldType(field) {
       switch (field.field_type) {
         case 'text':
