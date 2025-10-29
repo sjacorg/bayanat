@@ -6834,10 +6834,10 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
         except Exception as e:
             logger.warning(f"Failed to record form history for {entity_type}: {e}")
 
-        # Return all active fields
+        # Return all fields (including inactive and deleted)
         stmt = (
             select(DynamicField)
-            .where(DynamicField.entity_type == entity_type, DynamicField.active == True)
+            .where(DynamicField.entity_type == entity_type)
             .order_by(DynamicField.sort_order)
         )
         fields = db.session.execute(stmt).scalars().all()
