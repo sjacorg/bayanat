@@ -490,11 +490,10 @@ const formBuilderMixin = {
 
         const res = await api.post(`/admin/api/dynamic-fields/bulk-save`, payload);
 
-        this.formBuilder.originalFields = res.data.fields;
         this.formBuilder.dynamicFields = res.data.fields;
+        this.formBuilder.originalFields = deepClone(res.data.fields);
         this.resetHistory();
         this.showSnack(window.translations.fieldsSavedSuccessfully_);
-        this.fetchDynamicFields({ entityType });
       } catch (err) {
         console.error('Bulk save error:', err);
         this.showSnack(handleRequestError(err));
