@@ -552,8 +552,15 @@ const formBuilderMixin = {
     },
     sortFields(fields) {
       return fields.sort((a, b) => {
-        return a.sort_order - b.sort_order; // normal sort
-      });
+        const aIsFixed = this.fixedFields.includes(a.name)
+        const bIsFixed = this.fixedFields.includes(b.name)
+
+        if (aIsFixed && !bIsFixed) return 1 // a goes after b
+        if (!aIsFixed && bIsFixed) return -1 // a goes before b
+
+        // normal sort for non-fixed
+        return a.sort_order - b.sort_order
+      })
     },
     loadHistory(options) {
       if (options?.done) {
