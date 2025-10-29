@@ -99,6 +99,8 @@ class Constants:
         WEB_IMPORT_STATUS = "WEB_IMPORT_STATUS"
         NEW_ASSIGNMENT = "NEW_ASSIGNMENT"
         REVIEW_NEEDED = "REVIEW_NEEDED"
+        SYSTEM_UPDATE_AVAILABLE = "SYSTEM_UPDATE_AVAILABLE"
+        SYSTEM_UPDATE_PENDING = "SYSTEM_UPDATE_PENDING"
 
     class NotificationCategories(Enum):
         """

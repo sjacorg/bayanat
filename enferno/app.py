@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-from flask import Flask, render_template, current_app
+from flask import Flask, render_template, current_app, request
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security import current_user
@@ -47,6 +47,7 @@ from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.rate_limit_utils import ratelimit_handler
+from enferno.utils.maintenance import register_maintenance_middleware
 
 logger = get_logger()
 
@@ -85,6 +86,8 @@ def create_app(config_object=Config):
     register_shellcontext(app)
     register_commands(app)
     register_signals(app)
+    register_maintenance_middleware(app)
+
     return app
 
 
@@ -230,16 +233,24 @@ def register_commands(app):
     Args:
         app: Flask application instance
     """
-    app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create_db)
     app.cli.add_command(commands.import_data)
     app.cli.add_command(commands.install)
+    app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
+    app.cli.add_command(commands.apply_migrations)
     app.cli.add_command(commands.generate_config)
+    app.cli.add_command(commands.backup_db)
+    app.cli.add_command(commands.restore_db)
+    app.cli.add_command(commands.enable_maintenance)
+    app.cli.add_command(commands.disable_maintenance)
+    app.cli.add_command(commands.get_version)
+    app.cli.add_command(commands.update_system)
+    app.cli.add_command(commands.check_updates)
 
 
 def register_errorhandlers(app):

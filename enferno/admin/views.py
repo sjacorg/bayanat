@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import shutil
-import unicodedata
+import contextlib
+from io import StringIO
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
@@ -23,6 +25,10 @@ from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
+
+from enferno.tasks import perform_system_update, perform_version_check
+from enferno.tasks.update import schedule_system_update_with_grace_period
+from enferno.utils.update_utils import get_update_status, is_update_running
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
@@ -47,6 +53,7 @@ from enferno.admin.models import (
     LocationAdminLevel,
     LocationType,
     AppConfig,
+    SystemInfo,
     AtobInfo,
     AtoaInfo,
     BtobInfo,
@@ -113,6 +120,7 @@ from enferno.admin.validation.models import (
 )
 from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
+from enferno.settings import Config
 from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
@@ -6613,6 +6621,138 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return HTTPResponse.success(data={"batch_id": data_import.batch_id}, status=202)
+
+
+@admin.route("/api/system/update", methods=["POST"])
+@auth_required("session")
+@roles_required("Admin")
+def api_trigger_system_update() -> Response:
+    """Trigger system update in the background via Celery."""
+    data = request.get_json(silent=True) or {}
+    skip_backup = bool(data.get("skip_backup", False))
+
+    try:
+        task = perform_system_update.delay(skip_backup=skip_backup)
+    except Exception as e:
+        current_app.logger.error(f"Failed to queue update task: {str(e)}")
+        return HTTPResponse.error(f"Failed to queue update task: {str(e)}", 500)
+
+    return HTTPResponse.success(data={"task_id": task.id}, message="Update started", status=202)
+
+
+@admin.route("/api/system/update/schedule", methods=["POST"])
+@auth_required("session")
+@roles_required("Admin")
+def api_schedule_system_update() -> Response:
+    """Schedule system update with grace period - notifies all users first."""
+    data = request.get_json(silent=True) or {}
+    skip_backup = bool(data.get("skip_backup", False))
+
+    result = schedule_system_update_with_grace_period(skip_backup=skip_backup)
+
+    if result.get("success"):
+        return HTTPResponse.success(
+            data={"task_id": result["task_id"], "scheduled_at": result["scheduled_at"]},
+            message=result["message"],
+            status=202,
+        )
+    else:
+        # 409 Conflict - update already scheduled (not a server error)
+        return HTTPResponse.error(result.get("error", "Failed to schedule update"), 409)
+
+
+@admin.route("/api/system/update/status", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_get_system_update_status() -> Response:
+    """Return the current background update status."""
+    status_message = get_update_status()
+    return HTTPResponse.success(
+        data={
+            "status_message": status_message or "Update in progress",
+            "running": is_update_running(),
+        },
+        status=200,
+    )
+
+
+@admin.route("/api/system/status", methods=["GET"])
+@admin.route("/api/system/version/check", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_system_status() -> Response:
+    """Get system status - version info from cache or fresh GitHub check.
+
+    Query params:
+        fresh (bool): If true, checks GitHub directly instead of using cache
+    """
+    from enferno.settings import Config
+
+    current_version = SystemInfo.get_value("app_version") or Config.VERSION
+
+    # Check if fresh check is requested
+    fresh_check = request.args.get("fresh", "").lower() == "true"
+
+    if fresh_check:
+        # Fresh check directly from GitHub
+        try:
+            result = perform_version_check()
+            return (
+                HTTPResponse.success(data=result)
+                if result
+                else HTTPResponse.error("Failed to check version", 503)
+            )
+        except Exception as e:
+            current_app.logger.error(f"Fresh version check failed: {str(e)}")
+            return HTTPResponse.error(f"Version check error: {str(e)}", 500)
+
+    # Use cached data
+    cached_update = rds.get("bayanat:update:latest")
+
+    if cached_update:
+        latest_version, detected_at = cached_update.decode().split("|")
+        return HTTPResponse.success(
+            data={
+                "current_version": current_version,
+                "latest_version": latest_version,
+                "update_available": latest_version != current_version,
+                "checked_at": detected_at,
+            }
+        )
+
+    # No cache yet - return current version
+    return HTTPResponse.success(
+        data={
+            "current_version": current_version,
+            "latest_version": current_version,
+            "update_available": False,
+        }
+    )
+
+
+@admin.route("/system-update/", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def system_update_page():
+    """System update management page."""
+    return render_template("admin/system-update.html")
+
+
+@admin.route("/api/system/update-history", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_get_system_update_history() -> Response:
+    """Get system update history."""
+    try:
+        from enferno.admin.models import UpdateHistory
+
+        # Get recent 10 updates
+        updates = UpdateHistory.query.order_by(desc(UpdateHistory.created_at)).limit(10).all()
+        history = [update.to_dict() for update in updates]
+        return HTTPResponse.success(data={"updates": history})
+    except Exception as e:
+        current_app.logger.error(f"Failed to get update history: {str(e)}")
+        return HTTPResponse.error(f"Failed to get update history: {str(e)}", 500)
 
 
 @admin.route("/api/session-check")

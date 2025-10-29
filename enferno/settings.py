@@ -26,6 +26,13 @@ def uia_username_mapper(identity):
 class Config(object):
     """Base configuration."""
 
+    # Read version from pyproject.toml (single source of truth)
+    from pathlib import Path
+    import tomli
+
+    with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as f:
+        VERSION = tomli.load(f)["project"]["version"]
+
     BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5000/")
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -270,6 +277,9 @@ class Config(object):
     BACKUPS_AWS_ACCESS_KEY_ID = os.environ.get("BACKUPS_AWS_ACCESS_KEY_ID")
     BACKUPS_AWS_SECRET_ACCESS_KEY = os.environ.get("BACKUPS_AWS_SECRET_ACCESS_KEY")
     BACKUPS_AWS_REGION = os.environ.get("BACKUPS_AWS_REGION")
+
+    # System Updates
+    UPDATE_GRACE_PERIOD_MINUTES = int(os.environ.get("UPDATE_GRACE_PERIOD_MINUTES", "15"))
 
     # Setup Wizard
     SETUP_COMPLETE = manager.get_config("SETUP_COMPLETE")
@@ -612,6 +622,9 @@ class TestConfig:
     BACKUPS_AWS_ACCESS_KEY_ID = None
     BACKUPS_AWS_SECRET_ACCESS_KEY = None
     BACKUPS_AWS_REGION = None
+
+    # System Updates (1 minute for fast tests)
+    UPDATE_GRACE_PERIOD_MINUTES = 1
 
     @classmethod
     def get(cls, key, default=None):

@@ -85,6 +85,11 @@ class Role(db.Model, RoleMixin, BaseMixin):
 
     __table_args__ = {"extend_existing": True}
 
+    # define core constant role names
+    ADMIN = "Admin"
+    DATA_ANALYST = "DA"
+    MODERATOR = "Mod"
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     color = db.Column(db.String(10))
