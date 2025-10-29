@@ -209,9 +209,10 @@ const formBuilderMixin = {
       if (fieldToUpdate.active) fieldToUpdate.deleted = false;
     },
     reindexFields() {
+      // Reindex fields but keep fixed fields sort_order intact
       this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.map((field, index) => ({
         ...field,
-        sort_order: index + 1,
+        sort_order: this.fixedFields.includes(field.name) ? field.sort_order : index + 1,
       }));
     },
     async deleteField({ field }) {
@@ -552,13 +553,6 @@ const formBuilderMixin = {
     },
     sortFields(fields) {
       return fields.sort((a, b) => {
-        const aIsFixed = this.fixedFields.includes(a.name)
-        const bIsFixed = this.fixedFields.includes(b.name)
-
-        if (aIsFixed && !bIsFixed) return 1 // a goes after b
-        if (!aIsFixed && bIsFixed) return -1 // a goes before b
-
-        // normal sort for non-fixed
         return a.sort_order - b.sort_order
       })
     },
