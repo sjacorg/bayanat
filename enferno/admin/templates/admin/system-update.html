@@ -2,7 +2,7 @@
 {% block content %}
 <!-- Revision history sidebar -->
 <v-navigation-drawer
-    v-model="historyDrawer"
+    v-model="showHistory"
     location="right"
     temporary
     width="630"
@@ -11,7 +11,7 @@
     <v-card flat>
         <v-card-title class="px-5 py-4 d-flex align-center justify-space-between">
             {{ _('Update History') }}
-            <v-btn density="comfortable" icon="mdi-close" @click="historyDrawer = false"></v-btn>
+            <v-btn density="comfortable" icon="mdi-close" @click="showHistory = false"></v-btn>
         </v-card-title>
 
         <v-divider></v-divider>
@@ -53,7 +53,7 @@
                 <div class="d-flex align-center justify-space-between">
                     <div>
                         <div class="mb-3 d-flex ga-3 align-center">
-                            {{ _('System Update:') }}
+                            {{ _('System Update') }}:
                             <span>Bayanat v${latestVersion}</span>
                             <v-chip v-if="isUpToDate" color="primary">{{ _('Latest') }}</v-chip>
                             <v-chip v-else color="primary">{{ _('Available for Update') }}</v-chip>
@@ -68,7 +68,7 @@
                         </template>
                     </div>
                     <div class="d-flex ga-3">
-                        <v-btn prepend-icon="mdi-history" variant="outlined" @click="historyDrawer = true">{{ _('Update History') }}</v-btn>
+                        <v-btn prepend-icon="mdi-history" variant="outlined" @click="showHistory = true">{{ _('Update History') }}</v-btn>
                         <template v-if="!updating">
                             <v-btn v-if="isUpToDate" @click="checkForUpdates" :loading="checking" prepend-icon="mdi-cached" color="primary" variant="outlined">{{ _('Check for Updates') }}</v-btn>
                             <v-menu v-else>
@@ -142,48 +142,6 @@
         </v-card>
     </v-container>
 </v-main>
-
-<!-- Update History Dialog -->
-<v-dialog v-model="showHistory" max-width="600">
-    <v-card>
-        <v-card-title>{{ _('Update History') }}</v-card-title>
-        <v-divider></v-divider>
-
-        <v-card-text class="py-4">
-            <div v-if="updateHistory.length" class="space-y-4">
-                <div
-                    v-for="update in updateHistory"
-                    :key="update.id"
-                    class="d-flex ga-3 pa-3 bg-surface">
-
-                    <v-icon icon="mdi-check-circle" color="success"></v-icon>
-
-                    <div class="flex-grow-1">
-                        <div class="font-weight-bold">
-                            Updated to version ${ update.version_to }
-                        </div>
-                        <div class="text-caption text-disabled">
-                            ${ formatDate(update.created_at) }
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div v-else class="text-center py-6">
-                <p class="text-caption text-disabled">
-                    {{ _('No updates found') }}
-                </p>
-            </div>
-        </v-card-text>
-
-        <v-divider></v-divider>
-        <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="showHistory = false" variant="text">
-                {{ _('Close') }}
-            </v-btn>
-        </v-card-actions>
-    </v-card>
-</v-dialog>
 
 <!-- Update Confirmation Dialog (Immediate) -->
 <v-dialog v-model="showConfirm" max-width="500">
@@ -281,14 +239,13 @@
             updating: false,
             scheduling: false,
             updateProgress: 0,
-            updateStatus: 'Initializing update...',
+            updateStatus: "{{ _('Initializing update') }}",
             showHistory: false,
             showConfirm: false,
             showScheduledConfirm: false,
             releaseNotes: null,
             updateHistory: [],
             updateTimer: null,
-            historyDrawer: false,
             infiniteScrollCallback: null,
         }),
 
@@ -306,10 +263,10 @@
                 api.get('/admin/api/system/version/check?fresh=true')
                     .then(response => {
                         this.applyVersionInfo(response.data);
-                        this.showSnack('Version check completed', 'success');
+                        this.showSnack("{{ _('Version check completed') }}", 'success');
                     })
                     .catch(error => {
-                        this.showSnack(error.response?.data?.message || 'Failed to check versions', 'error');
+                        this.showSnack(error.response?.data?.message || "{{ _('Failed to check versions') }}", 'error');
                     })
                     .finally(() => {
                         this.checking = false;
@@ -333,17 +290,17 @@
                     skip_backup: false
                 }).then(response => {
                     this.scheduling = false;
-                    this.showSnack('Update scheduled successfully. Users have been notified.', 'success');
+                    this.showSnack("{{ _('Update scheduled successfully. Users have been notified.') }}", 'success');
 
                     // Show update as in progress
                     this.updating = true;
-                    this.updateStatus = `Update will start in 15 minutes at ${new Date(response.data.scheduled_at).toLocaleTimeString()}`;
+                    this.updateStatus = "{{ _('Update will start in 15 minutes at {date}') }}".replace('{date}', dayjs().add(15, 'minute').format(dateFormats.standardDatetime));
 
                     // Start polling for when update actually starts
                     this.pollUpdateStatus();
                 }).catch(error => {
                     this.scheduling = false;
-                    const errorMsg = error.response?.data?.message || 'Failed to schedule update';
+                    const errorMsg = error.response?.data?.message || "{{ _('Failed to schedule update') }}";
                     this.showSnack(errorMsg, 'error');
                 });
             },
@@ -352,7 +309,7 @@
                 this.showConfirm = false;
                 this.updating = true;
                 this.updateProgress = 30;
-                this.updateStatus = 'Starting system update...';
+                this.updateStatus = "{{ _('Starting system update') }}";
 
                 // Trigger the update via existing API endpoint
                 api.post('/admin/api/system/update', {
@@ -361,7 +318,7 @@
                     // Start polling for update status
                     this.pollUpdateStatus();
                 }).catch(error => {
-                    this.showSnack(error.response?.data?.message || 'Update failed', 'error');
+                    this.showSnack(error.response?.data?.message || "{{ _('Update failed') }}", 'error');
                     this.updating = false;
                     if (this.updateTimer) clearInterval(this.updateTimer);
                 });
@@ -374,16 +331,16 @@
                         .then(response => {
                             if (response.data.running) {
                                 this.updateProgress = 50;
-                                this.updateStatus = response.data.status_message || 'System update in progress...';
+                                this.updateStatus = response.data.status_message || "{{ _('System update in progress') }}";
                             } else {
                                 // Update complete
                                 clearInterval(this.updateTimer);
                                 this.updateProgress = 100;
-                                this.updateStatus = 'Update completed successfully!';
+                                this.updateStatus = "{{ _('Update completed successfully!') }}";
                                 this.updating = false;
 
                                 setTimeout(() => {
-                                    this.showSnack('System update completed. Reloading page...', 'success');
+                                    this.showSnack("{{ _('System update completed. Reloading page...') }}", 'success');
                                     setTimeout(() => {
                                         window.location.reload();
                                     }, 2000);
@@ -393,28 +350,9 @@
                         .catch(error => {
                             clearInterval(this.updateTimer);
                             this.updating = false;
-                            this.showSnack(error.response?.data?.message || 'Failed to get update status', 'error');
+                            this.showSnack(error.response?.data?.message || "{{ _('Failed to get update status') }}", 'error');
                         });
                 }, 2000);  // Poll every 2 seconds
-            },
-
-            formatDate(dateString) {
-                if (!dateString) return 'Unknown';
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleString();
-                } catch (e) {
-                    return dateString;
-                }
-            },
-
-            formatDuration(seconds) {
-                const minutes = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                if (minutes > 0) {
-                    return `${minutes}m ${secs}s`;
-                }
-                return `${secs}s`;
             },
 
             loadUpdateHistory(options) {
