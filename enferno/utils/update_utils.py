@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-import json
 from enferno.extensions import rds
 
 STATUS_KEY = "bayanat:update:status"
@@ -32,4 +30,15 @@ def set_update_message(message):
 def get_update_status():
     """Get current update status message or None if not running."""
     data = rds.get(STATUS_KEY)
+    return data.decode() if data else None
+
+
+def is_update_scheduled():
+    """Check if update is scheduled."""
+    return bool(rds.get("bayanat:update:scheduled"))
+
+
+def get_scheduled_update_time():
+    """Get scheduled update time or None if not scheduled."""
+    data = rds.get("bayanat:update:scheduled")
     return data.decode() if data else None
