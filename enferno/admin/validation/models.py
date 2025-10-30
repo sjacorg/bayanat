@@ -2041,8 +2041,6 @@ class ActivityQueryValidationModel(StrictValidationModel):
     def validate_created(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         """Validate created contains valid dates."""
         if v:
-            if len(v) != 2:
-                raise ValueError("created must contain exactly two dates: [start_date, end_date]")
             for date_str in v:
                 try:
                     parse(date_str)
