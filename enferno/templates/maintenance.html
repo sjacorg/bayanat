@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maintenance - Bayanat</title>
+    <title>{{ _('Maintenance') }} - Bayanat</title>
     <style>
         /* Modern CSS reset & base styles */
         * {
@@ -113,7 +113,7 @@
 </head>
 <body>
     <div class="maintenance-container">
-        <h1>System Maintenance</h1>
+        <h1>{{ _('System Maintenance') }}</h1>
         
         <div class="icon-container">
             <!-- Gear SVG icon, inline for simplicity -->
@@ -124,8 +124,8 @@
         </div>
         
         <div class="message">
-            <p>Bayanat is temporarily unavailable while we perform necessary maintenance.</p>
-            <p>We'll be back online as soon as possible. Thank you for your patience.</p>
+            <p>{{ _('Bayanat is temporarily unavailable while we perform necessary maintenance.') }}</p>
+            <p>{{ _('We\'ll be back online as soon as possible. Thank you for your patience.') }}</p>
         </div>
         
         {% if details %}
@@ -135,7 +135,7 @@
         {% endif %}
         
         <div class="footer">
-            &copy; {{ current_year }} Bayanat | Maintenance in Progress
+            &copy; {{ current_year }} Bayanat | {{ _('Maintenance in Progress') }}
         </div>
     </div>
 </body>
