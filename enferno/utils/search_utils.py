@@ -1,7 +1,9 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func, text, select
+from sqlalchemy import or_, not_, and_, func, text, select, literal_column, bindparam
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from sqlalchemy import String, Integer, DateTime
+from sqlalchemy.dialects.postgresql import ARRAY
 from datetime import datetime, time
 
 from enferno.extensions import db
@@ -233,10 +235,10 @@ class SearchUtils:
                     ):
                         value_str = _coerce_text(value)
                         if value_str:
-                            param_name = f"{name}_contains_{len(conditions)}"
+                            param_key = f"{name}_contains_{len(conditions)}"
                             conditions.append(
-                                text(f"{name} ILIKE :{param_name}").bindparams(
-                                    **{param_name: f"%{value_str}%"}
+                                literal_column(name, type_=String()).ilike(
+                                    bindparam(param_key, f"%{value_str}%")
                                 )
                             )
                         continue
@@ -246,9 +248,10 @@ class SearchUtils:
                         try:
                             num = int(value) if value is not None else None
                             if num is not None:
-                                param_name = f"{name}_eq_{len(conditions)}"
+                                param_key = f"{name}_eq_{len(conditions)}"
                                 conditions.append(
-                                    text(f"{name} = :{param_name}").bindparams(**{param_name: num})
+                                    literal_column(name, type_=Integer())
+                                    == bindparam(param_key, num)
                                 )
                         except (TypeError, ValueError):
                             logger.warning(
@@ -262,20 +265,15 @@ class SearchUtils:
                         if isinstance(value, (list, tuple)) and len(value) >= 1:
                             dates = [d for d in value[:2] if d]
                             if dates:
-                                # Use raw SQL for datetime between
                                 start_date = parse(dates[0]).date()
                                 end_date = parse(dates[1]).date() if len(dates) > 1 else start_date
                                 start_datetime = datetime.combine(start_date, time.min)
                                 end_datetime = datetime.combine(end_date, time.max)
                                 suffix = len(conditions)
                                 conditions.append(
-                                    text(
-                                        f"{name} BETWEEN :{name}_start_{suffix} AND :{name}_end_{suffix}"
-                                    ).bindparams(
-                                        **{
-                                            f"{name}_start_{suffix}": start_datetime,
-                                            f"{name}_end_{suffix}": end_datetime,
-                                        }
+                                    literal_column(name, type_=DateTime()).between(
+                                        bindparam(f"{name}_start_{suffix}", start_datetime),
+                                        bindparam(f"{name}_end_{suffix}", end_datetime),
                                     )
                                 )
                         continue
@@ -283,46 +281,40 @@ class SearchUtils:
                     # SELECT field operations
                     if df.field_type == DynamicField.SELECT:
                         values = _normalize_select_values(value)
+                        array_col = literal_column(name, type_=ARRAY(String()))
 
                         if op == "contains":
                             lookup = values[0] if values else ""
                             if lookup:
+                                param_key = f"{name}_contains_{len(conditions)}"
                                 conditions.append(
-                                    text(f"array_to_string({name}, ' ') ILIKE :val").bindparams(
-                                        val=f"%{lookup}%"
+                                    func.array_to_string(array_col, " ").ilike(
+                                        bindparam(param_key, f"%{lookup}%")
                                     )
                                 )
                         elif op == "eq":
                             if values:
-                                param_name = f"{name}_eq_{len(conditions)}"
+                                param_key = f"{name}_eq_{len(conditions)}"
                                 conditions.append(
-                                    text(
-                                        f"{name} IS NOT NULL AND CAST(:{param_name} AS varchar) = ANY({name})"
-                                    ).bindparams(**{param_name: values[0]})
+                                    array_col.contains(
+                                        bindparam(param_key, [values[0]], type_=ARRAY(String()))
+                                    )
                                 )
                         elif op == "any":
                             if values:
-                                suffix = len(conditions)
-                                option_conditions = []
-                                for i, val in enumerate(values):
-                                    param_name = f"{name}_any_{suffix}_{i}"
-                                    option_conditions.append(
-                                        text(
-                                            f"{name} IS NOT NULL AND CAST(:{param_name} AS varchar) = ANY({name})"
-                                        ).bindparams(**{param_name: val})
+                                param_key = f"{name}_any_{len(conditions)}"
+                                conditions.append(
+                                    array_col.overlap(
+                                        bindparam(param_key, values, type_=ARRAY(String()))
                                     )
-                                if option_conditions:
-                                    if len(option_conditions) == 1:
-                                        conditions.append(option_conditions[0])
-                                    else:
-                                        conditions.append(or_(*option_conditions))
+                                )
                         elif op == "all":
                             if values:
-                                param_name = f"{name}_all_{len(conditions)}"
+                                param_key = f"{name}_all_{len(conditions)}"
                                 conditions.append(
-                                    text(
-                                        f"{name} IS NOT NULL AND {name} @> CAST(:{param_name} AS varchar[])"
-                                    ).bindparams(**{param_name: values})
+                                    array_col.contains(
+                                        bindparam(param_key, values, type_=ARRAY(String()))
+                                    )
                                 )
                         continue
 
