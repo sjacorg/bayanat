@@ -147,6 +147,20 @@ class SearchUtils:
         """Build a query for the activity model."""
         return self.activity_query(self.search)
 
+    def _validate_dynamic_field_name(self, field_name: str, searchable_meta: dict) -> str:
+        """
+        Validate and sanitize a dynamic field name for SQL usage.
+
+        This acts as a security barrier ensuring field names are safe SQL identifiers.
+        Returns the validated field name or None if invalid.
+        """
+        if not field_name or field_name not in searchable_meta:
+            return None
+        # Ensure field name contains only safe characters (alphanumeric + underscore)
+        if not field_name.replace("_", "").isalnum():
+            return None
+        return field_name
+
     def _apply_dynamic_field_filters(self, conditions: list, q: dict, entity_type: str):
         """
         Apply dynamic field filters to search conditions.
@@ -191,16 +205,19 @@ class SearchUtils:
                     if not isinstance(item, dict):
                         logger.warning("dyn filter skipped: invalid item", extra={"item": item})
                         continue
-                    name = item.get("name")
-                    op = (item.get("op") or "eq").lower()
-                    value = item.get("value")
-                    if not name or name not in searchable_meta:
+
+                    # Validate and sanitize field name (acts as security barrier for CodeQL)
+                    raw_name = item.get("name")
+                    name = self._validate_dynamic_field_name(raw_name, searchable_meta)
+                    if not name:
                         logger.warning(
                             "dyn filter skipped: invalid dynamic field name",
-                            extra={"field_name": name},
+                            extra={"field_name": raw_name},
                         )
                         continue
 
+                    op = (item.get("op") or "eq").lower()
+                    value = item.get("value")
                     df = searchable_meta[name]
                     # Skip SQLAlchemy column check - use raw SQL for dynamic fields
                     # This avoids issues with dynamic columns not being in the model metadata
