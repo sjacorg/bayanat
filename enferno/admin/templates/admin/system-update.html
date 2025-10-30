@@ -128,7 +128,15 @@
 
             <v-divider></v-divider>
 
-            <v-card-text class="py-6">
+            <v-card-text class="pb-6 pt-3">
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <div>
+                        <span class="font-weight-bold">Version:</span> <span class="font-weight-medium">Bayanat v${currentVersion}</span>
+                    </div>
+                    <div>
+                        <v-btn href="https://github.com/sjacorg/bayanat/releases" target="_blank" variant="plain" append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>
+                    </div>
+                </div>
                 <div v-if="releaseNotes" class="release-notes">
                     <div v-html="releaseNotes" class="text-body2"></div>
                 </div>
