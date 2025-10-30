@@ -58,7 +58,6 @@ from enferno.admin.models import SystemInfo
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
 
 # Simple test detection - use TestConfig if in test environment
-import os
 
 if os.environ.get("BAYANAT_CONFIG_FILE") == "config.test.json":
     from enferno.settings import TestConfig
@@ -1047,7 +1046,7 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} PDF file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing PDF file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1098,7 +1097,7 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} JSON file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing JSON file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1158,7 +1157,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} CSV file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing CSV file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1224,7 +1223,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                 )
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
-                except Exception as e:
+                except Exception:
                     logger.error(
                         f"Error downloading Export #{export_request.id} file from S3.",
                         exc_info=True,
@@ -1306,7 +1305,7 @@ def activity_cleanup_cron() -> None:
     expired_activities = Activity.query.filter(
         datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
     )
-    logger.info(f"Cleaning up Activities...")
+    logger.info("Cleaning up Activities...")
     deleted = expired_activities.delete(synchronize_session=False)
     if deleted:
         db.session.commit()
@@ -1334,7 +1333,7 @@ def daily_backup_cron():
                 os.remove(filepath)
             except FileNotFoundError:
                 logger.error(f"Backup file {filename} not found to delete.", exc_info=True)
-            except OSError as e:
+            except OSError:
                 logger.error(f"Unable to remove backup file {filename}.", exc_info=True)
 
 
@@ -1720,7 +1719,7 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
     flag_modified(data_import, "data")
 
     data_import.add_to_log(f"Downloaded file: {filename}")
-    data_import.add_to_log(f"Format: mp4")
+    data_import.add_to_log("Format: mp4")
     data_import.add_to_log(f"Duration: {info.get('duration')}s")
     data_import.save()
 
