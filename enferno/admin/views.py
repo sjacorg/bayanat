@@ -6730,8 +6730,10 @@ def api_dynamic_fields():
         meta = {"total": total, "limit": limit, "offset": offset}
         return HTTPResponse.success(data={"data": data, "meta": meta})
     except Exception as e:
-        # Log the error and return a generic server error response
-        return HTTPResponse.error(str(e), status=500)
+        logger.error(f"Error retrieving dynamic fields: {str(e)}", exc_info=True)
+        return HTTPResponse.error(
+            "An internal error occurred while retrieving dynamic fields", status=500
+        )
 
 
 @admin.get("/api/dynamic-fields/<int:field_id>")
@@ -6747,8 +6749,10 @@ def api_dynamic_field(field_id):
             return HTTPResponse.not_found("Field not found")
         return HTTPResponse.success(data={"data": field.to_dict(), "meta": {}})
     except Exception as e:
-        # Log the error and return a generic server error response
-        return HTTPResponse.error(str(e), status=500)
+        logger.error(f"Error retrieving dynamic field {field_id}: {str(e)}", exc_info=True)
+        return HTTPResponse.error(
+            "An internal error occurred while retrieving dynamic field", status=500
+        )
 
 
 @admin.post("/api/dynamic-fields/bulk-save")
