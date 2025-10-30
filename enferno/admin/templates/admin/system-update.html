@@ -1,56 +1,113 @@
 {% extends 'layout.html' %}
 {% block content %}
+<!-- Revision history sidebar -->
+<v-navigation-drawer
+    v-model="historyDrawer"
+    location="right"
+    temporary
+    width="630"
+    clipped
+>
+    <v-card flat>
+        <v-card-title class="px-5 py-4 d-flex align-center justify-space-between">
+            {{ _('Update History') }}
+            <v-btn density="comfortable" icon="mdi-close" @click="historyDrawer = false"></v-btn>
+        </v-card-title>
+
+        <v-divider></v-divider>
+
+        <v-card-text class="px-5">
+        <v-infinite-scroll :empty-text="!updateHistory?.length ? '{{ _("No history yet") }}' : '{{ _('No more items in history') }}'" :items="updateHistory" @load="loadUpdateHistory({ ...$event })">
+            <v-timeline density="compact" side="end" align="start">
+                <v-timeline-item v-for="(item, index) in updateHistory" :key="item.id" dot-color="primary" size="10">
+                    <div class="mt-n1">
+                        <div>
+                            <div><b v-if="item?.user?.username">${item.user.username}</b><b v-else>{{ _('System') }}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
+                            <show-details show-more-text="{{ _('See detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+                                <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
+                                    <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="updateHistory" :headers="[
+                                        { title: `{{ _('From') }}`, value: 'version_from' },
+                                        { title: `{{ _('To') }}`, value: 'version_to' },
+                                        { title: `{{ _('Status') }}`, value: 'status' },
+                                    ]"
+                                    >
+                                    </v-data-table>
+                                    <!-- <div>{{ _('The update initiated by admin could not be completed. Please check your network connection or try again later.') }}</div> -->
+                                </v-sheet>
+                            </show-details>
+                        </div>
+                    </div>
+                </v-timeline-item>
+            </v-timeline>
+        </v-infinite-scroll>
+        </v-card-text>
+    </v-card>
+</v-navigation-drawer>
 
 <v-main class="">
     <v-container fluid>
-        <v-card class="pa-4 overflow-y-auto d-flex flex-column" height="calc(100vh - 93px)">
+        <v-card class="pa-4 overflow-y-auto d-flex flex-column" height="calc(100vh - 96px)">
 
             <!-- Header Section -->
-            <v-card-title class="d-flex align-center ga-3">
-                <v-icon icon="mdi-package-up"></v-icon>
-                System Update: Bayanat <strong class="ml-2">${ currentVersion }</strong>
-                <v-spacer></v-spacer>
+            <v-card-title class="px-5 py-5">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <div class="mb-3 d-flex ga-3 align-center">
+                            {{ _('System Update:') }}
+                            <span>Bayanat v${latestVersion}</span>
+                            <v-chip v-if="isUpToDate" color="primary">{{ _('Latest') }}</v-chip>
+                            <v-chip v-else color="primary">{{ _('Available for Update') }}</v-chip>
+                        </div>
+                        <template v-if="isUpToDate">
+                            <div class="text-body-2 mb-2 font-weight-medium">{{ _('Your system is up to date') }}</div>
+                            <div class="text-body-2 mb-2">{{ _('Last successful check for update:') }}<span class="ml-1">${lastCheckTime}</span></div>
+                        </template>
+                        <template v-else>
+                            <div class="text-body-2 mb-2">{{ _('A new version is available') }}</div>
+                            <div class="text-body-2 mb-2">{{ _('Current version:') }}<span class="ml-2 font-weight-medium">Bayanat v${currentVersion}</span></div>
+                        </template>
+                    </div>
+                    <div class="d-flex ga-3">
+                        <v-btn prepend-icon="mdi-history" variant="outlined" @click="historyDrawer = true">{{ _('Update History') }}</v-btn>
+                        <template v-if="!updating">
+                            <v-btn v-if="isUpToDate" @click="checkForUpdates" :loading="checking" prepend-icon="mdi-cached" color="primary" variant="outlined">{{ _('Check for Updates') }}</v-btn>
+                            <v-menu v-else>
+                                <template v-slot:activator="{ props }">
+                                    <v-btn
+                                        v-bind="props"
+                                        prepend-icon="mdi-download"
+                                        append-icon="mdi-menu-down"
+                                        color="primary"
+                                        variant="elevated">
+                                        {{ _('Update System') }}
+                                    </v-btn>
+                                </template>
+                                <v-list>
+                                    <v-list-item @click="confirmScheduledUpdate">
+                                        <template v-slot:prepend>
+                                            <v-icon>mdi-clock-outline</v-icon>
+                                        </template>
+                                        <v-list-item-title>{{ _('Schedule Update') }}</v-list-item-title>
+                                        <v-list-item-subtitle>{{ _('In 15 minutes with user notification') }}</v-list-item-subtitle>
+                                    </v-list-item>
 
-                <v-chip
-                    v-if="isUpToDate"
-                    label
-                    color="success"
-                    prepend-icon="mdi-check"
-                    class="text-white">
-                    Latest
-                </v-chip>
-                <v-chip
-                    v-else
-                    label
-                    color="warning"
-                    prepend-icon="mdi-alert"
-                    class="text-white">
-                    Update Available
-                </v-chip>
+                                    <v-list-item @click="confirmUpdate">
+                                        <template v-slot:prepend>
+                                            <v-icon>mdi-flash</v-icon>
+                                        </template>
+                                        <v-list-item-title>{{ _('Update Now') }}</v-list-item-title>
+                                        <v-list-item-subtitle>{{ _('Immediately (no grace period)') }}</v-list-item-subtitle>
+                                    </v-list-item>
+                                </v-list>
+                            </v-menu>
+                        </template>
+                    </div>
+                </div>
             </v-card-title>
-
-            <v-card-subtitle>
-                <p v-if="isUpToDate">{{ _('Your system is up to date') }}</p>
-                <p v-else>{{ _('A new version is available') }}</p>
-            </v-card-subtitle>
-
-            <v-card-text>
-                <div class="mb-3">
-                    <strong>{{ _('Current Version:') }}</strong> <span>${ currentVersion }</span>
-                </div>
-
-                <div class="mb-3">
-                    <strong>{{ _('Latest Version:') }}</strong> <span>${ latestVersion }</span>
-                </div>
-
-                <div v-if="lastCheckTime" class="text-caption text-disabled">
-                    {{ _('Last check for updates:') }} <strong>${ lastCheckTime }</strong>
-                </div>
-            </v-card-text>
 
             <!-- Update Progress Section -->
             <v-expand-transition>
-                <v-card-text v-if="updating" class="bg-blue-lighten-5">
+                <v-sheet v-if="updating" class="pa-6 bg-blue-lighten-5">
                     <v-row align="center">
                         <v-col cols="12" md="8">
                             <p class="text-subtitle-2 font-weight-bold">{{ _('System Update in Progress') }}</p>
@@ -66,108 +123,21 @@
                             </p>
                         </v-col>
                     </v-row>
-                </v-card-text>
+                </v-sheet>
             </v-expand-transition>
 
-            <!-- Action Buttons -->
-            <v-card-actions>
-                <v-btn
-                    v-if="!updating"
-                    @click="checkForUpdates"
-                    :loading="checking"
-                    prepend-icon="mdi-refresh"
-                    variant="text"
-                    color="primary">
-                    {{ _('Check for Updates') }}
-                </v-btn>
-
-                <v-menu v-if="!isUpToDate && !updating">
-                    <template v-slot:activator="{ props }">
-                        <v-btn
-                            v-bind="props"
-                            prepend-icon="mdi-download"
-                            append-icon="mdi-menu-down"
-                            color="primary"
-                            variant="elevated">
-                            {{ _('Update System') }}
-                        </v-btn>
-                    </template>
-                    <v-list>
-                        <v-list-item @click="confirmScheduledUpdate">
-                            <template v-slot:prepend>
-                                <v-icon>mdi-clock-outline</v-icon>
-                            </template>
-                            <v-list-item-title>{{ _('Schedule Update') }}</v-list-item-title>
-                            <v-list-item-subtitle>{{ _('In 15 minutes with user notification') }}</v-list-item-subtitle>
-                        </v-list-item>
-
-                        <v-list-item @click="confirmUpdate">
-                            <template v-slot:prepend>
-                                <v-icon>mdi-flash</v-icon>
-                            </template>
-                            <v-list-item-title>{{ _('Update Now') }}</v-list-item-title>
-                            <v-list-item-subtitle>{{ _('Immediately (no grace period)') }}</v-list-item-subtitle>
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
-
-                <v-spacer></v-spacer>
-
-                <v-btn
-                    @click="showHistory = true"
-                    prepend-icon="mdi-history"
-                    variant="text">
-                    {{ _('Update History') }}
-                </v-btn>
-            </v-card-actions>
-
             <v-divider></v-divider>
 
-            <!-- Tabs: UPDATE SETTINGS / RELEASE NOTES -->
-            <v-tabs v-model="tab" class="mt-4">
-                <v-tab value="settings" prepend-icon="mdi-cog">
-                    {{ _('UPDATE SETTINGS') }}
-                </v-tab>
-                <v-tab value="notes" prepend-icon="mdi-note-text">
-                    {{ _('RELEASE NOTES') }}
-                </v-tab>
-            </v-tabs>
-
-            <v-divider></v-divider>
-
-            <!-- TAB 1: UPDATE SETTINGS -->
-            <v-window v-model="tab">
-                <v-window-item value="settings">
-                    <v-card flat>
-                        <v-card-text class="py-6">
-                            <v-switch
-                                v-model="autoCheck"
-                                label="Automatically check for updates"
-                                hint="Bayanat will check for new versions every 12 hours"
-                                persistent-hint
-                                color="primary">
-                            </v-switch>
-                        </v-card-text>
-                    </v-card>
-                </v-window-item>
-
-                <!-- TAB 2: RELEASE NOTES -->
-                <v-window-item value="notes">
-                    <v-card flat>
-                        <v-card-text class="py-6">
-                            <div v-if="releaseNotes" class="release-notes">
-                                <h4 class="mb-3 text-h6">{{ _('Version') }} ${ currentVersion }</h4>
-                                <div v-html="releaseNotes" class="text-body2"></div>
-                            </div>
-                            <div v-else class="text-center py-6">
-                                <p class="text-caption text-disabled">
-                                    {{ _('Release notes not yet available') }}
-                                </p>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-window-item>
-            </v-window>
+            <v-card-text class="py-6">
+                <div v-if="releaseNotes" class="release-notes">
+                    <div v-html="releaseNotes" class="text-body2"></div>
+                </div>
+                <div v-else class="text-center py-6">
+                    <p class="text-caption text-disabled">
+                        {{ _('Release notes not yet available') }}
+                    </p>
+                </div>
+            </v-card-text>
 
         </v-card>
     </v-container>
@@ -229,7 +199,7 @@
                 {{ _('The system will be immediately unavailable during the update.') }}
             </v-alert>
 
-            <p>{{ _('Update from version') }} <strong>{{ currentVersion }}</strong> {{ _('to') }} <strong>{{ latestVersion }}</strong>?</p>
+            <p>{{ _('Update from version') }} <strong>${currentVersion}</strong> {{ _('to') }} <strong>${latestVersion}</strong>?</p>
             <p class="text-caption text-disabled mt-4">{{ _('This process typically takes a few minutes.') }}</p>
         </v-card-text>
 
@@ -264,7 +234,7 @@
                 {{ _('All users will be notified about the scheduled update.') }}
             </v-alert>
 
-            <p>{{ _('Update from version') }} <strong>{{ currentVersion }}</strong> {{ _('to') }} <strong>{{ latestVersion }}</strong></p>
+            <p>{{ _('Update from version') }} <strong>${currentVersion}</strong> {{ _('to') }} <strong>${latestVersion}</strong></p>
             <p class="mt-4">{{ _('The update will start in') }} <strong>15 {{ _('minutes') }}</strong>.</p>
             <p class="text-caption text-disabled mt-2">{{ _('Users will receive a notification to save their work and log out.') }}</p>
         </v-card-text>
@@ -289,6 +259,8 @@
 {% endblock %}
 
 {% block js %}
+<script src="/static/js/components/ShowDetails.js"></script>
+
 <script type="module">
     const { createApp } = Vue;
     const { createVuetify } = Vuetify;
@@ -301,7 +273,6 @@
 
         data: () => ({
             drawer: drawer,
-            tab: 'settings',
             currentVersion: '',
             latestVersion: '',
             isUpToDate: true,
@@ -314,10 +285,11 @@
             showHistory: false,
             showConfirm: false,
             showScheduledConfirm: false,
-            autoCheck: true,
             releaseNotes: null,
             updateHistory: [],
             updateTimer: null,
+            historyDrawer: false,
+            infiniteScrollCallback: null,
         }),
 
         methods: {
@@ -325,10 +297,8 @@
                 this.currentVersion = data.current_version || '';
                 this.latestVersion = data.latest_version || '';
                 this.isUpToDate = !data.update_available;
-                if (data.checked_at) {
-                    const checkDate = new Date(data.checked_at);
-                    this.lastCheckTime = checkDate.toLocaleString();
-                }
+                const checkedAt = data?.checked_at ?? new Date();
+                this.lastCheckTime = dayjs(checkedAt).format('MMMM D, YYYY h:mm A');
             },
 
             checkForUpdates() {
@@ -447,13 +417,21 @@
                 return `${secs}s`;
             },
 
-            loadUpdateHistory() {
+            loadUpdateHistory(options) {
+                if (options?.done) {
+                    this.infiniteScrollCallback = options.done;
+                }
+
                 api.get('/admin/api/system/update-history')
                     .then(response => {
                         this.updateHistory = response.data.updates || [];
+
+                        const hasMore = false;
+                        options?.done?.(hasMore ? 'ok' : 'empty');
                     })
                     .catch(error => {
                         console.error('Failed to load update history', error);
+                        options?.done?.('error');
                     });
             },
         },
@@ -467,9 +445,6 @@
             }).catch(error => {
                 console.error('Failed to fetch update info:', error);
             });
-
-            // Load update history
-            this.loadUpdateHistory();
         },
 
         beforeUnmount() {
@@ -479,6 +454,7 @@
         },
     });
 
+    app.component('ShowDetails', ShowDetails);
     app.use(vuetify).mount('#app');
 </script>
 {% endblock %}
