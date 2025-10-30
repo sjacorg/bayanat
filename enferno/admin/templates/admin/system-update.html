@@ -71,11 +71,12 @@
                         <v-btn prepend-icon="mdi-history" variant="outlined" @click="showHistory = true">{{ _('Update History') }}</v-btn>
                         <v-btn v-if="isUpToDate" @click="checkForUpdates" :loading="checking" prepend-icon="mdi-cached" color="primary" variant="outlined">{{ _('Check for Updates') }}</v-btn>
                         <v-menu v-else>
-                            <template v-slot:activator="{ props }">
+                            <template v-slot:activator="{ props: menuProps }">
                                 <v-tooltip text="An update has already been scheduled" location="top" :disabled="!updateScheduled">
                                     <template #activator="{ props: tooltipProps }">
-                                        <div v-bind="{ ...props, ...tooltipProps }">
+                                        <div v-bind="{ ...tooltipProps }">
                                             <v-btn
+                                                v-bind="menuProps"
                                                 :disabled="updateScheduled || updating"
                                                 prepend-icon="mdi-download"
                                                 append-icon="mdi-menu-down"
