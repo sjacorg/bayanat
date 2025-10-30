@@ -63,44 +63,48 @@
                             <div class="text-body-2 mb-2">{{ _('Last successful check for update:') }}<span class="ml-1">${lastCheckTime}</span></div>
                         </template>
                         <template v-else>
-                            <div class="text-body-2 mb-2">{{ _('A new version is available') }}</div>
+                            <div class="text-body-2 mb-2">{{ _('Released on') }}: ${formatDate(releaseNotes?.published_at)}</div>
                             <div class="text-body-2 mb-2">{{ _('Current version:') }}<span class="ml-2 font-weight-medium">Bayanat v${currentVersion}</span></div>
                         </template>
                     </div>
                     <div class="d-flex ga-3">
                         <v-btn prepend-icon="mdi-history" variant="outlined" @click="showHistory = true">{{ _('Update History') }}</v-btn>
-                        <template v-if="!updating">
-                            <v-btn v-if="isUpToDate" @click="checkForUpdates" :loading="checking" prepend-icon="mdi-cached" color="primary" variant="outlined">{{ _('Check for Updates') }}</v-btn>
-                            <v-menu v-else>
-                                <template v-slot:activator="{ props }">
-                                    <v-btn
-                                        v-bind="props"
-                                        prepend-icon="mdi-download"
-                                        append-icon="mdi-menu-down"
-                                        color="primary"
-                                        variant="elevated">
-                                        {{ _('Update System') }}
-                                    </v-btn>
-                                </template>
-                                <v-list>
-                                    <v-list-item @click="confirmScheduledUpdate">
-                                        <template v-slot:prepend>
-                                            <v-icon>mdi-clock-outline</v-icon>
-                                        </template>
-                                        <v-list-item-title>{{ _('Schedule Update') }}</v-list-item-title>
-                                        <v-list-item-subtitle>{{ _('In 15 minutes with user notification') }}</v-list-item-subtitle>
-                                    </v-list-item>
+                        <v-btn v-if="isUpToDate" @click="checkForUpdates" :loading="checking" prepend-icon="mdi-cached" color="primary" variant="outlined">{{ _('Check for Updates') }}</v-btn>
+                        <v-menu v-else>
+                            <template v-slot:activator="{ props }">
+                                <v-tooltip text="An update has already been scheduled" location="top" :disabled="!updateScheduled">
+                                    <template #activator="{ props: tooltipProps }">
+                                        <div v-bind="{ ...props, ...tooltipProps }">
+                                            <v-btn
+                                                :disabled="updateScheduled || updating"
+                                                prepend-icon="mdi-download"
+                                                append-icon="mdi-menu-down"
+                                                color="primary"
+                                                variant="elevated">
+                                                {{ _('Update System') }}
+                                            </v-btn>
+                                        </div>
+                                    </template>
+                                </v-tooltip>
+                            </template>
+                            <v-list>
+                                <v-list-item @click="confirmScheduledUpdate">
+                                    <template v-slot:prepend>
+                                        <v-icon>mdi-clock-outline</v-icon>
+                                    </template>
+                                    <v-list-item-title>{{ _('Schedule Update') }}</v-list-item-title>
+                                    <v-list-item-subtitle>{{ _('In 15 minutes with user notification') }}</v-list-item-subtitle>
+                                </v-list-item>
 
-                                    <v-list-item @click="confirmUpdate">
-                                        <template v-slot:prepend>
-                                            <v-icon>mdi-flash</v-icon>
-                                        </template>
-                                        <v-list-item-title>{{ _('Update Now') }}</v-list-item-title>
-                                        <v-list-item-subtitle>{{ _('Immediately (no grace period)') }}</v-list-item-subtitle>
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
-                        </template>
+                                <v-list-item @click="confirmUpdate">
+                                    <template v-slot:prepend>
+                                        <v-icon>mdi-flash</v-icon>
+                                    </template>
+                                    <v-list-item-title>{{ _('Update Now') }}</v-list-item-title>
+                                    <v-list-item-subtitle>{{ _('Immediately (no grace period)') }}</v-list-item-subtitle>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
                     </div>
                 </div>
             </v-card-title>
@@ -137,8 +141,8 @@
                         <v-btn href="https://github.com/sjacorg/bayanat/releases" target="_blank" variant="plain" append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>
                     </div>
                 </div>
-                <div v-if="releaseNotes" class="release-notes">
-                    <div v-html="releaseNotes" class="text-body2"></div>
+                <div v-if="releaseNotes?.body" class="markdown-content">
+                    <div v-html="renderedReleaseNotes" class="text-body2"></div>
                 </div>
                 <div v-else class="text-center py-6">
                     <p class="text-caption text-disabled">
@@ -226,6 +230,7 @@
 
 {% block js %}
 <script src="/static/js/components/ShowDetails.js"></script>
+<script src="/static/js/markdown-it/markdown-it.min.js"></script>
 
 <script type="module">
     const { createApp } = Vue;
@@ -246,6 +251,7 @@
             checking: false,
             updating: false,
             scheduling: false,
+            updateScheduled: false,
             updateProgress: 0,
             updateStatus: "{{ _('Initializing update') }}",
             showHistory: false,
@@ -255,8 +261,13 @@
             updateHistory: [],
             updateTimer: null,
             infiniteScrollCallback: null,
+            md: null,
         }),
-
+        computed: {
+            renderedReleaseNotes() {
+                return this.md.render(this.releaseNotes?.body || '');
+            }
+        },
         methods: {
             applyVersionInfo(data) {
                 this.currentVersion = data.current_version || '';
@@ -266,6 +277,18 @@
                 this.lastCheckTime = dayjs(checkedAt).format(this.dateFormats.standardDatetime);
             },
 
+            checkForScheduledUpdate() {
+                api.get('/admin/api/system/update/status')
+                    .then(response => {
+                        this.updateScheduled = Boolean(response?.data?.scheduled);
+                    })
+                    .catch(error => {
+                        this.showSnack(error.response?.data?.message || "{{ _('Failed to check status') }}", 'error');
+                    })
+                    .finally(() => {
+                        this.checking = false;
+                    });
+            },
             checkForUpdates() {
                 this.checking = true;
                 api.get('/admin/api/system/version/check?fresh=true')
@@ -297,6 +320,7 @@
                 api.post('/admin/api/system/update/schedule', {
                     skip_backup: false
                 }).then(response => {
+                    this.updateScheduled = true;
                     this.scheduling = false;
                     this.showSnack("{{ _('Update scheduled successfully. Users have been notified.') }}", 'success');
 
@@ -380,9 +404,22 @@
                         options?.done?.('error');
                     });
             },
+
+            loadReleaseNotes() {
+                api.get('/admin/api/system/release-notes')
+                    .then(response => {
+                        this.releaseNotes = response.data
+                    })
+                    .catch(error => {
+                        console.error('Failed to load release notes', error);
+                    });
+            },
         },
 
         mounted() {
+            this.md = markdownit({ linkify: true });
+            this.checkForScheduledUpdate();
+            this.loadReleaseNotes();
             // Fetch and populate update info
             this.fetchUpdateInfo().then(() => {
                 if (this.updateInfo) {
