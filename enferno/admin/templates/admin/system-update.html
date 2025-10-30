@@ -255,7 +255,7 @@
                 this.latestVersion = data.latest_version || '';
                 this.isUpToDate = !data.update_available;
                 const checkedAt = data?.checked_at ?? new Date();
-                this.lastCheckTime = dayjs(checkedAt).format('MMMM D, YYYY h:mm A');
+                this.lastCheckTime = dayjs(checkedAt).format(dateFormats.standardDatetime);
             },
 
             checkForUpdates() {
