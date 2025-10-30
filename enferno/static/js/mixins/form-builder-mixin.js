@@ -34,10 +34,6 @@ const formBuilderMixin = {
     },
   }),
   computed: {
-    cardDynamicFields(type = 'bulletin') {
-      const excludeKeys = this.excludedFields[type] || [];
-      return this.formBuilder.dynamicFields.filter(f => !excludeKeys.includes(f.name));
-    },
     fixedDynamicFields() {
       return this.formBuilder.dynamicFields.filter((field) => this.isFixedField(field) && !field.deleted);
     },
@@ -68,6 +64,10 @@ const formBuilderMixin = {
     },
   },
   methods: {
+    cardDynamicFields(type = 'bulletin') {
+      const excludeKeys = this.excludedFields[type] || [];
+      return this.formBuilder.dynamicFields.filter(f => !excludeKeys.includes(f.name));
+    },
     isFixedField(field) {
       return this.fixedFields.includes(field.name)
     },
