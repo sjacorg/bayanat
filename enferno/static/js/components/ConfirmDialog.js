@@ -1,6 +1,7 @@
 const ConfirmDialog = Vue.defineComponent({
   data() {
     return {
+      translations: window.translations,
       data: null,
       open: false,
       title: '',
@@ -8,8 +9,8 @@ const ConfirmDialog = Vue.defineComponent({
       loading: false,
       dialogProps: {},
 
-      cancelProps: { text: 'Cancel', variant: 'outlined' },
-      acceptProps: { text: 'Confirm', color: 'primary', variant: 'flat' },
+      cancelProps: { text: translations.cancel_, variant: 'outlined' },
+      acceptProps: { text: translations.confirm_, color: 'primary', variant: 'flat' },
 
       onAccept: null,
       onReject: null,
@@ -20,8 +21,8 @@ const ConfirmDialog = Vue.defineComponent({
   },
   methods: {
     show({
-      title = 'Confirmation',
-      message = 'Are you sure you want to proceed?',
+      title = translations.confirmation_,
+      message = translations.areYouSureYouWantToProceed_,
       cancelProps = {},
       acceptProps = {},
       dialogProps = {},
@@ -33,8 +34,8 @@ const ConfirmDialog = Vue.defineComponent({
         title,
         message,
         dialogProps: { ...dialogProps },
-        cancelProps: { text: 'Cancel', variant: 'outlined', ...cancelProps },
-        acceptProps: { text: 'Confirm', color: 'primary', variant: 'flat', ...acceptProps },
+        cancelProps: { text: translations.cancel_, variant: 'outlined', ...cancelProps },
+        acceptProps: { text: translations.confirm_, color: 'primary', variant: 'flat', ...acceptProps },
         onAccept,
         onReject,
         loading: false,
@@ -77,8 +78,8 @@ const ConfirmDialog = Vue.defineComponent({
         this.onReject = null;
         this.resolvePromise = null;
         this.rejectPromise = null;
-        this.cancelProps = { text: 'Cancel', variant: 'outlined' };
-        this.acceptProps = { text: 'Confirm', color: 'primary', variant: 'flat' };
+        this.cancelProps = { text: translations.cancel_, variant: 'outlined' };
+        this.acceptProps = { text: translations.confirm_, color: 'primary', variant: 'flat' };
         this.dialogProps = {};
         this.data = null;
       }, 300)
