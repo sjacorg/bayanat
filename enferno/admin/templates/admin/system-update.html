@@ -263,7 +263,7 @@
                 this.latestVersion = data.latest_version || '';
                 this.isUpToDate = !data.update_available;
                 const checkedAt = data?.checked_at ?? new Date();
-                this.lastCheckTime = dayjs(checkedAt).format(dateFormats.standardDatetime);
+                this.lastCheckTime = dayjs(checkedAt).format(this.dateFormats.standardDatetime);
             },
 
             checkForUpdates() {
@@ -302,7 +302,7 @@
 
                     // Show update as in progress
                     this.updating = true;
-                    this.updateStatus = "{{ _('Update will start in 15 minutes at {date}') }}".replace('{date}', dayjs().add(15, 'minute').format(dateFormats.standardDatetime));
+                    this.updateStatus = "{{ _('Update will start in 15 minutes at {date}') }}".replace('{date}', dayjs().add(15, 'minute').format(this.dateFormats.standardDatetime));
 
                     // Start polling for when update actually starts
                     this.pollUpdateStatus();
