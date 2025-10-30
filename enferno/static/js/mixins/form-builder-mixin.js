@@ -8,6 +8,11 @@ const formBuilderMixin = {
       originalFields: [],
       historyState: { items: [], total: 0, page: 1, per_page: 20 },
     },
+    excludedFields: {
+      bulletin: ['source_link','status','tags','comments','geo_locations'],
+      actor: ['source_link','status','tags','roles','comments','geo_locations'],
+      incident: ['source_link','status','tags','comments','geo_locations'],
+    },
     infiniteScrollCallback: null,
     fixedFields: ['comments', 'status'],
     dragDrop: {
@@ -29,25 +34,15 @@ const formBuilderMixin = {
     },
   }),
   computed: {
-    dynamicFieldsBulletinCard() {
-      // Keys omited since they are rendered somewhere else in the drawer
-      const omitedKeys = ['source_link', 'status', 'tags', 'comments', 'geo_locations'];
-      return this.formBuilder.dynamicFields.filter((field) => !omitedKeys.includes(field.name));
-    },
-    dynamicFieldsActorCard() {
-      // Keys omited since they are rendered somewhere else in the drawer
-      const omitedKeys = ['source_link', 'status', 'tags', 'roles', 'comments', 'geo_locations'];
-      return this.formBuilder.dynamicFields.filter((field) => !omitedKeys.includes(field.name));
+    cardDynamicFields(type = 'bulletin') {
+      const excludeKeys = this.excludedFields[type] || [];
+      return this.formBuilder.dynamicFields.filter(f => !excludeKeys.includes(f.name));
     },
     fixedDynamicFields() {
-      return this.formBuilder.dynamicFields.filter((field) =>
-        this.fixedFields.includes(field.name),
-      );
+      return this.formBuilder.dynamicFields.filter((field) => this.isFixedField(field) && !field.deleted);
     },
     movableDynamicFields() {
-      return this.formBuilder.dynamicFields.filter(
-        (field) => !this.fixedFields.includes(field.name),
-      );
+      return this.formBuilder.dynamicFields.filter((field) => !this.isFixedField(field) && !field.deleted);
     },
     hasChanges() {
       const changes = this.computeChanges({
@@ -59,26 +54,26 @@ const formBuilderMixin = {
     filteredDynamicFields() {
       if (!this.ui.search) return this.formBuilder.dynamicFields;
 
-      return this.formBuilder.dynamicFields.filter((field) =>
-        field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()),
-      );
+      return this.formBuilder.dynamicFields.filter((field) => fieldTitleMatchesSearch(field) && !field.deleted);
     },
     filteredMovableDynamicFields() {
       if (!this.ui.search) return this.movableDynamicFields;
 
-      return this.movableDynamicFields.filter((field) =>
-        field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()),
-      );
+      return this.movableDynamicFields.filter((field) => this.fieldTitleMatchesSearch(field));
     },
     filteredFixedDynamicFields() {
       if (!this.ui.search) return this.fixedDynamicFields;
 
-      return this.fixedDynamicFields.filter((field) =>
-        field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase()),
-      );
+      return this.fixedDynamicFields.filter((field) => this.fieldTitleMatchesSearch(field));
     },
   },
   methods: {
+    isFixedField(field) {
+      return this.fixedFields.includes(field.name)
+    },
+    fieldTitleMatchesSearch(field) {
+      return field.title?.toLowerCase().includes(this.ui.search.trim().toLowerCase());
+    },
     openRevisionHistoryDrawer() {
       this.formBuilder.showRevisions = true;
     },

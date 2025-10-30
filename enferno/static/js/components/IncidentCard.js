@@ -178,7 +178,7 @@ const IncidentCard = Vue.defineComponent({
         <v-divider v-if="incident.roles?.length" ></v-divider>
 
         <div class="d-flex flex-wrap">
-          <template v-for="(field, index) in $root.dynamicFieldsBulletinCard">
+          <template v-for="(field, index) in $root.cardDynamicFields('incident')">
             <div v-if="$root.isFieldActiveAndHasContent(field, 'title', [incident.title, incident.title_ar])" :class="$root.fieldClassDrawer(field)">
               <uni-field :caption="translations.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
             </div>

@@ -231,7 +231,7 @@ const BulletinCard = Vue.defineComponent({
       </v-card>
 
       <div class="d-flex flex-wrap">
-        <template v-for="(field) in $root.dynamicFieldsBulletinCard">
+        <template v-for="(field) in $root.cardDynamicFields('bulletin')">
           <div v-if="$root.isFieldActiveAndHasContent(field, 'title', [bulletin.title, bulletin.title_ar])" :class="$root.fieldClassDrawer(field)">
             <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
           </div>
