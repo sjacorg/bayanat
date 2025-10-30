@@ -17,37 +17,29 @@
         <v-divider></v-divider>
 
         <v-card-text class="px-5">
-        <!-- <v-infinite-scroll :empty-text="!formBuilder.historyState.items?.length ? '{{ _("No history yet") }}' : '{{ _('No more items in history') }}'" :items="formBuilder.historyState.items" @load="loadHistory({ ...$event, entityType: 'actor' })">
+        <v-infinite-scroll :empty-text="!updateHistory?.length ? '{{ _("No history yet") }}' : '{{ _('No more items in history') }}'" :items="updateHistory" @load="loadUpdateHistory({ ...$event })">
             <v-timeline density="compact" side="end" align="start">
-                <v-timeline-item v-for="(item, index) in formBuilder.historyState.items" :key="item.id" dot-color="primary" size="10">
+                <v-timeline-item v-for="(item, index) in updateHistory" :key="item.id" dot-color="primary" size="10">
                     <div class="mt-n1">
                         <div>
                             <div><b v-if="item?.user?.username">${item.user.username}</b><b v-else>{{ _('System') }}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
                             <show-details show-more-text="{{ _('See detailed changes') }}" show-less-text="{{ _('Collapse') }}">
                                 <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
-                                    <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeChanges({ previousFields: formBuilder.historyState.items?.[index + 1]?.fields_snapshot || [], currentFields: item.fields_snapshot }))" :headers="[
-                                        { title: `{{ _('From') }}`, value: 'from' },
-                                        { title: `{{ _('To') }}`, value: 'to' },
+                                    <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="updateHistory" :headers="[
+                                        { title: `{{ _('From') }}`, value: 'version_from' },
+                                        { title: `{{ _('To') }}`, value: 'version_to' },
                                         { title: `{{ _('Status') }}`, value: 'status' },
                                     ]"
                                     >
-                                        <template #[`item.title`]="{ item }">
-                                            <span class="text-caption">${item.title}</span>
-                                        </template>
-                                        <template #[`item.type`]="{ item }">
-                                            <span v-if="item.key === 'create'" class="text-caption text-green">${item.type}</span>
-                                            <span v-if="item.key === 'update'" class="text-caption text-orange">${item.type}</span>
-                                            <span v-if="item.key === 'delete'" class="text-caption text-red">${item.type}</span>
-                                        </template>
                                     </v-data-table>
-                                    <div>The update initiated by admin could not be completed. Please check your network connection or try again later.</div>
+                                    <!-- <div>{{ _('The update initiated by admin could not be completed. Please check your network connection or try again later.') }}</div> -->
                                 </v-sheet>
                             </show-details>
                         </div>
                     </div>
                 </v-timeline-item>
             </v-timeline>
-        </v-infinite-scroll> -->
+        </v-infinite-scroll>
         </v-card-text>
     </v-card>
 </v-navigation-drawer>
@@ -115,7 +107,7 @@
 
             <!-- Update Progress Section -->
             <v-expand-transition>
-                <v-card-text v-if="updating" class="bg-blue-lighten-5">
+                <v-sheet v-if="updating" class="pa-6 bg-blue-lighten-5">
                     <v-row align="center">
                         <v-col cols="12" md="8">
                             <p class="text-subtitle-2 font-weight-bold">{{ _('System Update in Progress') }}</p>
@@ -131,7 +123,7 @@
                             </p>
                         </v-col>
                     </v-row>
-                </v-card-text>
+                </v-sheet>
             </v-expand-transition>
 
             <v-divider></v-divider>
@@ -267,6 +259,8 @@
 {% endblock %}
 
 {% block js %}
+<script src="/static/js/components/ShowDetails.js"></script>
+
 <script type="module">
     const { createApp } = Vue;
     const { createVuetify } = Vuetify;
@@ -295,6 +289,7 @@
             updateHistory: [],
             updateTimer: null,
             historyDrawer: false,
+            infiniteScrollCallback: null,
         }),
 
         methods: {
@@ -422,13 +417,21 @@
                 return `${secs}s`;
             },
 
-            loadUpdateHistory() {
+            loadUpdateHistory(options) {
+                if (options?.done) {
+                    this.infiniteScrollCallback = options.done;
+                }
+
                 api.get('/admin/api/system/update-history')
                     .then(response => {
                         this.updateHistory = response.data.updates || [];
+
+                        const hasMore = false;
+                        options?.done?.(hasMore ? 'ok' : 'empty');
                     })
                     .catch(error => {
                         console.error('Failed to load update history', error);
+                        options?.done?.('error');
                     });
             },
         },
@@ -442,9 +445,6 @@
             }).catch(error => {
                 console.error('Failed to fetch update info:', error);
             });
-
-            // Load update history
-            this.loadUpdateHistory();
         },
 
         beforeUnmount() {
@@ -454,6 +454,7 @@
         },
     });
 
+    app.component('ShowDetails', ShowDetails);
     app.use(vuetify).mount('#app');
 </script>
 {% endblock %}
