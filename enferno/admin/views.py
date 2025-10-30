@@ -8,6 +8,7 @@ from typing import Any, Optional
 from uuid import uuid4
 
 import boto3
+import requests
 from botocore.config import Config as BotoConfig
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
 from flask import request, jsonify, abort, session
@@ -6733,6 +6734,44 @@ def api_get_system_update_history() -> Response:
     except Exception as e:
         current_app.logger.error(f"Failed to get update history: {str(e)}")
         return HTTPResponse.error(f"Failed to get update history: {str(e)}", 500)
+
+
+@admin.route("/api/system/release-notes", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_get_release_notes() -> Response:
+    """Get release notes from GitHub with Redis caching."""
+    cache_key = "bayanat:release:notes"
+
+    # Check cache first
+    cached = rds.get(cache_key)
+    if cached:
+        return HTTPResponse.success(data=json.loads(cached.decode()))
+
+    # Fetch from GitHub
+    try:
+        repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
+        api_url = f"https://api.github.com/repos/{repo_name}/releases/latest"
+
+        response = requests.get(api_url, timeout=5)
+        response.raise_for_status()
+
+        release_data = response.json()
+        result = {
+            "version": release_data.get("tag_name"),
+            "name": release_data.get("name"),
+            "body": release_data.get("body"),
+            "published_at": release_data.get("published_at"),
+            "html_url": release_data.get("html_url"),
+        }
+
+        # Cache for 24 hours
+        rds.setex(cache_key, 86400, json.dumps(result))
+        return HTTPResponse.success(data=result)
+
+    except Exception as e:
+        logger.error(f"Failed to fetch release notes: {e}")
+        return HTTPResponse.error("Failed to fetch release notes", 503)
 
 
 @admin.route("/api/session-check")
