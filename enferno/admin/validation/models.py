@@ -1977,3 +1977,67 @@ class WebImportValidationModel(StrictValidationModel):
             raise ValueError(f"Imports not allowed from {domain}")
 
         return str(v)
+
+
+class ActivityQueryValidationModel(StrictValidationModel):
+    user: Optional[int] = None
+    action: Optional[str] = None
+    model: Optional[str] = None
+    created: Optional[List[str]] = None
+
+    @field_validator("action")
+    @classmethod
+    def validate_action(cls, v: Optional[str]) -> Optional[str]:
+        """Validate action is among allowed values."""
+        if v is None:
+            return v
+        allowed = [
+            "APPROVE",
+            "BULK",
+            "CREATE",
+            "DELETE",
+            "DOWNLOAD",
+            "LOGIN",
+            "LOGOUT",
+            "REJECT",
+            "REQUEST",
+            "REVIEW",
+            "SEARCH",
+            "SELF-ASSIGN",
+            "UPDATE",
+            "UPLOAD",
+            "VIEW",
+        ]
+        if v not in allowed:
+            raise ValueError(f"Invalid action: {v}. Allowed actions are: {', '.join(allowed)}")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: Optional[str]) -> Optional[str]:
+        """Validate model is among allowed values."""
+        if v is None:
+            return v
+        allowed = ["bulletin", "actor", "incident", "user", "role", "location", "source", "label"]
+        if v not in allowed:
+            raise ValueError(f"Invalid model: {v}. Allowed models are: {', '.join(allowed)}")
+        return v
+
+    @field_validator("created")
+    @classmethod
+    def validate_created(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Validate created contains valid dates."""
+        if v:
+            if len(v) != 2:
+                raise ValueError("created must contain exactly two dates: [start_date, end_date]")
+            for date_str in v:
+                try:
+                    parse(date_str)
+                except ValueError:
+                    raise ValueError(f"Invalid date format in created: {date_str}")
+        return v
+
+
+class ActivityQueryRequestModel(StrictValidationModel):
+    q: ActivityQueryValidationModel
+    options: OptionsModel

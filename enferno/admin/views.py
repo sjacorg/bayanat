@@ -110,6 +110,7 @@ from enferno.admin.validation.models import (
     UserPasswordCheckValidationModel,
     UserRequestModel,
     WebImportValidationModel,
+    ActivityQueryRequestModel,
 )
 from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
@@ -6022,9 +6023,10 @@ def activity() -> str:
 
 @admin.route("/api/activities/", methods=["POST", "GET"])
 @roles_required("Admin")
-def api_activities() -> Response:
+@validate_with(ActivityQueryRequestModel)
+def api_activities(validated_data: dict) -> Response:
     """Returns activities in JSON format, allows search and paging."""
-    q = request.json.get("q", {})
+    q = validated_data.get("q", {})
     su = SearchUtils(q, cls="activity")
     query = su.get_query()
 
