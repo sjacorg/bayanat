@@ -17,32 +17,6 @@
     </template>
   </v-data-table>
 </confirm-dialog>
-<confirm-dialog ref="revertConfirmDialog">
-  <template #title>
-    {{ _('Are you sure you want to revert to this version?') }}
-  </template>
-  <template #default="{ data }">
-    <div class="mb-4">{{ _('Version settings changed by') }} <b>@${data.snapshot?.user?.username}</b> - ${formatDate(data.snapshot?.created_at, dateFormats.standardDatetime, dateOptions.local)}.</div>
-    <show-details show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-      <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
-        <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="buildChangesTable(computeChanges({ previousFields: formBuilder.dynamicFields || [], currentFields: data?.snapshot?.fields_snapshot }))" :headers="[
-            { title: `{{ _('Field Name') }}`, value: 'title' },
-            { title: `{{ _('Change Type') }}`, value: 'type' },
-          ]"
-        >
-          <template #[`item.title`]="{ item }">
-            <span class="text-caption">${item.title}</span>
-          </template>
-          <template #[`item.type`]="{ item }">
-            <span v-if="item.key === 'create'" class="text-caption text-green">${item.type}</span>
-            <span v-if="item.key === 'update'" class="text-caption text-orange">${item.type}</span>
-            <span v-if="item.key === 'delete'" class="text-caption text-red">${item.type}</span>
-          </template>
-        </v-data-table>
-      </v-sheet>
-    </show-details>
-  </template>
-</confirm-dialog>
 <!-- Revision history sidebar -->
 <v-navigation-drawer
   v-model="formBuilder.showRevisions"
@@ -78,7 +52,6 @@
                                 </v-data-table>
                               </v-sheet>
                             </show-details>
-                            <v-btn v-if="index !== 0" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="showRevertDialog(item)">{{ _('Revert to this version') }}</v-btn>
                         </div>
                     </div>
                 </v-timeline-item>

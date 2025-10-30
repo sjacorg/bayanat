@@ -175,16 +175,6 @@ const formBuilderMixin = {
         },
       });
     },
-    showRevertDialog(snapshot) {
-      this.formBuilder.showRevisions = false
-      this.$refs.revertConfirmDialog.show({
-        dialogProps: { width: 780 },
-        data: { snapshot },
-        onAccept: async () => {
-          this.formBuilder.dynamicFields = [...snapshot.fields_snapshot];
-        },
-      });
-    },
     getSearchOperatorFromFieldType(field) {
       switch (field.field_type) {
         case 'text':
@@ -209,9 +199,10 @@ const formBuilderMixin = {
       if (fieldToUpdate.active) fieldToUpdate.deleted = false;
     },
     reindexFields() {
+      // Reindex fields but keep fixed fields sort_order intact
       this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.map((field, index) => ({
         ...field,
-        sort_order: index + 1,
+        sort_order: this.fixedFields.includes(field.name) ? field.sort_order : index + 1,
       }));
     },
     async deleteField({ field }) {
@@ -552,8 +543,8 @@ const formBuilderMixin = {
     },
     sortFields(fields) {
       return fields.sort((a, b) => {
-        return a.sort_order - b.sort_order; // normal sort
-      });
+        return a.sort_order - b.sort_order
+      })
     },
     loadHistory(options) {
       if (options?.done) {
