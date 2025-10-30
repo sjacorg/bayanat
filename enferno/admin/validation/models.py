@@ -2018,7 +2018,20 @@ class ActivityQueryValidationModel(StrictValidationModel):
         """Validate model is among allowed values."""
         if v is None:
             return v
-        allowed = ["bulletin", "actor", "incident", "user", "role", "location", "source", "label"]
+        allowed = [
+            "bulletin",
+            "actor",
+            "incident",
+            "user",
+            "role",
+            "location",
+            "source",
+            "label",
+            "media",
+            "eventtype",
+            "dynamic_field_bulk",
+            "config",
+        ]
         if v not in allowed:
             raise ValueError(f"Invalid model: {v}. Allowed models are: {', '.join(allowed)}")
         return v
