@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import shutil
-import contextlib
-from io import StringIO
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 from uuid import uuid4
 
-import bleach
 import boto3
 from botocore.config import Config as BotoConfig
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
@@ -19,16 +15,19 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, select, func, text
-from sqlalchemy.orm import joinedload
+from sqlalchemy import desc, or_, select, func
 from werkzeug.utils import safe_join, secure_filename
-from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
 
 from enferno.tasks import perform_system_update, perform_version_check
 from enferno.tasks.update import schedule_system_update_with_grace_period
-from enferno.utils.update_utils import get_update_status, is_update_running
+from enferno.utils.update_utils import (
+    get_update_status,
+    is_update_running,
+    is_update_scheduled,
+    get_scheduled_update_time,
+)
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
@@ -80,7 +79,6 @@ from enferno.admin.validation.models import (
     AtoaInfoRequestModel,
     AtobInfoRequestModel,
     BtobInfoRequestModel,
-    BulkUpdateRequestModel,
     BulletinBulkUpdateRequestModel,
     BulletinQueryRequestModel,
     BulletinRequestModel,
@@ -3862,7 +3860,7 @@ def api_medias_chunk() -> Response:
     except KeyError as err:
         raise abort(400, body=f"Not all required fields supplied, missing {err}")
     except ValueError:
-        raise abort(400, body=f"Values provided were not in expected format")
+        raise abort(400, body="Values provided were not in expected format")
 
     # validate dz_uuid
     if not safe_join(str(Media.media_file), dz_uuid):
@@ -3891,7 +3889,7 @@ def api_medias_chunk() -> Response:
                 f.write((save_dir / str(file_number)).read_bytes())
 
         if os.stat(filepath).st_size != total_size:
-            return HTTPResponse.error(f"Error uploading the file")
+            return HTTPResponse.error("Error uploading the file")
 
         shutil.rmtree(save_dir)
         # get md5 hash
@@ -4054,7 +4052,7 @@ def serve_media(
                     return HTTPResponse.forbidden("Restricted Access")
             except s3.exceptions.NoSuchKey:
                 return HTTPResponse.not_found("File not found")
-            except Exception as e:
+            except Exception:
                 return HTTPResponse.error("Internal Server Error", status=500)
         else:
             # media exists in the database, check access control restrictions
@@ -6643,12 +6641,17 @@ def api_schedule_system_update() -> Response:
 @auth_required("session")
 @roles_required("Admin")
 def api_get_system_update_status() -> Response:
-    """Return the current background update status."""
+    """Return the current background update status and scheduled update info."""
     status_message = get_update_status()
+    scheduled = is_update_scheduled()
+    scheduled_at = get_scheduled_update_time() if scheduled else None
+
     return HTTPResponse.success(
         data={
             "status_message": status_message or "Update in progress",
             "running": is_update_running(),
+            "scheduled": scheduled,
+            "scheduled_at": scheduled_at,
         },
         status=200,
     )
@@ -6664,7 +6667,6 @@ def api_system_status() -> Response:
     Query params:
         fresh (bool): If true, checks GitHub directly instead of using cache
     """
-    from enferno.settings import Config
 
     current_version = SystemInfo.get_value("app_version") or Config.VERSION
 
