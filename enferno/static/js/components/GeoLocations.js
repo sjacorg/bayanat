@@ -94,7 +94,7 @@ const GeoLocations = Vue.defineComponent({
     },
 
     removeLocation(i) {
-      if (confirm(this.translations.confirm_)) {
+      if (confirm(this.translations.areYouSure_)) {
         this.locations.splice(i, 1);
         this.$emit('update:modelValue', this.locations);
       }
