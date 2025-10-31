@@ -6871,7 +6871,7 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
     except Exception as e:
         logger.error(f"Error in bulk save: {str(e)}")
         db.session.rollback()
-        return HTTPResponse.error(f"Bulk save failed: {str(e)}", status=500)
+        return HTTPResponse.error("Bulk save failed", status=500)
 
 
 @admin.get("/api/dynamic-fields/history/<entity_type>")
