@@ -121,13 +121,17 @@ const ActorSearchBox = Vue.defineComponent({
     },
 
     updateDynamicField(value, field, operator) {
-      if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+      const normalized = Array.isArray(value)
+        ? value.filter((item) => item !== undefined && item !== null && item !== '')
+        : value;
+
+      if (normalized === undefined || normalized === null || normalized === '' || (Array.isArray(normalized) && normalized.length === 0)) {
         this.dyn.delete(field.name)
       } else {
         this.dyn.set(field.name, {
           name: field.name,
           op: operator ?? this.$root.getSearchOperatorFromFieldType(field),
-          value: value
+          value: normalized
         })
       }
 
