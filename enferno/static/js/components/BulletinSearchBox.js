@@ -551,8 +551,6 @@ const BulletinSearchBox = Vue.defineComponent({
               <div
                 v-else-if="['select'].includes(field.field_type)"
               >
-                {{field.field_type}}
-                {{field?.schema_config?.allow_multiple}}
                 <v-autocomplete
                   :model-value="dyn.get(field.name)?.value"
                   @update:model-value="updateDynamicField(field.field_type === 'select' && field?.schema_config?.allow_multiple ? $event : [$event], field)"
