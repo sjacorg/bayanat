@@ -150,7 +150,8 @@ const vuetifyConfig = {
         },
         VBtn: {
             rounded: 'lg',
-            class: 'text-none font-weight-regular text-body-2 elevation-0',
+            class: 'text-none font-weight-regular text-body-2',
+            elevation: '0',
         },
         VTab: {
             VBtn: {
