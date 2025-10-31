@@ -50,7 +50,7 @@ const formBuilderMixin = {
     filteredDynamicFields() {
       if (!this.ui.search) return this.formBuilder.dynamicFields;
 
-      return this.formBuilder.dynamicFields.filter((field) => fieldTitleMatchesSearch(field) && !field.deleted);
+      return this.formBuilder.dynamicFields.filter((field) => this.fieldTitleMatchesSearch(field) && !field.deleted);
     },
     filteredMovableDynamicFields() {
       if (!this.ui.search) return this.movableDynamicFields;
