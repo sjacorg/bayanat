@@ -16,6 +16,7 @@ import pandas as pd
 from celery import Celery, chain, chord, group
 from celery.schedules import crontab
 from celery.signals import worker_ready, worker_process_init
+from geoalchemy2.shape import to_shape
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -1433,6 +1434,165 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
+
+
+@celery.task
+def generate_actor_flowmap(query_json: list, user_id: int) -> Optional[str]:
+    """
+    Generate flowmap visualization data from actor life events.
+    Returns {locations, flows, metadata} JSON cached in Redis.
+    Query format: [{}] for all actors, or [{field: value}] for filtered.
+    """
+    if not user_id:
+        raise ValueError("User ID is required to generate actor flowmap")
+
+    try:
+        # Create cache key based on query + user
+        query_key = create_query_key(query_json, "actor", user_id)
+
+        # Redis keys for this user's flowmap
+        status_key = f"user{user_id}:flowmap:status"
+        data_key = f"user{user_id}:flowmap:data"
+        query_key_key = f"user{user_id}:flowmap:query_key"
+        error_key = f"user{user_id}:flowmap:error"
+
+        # Check if we already have data for this exact query
+        existing_query_key = rds.get(query_key_key)
+        if existing_query_key and existing_query_key.decode() == query_key:
+            # Return cached data
+            existing_data = rds.get(data_key)
+            if existing_data:
+                return existing_data.decode()
+
+        # Set status to pending
+        rds.set(status_key, "pending")
+        rds.delete(error_key)
+
+        # Fetch matching actors using SearchUtils (enforces access controls)
+        search_util = SearchUtils(query_json, cls="actor")
+        query = search_util.get_query()
+        result = db.session.execute(query)
+        actors = result.scalars().unique().all()
+
+        if not actors:
+            # No actors found
+            flowmap_data = {
+                "locations": [],
+                "flows": [],
+                "metadata": {
+                    "total_actors": 0,
+                    "total_locations": 0,
+                    "total_flows": 0,
+                    "date_range": None,
+                },
+            }
+            flowmap_json = json.dumps(flowmap_data)
+            rds.set(data_key, flowmap_json)
+            rds.set(query_key_key, query_key)
+            rds.set(status_key, "done")
+            return flowmap_json
+
+        # Track locations and flows
+        locations_map = {}  # id -> {id, name, lat, lon, total_events}
+        flows_map = {}  # (origin_id, dest_id) -> count
+        date_min = None
+        date_max = None
+
+        # Process each actor's life events
+        for actor in actors:
+            # Get events and sort chronologically
+            # Sort by from_date first, then to_date, handling None values (push to end)
+            events = sorted(
+                actor.events,
+                key=lambda e: (
+                    e.from_date if e.from_date else datetime.max,
+                    e.to_date if e.to_date else datetime.max,
+                ),
+            )
+
+            if not events:
+                continue
+
+            # Extract locations from events
+            prev_location_id = None
+            for event in events:
+                if not event.location or not event.location.latlng:
+                    continue
+
+                location = event.location
+                location_id = location.id
+
+                # Add/update location in map
+                if location_id not in locations_map:
+                    shape = to_shape(location.latlng)
+                    locations_map[location_id] = {
+                        "id": location_id,
+                        "name": location.full_location
+                        or location.title
+                        or f"Location {location_id}",
+                        "lat": shape.y,
+                        "lon": shape.x,
+                        "total_events": 0,
+                    }
+
+                locations_map[location_id]["total_events"] += 1
+
+                # Track date range
+                if event.from_date:
+                    if date_min is None or event.from_date < date_min:
+                        date_min = event.from_date
+                    if date_max is None or event.from_date > date_max:
+                        date_max = event.from_date
+
+                # Create flow from previous location to current
+                if prev_location_id and prev_location_id != location_id:
+                    flow_key = (prev_location_id, location_id)
+                    flows_map[flow_key] = flows_map.get(flow_key, 0) + 1
+
+                prev_location_id = location_id
+
+        # Build final output structure
+        locations = list(locations_map.values())
+        flows = [
+            {"origin": origin_id, "dest": dest_id, "count": count}
+            for (origin_id, dest_id), count in flows_map.items()
+        ]
+
+        metadata = {
+            "total_actors": len(actors),
+            "total_locations": len(locations),
+            "total_flows": len(flows),
+            "date_range": (
+                {
+                    "start": date_min.isoformat() if date_min else None,
+                    "end": date_max.isoformat() if date_max else None,
+                }
+                if date_min or date_max
+                else None
+            ),
+        }
+
+        flowmap_data = {"locations": locations, "flows": flows, "metadata": metadata}
+
+        # Cache the result
+        flowmap_json = json.dumps(flowmap_data)
+        rds.set(data_key, flowmap_json)
+        rds.set(query_key_key, query_key)
+        rds.set(status_key, "done")
+
+        logger.info(
+            f"Generated flowmap for user {user_id}: {len(actors)} actors, {len(locations)} locations, {len(flows)} flows"
+        )
+
+        return flowmap_json
+
+    except Exception as e:
+        # Handle errors gracefully
+        error_msg = f"Error generating flowmap: {str(e)}"
+        logger.error(error_msg, exc_info=True)
+        rds.set(f"user{user_id}:flowmap:status", "error")
+        rds.set(f"user{user_id}:flowmap:error", error_msg)
+        raise
 
 
 @celery.task
