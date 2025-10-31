@@ -50,6 +50,8 @@ const IncidentSearchBox = Vue.defineComponent({
             newMap.set(query.name, query);
           }
           this.dyn = newMap;
+        } else {
+          this.dyn = new Map();
         }
       },
       immediate: true
