@@ -52,6 +52,7 @@
             {% block nav %}
                 {% if current_user.is_authenticated %}
                     {% include 'nav-bar.html' %}
+                    {% include 'nav-drawer.html' %}
                     {% include 'settings_drawer.html' %}
                     {% include 'notifications_drawer.html' %}
                     {% include 'notifications_dialog.html' %}
