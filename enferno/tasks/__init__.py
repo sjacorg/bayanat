@@ -1479,7 +1479,12 @@ def perform_version_check() -> Optional[dict]:
             f"https://raw.githubusercontent.com/{repo_name}/main/updates/latest.json",
         )
 
-        response = requests.get(manifest_url, timeout=3)
+        # Force fresh content from GitHub (bypass CDN cache)
+        response = requests.get(
+            manifest_url,
+            timeout=3,
+            headers={"Cache-Control": "no-cache", "Pragma": "no-cache"},
+        )
         response.raise_for_status()
 
         manifest = response.json()
