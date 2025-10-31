@@ -132,9 +132,9 @@ const formBuilderMixin = {
 
     buildChangesTable(diff) {
       const changeTypeTranslations = {
-        create: translations.added_,
-        update: translations.modified_,
-        delete: translations.deleted_,
+        create: window.translations.added_,
+        update: window.translations.modified_,
+        delete: window.translations.deleted_,
       };
 
       // Collect all deleted IDs first
