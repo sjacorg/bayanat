@@ -1,0 +1,40 @@
+{% extends 'data-entry-layout.html' %} {% block content %}
+
+<v-main class="">
+  <v-container fluid>
+    <v-card class="pa-2 overflow-y-auto d-flex flex-column" height="calc(100vh - 96px)">
+      <v-card-title>
+        {{ _('Welcome') }}, {{ g.user.username }}!
+
+        <v-spacer></v-spacer>
+        {% include "security/_messages.html" %}
+      </v-card-title>
+
+      {% if g.user.last_login_at %}
+      <v-card-subtitle>
+        <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
+      </v-card-subtitle>
+      {% endif %}
+    </v-card>
+  </v-container>
+</v-main>
+
+{% endblock %} {% block js %}
+<script type="module">
+  const {createApp} = Vue;
+  const {createVuetify} = Vuetify;
+
+  const vuetify = createVuetify(vuetifyConfig);
+
+  const app = createApp({
+      delimiters: ['${', '}'],
+      mixins: [globalMixin],
+      data: () => ({
+          drawer: false,
+      }),
+      methods: {},
+  });
+
+  app.use(vuetify).mount('#app');
+</script>
+{% endblock %}

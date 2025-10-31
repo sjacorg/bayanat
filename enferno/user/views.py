@@ -173,6 +173,15 @@ def account() -> str:
     """
     return render_template("dashboard.html")
 
+@bp_user.route("/data-entry-dashboard/")
+@auth_required("session")
+def dataentryaccount() -> str:
+    """
+    Main dashboard endpoint.
+    """
+    # Update info is now fetched via API call from frontend
+    return render_template("data-entry-dashboard.html")
+
 
 @bp_user.route("/settings/")
 @auth_required("session")
