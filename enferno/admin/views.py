@@ -6030,7 +6030,7 @@ def api_activities(validated_data: dict) -> Response:
     su = SearchUtils(q, cls="activity")
     query = su.get_query()
 
-    options = request.json.get("options")
+    options = validated_data.get("options")
     page = options.get("page", 1)
     per_page = options.get("itemsPerPage", PER_PAGE)
 
