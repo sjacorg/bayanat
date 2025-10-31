@@ -186,7 +186,7 @@
                                         :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'" chips :disabled="unrestricted"
                                         item-title="name" return-object :items="allowedRoles" multiple v-model="editedItem.roles"
                                         label="{{ _('Restrict Bulletin to Access Group(s)') }}" :rules="
-                                                                                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
+                                                                                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []
                                                                                                                 " clearable></v-select>
                                     <v-checkbox color="error" @change="unrestricted? editedItem.roles = [] : null" class="mx-2"
                                         label="{{ _('No Access Groups') }}" v-model="unrestricted">
