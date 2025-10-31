@@ -3129,9 +3129,9 @@ def relationship_info() -> Response:
 
 
 # Bulletin fields routes
-@admin.route("/bulletin-fields/", defaults={"id": None})
+@admin.route("/bulletin-fields/")
 @roles_required("Admin")
-def bulletin_fields(id: Optional[t.id]) -> str:
+def bulletin_fields() -> str:
     """Endpoint for bulletin fields configuration."""
     return render_template("admin/bulletin-fields.html")
 
@@ -4211,9 +4211,9 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
 
 
 # Actor fields routes
-@admin.route("/actor-fields/", defaults={"id": None})
+@admin.route("/actor-fields/")
 @roles_required("Admin")
-def actor_fields(id: Optional[t.id]) -> str:
+def actor_fields() -> str:
     """Endpoint for actor fields configuration."""
     return render_template("admin/actor-fields.html")
 
@@ -5500,9 +5500,9 @@ def api_role_import() -> Response:
 
 
 # Incident fields routes
-@admin.route("/incident-fields/", defaults={"id": None})
+@admin.route("/incident-fields/")
 @roles_required("Admin")
-def incident_fields(id: Optional[t.id]) -> str:
+def incident_fields() -> str:
     """Endpoint for incident fields configuration."""
     return render_template("admin/incident-fields.html")
 
