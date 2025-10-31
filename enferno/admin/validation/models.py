@@ -14,6 +14,7 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
+from enferno.admin.models import Activity
 from enferno.settings import Config
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
@@ -1991,23 +1992,7 @@ class ActivityQueryValidationModel(StrictValidationModel):
         """Validate action is among allowed values."""
         if v is None:
             return v
-        allowed = [
-            "APPROVE",
-            "BULK",
-            "CREATE",
-            "DELETE",
-            "DOWNLOAD",
-            "LOGIN",
-            "LOGOUT",
-            "REJECT",
-            "REQUEST",
-            "REVIEW",
-            "SEARCH",
-            "SELF-ASSIGN",
-            "UPDATE",
-            "UPLOAD",
-            "VIEW",
-        ]
+        allowed = Activity.get_action_values()
         if v not in allowed:
             raise ValueError(f"Invalid action: {v}. Allowed actions are: {', '.join(allowed)}")
         return v
