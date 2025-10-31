@@ -6,12 +6,11 @@ Maintenance mode is based on a file lock rather than database to ensure
 it works even during database maintenance operations.
 """
 
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from flask import current_app, render_template, request
+from flask import render_template, request
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger()
