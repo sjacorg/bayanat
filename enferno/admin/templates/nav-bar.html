@@ -1,7 +1,9 @@
 <v-app-bar color="primary">
+  {% if not hideDrawerIcon %}
   <template v-slot:prepend>
     <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
   </template>
+  {% endif %}
 
   <v-toolbar-title  class="ml-0 pl-3">
     <a href="/">
@@ -10,10 +12,9 @@
         class="mt-1"
         height="42"
         cover
-        >
-        </a>
+      />
+    </a>
   </v-toolbar-title>
-  <v-spacer></v-spacer>
 
   <v-tooltip location="bottom">
     <template v-slot:activator="{ props }">
