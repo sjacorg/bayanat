@@ -14,6 +14,7 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
+from enferno.admin.models import Activity
 from enferno.settings import Config
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
@@ -2052,6 +2053,7 @@ class DynamicFieldBulkSaveModel(StrictValidationModel):
         return v
 
 
+
 class ActivityQueryValidationModel(StrictValidationModel):
     user: Optional[int] = None
     action: Optional[str] = None
@@ -2064,23 +2066,7 @@ class ActivityQueryValidationModel(StrictValidationModel):
         """Validate action is among allowed values."""
         if v is None:
             return v
-        allowed = [
-            "APPROVE",
-            "BULK",
-            "CREATE",
-            "DELETE",
-            "DOWNLOAD",
-            "LOGIN",
-            "LOGOUT",
-            "REJECT",
-            "REQUEST",
-            "REVIEW",
-            "SEARCH",
-            "SELF-ASSIGN",
-            "UPDATE",
-            "UPLOAD",
-            "VIEW",
-        ]
+        allowed = Activity.get_action_values()
         if v not in allowed:
             raise ValueError(f"Invalid action: {v}. Allowed actions are: {', '.join(allowed)}")
         return v
@@ -2091,7 +2077,20 @@ class ActivityQueryValidationModel(StrictValidationModel):
         """Validate model is among allowed values."""
         if v is None:
             return v
-        allowed = ["bulletin", "actor", "incident", "user", "role", "location", "source", "label"]
+        allowed = [
+            "bulletin",
+            "actor",
+            "incident",
+            "user",
+            "role",
+            "location",
+            "source",
+            "label",
+            "media",
+            "eventtype",
+            "dynamic_field_bulk",
+            "config",
+        ]
         if v not in allowed:
             raise ValueError(f"Invalid model: {v}. Allowed models are: {', '.join(allowed)}")
         return v
@@ -2101,8 +2100,6 @@ class ActivityQueryValidationModel(StrictValidationModel):
     def validate_created(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         """Validate created contains valid dates."""
         if v:
-            if len(v) != 2:
-                raise ValueError("created must contain exactly two dates: [start_date, end_date]")
             for date_str in v:
                 try:
                     parse(date_str)
