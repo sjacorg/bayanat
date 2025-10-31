@@ -369,6 +369,7 @@ const ActorCard = Vue.defineComponent({
             <actor-profiles :actor-id="actor.id"></actor-profiles>
           </div>
 
+          <!-- Render map after actor_profiles to maintain visual flow -->
           <div
             v-else-if="field.field_type === 'actor_profiles'"
             :class="$root.fieldClassDrawer(field)"
