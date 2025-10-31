@@ -6875,6 +6875,7 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
 
 
 @admin.get("/api/dynamic-fields/history/<entity_type>")
+@roles_required("Admin")
 def api_dynamic_fields_history(entity_type):
     """
     Get history of dynamic form changes for an entity type.
