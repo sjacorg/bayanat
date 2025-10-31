@@ -118,7 +118,7 @@ const ShortActorDialog = Vue.defineComponent({
       return this.profileModes.find((x) => x.id === mode).fields.includes(fieldName);
     },
     confirmClose() {
-      if (confirm(translations.confirm_)) {
+      if (confirm(translations.areYouSure_)) {
         this.close();
       }
     },

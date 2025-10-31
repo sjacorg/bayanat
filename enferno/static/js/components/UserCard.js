@@ -1,6 +1,6 @@
 const UserCard = Vue.defineComponent({
   props: ['user', 'closable'],
-  emits: ['close', 'edit', 'resetPassword', 'revoke2fa', 'logoutAll'],
+  emits: ['close', 'edit', 'resetPassword', 'revoke2fa', 'logoutAll', 'changePassword'],
   watch: {
     user: function (val, old) {
       this.resetSessions();
@@ -77,28 +77,31 @@ const UserCard = Vue.defineComponent({
         });
     },
 
-    logoutSession(id) {
-      if (window.confirm(this.translations.logoutSessionConfirmation_)) {
-        axios
-          .delete('/admin/api/session/logout', {
-            data: {
-              sessid: id,
-            },
-          })
-          .then((response) => {
-            console.log('Logged out session');
-            if (response.data.redirect) {
-              // Perform the redirection to the root path
-              window.location.href = '/';
-            } else {
-              this.resetSessions();
-              this.fetchSessions();
-            }
-          })
-          .catch((err) => {
-            console.error('Error logging out session', err);
-          });
-      }
+    openLogoutSessionDialog(id) {
+      this.$root.$confirm({
+        title: translations.youreAboutToEndThisSession_,
+        message: `${translations.afterThisActionTheUserWillBeSignedOut_}\r\n\r\n${translations.doYouWantToContinue_}`,
+        acceptProps: { text: translations.endSession_, color: 'error' },
+        dialogProps: { width: 780 },
+        onAccept: () => {
+          axios
+            .delete('/admin/api/session/logout', {
+              data: { sessid: id },
+            })
+            .then((response) => {
+              console.log('Logged out session');
+              if (response.data.redirect) {
+                window.location.href = '/';
+              } else {
+                this.resetSessions();
+                this.fetchSessions();
+              }
+            })
+            .catch((err) => {
+              console.error('Error logging out session', err);
+            });
+        },
+      });
     },
   },
 
@@ -115,149 +118,251 @@ const UserCard = Vue.defineComponent({
 
   template: `
       <v-card class="mx-auto">
-        <v-sheet class="px-6 py-4 d-flex align-center">
+        <v-sheet class="px-6 py-5 d-flex align-center">
           <v-toolbar-title>
-            <div class="d-flex flex-wrap ga-2 align-center">
-              {{ user.name }}
+            <div class="d-flex justify-space-between ga-2 align-center">
+              <div class="d-flex flex-column">
+                <div class="d-flex align-center ga-2">
+                  {{ user.name }}
+      
+                  <v-chip color="primary">
+                    <v-icon size="x-large">mdi-identifier</v-icon>
+                    {{ user.id }}
+                  </v-chip>
   
-              <v-chip prepend-icon="mdi-identifier" color="primary">
-                {{ user.id }}
-              </v-chip>
-  
-              <v-chip prepend-icon="mdi-account-circle-outline" color="primary">
-                {{ user.username }}
-              </v-chip>
-  
-              <v-chip v-if="user.email" prepend-icon="mdi-email" color="primary">
-                {{ user.email }}
-              </v-chip>
-  
-              <v-btn
-                variant="tonal"
-                size="small"
-                prepend-icon="mdi-pencil"
-                @click="$emit('edit', user)"
-              >
-                {{ translations.edit_ }}
-              </v-btn>
-  
-              <v-tooltip
-                location="bottom"
-                :disabled="!user.force_reset"
-                :text="translations.passwordResetAlreadyRequested_"
-              >
-                <template #activator="{props}">
-                  <div v-bind="props">
-                    <v-btn
-                      :disabled="user.force_reset != null"
-                      variant="tonal"
-                      size="small"
-                      prepend-icon="mdi-lock-reset"
-                      @click="$emit('resetPassword', user)"
-                    >
-                      {{ translations.forcePasswordReset_ }}
-                    </v-btn>
-                  </div>
-                </template>
-              </v-tooltip>
-              
+                  <v-chip :color="user.active ? 'success' : null">
+                    <v-icon class="mr-1" size="x-large">{{ user.active ? 'mdi-account-check' : 'mdi-account-cancel'}}</v-icon>
+                    {{ user.active ? translations.active_ : translations.inactive_ }}
+                  </v-chip>
+                </div>
+    
+                <div>
+                  <v-chip prepend-icon="mdi-account-circle-outline" variant="plain" class="text-body-2">
+                    {{ user.username }}
+                  </v-chip>
+      
+                  <v-chip v-if="user.email" prepend-icon="mdi-email-outline" variant="plain" class="text-body-2">
+                    {{ user.email }}
+                  </v-chip>
+                </div>
+              </div>
+
               <v-chip
                 v-if="user.force_reset"
                 color="error"
-                variant="tonal"
-                label
-                prepend-icon="mdi-exclamation"
+                variant="text"
+                class="font-weight-medium"
               >
+                <v-icon size="x-large">mdi-exclamation</v-icon>
                 {{ translations.passwordResetRequested_ }}
               </v-chip>
+  
+              <div class="d-flex justify-space-between ga-2 align-center">
+                <v-tooltip
+                  location="bottom"
+                  :text="user.force_reset ? translations.passwordResetAlreadyRequested_ : translations.forcePasswordReset_"
+                >
+                  <template #activator="{props}">
+                    <div v-bind="props">
+                      <v-btn
+                        :disabled="user.force_reset != null"
+                        color="error"
+                        density="comfortable"
+                        icon="mdi-lock-reset"
+                        @click="$emit('resetPassword', user)"
+                      ></v-btn>
+                    </div>
+                  </template>
+                </v-tooltip>
+
+                <v-tooltip
+                  location="bottom"
+                  :text="translations.changePassword_"
+                >
+                  <template #activator="{props}">
+                    <div v-bind="props">
+                      <v-btn
+                        :disabled="user.force_reset != null"
+                        color="warning"
+                        density="comfortable"
+                        icon="mdi-form-textbox-password"
+                        @click="$emit('changePassword', user)"
+                      ></v-btn>
+                    </div>
+                  </template>
+                </v-tooltip>
+
+                <v-tooltip
+                  v-if="user.two_factor_devices && user.two_factor_devices.length > 0"
+                  location="bottom"
+                  :text="translations.revoke2fa_"
+                >
+                  <template #activator="{props}">
+                    <div v-bind="props">
+                      <v-btn
+                        
+                        @click.stop="$emit('revoke2fa', user.id)"
+                        variant="outlined"
+                        color="warning"
+                        density="comfortable"
+                        icon="mdi-lock-remove"
+                      ></v-btn>
+                    </div>
+                  </template>
+                </v-tooltip>
+
+                <v-tooltip
+                  location="bottom"
+                  :text="translations.editUser_"
+                >
+                  <template #activator="{props}">
+                    <div v-bind="props">
+                      <v-btn
+                        variant="outlined"
+                        density="comfortable"
+                        icon="mdi-pencil"
+                        @click="$emit('edit', user)"
+                      ></v-btn>
+                    </div>
+                  </template>
+                </v-tooltip>
+
+                <v-btn v-if="closable" size="small" variant="flat" icon="mdi-close" @click="$emit('close')"></v-btn>
+              </div>
             </div>
           </v-toolbar-title>
-
-          <v-btn v-if="closable" size="small" variant="flat" icon="mdi-close" @click="$emit('close')"></v-btn>
         </v-sheet>
         <v-divider></v-divider>
 
-
-        <v-card variant="flat" class="mt-3 pa-3">
-
-          <v-label class="ml-3">
-            {{ translations.userPermissions_ }}
-          </v-label>
-          <v-card-text>
-
-            <v-chip
-              v-for="(permission, index) in permissions"
-              :key="index"
-              class="ma-2"
-              :color="permission.value ? 'primary' : 'error'"
-              :prepend-icon="permission.value ? 'mdi-checkbox-marked-circle' : 'mdi-close-circle'">
-              {{ permission.label }}
-            </v-chip>
+        <v-card variant="flat">
+          <v-card-text class="px-6">
+            <v-row>
+              <v-col cols="12" sm="6" md="4">
+                <div class="mb-3 text-body-1">{{ translations.accessLevel_ }}</div>
+                <div class="d-flex flex-wrap ga-3">
+                  <template v-if="user?.access_level">
+                    <toggle-button
+                      read-only
+                      hide-left-icon
+                      :model-value="true"
+                    >
+                      <v-icon start size="large">{{ $root.getIconFromAccessLevel(user?.access_level) }}</v-icon>
+                      {{ user?.access_level?.name }}
+                    </toggle-button>
+                  </template>
+                  <template v-else>
+                    <toggle-button
+                      read-only
+                      hide-left-icon
+                      :model-value="true"
+                    >
+                      <v-icon start size="large">mdi-account-cancel</v-icon>
+                      {{ translations.disabled_ }}
+                    </toggle-button>
+                  </template>
+                </div>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <div class="mb-3 text-body-1">{{ translations.systemRole_ }}</div>
+                <div class="d-flex flex-wrap ga-3">
+                  <template v-if="user.roles.length">
+                    <toggle-button
+                      v-for="(role, index) in user.roles"
+                      :key="index"
+                      read-only
+                      hide-left-icon
+                      :model-value="true"
+                    >
+                      {{ role.name }}
+                    </toggle-button>
+                  </template>
+                </div>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <div class="mb-3 text-body-1">{{ translations.accessRole_ }}</div>
+                <div class="d-flex flex-wrap ga-3">
+                  <template v-if="user?.access_roles?.length">
+                    <toggle-button
+                      v-for="(role, index) in user.access_roles"
+                      :key="index"
+                      read-only
+                      hide-left-icon
+                      :model-value="true"
+                    >
+                      {{ role.name }}
+                    </toggle-button>
+                  </template>
+                </div>
+              </v-col>
+            </v-row>
           </v-card-text>
         </v-card>
 
-        <v-divider></v-divider>
-        
-         <v-card variant="flat" class="mt-3 pa-3">
-
-          <div class="d-flex align-center">
-            <v-label class="ml-3">
-              {{ translations.userTwoFactorMethods_ }}
-            </v-label>
-
-            <v-btn
-              v-if="user.two_factor_devices && user.two_factor_devices.length > 0"
-              @click.stop="$emit('revoke2fa', user.id)"
-              variant="tonal"
-              color="warning"
-              size="small"
-              prepend-icon="mdi-lock-remove"
-              class="ml-2"
-            >
-              {{ translations.revoke2fa_ }}
-            </v-btn>
-          </div>
-
-          <v-card-text class="d-flex ga-3">
-
-            <v-chip
-              v-for="device in user.two_factor_devices"
-              :key="device.id"
-              :prepend-icon="device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive'"
-              color="primary"
-            >
-              {{ device.name }}
-            </v-chip>
-
-            <v-chip
-              v-if="user.two_factor_devices.length == 0"
-              prepend-icon="mdi-lock-open-alert"
-              color="error"
-              label
-            >
-              {{ translations.noTwoFactorMethods_ }}
-            </v-chip>
-
-
+        <v-card variant="flat">
+          <v-card-text class="px-6">
+            <div class="mb-3 text-body-1">{{ translations.userPermissions_ }}</div>
+            <div class="d-flex flex-wrap ga-3">
+              <toggle-button
+                v-for="(permission, index) in permissions"
+                :key="index"
+                read-only
+                :model-value="permission.value"
+              >
+                {{ permission.label }}
+              </toggle-button>
+            </div>
           </v-card-text>
         </v-card>
 
-        <v-divider></v-divider>
+        <v-card variant="flat">
+          <v-card-text class="px-6">
+            <v-row>
+              <v-col cols="12" md="4">
+                <div class="mb-3 text-body-1">{{ translations.twoFactorAuthentication_ }}</div>
+                <div class="d-flex flex-wrap ga-3">
+                  <div
+                    v-if="user?.two_factor_devices?.length > 0"
+                    class="d-flex flex-column ga-2 font-weight-medium text-success"
+                  >
+                    <div
+                      v-for="device in user.two_factor_devices"
+                      :key="device.id"
+                      class="d-flex align-center ga-2"
+                    >
+                      <v-icon
+                        :icon="device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive'"
+                        color="success"
+                        size="small"
+                      />
+                      {{ device.name }}
+                    </div>
+                  </div>
+
+                  <div
+                    v-else
+                    class="d-flex align-center ga-2 font-weight-medium text-warning"
+                  >
+                    <v-icon color="warning" size="small">mdi-lock-open-alert</v-icon>
+                    {{ translations.noTwoFactorMethods_ }}
+                  </div>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
 
         <v-card class="mt-2" variant="flat">
-
-          <v-card-text>
-            <div class="d-flex align-center">
-              <v-label class="ml-3">{{ translations.userSessions_ }}</v-label>
+          <v-card-text class="px-6">
+            <div class="d-flex justify-space-between align-center mb-2">
+              <div class="text-body-1">{{ translations.userSessions_ }}</div>
               <v-btn
+                v-if="sessions.length"
                 @click.stop="$emit('logoutAll', user.id)"
-                variant="tonal"
-                size="small"
+                variant="outlined"
                 prepend-icon="mdi-logout"
                 color="error"
-                class="ml-2"
               >
-                {{ translations.logoutAllSessions_ }}
+                {{ translations.logoutAll_ }}
               </v-btn>
             </div>
 
@@ -265,8 +370,8 @@ const UserCard = Vue.defineComponent({
               <thead>
               <tr>
                 <th class="text-left">{{ translations.session_ }}</th>
-                <th class="text-left">{{ translations.ip_ }}</th>
-                <th class="text-left">{{ translations.userAgent_ }}</th>
+                <th class="text-left">{{ translations.device_ }}</th>
+                <th class="text-left">{{ translations.browser_ }}</th>
                 <th class="text-left">{{ translations.started_ }}</th>
                 <th class="text-left">{{ translations.logOffThisDevice_ }}</th>
               </tr>
@@ -296,25 +401,26 @@ const UserCard = Vue.defineComponent({
 
                 </td>
                 <td>
-                  <v-chip label>{{ session.ip_address }}</v-chip>
+                  {{ session.meta.os }}
                 </td>
                 <td class="text-caption">
-                  {{ session.meta.device }}
+                  {{ session.meta.browser }}
                 </td>
                 <td class="text-caption">{{ $root.formatDate(session.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}</td>
                 <td>
-                  <v-btn icon="mdi-logout" variant="plain" v-if="session.details?._fresh"
-                         @click.once="logoutSession(session.id)" :disabled="!session.is_active"
-                         color="error">
-
-                  </v-btn>
+                  <v-btn
+                    icon="mdi-logout"
+                    variant="plain" v-if="session.details?._fresh"
+                    @click="openLogoutSessionDialog(session.id)" :disabled="!session.is_active"
+                    color="error"
+                  ></v-btn>
                 </td>
               </tr>
               </tbody>
             </v-table>
           </v-card-text>
           <v-card-text class="text-center">
-            <v-btn icon="mdi-dots-horizontal" variant="plain" v-if="more" fab small @click="fetchSessions(page, perPage)"></v-btn>
+            <v-btn variant="outlined" v-if="more" @click="fetchSessions(page, perPage)">{{ translations.loadMore_ }}</v-btn>
           </v-card-text>
         </v-card>
       </v-card>
