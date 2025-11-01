@@ -6749,25 +6749,6 @@ def api_dynamic_fields():
         )
 
 
-@admin.get("/api/dynamic-fields/<int:field_id>")
-def api_dynamic_field(field_id):
-    """
-    Retrieve a single dynamic field by its ID.
-    Returns a JSON response with 'data' (field details) or a 404 error if not found.
-    """
-    try:
-        stmt = select(DynamicField).where(DynamicField.id == field_id)
-        field = db.session.execute(stmt).scalars().first()
-        if not field:
-            return HTTPResponse.not_found("Field not found")
-        return HTTPResponse.success(data={"data": field.to_dict(), "meta": {}})
-    except Exception as e:
-        logger.error(f"Error retrieving dynamic field {field_id}: {str(e)}", exc_info=True)
-        return HTTPResponse.error(
-            "An internal error occurred while retrieving dynamic field", status=500
-        )
-
-
 @admin.post("/api/dynamic-fields/bulk-save")
 @roles_required("Admin")
 @validate_with(DynamicFieldBulkSaveModel)
