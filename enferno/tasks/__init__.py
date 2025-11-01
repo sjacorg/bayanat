@@ -13,9 +13,11 @@ from datetime import datetime, timedelta, date, timezone
 
 import boto3
 import pandas as pd
+import requests
 from celery import Celery, chain, chord, group
 from celery.schedules import crontab
 from celery.signals import worker_ready, worker_process_init
+from packaging import version
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -51,11 +53,11 @@ from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
 import enferno.utils.typing as t
+from enferno.admin.models import SystemInfo
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
 
 # Simple test detection - use TestConfig if in test environment
-import os
 
 if os.environ.get("BAYANAT_CONFIG_FILE") == "config.test.json":
     from enferno.settings import TestConfig
@@ -116,6 +118,11 @@ class ContextTask(celery.Task):
 
 
 celery.Task = ContextTask
+
+# Register tasks from separate modules (after ContextTask is set)
+from enferno.tasks.update import perform_system_update_task
+
+perform_system_update = celery.task(perform_system_update_task)
 
 # splitting db operations for performance
 BULK_CHUNK_SIZE = 250
@@ -729,6 +736,10 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
     # session cleanup task
     sender.add_periodic_task(24 * 60 * 60, session_cleanup.s(), name="Session Cleanup Cron")
 
+    # version check task (every 12 hours)
+    sender.add_periodic_task(12 * 60 * 60, check_for_updates.s(), name="Version Check")
+    logger.info("Version check periodic task is set up (runs every 12 hours).")
+
 
 @celery.task
 def session_cleanup():
@@ -910,16 +921,40 @@ def process_row(
     si.import_row()
 
 
-def reload_app():
+def restart_service(service_name="bayanat"):
+    """Unified restart logic: systemd → socket API → signal fallback."""
     import os
     import signal
+    import shutil
+    import requests
+    from flask import current_app
 
+    # Production mode = systemctl command exists
+    is_production = shutil.which("systemctl") is not None
+
+    if is_production:
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8080/restart-service", json={"service": service_name}, timeout=2
+            )
+            if response.status_code == 200:
+                return
+        except:
+            pass  # Fall through to signal
+
+    # Dev mode or fallback: SIGHUP parent process
+    if current_app:
+        current_app.logger.info(f"Dev restart: {service_name} via SIGHUP")
     os.kill(os.getppid(), signal.SIGHUP)
+
+
+def reload_app():
+    restart_service("bayanat")
 
 
 @celery.task
 def reload_celery():
-    reload_app()
+    restart_service("bayanat-celery")
 
 
 # ---- Export tasks ----
@@ -1011,7 +1046,7 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} PDF file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing PDF file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1062,7 +1097,7 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} JSON file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing JSON file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1122,7 +1157,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} CSV file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing CSV file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1188,7 +1223,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                 )
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
-                except Exception as e:
+                except Exception:
                     logger.error(
                         f"Error downloading Export #{export_request.id} file from S3.",
                         exc_info=True,
@@ -1270,7 +1305,7 @@ def activity_cleanup_cron() -> None:
     expired_activities = Activity.query.filter(
         datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
     )
-    logger.info(f"Cleaning up Activities...")
+    logger.info("Cleaning up Activities...")
     deleted = expired_activities.delete(synchronize_session=False)
     if deleted:
         db.session.commit()
@@ -1298,7 +1333,7 @@ def daily_backup_cron():
                 os.remove(filepath)
             except FileNotFoundError:
                 logger.error(f"Backup file {filename} not found to delete.", exc_info=True)
-            except OSError as e:
+            except OSError:
                 logger.error(f"Unable to remove backup file {filename}.", exc_info=True)
 
 
@@ -1433,6 +1468,76 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
+
+
+def perform_version_check() -> Optional[dict]:
+    """Check manifest for new Bayanat version. Returns result dict or None on error."""
+    try:
+        repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
+        manifest_url = os.environ.get(
+            "BAYANAT_UPDATE_MANIFEST_URL",
+            f"https://raw.githubusercontent.com/{repo_name}/main/updates/latest.json",
+        )
+
+        # Force fresh content from GitHub (bypass CDN cache)
+        response = requests.get(
+            manifest_url,
+            timeout=3,
+            headers={"Cache-Control": "no-cache", "Pragma": "no-cache"},
+        )
+        response.raise_for_status()
+
+        manifest = response.json()
+        latest_tag = manifest.get("version")
+        if not latest_tag:
+            return None
+
+        current_version = cfg.VERSION
+        checked_at = datetime.now(timezone.utc).isoformat()
+
+        try:
+            update_available = version.parse(latest_tag) > version.parse(current_version)
+        except Exception:
+            update_available = False
+
+        # Always cache the checked version to prevent stale data
+        cached = rds.get("bayanat:update:latest")
+        cached_version = cached.decode().split("|")[0] if cached else None
+
+        if update_available:
+            # Only notify if version changed
+            if cached_version != latest_tag:
+                Notification.send_admin_notification_for_event(
+                    Constants.NotificationEvent.SYSTEM_UPDATE_AVAILABLE,
+                    "System update available",
+                    f"Bayanat {latest_tag} is available (current: {current_version}).",
+                    category=Constants.NotificationCategories.UPDATE.value,
+                )
+            logger.info(f"New version available: {latest_tag}")
+
+        # Update cache on every check (keeps dashboard accurate)
+        rds.set("bayanat:update:latest", f"{latest_tag}|{checked_at}")
+
+        return {
+            "latest_version": latest_tag,
+            "current_version": current_version,
+            "update_available": update_available,
+            "checked_at": checked_at,
+            "repository": repo_name,
+        }
+
+    except Exception as e:
+        logger.warning(f"Version check failed: {e}")
+        return None
+
+
+@celery.task
+def check_for_updates() -> None:
+    """
+    Periodic Celery task to check for new Bayanat versions.
+    Delegates to perform_version_check() which contains the actual logic.
+    """
+    perform_version_check()
 
 
 @celery.task
@@ -1619,7 +1724,7 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
     flag_modified(data_import, "data")
 
     data_import.add_to_log(f"Downloaded file: {filename}")
-    data_import.add_to_log(f"Format: mp4")
+    data_import.add_to_log("Format: mp4")
     data_import.add_to_log(f"Duration: {info.get('duration')}s")
     data_import.save()
 

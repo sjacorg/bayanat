@@ -39,5 +39,7 @@ from .PotentialViolation import PotentialViolation
 from .Query import Query
 from .Settings import Settings
 from .Source import Source
+from .SystemInfo import SystemInfo, MigrationHistory
+from .UpdateHistory import UpdateHistory
 from .WorkflowStatus import WorkflowStatus
 from .Notification import Notification
