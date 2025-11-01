@@ -6304,6 +6304,7 @@ def system_admin() -> str:
     """Endpoint for system administration."""
     return render_template("admin/system-administration.html")
 
+
 @admin.get("/api/appconfig/")
 @roles_required("Admin")
 def api_app_config() -> Response:
@@ -6623,7 +6624,7 @@ def api_trigger_system_update() -> Response:
     skip_backup = bool(data.get("skip_backup", False))
 
     try:
-        task = perform_system_update.delay(skip_backup=skip_backup)
+        task = perform_system_update.delay(skip_backup=skip_backup, user_id=current_user.id)
     except Exception as e:
         current_app.logger.error(f"Failed to queue update task: {str(e)}")
         return HTTPResponse.error(f"Failed to queue update task: {str(e)}", 500)
@@ -6639,7 +6640,9 @@ def api_schedule_system_update() -> Response:
     data = request.get_json(silent=True) or {}
     skip_backup = bool(data.get("skip_backup", False))
 
-    result = schedule_system_update_with_grace_period(skip_backup=skip_backup)
+    result = schedule_system_update_with_grace_period(
+        skip_backup=skip_backup, user_id=current_user.id
+    )
 
     if result.get("success"):
         return HTTPResponse.success(
