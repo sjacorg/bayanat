@@ -54,7 +54,8 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
             raise RuntimeError("Failed to acquire system lock")
         lock_acquired = True
 
-        # Capture target version before attempting update
+        # Capture current version before update and target version
+        current_version = SystemInfo.get_value("app_version")
         target_version = Config.VERSION
 
         set_update_message("Running update...")
@@ -63,11 +64,21 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
         if success:
             new_version = SystemInfo.get_value("app_version") or Config.VERSION
             set_update_message(f"Update complete: {new_version}")
-            UpdateHistory(version_to=new_version, status="success", user_id=user_id).save()
+            UpdateHistory(
+                version_from=current_version,
+                version_to=new_version,
+                status="success",
+                user_id=user_id,
+            ).save()
         else:
             set_update_message(f"Update failed: {message}")
             # Record failed attempt with target version
-            UpdateHistory(version_to=target_version, status="failed", user_id=user_id).save()
+            UpdateHistory(
+                version_from=current_version,
+                version_to=target_version,
+                status="failed",
+                user_id=user_id,
+            ).save()
 
         return {"success": success, "message": message}
 
@@ -75,8 +86,14 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
         set_update_message(f"Error: {str(e)}")
         # Record failed attempt due to exception
         try:
+            current_version = SystemInfo.get_value("app_version")
             target_version = Config.VERSION
-            UpdateHistory(version_to=target_version, status="failed", user_id=user_id).save()
+            UpdateHistory(
+                version_from=current_version,
+                version_to=target_version,
+                status="failed",
+                user_id=user_id,
+            ).save()
         except Exception as log_error:
             current_app.logger.error(f"Failed to log update failure: {str(log_error)}")
 
