@@ -54,20 +54,32 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
             raise RuntimeError("Failed to acquire system lock")
         lock_acquired = True
 
+        # Capture target version before attempting update
+        target_version = Config.VERSION
+
         set_update_message("Running update...")
         success, message = run_system_update(skip_backup=skip_backup)
 
         if success:
             new_version = SystemInfo.get_value("app_version") or Config.VERSION
             set_update_message(f"Update complete: {new_version}")
-            UpdateHistory(version_to=new_version, user_id=user_id).save()
+            UpdateHistory(version_to=new_version, status="success", user_id=user_id).save()
         else:
             set_update_message(f"Update failed: {message}")
+            # Record failed attempt with target version
+            UpdateHistory(version_to=target_version, status="failed", user_id=user_id).save()
 
         return {"success": success, "message": message}
 
     except Exception as e:
         set_update_message(f"Error: {str(e)}")
+        # Record failed attempt due to exception
+        try:
+            target_version = Config.VERSION
+            UpdateHistory(version_to=target_version, status="failed", user_id=user_id).save()
+        except Exception as log_error:
+            current_app.logger.error(f"Failed to log update failure: {str(log_error)}")
+
         return {"success": False, "error": str(e)}
 
     finally:
