@@ -25,7 +25,9 @@ from enferno.utils.validation_utils import (
     validate_password_policy,
     validate_username,
     validate_username_constraints,
+    validate_field_type,
 )
+from enferno.admin.models.DynamicField import DynamicField
 from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
@@ -34,6 +36,24 @@ BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 PER_PAGE = int(Config.get("ITEMS_PER_PAGE_OPTIONS")[0])
+
+
+def validate_dynamic_fields(entity_type: str, model_instance) -> None:
+    """Validate dynamic fields against their schema definitions."""
+    # Use model_extra to get only true extra fields (not aliases)
+    dynamic_data = model_instance.model_extra or {}
+
+    if not dynamic_data:
+        return
+
+    fields = DynamicField.query.filter_by(entity_type=entity_type, active=True, core=False).all()
+    field_map = {f.name: f for f in fields}
+
+    for name, value in dynamic_data.items():
+        if name not in field_map:
+            raise ValueError(f"Unknown field '{name}' for {entity_type}")
+        validated = validate_field_type(value, field_map[name].field_type)
+        setattr(model_instance, name, validated)
 
 
 class BaseValidationModel(BaseModel):
@@ -219,6 +239,9 @@ class PartialMediaModel(BaseValidationModel):
 
 
 class BulletinValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     originid: Optional[str] = None
     title: str = Field(min_length=1)
     sjac_title: Optional[str] = None
@@ -298,6 +321,12 @@ class BulletinValidationModel(StrictValidationModel):
                 raise ValueError(f"Invalid date format: {v}")
         return v
 
+    @model_validator(mode="after")
+    def validate_bulletin_dynamic_fields(self):
+        """Validate dynamic bulletin fields."""
+        validate_dynamic_fields("bulletin", self)
+        return self
+
 
 class BulletinRequestModel(BaseValidationModel):
     item: BulletinValidationModel
@@ -312,6 +341,9 @@ class PartialClaimedViolationModel(BaseValidationModel):
 
 
 class IncidentValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     title: str = Field(min_length=1)
     title_ar: Optional[str] = None
     description: Optional[SanitizedField] = None
@@ -433,6 +465,12 @@ class IncidentValidationModel(StrictValidationModel):
             except ValueError:
                 raise ValueError(f"Invalid date format: {v}")
         return v
+
+    @model_validator(mode="after")
+    def validate_incident_dynamic_fields(self):
+        """Validate dynamic incident fields."""
+        validate_dynamic_fields("incident", self)
+        return self
 
 
 class IncidentRequestModel(BaseValidationModel):
@@ -634,6 +672,9 @@ class PartialActorProfileModel(BaseValidationModel):
 
 
 class ActorValidationModel(StrictValidationModel):
+    # Allow unknown/dynamic fields to pass through to from_json
+    model_config = ConfigDict(str_strip_whitespace=True, extra="allow")
+
     type: str = DEFAULT_STRING_FIELD  # type: ignore
     name: Optional[str] = DEFAULT_STRING_FIELD
     name_ar: Optional[str] = DEFAULT_STRING_FIELD
@@ -759,6 +800,12 @@ class ActorValidationModel(StrictValidationModel):
             except ValueError:
                 raise ValueError(f"Invalid date format: {v}")
         return v
+
+    @model_validator(mode="after")
+    def validate_actor_dynamic_fields(self):
+        """Validate dynamic actor fields."""
+        validate_dynamic_fields("actor", self)
+        return self
 
 
 class ActorRequestModel(BaseValidationModel):
@@ -1207,6 +1254,9 @@ class BulletinQueryValidationModel(QueryBaseModel):
     childsources: Optional[bool] = False
     locTypes: Optional[list[str]] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel] = None
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "case_number", "op": "contains", "value": "2024-"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
     @field_validator("tags")
     def validate_tags(cls, v):
@@ -1366,6 +1416,9 @@ class ActorQueryModel(QueryBaseModel):
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "field_name", "op": "contains", "value": "test"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
     @field_validator("tags")
     def validate_tags(cls, v):
@@ -1502,6 +1555,9 @@ class IncidentQueryModel(QueryBaseModel):
     ids: list[int] = Field(default_factory=list)
     potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
     claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
+    # Minimal, permissive container for dynamic-field filters
+    # Example item: {"name": "field_123", "op": "contains", "value": "test"}
+    dyn: Optional[list[dict]] = Field(default_factory=list)
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
@@ -1978,6 +2034,24 @@ class WebImportValidationModel(StrictValidationModel):
             raise ValueError(f"Imports not allowed from {domain}")
 
         return str(v)
+
+
+# Dynamic Field Validation Models
+class DynamicFieldBulkSaveModel(StrictValidationModel):
+    """Validation for bulk save operations."""
+
+    entity_type: str
+    changes: Dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("entity_type")
+    @classmethod
+    def validate_entity_type(cls, v: str) -> str:
+        """Validate entity_type is one of the allowed values."""
+        allowed = ["bulletin", "actor", "incident"]
+        if v not in allowed:
+            raise ValueError(f"entity_type must be one of: {', '.join(allowed)}")
+        return v
+
 
 
 class ActivityQueryValidationModel(StrictValidationModel):

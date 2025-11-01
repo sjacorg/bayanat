@@ -20,6 +20,7 @@ from enferno.admin.models.Itob import Itob
 from enferno.admin.models.Location import Location
 from enferno.admin.models.GeoLocation import GeoLocation
 from enferno.admin.models.Event import Event
+from enferno.admin.models.DynamicField import DynamicField
 
 
 from enferno.admin.models.tables import (
@@ -493,6 +494,16 @@ class Bulletin(db.Model, BaseMixin):
         if "status" in json:
             self.status = json["status"]
 
+        # Dynamic fields: apply values via a central helper for simplicity
+        try:
+            from enferno.admin.models.DynamicField import DynamicField as DF
+
+            DF.apply_values(self, json)
+        except Exception as e:
+            logger.error(
+                f"Failed to apply dynamic fields on Bulletin {self.id}: {e}", exc_info=True
+            )
+
         return self
 
     # Compact dict for relationships
@@ -696,6 +707,9 @@ class Bulletin(db.Model, BaseMixin):
         if mode == "1":
             return self.min_json()
 
+        # Get base dictionary
+        data = super().to_dict()
+
         # locations json
         locations_json = []
         if self.locations and len(self.locations):
@@ -756,43 +770,57 @@ class Bulletin(db.Model, BaseMixin):
             for relation in self.incident_relations:
                 incident_relations_dict.append(relation.to_dict())
 
-        return {
-            "class": self.__tablename__,
-            "id": self.id,
-            "title": self.title,
-            "title_ar": self.title_ar,
-            "sjac_title": self.sjac_title or None,
-            "sjac_title_ar": self.sjac_title_ar or None,
-            "originid": self.originid or None,
-            # assigned to
-            "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
-            # first peer reviewer
-            "first_peer_reviewer": (
-                self.first_peer_reviewer.to_compact() if self.first_peer_reviewer_id else None
-            ),
-            "locations": locations_json,
-            "geoLocations": geo_locations_json,
-            "labels": labels_json,
-            "verLabels": ver_labels_json,
-            "sources": sources_json,
-            "events": events_json,
-            "medias": medias_json,
-            "bulletin_relations": bulletin_relations_dict,
-            "actor_relations": actor_relations_dict,
-            "incident_relations": incident_relations_dict,
-            "description": self.description or None,
-            "comments": self.comments or None,
-            "source_link": self.source_link or None,
-            "source_link_type": self.source_link_type or None,
-            "tags": self.tags or [],
-            "publish_date": DateHelper.serialize_datetime(self.publish_date),
-            "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
-            "status": self.status,
-            "review": self.review if self.review else None,
-            "review_action": self.review_action if self.review_action else None,
-            "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
-            "roles": [role.to_dict() for role in self.roles] if self.roles else [],
-        }
+        # Update with bulletin-specific core fields
+        data.update(
+            {
+                "class": self.__tablename__,
+                "id": self.id,
+                "title": self.title,
+                "title_ar": self.title_ar,
+                "sjac_title": self.sjac_title or None,
+                "sjac_title_ar": self.sjac_title_ar or None,
+                "originid": self.originid or None,
+                # assigned to
+                "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
+                # first peer reviewer
+                "first_peer_reviewer": (
+                    self.first_peer_reviewer.to_compact() if self.first_peer_reviewer_id else None
+                ),
+                "locations": locations_json,
+                "geoLocations": geo_locations_json,
+                "labels": labels_json,
+                "verLabels": ver_labels_json,
+                "sources": sources_json,
+                "events": events_json,
+                "medias": medias_json,
+                "bulletin_relations": bulletin_relations_dict,
+                "actor_relations": actor_relations_dict,
+                "incident_relations": incident_relations_dict,
+                "description": self.description or None,
+                "comments": self.comments or None,
+                "source_link": self.source_link or None,
+                "source_link_type": self.source_link_type or None,
+                "tags": self.tags or [],
+                "publish_date": DateHelper.serialize_datetime(self.publish_date),
+                "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
+                "status": self.status,
+                "review": self.review if self.review else None,
+                "review_action": self.review_action if self.review_action else None,
+                "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
+                "roles": [role.to_dict() for role in self.roles] if self.roles else [],
+            }
+        )
+
+        # Merge dynamic fields (non-core) into the response
+        try:
+            dynamic_values = DynamicField.extract_values_for(self)
+            if dynamic_values:
+                data.update(dynamic_values)
+        except Exception:
+            # Fail-safe: never break serialization because of dynamic fields
+            logger.error("Failed to merge dynamic fields for Bulletin %s", self.id, exc_info=True)
+
+        return data
 
     # custom serialization mode
     def to_mode2(self) -> dict[str, Any]:

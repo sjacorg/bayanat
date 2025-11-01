@@ -1,8 +1,8 @@
 const UniField = Vue.defineComponent({
   props: {
     caption: String,
-    english: String,
-    arabic: String,
+    english: String | Number,
+    arabic: String | Number,
     disableSpacing: Boolean
   },
   data() {
