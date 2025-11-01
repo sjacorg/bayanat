@@ -933,7 +933,7 @@
                                             v-model="editedItem.roles"
                                             label="{{ _('Restrict Actor to Access Group(s)') }}"
                                             :rules="
-                                                !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
+                                                !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []
                                             "
                                             clearable
                                     ></v-select>

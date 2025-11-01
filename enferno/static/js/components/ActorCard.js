@@ -233,7 +233,7 @@ const ActorCard = Vue.defineComponent({
         </v-card>
 
         <div class="d-flex flex-wrap">
-        <template v-for="(field) in $root.dynamicFieldsActorCard">
+        <template v-for="(field) in $root.cardDynamicFields('actor')">
           <div
             v-if="$root.isFieldActiveAndHasContent(field, 'name', [actor.name, actor.name_ar])"
             :class="$root.fieldClassDrawer(field)"
@@ -369,6 +369,7 @@ const ActorCard = Vue.defineComponent({
             <actor-profiles :actor-id="actor.id"></actor-profiles>
           </div>
 
+          <!-- Render map after actor_profiles to maintain visual flow -->
           <div
             v-else-if="field.field_type === 'actor_profiles'"
             :class="$root.fieldClassDrawer(field)"

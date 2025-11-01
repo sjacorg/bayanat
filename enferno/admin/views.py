@@ -3129,8 +3129,9 @@ def relationship_info() -> Response:
 
 
 # Bulletin fields routes
-@admin.route("/bulletin-fields/", defaults={"id": None})
-def bulletin_fields(id: Optional[t.id]) -> str:
+@admin.route("/bulletin-fields/")
+@roles_required("Admin")
+def bulletin_fields() -> str:
     """Endpoint for bulletin fields configuration."""
     return render_template("admin/bulletin-fields.html")
 
@@ -4210,8 +4211,9 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
 
 
 # Actor fields routes
-@admin.route("/actor-fields/", defaults={"id": None})
-def actor_fields(id: Optional[t.id]) -> str:
+@admin.route("/actor-fields/")
+@roles_required("Admin")
+def actor_fields() -> str:
     """Endpoint for actor fields configuration."""
     return render_template("admin/actor-fields.html")
 
@@ -5498,8 +5500,9 @@ def api_role_import() -> Response:
 
 
 # Incident fields routes
-@admin.route("/incident-fields/", defaults={"id": None})
-def incident_fields(id: Optional[t.id]) -> str:
+@admin.route("/incident-fields/")
+@roles_required("Admin")
+def incident_fields() -> str:
     """Endpoint for incident fields configuration."""
     return render_template("admin/incident-fields.html")
 
@@ -6052,7 +6055,7 @@ def api_activities(validated_data: dict) -> Response:
     su = SearchUtils(q, cls="activity")
     query = su.get_query()
 
-    options = request.json.get("options")
+    options = validated_data.get("options")
     page = options.get("page", 1)
     per_page = options.get("itemsPerPage", PER_PAGE)
 
@@ -6871,10 +6874,11 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
     except Exception as e:
         logger.error(f"Error in bulk save: {str(e)}")
         db.session.rollback()
-        return HTTPResponse.error(f"Bulk save failed: {str(e)}", status=500)
+        return HTTPResponse.error("Bulk save failed", status=500)
 
 
 @admin.get("/api/dynamic-fields/history/<entity_type>")
+@roles_required("Admin")
 def api_dynamic_fields_history(entity_type):
     """
     Get history of dynamic form changes for an entity type.
