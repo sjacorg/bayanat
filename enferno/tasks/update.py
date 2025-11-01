@@ -16,7 +16,7 @@ from enferno.settings import Config
 from enferno.extensions import rds
 
 
-def perform_system_update_task(skip_backup: bool = False) -> dict:
+def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -> dict:
     """Execute system update in background with system lock.
 
     This function is imported and registered as a Celery task in
@@ -24,6 +24,10 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
 
     NOTE: run_system_update is imported inside function to avoid circular
     dependency (enferno.commands imports enferno.tasks).
+
+    Args:
+        skip_backup: Whether to skip database backup
+        user_id: ID of user who initiated the update (None for scheduled/system updates)
     """
     from enferno.commands import run_system_update
 
@@ -56,7 +60,7 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
         if success:
             new_version = SystemInfo.get_value("app_version") or Config.VERSION
             set_update_message(f"Update complete: {new_version}")
-            UpdateHistory(version_to=new_version).save()
+            UpdateHistory(version_to=new_version, user_id=user_id).save()
         else:
             set_update_message(f"Update failed: {message}")
 
@@ -72,7 +76,9 @@ def perform_system_update_task(skip_backup: bool = False) -> dict:
         end_update()
 
 
-def schedule_system_update_with_grace_period(skip_backup: bool = False) -> dict:
+def schedule_system_update_with_grace_period(
+    skip_backup: bool = False, user_id: int = None
+) -> dict:
     """
     Schedule a system update with grace period notification.
 
@@ -81,6 +87,7 @@ def schedule_system_update_with_grace_period(skip_backup: bool = False) -> dict:
 
     Args:
         skip_backup: Whether to skip database backup during update
+        user_id: ID of user who scheduled the update
 
     Returns:
         dict with success status, message, and scheduled time
@@ -109,7 +116,7 @@ def schedule_system_update_with_grace_period(skip_backup: bool = False) -> dict:
     # Let Celery generate task ID (avoids collision, still cancellable)
     try:
         task = perform_system_update.apply_async(
-            kwargs={"skip_backup": skip_backup}, eta=scheduled_time
+            kwargs={"skip_backup": skip_backup, "user_id": user_id}, eta=scheduled_time
         )
         # Only set Redis flag AFTER successful enqueue (prevents false blocks if Celery fails)
         rds.setex(schedule_key, grace_minutes * 60, scheduled_time.isoformat())
