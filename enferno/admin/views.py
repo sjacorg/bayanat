@@ -6737,9 +6737,6 @@ def api_dynamic_fields():
         items = db.session.execute(stmt).scalars().all()
         data = [item.to_dict() for item in items]
 
-        # Simple entity_type filtering
-        entity_type_filter = request.args.get("entity_type")
-
         # Core fields are now stored in the database like regular dynamic fields
         # No special handling needed - they're included in the main query
 
