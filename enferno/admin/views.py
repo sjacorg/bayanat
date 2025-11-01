@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import os
 import shutil
-import time
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 from uuid import uuid4
-import re
 import boto3
 from botocore.config import Config as BotoConfig
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
@@ -16,7 +14,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, asc, text, select, func
+from sqlalchemy import desc, or_, asc, select, func
 from werkzeug.utils import safe_join, secure_filename
 from flask_security.twofactor import tf_disable
 import shortuuid
