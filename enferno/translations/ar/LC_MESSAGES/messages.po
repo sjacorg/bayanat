@@ -4249,14 +4249,16 @@ msgstr "بشكل افتراضي، يمكن للمستخدمين الوصول إ�
 #: enferno/admin/templates/nav-bar.html:74
 #: enferno/templates/notifications_dialog.html:8
 #: enferno/templates/notifications_drawer.html:11
+#, fuzzy
 msgid "Notifications"
-msgstr ""
+msgstr "الإشعارات"
 
 #: enferno/admin/templates/admin/actor-fields.html:7
 #: enferno/admin/templates/admin/bulletin-fields.html:7
 #: enferno/admin/templates/admin/incident-fields.html:7
+#, fuzzy
 msgid "Please review your updates before applying them to the form."
-msgstr ""
+msgstr "يرجى مراجعة التحديثات قبل تطبيقها على النموذج."
 
 #: enferno/admin/templates/admin/actor-fields.html:9
 #: enferno/admin/templates/admin/actor-fields.html:40
@@ -4264,8 +4266,9 @@ msgstr ""
 #: enferno/admin/templates/admin/bulletin-fields.html:40
 #: enferno/admin/templates/admin/incident-fields.html:9
 #: enferno/admin/templates/admin/incident-fields.html:40
+#, fuzzy
 msgid "Field Name"
-msgstr ""
+msgstr "اسم الحقل"
 
 #: enferno/admin/templates/admin/actor-fields.html:10
 #: enferno/admin/templates/admin/actor-fields.html:41
@@ -4273,8 +4276,9 @@ msgstr ""
 #: enferno/admin/templates/admin/bulletin-fields.html:41
 #: enferno/admin/templates/admin/incident-fields.html:10
 #: enferno/admin/templates/admin/incident-fields.html:41
+#, fuzzy
 msgid "Change Type"
-msgstr ""
+msgstr "نوع التغيير"
 
 #: enferno/admin/templates/admin/actor-fields.html:29
 #: enferno/admin/templates/admin/actor-fields.html:81
@@ -4284,573 +4288,690 @@ msgstr ""
 #: enferno/admin/templates/admin/incident-fields.html:81
 #: enferno/admin/templates/admin/system-administration.html:41
 #: enferno/admin/templates/admin/system-administration.html:990
+#, fuzzy
 msgid "Revision history"
-msgstr ""
+msgstr "سجل المراجعات"
 
 #: enferno/admin/templates/admin/actor-fields.html:31
 #: enferno/admin/templates/admin/bulletin-fields.html:31
 #: enferno/admin/templates/admin/incident-fields.html:31
+#, fuzzy
 msgid "No revision history yet"
-msgstr ""
+msgstr "لا يوجد سجل مراجعات بعد"
 
 #: enferno/admin/templates/admin/actor-fields.html:31
 #: enferno/admin/templates/admin/bulletin-fields.html:31
 #: enferno/admin/templates/admin/incident-fields.html:31
 #: enferno/admin/templates/admin/system-administration.html:992
+#, fuzzy
 msgid "No more items in history"
-msgstr ""
+msgstr "لا توجد المزيد من العناصر في السجل"
 
 #: enferno/admin/templates/admin/actor-fields.html:36
 #: enferno/admin/templates/admin/bulletin-fields.html:36
 #: enferno/admin/templates/admin/incident-fields.html:36
+#, fuzzy
 msgid "System"
-msgstr ""
+msgstr "النظام"
 
 #: enferno/admin/templates/admin/actor-fields.html:36
 #: enferno/admin/templates/admin/bulletin-fields.html:36
 #: enferno/admin/templates/admin/incident-fields.html:36
 #: enferno/admin/templates/admin/system-administration.html:996
+#, fuzzy
 msgid "updated the settings"
-msgstr ""
+msgstr "تم تحديث الإعدادات"
 
 #: enferno/admin/templates/admin/actor-fields.html:36
 #: enferno/admin/templates/admin/bulletin-fields.html:36
 #: enferno/admin/templates/admin/incident-fields.html:36
+#, fuzzy
 msgid "(Latest)"
-msgstr ""
+msgstr "(الأحدث)"
 
 #: enferno/admin/templates/admin/actor-fields.html:37
 #: enferno/admin/templates/admin/bulletin-fields.html:37
 #: enferno/admin/templates/admin/incident-fields.html:37
 #: enferno/admin/templates/admin/system-administration.html:998
 #: enferno/admin/templates/admin/system-administration.html:1064
+#, fuzzy
 msgid "Show detailed changes"
-msgstr ""
+msgstr "عرض التغييرات التفصيلية"
 
 #: enferno/admin/templates/admin/actor-fields.html:37
 #: enferno/admin/templates/admin/bulletin-fields.html:37
 #: enferno/admin/templates/admin/incident-fields.html:37
 #: enferno/admin/templates/admin/system-administration.html:998
 #: enferno/admin/templates/admin/system-administration.html:1064
+#, fuzzy
 msgid "Collapse"
-msgstr ""
+msgstr "طي"
 
 #: enferno/admin/templates/admin/actor-fields.html:68
+#, fuzzy
 msgid "Actor Dynamic From Builder"
-msgstr ""
+msgstr "منشئ النموذج الديناميكي للكيان"
 
 #: enferno/admin/templates/admin/actor-fields.html:84
 #: enferno/admin/templates/admin/bulletin-fields.html:84
 #: enferno/admin/templates/admin/incident-fields.html:84
 #: enferno/admin/templates/admin/jsapi.jinja2:81
+#, fuzzy
 msgid "Discard Changes"
-msgstr ""
+msgstr "تجاهل التغييرات"
 
 #: enferno/admin/templates/admin/actor-fields.html:86
 #: enferno/admin/templates/admin/bulletin-fields.html:86
 #: enferno/admin/templates/admin/incident-fields.html:86
+#, fuzzy
 msgid "Save Changes"
-msgstr ""
+msgstr "حفظ التغييرات"
 
 #: enferno/admin/templates/admin/actor-fields.html:88
 #: enferno/admin/templates/admin/bulletin-fields.html:88
 #: enferno/admin/templates/admin/incident-fields.html:88
+#, fuzzy
 msgid "Add New"
-msgstr ""
+msgstr "إضافة جديد"
 
 #: enferno/admin/templates/admin/actor-fields.html:116
 #: enferno/admin/templates/admin/bulletin-fields.html:122
 #: enferno/admin/templates/admin/incident-fields.html:116
+#, fuzzy
 msgid "No fields yet. Start by creating your first field to get started!"
-msgstr ""
+msgstr "لا توجد حقول بعد. ابدأ بإنشاء الحقل الأول للبدء!"
 
 #: enferno/admin/templates/admin/actor-fields.html:119
 #: enferno/admin/templates/admin/bulletin-fields.html:125
 #: enferno/admin/templates/admin/incident-fields.html:119
+#, fuzzy
 msgid "We couldn't find any fields for that search. Try another keyword."
-msgstr ""
+msgstr "لم نتمكن من العثور على أي حقول لهذا البحث. جرب كلمة أخرى."
 
 #: enferno/admin/templates/admin/actors.html:164
 #: enferno/admin/templates/admin/bulletins.html:188
 #: enferno/admin/templates/admin/incidents.html:167
+#, fuzzy
 msgid "Items per page:"
-msgstr ""
+msgstr "عناصر في كل صفحة:"
 
 #: enferno/admin/templates/admin/actors.html:645
 #: enferno/admin/templates/admin/bulletins.html:803
 #: enferno/admin/templates/admin/incidents.html:606
+#, fuzzy
 msgid "Showing {items} of"
-msgstr ""
+msgstr "عرض {items} من"
 
 #: enferno/admin/templates/admin/bulletin-fields.html:68
+#, fuzzy
 msgid "Bulletin Dynamic From Builder"
-msgstr ""
+msgstr "منشئ النموذج الديناميكي للمادة"
 
 #: enferno/admin/templates/admin/bulletins.html:112
 #: enferno/admin/templates/admin/bulletins.html:323
+#, fuzzy
 msgid "Import from Web"
-msgstr ""
+msgstr "استيراد من الويب"
 
 #: enferno/admin/templates/admin/bulletins.html:288
+#, fuzzy
 msgid "Create Related Actor"
-msgstr ""
+msgstr "إنشاء كيان مرتبط"
 
 #: enferno/admin/templates/admin/bulletins.html:331
+#, fuzzy
 msgid "Enter URL"
-msgstr ""
+msgstr "أدخل الرابط"
 
 #: enferno/admin/templates/admin/bulletins.html:345
+#, fuzzy
 msgid "Import"
-msgstr ""
+msgstr "استيراد"
 
 #: enferno/admin/templates/admin/bulletins.html:1671
+#, fuzzy
 msgid "Please enter a URL"
-msgstr ""
+msgstr "يرجى إدخال رابط"
 
 #: enferno/admin/templates/admin/bulletins.html:1681
+#, fuzzy
 msgid "URL import started"
-msgstr ""
+msgstr "بدأ استيراد الرابط"
 
 #: enferno/admin/templates/admin/component-data.html:42
+#, fuzzy
 msgid "Full Location text format"
-msgstr ""
+msgstr "تنسيق نص الموقع الكامل"
 
 #: enferno/admin/templates/admin/component-data.html:45
-msgid "These settings control how the Full Location text of each\n"
-"                                            Location is\n"
-"                                            formatted and generated from its title and its parents. You can\n"
-"                                            customize this order to match the\n"
-"                                            address system of the country you're working on."
-msgstr ""
+#, fuzzy
+msgid "These settings control how the Full Location text of each\n                                            Location is\n                                            formatted and generated from its title and its parents. You can\n                                            customize this order to match the\n                                            address system of the country you're working on."
+msgstr "تتحكم هذه الإعدادات في كيفية تنسيق وإنشاء نص الموقع الكامل لكل موقع من عنوانه ومواقعه الأب. يمكنك تخصيص هذا الترتيب لمطابقة نظام العناوين في البلد الذي تعمل عليه."
 
 #: enferno/admin/templates/admin/component-data.html:62
-msgid "You can change the option to include postal codes in\n"
-"                                                format of the Full Location text in the system settings."
-msgstr ""
+#, fuzzy
+msgid "You can change the option to include postal codes in\n                                                format of the Full Location text in the system settings."
+msgstr "يمكنك تغيير خيار تضمين الرموز البريدية في تنسيق نص الموقع الكامل في إعدادات النظام."
 
 #: enferno/admin/templates/admin/component-data.html:67
+#, fuzzy
 msgid "Revert changes"
-msgstr ""
+msgstr "التراجع عن التغييرات"
 
 #: enferno/admin/templates/admin/component-data.html:71
+#, fuzzy
 msgid "Regenerate"
-msgstr ""
+msgstr "إعادة إنشاء"
 
 #: enferno/admin/templates/admin/component-data.html:75
+#, fuzzy
 msgid "Save order"
-msgstr ""
+msgstr "حفظ الترتيب"
 
 #: enferno/admin/templates/admin/component-data.html:82
+#, fuzzy
 msgid "You must re-generate Full Location texts for the new format to take effect."
-msgstr ""
+msgstr "يجب إعادة إنشاء نصوص الموقع الكامل حتى يسري التنسيق الجديد."
 
 #: enferno/admin/templates/admin/component-data.html:223
 #: enferno/admin/templates/admin/component-data.html:347
+#, fuzzy
 msgid "ID Number Types"
-msgstr ""
+msgstr "أنواع أرقام الهوية"
 
 #: enferno/admin/templates/admin/component-data.html:233
 #: enferno/admin/templates/admin/component-data.html:353
+#, fuzzy
 msgid "Potential Violation"
-msgstr ""
+msgstr "انتهاك محتمل"
 
 #: enferno/admin/templates/admin/component-data.html:236
 #: enferno/admin/templates/admin/component-data.html:354
+#, fuzzy
 msgid "Claimed Violation"
-msgstr ""
+msgstr "انتهاك مزعوم"
 
 #: enferno/admin/templates/admin/component-data.html:243
+#, fuzzy
 msgid "Potential Violation Categories"
-msgstr ""
+msgstr "فئات الانتهاكات المحتملة"
 
 #: enferno/admin/templates/admin/component-data.html:251
+#, fuzzy
 msgid "Claimed Violation Categories"
-msgstr ""
+msgstr "فئات الانتهاكات المزعومة"
 
 #: enferno/admin/templates/admin/component-data.html:319
+#, fuzzy
 msgid "Administrative Levels"
-msgstr ""
+msgstr "المستويات الإدارية"
 
 #: enferno/admin/templates/admin/component-data.html:324
+#, fuzzy
 msgid "Countries and Languages"
-msgstr ""
+msgstr "البلدان واللغات"
 
 #: enferno/admin/templates/admin/component-data.html:332
+#, fuzzy
 msgid "Relations"
-msgstr ""
+msgstr "العلاقات"
 
 #: enferno/admin/templates/admin/component-data.html:334
+#, fuzzy
 msgid "Actor to Actor"
-msgstr ""
+msgstr "كيان إلى كيان"
 
 #: enferno/admin/templates/admin/component-data.html:335
+#, fuzzy
 msgid "Actor to Bulletin"
-msgstr ""
+msgstr "كيان إلى مادة"
 
 #: enferno/admin/templates/admin/component-data.html:336
+#, fuzzy
 msgid "Bulletin to Bulletin"
-msgstr ""
+msgstr "مادة إلى مادة"
 
 #: enferno/admin/templates/admin/component-data.html:337
+#, fuzzy
 msgid "Incident to Bulletin"
-msgstr ""
+msgstr "واقعة إلى مادة"
 
 #: enferno/admin/templates/admin/component-data.html:338
+#, fuzzy
 msgid "Incident to Actor"
-msgstr ""
+msgstr "واقعة إلى كيان"
 
 #: enferno/admin/templates/admin/component-data.html:339
+#, fuzzy
 msgid "Incident to Incident"
-msgstr ""
+msgstr "واقعة إلى واقعة"
 
 #: enferno/admin/templates/admin/component-data.html:343
+#, fuzzy
 msgid "Geo Location"
-msgstr ""
+msgstr "الموقع الجغرافي"
 
 #: enferno/admin/templates/admin/component-data.html:345
+#, fuzzy
 msgid "Identification"
-msgstr ""
+msgstr "الهوية"
 
 #: enferno/admin/templates/admin/component-data.html:351
+#, fuzzy
 msgid "Violation Categories"
-msgstr ""
+msgstr "فئات الانتهاكات"
 
 #: enferno/admin/templates/admin/incident-fields.html:68
+#, fuzzy
 msgid "Incident Dynamic From Builder"
-msgstr ""
+msgstr "منشئ النموذج الديناميكي للواقعة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:23
+#, fuzzy
 msgid "Invalid username: only letters and numbers are allowed"
-msgstr ""
+msgstr "اسم مستخدم غير صالح: يسمح بالأحرف والأرقام فقط"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:24
+#, fuzzy
 msgid "Username already taken"
-msgstr ""
+msgstr "اسم المستخدم مستخدم بالفعل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:25
+#, fuzzy
 msgid "Invalid email address"
-msgstr ""
+msgstr "عنوان بريد إلكتروني غير صالح"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:26
+#, fuzzy
 msgid "Invalid date"
-msgstr ""
+msgstr "تاريخ غير صالح"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:27
+#, fuzzy
 msgid "From date must be before To date"
-msgstr ""
+msgstr "يجب أن يكون تاريخ 'من' قبل تاريخ 'إلى'"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:28
+#, fuzzy
 msgid "To date must be after From date"
-msgstr ""
+msgstr "يجب أن يكون تاريخ 'إلى' بعد تاريخ 'من'"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:29
+#, fuzzy
 msgid "Must be a valid URL or 'NA'"
-msgstr ""
+msgstr "يجب أن يكون رابطًا صالحًا أو 'غير متوفر'"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:30
+#, fuzzy
 msgid "Fields do not match"
-msgstr ""
+msgstr "الحقول غير متطابقة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:31
+#, fuzzy
 msgid "Password is too weak"
-msgstr ""
+msgstr "كلمة المرور ضعيفة جدًا"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:32
+#, fuzzy
 msgid "Select Field Type"
-msgstr ""
+msgstr "اختر نوع الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:33
+#, fuzzy
 msgid "Short Text"
-msgstr ""
+msgstr "نص قصير"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:34
+#, fuzzy
 msgid "Long Text"
-msgstr ""
+msgstr "نص طويل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:35
 #: enferno/admin/templates/admin/jsapi.jinja2:492
 #: enferno/data_import/templates/sheets-import.html:342
+#, fuzzy
 msgid "Number"
-msgstr ""
+msgstr "رقم"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:36
+#, fuzzy
 msgid "Dropdown"
-msgstr ""
+msgstr "قائمة منسدلة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:37
+#, fuzzy
 msgid "Multi-Select"
-msgstr ""
+msgstr "اختيار متعدد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:38
+#, fuzzy
 msgid "Date and Time"
-msgstr ""
+msgstr "التاريخ والوقت"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:39
+#, fuzzy
 msgid "Make the field required"
-msgstr ""
+msgstr "جعل الحقل مطلوبًا"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:40
+#, fuzzy
 msgid "Make the field searchable"
-msgstr ""
+msgstr "جعل الحقل قابلًا للبحث"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:41
+#, fuzzy
 msgid "Show Field"
-msgstr ""
+msgstr "عرض الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:42
+#, fuzzy
 msgid "Hide Field"
-msgstr ""
+msgstr "إخفاء الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:43
+#, fuzzy
 msgid "Show Option"
-msgstr ""
+msgstr "عرض الخيار"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:44
+#, fuzzy
 msgid "Hide Option"
-msgstr ""
+msgstr "إخفاء الخيار"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:45
+#, fuzzy
 msgid "Delete Field"
-msgstr ""
+msgstr "حذف الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:46
+#, fuzzy
 msgid "Deletion Restricted"
-msgstr ""
+msgstr "الحذف مقيد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:47
+#, fuzzy
 msgid "Max Length"
-msgstr ""
+msgstr "الطول الأقصى"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:48
+#, fuzzy
 msgid "Help Text"
-msgstr ""
+msgstr "نص المساعدة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:49
+#, fuzzy
 msgid "Field Properties"
-msgstr ""
+msgstr "خصائص الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:50
+#, fuzzy
 msgid "Add another option"
-msgstr ""
+msgstr "إضافة خيار آخر"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:51
+#, fuzzy
 msgid "One selection only"
-msgstr ""
+msgstr "اختيار واحد فقط"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:52
+#, fuzzy
 msgid "Field Options"
-msgstr ""
+msgstr "خيارات الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:53
+#, fuzzy
 msgid "DEFAULT"
-msgstr ""
+msgstr "افتراضي"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:54
+#, fuzzy
 msgid "CUSTOM"
-msgstr ""
+msgstr "مخصص"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:55
+#, fuzzy
 msgid "Full"
-msgstr ""
+msgstr "كامل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:56
+#, fuzzy
 msgid "Half"
-msgstr ""
+msgstr "نصف"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:57
+#, fuzzy
 msgid "New Field"
-msgstr ""
+msgstr "حقل جديد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:58
+#, fuzzy
 msgid "Field Title"
-msgstr ""
+msgstr "عنوان الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:59
+#, fuzzy
 msgid "Option {num}"
-msgstr ""
+msgstr "الخيار {num}"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:60
+#, fuzzy
 msgid "Field {num}"
-msgstr ""
+msgstr "الحقل {num}"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:61
+#, fuzzy
 msgid "Width"
-msgstr ""
+msgstr "العرض"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:62
+#, fuzzy
 msgid "No UI component mapped for this field"
-msgstr ""
+msgstr "لا يوجد مكون واجهة مستخدم مرتبط بهذا الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:63
+#, fuzzy
 msgid "Show or Hide Event Types"
-msgstr ""
+msgstr "عرض أو إخفاء أنواع الحوادث"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:65
+#, fuzzy
 msgid "Modified"
-msgstr ""
+msgstr "معدّل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:66
+#, fuzzy
 msgid "Deleted"
-msgstr ""
+msgstr "محذوف"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:68
+#, fuzzy
 msgid "Copy coordinates"
-msgstr ""
+msgstr "نسخ الإحداثيات"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:69
+#, fuzzy
 msgid "Failed to copy coordinates"
-msgstr ""
+msgstr "فشل نسخ الإحداثيات"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:70
+#, fuzzy
 msgid "Up to 255 characters"
-msgstr ""
+msgstr "حتى 255 حرفًا"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:71
+#, fuzzy
 msgid "Unlimited text length"
-msgstr ""
+msgstr "طول نص غير محدود"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:72
+#, fuzzy
 msgid "Whole numbers only"
-msgstr ""
+msgstr "أرقام صحيحة فقط"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:73
+#, fuzzy
 msgid "Single or multiple choice"
-msgstr ""
+msgstr "اختيار واحد أو متعدد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:74
+#, fuzzy
 msgid "Date with optional time"
-msgstr ""
+msgstr "تاريخ مع وقت اختياري"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:75
+#, fuzzy
 msgid "Deleting the field '{field}' will remove it from your form."
-msgstr ""
+msgstr "حذف الحقل '{field}' سيزيله من نموذجك."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:76
+#, fuzzy
 msgid "Field '{field}' has been deleted successfully."
-msgstr ""
+msgstr "تم حذف الحقل '{field}' بنجاح."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:77
+#, fuzzy
 msgid "Google OAuth"
-msgstr ""
+msgstr "مصادقة Google"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:78
+#, fuzzy
 msgid "You're about to discard changes"
-msgstr ""
+msgstr "أنت على وشك تجاهل التغييرات"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:79
+#, fuzzy
 msgid "Discarding will remove all unsaved edits you've made to this form."
-msgstr ""
+msgstr "التجاهل سيزيل جميع التعديلات غير المحفوظة التي قمت بها على هذا النموذج."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:80
+#, fuzzy
 msgid "Do you want to continue?"
-msgstr ""
+msgstr "هل تريد المتابعة؟"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:82
+#, fuzzy
 msgid "All unsaved edits in the form have been discarded."
-msgstr ""
+msgstr "تم تجاهل جميع التعديلات غير المحفوظة في النموذج."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:83
+#, fuzzy
 msgid "Review & Confirm Changes"
-msgstr ""
+msgstr "مراجعة وتأكيد التغييرات"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:84
+#, fuzzy
 msgid "You're about to delete a field"
-msgstr ""
+msgstr "أنت على وشك حذف حقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:85
+#, fuzzy
 msgid "Fields saved successfully"
-msgstr ""
+msgstr "تم حفظ الحقول بنجاح"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:90
+#, fuzzy
 msgid "Location or Date is required"
-msgstr ""
+msgstr "الموقع أو التاريخ مطلوب"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:91
+#, fuzzy
 msgid "Title or Event Type is required"
-msgstr ""
+msgstr "العنوان أو نوع الحادثة مطلوب"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:92
+#, fuzzy
 msgid "Preview"
-msgstr ""
-
-#: enferno/admin/templates/admin/jsapi.jinja2:94
-#: enferno/admin/templates/admin/partials/actor_dialog.html:936
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:189
-#: enferno/admin/templates/admin/partials/incident_dialog.html:186
-msgid "Access Group(s) are required unless unrestricted."
-msgstr ""
+msgstr "معاينة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:119
+#, fuzzy
 msgid "Comments (Ar)"
-msgstr ""
+msgstr "التعليقات (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:125
+#, fuzzy
 msgid "Show more"
-msgstr ""
+msgstr "عرض المزيد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:126
+#, fuzzy
 msgid "Show less"
-msgstr ""
+msgstr "عرض أقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:127
+#, fuzzy
 msgid "Add as related"
-msgstr ""
+msgstr "إضافة كمرتبط"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:128
+#, fuzzy
 msgid "Hide from results"
-msgstr ""
+msgstr "إخفاء من النتائج"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:129
+#, fuzzy
 msgid "Show search"
-msgstr ""
+msgstr "عرض البحث"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:130
+#, fuzzy
 msgid "Hide search"
-msgstr ""
+msgstr "إخفاء البحث"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:140
+#, fuzzy
 msgid "Include Tags"
-msgstr ""
+msgstr "تضمين الوسوم"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:141
+#, fuzzy
 msgid "Include Tags (All)"
-msgstr ""
+msgstr "تضمين الوسوم (الكل)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:142
+#, fuzzy
 msgid "Exclude Tags"
-msgstr ""
+msgstr "استبعاد الوسوم"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:143
+#, fuzzy
 msgid "Exclude Tags (Any)"
-msgstr ""
+msgstr "استبعاد الوسوم (أي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:150
+#, fuzzy
 msgid "Timing for this event is estimated"
-msgstr ""
+msgstr "توقيت هذا الحدث تقديري"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:186
+#, fuzzy
 msgid "Occupation (Ar)"
-msgstr ""
+msgstr "المهنة (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:188
+#, fuzzy
 msgid "Position (Ar)"
-msgstr ""
+msgstr "المنصب (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:205
+#, fuzzy
 msgid "Relation"
-msgstr ""
+msgstr "العلاقة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:234
+#, fuzzy
 msgid "Confirmation"
-msgstr ""
+msgstr "تأكيد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:235
+#, fuzzy
 msgid "Are you sure you want to proceed?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد المتابعة؟"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:236
+#, fuzzy
 msgid "Mark as read"
-msgstr ""
+msgstr "وضع علامة كمقروء"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:237
 #: enferno/admin/templates/admin/system-administration.html:689
@@ -4872,305 +4993,362 @@ msgstr ""
 #: enferno/admin/templates/admin/system-administration.html:875
 #: enferno/admin/templates/admin/system-administration.html:892
 #: enferno/admin/templates/admin/system-administration.html:903
+#, fuzzy
 msgid "In-app"
-msgstr ""
+msgstr "داخل التطبيق"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:257
+#, fuzzy
 msgid "Related as"
-msgstr ""
+msgstr "مرتبط كـ"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:271
+#, fuzzy
 msgid "Nickname (Ar)"
-msgstr ""
+msgstr "اللقب (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:277
+#, fuzzy
 msgid "Father's Name (Ar)"
-msgstr ""
+msgstr "اسم الأب (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:279
+#, fuzzy
 msgid "Mother's Name (Ar)"
-msgstr ""
+msgstr "اسم الأم (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:284
+#, fuzzy
 msgid "Relationship with Bulletin {id}"
-msgstr ""
+msgstr "علاقة مع المادة {id}"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:285
+#, fuzzy
 msgid "The relationship between the new Actor and the Bulletin will be created when the Actor is saved"
-msgstr ""
+msgstr "سيتم إنشاء العلاقة بين الكيان الجديد والمادة عند حفظ الكيان"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:290
 #: enferno/data_import/templates/sheets-import.html:322
+#, fuzzy
 msgid "ID Numbers"
-msgstr ""
+msgstr "أرقام الهوية"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:291
 #: enferno/data_import/templates/sheets-import.html:329
+#, fuzzy
 msgid "ID Type"
-msgstr ""
+msgstr "نوع الهوية"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:292
+#, fuzzy
 msgid "Are you sure you want to delete this record?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد حذف هذا السجل؟"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:293
+#, fuzzy
 msgid "Leave blank to include all types."
-msgstr ""
+msgstr "اتركه فارغًا لتضمين جميع الأنواع."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:420
+#, fuzzy
 msgid "URGENT"
-msgstr ""
+msgstr "عاجل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:421
+#, fuzzy
 msgid "No notifications yet"
-msgstr ""
+msgstr "لا توجد إشعارات بعد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:422
+#, fuzzy
 msgid "You haven't received any notifications yet. When you do, they'll appear here."
-msgstr ""
+msgstr "لم تتلق أي إشعارات بعد. عندما تتلقى، ستظهر هنا."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:423
+#, fuzzy
 msgid "Load more"
-msgstr ""
+msgstr "تحميل المزيد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:424
+#, fuzzy
 msgid "No more notifications to load."
-msgstr ""
+msgstr "لا توجد المزيد من الإشعارات للتحميل."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:425
-msgid "Oops! Notifications couldn’t be loaded"
-msgstr ""
+#, fuzzy
+msgid "Oops! Notifications couldn't be loaded"
+msgstr "عذرًا! تعذر تحميل الإشعارات"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:426
-msgid "We’re having trouble fetching your notifications right now. Check your connection or refresh the page."
-msgstr ""
+#, fuzzy
+msgid "We're having trouble fetching your notifications right now. Check your connection or refresh the page."
+msgstr "نواجه مشكلة في جلب إشعاراتك الآن. تحقق من اتصالك أو حدث الصفحة."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:427
-msgid "We couldn’t load more notifications. Please try again."
-msgstr ""
+#, fuzzy
+msgid "We couldn't load more notifications. Please try again."
+msgstr "تعذر تحميل المزيد من الإشعارات. يرجى المحاولة مرة أخرى."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:428
+#, fuzzy
 msgid "Oops"
-msgstr ""
+msgstr "عذرًا"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:429
+#, fuzzy
 msgid "Retry"
-msgstr ""
+msgstr "إعادة المحاولة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:471
+#, fuzzy
 msgid "Cannot View Usernames"
-msgstr ""
+msgstr "لا يمكن عرض أسماء المستخدمين"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:473
+#, fuzzy
 msgid "Cannot View Simple History"
-msgstr ""
+msgstr "لا يمكن عرض السجل المبسط"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:475
+#, fuzzy
 msgid "Cannot View Full History"
-msgstr ""
+msgstr "لا يمكن عرض السجل الكامل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:477
+#, fuzzy
 msgid "Cannot Edit Locations"
-msgstr ""
+msgstr "لا يمكن تعديل المواقع"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:479
+#, fuzzy
 msgid "Cannot Export"
-msgstr ""
+msgstr "لا يمكن التصدير"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:481
+#, fuzzy
 msgid "Cannot Self Assign"
-msgstr ""
+msgstr "لا يمكن التخصيص الذاتي"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:493
+#, fuzzy
 msgid "Coordinates"
-msgstr ""
+msgstr "الإحداثيات"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:496
+#, fuzzy
 msgid "Parent ID"
-msgstr ""
+msgstr "معرف الأب"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:510
+#, fuzzy
 msgid "Default settings loaded. Click Save to apply changes."
-msgstr ""
+msgstr "تم تحميل الإعدادات الافتراضية. انقر على حفظ لتطبيق التغييرات."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:511
+#, fuzzy
 msgid "Field"
-msgstr ""
+msgstr "الحقل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:512
+#, fuzzy
 msgid "Previous"
-msgstr ""
+msgstr "السابق"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:513
+#, fuzzy
 msgid "Updated"
-msgstr ""
+msgstr "محدّث"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:514
+#, fuzzy
 msgid "UNSET"
-msgstr ""
+msgstr "غير محدد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:515
+#, fuzzy
 msgid "On"
-msgstr ""
+msgstr "تشغيل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:516
+#, fuzzy
 msgid "Off"
-msgstr ""
+msgstr "إيقاف"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:520
 #: enferno/admin/templates/admin/system-logs.html:146
+#, fuzzy
 msgid "Logger"
-msgstr ""
+msgstr "المسجل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:595
+#, fuzzy
 msgid "Are you sure you want to end the session for this device?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد إنهاء الجلسة لهذا الجهاز؟"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:617
+#, fuzzy
 msgid "Reset password"
-msgstr ""
-
-#: enferno/admin/templates/admin/jsapi.jinja2:620
-#: enferno/admin/templates/admin/users.html:43
-msgid "Force password reset"
-msgstr ""
+msgstr "إعادة تعيين كلمة المرور"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:624
+#, fuzzy
 msgid "Must be {max} characters or fewer."
-msgstr ""
+msgstr "يجب أن يكون {max} حرفًا أو أقل."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:625
+#, fuzzy
 msgid "Must be at least {min} characters."
-msgstr ""
+msgstr "يجب أن يكون {min} حرفًا على الأقل."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:626
+#, fuzzy
 msgid "This field is required."
-msgstr ""
+msgstr "هذا الحقل مطلوب."
 
 #: enferno/admin/templates/admin/jsapi.jinja2:627
+#, fuzzy
 msgid "Please enter a valid number."
-msgstr ""
+msgstr "يرجى إدخال رقم صالح."
 
 #: enferno/admin/templates/admin/system-administration.html:37
+#, fuzzy
 msgid "Restore default settings"
-msgstr ""
+msgstr "استعادة الإعدادات الافتراضية"
 
 #: enferno/admin/templates/admin/system-administration.html:44
+#, fuzzy
 msgid "Save changes"
-msgstr ""
+msgstr "حفظ التغييرات"
 
 #: enferno/admin/templates/admin/system-administration.html:57
+#, fuzzy
 msgid "Table settings"
-msgstr ""
+msgstr "إعدادات الجدول"
 
 #: enferno/admin/templates/admin/system-administration.html:60
+#, fuzzy
 msgid "Items per page options"
-msgstr ""
+msgstr "خيارات العناصر في كل صفحة"
 
 #: enferno/admin/templates/admin/system-administration.html:64
+#, fuzzy
 msgid "Media settings"
-msgstr ""
+msgstr "إعدادات الوسائط"
 
 #: enferno/admin/templates/admin/system-administration.html:67
+#, fuzzy
 msgid "Video playback rate"
-msgstr ""
+msgstr "معدل تشغيل الفيديو"
 
 #: enferno/admin/templates/admin/system-administration.html:73
+#, fuzzy
 msgid "Default language"
-msgstr ""
+msgstr "اللغة الافتراضية"
 
 #: enferno/admin/templates/admin/system-administration.html:83
+#, fuzzy
 msgid "Deduplication tool"
-msgstr ""
+msgstr "أداة إزالة التكرارات"
 
 #: enferno/admin/templates/admin/system-administration.html:93
+#, fuzzy
 msgid "Deduplication low distance"
-msgstr ""
+msgstr "الحد الأدنى للفرق"
 
 #: enferno/admin/templates/admin/system-administration.html:99
+#, fuzzy
 msgid "Deduplication max distance"
-msgstr ""
+msgstr "الحد الأعظم للفرق"
 
 #: enferno/admin/templates/admin/system-administration.html:105
+#, fuzzy
 msgid "Deduplication batch size"
-msgstr ""
+msgstr "حجم دفعة إزالة التكرار"
 
 #: enferno/admin/templates/admin/system-administration.html:111
+#, fuzzy
 msgid "Deduplication interval"
-msgstr ""
+msgstr "الفاصل الزمني لإزالة التكرار"
 
 #: enferno/admin/templates/admin/system-administration.html:120
+#, fuzzy
 msgid "Advanced analysis features"
-msgstr ""
+msgstr "ميزات التحليل المتقدمة"
 
 #: enferno/admin/templates/admin/system-administration.html:131
+#, fuzzy
 msgid "Settings"
-msgstr ""
+msgstr "الإعدادات"
 
 #: enferno/admin/templates/admin/system-administration.html:169
+#, fuzzy
 msgid "MB"
-msgstr ""
+msgstr "ميغابايت"
 
 #: enferno/admin/templates/admin/system-administration.html:194
-msgid "Bayanat uses zxcvbn password strength estimator to\n"
-"                                                calculate a password score. 'Medium' coresponds to a zxcvbn score of 2 and is suitable for\n"
-"                                                offline Bayanat installation. 'Strong' corresponds to a score of 3, we recommend this\n"
-"                                                setting for online Bayanat installations. 'Very Strong' corresponds to a zxcvbn score of 4\n"
-"                                                and offers the highest level of protection."
-msgstr ""
+#, fuzzy
+msgid "Bayanat uses zxcvbn password strength estimator to\n                                                calculate a password score. 'Medium' coresponds to a zxcvbn score of 2 and is suitable for\n                                                offline Bayanat installation. 'Strong' corresponds to a score of 3, we recommend this\n                                                setting for online Bayanat installations. 'Very Strong' corresponds to a zxcvbn score of 4\n                                                and offers the highest level of protection."
+msgstr "يستخدم بيانات مُقدّر قوة كلمات المرور zxcvbn لحساب درجة كلمة المرور. 'متوسطة' تتوافق مع درجة 2 وهي مناسبة لتثبيت بيانات دون اتصال بالإنترنت. 'قوية' تتوافق مع درجة 3، ونوصي بهذا الإعداد لتثبيتات بيانات عبر الإنترنت. 'قوية جداً' تتوافق مع درجة 4 وتوفر أعلى مستوى من الحماية."
 
 #: enferno/admin/templates/admin/system-administration.html:207
+#, fuzzy
 msgid "Force 2FA enrollment"
-msgstr ""
+msgstr "فرض تفعيل المصادقة الثنائية"
 
 #: enferno/admin/templates/admin/system-administration.html:216
+#, fuzzy
 msgid "Session policies"
-msgstr ""
+msgstr "سياسات الجلسة"
 
 #: enferno/admin/templates/admin/system-administration.html:219
+#, fuzzy
 msgid "Disallow multiple concurrent sessions"
-msgstr ""
+msgstr "عدم السماح بجلسات متزامنة متعددة"
 
 #: enferno/admin/templates/admin/system-administration.html:236
+#, fuzzy
 msgid "Recaptcha enabled"
-msgstr ""
+msgstr "تفعيل Recaptcha"
 
 #: enferno/admin/templates/admin/system-administration.html:275
+#, fuzzy
 msgid "Security freshness"
-msgstr ""
+msgstr "تحديث الأمان"
 
 #: enferno/admin/templates/admin/system-administration.html:280
+#, fuzzy
 msgid "Security freshness grace period"
-msgstr ""
+msgstr "فترة السماح لتحديث الأمان"
 
 #: enferno/admin/templates/admin/system-administration.html:295
-msgid "By default, users can access all\n"
-"                                        items in the Bayanat database, except for items which are restricted from them. Administrators can\n"
-"                                        restrict access to certain items by assigning Access Group(s) to these items. Additionally, only\n"
-"                                        administrators can restrict items. This default behaviour can be changed with the following\n"
-"                                        settings."
-msgstr ""
+#, fuzzy
+msgid "By default, users can access all\n                                        items in the Bayanat database, except for items which are restricted from them. Administrators can\n                                        restrict access to certain items by assigning Access Group(s) to these items. Additionally, only\n                                        administrators can restrict items. This default behaviour can be changed with the following\n                                        settings."
+msgstr "بشكل افتراضي، يمكن للمستخدمين الوصول إلى جميع العناصر في قاعدة بيانات بيانات، باستثناء العناصر المقيدة. يمكن للمسؤولين تقييد الوصول إلى عناصر معينة عن طريق تعيين مجموعات وصول. بالإضافة إلى ذلك، يمكن للمسؤولين فقط تقييد العناصر. يمكن تغيير هذا السلوك الافتراضي بالإعدادات التالية."
 
 #: enferno/admin/templates/admin/system-administration.html:303
+#, fuzzy
 msgid "Restrictive access control"
-msgstr ""
+msgstr "التحكم بالوصول المقيد"
 
 #: enferno/admin/templates/admin/system-administration.html:309
+#, fuzzy
 msgid "Allow non-admin users to restrict new items"
-msgstr ""
+msgstr "السماح للمستخدمين غير الإداريين بتقييد العناصر الجديدة"
 
 #: enferno/admin/templates/admin/system-administration.html:322
-msgid "Set users' actions to be logged in the Activity\n"
-"                                        Monitor."
-msgstr ""
+#, fuzzy
+msgid "Set users' actions to be logged in the Activity\n                                        Monitor."
+msgstr "تعيين إجراءات المستخدمين ليتم تسجيلها في مراقب النشاط."
 
 #: enferno/admin/templates/admin/system-administration.html:325
+#, fuzzy
 msgid "Items"
-msgstr ""
+msgstr "عناصر"
 
 #: enferno/admin/templates/admin/system-administration.html:328
+#, fuzzy
 msgid "Items created"
-msgstr ""
+msgstr "العناصر المُنشأة"
 
 #: enferno/admin/templates/admin/system-administration.html:328
 #: enferno/admin/templates/admin/system-administration.html:336
@@ -5182,683 +5360,845 @@ msgstr ""
 #: enferno/admin/templates/admin/system-administration.html:427
 #: enferno/admin/templates/admin/system-administration.html:439
 #: enferno/admin/templates/admin/system-administration.html:448
+#, fuzzy
 msgid " by users."
-msgstr ""
+msgstr " من قبل المستخدمين."
 
 #: enferno/admin/templates/admin/system-administration.html:336
+#, fuzzy
 msgid "Items viewed"
-msgstr ""
+msgstr "العناصر المُشاهدة"
 
 #: enferno/admin/templates/admin/system-administration.html:344
+#, fuzzy
 msgid "Items edited"
-msgstr ""
+msgstr "العناصر المُعدّلة"
 
 #: enferno/admin/templates/admin/system-administration.html:352
+#, fuzzy
 msgid "Items deleted"
-msgstr ""
+msgstr "العناصر المحذوفة"
 
 #: enferno/admin/templates/admin/system-administration.html:360
+#, fuzzy
 msgid "Items reviewed"
-msgstr ""
+msgstr "العناصر المُراجعة"
 
 #: enferno/admin/templates/admin/system-administration.html:368
+#, fuzzy
 msgid "Items self-assigned"
-msgstr ""
+msgstr "العناصر المُخصصة ذاتياً"
 
 #: enferno/admin/templates/admin/system-administration.html:382
+#, fuzzy
 msgid "Export requests made"
-msgstr ""
+msgstr "طلبات التصدير المُقدمة"
 
 #: enferno/admin/templates/admin/system-administration.html:382
 #: enferno/admin/templates/admin/system-administration.html:406
 #: enferno/admin/templates/admin/system-administration.html:456
-msgid " by\n"
-"                                                users."
-msgstr ""
+#, fuzzy
+msgid " by\n                                                users."
+msgstr " من قبل المستخدمين."
 
 #: enferno/admin/templates/admin/system-administration.html:390
+#, fuzzy
 msgid "Export requests approved"
-msgstr ""
+msgstr "طلبات التصدير الموافق عليها"
 
 #: enferno/admin/templates/admin/system-administration.html:390
 #: enferno/admin/templates/admin/system-administration.html:398
-msgid " by\n"
-"                                                admins."
-msgstr ""
+#, fuzzy
+msgid " by\n                                                admins."
+msgstr " من قبل المسؤولين."
 
 #: enferno/admin/templates/admin/system-administration.html:398
+#, fuzzy
 msgid "Export requests rejected"
-msgstr ""
+msgstr "طلبات التصدير المرفوضة"
 
 #: enferno/admin/templates/admin/system-administration.html:406
+#, fuzzy
 msgid "Export requests downloaded"
-msgstr ""
+msgstr "طلبات التصدير المُنزّلة"
 
 #: enferno/admin/templates/admin/system-administration.html:417
+#, fuzzy
 msgid "Authentication"
-msgstr ""
+msgstr "المصادقة"
 
 #: enferno/admin/templates/admin/system-administration.html:420
+#, fuzzy
 msgid "Logins"
-msgstr ""
+msgstr "تسجيلات الدخول"
 
 #: enferno/admin/templates/admin/system-administration.html:427
+#, fuzzy
 msgid "Logouts"
-msgstr ""
+msgstr "تسجيلات الخروج"
 
 #: enferno/admin/templates/admin/system-administration.html:439
+#, fuzzy
 msgid "Search queries made"
-msgstr ""
+msgstr "استعلامات البحث المُنفذة"
 
 #: enferno/admin/templates/admin/system-administration.html:448
+#, fuzzy
 msgid "Files uploaded"
-msgstr ""
+msgstr "الملفات المُرفوعة"
 
 #: enferno/admin/templates/admin/system-administration.html:456
+#, fuzzy
 msgid "Bulk operations queued"
-msgstr ""
+msgstr "العمليات المجمعة في قائمة الانتظار"
 
 #: enferno/admin/templates/admin/system-administration.html:467
+#, fuzzy
 msgid "Retention period"
-msgstr ""
+msgstr "فترة الاحتفاظ"
 
 #: enferno/admin/templates/admin/system-administration.html:468
+#, fuzzy
 msgid "Period after which all logged activities will be deleted."
-msgstr ""
+msgstr "الفترة التي سيتم بعدها حذف جميع الأنشطة المسجلة."
 
 #: enferno/admin/templates/admin/system-administration.html:484
+#, fuzzy
 msgid "Media Import tool"
-msgstr ""
+msgstr "أداة استيراد الوسائط"
 
 #: enferno/admin/templates/admin/system-administration.html:493
+#, fuzzy
 msgid "Media Import path scanning"
-msgstr ""
+msgstr "فحص مسار استيراد الوسائط"
 
 #: enferno/admin/templates/admin/system-administration.html:495
+#, fuzzy
 msgid "Allow scanning of the import path for files in the Media Import tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it's needed."
-msgstr ""
+msgstr "السماح بفحص مسار الاستيراد بحثاً عن الملفات في أداة استيراد الوسائط. يجب تعيين المسار في ملف .env لكي يعمل هذا الإعداد. يتم ذلك لأغراض أمنية. تحذير: هذا إعداد خطير ويجب تفعيله فقط في التثبيتات التي يمكنها استخدام هذه الميزة. يجب تشغيله فقط عند الحاجة."
 
 #: enferno/admin/templates/admin/system-administration.html:500
+#, fuzzy
 msgid "The file extensions for media, documents, and other files that are permitted for import using the Media Import Tool."
-msgstr ""
+msgstr "امتدادات الملفات للوسائط والمستندات والملفات الأخرى المسموح باستيرادها باستخدام أداة استيراد الوسائط."
 
 #: enferno/admin/templates/admin/system-administration.html:501
+#, fuzzy
 msgid "Allowed Media Import Extensions"
-msgstr ""
+msgstr "امتدادات استيراد الوسائط المسموح بها"
 
 #: enferno/admin/templates/admin/system-administration.html:508
+#, fuzzy
 msgid "Bayanat's Media Import tool can utilize Google's Tesseract OCR engine. This enables parsing and extracting text from images and scanned PDF files (requires Tesseract system package)."
-msgstr ""
+msgstr "يمكن لأداة استيراد الوسائط في بيانات استخدام محرك التعرف الضوئي على الحروف Tesseract من Google. يتيح ذلك تحليل واستخراج النصوص من الصور وملفات PDF الممسوحة ضوئياً (يتطلب حزمة نظام Tesseract)."
 
 #: enferno/admin/templates/admin/system-administration.html:519
+#, fuzzy
 msgid "Tesseract is not installed. Please install it to enable OCR."
-msgstr ""
+msgstr "لم يتم تثبيت Tesseract. يرجى تثبيته لتمكين التعرف الضوئي على الحروف."
 
 #: enferno/admin/templates/admin/system-administration.html:532
+#, fuzzy
 msgid "Enable transcription"
-msgstr ""
+msgstr "تمكين النسخ الصوتي"
 
 #: enferno/admin/templates/admin/system-administration.html:534
+#, fuzzy
 msgid "Enables transcription of audio and video files using OpenAI's Whisper during import. Bayanat will need to download the specified model below from OpenAI's servers. However, the transcription will run locally on the Bayanat server. For more information about the models' performance, required resources and available language please check:"
-msgstr ""
+msgstr "يتيح نسخ ملفات الصوت والفيديو باستخدام Whisper من OpenAI أثناء الاستيراد. سيحتاج بيانات إلى تنزيل النموذج المحدد أدناه من خوادم OpenAI. ومع ذلك، سيتم تشغيل النسخ محلياً على خادم بيانات. لمزيد من المعلومات حول أداء النماذج والموارد المطلوبة واللغات المتاحة، يرجى التحقق من:"
 
 #: enferno/admin/templates/admin/system-administration.html:545
+#, fuzzy
 msgid "OpenAI Whisper is not installed. Please install it to enable transcription."
-msgstr ""
+msgstr "لم يتم تثبيت OpenAI Whisper. يرجى تثبيته لتمكين النسخ الصوتي."
 
 #: enferno/admin/templates/admin/system-administration.html:552
+#, fuzzy
 msgid "Whisper model to use for transcription."
-msgstr ""
+msgstr "نموذج Whisper المستخدم للنسخ الصوتي."
 
 #: enferno/admin/templates/admin/system-administration.html:553
+#, fuzzy
 msgid "Whisper Model"
-msgstr ""
+msgstr "نموذج Whisper"
 
 #: enferno/admin/templates/admin/system-administration.html:585
+#, fuzzy
 msgid "Web import"
-msgstr ""
+msgstr "الاستيراد من الويب"
 
 #: enferno/admin/templates/admin/system-administration.html:586
+#, fuzzy
 msgid "Enables import of videos from online sources into Bulletins."
-msgstr ""
+msgstr "يتيح استيراد مقاطع الفيديو من المصادر عبر الإنترنت إلى المواد."
 
 #: enferno/admin/templates/admin/system-administration.html:593
+#, fuzzy
 msgid "Web import proxy"
-msgstr ""
+msgstr "وكيل استيراد الويب"
 
 #: enferno/admin/templates/admin/system-administration.html:594
+#, fuzzy
 msgid "Proxy URL to use when importing media from web sources (e.g. socks5://user:pass@host:port)."
-msgstr ""
+msgstr "عنوان URL للوكيل لاستخدامه عند استيراد الوسائط من مصادر الويب (مثل socks5://user:pass@host:port)."
 
 #: enferno/admin/templates/admin/system-administration.html:599
+#, fuzzy
 msgid "Allowed domains"
-msgstr ""
+msgstr "النطاقات المسموح بها"
 
 #: enferno/admin/templates/admin/system-administration.html:601
+#, fuzzy
 msgid "List of domains from which media can be imported. Check yt-dlp's repository (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list of supported websites."
-msgstr ""
+msgstr "قائمة النطاقات التي يمكن استيراد الوسائط منها. تحقق من مستودع yt-dlp (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) للحصول على قائمة المواقع المدعومة."
 
 #: enferno/admin/templates/admin/system-administration.html:607
+#, fuzzy
 msgid "Web import cookies"
-msgstr ""
+msgstr "ملفات تعريف الارتباط لاستيراد الويب"
 
 #: enferno/admin/templates/admin/system-administration.html:608
+#, fuzzy
 msgid "Cookie data for authenticated web imports (in Netscape/Mozilla format)."
-msgstr ""
+msgstr "بيانات ملفات تعريف الارتباط لاستيرادات الويب المصادق عليها (بتنسيق Netscape/Mozilla)."
 
 #: enferno/admin/templates/admin/system-administration.html:623
+#, fuzzy
 msgid "Export system"
-msgstr ""
+msgstr "نظام التصدير"
 
 #: enferno/admin/templates/admin/system-administration.html:641
+#, fuzzy
 msgid "Map API endpoint"
-msgstr ""
+msgstr "نقطة نهاية واجهة برمجة تطبيقات الخرائط"
 
 #: enferno/admin/templates/admin/system-administration.html:646
-msgid "Bayanat uses OpenStreetMaps by default. Optionally, it is\n"
-"                                        able to show satellite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps\n"
-"                                        API Key."
-msgstr ""
+#, fuzzy
+msgid "Bayanat uses OpenStreetMaps by default. Optionally, it is\n                                        able to show satellite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps\n                                        API Key."
+msgstr "يستخدم بيانات خرائط OpenStreetMaps بشكل افتراضي. اختيارياً، يمكنه عرض صور الأقمار الصناعية باستخدام خرائط Google، بالإضافة إلى OSM. للتمكين، أضف مفتاح واجهة برمجة تطبيقات خرائط Google."
 
 #: enferno/admin/templates/admin/system-administration.html:669
+#, fuzzy
 msgid "Include postal code generation settings"
-msgstr ""
+msgstr "تضمين إعدادات إنشاء الرمز البريدي"
 
 #: enferno/admin/templates/admin/system-administration.html:671
+#, fuzzy
 msgid "Include postal codes in the format of full location text of all entries. Note: you must regenerate full locations from the Component Data dashboard for this change to take effect."
-msgstr ""
+msgstr "تضمين الرموز البريدية في تنسيق نص الموقع الكامل لجميع الإدخالات. ملاحظة: يجب إعادة إنشاء المواقع الكاملة من لوحة معلومات بيانات المكونات حتى يسري هذا التغيير."
 
 #: enferno/admin/templates/admin/system-administration.html:681
+#, fuzzy
 msgid "Email is not configured, and email notifications are currently disabled. To enable them, set up the email service in the Mail tab."
-msgstr ""
+msgstr "لم يتم تكوين البريد الإلكتروني، وإشعارات البريد الإلكتروني معطلة حالياً. لتمكينها، قم بإعداد خدمة البريد الإلكتروني في علامة التبويب البريد."
 
 #: enferno/admin/templates/admin/system-administration.html:683
+#, fuzzy
 msgid "Notifications for users"
-msgstr ""
+msgstr "إشعارات للمستخدمين"
 
 #: enferno/admin/templates/admin/system-administration.html:684
+#, fuzzy
 msgid "These notifications are sent to users about important changes to their accounts and new task assignments."
-msgstr ""
+msgstr "يتم إرسال هذه الإشعارات إلى المستخدمين حول التغييرات المهمة في حساباتهم وتعيينات المهام الجديدة."
 
 #: enferno/admin/templates/admin/system-administration.html:687
+#, fuzzy
 msgid "Login from new IP"
-msgstr ""
+msgstr "تسجيل الدخول من عنوان IP جديد"
 
 #: enferno/admin/templates/admin/system-administration.html:692
+#, fuzzy
 msgid "Notify when a user logs in from a new IP address."
-msgstr ""
+msgstr "إخطار عند تسجيل دخول مستخدم من عنوان IP جديد."
 
 #: enferno/admin/templates/admin/system-administration.html:702
+#, fuzzy
 msgid "Notify when a user changes their password."
-msgstr ""
+msgstr "إخطار عند تغيير المستخدم لكلمة المرور الخاصة به."
 
 #: enferno/admin/templates/admin/system-administration.html:706
+#, fuzzy
 msgid "Two-factor authentication"
-msgstr ""
+msgstr "المصادقة الثنائية"
 
 #: enferno/admin/templates/admin/system-administration.html:711
+#, fuzzy
 msgid "Notify when a user sets up, updates or removes 2FA."
-msgstr ""
+msgstr "إخطار عند قيام المستخدم بإعداد أو تحديث أو إزالة المصادقة الثنائية."
 
 #: enferno/admin/templates/admin/system-administration.html:715
+#, fuzzy
 msgid "Recovery codes"
-msgstr ""
+msgstr "رموز الاسترداد"
 
 #: enferno/admin/templates/admin/system-administration.html:720
+#, fuzzy
 msgid "Notify when a user generates new recovery codes."
-msgstr ""
+msgstr "إخطار عند قيام المستخدم بإنشاء رموز استرداد جديدة."
 
 #: enferno/admin/templates/admin/system-administration.html:724
+#, fuzzy
 msgid "New assignment"
-msgstr ""
+msgstr "مهمة جديدة"
 
 #: enferno/admin/templates/admin/system-administration.html:731
+#, fuzzy
 msgid "Notify user when they are assigned a new task."
-msgstr ""
+msgstr "إخطار المستخدم عند تعيين مهمة جديدة له."
 
 #: enferno/admin/templates/admin/system-administration.html:736
+#, fuzzy
 msgid "Review needed"
-msgstr ""
+msgstr "مراجعة مطلوبة"
 
 #: enferno/admin/templates/admin/system-administration.html:743
+#, fuzzy
 msgid "Notify user when their review is requested."
-msgstr ""
+msgstr "إخطار المستخدم عند طلب مراجعته."
 
 #: enferno/admin/templates/admin/system-administration.html:748
+#, fuzzy
 msgid "Web Import status"
-msgstr ""
+msgstr "حالة الاستيراد من الويب"
 
 #: enferno/admin/templates/admin/system-administration.html:755
+#, fuzzy
 msgid "Notify user about their web import status."
-msgstr ""
+msgstr "إخطار المستخدم بحالة الاستيراد من الويب."
 
 #: enferno/admin/templates/admin/system-administration.html:762
+#, fuzzy
 msgid "Notifications for all administrators"
-msgstr ""
+msgstr "إشعارات لجميع المسؤولين"
 
 #: enferno/admin/templates/admin/system-administration.html:763
+#, fuzzy
 msgid "Notifications sent to all administrators about important events."
-msgstr ""
+msgstr "إشعارات يتم إرسالها إلى جميع المسؤولين حول الأحداث المهمة."
 
 #: enferno/admin/templates/admin/system-administration.html:767
+#, fuzzy
 msgid "New user"
-msgstr ""
+msgstr "مستخدم جديد"
 
 #: enferno/admin/templates/admin/system-administration.html:774
+#, fuzzy
 msgid "Notify when a new user account is created."
-msgstr ""
+msgstr "إخطار عند إنشاء حساب مستخدم جديد."
 
 #: enferno/admin/templates/admin/system-administration.html:778
+#, fuzzy
 msgid "User updates"
-msgstr ""
+msgstr "تحديثات المستخدم"
 
 #: enferno/admin/templates/admin/system-administration.html:785
+#, fuzzy
 msgid "Notify when an existing user is updated."
-msgstr ""
+msgstr "إخطار عند تحديث مستخدم موجود."
 
 #: enferno/admin/templates/admin/system-administration.html:789
+#, fuzzy
 msgid "New group"
-msgstr ""
+msgstr "مجموعة جديدة"
 
 #: enferno/admin/templates/admin/system-administration.html:796
+#, fuzzy
 msgid "Notify when a new group is created."
-msgstr ""
+msgstr "إخطار عند إنشاء مجموعة جديدة."
 
 #: enferno/admin/templates/admin/system-administration.html:800
+#, fuzzy
 msgid "System settings change"
-msgstr ""
+msgstr "تغيير إعدادات النظام"
 
 #: enferno/admin/templates/admin/system-administration.html:807
+#, fuzzy
 msgid "Notify when system settings are updated."
-msgstr ""
+msgstr "إخطار عند تحديث إعدادات النظام."
 
 #: enferno/admin/templates/admin/system-administration.html:811
+#, fuzzy
 msgid "Unauthorized action"
-msgstr ""
+msgstr "إجراء غير مصرح به"
 
 #: enferno/admin/templates/admin/system-administration.html:818
+#, fuzzy
 msgid "An unauthorized action is attempted."
-msgstr ""
+msgstr "تم محاولة إجراء غير مصرح به."
 
 #: enferno/admin/templates/admin/system-administration.html:822
+#, fuzzy
 msgid "Admin security credentials change"
-msgstr ""
+msgstr "تغيير بيانات اعتماد أمان المسؤول"
 
 #: enferno/admin/templates/admin/system-administration.html:829
+#, fuzzy
 msgid "Notify when an administrator updates their security credentials."
-msgstr ""
+msgstr "إخطار عند قيام المسؤول بتحديث بيانات اعتماد الأمان الخاصة به."
 
 #: enferno/admin/templates/admin/system-administration.html:833
+#, fuzzy
 msgid "Deleted items"
-msgstr ""
+msgstr "العناصر المحذوفة"
 
 #: enferno/admin/templates/admin/system-administration.html:840
+#, fuzzy
 msgid "Notify when items are deleted from the system."
-msgstr ""
+msgstr "إخطار عند حذف عناصر من النظام."
 
 #: enferno/admin/templates/admin/system-administration.html:848
+#, fuzzy
 msgid "New request"
-msgstr ""
+msgstr "طلب جديد"
 
 #: enferno/admin/templates/admin/system-administration.html:855
+#, fuzzy
 msgid "Notify when a new export request is created."
-msgstr ""
+msgstr "إخطار عند إنشاء طلب تصدير جديد."
 
 #: enferno/admin/templates/admin/system-administration.html:859
+#, fuzzy
 msgid "Approved request"
-msgstr ""
+msgstr "طلب موافق عليه"
 
 #: enferno/admin/templates/admin/system-administration.html:866
+#, fuzzy
 msgid "Notify when an export request is approved."
-msgstr ""
+msgstr "إخطار عند الموافقة على طلب تصدير."
 
 #: enferno/admin/templates/admin/system-administration.html:870
+#, fuzzy
 msgid "Media and Sheet Import"
-msgstr ""
+msgstr "استيراد الوسائط والجداول"
 
 #: enferno/admin/templates/admin/system-administration.html:873
+#, fuzzy
 msgid "New batch"
-msgstr ""
+msgstr "دفعة جديدة"
 
 #: enferno/admin/templates/admin/system-administration.html:880
+#, fuzzy
 msgid "Notify when a new import batch is queued."
-msgstr ""
+msgstr "إخطار عند إضافة دفعة استيراد جديدة إلى قائمة الانتظار."
 
 #: enferno/admin/templates/admin/system-administration.html:886
+#, fuzzy
 msgid "Notifications for administrators"
-msgstr ""
+msgstr "إشعارات للمسؤولين"
 
 #: enferno/admin/templates/admin/system-administration.html:887
+#, fuzzy
 msgid "Notifications sent to individual administrators about the results of actions they initiated."
-msgstr ""
+msgstr "إشعارات يتم إرسالها إلى المسؤولين الأفراد حول نتائج الإجراءات التي بدأوها."
 
 #: enferno/admin/templates/admin/system-administration.html:890
+#, fuzzy
 msgid "Import batch status"
-msgstr ""
+msgstr "حالة دفعة الاستيراد"
 
 #: enferno/admin/templates/admin/system-administration.html:897
+#, fuzzy
 msgid "Notify about the results of their Media or Sheets Import batches."
-msgstr ""
+msgstr "إخطار حول نتائج دفعات استيراد الوسائط أو الجداول الخاصة بهم."
 
 #: enferno/admin/templates/admin/system-administration.html:901
+#, fuzzy
 msgid "Bulk operations status"
-msgstr ""
+msgstr "حالة العمليات المجمعة"
 
 #: enferno/admin/templates/admin/system-administration.html:908
+#, fuzzy
 msgid "Notify about the status of their bulk operations."
-msgstr ""
+msgstr "إخطار حول حالة عملياتهم المجمعة."
 
 #: enferno/admin/templates/admin/system-administration.html:917
+#, fuzzy
 msgid "Enable Mail System"
-msgstr ""
+msgstr "تمكين نظام البريد"
 
 #: enferno/admin/templates/admin/system-administration.html:919
+#, fuzzy
 msgid "Enables sending emails from Bayanat."
-msgstr ""
+msgstr "يتيح إرسال رسائل البريد الإلكتروني من بيانات."
 
 #: enferno/admin/templates/admin/system-administration.html:926
+#, fuzzy
 msgid "Mail Server"
-msgstr ""
+msgstr "خادم البريد"
 
 #: enferno/admin/templates/admin/system-administration.html:927
+#, fuzzy
 msgid "SMTP server for sending emails."
-msgstr ""
+msgstr "خادم SMTP لإرسال رسائل البريد الإلكتروني."
 
 #: enferno/admin/templates/admin/system-administration.html:931
+#, fuzzy
 msgid "Mail Port"
-msgstr ""
+msgstr "منفذ البريد"
 
 #: enferno/admin/templates/admin/system-administration.html:932
+#, fuzzy
 msgid "Port for SMTP server."
-msgstr ""
+msgstr "منفذ خادم SMTP."
 
 #: enferno/admin/templates/admin/system-administration.html:936
+#, fuzzy
 msgid "Use TLS"
-msgstr ""
+msgstr "استخدام TLS"
 
 #: enferno/admin/templates/admin/system-administration.html:937
+#, fuzzy
 msgid "Use TLS for SMTP server."
-msgstr ""
+msgstr "استخدام TLS لخادم SMTP."
 
 #: enferno/admin/templates/admin/system-administration.html:941
+#, fuzzy
 msgid "Use SSL"
-msgstr ""
+msgstr "استخدام SSL"
 
 #: enferno/admin/templates/admin/system-administration.html:942
+#, fuzzy
 msgid "Use SSL for SMTP server."
-msgstr ""
+msgstr "استخدام SSL لخادم SMTP."
 
 #: enferno/admin/templates/admin/system-administration.html:946
+#, fuzzy
 msgid "Mail Username"
-msgstr ""
+msgstr "اسم مستخدم البريد"
 
 #: enferno/admin/templates/admin/system-administration.html:946
+#, fuzzy
 msgid "Username for SMTP server."
-msgstr ""
+msgstr "اسم المستخدم لخادم SMTP."
 
 #: enferno/admin/templates/admin/system-administration.html:951
+#, fuzzy
 msgid "Mail Password"
-msgstr ""
+msgstr "كلمة مرور البريد"
 
 #: enferno/admin/templates/admin/system-administration.html:951
+#, fuzzy
 msgid "Password for SMTP server."
-msgstr ""
+msgstr "كلمة المرور لخادم SMTP."
 
 #: enferno/admin/templates/admin/system-administration.html:956
+#, fuzzy
 msgid "Mail Default Sender"
-msgstr ""
+msgstr "المرسل الافتراضي للبريد"
 
 #: enferno/admin/templates/admin/system-administration.html:957
+#, fuzzy
 msgid "Default sender for emails."
-msgstr ""
+msgstr "المرسل الافتراضي لرسائل البريد الإلكتروني."
 
 #: enferno/admin/templates/admin/system-administration.html:962
+#, fuzzy
 msgid "Allowed Email Domains"
-msgstr ""
+msgstr "نطاقات البريد الإلكتروني المسموح بها"
 
 #: enferno/admin/templates/admin/system-administration.html:963
+#, fuzzy
 msgid "Only emails from the listed domains will be allowed (e.g., gmail.com, yahoo.com). Use * to allow all domains."
-msgstr ""
+msgstr "سيُسمح فقط برسائل البريد الإلكتروني من النطاقات المدرجة (مثل gmail.com، yahoo.com). استخدم * للسماح بجميع النطاقات."
 
 #: enferno/admin/templates/admin/system-administration.html:996
+#, fuzzy
 msgid "(Current settings)"
-msgstr ""
+msgstr "(الإعدادات الحالية)"
 
 #: enferno/admin/templates/admin/system-administration.html:997
+#, fuzzy
 msgid "No changes in this configuration"
-msgstr ""
+msgstr "لا توجد تغييرات في هذا التكوين"
 
 #: enferno/admin/templates/admin/system-administration.html:1015
+#, fuzzy
 msgid "Review and confirm your changes"
-msgstr ""
+msgstr "راجع وأكد التغييرات"
 
 #: enferno/admin/templates/admin/system-administration.html:1057
+#, fuzzy
 msgid "Are you sure you want to revert to this version?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد العودة إلى هذا الإصدار؟"
 
 #: enferno/admin/templates/admin/system-administration.html:1061
+#, fuzzy
 msgid "Version settings changed by"
-msgstr ""
+msgstr "تم تغيير إعدادات الإصدار بواسطة"
 
 #: enferno/admin/templates/admin/system-administration.html:1142
+#, fuzzy
 msgid "Edit time"
-msgstr ""
+msgstr "وقت التعديل"
 
 #: enferno/admin/templates/admin/system-administration.html:1176
+#, fuzzy
 msgid "Access control"
-msgstr ""
+msgstr "التحكم بالوصول"
 
 #: enferno/admin/templates/admin/system-administration.html:1177
+#, fuzzy
 msgid "Activity monitor"
-msgstr ""
+msgstr "مراقب النشاط"
 
 #: enferno/admin/templates/admin/system-administration.html:1178
+#, fuzzy
 msgid "Import tools"
-msgstr ""
+msgstr "أدوات الاستيراد"
 
 #: enferno/admin/templates/admin/system-administration.html:1183
+#, fuzzy
 msgid "Mail"
-msgstr ""
+msgstr "البريد"
 
 #: enferno/admin/templates/admin/users.html:187
 #: enferno/templates/security/change_password.html:33
+#, fuzzy
 msgid "Strong password"
-msgstr ""
+msgstr "كلمة مرور قوية"
 
 #: enferno/admin/templates/admin/users.html:220
+#, fuzzy
 msgid "Username available"
-msgstr ""
+msgstr "اسم المستخدم متاح"
 
 #: enferno/admin/templates/admin/users.html:292
+#, fuzzy
 msgid "Can Import from Web"
-msgstr ""
+msgstr "يمكنه الاستيراد من الويب"
 
 #: enferno/admin/templates/admin/users.html:355
+#, fuzzy
 msgid "Account Status"
-msgstr ""
+msgstr "حالة الحساب"
 
 #: enferno/admin/templates/admin/partials/review_dialog.html:44
+#, fuzzy
 msgid "Appends the tags to the bulletin (does not remove existing tags)"
-msgstr ""
+msgstr "إضافة الوسوم إلى المادة (لا يزيل الوسوم الموجودة)"
 
 #: enferno/data_import/templates/media-import.html:238
+#, fuzzy
 msgid "Transcribe audio/video files"
-msgstr ""
+msgstr "نسخ ملفات الصوت/الفيديو"
 
 #: enferno/data_import/templates/media-import.html:241
+#, fuzzy
 msgid "Transcription is disabled."
-msgstr ""
+msgstr "النسخ الصوتي معطل."
 
 #: enferno/data_import/templates/media-import.html:247
+#, fuzzy
 msgid "Language:"
-msgstr ""
+msgstr "اللغة:"
 
 #: enferno/data_import/templates/sheets-import.html:13
+#, fuzzy
 msgid "Map"
-msgstr ""
+msgstr "خريطة"
 
 #: enferno/data_import/templates/sheets-import.html:15
+#, fuzzy
 msgid "Upload More"
-msgstr ""
+msgstr "رفع المزيد"
 
 #: enferno/data_import/templates/sheets-import.html:180
+#, fuzzy
 msgid "Update"
-msgstr ""
+msgstr "تحديث"
 
 #: enferno/data_import/templates/sheets-import.html:182
+#, fuzzy
 msgid "New map"
-msgstr ""
+msgstr "خريطة جديدة"
 
 #: enferno/data_import/templates/sheets-import.html:1199
+#, fuzzy
 msgid "Are you sure you want to reset this mapping?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد إعادة تعيين هذا التعيين؟"
 
 #: enferno/data_import/templates/sheets-import.html:1329
+#, fuzzy
 msgid "Are you sure you want to delete this mapping?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد حذف هذا التعيين؟"
 
 #: enferno/templates/important_notifications_dialog.html:7
+#, fuzzy
 msgid "Important notifications"
-msgstr ""
+msgstr "إشعارات مهمة"
 
 #: enferno/templates/login_dialog.html:3
+#, fuzzy
 msgid "Session Expired"
-msgstr ""
+msgstr "انتهت صلاحية الجلسة"
 
 #: enferno/templates/login_dialog.html:3
+#, fuzzy
 msgid "Please sign in again to continue."
-msgstr ""
+msgstr "يرجى تسجيل الدخول مرة أخرى للمتابعة."
 
 #: enferno/templates/login_dialog.html:60
+#, fuzzy
 msgid "Choose the 2FA method"
-msgstr ""
+msgstr "اختر طريقة المصادقة الثنائية"
 
 #: enferno/templates/login_dialog.html:60
+#, fuzzy
 msgid "Choose one of the methods below"
-msgstr ""
+msgstr "اختر إحدى الطرق أدناه"
 
 #: enferno/templates/login_dialog.html:66
 #: enferno/templates/login_dialog.html:101
 #: enferno/templates/security/two_factor_select.html:82
+#, fuzzy
 msgid "Authenticator"
-msgstr ""
+msgstr "تطبيق المصادقة"
 
 #: enferno/templates/login_dialog.html:71
+#, fuzzy
 msgid "Security Keys or Passkeys"
-msgstr ""
+msgstr "مفاتيح الأمان أو مفاتيح المرور"
 
 #: enferno/templates/login_dialog.html:90
+#, fuzzy
 msgid "Select"
-msgstr ""
+msgstr "اختر"
 
 #: enferno/templates/login_dialog.html:132
 #: enferno/templates/settings_drawer.html:65
+#, fuzzy
 msgid "Security Keys/Passkeys"
-msgstr ""
+msgstr "مفاتيح الأمان / مفاتيح المرور"
 
 #: enferno/templates/login_dialog.html:133
+#, fuzzy
 msgid "Sign In Using your Security Key or Passkey"
-msgstr ""
+msgstr "تسجيل الدخول باستخدام مفتاح الأمان أو مفتاح المرور"
 
 #: enferno/templates/nav-drawer.html:92
+#, fuzzy
 msgid "Customize Database"
-msgstr ""
+msgstr "تخصيص قاعدة البيانات"
 
 #: enferno/templates/nav-drawer.html:95
+#, fuzzy
 msgid "Bulletin Form Builder"
-msgstr ""
+msgstr "منشئ نموذج المادة"
 
 #: enferno/templates/nav-drawer.html:97
+#, fuzzy
 msgid "Actor Form Builder"
-msgstr ""
+msgstr "منشئ نموذج الكيان"
 
 #: enferno/templates/nav-drawer.html:99
+#, fuzzy
 msgid "Incident Form Builder"
-msgstr ""
+msgstr "منشئ نموذج الواقعة"
 
 #: enferno/templates/notifications_dialog.html:26
+#, fuzzy
 msgid "Unread"
-msgstr ""
+msgstr "غير مقروء"
 
 #: enferno/templates/notifications_dialog.html:32
+#, fuzzy
 msgid "Read"
-msgstr ""
+msgstr "مقروء"
 
 #: enferno/templates/notifications_drawer.html:18
+#, fuzzy
 msgid "Open notifications dialog"
-msgstr ""
+msgstr "فتح حوار الإشعارات"
 
 #: enferno/templates/reauth_dialog.html:3
+#, fuzzy
 msgid "Verify Password"
-msgstr ""
+msgstr "التحقق من كلمة المرور"
 
 #: enferno/templates/reauth_dialog.html:3
+#, fuzzy
 msgid "You must re-authenticate to continue."
-msgstr ""
+msgstr "يجب إعادة المصادقة للمتابعة."
 
 #: enferno/templates/settings_drawer.html:63
+#, fuzzy
 msgid "Two-Factor Authentication"
-msgstr ""
+msgstr "المصادقة الثنائية"
 
 #: enferno/templates/security/login_user.html:5
+#, fuzzy
 msgid "Welcome to Bayanat"
-msgstr ""
+msgstr "مرحباً بك في بيانات"
 
 #: enferno/templates/security/login_user.html:7
+#, fuzzy
 msgid "Please enter your details below to log in."
-msgstr ""
+msgstr "يرجى إدخال تفاصيلك أدناه لتسجيل الدخول."
 
 #: enferno/templates/security/mf_recovery.html:5
 #: enferno/templates/security/mf_recovery.html:13
+#, fuzzy
 msgid "Recovery code"
-msgstr ""
+msgstr "رمز الاسترداد"
 
 #: enferno/templates/security/mf_recovery.html:7
-msgid "You’ve chosen to use a recovery code. Please enter it below to continue."
-msgstr ""
+#, fuzzy
+msgid "You've chosen to use a recovery code. Please enter it below to continue."
+msgstr "لقد اخترت استخدام رمز استرداد. يرجى إدخاله أدناه للمتابعة."
 
 #: enferno/templates/security/mf_recovery.html:14
+#, fuzzy
 msgid "Enter your 12-character recovery code, including dashes"
-msgstr ""
+msgstr "أدخل رمز الاسترداد المكون من 12 حرفاً، بما في ذلك الشرطات"
 
 #: enferno/templates/security/two_factor_select.html:9
+#, fuzzy
 msgid "Available two-factor authentication methods:"
-msgstr ""
+msgstr "طرق المصادقة الثنائية المتاحة:"
 
 #: enferno/templates/security/two_factor_select.html:80
+#, fuzzy
 msgid "Security Key/Passkey"
-msgstr ""
+msgstr "مفتاح الأمان / مفتاح المرور"
 
 #: enferno/templates/security/two_factor_verify_code.html:6
+#, fuzzy
 msgid "Authentication app"
-msgstr ""
+msgstr "تطبيق المصادقة"
 
 #: enferno/templates/security/two_factor_verify_code.html:13
+#, fuzzy
 msgid "Authentication code"
-msgstr ""
+msgstr "رمز المصادقة"
 
 #: enferno/templates/security/two_factor_verify_code.html:16
+#, fuzzy
 msgid "The authentication code consists of 6 digits and is generated within your Authenticator app."
-msgstr ""
+msgstr "يتكون رمز المصادقة من 6 أرقام ويتم إنشاؤه داخل تطبيق المصادقة الخاص بك."
 
 #: enferno/templates/security/two_factor_verify_code.html:41
 #: enferno/templates/security/wan_signin.html:78
+#, fuzzy
 msgid "Log out"
-msgstr ""
+msgstr "تسجيل الخروج"
 
 #: enferno/templates/security/wan_signin.html:15
+#, fuzzy
 msgid "Security key"
-msgstr ""
+msgstr "مفتاح الأمان"
 
 #: enferno/templates/security/wan_signin.html:59
+#, fuzzy
 msgid "Try again"
-msgstr ""
+msgstr "حاول مرة أخرى"
 
 #: enferno/templates/security/wan_signin.html:98
+#, fuzzy
 msgid "Use a saved passkey for {host}"
-msgstr ""
+msgstr "استخدم مفتاح مرور محفوظ لـ {host}"
 
 #: enferno/templates/security/wan_signin.html:121
+#, fuzzy
 msgid "Authentication was canceled or timed out."
-msgstr ""
-
+msgstr "تم إلغاء المصادقة أو انتهت مهلتها."
