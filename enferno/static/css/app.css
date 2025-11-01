@@ -895,3 +895,8 @@ div.jsondiffpatch-child-node-type-array:after {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/* Diff dialog */
+.diff-dialog-content .jsondiffpatch-delta pre {
+    white-space: normal;
+}
