@@ -4,6 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS update_history (
     id SERIAL PRIMARY KEY,
+    version_from VARCHAR(50),
     version_to VARCHAR(50) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'success',
     user_id INTEGER REFERENCES "user"(id) ON DELETE SET NULL,
