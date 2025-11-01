@@ -10,6 +10,7 @@ class UpdateHistory(db.Model, BaseMixin):
     """
 
     id = db.Column(db.Integer, primary_key=True)
+    version_from = db.Column(db.String(50), nullable=True)
     version_to = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="success")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
@@ -21,6 +22,7 @@ class UpdateHistory(db.Model, BaseMixin):
         """Convert to dictionary for API response."""
         return {
             "id": self.id,
+            "version_from": self.version_from,
             "version_to": self.version_to,
             "status": self.status,
             "created_at": self.created_at.isoformat(),
