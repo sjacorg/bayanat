@@ -41,11 +41,10 @@ class TestDynamicFieldSearch:
             )
         )
 
-        # Verify CAST syntax, NULL check, and proper array operator
-        assert "CAST(" in sql
-        assert "AS varchar)" in sql
-        assert "= ANY(test_select)" in sql
-        assert "IS NOT NULL" in sql
+        # Verify array overlap operator and that numeric values were converted to strings
+        assert "&&" in sql  # PostgreSQL array overlap operator
+        assert "ARRAY['1', '2']" in sql  # Values should be converted to strings
+        assert "test_select" in sql
 
     def test_text_field_contains_coerces_numeric(self, monkeypatch):
         """Test TEXT field 'contains' operator converts numeric values to strings."""
@@ -59,5 +58,13 @@ class TestDynamicFieldSearch:
         )
 
         assert len(conditions) == 1
-        bind_values = [p.value for p in conditions[0]._bindparams.values()]
-        assert bind_values == ["%42%"]
+        # Compile the condition to check the bound parameter value
+        compiled = conditions[0].compile(
+            dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
+        )
+        sql = str(compiled)
+
+        # Verify the numeric value was converted to a string with wildcards
+        assert "%42%" in sql
+        assert "test_text" in sql
+        assert "ILIKE" in sql.upper()
