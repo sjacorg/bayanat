@@ -3,7 +3,7 @@ FROM ubuntu:24.04 as base
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && \
-    apt-get install -yq python3.12 python3.12-dev python3.12-venv python3-pip curl git \
+    apt-get install -yq python3.12 python3.12-dev python3.12-venv python3-pip curl \
     libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev \
     libmysqlclient-dev libncurses5-dev libpq-dev \
     libimage-exiftool-perl
