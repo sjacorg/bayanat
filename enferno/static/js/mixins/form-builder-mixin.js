@@ -584,7 +584,7 @@ const formBuilderMixin = {
       try {
         this.formBuilder.loading = true;
         const response = await api.get(
-          `/admin/api/dynamic-fields/?entity_type=${entityType}&limit=50`,
+          `/admin/api/dynamic-fields/?entity_type=${entityType}`,
         );
         this.formBuilder.dynamicFields = response.data.data;
         this.formBuilder.dynamicFields = this.sortFields(this.formBuilder.dynamicFields);
@@ -600,7 +600,7 @@ const formBuilderMixin = {
       try {
         this.formBuilder.loading = true;
         const response = await api.get(
-          `/admin/api/dynamic-fields/?entity_type=${entityType}&active=true&searchable=true&limit=50`,
+          `/admin/api/dynamic-fields/?entity_type=${entityType}&active=true&searchable=true`,
         );
         this.formBuilder.searchableDynamicFields = response.data.data;
         this.formBuilder.searchableDynamicFields = this.sortFields(

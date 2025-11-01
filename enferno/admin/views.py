@@ -6713,14 +6713,25 @@ def api_dynamic_fields():
 
         filters = parse_filters(request.args)
         sort_clause = parse_sort(request.args)
+
+        # No default limit - return all fields by default (form builders need complete data)
+        # Max cap of 1000 for safety
+        MAX_LIMIT = 1000
         try:
-            limit = int(request.args.get("limit", 25))
+            limit_param = request.args.get("limit")
+            if limit_param is None:
+                limit = None  # No limit = return all
+            else:
+                limit = int(limit_param)
+                if limit > MAX_LIMIT:
+                    return HTTPResponse.error(f"Limit cannot exceed {MAX_LIMIT}", status=400)
             offset = int(request.args.get("offset", 0))
         except ValueError:
             return HTTPResponse.error("Invalid limit or offset", status=400)
-        stmt = (
-            select(DynamicField).where(*filters).order_by(sort_clause).offset(offset).limit(limit)
-        )
+
+        stmt = select(DynamicField).where(*filters).order_by(sort_clause).offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
         count_stmt = select(func.count()).select_from(DynamicField).where(*filters)
         total = db.session.execute(count_stmt).scalar_one()
         items = db.session.execute(stmt).scalars().all()
