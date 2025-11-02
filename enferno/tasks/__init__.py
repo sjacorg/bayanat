@@ -736,9 +736,12 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
     # session cleanup task
     sender.add_periodic_task(24 * 60 * 60, session_cleanup.s(), name="Session Cleanup Cron")
 
-    # version check task (every 12 hours)
-    sender.add_periodic_task(12 * 60 * 60, check_for_updates.s(), name="Version Check")
-    logger.info("Version check periodic task is set up (runs every 12 hours).")
+    # version check task (configurable interval, default 12 hours)
+    sender.add_periodic_task(
+        cfg.VERSION_CHECK_INTERVAL, check_for_updates.s(), name="Version Check"
+    )
+    hours = cfg.VERSION_CHECK_INTERVAL / 3600
+    logger.info(f"Version check periodic task is set up (runs every {hours:.1f} hours).")
 
 
 @celery.task

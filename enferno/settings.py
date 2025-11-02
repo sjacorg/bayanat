@@ -280,6 +280,7 @@ class Config(object):
 
     # System Updates
     UPDATE_GRACE_PERIOD_MINUTES = int(os.environ.get("UPDATE_GRACE_PERIOD_MINUTES", "15"))
+    VERSION_CHECK_INTERVAL = int(os.environ.get("VERSION_CHECK_INTERVAL", 12 * 60 * 60))
 
     # Setup Wizard
     SETUP_COMPLETE = manager.get_config("SETUP_COMPLETE")
@@ -625,6 +626,7 @@ class TestConfig:
 
     # System Updates (1 minute for fast tests)
     UPDATE_GRACE_PERIOD_MINUTES = 1
+    VERSION_CHECK_INTERVAL = 60  # 1 minute for testing
 
     @classmethod
     def get(cls, key, default=None):
