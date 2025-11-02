@@ -6750,7 +6750,7 @@ def api_get_system_update_history() -> Response:
         return HTTPResponse.success(data={"updates": history})
     except Exception as e:
         current_app.logger.error(f"Failed to get update history: {str(e)}")
-        return HTTPResponse.error(f"Failed to get update history: {str(e)}", 500)
+        return HTTPResponse.error("Failed to get update history. Check logs for details.", 500)
 
 
 @admin.route("/api/system/release-notes", methods=["GET"])
