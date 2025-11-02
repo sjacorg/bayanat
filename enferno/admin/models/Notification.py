@@ -177,7 +177,7 @@ class Notification(db.Model, BaseMixin):
         title,
         message,
         category=NotificationCategories.ANNOUNCEMENT.value,
-        is_urgent=False,
+        is_urgent=True,
         send_email=False,
     ):
         """Create notifications for all users"""
