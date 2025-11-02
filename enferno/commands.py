@@ -30,6 +30,7 @@ from enferno.utils.data_helpers import (
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.update_utils import rollback_update
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
@@ -703,43 +704,11 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         logger.error(f"Update failed, rolling back: {e}")
         click.echo(f"Update failed: {e}")
 
-        if git_commit_before:
-            subprocess.run(
-                ["git", "reset", "--hard", git_commit_before], cwd=project_root, check=False
-            )
-            subprocess.run(["uv", "sync", "--frozen"], cwd=project_root, check=False)
-            logger.info(f"Rolled back code to: {git_commit_before[:8]}")
-
-        if backup_file and Path(backup_file).exists():
-            # Clean up database connections
-            with suppress(Exception):
-                db.session.rollback()
-                db.session.remove()
-                db.engine.dispose()
-
-            # Terminate connections
-            with suppress(Exception):
-                with db.engine.begin() as conn:
-                    conn.execute(
-                        text(
-                            "SELECT pg_terminate_backend(pid) "
-                            "FROM pg_stat_activity "
-                            "WHERE datname = :dbname AND pid <> pg_backend_pid()"
-                        ),
-                        {"dbname": db.engine.url.database},
-                    )
-                logger.info("Terminated active database connections")
-
-            # Restore database (don't suppress errors)
-            try:
-                restore_backup(backup_file, timeout=600)
-                logger.info(f"Database restored from: {backup_file}")
-            except Exception as restore_error:
-                logger.error(f"Database rollback failed: {restore_error}")
-
-        if restart_service:
-            restart("bayanat")
-            logger.info("Service restarted after rollback")
+        rollback_update(
+            git_commit=git_commit_before,
+            backup_file=backup_file,
+            restart_service=restart_service,
+        )
 
         return (False, f"Update failed and rolled back: {e}")
     finally:
