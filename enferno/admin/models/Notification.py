@@ -236,6 +236,8 @@ class Notification(db.Model, BaseMixin):
                 send_email=config.get("email", False),
             )
 
+        return []
+
 
 def get_notification_config(event):
     """
