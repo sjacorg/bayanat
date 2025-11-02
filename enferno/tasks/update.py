@@ -1,9 +1,10 @@
 """Background system update task with locking and progress tracking."""
 
+import json
 from datetime import datetime, timedelta, timezone
 from flask import current_app
 
-from enferno.utils.maintenance import disable_maintenance, enable_maintenance
+from enferno.utils.maintenance import disable_maintenance, enable_maintenance, logout_all_users
 from enferno.utils.update_utils import (
     start_update,
     end_update,
@@ -34,27 +35,28 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
     # Clear schedule flag - update is starting now, is_update_running() takes over
     rds.delete("bayanat:update:scheduled")
 
-    lock_acquired = False
+    # Acquire lock BEFORE try block - prevents concurrent updates
+    # If we can't get the lock, return early without entering try/finally
+    if not start_update("Acquiring lock..."):
+        return {"success": False, "error": "Update already running"}
+
+    # If we get here, we acquired the lock - finally block WILL cleanup
+    # Initialize versions early so they're available in exception handler
+    current_version = None
+    target_version = Config.VERSION
 
     try:
-        # Acquire lock - prevents concurrent updates
-        if not start_update("Acquiring lock..."):
-            return {"success": False, "error": "Update already running"}
-        lock_acquired = True
 
         # Log out all users before maintenance mode
         set_update_message("Logging out all users...")
-        session_redis = current_app.config["SESSION_REDIS"]
-        session_keys = session_redis.keys("session:*")
-        if session_keys:
-            session_redis.delete(*session_keys)
+        logout_all_users()
 
         set_update_message("Enabling maintenance mode...")
         if not enable_maintenance("System is being updated. Please wait..."):
             raise RuntimeError("Failed to acquire system lock")
-        lock_acquired = True
 
         # Capture current version before update and target version
+        # Do this BEFORE any operations that might fail
         current_version = SystemInfo.get_value("app_version")
         target_version = Config.VERSION
 
@@ -72,7 +74,10 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
             ).save()
         else:
             set_update_message(f"Update failed: {message}")
-            # Record failed attempt with target version
+            # Store failure in Redis first (survives DB rollback)
+            _store_failure_in_redis(current_version, target_version, message, user_id)
+            # Try to save to DB (might fail if rolled back to version without table)
+            # .save() handles exceptions internally - logs error and returns False
             UpdateHistory(
                 version_from=current_version,
                 version_to=target_version,
@@ -84,25 +89,62 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
 
     except Exception as e:
         set_update_message(f"Error: {str(e)}")
-        # Record failed attempt due to exception
-        try:
-            current_version = SystemInfo.get_value("app_version")
-            target_version = Config.VERSION
-            UpdateHistory(
-                version_from=current_version,
-                version_to=target_version,
-                status="failed",
-                user_id=user_id,
-            ).save()
-        except Exception as log_error:
-            current_app.logger.error(f"Failed to log update failure: {str(log_error)}")
+        # Use captured versions from before update (don't query DB in exception handler)
+        # If versions weren't captured yet, try to get them but don't fail if DB is unavailable
+        failure_current_version = current_version
+        failure_target_version = target_version
+
+        if failure_current_version is None:
+            # Versions not captured yet, try to get current_version from DB if available
+            try:
+                failure_current_version = SystemInfo.get_value("app_version")
+            except Exception:
+                # DB unavailable, use None
+                failure_current_version = None
+
+        # Store failure in Redis first (survives any DB issues)
+        _store_failure_in_redis(failure_current_version, failure_target_version, str(e), user_id)
+
+        # Try to save to DB (might fail if DB is unavailable)
+        # .save() handles exceptions internally - logs error and returns False
+        UpdateHistory(
+            version_from=failure_current_version,
+            version_to=failure_target_version,
+            status="failed",
+            user_id=user_id,
+        ).save()
 
         return {"success": False, "error": str(e)}
 
     finally:
-        if lock_acquired:
-            disable_maintenance()
+        # Cleanup - only runs if we acquired the lock (got past the check above)
+        # If lock acquisition failed, we returned early before entering try block
+        disable_maintenance()
         end_update()
+
+
+def _store_failure_in_redis(version_from, version_to, error_message, user_id):
+    """Store update failure in Redis as backup (survives DB rollback).
+
+    This ensures failures are recorded even if database rollback removes
+    the UpdateHistory table or invalidates connections.
+    """
+    try:
+        failure_key = "bayanat:update:failure"
+        failure_data = {
+            "version_from": version_from,
+            "version_to": version_to,
+            "status": "failed",
+            "user_id": user_id,
+            "error": error_message,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        # Store for 24 hours - long enough to sync to DB when table exists
+        rds.setex(failure_key, 86400, json.dumps(failure_data))
+        current_app.logger.info(f"Update failure stored in Redis: {failure_key}")
+    except Exception as redis_error:
+        # If Redis fails, log it but don't crash - at least we tried
+        current_app.logger.error(f"Failed to store update failure in Redis: {redis_error}")
 
 
 def schedule_system_update_with_grace_period(

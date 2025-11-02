@@ -87,6 +87,31 @@ def disable_maintenance() -> bool:
         return False
 
 
+def logout_all_users() -> int:
+    """
+    Logout all users by clearing their sessions.
+
+    Returns:
+        int: Number of users logged out
+    """
+    try:
+        from flask import current_app
+
+        session_redis = current_app.config["SESSION_REDIS"]
+        session_keys = session_redis.keys("session:*")
+
+        if session_keys:
+            session_redis.delete(*session_keys)
+            logger.info(f"Logged out {len(session_keys)} users")
+            return len(session_keys)
+        else:
+            logger.info("No active sessions to logout")
+            return 0
+    except Exception as e:
+        logger.error(f"Failed to logout users: {e}")
+        return 0
+
+
 def get_maintenance_details() -> str:
     """
     Get maintenance mode details.
