@@ -41,12 +41,17 @@ def get_csrf_token() -> Response:
 @bp_public.route("/maintenance")
 def maintenance():
     """
-    Display maintenance page.
+    Display maintenance page. Only accessible when maintenance mode is active.
 
     Returns:
-        Rendered maintenance template with 503 status code
+        Rendered maintenance template with 503 status code if maintenance is active,
+        otherwise redirects to home page
     """
-    from enferno.utils.maintenance import get_maintenance_details
+    from enferno.utils.maintenance import is_maintenance_mode, get_maintenance_details
+
+    # Only show maintenance page if maintenance mode is actually enabled
+    if not is_maintenance_mode():
+        return redirect("/dashboard")
 
     details = get_maintenance_details()
     current_year = datetime.datetime.now().year
