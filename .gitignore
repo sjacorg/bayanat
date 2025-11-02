@@ -31,3 +31,4 @@ backups/*
 .windsurfrules
 cookies.txt
 
+*.egg-info/
