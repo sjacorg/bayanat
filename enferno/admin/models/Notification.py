@@ -206,6 +206,7 @@ class Notification(db.Model, BaseMixin):
                 is_urgent=is_urgent,
                 send_email=config.get("email", False),
             )
+        return None
 
     @staticmethod
     def send_admin_notification_for_event(event, title, message, category=None, is_urgent=False):
@@ -220,6 +221,7 @@ class Notification(db.Model, BaseMixin):
                 is_urgent=is_urgent,
                 send_email=config.get("email", True),  # Default to email for admin notifications
             )
+        return []
 
     @staticmethod
     def send_notification_to_all_users(event, title, message, category=None, is_urgent=False):

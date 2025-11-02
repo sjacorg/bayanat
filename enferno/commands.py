@@ -6,14 +6,14 @@ import sys
 from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Optional
 
 import click
 import tomli
 from flask import current_app
 from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
-from sqlalchemy import event, MetaData, text
+from sqlalchemy import event, text
 
 from enferno.admin.models import MigrationHistory, SystemInfo
 from enferno.extensions import db, rds

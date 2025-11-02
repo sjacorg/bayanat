@@ -6627,7 +6627,7 @@ def api_trigger_system_update() -> Response:
         task = perform_system_update.delay(skip_backup=skip_backup, user_id=current_user.id)
     except Exception as e:
         current_app.logger.error(f"Failed to queue update task: {str(e)}")
-        return HTTPResponse.error(f"Failed to queue update task: {str(e)}", 500)
+        return HTTPResponse.error("Failed to queue update task. Check logs for details.", 500)
 
     return HTTPResponse.success(data={"task_id": task.id}, message="Update started", status=202)
 
@@ -6702,7 +6702,7 @@ def api_system_status() -> Response:
             )
         except Exception as e:
             current_app.logger.error(f"Fresh version check failed: {str(e)}")
-            return HTTPResponse.error(f"Version check error: {str(e)}", 500)
+            return HTTPResponse.error("Version check error. Check logs for details.", 500)
 
     # Use cached data
     cached_update = rds.get("bayanat:update:latest")

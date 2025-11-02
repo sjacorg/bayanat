@@ -939,7 +939,7 @@ def restart_service(service_name="bayanat"):
             )
             if response.status_code == 200:
                 return
-        except:
+        except Exception:
             pass  # Fall through to signal
 
     # Dev mode or fallback: SIGHUP parent process
@@ -1323,7 +1323,7 @@ def daily_backup_cron():
     filepath = f"{cfg.BACKUPS_LOCAL_PATH}/{filename}"
     try:
         pg_dump(filepath)
-    except:
+    except Exception:
         logger.error("Error during daily backups", exc_info=True)
         return
 

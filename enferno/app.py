@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-from flask import Flask, render_template, current_app, request
+from flask import Flask, render_template, current_app
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security import current_user
