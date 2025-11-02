@@ -162,3 +162,5 @@ def register_maintenance_middleware(app) -> None:
                 logger.error(f"Error rendering maintenance page: {e}")
                 # Fallback to simple message if template rendering fails
                 return "System is under maintenance", 503
+
+        return None
