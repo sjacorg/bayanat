@@ -466,7 +466,6 @@ def verify_backup(backup_file: str) -> None:
     except FileNotFoundError:
         # pg_restore not in PATH - fall back to basic checks only
         logger.warning("pg_restore not found, skipping detailed backup verification")
-        pass
 
 
 def create_backup(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
