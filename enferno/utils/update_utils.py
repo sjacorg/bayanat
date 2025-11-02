@@ -129,11 +129,12 @@ def rollback_update(
             logger.error(f"Database rollback failed: {e}")
             rollback_success = False
 
-    # Restart service if requested
+    # Restart services if requested
     if restart_service:
         try:
             restart("bayanat")
-            logger.info("Service restarted after rollback")
+            restart("bayanat-celery")
+            logger.info("Services restarted after rollback")
         except Exception as e:
             logger.error(f"Service restart failed: {e}")
             rollback_success = False

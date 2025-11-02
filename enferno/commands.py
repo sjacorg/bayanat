@@ -690,11 +690,12 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         rds.set("bayanat:update:latest", f"{new_version}|{checked_at}")
         logger.info(f"Updated version cache to {new_version}")
 
-        # 6) Restart
+        # 6) Restart services
         if restart_service:
-            click.echo("Restarting service...")
+            click.echo("Restarting services...")
             restart("bayanat")
-            logger.info("Service restarted")
+            restart("bayanat-celery")
+            logger.info("Services restarted")
 
         logger.info("System update completed successfully")
         return (True, "System updated successfully")
