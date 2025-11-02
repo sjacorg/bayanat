@@ -13,7 +13,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from enferno.admin.constants import Constants
 from enferno.settings import Config
 from enferno.user.forms import ExtendedLoginForm
-from enferno.user.models import User, Session, Role
+from enferno.user.models import User, Session
 from enferno.admin.models.Notification import Notification
 
 # Note: check_for_updates removed - now using real-time API endpoint
