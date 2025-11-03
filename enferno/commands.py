@@ -30,7 +30,7 @@ from enferno.utils.data_helpers import (
     generate_workflow_statues,
     import_default_data,
 )
-from enferno.utils.db_alignment_helpers import DBAlignmentChecker
+from enferno.utils.db_alignment_helpers import DBAlignmentChecker, db_doctor
 from enferno.utils.form_history_utils import record_form_history
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.update_utils import rollback_update
@@ -431,15 +431,25 @@ def compile() -> None:
         raise RuntimeError("Compile command failed")
 
 
-# Database Schema Alignment
-@click.command()
+# Database Health Check
+@click.command(name="db-doctor")
 @with_appcontext
-def check_db_alignment() -> None:
-    """Check the alignment of the database schema with the models."""
-    logger.info("Checking database schema alignment.")
-    checker = DBAlignmentChecker()
-    checker.check_db_alignment()
-    logger.info("Database schema alignment check completed.")
+def db_doctor_cli() -> None:
+    """
+    Run database health check.
+
+    Performs a quick diagnosis that critical tables exist and columns match.
+    """
+    logger.info("Running database health check...")
+    healthy, diagnosis = db_doctor()
+
+    if healthy:
+        click.echo(f"✓ {diagnosis}")
+        logger.info(diagnosis)
+    else:
+        click.echo(f"✗ {diagnosis}", err=True)
+        logger.error(diagnosis)
+        raise click.ClickException(diagnosis)
 
 
 @click.command()
@@ -685,7 +695,14 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         run_migrations()
         logger.info("Migrations completed")
 
-        # 5) Update version in database
+        # 5) Database health check after migrations
+        click.echo("Running database health check...")
+        healthy, diagnosis = db_doctor()
+        if not healthy:
+            raise RuntimeError(f"Database health check failed: {diagnosis}")
+        logger.info(f"Database health check passed: {diagnosis}")
+
+        # 6) Update version in database
         pyproject_path = project_root / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             pyproject_data = tomli.load(f)
@@ -713,7 +730,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         rds.set("bayanat:update:latest", f"{new_version}|{checked_at}")
         logger.info(f"Updated version cache to {new_version}")
 
-        # 6) Restart services
+        # 7) Restart services
         if restart_service:
             click.echo("Restarting services...")
             restart("bayanat")
