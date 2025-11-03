@@ -449,7 +449,7 @@ def db_doctor_cli() -> None:
     else:
         click.echo(f"✗ {diagnosis}", err=True)
         logger.error(diagnosis)
-        raise click.ClickException(diagnosis)
+        raise SystemExit(1)
 
 
 @click.command()
