@@ -10,12 +10,6 @@
     <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
 
     <link rel="stylesheet" href="/static/css/data-entry-dashboard.css"/>
-    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.min.css"/>
-    <link rel="stylesheet" href="/static/css/leaflet.css">
-    <link rel="stylesheet" href="/static/css/MarkerCluster.css">
-    <link rel="stylesheet" href="/static/css/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="/static/css/Leaflet.PolylineMeasure.css">
-    <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css">
 
     <!-- favicon -->
 
@@ -101,32 +95,71 @@
 
 
 {% if config.DEBUG %}
-<script src="/static/js/vue.global.js"></script>
+<script src="/static/js/vue.global.js" defer></script>
 {% else  %}
-<script src="/static/js/vue.global.prod.js"></script>
+<script src="/static/js/vue.global.prod.js" defer></script>
 {% endif  %}
-<script src="/static/js/vuetify.min.js"></script>
-<script src="/static/js/vue-router.global.prod.min.js"></script>
-<script src="/static/js/axios.min.js"></script>
-<script src="/static/js/dayjs/dayjs.min.js"></script>
-<script src="/static/js/leaflet.js"></script>
-<script src="/static/js/vue2-leaflet.min.js"></script>
-<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
-<script src="/static/js/leaflet.markercluster.js"></script>
-<script src="/static/js/leaflet.curve.min.js"></script>
-<script src="/static/js/leaflet.rotatedmarker.min.js"></script>
-<script src="/static/js/Leaflet.PolylineMeasure.js"></script>
-<script src="/static/js/Leaflet.GoogleMutant.js"></script>
-
+<script src="/static/js/vuetify.min.js" defer></script>
+<script src="/static/js/vue-router.global.prod.min.js" defer></script>
+<script src="/static/js/axios.min.js" defer></script>
+<script src="/static/js/dayjs/dayjs.min.js" defer></script>
 <script>
     {%  include 'admin/jsapi.jinja2' %}
 </script>
-<script src="/static/js/components/NotificationsList.js"></script>
-<script src="/static/js/common/vuetify-config.js"></script>
-<script src="/static/js/common/axios-config.js"></script>
-<script src="/static/js/mixins/reauth-mixin.js"></script>
-<script src="/static/js/mixins/notification-mixin.js"></script>
-<script src="/static/js/mixins/global-mixin.js"></script>
+<script src="/static/js/components/NotificationsList.js" defer></script>
+<script src="/static/js/common/data-entry-config.js" defer></script>
+<script src="/static/js/mixins/reauth-mixin.js" defer></script>
+<script src="/static/js/mixins/notification-mixin.js" defer></script>
+<script src="/static/js/mixins/global-mixin.js" defer></script>
+
+<script>
+window.addEventListener('load', () => {
+    console.log('Page fully loaded, now loading Leaflet async');
+
+    // Load CSS asynchronously
+    const loadCss = (href) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        document.head.appendChild(link);
+    };
+
+    [
+        '/static/font/mdi/css/materialdesignicons.min.css',
+        '/static/css/leaflet.css',
+        '/static/css/MarkerCluster.css',
+        '/static/css/MarkerCluster.Default.css',
+        '/static/css/Leaflet.PolylineMeasure.css',
+        '/static/leaflet-fullscreen/leaflet.fullscreen.css'
+    ].forEach(loadCss);
+
+    // Helper to load scripts asynchronously
+    const loadScript = (src, onLoad) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true; // async to not block
+        s.onload = onLoad;
+        document.body.appendChild(s);
+    };
+
+    // Load Leaflet first
+    loadScript('/static/js/leaflet.js', () => {
+        console.log('Leaflet loaded');
+
+        // Load plugins in parallel now that Leaflet is ready
+        [
+            '/static/js/leaflet.js',
+            '/static/js/vue2-leaflet.min.js',
+            '/static/leaflet-fullscreen/leaflet.fullscreen.min.js',
+            '/static/js/leaflet.markercluster.js',
+            '/static/js/leaflet.curve.min.js',
+            '/static/js/leaflet.rotatedmarker.min.js',
+            '/static/js/Leaflet.PolylineMeasure.js',
+            '/static/js/Leaflet.GoogleMutant.js'
+        ].forEach(src => loadScript(src));
+    });
+});
+</script>
 
 {% block js %}{% endblock %}
 
