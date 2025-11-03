@@ -86,7 +86,7 @@ const relationsMixin = {
     },
 
     removeFromRelationList({ relationList = [], index } = {}) {
-      if (confirm(translations.confirm_)) {
+      if (confirm(translations.areYouSure_)) {
         relationList.splice(index, 1);
       }
     },

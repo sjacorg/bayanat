@@ -16,6 +16,8 @@ from flask_security.utils import hash_password
 from sqlalchemy import event, text
 
 from enferno.admin.models import MigrationHistory, SystemInfo
+from enferno.admin.models.DynamicField import DynamicField
+from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
 from enferno.extensions import db, rds
 from enferno.settings import Config
 from enferno.tasks import restart_service as restart, perform_version_check
@@ -29,6 +31,7 @@ from enferno.utils.data_helpers import (
     import_default_data,
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
+from enferno.utils.form_history_utils import record_form_history
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.update_utils import rollback_update
 from enferno.utils.validation_utils import validate_password_policy
@@ -42,11 +45,30 @@ def say(message: str, level: str = "info") -> None:
     click.echo(message)
 
 
-# Function to log table creation
 def log_table_creation(target, connection, tables=None, **kw):
+    """Function to log table creation."""
     if tables is not None:
         for table in tables:
             logger.info(f"Creating table: {table.name}")
+
+
+def create_initial_snapshots():
+    """Create initial form history snapshots for all entity types."""
+    for entity_type in ["bulletin", "incident", "actor"]:
+        existing = DynamicFormHistory.query.filter_by(entity_type=entity_type).first()
+        if not existing:
+            record_form_history(entity_type, user_id=None)
+            logger.info(f"Created initial snapshot for {entity_type}")
+
+
+def generate_core_fields():
+    """Generate core fields and create initial form history snapshots."""
+    from enferno.admin.models.core_fields import seed_core_fields
+
+    logger.info("Seeding core fields...")
+    seed_core_fields()
+    create_initial_snapshots()
+    logger.info("Core fields seeded successfully")
 
 
 @click.command()
@@ -85,6 +107,8 @@ def create_db(create_exts: bool) -> None:
     say("Generated system workflow statues successfully.")
     create_default_location_data()
     say("Generated location metadata successfully.")
+    generate_core_fields()
+    say("Generated core fields successfully.")
 
     # Remove the event listener after creation
     event.remove(metadata, "before_create", log_table_creation)

@@ -152,6 +152,7 @@
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/form-builder-mixin.js"></script>
 
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
@@ -219,7 +220,7 @@
 
   const app = createApp({
     delimiters: delimiters,
-    mixins: [globalMixin],
+    mixins: [globalMixin, formBuilderMixin],
     data: () => ({
       translations: window.translations,
       itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
@@ -249,7 +250,7 @@
 
       loading: true,
       parentLoading: false,
-      models: ['bulletin', 'actor', 'incident', 'user', 'location', 'media'],
+      models: ["bulletin", "actor", "incident", "user", "role", "location", "source", "label", "media", "eventtype", "dynamic_field_bulk", "config"],
       users: JSON.parse(`{{users|tojson}}`),
       options: {},
 

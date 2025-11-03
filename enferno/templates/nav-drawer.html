@@ -28,8 +28,7 @@
 
         {% if current_user.has_role("Admin") %}
             <!-- Secondary Data (Location Configurations) -->
-            <v-list-item prepend-icon="mdi-database-cog" title="{{ _('Component Data') }}"
-                         href="/admin/component-data/" key="comp-data"></v-list-item>
+            
 
             <v-list-group>
                 <template v-slot:activator="{props}">
@@ -85,6 +84,23 @@
                 <!-- Groups Management -->
                 <v-list-item class="grey lighten-3" prepend-icon="mdi-shield-lock" title="{{ _('Groups') }}"
                             href="/admin/roles/" key="roles"></v-list-item>
+            </v-list-group>
+
+            <v-list-group>
+                <template v-slot:activator="{props}">
+                    <v-list-item v-bind="props" prepend-icon="mdi-database-edit"
+                                title="{{ _('Customize Database') }}"></v-list-item>
+                </template>
+                
+                <v-list-item prepend-icon="mdi-file-document-multiple" title="{{ _('Bulletin Form Builder') }}" href="/admin/bulletin-fields/"
+                            key="bulletinfields"></v-list-item>
+                <v-list-item prepend-icon="mdi-account-multiple" title="{{ _('Actor Form Builder') }}" href="/admin/actor-fields/"
+                            key="actorfields"></v-list-item>
+                <v-list-item prepend-icon="mdi-hazard-lights" title="{{ _('Incident Form Builder') }}" href="/admin/incident-fields/"
+                            key="incidentfields"></v-list-item>
+
+                <v-list-item prepend-icon="mdi-form-select" title="{{ _('Component Data') }}"
+                         href="/admin/component-data/" key="comp-data"></v-list-item>
             </v-list-group>
 
             <v-list-group>
