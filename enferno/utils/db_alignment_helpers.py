@@ -119,11 +119,56 @@ class DBAlignmentChecker:
             logger.info("The database is aligned with the schema")
 
 
+def _check_dynamic_fields(inspector, db_tables) -> list[str]:
+    """
+    Check dynamic field columns exist in entity tables.
+
+    Args:
+        inspector: SQLAlchemy inspector instance
+        db_tables: Set of table names in database
+
+    Returns:
+        List of issue descriptions (empty if no issues)
+    """
+    issues = []
+
+    try:
+        from enferno.admin.models import DynamicField
+
+        # Get all active non-core dynamic fields
+        active_fields = DynamicField.query.filter(
+            DynamicField.active.is_(True), DynamicField.core.is_(False)
+        ).all()
+
+        for field in active_fields:
+            entity_table = field.entity_type  # bulletin, actor, incident
+
+            # Check entity table exists
+            if entity_table not in db_tables:
+                issues.append(
+                    f"Dynamic field '{field.name}': entity table '{entity_table}' not found"
+                )
+                continue
+
+            # Check column exists in entity table
+            db_columns = {c["name"] for c in inspector.get_columns(entity_table)}
+            if field.name not in db_columns:
+                issues.append(
+                    f"Dynamic field '{field.name}': column missing in table '{entity_table}'"
+                )
+
+    except Exception as e:
+        logger.warning(f"Could not check dynamic fields: {e}")
+
+    return issues
+
+
 def db_doctor() -> tuple[bool, str]:
     """
     Database health check for system update validation.
 
     Performs a quick diagnosis of critical database tables and schema alignment.
+    Validates both core tables and dynamic field columns.
     Returns a simple success/failure status suitable for automated processes.
 
     Returns:
@@ -163,7 +208,6 @@ def db_doctor() -> tuple[bool, str]:
 
         if missing_critical:
             error_msg = f"Critical tables missing: {', '.join(missing_critical)}"
-            logger.error(error_msg)
             return (False, error_msg)
 
         # Check for critical column mismatches in core tables
@@ -190,16 +234,18 @@ def db_doctor() -> tuple[bool, str]:
             except Exception as e:
                 logger.warning(f"Could not check columns for {table_name}: {e}")
 
+        # Check dynamic field columns
+        dynamic_issues = _check_dynamic_fields(inspector, db_tables)
+        if dynamic_issues:
+            issues.extend(dynamic_issues)
+
         if issues:
             error_msg = f"Schema alignment issues: {'; '.join(issues)}"
-            logger.error(error_msg)
             return (False, error_msg)
 
         # Success
-        logger.info("Database schema alignment verified")
         return (True, "Database schema is aligned")
 
     except Exception as e:
         error_msg = f"DB alignment check failed: {str(e)}"
-        logger.error(error_msg)
         return (False, error_msg)
