@@ -899,4 +899,5 @@ div.jsondiffpatch-child-node-type-array:after {
 /* Diff dialog */
 .diff-dialog-content .jsondiffpatch-delta pre {
     white-space: normal;
+    word-break: break-word;
 }
