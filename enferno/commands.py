@@ -440,15 +440,13 @@ def db_doctor_cli() -> None:
 
     Performs a quick diagnosis that critical tables exist and columns match.
     """
-    logger.info("Running database health check...")
+    click.echo("Running database health check...")
     healthy, diagnosis = db_doctor()
 
     if healthy:
         click.echo(f"✓ {diagnosis}")
-        logger.info(diagnosis)
     else:
         click.echo(f"✗ {diagnosis}", err=True)
-        logger.error(diagnosis)
         raise SystemExit(1)
 
 
