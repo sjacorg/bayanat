@@ -1,7 +1,9 @@
 const IncidentCard = Vue.defineComponent({
   props: ['incident', 'close', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
-
+  mounted() {
+    this.$root.fetchDynamicFields({ entityType: 'incident' })
+  },
   methods: {
     async loadGeoMap() {
       this.geoMapLoading = true;
@@ -175,94 +177,120 @@ const IncidentCard = Vue.defineComponent({
         </v-card>  
         <v-divider v-if="incident.roles?.length" ></v-divider>
 
-        <uni-field :caption="translations.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
-
-        <v-card  v-if="incident.description" class="ma-2 pa-2">
-          <div class="caption grey--text mb-2">{{ translations.description_ }}</div>
-          <read-more><div class="rich-description" v-html="incident.description"></div></read-more>
-        </v-card>
-
-        <!-- Map -->
-        <v-card :loading="geoMapLoading"  class="ma-2 pa-2">
-          <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0"
-                 color="primary lighten-2">
-            <v-icon left>mdi-map</v-icon>
-            {{ translations.loadGeoMap_ }}
-          </v-btn>
-          <v-card-text v-if="geoMapOn">
-            <global-map :model-value="mapLocations"></global-map>
-          </v-card-text>
-        </v-card>
-
-        <v-card  class="ma-2"
-                v-if="incident.potential_violations && incident.potential_violations.length">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ translations.potentialViolationsCategories_ }}</div>
-            <div class="flex-chips">
-              <v-chip class="flex-chip" v-for="item in incident.potential_violations"
-                      :key="item.id">{{ item.title }}
-              </v-chip>
+        <div class="d-flex flex-wrap">
+          <template v-for="(field, index) in $root.cardDynamicFields('incident')">
+            <div v-if="$root.isFieldActiveAndHasContent(field, 'title', [incident.title, incident.title_ar])" :class="$root.fieldClassDrawer(field)">
+              <uni-field :caption="translations.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
             </div>
-          </v-card-text>
-        </v-card>
 
-        <v-card  class="ma-2"
-                v-if="incident.claimed_violations && incident.claimed_violations.length">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ translations.claimedViolationsCategories_ }}</div>
-            <div class="flex-chips">
-              <v-chip class="flex-chip" v-for="item in incident.claimed_violations"
-                      :key="item.id">{{ item.title }}
-              </v-chip>
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'description', incident.description)" :class="$root.fieldClassDrawer(field)">
+              <v-card class="ma-2 pa-2">
+                <div class="caption grey--text mb-2">{{ translations.description_ }}</div>
+                <read-more><div class="rich-description" v-html="incident.description"></div></read-more>
+              </v-card>
             </div>
-          </v-card-text>
-        </v-card>
 
-
-        <v-card  class="ma-2" v-if="incident.labels && incident.labels.length">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ translations.labels_ }}</div>
-            <div class="flex-chips">
-              <v-chip class="flex-chip" v-for="label in incident.labels"
-                      :key="label.id">{{ label.title }}
-              </v-chip>
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'potential_violations', incident.potential_violations)" :class="$root.fieldClassDrawer(field)">
+              <v-card class="ma-2">
+                <v-card-text>
+                  <div class="px-1 title black--text">{{ translations.potentialViolationsCategories_ }}</div>
+                  <div class="flex-chips">
+                    <v-chip class="flex-chip" v-for="item in incident.potential_violations" :key="item.id">{{ item.title }}</v-chip>
+                  </div>
+                </v-card-text>
+              </v-card>
             </div>
-          </v-card-text>
-        </v-card>
 
-        <v-card  class="ma-2" v-if="incident.locations && incident.locations.length">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ translations.locations_ }}</div>
-            <div class="flex-chips">
-              <v-chip class="flex-chip" v-for="item in incident.locations"
-                      :key="item.id">{{ item.title }}
-              </v-chip>
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'claimed_violations', incident.claimed_violations)" :class="$root.fieldClassDrawer(field)">
+              <v-card class="ma-2">
+                <v-card-text>
+                  <div class="px-1 title black--text">{{ translations.claimedViolationsCategories_ }}</div>
+                  <div class="flex-chips">
+                    <v-chip class="flex-chip" v-for="item in incident.claimed_violations" :key="item.id">{{ item.title }}</v-chip>
+                  </div>
+                </v-card-text>
+              </v-card>
             </div>
-          </v-card-text>
-        </v-card>
 
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'labels', incident.labels)" :class="$root.fieldClassDrawer(field)">
+              <v-card class="ma-2">
+                <v-card-text>
+                  <div class="px-1 title black--text">{{ translations.labels_ }}</div>
+                  <div class="flex-chips">
+                    <v-chip class="flex-chip" v-for="label in incident.labels" :key="label.id">{{ label.title }}</v-chip>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </div>
 
-        <!-- Events -->
-        <v-card  class="ma-2" v-if="incident.events && incident.events.length">
-          <v-card-text class="pa-2">
-            <div class="px-1 title black--text">{{ translations.events_ }}</div>
-            <event-card v-for="(event, index) in incident.events" :key="event.id" :number="index+1"
-                        :event="event"></event-card>
-          </v-card-text>
-        </v-card>
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'locations', incident.locations)" :class="$root.fieldClassDrawer(field)">
+              <v-card class="ma-2">
+                <v-card-text>
+                  <div class="px-1 title black--text">{{ translations.locations_ }}</div>
+                  <div class="flex-chips">
+                    <v-chip class="flex-chip" v-for="item in incident.locations" :key="item.id">{{ item.title }}</v-chip>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </div>
 
-        <!-- Related Bulletins -->
-        <related-bulletins-card v-if="incident" :entity="incident"
-                                :relationInfo="$root.itobInfo"
-                                ></related-bulletins-card>
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'events', incident.events)" :class="$root.fieldClassDrawer(field)">
+              <v-card class="ma-2">
+                <v-card-text class="pa-2">
+                  <div class="px-1 title black--text">{{ translations.events_ }}</div>
+                  <event-card v-for="(event, index) in incident.events" :key="event.id" :number="index+1" :event="event"></event-card>
+                </v-card-text>
+              </v-card>
+            </div>
 
-        <!-- Related Actors  -->
-        <related-actors-card v-if="incident" :entity="incident"
-                             :relationInfo="$root.itoaInfo"></related-actors-card>
+            <div v-else-if="$root.isFieldActive(field, 'related_bulletins')" :class="$root.fieldClassDrawer(field)">
+              <related-bulletins-card v-if="incident" :entity="incident" :relationInfo="$root.itobInfo"></related-bulletins-card>
+            </div>
 
-        <!-- Related Incidents -->
-        <related-incidents-card v-if="incident" :entity="incident"
-                                :relationInfo="$root.itoiInfo"></related-incidents-card>
+            <div v-else-if="$root.isFieldActive(field, 'related_actors')" :class="$root.fieldClassDrawer(field)">
+              <related-actors-card v-if="incident" :entity="incident" :relationInfo="$root.itoaInfo"></related-actors-card>
+            </div>
+
+            <div v-else-if="$root.isFieldActive(field, 'related_incidents')" :class="$root.fieldClassDrawer(field)">
+              <related-incidents-card v-if="incident" :entity="incident" :relationInfo="$root.itoiInfo"></related-incidents-card>
+            </div>
+
+            <div v-else-if="$root.isFieldActive(field)" :class="$root.fieldClassDrawer(field)">
+              <div v-if="Array.isArray(incident?.[field.name])">
+                <v-card class="ma-2" v-if="$root.isFieldActiveAndHasContent(field, field.name, incident?.[field.name])">
+                  <v-toolbar density="compact">
+                    <v-toolbar-title class="text-subtitle-1">{{ field.title }}</v-toolbar-title>
+                  </v-toolbar>
+                  <v-card-text class="pt-0">
+                    <div class="flex-chips">
+                      <v-chip label size="small" class="flex-chip" v-for="value in incident?.[field.name]" :key="value">
+                        {{ $root.findFieldOptionByValue(field, value)?.label ?? value }}
+                      </v-chip>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </div>
+              <div v-else-if="field.field_type === 'datetime'">
+                <uni-field v-if="$root.isFieldActiveAndHasContent(field, field.name, incident?.[field.name])" :caption="field.title" :english="$root.formatDate(incident?.[field.name])"></uni-field>
+              </div>
+              <div v-else>
+                <uni-field v-if="$root.isFieldActiveAndHasContent(field, field.name, incident?.[field.name])" :caption="field.title" :english="$root.findFieldOptionByValue(field, incident?.[field.name])?.label ?? incident?.[field.name]"></uni-field>
+              </div>
+            </div>
+
+            <div v-if="index === 1" class="w-100">
+              <v-card :loading="geoMapLoading" class="ma-2 pa-2">
+                <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0" color="primary lighten-2">
+                  <v-icon left>mdi-map</v-icon>
+                  {{ translations.loadGeoMap_ }}
+                </v-btn>
+                <v-card-text v-if="geoMapOn">
+                  <global-map :model-value="mapLocations"></global-map>
+                </v-card-text>
+              </v-card>
+            </div>
+          </template>
+        </div>
 
         <v-card v-if="incident.status==='Peer Reviewed'" variant="" elevation="0" class="ma-3"
                 color="teal-lighten-2">

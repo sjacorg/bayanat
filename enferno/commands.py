@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
+from datetime import datetime, timezone
 
 import click
 from flask.cli import AppGroup
@@ -20,10 +21,34 @@ from enferno.utils.data_helpers import (
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
+from enferno.admin.models import Bulletin
+from enferno.admin.models.DynamicField import DynamicField
+from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
+from enferno.utils.date_helper import DateHelper
+from enferno.utils.form_history_utils import record_form_history
 
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
+
+
+def create_initial_snapshots():
+    """Create initial form history snapshots for all entity types."""
+    for entity_type in ["bulletin", "incident", "actor"]:
+        existing = DynamicFormHistory.query.filter_by(entity_type=entity_type).first()
+        if not existing:
+            record_form_history(entity_type, user_id=None)
+            logger.info(f"Created initial snapshot for {entity_type}")
+
+
+def generate_core_fields():
+    """Generate core fields and create initial form history snapshots."""
+    from enferno.admin.models.core_fields import seed_core_fields
+
+    logger.info("Seeding core fields...")
+    seed_core_fields()
+    create_initial_snapshots()
+    logger.info("Core fields seeded successfully")
 
 
 @click.command()
@@ -61,6 +86,9 @@ def create_db(create_exts: bool) -> None:
     create_default_location_data()
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
+    generate_core_fields()
+    click.echo("Generated core fields successfully.")
+    logger.info("Generated core fields successfully.")
 
 
 @click.command()

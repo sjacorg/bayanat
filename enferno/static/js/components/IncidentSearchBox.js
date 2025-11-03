@@ -21,6 +21,7 @@ const IncidentSearchBox = Vue.defineComponent({
     return {
       translations: window.translations,
       q: {},
+      dyn: new Map(),
       potentialViolationsCategories: [],
       claimedViolationsCategories: [],
     };
@@ -32,16 +33,37 @@ const IncidentSearchBox = Vue.defineComponent({
       },
       deep: true,
     },
-    modelValue: function (newVal, oldVal) {
-      if (newVal !== oldVal) {
+    modelValue: {
+      handler(newVal, oldVal) {
         this.q = newVal;
-      }
-    },
+
+        // Reset dyn if data cleared
+        if (!newVal || !Object.keys(newVal).length) {
+          this.dyn = new Map();
+          return;
+        }
+
+        // If dyn exists and is iterable, rebuild map
+        if (Array.isArray(newVal.dyn)) {
+          const newMap = new Map();
+          for (const query of newVal.dyn) {
+            newMap.set(query.name, query);
+          }
+          this.dyn = newMap;
+        } else {
+          this.dyn = new Map();
+        }
+      },
+      immediate: true
+    }
   },
   created() {
-    this.q = this.modelValue;
     this.fetchViolationCategories('potentialviolation', 'potentialViolationsCategories');
     this.fetchViolationCategories('claimedviolation', 'claimedViolationsCategories');
+  },
+  mounted() {
+    this.$root.fetchDynamicFields({ entityType: 'incident' });
+    this.$root.fetchSearchableDynamicFields({ entityType: 'incident' });
   },
   methods: {
     fetchViolationCategories(endpointSuffix, categoryVarName) {
@@ -54,9 +76,39 @@ const IncidentSearchBox = Vue.defineComponent({
           console.error(`Error fetching data for ${categoryVarName}`);
         });
     },
+    updateDynamicField(value, field, operator) {
+      const normalized = Array.isArray(value)
+        ? value.filter((item) => item !== undefined && item !== null && item !== '')
+        : value;
+
+      if (normalized === undefined || normalized === null || normalized === '' || (Array.isArray(normalized) && normalized.length === 0)) {
+        this.dyn.delete(field.name)
+      } else {
+        this.dyn.set(field.name, {
+          name: field.name,
+          op: operator ?? this.$root.getSearchOperatorFromFieldType(field),
+          value: normalized
+        })
+      }
+
+      this.buildAndEmitDyn();
+    },
+
+    buildAndEmitDyn: debounce(function () {
+      const dynamicFieldList = Array.from(this.dyn.values())
+
+      const newQ = { ...this.q }
+      if (dynamicFieldList.length) {
+        newQ.dyn = dynamicFieldList
+      } else {
+        delete newQ.dyn
+      }
+
+      this.$emit('update:modelValue', newQ)
+    }, 350),
   },
 
-  template: /*html*/`
+  template: `
       <div>
           <v-container class="fluid">
             <v-row>
@@ -96,7 +148,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-            <v-col cols="12">
+            <v-col v-if="$root.isFieldActiveByName('events_section')" cols="12">
               <v-card class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
@@ -233,7 +285,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col cols="12">
+              <v-col v-if="$root.isFieldActiveByName('potential_violations')" cols="12">
                 <span class="caption pt-2">{{ translations.potentialViolationsCategories_ }}</span>
                 <v-chip-group
                     column
@@ -254,7 +306,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col cols="12">
+              <v-col v-if="$root.isFieldActiveByName('claimed_violations')" cols="12">
                 <span class="caption pt-2">{{ translations.claimedViolationsCategories_ }}</span>
                 <v-chip-group
                     column
@@ -275,7 +327,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col>
+              <v-col v-if="$root.isFieldActiveByName('labels')">
                 <div class="d-flex">
                   <search-field
                       v-model="q.labels"
@@ -306,7 +358,7 @@ const IncidentSearchBox = Vue.defineComponent({
 
 
             <v-row>
-              <v-col>
+              <v-col v-if="$root.isFieldActiveByName('locations')">
                 <div class="d-flex">
                   <location-search-field
                       v-model="q.locations"
@@ -333,6 +385,57 @@ const IncidentSearchBox = Vue.defineComponent({
 
               </v-col>
             </v-row>
+
+            <div>
+              <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields" :key="index">
+                <v-text-field
+                    v-if="['text', 'long_text'].includes(field.field_type)"
+                    :label="field.title"
+                    clearable
+                    :model-value="dyn.get(field.name)?.value"
+                    @update:model-value="updateDynamicField($event, field)"
+                ></v-text-field>
+                <v-number-input
+                    v-else-if="['number'].includes(field.field_type)"
+                    :label="field.title"
+                    clearable
+                    :model-value="dyn.get(field.name)?.value"
+                    @update:model-value="updateDynamicField($event, field)"
+                    control-variant="hidden"
+                    :min="-2147483648"
+                    :max="2147483647"
+                ></v-number-input>
+                <div
+                  v-else-if="['select'].includes(field.field_type)"
+                >
+                  <v-autocomplete
+                    :model-value="dyn.get(field.name)?.value"
+                    @update:model-value="updateDynamicField(field.field_type === 'select' && field?.schema_config?.allow_multiple ? $event : [$event], field)"
+                    item-color="secondary"
+                    :label="field.title"
+                    :items="field.options"
+                    item-title="label"
+                    item-value="id"
+                    :multiple="Boolean(field?.schema_config?.allow_multiple)"
+                    chips
+                    clearable
+                    :closable-chips="Boolean(field?.schema_config?.allow_multiple)"
+                    prepend-inner-icon="mdi-magnify"
+                    :return-object="false"
+                  ></v-autocomplete>
+                  <div v-if="Boolean(field?.schema_config?.allow_multiple)" class="d-flex align-center flex-wrap">
+                    <v-checkbox :disabled="!dyn.get(field.name)?.value" :label="translations.any_" dense :model-value="dyn.get(field.name)?.op === 'any'" @update:model-value="updateDynamicField(dyn.get(field.name)?.value, field, $event ? 'any' : null)" color="primary" small
+                                  class="me-4"></v-checkbox>
+                  </div>
+                </div>
+                <pop-date-range-field
+                  v-else-if="['datetime'].includes(field.field_type)"
+                  :label="field.title"
+                  :model-value="dyn.get(field.name)?.value"
+                  @update:model-value="updateDynamicField($event, field)"
+                />
+              </div>
+            </div>
 
           </v-container>
       </div>

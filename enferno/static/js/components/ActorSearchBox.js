@@ -33,6 +33,7 @@ const ActorSearchBox = Vue.defineComponent({
         number: null,
       },
       idNumberTypes: [],
+      dyn: new Map(),
     };
   },
   watch: {
@@ -42,22 +43,38 @@ const ActorSearchBox = Vue.defineComponent({
       },
       deep: true,
     },
-    modelValue: function (newVal, oldVal) {
-      if (newVal !== oldVal) {
+    modelValue: {
+      handler(newVal, oldVal) {
         this.q = newVal;
-
         this.id_number = {
           type: this.q?.id_number?.type || null,
           number: this.q?.id_number?.number || null,
         };
-      }
-    },
-  },
-  created() {
-    this.q = this.modelValue;
+
+        // Reset dyn if data cleared
+        if (!newVal || !Object.keys(newVal).length) {
+          this.dyn = new Map();
+          return;
+        }
+
+        // If dyn exists and is iterable, rebuild map
+        if (Array.isArray(newVal.dyn)) {
+          const newMap = new Map();
+          for (const query of newVal.dyn) {
+            newMap.set(query.name, query);
+          }
+          this.dyn = newMap;
+        } else {
+          this.dyn = new Map();
+        }
+      },
+      immediate: true
+    }
   },
 
   mounted() {
+    this.$root.fetchDynamicFields({ entityType: 'actor' });
+    this.$root.fetchSearchableDynamicFields({ entityType: 'actor' });
     this.fetchIdNumberTypes();
     this.q.locTypes = this.q.locTypes || this.translations.actorLocTypes_.map((x) => x.code);
     if ('id_number' in this.q) {
@@ -104,9 +121,40 @@ const ActorSearchBox = Vue.defineComponent({
         id_number: filteredIdNumber,
       };
     },
+
+    updateDynamicField(value, field, operator) {
+      const normalized = Array.isArray(value)
+        ? value.filter((item) => item !== undefined && item !== null && item !== '')
+        : value;
+
+      if (normalized === undefined || normalized === null || normalized === '' || (Array.isArray(normalized) && normalized.length === 0)) {
+        this.dyn.delete(field.name)
+      } else {
+        this.dyn.set(field.name, {
+          name: field.name,
+          op: operator ?? this.$root.getSearchOperatorFromFieldType(field),
+          value: normalized
+        })
+      }
+
+      this.buildAndEmitDyn();
+    },
+
+    buildAndEmitDyn: debounce(function () {
+      const dynamicFieldList = Array.from(this.dyn.values())
+
+      const newQ = { ...this.q }
+      if (dynamicFieldList.length) {
+        newQ.dyn = dynamicFieldList
+      } else {
+        delete newQ.dyn
+      }
+
+      this.$emit('update:modelValue', newQ)
+    }, 350),
   },
 
-  template: /*html*/`
+  template: `
       <div>
 
         <v-container class="container--fluid">
@@ -141,14 +189,15 @@ const ActorSearchBox = Vue.defineComponent({
                   clearable
               ></v-text-field>
               
-                <v-combobox
-                    v-model="q.tags"
-                    :label="translations.inTagsAll_"
-                    multiple
-                    chips
-                    closable-chips
-                    clearable
-                ></v-combobox>
+              <template v-if="$root.isFieldActiveByName('tags')">
+              <v-combobox
+                  v-model="q.tags"
+                  :label="translations.inTagsAll_"
+                  multiple
+                  chips
+                  closable-chips
+                  clearable
+              ></v-combobox>
               <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opTags" color="primary"
                             class="me-4"></v-checkbox>
@@ -170,12 +219,13 @@ const ActorSearchBox = Vue.defineComponent({
                 <v-checkbox :label="translations.exactMatch_" v-model="q.exExact" color="primary"
                             class="me-4"></v-checkbox>
               </div>
+              </template>
 
             </v-col>
           </v-row>
 
           <v-row>
-            <v-col cols="12">
+            <v-col v-if="$root.isFieldActiveByName('publish_date')" cols="12">
                 <pop-date-range-field
                     :label="translations.publishDate_"
                     v-model="q.pubdate"
@@ -184,7 +234,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col cols="12">
+            <v-col v-if="$root.isFieldActiveByName('documentation_date')" cols="12">
                 <pop-date-range-field 
                     :label="translations.documentationDate_"
                     v-model="q.docdate"
@@ -212,7 +262,7 @@ const ActorSearchBox = Vue.defineComponent({
 
           <v-row>
             <v-col md="12">
-              <v-card class="mb-4">
+              <v-card v-if="$root.isFieldActiveByName('events_section')" class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
                 </v-toolbar>
@@ -257,7 +307,7 @@ const ActorSearchBox = Vue.defineComponent({
         </v-row>
 
         <v-row>
-          <v-col md="12">
+          <v-col v-if="$root.isFieldActiveByName('first_name')" md="12">
             <v-text-field
                 v-model="q.first_name"
                 :label="translations.firstName_"
@@ -267,7 +317,7 @@ const ActorSearchBox = Vue.defineComponent({
         </v-row>
 
         <v-row>
-          <v-col md="12">
+          <v-col v-if="$root.isFieldActiveByName('middle_name')" md="12">
             <v-text-field
                 v-model="q.middle_name"
                 :label="translations.middleName_"
@@ -277,7 +327,7 @@ const ActorSearchBox = Vue.defineComponent({
         </v-row>
 
         <v-row>
-          <v-col md="12">
+          <v-col v-if="$root.isFieldActiveByName('last_name')" md="12">
             <v-text-field
                 v-model="q.last_name"
                 :label="translations.lastName_"
@@ -287,7 +337,7 @@ const ActorSearchBox = Vue.defineComponent({
         </v-row>
 
         <v-row>
-          <v-col md="12">
+          <v-col v-if="$root.isFieldActiveByName('nickname')" md="12">
             <v-text-field
                 v-model="q.nickname"
                 :label="translations.nickName_"
@@ -297,7 +347,7 @@ const ActorSearchBox = Vue.defineComponent({
         </v-row>
 
         <v-row>
-          <v-col md="12">
+          <v-col v-if="$root.isFieldActiveByName('father_name')" md="12">
             <v-text-field
                 v-model="q.father_name"
                 :label="translations.fathersName_"
@@ -307,7 +357,7 @@ const ActorSearchBox = Vue.defineComponent({
         </v-row>
 
         <v-row>
-          <v-col md="12">
+          <v-col v-if="$root.isFieldActiveByName('mother_name')" md="12">
             <v-text-field
                 v-model="q.mother_name"
                 :label="translations.mothersName_"
@@ -401,7 +451,7 @@ const ActorSearchBox = Vue.defineComponent({
         </v-row>
         <v-row>
 
-          <v-col>
+          <v-col v-if="$root.isFieldActiveByName('sources')">
                 <search-field
                     v-model="q.sources"
                     api="/admin/api/sources/"
@@ -431,7 +481,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col>
+            <v-col v-if="$root.isFieldActiveByName('labels')">
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
@@ -462,7 +512,7 @@ const ActorSearchBox = Vue.defineComponent({
             </v-col>
           </v-row>
           <v-row>
-            <v-col>
+            <v-col v-if="$root.isFieldActiveByName('ver_labels')">
                 <search-field
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
@@ -491,7 +541,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col>
+            <v-col v-if="$root.isFieldActiveByName('origin_place')">
 
               <location-search-field
                   v-model="q.originLocations"
@@ -545,7 +595,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-sheet>
 
           <v-row>
-            <v-col cols="12" md="3">
+            <v-col v-if="$root.isFieldActiveByName('sex')" cols="12" md="3">
               <v-select
                   :items="translations.actorSex"
                   item-title="tr"
@@ -556,7 +606,7 @@ const ActorSearchBox = Vue.defineComponent({
               ></v-select>
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col v-if="$root.isFieldActiveByName('age')" cols="12" md="3">
               <v-select
                   :items="translations.actorAge"
                   item-title="tr"
@@ -567,7 +617,7 @@ const ActorSearchBox = Vue.defineComponent({
               ></v-select>
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col v-if="$root.isFieldActiveByName('civilian')" cols="12" md="3">
               <v-select
                   :items="translations.actorCivilian"
                   item-title="tr"
@@ -591,14 +641,14 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col cols="12" md="3">
+            <v-col v-if="$root.isFieldActiveByName('occupation')" cols="12" md="3">
               <v-text-field
                   :label="translations.occupation_"
                   v-model="q.occupation"
               >
               </v-text-field>
             </v-col>
-            <v-col cols="12" md="3">
+            <v-col v-if="$root.isFieldActiveByName('position')" cols="12" md="3">
               <v-text-field
                   :label="translations.position_"
                   v-model="q.position"
@@ -607,7 +657,7 @@ const ActorSearchBox = Vue.defineComponent({
             </v-col>
 
             
-            <v-col cols="12" md="3">
+            <v-col v-if="$root.isFieldActiveByName('family_status')" cols="12" md="3">
               <v-select
                     item-title="tr"
                     item-value="en"
@@ -620,7 +670,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col md="12">
+            <v-col v-if="$root.isFieldActiveByName('dialects')" md="12">
 
                 <search-field
                     api="/admin/api/dialects/"
@@ -640,7 +690,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col md="12">
+            <v-col v-if="$root.isFieldActiveByName('ethnographies')" md="12">
 
                 <search-field
                     api="/admin/api/ethnographies/"
@@ -660,7 +710,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col md="12">
+            <v-col v-if="$root.isFieldActiveByName('nationalities')" md="12">
 
                 <search-field
                     v-model="q.nationality"
@@ -680,7 +730,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col cols="12">
+            <v-col v-if="$root.isFieldActiveByName('id_number')" cols="12">
               <v-card>
                 <v-card-item>
                     <v-card-title>{{ translations.idNumber_ }}</v-card-title>
@@ -715,6 +765,57 @@ const ActorSearchBox = Vue.defineComponent({
               </v-card>
             </v-col>
           </v-row>
+
+          <div class="mt-12">
+            <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields" :key="index">
+              <v-text-field
+                  v-if="['text', 'long_text'].includes(field.field_type)"
+                  :label="field.title"
+                  clearable
+                  :model-value="dyn.get(field.name)?.value"
+                  @update:model-value="updateDynamicField($event, field)"
+              ></v-text-field>
+              <v-number-input
+                  v-else-if="['number'].includes(field.field_type)"
+                  :label="field.title"
+                  clearable
+                  :model-value="dyn.get(field.name)?.value"
+                  @update:model-value="updateDynamicField($event, field)"
+                  control-variant="hidden"
+                  :min="-2147483648"
+                  :max="2147483647"
+              ></v-number-input>
+              <div
+                v-else-if="['select'].includes(field.field_type)"
+              >
+                <v-autocomplete
+                  :model-value="dyn.get(field.name)?.value"
+                  @update:model-value="updateDynamicField(field.field_type === 'select' && field?.schema_config?.allow_multiple ? $event : [$event], field)"
+                  item-color="secondary"
+                  :label="field.title"
+                  :items="field.options"
+                  item-title="label"
+                  item-value="id"
+                  :multiple="Boolean(field?.schema_config?.allow_multiple)"
+                  chips
+                  clearable
+                  :closable-chips="Boolean(field?.schema_config?.allow_multiple)"
+                  prepend-inner-icon="mdi-magnify"
+                  :return-object="false"
+                ></v-autocomplete>
+                <div v-if="Boolean(field?.schema_config?.allow_multiple)" class="d-flex align-center flex-wrap">
+                  <v-checkbox :disabled="!dyn.get(field.name)?.value" :label="translations.any_" dense :model-value="dyn.get(field.name)?.op === 'any'" @update:model-value="updateDynamicField(dyn.get(field.name)?.value, field, $event ? 'any' : null)" color="primary" small
+                                class="me-4"></v-checkbox>
+                </div>
+              </div>
+              <pop-date-range-field
+                v-else-if="['datetime'].includes(field.field_type)"
+                :label="field.title"
+                :model-value="dyn.get(field.name)?.value"
+                @update:model-value="updateDynamicField($event, field)"
+              />
+            </div>
+          </div>
 
         </v-container>
       </div>

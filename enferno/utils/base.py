@@ -6,6 +6,7 @@ from enferno.extensions import db
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
+
 logger = get_logger()
 
 
@@ -24,6 +25,11 @@ class BaseMixin(object):
         :param column_name: name of db column
         :return: tuple : serialized representation or None with a True/False flag if operation is successful
         """
+        # First try to get dynamic fields
+        dynamic_fields = self.get_dynamic_fields()
+        if column_name in dynamic_fields:
+            return dynamic_fields[column_name]
+
         columns = self.__table__.columns
 
         # for this custom class attribute, manually attach table name
@@ -49,6 +55,21 @@ class BaseMixin(object):
                     return [item.to_dict() for item in cls]
         else:
             return f"---- needs implementation -----> {column_name}"
+
+    def get_dynamic_fields(self):
+        from enferno.admin.models.DynamicField import DynamicField
+
+        """Get all dynamic fields for this entity type - exclude core fields to avoid collisions with existing model attributes"""
+
+        # Get the entity type from the table name
+        entity_type = self.__tablename__.rstrip("s")  # Remove trailing 's' for plural
+
+        # Query only NON-CORE dynamic fields to avoid collisions with existing model attributes
+        dynamic_fields = DynamicField.query.filter_by(
+            entity_type=entity_type, active=True, core=False
+        ).all()
+
+        return {field.name: getattr(self, field.name, None) for field in dynamic_fields}
 
     def serialize_relationship(self, relationship):
         return [rel.to_dict() for rel in relationship] if relationship else []
@@ -108,6 +129,13 @@ class BaseMixin(object):
                 raise DatabaseException(f"Error deleting {self.__class__.__name__}: {e}")
             else:
                 return False
+
+    def to_dict(self, mode=None):
+        """Base implementation of to_dict that includes dynamic fields"""
+        data = {}
+        # Add dynamic fields only - system fields handled by child classes
+        data.update(self.get_dynamic_fields())
+        return data
 
 
 class ComponentDataMixin(BaseMixin):
