@@ -1,5 +1,15 @@
 {% extends 'data-entry-layout.html' %} {% block content %}
 
+<div v-if="activeEntity === 'Actor'">
+  {% include 'admin/partials/actor_dialog.html' %}
+</div>
+<div v-else-if="activeEntity === 'Bulletin'">
+  {% include 'admin/partials/bulletin_dialog.html' %}
+</div>
+<div v-else-if="activeEntity === 'Incident'">
+  {% include 'admin/partials/incident_dialog.html' %}
+</div>
+
 <v-main class="">
   <v-container fluid>
     <v-card class="pa-2 overflow-y-auto d-flex flex-column" height="calc(100vh - 96px)">
@@ -20,7 +30,7 @@
         <div class="text-h6 mb-5">{{ _('Start New Entry for') }}:</div>
 
         <div class="d-flex flex-wrap ga-5">
-          <v-btn v-for="(entity, index) in ['Actor', 'Bulletin', 'Incident']" :key="index" :disabled="entity !== 'Actor'" height="128" width="256" variant="tonal" elevation="2" class="d-flex align-center justify-center">
+          <v-btn v-for="(entity, index) in ['Actor', 'Bulletin', 'Incident']" :key="index" @click="activeEntity = entity" :disabled="entity !== 'Actor'" height="128" width="256" variant="tonal" elevation="2" class="d-flex align-center justify-center">
             ${entity}
           </v-btn>
         </div>
@@ -41,6 +51,7 @@
       mixins: [globalMixin],
       data: () => ({
           drawer: false,
+          activeEntity: null,
       }),
       methods: {},
   });
