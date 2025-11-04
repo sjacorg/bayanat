@@ -59,16 +59,19 @@ log "Setting up application..."
 [ -f /opt/bayanat/run.py ] || {
     rm -rf /opt/bayanat
 
-    # Get latest release tag
-    log "Fetching latest release tag..."
-    LATEST_TAG=$(git ls-remote --tags --refs --sort=-version:refname "$GIT_URL" | head -n1 | cut -d/ -f3)
+    # Clone with full history to avoid detached HEAD and enable updates
+    log "Cloning repository..."
+    git clone "$GIT_URL" /opt/bayanat
 
-    if [ -z "$LATEST_TAG" ]; then
-        log "No release tags found, cloning main branch..."
-        git clone --depth 1 "$GIT_URL" /opt/bayanat
+    # Get latest release tag and checkout
+    log "Checking for latest release tag..."
+    LATEST_TAG=$(git -C /opt/bayanat tag --list --sort=-version:refname | head -n1)
+
+    if [ -n "$LATEST_TAG" ]; then
+        log "Checking out release: $LATEST_TAG"
+        git -C /opt/bayanat checkout "$LATEST_TAG"
     else
-        log "Installing release: $LATEST_TAG"
-        git clone --depth 1 --branch "$LATEST_TAG" "$GIT_URL" /opt/bayanat
+        log "No release tags found, staying on main branch"
     fi
 }
 chown -R bayanat:bayanat /opt/bayanat
@@ -181,16 +184,16 @@ mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 
 # Setup daemon permissions (CRITICAL SECURITY FEATURE)
 cat > /etc/sudoers.d/bayanat-daemon << 'EOF'
-bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active bayanat, \
-    /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat, \
-    /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart caddy, \
-    /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat-celery
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat fetch --tags --prune, \
-    /usr/bin/git -C /opt/bayanat tag --list --sort=-version:refname, \
-    /usr/bin/git -C /opt/bayanat describe --tags --exact-match, \
-    /usr/bin/git -C /opt/bayanat checkout *, \
-    /usr/local/bin/uv --directory /opt/bayanat sync --frozen, \
-    /usr/local/bin/bayanat-apply-migrations.sh
+bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active bayanat
+bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat
+bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart caddy
+bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat-celery
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat fetch --tags --prune
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat tag --list --sort=-version\:refname
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat describe --tags --exact-match
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat checkout *
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/local/bin/uv --directory /opt/bayanat sync --frozen
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/local/bin/bayanat-apply-migrations.sh
 EOF
 
 # Create API handler
