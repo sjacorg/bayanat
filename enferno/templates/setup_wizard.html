@@ -400,13 +400,8 @@
                                             
                                         </v-card>
                                         <template v-slot:next="{ next }">
-                                            <v-btn :disabled="isWaiting" color="primary" variant="flat" @click="startRedirectTimer()">
-                                                <template v-if="isWaiting">
-                                                    {{ _('Redirecting in') }} ${timeLeft}
-                                                </template>
-                                                <template v-else>
-                                                    {{ _('Proceed to dashboard') }}
-                                                </template>
+                                            <v-btn color="primary" variant="flat" href="/dashboard/">
+                                                {{ _('Proceed to dashboard') }}
                                             </v-btn>
                                         </template>
 
@@ -505,7 +500,6 @@
             delimiters: ['${', '}'],
             data() {
                 return {
-                    
                     languages: languages,
                     snackbar: false,
                     snackMessage: '',
@@ -535,9 +529,6 @@
                         {title: "{{_('Actions')}}", value: "actions"},
 
                     ],
-                    timeLeft: 10,
-                    isWaiting: false,
-                    timer: null,
                 }
             },
             mounted() {
@@ -546,18 +537,7 @@
                 this.fetchDefaultSettings();
             },
             methods: {
-                startRedirectTimer() {
-                    this.isWaiting = true
 
-                    this.timer = setInterval(() => {
-                        this.timeLeft--
-
-                        if (this.timeLeft <= 0) {
-                            clearInterval(this.timer)
-                            window.location.href = '{{ config.SECURITY_POST_LOGIN_VIEW }}';
-                        }
-                    }, 1000)
-                },
                 showSnack(message) {
                     this.snackMessage = message;
                     this.snackbar = true;
