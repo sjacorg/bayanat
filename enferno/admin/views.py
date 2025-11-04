@@ -6717,7 +6717,7 @@ def api_system_status() -> Response:
         fresh (bool): If true, checks GitHub directly instead of using cache
     """
 
-    current_version = SystemInfo.get_value("app_version") or Config.VERSION
+    current_version = Config.VERSION
 
     # Check if fresh check is requested
     fresh_check = request.args.get("fresh", "").lower() == "true"

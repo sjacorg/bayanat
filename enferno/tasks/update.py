@@ -57,14 +57,23 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
 
         # Capture current version before update
         # Do this BEFORE any operations that might fail
-        current_version = SystemInfo.get_value("app_version") or Config.VERSION
+        current_version = Config.VERSION
 
         set_update_message("Running update...")
         success, message = run_system_update(skip_backup=skip_backup)
 
         if success:
-            # Get new version from database (updated by run_system_update)
-            new_version = SystemInfo.get_value("app_version") or Config.VERSION
+            # After restart, Config.VERSION will be loaded from new pyproject.toml
+            # For now, read it directly from the checked-out tag
+            from pathlib import Path
+            import tomli
+
+            project_root = Path(current_app.root_path).parent
+            pyproject_path = project_root / "pyproject.toml"
+            with open(pyproject_path, "rb") as f:
+                pyproject_data = tomli.load(f)
+                new_version = pyproject_data["project"]["version"]
+
             set_update_message(f"Update complete: {new_version}")
 
             # Only record history if version actually changed
@@ -98,11 +107,11 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
         failure_current_version = current_version
 
         if failure_current_version is None:
-            # Version not captured yet, try to get current_version from DB if available
+            # Version not captured yet, use Config.VERSION
             try:
-                failure_current_version = SystemInfo.get_value("app_version")
+                failure_current_version = Config.VERSION
             except Exception:
-                # DB unavailable, use None
+                # Unable to read version, use None
                 failure_current_version = None
 
         # Store failure in Redis first (survives any DB issues)
