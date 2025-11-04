@@ -677,25 +677,26 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             )
             stashed = True
 
-        # 3) Fetch tags and get latest release
+        # 3) Fetch tags and get latest release from remote
         click.echo("Fetching latest release...")
         subprocess.run(
             ["git", "fetch", "--tags", "--prune"], check=True, timeout=120, cwd=project_root
         )
 
-        # Get latest tag
+        # Get latest tag from remote (not local tags)
+        repo_url = f"https://github.com/{Config.BAYANAT_REPO}.git"
         result = subprocess.run(
-            ["git", "tag", "--list", "--sort=-version:refname"],
+            ["git", "ls-remote", "--tags", "--refs", "--sort=-version:refname", repo_url],
             capture_output=True,
             text=True,
             check=True,
-            cwd=project_root,
+            timeout=10,
         )
-        tags = [tag.strip() for tag in result.stdout.split("\n") if tag.strip()]
-        if not tags:
-            raise RuntimeError("No release tags found")
 
-        latest_tag = tags[0]
+        if not result.stdout.strip():
+            raise RuntimeError("No release tags found on remote")
+
+        latest_tag = result.stdout.split("\n")[0].split("/")[-1].strip()
         click.echo(f"Latest release: {latest_tag}")
 
         # Checkout latest release tag
