@@ -6740,11 +6740,22 @@ def api_system_status() -> Response:
 
     if cached_update:
         latest_version, detected_at = cached_update.decode().split("|")
+
+        # Compare versions semantically (strip 'v' prefix)
+        try:
+            from packaging import version
+
+            latest_ver = latest_version.lstrip("v")
+            current_ver = current_version.lstrip("v")
+            update_available = version.parse(latest_ver) > version.parse(current_ver)
+        except Exception:
+            update_available = False
+
         return HTTPResponse.success(
             data={
                 "current_version": current_version,
                 "latest_version": latest_version,
-                "update_available": latest_version != current_version,
+                "update_available": update_available,
                 "checked_at": detected_at,
             }
         )
