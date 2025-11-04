@@ -241,7 +241,7 @@ const MapVisualization = Vue.defineComponent({
       </v-toolbar>
 
       <v-sheet class="relative fill-height">
-        <div id="container" class="relative fill-height">
+        <div id="map-visualization" class="relative fill-height">
           <div id="map"></div>
           <canvas id="deck-canvas"></canvas>
 
