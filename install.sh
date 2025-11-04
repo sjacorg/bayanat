@@ -181,8 +181,16 @@ mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 
 # Setup daemon permissions (CRITICAL SECURITY FEATURE)
 cat > /etc/sudoers.d/bayanat-daemon << 'EOF'
-bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active bayanat, /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat, /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart caddy, /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat-celery
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat fetch --tags --prune, /usr/bin/git -C /opt/bayanat tag --list --sort=-version:refname, /usr/bin/git -C /opt/bayanat describe --tags --exact-match, /usr/bin/git -C /opt/bayanat checkout *, /usr/local/bin/uv --directory /opt/bayanat sync --frozen, /usr/local/bin/bayanat-apply-migrations.sh
+bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active bayanat, \
+    /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat, \
+    /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart caddy, \
+    /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat-celery
+bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat fetch --tags --prune, \
+    /usr/bin/git -C /opt/bayanat tag --list --sort=-version:refname, \
+    /usr/bin/git -C /opt/bayanat describe --tags --exact-match, \
+    /usr/bin/git -C /opt/bayanat checkout *, \
+    /usr/local/bin/uv --directory /opt/bayanat sync --frozen, \
+    /usr/local/bin/bayanat-apply-migrations.sh
 EOF
 
 # Create API handler
