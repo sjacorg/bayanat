@@ -8,6 +8,7 @@ const MapVisualization = Vue.defineComponent({
   },
   emits: ['update:open'],
   data: () => ({
+    translations: window.translations,
     MAPLIBRE_STYLE: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
     tooltip: null,
     menu: false,
@@ -40,14 +41,14 @@ const MapVisualization = Vue.defineComponent({
   methods: {
     async fetchData() {
       this.loading = true;
-      this.loadingMessage = 'Starting generation...';
+      this.loadingMessage = translations.startingGeneration_;
       this.errorMessage = '';
 
       try {
         // Step 1: Start generation
         const startRes = await api.post(this.visualizeEndpoint, { q: this.query });
         const taskId = startRes?.data?.task_id;
-        if (!taskId) throw new Error('Failed to start visualization task.');
+        if (!taskId) throw new Error(translations.mapGenerationFailed_);
 
         // Step 2: Wait for task completion via status endpoint
         let status = 'pending';
@@ -59,21 +60,21 @@ const MapVisualization = Vue.defineComponent({
           error = res?.data?.error;
 
           if (status === 'pending') {
-            this.loadingMessage = 'Waiting for flowmap generation...';
+            this.loadingMessage = translations.waitingForMapGeneration_;
             await new Promise((r) => setTimeout(r, 2000)); // small delay before polling again
           }
         }
 
-        if (status === 'error') throw new Error(error || 'Flowmap generation failed.');
+        if (status === 'error') throw new Error(error || translations.mapGenerationFailed_);
 
         // Step 3: Fetch the data
-        this.loadingMessage = 'Fetching visualization data...';
+        this.loadingMessage = translations.fetchingVisualizationData_;
         const dataRes = await api.get(this.dataEndpoint);
         const { locations, flows } = dataRes.data || {};
         return { locations, flows };
       } catch (err) {
         console.error(err);
-        this.errorMessage = err.message || 'An unexpected error occurred.';
+        this.errorMessage = err.message || translations.mapGenerationFailed_;
         return { locations: [], flows: [] };
       } finally {
         this.loading = false;
@@ -82,12 +83,12 @@ const MapVisualization = Vue.defineComponent({
 
     async initMap() {
       this.loading = true;
-      this.loadingMessage = 'Preparing map...';
+      this.loadingMessage = translations.preparingMap_;
       const data = await this.fetchData();
 
       if (this.errorMessage) return; // stop if error
 
-      this.loadingMessage = 'Rendering flowmap...';
+      this.loadingMessage = translations.renderingMap_;
       let { locations, flows } = data;
       const [width, height] = [this.windowWidth, this.windowHeight];
 
@@ -195,19 +196,19 @@ const MapVisualization = Vue.defineComponent({
       let details = [];
 
       if (obj.type === 'flow') {
-        title = 'Flow Details';
+        title = translations.flowDetails_;
         details = [
-          { label: 'Origin', value: obj.origin.name },
-          { label: 'Destination', value: obj.dest.name },
-          { label: 'Count', value: obj.count },
+          { label: translations.origin_, value: obj.origin.name },
+          { label: translations.destination_, value: obj.dest.name },
+          { label: translations.count_, value: obj.count },
         ];
       } else if (obj.type === 'location') {
         const totals = obj.totals || { incomingCount: 0, outgoingCount: 0 };
-        title = 'Location Details';
+        title = translations.locationDetails_;
         details = [
-          { label: 'Name', value: obj.name },
-          { label: 'Total In', value: totals.incomingCount },
-          { label: 'Total Out', value: totals.outgoingCount },
+          { label: translations.name_, value: obj.name },
+          { label: translations.totalIn_, value: totals.incomingCount },
+          { label: translations.totalOut_, value: totals.outgoingCount },
         ];
       }
 
@@ -233,7 +234,7 @@ const MapVisualization = Vue.defineComponent({
   template: `
     <v-dialog fullscreen :model-value="open">
       <v-toolbar color="primary" dark>
-        <v-toolbar-title>Map Flows</v-toolbar-title>
+        <v-toolbar-title>{{ translations.mapVisualization_ }}</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon="mdi-close" @click="$emit('update:open', false)"></v-btn>
       </v-toolbar>
