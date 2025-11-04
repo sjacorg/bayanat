@@ -281,6 +281,7 @@ class Config(object):
     # System Updates
     UPDATE_GRACE_PERIOD_MINUTES = int(os.environ.get("UPDATE_GRACE_PERIOD_MINUTES", "15"))
     VERSION_CHECK_INTERVAL = int(os.environ.get("VERSION_CHECK_INTERVAL", 12 * 60 * 60))
+    BAYANAT_REPO = "sjacorg/bayanat"  # Hardcoded for security - do not read from env
 
     # Setup Wizard
     SETUP_COMPLETE = manager.get_config("SETUP_COMPLETE")

@@ -6798,7 +6798,7 @@ def api_get_release_notes() -> Response:
 
     # Fetch from GitHub
     try:
-        repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
+        repo_name = Config.BAYANAT_REPO
         api_url = f"https://api.github.com/repos/{repo_name}/releases/latest"
 
         response = requests.get(api_url, timeout=5)

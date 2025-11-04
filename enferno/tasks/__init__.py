@@ -1478,7 +1478,7 @@ def perform_version_check() -> Optional[dict]:
     try:
         import subprocess
 
-        repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
+        repo_name = cfg.BAYANAT_REPO
         repo_url = f"https://github.com/{repo_name}.git"
 
         # Get latest release tag from git (no API rate limits)
