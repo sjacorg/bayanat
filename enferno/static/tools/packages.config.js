@@ -24,13 +24,13 @@ function generatePackageInfo(importPath, globalName) {
 
 // Define packages with minimal config - name and filename auto-generated
 const packageDefinitions = [
-  { import: '@deck.gl/core', globalName: 'DeckCore' },
-  { import: '@deck.gl/layers', globalName: 'DeckLayers' },
-  { import: '@flowmap.gl/data', globalName: 'FlowmapData' },
-  { import: '@flowmap.gl/layers', globalName: 'FlowmapLayers' },
-  { import: '@math.gl/web-mercator', globalName: 'webMercator' },
   { import: 'maplibre-gl', globalName: 'MaplibreGL' }
 ];
+
+// Packages that need CSS imports
+export const cssPackages = {
+  'maplibre-gl': 'maplibre-gl/dist/maplibre-gl.css'
+};
 
 // Generate full package configs
 export const packageConfigs = packageDefinitions.map(def => 

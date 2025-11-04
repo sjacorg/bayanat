@@ -113,7 +113,7 @@ const MapVisualization = Vue.defineComponent({
             };
 
       // Initialize Maplibre
-      this.map = new FlowmapBundle.MaplibreGL.Map({
+      this.map = new MaplibreGL.Map({
         container: 'map',
         style: this.MAPLIBRE_STYLE,
         interactive: false,

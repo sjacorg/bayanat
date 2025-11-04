@@ -2,7 +2,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { packageConfigs } from './packages.config.js';
+import { packageConfigs, cssPackages } from './packages.config.js';
 
 // Create src/entries directory if it doesn't exist
 const entriesDir = 'src/entries';
@@ -11,11 +11,6 @@ try {
 } catch (error) {
   // Directory already exists
 }
-
-// Packages that need CSS imports
-const cssPackages = {
-  'maplibre-gl': 'maplibre-gl/dist/maplibre-gl.css'
-};
 
 // Generate individual entry files
 for (const config of packageConfigs) {

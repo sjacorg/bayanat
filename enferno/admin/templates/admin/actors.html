@@ -4,7 +4,6 @@
     <link rel="stylesheet" href="/static/css/dropzone.min.css"/>
     <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
-    <link rel="stylesheet" href="/static/js/packages/maplibre-gl.min.css">
 {% endblock %} {% block content %}
 
 
@@ -399,18 +398,8 @@
     <script src="/static/js/croppr/croppr.min.js"></script>
 
     <!-- Flowmap packages -->
-    <!-- <script src="/static/js/packages/deck-gl-core.min.js"></script>
-    <script src="/static/js/packages/deck-gl-layers.min.js"></script>
-    <script src="/static/js/packages/flowmap-gl-data.min.js"></script>
-    <script src="/static/js/packages/flowmap-gl-layers.min.js"></script>
-    <script src="/static/js/packages/maplibre-gl.min.js"></script>
-    <script src="/static/js/packages/math-gl-web-mercator.min.js"></script>
-    <script src="/static/js/packages/luma-gl-constants.min.js"></script>
-    <script src="/static/js/packages/luma-gl-core.min.js"></script>
-    <script src="/static/js/packages/luma-gl-engine.min.js"></script>
-    <script src="/static/js/packages/luma-gl-shadertools.min.js"></script>
-    <script src="/static/js/packages/luma-gl-webgl.min.js"></script> -->
     <script src="/static/js/packages/flowmap-bundle.min.js"></script>
+    <script src="/static/js/packages/maplibre-gl.min.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
