@@ -633,7 +633,7 @@ def disable_maintenance():
 
 def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> tuple[bool, str]:
     """
-    Update system: git pull, dependencies, migrations, and restart services.
+    Update system: fetch latest release tag, update code, dependencies, migrations, and restart services.
     Automatically rolls back on failure.
 
     Returns:
@@ -666,7 +666,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
                 raise RuntimeError("Database backup failed")
             logger.info(f"Backup created: {backup_file}")
 
-        # 2) Git: stash local changes if any, then pull
+        # 2) Git: stash local changes if any
         status = subprocess.run(
             ["git", "status", "--porcelain"], capture_output=True, text=True, cwd=project_root
         )
@@ -677,30 +677,51 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             )
             stashed = True
 
-        click.echo("Pulling code updates...")
-        subprocess.run(["git", "pull", "--ff-only"], check=True, timeout=120, cwd=project_root)
+        # 3) Fetch tags and get latest release
+        click.echo("Fetching latest release...")
+        subprocess.run(
+            ["git", "fetch", "--tags", "--prune"], check=True, timeout=120, cwd=project_root
+        )
+
+        # Get latest tag
+        result = subprocess.run(
+            ["git", "tag", "--list", "--sort=-version:refname"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=project_root,
+        )
+        tags = [tag.strip() for tag in result.stdout.split("\n") if tag.strip()]
+        if not tags:
+            raise RuntimeError("No release tags found")
+
+        latest_tag = tags[0]
+        click.echo(f"Latest release: {latest_tag}")
+
+        # Checkout latest release tag
+        subprocess.run(["git", "checkout", latest_tag], check=True, cwd=project_root)
         new_commit = subprocess.run(
             ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=project_root
         ).stdout.strip()
-        logger.info(f"Pulled to commit: {new_commit[:8]}")
+        logger.info(f"Checked out tag {latest_tag} at commit: {new_commit[:8]}")
 
-        # 3) Dependencies
+        # 4) Dependencies
         click.echo("Installing dependencies...")
         subprocess.run(["uv", "sync", "--frozen"], check=True, timeout=600, cwd=project_root)
         logger.info("Dependencies installed")
 
-        # 4) Migrations
+        # 5) Migrations
         run_migrations()
         logger.info("Migrations completed")
 
-        # 5) Database health check after migrations
+        # 6) Database health check after migrations
         click.echo("Running database health check...")
         healthy, diagnosis = db_doctor()
         if not healthy:
             raise RuntimeError(f"Database health check failed: {diagnosis}")
         logger.info(f"Database health check passed: {diagnosis}")
 
-        # 6) Update version in database
+        # 7) Update version in database
         pyproject_path = project_root / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             pyproject_data = tomli.load(f)
@@ -728,7 +749,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         rds.set("bayanat:update:latest", f"{new_version}|{checked_at}")
         logger.info(f"Updated version cache to {new_version}")
 
-        # 7) Restart services
+        # 8) Restart services
         if restart_service:
             click.echo("Restarting services...")
             restart("bayanat")

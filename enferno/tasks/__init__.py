@@ -1474,24 +1474,28 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
 
 
 def perform_version_check() -> Optional[dict]:
-    """Check manifest for new Bayanat version. Returns result dict or None on error."""
+    """Check git tags for new Bayanat version. Returns result dict or None on error."""
     try:
+        import subprocess
+
         repo_name = os.environ.get("BAYANAT_REPO", "sjacorg/bayanat")
-        manifest_url = os.environ.get(
-            "BAYANAT_UPDATE_MANIFEST_URL",
-            f"https://raw.githubusercontent.com/{repo_name}/main/updates/latest.json",
+        repo_url = f"https://github.com/{repo_name}.git"
+
+        # Get latest release tag from git (no API rate limits)
+        result = subprocess.run(
+            ["git", "ls-remote", "--tags", "--refs", "--sort=-version:refname", repo_url],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True,
         )
 
-        # Force fresh content from GitHub (bypass CDN cache)
-        response = requests.get(
-            manifest_url,
-            timeout=3,
-            headers={"Cache-Control": "no-cache", "Pragma": "no-cache"},
-        )
-        response.raise_for_status()
+        if not result.stdout.strip():
+            logger.warning("No tags found in repository")
+            return None
 
-        manifest = response.json()
-        latest_tag = manifest.get("version")
+        # Parse first line to get latest tag
+        latest_tag = result.stdout.split("\n")[0].split("/")[-1].strip()
         if not latest_tag:
             return None
 
@@ -1499,7 +1503,10 @@ def perform_version_check() -> Optional[dict]:
         checked_at = datetime.now(timezone.utc).isoformat()
 
         try:
-            update_available = version.parse(latest_tag) > version.parse(current_version)
+            # Strip 'v' prefix if present for comparison
+            latest_ver = latest_tag.lstrip("v")
+            current_ver = current_version.lstrip("v")
+            update_available = version.parse(latest_ver) > version.parse(current_ver)
         except Exception:
             update_available = False
 
