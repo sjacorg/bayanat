@@ -55,32 +55,36 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
         if not enable_maintenance("System is being updated. Please wait..."):
             raise RuntimeError("Failed to acquire system lock")
 
-        # Capture current version before update and target version
+        # Capture current version before update
         # Do this BEFORE any operations that might fail
-        current_version = SystemInfo.get_value("app_version")
-        target_version = Config.VERSION
+        current_version = SystemInfo.get_value("app_version") or Config.VERSION
 
         set_update_message("Running update...")
         success, message = run_system_update(skip_backup=skip_backup)
 
         if success:
+            # Get new version from database (updated by run_system_update)
             new_version = SystemInfo.get_value("app_version") or Config.VERSION
             set_update_message(f"Update complete: {new_version}")
-            UpdateHistory(
-                version_from=current_version,
-                version_to=new_version,
-                status="success",
-                user_id=user_id,
-            ).save()
+
+            # Only record history if version actually changed
+            if new_version != current_version:
+                UpdateHistory(
+                    version_from=current_version,
+                    version_to=new_version,
+                    status="success",
+                    user_id=user_id,
+                ).save()
         else:
             set_update_message(f"Update failed: {message}")
+            # For failures, target version is unknown (update failed before determining it)
             # Store failure in Redis first (survives DB rollback)
-            _store_failure_in_redis(current_version, target_version, message, user_id)
+            _store_failure_in_redis(current_version, None, message, user_id)
             # Try to save to DB (might fail if rolled back to version without table)
             # .save() handles exceptions internally - logs error and returns False
             UpdateHistory(
                 version_from=current_version,
-                version_to=target_version,
+                version_to=None,
                 status="failed",
                 user_id=user_id,
             ).save()
@@ -89,13 +93,12 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
 
     except Exception as e:
         set_update_message(f"Error: {str(e)}")
-        # Use captured versions from before update (don't query DB in exception handler)
-        # If versions weren't captured yet, try to get them but don't fail if DB is unavailable
+        # Use captured version from before update (don't query DB in exception handler)
+        # If version wasn't captured yet, try to get it but don't fail if DB is unavailable
         failure_current_version = current_version
-        failure_target_version = target_version
 
         if failure_current_version is None:
-            # Versions not captured yet, try to get current_version from DB if available
+            # Version not captured yet, try to get current_version from DB if available
             try:
                 failure_current_version = SystemInfo.get_value("app_version")
             except Exception:
@@ -103,13 +106,14 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
                 failure_current_version = None
 
         # Store failure in Redis first (survives any DB issues)
-        _store_failure_in_redis(failure_current_version, failure_target_version, str(e), user_id)
+        # Target version is unknown for failures
+        _store_failure_in_redis(failure_current_version, None, str(e), user_id)
 
         # Try to save to DB (might fail if DB is unavailable)
         # .save() handles exceptions internally - logs error and returns False
         UpdateHistory(
             version_from=failure_current_version,
-            version_to=failure_target_version,
+            version_to=None,
             status="failed",
             user_id=user_id,
         ).save()
