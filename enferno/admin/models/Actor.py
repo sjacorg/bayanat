@@ -559,6 +559,14 @@ class Actor(db.Model, BaseMixin):
                     if profile_to_remove:
                         self.actor_profiles.remove(profile_to_remove)
 
+        # Dynamic fields: apply values via a central helper for simplicity
+        try:
+            from enferno.admin.models.DynamicField import DynamicField as DF
+
+            DF.apply_values(self, json)
+        except Exception as e:
+            logger.error(f"Failed to apply dynamic fields on Actor {self.id}: {e}", exc_info=True)
+
         return self
 
     # Compact dict for relationships
@@ -844,6 +852,17 @@ class Actor(db.Model, BaseMixin):
             "roles": [role.to_dict() for role in self.roles] if self.roles else [],
             "actor_profiles": [profile.to_dict() for profile in self.actor_profiles],
         }
+
+        # Merge dynamic fields (non-core) into the response
+        try:
+            from enferno.admin.models.DynamicField import DynamicField
+
+            dynamic_values = DynamicField.extract_values_for(self)
+            if dynamic_values:
+                actor.update(dynamic_values)
+        except Exception:
+            # Fail-safe: never break serialization because of dynamic fields
+            logger.error("Failed to merge dynamic fields for Actor %s", self.id, exc_info=True)
 
         return actor
 

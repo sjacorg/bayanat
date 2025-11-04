@@ -23,17 +23,14 @@
 
             <v-sheet
                     id="card-content"
-                    max-height="100vh"
-                    class="overflow-y-auto pt-11">
-
-
+                    style="height: calc(100vh - 64px);"
+                    class="overflow-y-auto">
                 <v-card-text>
                     <v-container fluid>
-
-                        <v-row>
-                            <v-col cols="12" md="12">
-
-                                <dual-field
+                        <div v-if="movableDynamicFields.length" class="form-grid mt-4">
+                            <template v-for="(field, index) in movableDynamicFields" :key="field.id">
+                                <div v-if="isFieldActive(field, 'title')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <dual-field
                                         v-model:original="editedItem.title"
                                         v-model:translation="editedItem.title_ar"
                                         label-original="{{ _('Title') }}"
@@ -42,56 +39,33 @@
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
-                                ></dual-field>
-                            </v-col>
-
-                        </v-row>
-
-
-                        <v-row>
-                            <v-col cols="12" md="12">
-                                <div class="body-1 pa-1 grey--text">{{ _('Description') }}</div>
-                                <tinymce-editor
-                                        :init="tinyConfig"
-                                        v-model="editedItem.description"
-                                ></tinymce-editor>
-                            </v-col>
-                        </v-row>
-
-
-                        <v-row>
-
-                            <v-col cols="12" md="6">
-                                <search-field
+                                    ></dual-field>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'description')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <tinymce-editor :init="tinyConfig" v-model="editedItem.description"></tinymce-editor>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'potential_violations')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <search-field
                                         v-model="editedItem.potential_violations"
                                         api="/admin/api/potentialviolation/"
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
                                         label="{{ _('Potential violation categories') }}"
-                                ></search-field>
-
-
-                            </v-col>
-
-                            <v-col cols="12" md="6">
-
-                                <search-field
+                                    ></search-field>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'claimed_violations')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <search-field
                                         v-model="editedItem.claimed_violations"
                                         api="/admin/api/claimedviolation/"
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
                                         label="{{ _('Claimed Violations Categories') }}"
-                                ></search-field>
-
-                            </v-col>
-                        </v-row>
-
-                        <v-row>
-
-                            <v-col cols="12" md="6">
-                                <search-field
+                                    ></search-field>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <search-field
                                         v-model="editedItem.labels"
                                         api="/admin/api/labels/"
                                         :query-params="{ typ: 'for_incident' }"
@@ -99,184 +73,124 @@
                                         item-value="id"
                                         :multiple="true"
                                         label="{{ _('Labels') }}"
-                                ></search-field>
-                            </v-col>
-
-                            <v-col cols="12" md="6">
-                                <location-search-field
+                                    ></search-field>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'locations')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <location-search-field
                                         v-model="editedItem.locations"
                                         api="/admin/api/locations/"
                                         item-title="full_string"
                                         item-value="id"
                                         :multiple="true"
                                         label="{{ _('Locations') }}"
-                                ></location-search-field>
+                                    ></location-search-field>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'events_section')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'related_bulletins')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <!-- Relate Bulletins Base Card -->
+                                    <v-card>
+                                        <v-toolbar class="px-4">
+                                            <v-btn variant="outlined" :prepend-icon="br_loaded? 'mdi-chevron-down': 'mdi-chevron-right'" :loading="br_loading" :disabled="br_loaded"
+                                                @click.stop="loadBulletinRelations"
+                                            >{{ _('Load Related Bulletins') }}</v-btn>
+                                            <v-spacer></v-spacer>
 
-                            </v-col>
-
-
-                        </v-row>
-
-
-                        <!-- events  -->
-
-                        <v-row>
-                            <v-col col="12">
-                                <events-section :edited-item="editedItem" :dialog-props="commonDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
-                            </v-col>
-                        </v-row>
-
-                        <!-- End Event -->
-
-
-                        <v-row>
-                            <v-col cols="12">
-
-
-                                <!-- Relate Actors Base Card -->
-
-                                <v-card class="my-5">
-                                    <v-toolbar class="px-4">
-                                        <v-btn variant="outlined" :prepend-icon="ar_loaded? 'mdi-chevron-down': 'mdi-chevron-right'"  :loading="ar_loading" :disabled="ar_loaded"
-                                               @click.stop="loadActorRelations"
-                                        >{{ _('Load Related Actors') }}</v-btn>
-
-                                        <v-spacer></v-spacer>
-
-                                        <v-text-field
-                                                density="compact"
-                                                v-if="ar_loaded"
-                                                class="mt-5"
-                                                v-model="relateActorTerm"
-                                                label="{{ _('Search & Relate Actors') }}"
-                                                @keydown.enter="searchRelatedActors"
-                                                @click:append="searchRelatedActors"
-                                                append-icon="mdi-magnify"
-                                        ></v-text-field>
-                                    </v-toolbar>
-
-                                    {% include 'admin/partials/related_actors_grid.html' %}
-
-                                </v-card>
+                                            <v-text-field
+                                                    v-if="br_loaded"
+                                                    class="mt-5"
+                                                    density="compact"
+                                                    v-model="relateBulletinTerm"
+                                                    label="{{ _('Search & Relate Bulletins') }}"
+                                                    @keydown.enter="searchRelatedBulletins"
+                                                    @click:append="searchRelatedBulletins"
+                                                    append-icon="mdi-magnify"
+                                            ></v-text-field>
+                                        </v-toolbar>
 
 
-                                <!-- End Relate Actor Base Card-->
+                                        {% include 'admin/partials/related_bulletins_grid.html' %}
+                                    </v-card>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'related_actors')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <!-- Relate Actors Base Card -->
+                                    <v-card>
+                                        <v-toolbar class="px-4">
+                                            <v-btn variant="outlined" :prepend-icon="ar_loaded? 'mdi-chevron-down': 'mdi-chevron-right'"  :loading="ar_loading" :disabled="ar_loaded"
+                                                @click.stop="loadActorRelations"
+                                            >{{ _('Load Related Actors') }}</v-btn>
 
+                                            <v-spacer></v-spacer>
 
-                                <!-- Relate Bulletins Base Card -->
+                                            <v-text-field
+                                                    density="compact"
+                                                    v-if="ar_loaded"
+                                                    class="mt-5"
+                                                    v-model="relateActorTerm"
+                                                    label="{{ _('Search & Relate Actors') }}"
+                                                    @keydown.enter="searchRelatedActors"
+                                                    @click:append="searchRelatedActors"
+                                                    append-icon="mdi-magnify"
+                                            ></v-text-field>
+                                        </v-toolbar>
 
-                                <v-card class="my-5">
-                                    <v-toolbar class="px-4">
-                                        <v-btn variant="outlined" :prepend-icon="br_loaded? 'mdi-chevron-down': 'mdi-chevron-right'" :loading="br_loading" :disabled="br_loaded"
-                                               @click.stop="loadBulletinRelations"
-                                        >{{ _('Load Related Bulletins') }}</v-btn>
-                                        <v-spacer></v-spacer>
+                                        {% include 'admin/partials/related_actors_grid.html' %}
+                                    </v-card>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'related_incidents')" :class="[fieldClass(field), 'px-3 py-2']">
+                                    <!-- Relate Incidents Base Card -->
+                                    <v-card>
+                                        <v-toolbar class="px-4">
+                                            <v-btn variant="outlined" :prepend-icon="ir_loaded? 'mdi-chevron-down': 'mdi-chevron-right'"  :loading="ir_loading" :disabled="ir_loaded"
+                                                @click.stop="loadIncidentRelations"
+                                            >{{ _('Load Related Incidents') }}</v-btn>
+                                            <v-spacer></v-spacer>
 
-                                        <v-text-field
-                                                v-if="br_loaded"
-                                                class="mt-5"
-                                                density="compact"
-                                                v-model="relateBulletinTerm"
-                                                label="{{ _('Search & Relate Bulletins') }}"
-                                                @keydown.enter="searchRelatedBulletins"
-                                                @click:append="searchRelatedBulletins"
-                                                append-icon="mdi-magnify"
-                                        ></v-text-field>
-                                    </v-toolbar>
+                                            <v-text-field
+                                                    class="mt-5"
+                                                    v-if="ir_loaded"
+                                                    density="compact"
+                                                    v-model="relateIncidentTerm"
+                                                    label="{{ _('Search & Relate Incidents') }}"
+                                                    @keydown.enter="searchRelatedIncidents"
+                                                    @click:append="searchRelatedIncidents"
+                                                    append-icon="mdi-magnify"
+                                            ></v-text-field>
+                                        </v-toolbar>
 
-
-                                    {% include 'admin/partials/related_bulletins_grid.html' %}
-                                </v-card>
-
-
-                                <!---     End Relate bulletin base card   ---->
-
-
-                                <!-- Relate Incidents Base Card -->
-
-                                <v-card class="my-5">
-                                    <v-toolbar class="px-4">
-                                        <v-btn variant="outlined" :prepend-icon="ir_loaded? 'mdi-chevron-down': 'mdi-chevron-right'"  :loading="ir_loading" :disabled="ir_loaded"
-                                               @click.stop="loadIncidentRelations"
-                                        >{{ _('Load Related Incidents') }}</v-btn>
-                                        <v-spacer></v-spacer>
-
-                                        <v-text-field
-                                                class="mt-5"
-                                                v-if="ir_loaded"
-                                                density="compact"
-                                                v-model="relateIncidentTerm"
-                                                label="{{ _('Search & Relate Incidents') }}"
-                                                @keydown.enter="searchRelatedIncidents"
-                                                @click:append="searchRelatedIncidents"
-                                                append-icon="mdi-magnify"
-                                        ></v-text-field>
-                                    </v-toolbar>
-
-                                    {% include 'admin/partials/related_incidents_grid.html' %}
-                                </v-card>
-
-                                <!-- End Relate Incident Base Card-->
-                            </v-col>
-                        </v-row>
-
-                        <v-row>
-                            <v-col cols="12" md="6">
-
-                                <v-textarea
-                                        v-model="editedItem.comments"
-                                        :rules="[validationRules.required()]"
-                                        label="{{ _('Comments') }}"
-                                        v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
-                                >
-                                </v-textarea>
-
-                            </v-col>
-
-                            <v-col cols="12" md="6">
-                                <v-row>
-                                    <v-select
-                                            :disabled="statusDisabled"
-                                            item-title="tr"
-                                            item-value="en"
-                                            :items="statusItems"
-
-                                            v-model="editedItem.status"
-                                            label="{{ _('Status') }}"
-                                    ></v-select>
-                                </v-row>
-
-                                {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
-                                    <v-row v-if="!editedItem.id">
-                                        <v-select
-                                                :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
-                                                :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
-                                                chips
-                                                :disabled="unrestricted"
-                                                item-title="name"
-                                                return-object
-                                                :items="allowedRoles"
-                                                multiple
-                                                v-model="editedItem.roles"
-                                                label="{{ _('Restrict Incident to Access Group(s)') }}"
-                                                :rules="
-                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
-                                                "
-                                                clearable
-                                        ></v-select>
-                                        <v-checkbox
-                                                color="error"
-                                                @change="unrestricted? editedItem.roles = [] : null"
-                                                class="mx-2"
-                                                label="{{ _('No Access Group') }}"
-                                                v-model="unrestricted">
-                                        </v-checkbox>
-                                    </v-row>
-                                {% endif %}
-
-                            </v-col>
-                        </v-row>
-
+                                        {% include 'admin/partials/related_incidents_grid.html' %}
+                                    </v-card>
+                                </div>
+                                <field-renderer v-else-if="isFieldActive(field) && !field.core" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
+                            </template>
+                        </div>
+                        <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
+                            <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
+                                <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
+                                    <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
+                                        label="{{ _('Comments') }}" v-bind="serverErrorPropsForField(serverErrors, 'item.comments')">
+                                    </v-textarea>
+                                </div>
+                                <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
+                                    <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"
+                                        v-model="editedItem.status" label="{{ _('Status') }}"></v-select>
+                                </div>
+                            </template>
+                            {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
+                            <div class="grid-col-span-1 px-3 py-2" v-if="!editedItem.id">
+                                <v-select :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
+                                    :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'" chips :disabled="unrestricted"
+                                    item-title="name" return-object :items="allowedRoles" multiple v-model="editedItem.roles"
+                                    label="{{ _('Restrict Bulletin to Access Group(s)') }}" :rules="
+                                                                                                                !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []
+                                                                                                            " clearable></v-select>
+                                <v-checkbox color="error" @change="unrestricted? editedItem.roles = [] : null" class="mx-2"
+                                    label="{{ _('No Access Groups') }}" v-model="unrestricted">
+                                </v-checkbox>
+                            </div>
+                            {% endif %}
+                        </div>
                     </v-container>
                 </v-card-text>
 

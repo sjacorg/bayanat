@@ -78,268 +78,139 @@
                             </div>
                         </template>
                         <template #right>
-                                <v-row class="w-100 mx-0 mb-0 mt-6">
-                                    <v-col cols="12" md="4">
-                                        <dual-field v-model:original="editedItem.title"
-                                                    v-model:translation="editedItem.title_ar"
-                                                    label-original="{{ _('Original Title') }}"
-                                                    label-translation="{{ _('Original Title (Ar)') }}"
-                                                    :rules="[
-                                                        validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
-                                                        validationRules.maxLength(255),
-                                                    ]"
-                                                    v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
+                            <div v-if="movableDynamicFields.length" class="form-grid mt-4">
+                                <template v-for="(field, index) in movableDynamicFields" :key="field.id">
+                                    <div v-if="isFieldActive(field, 'title')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <dual-field v-model:original="editedItem.title" v-model:translation="editedItem.title_ar"
+                                            label-original="{{ _('Original Title') }}" label-translation="{{ _('Original Title (Ar)') }}" :rules="[
+                                                validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
+                                                validationRules.maxLength(255),
+                                            ]"
+                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
                                         ></dual-field>
-                                    </v-col>
-    
-                                    <v-col cols="12" md="4">
-                                        <dual-field v-model:original="editedItem.sjac_title"
-                                                    v-model:translation="editedItem.sjac_title_ar"
-                                                    label-original="{{ _('Title') }}"
-                                                    label-translation="{{ _('Title (Ar)') }}"
-                                                    :rules="[
-                                                        validationRules.maxLength(255),
-                                                    ]"
-                                                    v-bind="serverErrorPropsForDualField(serverErrors, 'item.sjac_title', 'item.sjac_title_ar')"
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'sjac_title')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <dual-field v-model:original="editedItem.sjac_title" v-model:translation="editedItem.sjac_title_ar"
+                                            label-original="{{ _('Title') }}" label-translation="{{ _('Title (Ar)') }}"
+                                            :rules="[validationRules.maxLength(255)]"
+                                            v-bind="serverErrorPropsForDualField(serverErrors, 'item.sjac_title', 'item.sjac_title_ar')"
                                         ></dual-field>
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-combobox
-                                                chips
-                                                multiple
-                                                v-model="editedItem.tags"
-                                                label="{{ _('Tags') }}"
-                                        ></v-combobox>
-    
-                                    </v-col>
-    
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0">
-                                    <v-col cols="12" md="12">
-    
-                                        <search-field
-                                                v-model="editedItem.sources"
-                                                api="/admin/api/sources/"
-                                                item-title="title"
-                                                item-value="id"
-                                                :multiple="true"
-                                                label="{{ _('Sources') }}"
-                                        ></search-field>
-    
-                                        <tinymce-editor
-                                                :init="tinyConfig"
-                                                :key="descKey"
-                                                v-model="editedItem.description"
-                                        ></tinymce-editor>
-                                    </v-col>
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0">
-    
-                                    <v-col cols="12" md="6">
-                                        <search-field
-                                                v-model="editedItem.labels"
-                                                api="/admin/api/labels/"
-                                                :query-params="{ typ: 'for_bulletin' }"
-                                                item-title="title"
-                                                item-value="id"
-                                                :multiple="true"
-                                                :show-copy-icon="advFeatures"
-                                                label="{{ _('Labels') }}"
-                                        ></search-field>
-                                    </v-col>
-    
-    
-                                    <v-col cols="12" md="6">
-                                        <search-field
-                                                v-model="editedItem.verLabels"
-                                                api="/admin/api/labels/"
-                                                :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
-                                                item-title="title"
-                                                item-value="id"
-                                                :multiple="true"
-                                                :show-copy-icon="advFeatures"
-                                                label="{{ _('Verified Labels') }}"
-                                        ></search-field>
-    
-                                    </v-col>
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0">
-                                    <v-col cols="12" md="12">
-    
-                                        <location-search-field
-                                                v-model="editedItem.locations"
-                                                api="/admin/api/locations/"
-                                                item-title="full_string"
-                                                item-value="id"
-                                                :multiple="true"
-                                                :show-copy-icon="advFeatures"
-                                                label="{{ _('Locations') }}"
-                                        ></location-search-field>
-    
-                                    </v-col>
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0">
-                                    <v-col cols="12">
-                                        <global-map ref="globalmap" :model-value="compLocations"></global-map>
-    
-                                    </v-col>
-                                </v-row>
-    
-                                <!-- events  -->
-    
-                                <v-row class="w-100 ma-0">
-                                    <v-col col="12">
-                                        <events-section :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
-                                    </v-col>
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0">
-                                    <v-col col="12">
-                                        <geo-locations @locations-updated="geoLocationsUpdated"
-                                                    :others="editedItem.geoLocations"
-                                                    v-model="editedItem.geoLocations" :dialog-props="rightContainedDialogProps"></geo-locations>
-    
-    
-                                    </v-col>
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0">
-                                    <v-col cols="12">
-    
-    
-                                        {% include 'admin/partials/edit_related_bulletins.html' %}
-                                        {% include 'admin/partials/edit_related_actors.html' %}
-                                        {% include 'admin/partials/edit_related_incidents.html' %}
-    
-    
-                                    </v-col>
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0">
-    
-                                    <v-col cols="12" md="6">
-    
-    
-                                        <v-sheet class="d-flex align-center">
-    
-    
-                                            <v-text-field class="mx-2"
-                                                        :disabled="source_disabled"
-                                                        v-model="editedItem.source_link"
-                                                        label="{{ _('Source Link') }}"
-                                                        :rules="[
-                                                            validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
-                                                            validationRules.maxLength(255),
-                                                        ]"
-                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.source_link')"
-                                            ></v-text-field>
-    
-                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt" @update:model-value="serverErrors['item.source_link'] = null">
-                                            </v-checkbox>
-    
-                                            <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
-                                                    v-model="editedItem.source_link_type">
-                                            </v-switch>
-    
-    
-                                        </v-sheet>
-    
-    
-                                    </v-col>
-                                    <v-col cols="12" md="6">
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'tags')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'sources')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <search-field v-model="editedItem.sources" api="/admin/api/sources/" item-title="title" item-value="id"
+                                            :multiple="true" label="{{ _('Sources') }}"></search-field>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'description')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <tinymce-editor :init="tinyConfig" :key="descKey" v-model="editedItem.description"></tinymce-editor>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <search-field v-model="editedItem.labels" api="/admin/api/labels/" :query-params="{ typ: 'for_bulletin' }"
+                                            item-title="title" item-value="id" :multiple="true" :show-copy-icon="advFeatures"
+                                            label="{{ _('Labels') }}"></search-field>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'ver_labels')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <search-field v-model="editedItem.verLabels" api="/admin/api/labels/"
+                                            :query-params="{ fltr: 'verified', typ: 'for_bulletin' }" item-title="title" item-value="id" :multiple="true"
+                                            :show-copy-icon="advFeatures" label="{{ _('Verified Labels') }}"></search-field>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'locations')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <location-search-field v-model="editedItem.locations" api="/admin/api/locations/" item-title="full_string"
+                                            item-value="id" :multiple="true" :show-copy-icon="advFeatures" label="{{ _('Locations') }}"></location-search-field>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'events_section')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <events-section :edited-item="editedItem" :dialog-props="rightContainedDialogProps" :show-copy-icon="advFeatures"
+                                        :event-params="eventParams"></events-section>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'geo_locations')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <geo-locations @locations-updated="geoLocationsUpdated" :others="editedItem.geoLocations"
+                                            v-model="editedItem.geoLocations" :dialog-props="rightContainedDialogProps"></geo-locations>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'global_map')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <global-map  ref="globalmap" :model-value="compLocations"></global-map>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'publish_date')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
-                                                            v-model="editedItem.publish_date"></pop-date-time-field>
-    
-    
-                                            <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
-                                                            v-model="editedItem.documentation_date"></pop-date-time-field>
-    
-    
-                                    </v-col>
-    
-    
-    
-    
-    
-    
-                                </v-row>
-                                <v-row class="w-100 ma-0">
-                                    <v-col cols="12" md="6">
-    
-    
-                                        <v-textarea
-                                                required
-                                                :rules="[validationRules.required()]"
-                                                outlined
-                                                v-model="editedItem.comments"
-                                                label="{{ _('Comments') }}"
-                                                v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
-                                        >
-    
-                                        </v-textarea>
-    
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-row class="w-100 ma-0">
-                                        <v-select
-                                                    :disabled="statusDisabled"
-                                                    item-title="tr"
-                                                    item-value="en"
-                                                    :items="statusItems"
-                                                    class="mx-2"
-                                                    v-model="editedItem.status"
-                                                    label="{{ _('Status') }}"
-                                            ></v-select>
-                                        </v-row>
-    
-                                        {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
-                                        <v-row class="w-100 ma-0" v-if="!editedItem.id">
-                                            <v-select
-                                                    :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
-                                                    :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
-                                                    chips
-                                                    :disabled="unrestricted"
-                                                    item-title="name"
-                                                    return-object
-                                                    :items="allowedRoles"
-                                                    multiple
-                                                    v-model="editedItem.roles"
-                                                    label="{{ _('Restrict Bulletin to Access Group(s)') }}"
-                                                    :rules="
-                                                        !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
-                                                    "
-                                                    clearable
-                                            ></v-select>
-                                            <v-checkbox
-                                                color="error"
-                                                @change="unrestricted? editedItem.roles = [] : null"
-                                                class="mx-2"
-                                                label="{{ _('No Access Groups') }}"
-                                                v-model="unrestricted">
+                                            v-model="editedItem.publish_date"></pop-date-time-field>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'documentation_date')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
+                                            v-model="editedItem.documentation_date"></pop-date-time-field>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'related_bulletins')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        {% include 'admin/partials/edit_related_bulletins.html' %}
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'related_actors')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        {% include 'admin/partials/edit_related_actors.html' %}
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'related_incidents')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        {% include 'admin/partials/edit_related_incidents.html' %}
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'source_link')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <v-sheet class="d-flex align-center">
+                                            <v-text-field class="mx-2" :disabled="source_disabled" v-model="editedItem.source_link"
+                                                label="{{ _('Source Link') }}" :rules="[
+                                                validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
+                                                    validationRules.maxLength(255)
+                                                ]"
+                                                v-bind="serverErrorPropsForField(serverErrors, 'item.source_link')"
+                                            ></v-text-field>
+                                        
+                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
                                             </v-checkbox>
-                                        </v-row>
-                                        {% endif %}
-    
-                                    </v-col>
-                                </v-row>
-    
-                                <v-row class="w-100 ma-0" v-if="editedItem.review">
-                                    <v-col cols="12" md="12">
-    
-                                        <v-card outlined color="gray " elevation="0">
-                                            <v-card-title class="subtitle-2 black--text">{{ _('Review') }}</v-card-title>
-                                            <v-card-text>
-                                                <read-more><p class="pa-1 my-2 grey--text text--darken-2" v-html="editedItem.review"></p></read-more>
-                                            </v-card-text>
-    
-                                        </v-card>
-    
-                                    </v-col>
-                                </v-row>
+                                        
+                                            <v-switch color="primary" class="mx-2" label="{{ _('Private') }}" v-model="editedItem.source_link_type">
+                                            </v-switch>
+                                        </v-sheet>
+                                    </div>
+                                    <field-renderer v-else-if="isFieldActive(field) && !field.core" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
+                                </template>
+                            </div>
+                            <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
+                                <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
+                                    <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
+                                        <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
+                                            label="{{ _('Comments') }}" v-bind="serverErrorPropsForField(serverErrors, 'item.comments')">
+                                        </v-textarea>
+                                    </div>
+                                    <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
+                                        <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"
+                                            v-model="editedItem.status" label="{{ _('Status') }}"></v-select>
+                                    </div>
+                                </template>
+                                {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
+                                <div class="grid-col-span-1 px-3 py-2" v-if="!editedItem.id">
+                                    <v-select :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
+                                        :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'" chips :disabled="unrestricted"
+                                        item-title="name" return-object :items="allowedRoles" multiple v-model="editedItem.roles"
+                                        label="{{ _('Restrict Bulletin to Access Group(s)') }}" :rules="
+                                                                                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []
+                                                                                                                " clearable></v-select>
+                                    <v-checkbox color="error" @change="unrestricted? editedItem.roles = [] : null" class="mx-2"
+                                        label="{{ _('No Access Groups') }}" v-model="unrestricted">
+                                    </v-checkbox>
+                                </div>
+                                {% endif %}
+                            </div>
+
+
+                            <v-row class="w-100 ma-0" v-if="editedItem.review">
+                                <v-col cols="12" md="12">
+                        
+                                    <v-card outlined color="gray " elevation="0">
+                                        <v-card-title class="subtitle-2 black--text">{{ _('Review') }}</v-card-title>
+                                        <v-card-text>
+                                            <read-more>
+                                                <p class="pa-1 my-2 grey--text text--darken-2" v-html="editedItem.review"></p>
+                                            </read-more>
+                                        </v-card-text>
+                        
+                                    </v-card>
+                        
+                                </v-col>
+                            </v-row>
                         </template>
                     </split-view>
             </v-card-text>
