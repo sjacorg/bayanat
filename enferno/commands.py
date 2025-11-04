@@ -190,25 +190,14 @@ def apply_migrations(dry_run: bool = False) -> None:
 @with_appcontext
 def get_version() -> None:
     """
-    Get the current application version from both settings and database.
+    Get the current application version from pyproject.toml.
     """
-    click.echo(f"Desired version (pyproject.toml): {Config.VERSION}")
+    click.echo(f"Current version: {Config.VERSION}")
 
-    # Get deployed version from database
-    deployed_version = SystemInfo.get_value("app_version")
+    # Get last update time from database
     last_update = SystemInfo.get_value("last_update_time")
-
-    if deployed_version:
-        click.echo(f"Deployed version (database): {deployed_version}")
-        if last_update:
-            click.echo(f"Last update: {last_update}")
-
-        if deployed_version == Config.VERSION:
-            click.echo("System is up to date")
-        else:
-            click.echo("System is not up to date - run 'flask update-system' to update")
-    else:
-        click.echo("Deployed version: Not recorded (fresh installation?)")
+    if last_update:
+        click.echo(f"Last update: {last_update}")
 
 
 @click.command()
@@ -677,25 +666,26 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             )
             stashed = True
 
-        # 3) Fetch tags and get latest release
+        # 3) Fetch tags and get latest release from remote
         click.echo("Fetching latest release...")
         subprocess.run(
             ["git", "fetch", "--tags", "--prune"], check=True, timeout=120, cwd=project_root
         )
 
-        # Get latest tag
+        # Get latest tag from remote (not local tags)
+        repo_url = f"https://github.com/{Config.BAYANAT_REPO}.git"
         result = subprocess.run(
-            ["git", "tag", "--list", "--sort=-version:refname"],
+            ["git", "ls-remote", "--tags", "--refs", "--sort=-version:refname", repo_url],
             capture_output=True,
             text=True,
             check=True,
-            cwd=project_root,
+            timeout=10,
         )
-        tags = [tag.strip() for tag in result.stdout.split("\n") if tag.strip()]
-        if not tags:
-            raise RuntimeError("No release tags found")
 
-        latest_tag = tags[0]
+        if not result.stdout.strip():
+            raise RuntimeError("No release tags found on remote")
+
+        latest_tag = result.stdout.split("\n")[0].split("/")[-1].strip()
         click.echo(f"Latest release: {latest_tag}")
 
         # Checkout latest release tag
@@ -721,19 +711,7 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             raise RuntimeError(f"Database health check failed: {diagnosis}")
         logger.info(f"Database health check passed: {diagnosis}")
 
-        # 7) Update version in database
-        pyproject_path = project_root / "pyproject.toml"
-        with open(pyproject_path, "rb") as f:
-            pyproject_data = tomli.load(f)
-            new_version = pyproject_data["project"]["version"]
-
-        # Update version and timestamp in one go
-        version_entry = SystemInfo.query.filter_by(key="app_version").first()
-        if version_entry:
-            version_entry.value = new_version
-        else:
-            db.session.add(SystemInfo(key="app_version", value=new_version))
-
+        # 7) Update last update timestamp in database
         update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
         if update_time_entry:
             update_time_entry.value = datetime.now().isoformat()
@@ -741,13 +719,20 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             db.session.add(SystemInfo(key="last_update_time", value=datetime.now().isoformat()))
 
         db.session.commit()
-        logger.info(f"Version updated to {new_version}")
+
+        # Read new version from pyproject.toml (checked out from new tag)
+        pyproject_path = project_root / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            pyproject_data = tomli.load(f)
+            new_version = pyproject_data["project"]["version"]
+
+        logger.info(f"Updated to version {new_version}")
 
         # Update cache to reflect new version (maintains accuracy)
         # Use current timestamp so UI knows update just completed
         checked_at = datetime.now(timezone.utc).isoformat()
-        rds.set("bayanat:update:latest", f"{new_version}|{checked_at}")
-        logger.info(f"Updated version cache to {new_version}")
+        rds.set("bayanat:update:latest", f"v{new_version}|{checked_at}")
+        logger.info(f"Updated version cache to v{new_version}")
 
         # 8) Restart services
         if restart_service:

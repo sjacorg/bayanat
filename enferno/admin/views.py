@@ -6717,7 +6717,7 @@ def api_system_status() -> Response:
         fresh (bool): If true, checks GitHub directly instead of using cache
     """
 
-    current_version = SystemInfo.get_value("app_version") or Config.VERSION
+    current_version = Config.VERSION
 
     # Check if fresh check is requested
     fresh_check = request.args.get("fresh", "").lower() == "true"
@@ -6740,11 +6740,22 @@ def api_system_status() -> Response:
 
     if cached_update:
         latest_version, detected_at = cached_update.decode().split("|")
+
+        # Compare versions semantically (strip 'v' prefix)
+        try:
+            from packaging import version
+
+            latest_ver = latest_version.lstrip("v")
+            current_ver = current_version.lstrip("v")
+            update_available = version.parse(latest_ver) > version.parse(current_ver)
+        except Exception:
+            update_available = False
+
         return HTTPResponse.success(
             data={
                 "current_version": current_version,
                 "latest_version": latest_version,
-                "update_available": latest_version != current_version,
+                "update_available": update_available,
                 "checked_at": detected_at,
             }
         )

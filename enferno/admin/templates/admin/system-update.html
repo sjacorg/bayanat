@@ -54,7 +54,7 @@
                     <div>
                         <div class="mb-3 d-flex ga-3 align-center">
                             {{ _('System Update') }}:
-                            <span>Bayanat v${latestVersion}</span>
+                            <span>Bayanat ${latestVersion}</span>
                             <v-chip v-if="isUpToDate" color="primary">{{ _('Latest') }}</v-chip>
                             <v-chip v-else color="primary">{{ _('Available for Update') }}</v-chip>
                         </div>
@@ -64,7 +64,7 @@
                         </template>
                         <template v-else>
                             <div class="text-body-2 mb-2">{{ _('Released on') }}: ${formatDate(releaseNotes?.published_at)}</div>
-                            <div class="text-body-2 mb-2">{{ _('Current version:') }}<span class="ml-2 font-weight-medium">Bayanat v${currentVersion}</span></div>
+                            <div class="text-body-2 mb-2">{{ _('Current version:') }}<span class="ml-2 font-weight-medium">Bayanat ${currentVersion}</span></div>
                         </template>
                     </div>
                     <div class="d-flex ga-3">
@@ -136,7 +136,7 @@
             <v-card-text class="pb-6 pt-3">
                 <div class="d-flex align-center justify-space-between mb-2">
                     <div>
-                        <span class="font-weight-bold">Version:</span> <span class="font-weight-medium">Bayanat v${currentVersion}</span>
+                        <span class="font-weight-bold">Version:</span> <span class="font-weight-medium">Bayanat ${currentVersion}</span>
                     </div>
                     <div>
                         <v-btn href="https://github.com/sjacorg/bayanat/releases" target="_blank" variant="plain" append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>

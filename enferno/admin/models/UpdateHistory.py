@@ -11,7 +11,7 @@ class UpdateHistory(db.Model, BaseMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     version_from = db.Column(db.String(50), nullable=True)
-    version_to = db.Column(db.String(50), nullable=False)
+    version_to = db.Column(db.String(50), nullable=True)  # Nullable for failed updates
     status = db.Column(db.String(20), nullable=False, default="success")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
