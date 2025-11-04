@@ -9,7 +9,7 @@ const MapVisualization = Vue.defineComponent({
   emits: ['update:open'],
   data: () => ({
     translations: window.translations,
-    MAPLIBRE_STYLE: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    maplibreStyle: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
     tooltip: null,
     menu: false,
     windowWidth: window.innerWidth,
@@ -116,7 +116,7 @@ const MapVisualization = Vue.defineComponent({
       // Initialize Maplibre
       this.map = new MaplibreGL.Map({
         container: 'map',
-        style: this.MAPLIBRE_STYLE,
+        style: this.maplibreStyle,
         interactive: false,
         center: [initialViewState.longitude, initialViewState.latitude],
         zoom: initialViewState.zoom,
@@ -140,9 +140,10 @@ const MapVisualization = Vue.defineComponent({
             getFlowDestId: (f) => f.dest,
             getFlowMagnitude: (f) => f.count,
             darkMode: false,
-            colorScheme: 'OrRd',
+            colorScheme: 'TealGrn',
             clusteringEnabled: true,
             highlightColor: 'orange',
+            fadeEnabled: false,
             onClick: this.onClick,
           }),
         );
