@@ -35,6 +35,7 @@ from enferno.admin.models import (
     BulletinHistory,
     ActorHistory,
     LocationHistory,
+    UserHistory,
     PotentialViolation,
     ClaimedViolation,
     Activity,
@@ -4853,6 +4854,35 @@ def api_locationhistory(locationid: t.id) -> Response:
     return HTTPResponse.success(data=response)
 
 
+# User History Helpers
+
+
+@admin.route("/api/userhistory/<int:userid>")
+@require_view_history
+def api_userhistory(userid: t.id) -> Response:
+    """
+    Endpoint to get revision history of a user.
+
+    Args:
+        - userid: id of the user.
+
+    Returns:
+        - json feed of user's history / error.
+    """
+    result = (
+        db.session.execute(
+            select(UserHistory)
+            .where(UserHistory.target_user_id == userid)
+            .order_by(desc(UserHistory.created_at))
+        )
+        .scalars()
+        .all()
+    )
+    # For standardization
+    response = {"items": [item.to_dict() for item in result]}
+    return HTTPResponse.success(data=response)
+
+
 # user management routes
 
 
@@ -5214,6 +5244,8 @@ def api_user_update(
 
         user = user.from_json(u)
         if user.save():
+            # Create history revision
+            user.create_revision()
             # Record activity
             Activity.create(
                 current_user,
