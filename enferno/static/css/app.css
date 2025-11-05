@@ -938,7 +938,7 @@ div.jsondiffpatch-child-node-type-array:after {
 /* Inline code */
 .markdown-content code {
     padding: 4px 4px;
-    background-color: rgba(var(--v-theme-background)); /* inline code bg */
+    background-color: rgba(var(--v-theme-surface-light)); /* inline code bg */
     color: rgba(var(--v-theme-on-background));
     border-radius: 4px;
     font-family: 'Fira Code', 'Monaco', monospace;
@@ -951,7 +951,7 @@ div.jsondiffpatch-child-node-type-array:after {
     white-space: pre-wrap;  /* wrap long lines */
     word-break: break-word;
     padding: 12px 16px;
-    background-color: rgba(var(--v-theme-background)); /* inline code bg */
+    background-color: rgba(var(--v-theme-surface-light)); /* inline code bg */
     color: rgba(var(--v-theme-on-background));
     border-radius: 4px;
     font-family: 'Fira Code', 'Monaco', monospace;
