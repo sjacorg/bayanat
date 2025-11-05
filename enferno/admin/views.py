@@ -5329,6 +5329,47 @@ def api_user_force_reset_all() -> Response:
     return HTTPResponse.success(message="Forced password reset has been set for all users")
 
 
+@admin.post("/api/user/<int:id>/suspend")
+@roles_required("Admin")
+def api_user_suspend(id: int) -> Response:
+    """
+    Temporarily suspend a user account.
+
+    Args:
+        - id: id of the user to suspend.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if not user.active:
+        return HTTPResponse.error("User is already suspended or disabled")
+
+    user.active = False
+    user.save()
+    user.logout_other_sessions()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details={"action": "suspended"},
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.ITEM_UPDATED,
+        "User Suspended",
+        f"User {user.username} has been suspended by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(message=f"User {user.username} suspended successfully")
+
+
 @admin.delete("/api/user/<int:id>")
 @roles_required("Admin")
 def api_user_delete(
