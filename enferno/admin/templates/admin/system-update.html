@@ -418,7 +418,11 @@
         },
 
         mounted() {
-            this.md = markdownit({ linkify: true });
+            this.md = markdownit({
+                html: true,
+                linkify: true,
+                typographer: true
+            });
             this.checkForScheduledUpdate();
             this.loadReleaseNotes();
             // Fetch and populate update info
