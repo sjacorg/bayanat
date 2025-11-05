@@ -5346,7 +5346,7 @@ def api_user_suspend(id: int) -> Response:
         return HTTPResponse.not_found("User not found")
 
     if not user.active:
-        return HTTPResponse.error("User is already suspended or disabled")
+        return HTTPResponse.success(message="User is already suspended or disabled")
 
     user.active = False
     user.save()
@@ -5390,7 +5390,7 @@ def api_user_reactivate(id: int) -> Response:
         return HTTPResponse.forbidden("Cannot reactivate a disabled user")
 
     if user.active:
-        return HTTPResponse.error("User is already active")
+        return HTTPResponse.success(message="User is already active")
 
     user.active = True
     user.save()
@@ -5411,6 +5411,56 @@ def api_user_reactivate(id: int) -> Response:
     )
 
     return HTTPResponse.success(message=f"User {user.username} reactivated successfully")
+
+
+@admin.post("/api/user/<int:id>/disable")
+@roles_required("Admin")
+def api_user_disable(id: int) -> Response:
+    """
+    Disable account for user leaving organization.
+
+    Args:
+        - id: id of the user to disable.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if user.deleted:
+        return HTTPResponse.success(message="User is already disabled")
+
+    user.active = False
+    user.deleted = True
+    user.roles = []
+    user.view_usernames = False
+    user.view_simple_history = False
+    user.view_full_history = False
+    user.can_self_assign = False
+    user.can_edit_locations = False
+    user.can_export = False
+    user.can_import_web = False
+    user.save()
+    user.logout_other_sessions()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="disabled",
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.UPDATE_USER,
+        "User Disabled",
+        f"User {user.username} has been disabled by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(message=f"User {user.username} disabled successfully")
 
 
 @admin.delete("/api/user/<int:id>")
