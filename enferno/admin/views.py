@@ -5463,6 +5463,49 @@ def api_user_disable(id: int) -> Response:
     return HTTPResponse.success(message=f"User {user.username} disabled successfully")
 
 
+@admin.post("/api/user/<int:id>/enable")
+@roles_required("Admin")
+def api_user_enable(id: int) -> Response:
+    """
+    Re-enable a disabled account.
+
+    Args:
+        - id: id of the user to enable.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if not user.deleted:
+        return HTTPResponse.success(message="User is already enabled")
+
+    user.active = True
+    user.deleted = False
+    user.save()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="enabled",
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.UPDATE_USER,
+        "User Enabled",
+        f"User {user.username} has been enabled by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(
+        message=f"User {user.username} enabled successfully. Admin must assign roles."
+    )
+
+
 @admin.delete("/api/user/<int:id>")
 @roles_required("Admin")
 def api_user_delete(
