@@ -5358,16 +5358,59 @@ def api_user_suspend(id: int) -> Response:
         Activity.STATUS_SUCCESS,
         user.to_mini(),
         "user",
-        details={"action": "suspended"},
+        details="suspended",
     )
 
     Notification.send_admin_notification_for_event(
-        Constants.NotificationEvent.ITEM_UPDATED,
+        Constants.NotificationEvent.UPDATE_USER,
         "User Suspended",
         f"User {user.username} has been suspended by {current_user.username}.",
     )
 
     return HTTPResponse.success(message=f"User {user.username} suspended successfully")
+
+
+@admin.post("/api/user/<int:id>/reactivate")
+@roles_required("Admin")
+def api_user_reactivate(id: int) -> Response:
+    """
+    Reactivate a suspended user account.
+
+    Args:
+        - id: id of the user to reactivate.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if user.deleted:
+        return HTTPResponse.forbidden("Cannot reactivate a disabled user")
+
+    if user.active:
+        return HTTPResponse.error("User is already active")
+
+    user.active = True
+    user.save()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="reactivated",
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.UPDATE_USER,
+        "User Reactivated",
+        f"User {user.username} has been reactivated by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(message=f"User {user.username} reactivated successfully")
 
 
 @admin.delete("/api/user/<int:id>")
