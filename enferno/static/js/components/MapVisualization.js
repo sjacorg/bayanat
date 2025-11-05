@@ -143,7 +143,7 @@ const MapVisualization = Vue.defineComponent({
             colorScheme: 'TealGrn',
             clusteringEnabled: true,
             highlightColor: 'orange',
-            fadeEnabled: false,
+            fadeEnabled: true,
             onClick: this.onClick,
           }),
         );
