@@ -76,6 +76,9 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
 
             set_update_message(f"Update complete: {new_version}")
 
+            # Clear release notes cache so new version is fetched
+            rds.delete("bayanat:release:notes")
+
             # Only record history if version actually changed
             if new_version != current_version:
                 UpdateHistory(
