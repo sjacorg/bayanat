@@ -246,46 +246,17 @@
                         </template>
 
                         <template v-slot:item.2fa="{ item }">
-                            <v-tooltip location="top"
-                                       :text="item.two_factor_devices && item.two_factor_devices.length > 0 ? '{{ _('2FA Active') }}' : '{{ _('2FA Inactive') }}'">
-                                <template #activator="{props}">
-                                    <div v-if="item.two_factor_devices && item.two_factor_devices.length > 0" class="d-flex ga-2 font-weight-medium text-success">
-                                        <v-icon
-                                            color="success"
-                                            v-bind="props"
-                                            size="small"
-                                        >
-                                            mdi-lock-check
-                                        </v-icon>
-                                        {{ _('2FA Active') }}
-                                    </div>
-                                    <div v-else class="d-flex ga-2 font-weight-medium text-warning">
-                                        <v-icon
-                                                color="warning"
-                                                v-bind="props"
-                                                size="small"
-                                        >
-                                            mdi-lock-open-alert
-                                        </v-icon>
-                                        {{ _('2FA Inactive') }}
-                                    </div>
-                                </template>
-                            </v-tooltip>
+                            <v-chip variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1">
+                                <v-icon start size="large">${getUser2FaMeta(item)?.icon}</v-icon>
+                                ${getUser2FaMeta(item)?.text}
+                            </v-chip>
                         </template>
 
-                        <template v-slot:item.access_level="{ item }">
-                            <template v-if="item?.access_level">
-                                <v-chip class="ma-1">
-                                    <v-icon start size="large">${getIconFromAccessLevel(item?.access_level)}</v-icon>
-                                    ${item?.access_level?.name}
-                                </v-chip>
-                            </template>
-                            <template v-else>
-                                <v-chip class="ma-1">
-                                    <v-icon start size="large">mdi-account-cancel</v-icon>
-                                    {{ _('Disabled') }}
-                                </v-chip>
-                            </template>
+                        <template v-slot:item.status="{ item }">
+                            <v-chip variant="text" :color="getUserStatusMeta(item)?.color" class="ma-1">
+                                <v-icon start size="large">${getUserStatusMeta(item)?.icon}</v-icon>
+                                ${getUserStatusMeta(item)?.text}
+                            </v-chip>
                         </template>
 
                         <template v-slot:item.roles="{ item }">
@@ -380,38 +351,23 @@
                                             </v-col>
                                         </v-row>
 
-                                        <div class="mb-3 text-body-1">{{ _('Access Levels') }}</div>
-                                        <div class="mb-7">
-                                            <div class="d-flex flex-wrap ga-3 mb-2">
-                                                <v-btn-toggle
-                                                    :model-value="Math.max(accessLevels.findIndex(level => level.value === editedItem?.access_level?.value), 0)"
-                                                    @update:model-value="updateAccessLevel($event)"
-                                                    variant="outlined"
-                                                    divided
-                                                    color="primary"
-                                                >
-                                                    <v-btn v-for="(accessLevel) in accessLevels" :key="accessLevel.value">${accessLevel.name}</v-btn>
-                                                </v-btn-toggle>
-                                            </div>
-                                            <span class="text-caption text-medium-emphasis">${editedItem.access_level?.description || accessLevels[0]?.description}</span>
-                                        </div>
-
                                         <v-row>
-                                            <v-col v-if="['full_access'].includes(editedItem.access_level?.value)" cols="12" md="6">
+                                            <v-col cols="12" md="6">
                                                 <div class="mb-3 text-body-1">{{ _('System Role') }}</div>
                                                 <div class="d-flex flex-wrap ga-3 mb-7">
                                                     <v-btn-toggle
-                                                        :model-value="Math.max(roles.findIndex(role => editedItem?.roles?.some(r => r?.id === role?.id)), 0)"
+                                                        :model-value="Math.max(systemRoles.findIndex(role => editedItem?.roles?.some(r => r?.name?.toLowerCase?.() === role?.value?.toLowerCase?.())), 0)"
                                                         @update:model-value="updateSystemRole($event)"
                                                         variant="outlined"
                                                         divided
                                                         color="primary"
                                                     >
-                                                        <v-btn v-for="(role) in roles" :key="role?.id">${role.name}</v-btn>
+                                                        <v-btn v-for="(role) in systemRoles" :key="role?.value">${role.name}</v-btn>
                                                     </v-btn-toggle>
+                                                    <div class="text-caption text-medium-emphasis">${systemRoles.find(role => editedItem?.roles?.some(r => r?.name?.toLowerCase?.() === role?.value?.toLowerCase?.()))?.description || systemRoles[0]?.description}</div>
                                                 </div>
                                             </v-col>
-                                            <v-col v-if="['view_only', 'full_access'].includes(editedItem.access_level?.value)" cols="12" md="6">
+                                            <v-col cols="12" md="6">
                                                 <div class="mb-3 text-body-1">{{ _('Access Role') }}</div>
                                                 <div class="d-flex flex-wrap ga-3 mb-7">
                                                     <toggle-button
@@ -427,39 +383,36 @@
                                             </v-col>
                                         </v-row>
 
+                                        <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
+                                        <div class="d-flex flex-wrap ga-3 mb-7">
+                                            <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole">
+                                                {{ _('Can View Usernames') }}
+                                            </toggle-button>
 
-                                        <template v-if="['full_access'].includes(editedItem.access_level?.value)">
-                                            <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
-                                            <div class="d-flex flex-wrap ga-3 mb-7">
-                                                <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole">
-                                                    {{ _('Can View Usernames') }}
-                                                </toggle-button>
+                                            <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole">
+                                                {{ _('Can View Full History') }}
+                                            </toggle-button>
 
-                                                <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole">
-                                                    {{ _('Can View Full History') }}
-                                                </toggle-button>
+                                            <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole">
+                                                {{ _('Can View Simple History') }}
+                                            </toggle-button>
 
-                                                <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole">
-                                                    {{ _('Can View Simple History') }}
-                                                </toggle-button>
+                                            <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole">
+                                                {{ _('Can Self-Assign') }}
+                                            </toggle-button>
 
-                                                <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole">
-                                                    {{ _('Can Self-Assign') }}
-                                                </toggle-button>
+                                            <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole">
+                                                {{ _('Can Edit Locations') }}
+                                            </toggle-button>
 
-                                                <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole">
-                                                    {{ _('Can Edit Locations') }}
-                                                </toggle-button>
+                                            <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole">
+                                                {{ _('Can Request Exports') }}
+                                            </toggle-button>
 
-                                                <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole">
-                                                    {{ _('Can Request Exports') }}
-                                                </toggle-button>
-
-                                                <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole">
-                                                    {{ _('Can Import From Web') }}
-                                                </toggle-button>
-                                            </div>
-                                        </template>
+                                            <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole">
+                                                {{ _('Can Import From Web') }}
+                                            </toggle-button>
+                                        </div>
                                     </v-container>
                                 </v-card-text>
                             </v-form>
@@ -532,11 +485,10 @@
 
                 headers: [
                     {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Username')}}", value: "username"},
-                    {title: "{{_('Email')}}", value: "email"},
                     {title: "{{_('Name')}}", value: "name"},
-                    {title: "{{_('Access Level')}}", value: "access_level"},
-                    {title: "{{_('Groups')}}", value: "roles"},
+                    {title: "{{_('Username')}}", value: "username"},
+                    {title: "{{_('Status')}}", value: "status"},
+                    {title: "{{_('System role')}}", value: "roles"},
                     {title: "{{_('Two-Factor Authentication')}}", value: "2fa"},
                     {title: "{{_('Actions')}}", value: "action", sortable: false}
                 ],
@@ -562,11 +514,11 @@
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
 
-                accessLevels: [
-                    { name: "{{ _('Disabled') }}", value: 'disabled', description: "{{ _('User cannot access Bayanat unless their access level is changed.') }}" },
-                    { name: "{{ _('Write Only') }}", value: 'write_only', description: "{{ _('Users can add items in Actors, Bulletins, and Incidents but cannot view existing database content.') }}" },
-                    { name: "{{ _('View Only') }}", value: 'view_only', description: "{{ _('Users can view items in Actors, Bulletins, and Incidents but cannot edit or add new items.') }}" },
-                    { name: "{{ _('Full Access') }}", value: 'full_access', description: "{{ _('User can view, add, and modify data in the database according to their system role.') }}" },
+                systemRoles: [
+                    { name: "{{ _('View') }}", value: 'view', description: "{{ _('Users can view items in Actors, Bulletins, and Incidents but cannot edit or add new items.') }}" },
+                    { name: "{{ _('Data Analyst') }}", value: 'da', description: "{{ _('User can view all items and edit only those assigned to them. User can review assigned items for peer review.') }}" },
+                    { name: "{{ _('Moderator') }}", value: 'mod', description: "{{ _('User can manage system data, edit assigned items, and perform bulk updates.') }}" },
+                    { name: "{{ _('Administrator') }}", value: 'admin', description: "{{ _('Full access to all items and actions, including Activity Monitor and user management across the system.') }}" },
                 ],
                 accessRoles: [
                     { name: "{{ _('Incident Access') }}", value: 'incident_access' },
@@ -637,11 +589,14 @@
 
 
             methods: {
-                getIconFromAccessLevel(level) {
-                    if (level.value === 'disabled') return 'mdi-account-cancel';
-                    if (level.value === 'view_only') return 'mdi-eye';
-                    if (level.value === 'write_only') return 'mdi-pencil';
-                    if (level.value === 'full_access') return 'mdi-account-key';
+                getUser2FaMeta(user) {
+                    if (user.two_factor_devices && user.two_factor_devices.length > 0) return { color: 'success', text: "{{ _('2FA Active') }}", icon: 'mdi-lock-check' }
+                    return { color: 'warning', text: "{{ _('2FA Inactive') }}", icon: 'mdi-lock-open-alert' }
+                },
+                getUserStatusMeta(user) {
+                    if (user.active && !user?.deleted) return { color: 'success', text: "{{ _('Active') }}", icon: 'mdi-account-check' }
+                    if (!user.active && !user?.deleted) return { color: 'warning', text: "{{ _('Suspended') }}", icon: 'mdi-account-clock' }
+                    if (!user.active && user?.deleted) return { text: "{{ _('Disabled') }}", icon: 'mdi-account-cancel' }
                 },
                 activeCount(key) {
                     const val = this.options?.[key]
@@ -692,7 +647,7 @@
 
                 showUser(user_id) {
                     api.get(`/admin/api/user/${user_id}`).then(response => {
-                        this.user = { ...response.data, access_level: this.computeAccessLevel(response.data) };
+                        this.user = response.data;
                         this.userDrawer = true;
                     }).catch(err => {
                         console.error(err);
@@ -701,7 +656,7 @@
                 },
                 refreshUser(user_id) {
                     api.get(`/admin/api/user/${user_id}`).then(response => {
-                        this.user = { ...response.data, access_level: this.computeAccessLevel(response.data) };
+                        this.user = response.data;
                     })
                 },
 
@@ -837,10 +792,7 @@
 
                     api.get(`/admin/api/users/?${params.toString()}`)
                         .then(response => {
-                            this.items = response.data.items.map(user => ({
-                                ...user,
-                                access_level: this.computeAccessLevel(user)
-                            }))
+                            this.items = response.data.items;
                             this.itemsLength = response.data.total;
                         })
                         .catch(err => {
@@ -896,10 +848,7 @@
                 editItem(item) {
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
-                    this.editedItem = {
-                        ...item,
-                        access_level: this.computeAccessLevel(item)
-                    };
+                    this.editedItem = { ...item };
                     this.isUsernameAvailable = false;
                     this.initialUsername = item.username;
                     this.dialog = true;
@@ -948,8 +897,7 @@
 
                     this.saving = true;
 
-                    const payload = this.applyAccessLevelRules({...this.editedItem});
-                    if (payload.access_level) delete payload.access_level; // 👈 access_level is only used on frontend
+                    const payload = {...this.editedItem};
                     if (payload.access_roles) delete payload.access_roles; // 👈 TODO: Remove this line once it's supported by backend
 
                     // edit mode
@@ -1000,9 +948,12 @@
                     }
                 },
                 updateSystemRole(index) {
-                    const selectedRole = this.roles?.[index] || this.roles[0];
+                    if (index === null || index === undefined) return;
+                    const systemRole = this.systemRoles?.[index] || this.systemRoles[0];
                     if (!this.editedItem?.roles) this.editedItem.roles = []
-                    this.editedItem.roles = [selectedRole];
+                    const selectedRole = this.roles.find(r => r.name.toLowerCase() === systemRole.value.toLowerCase());
+
+                    this.editedItem.roles = systemRole ? [selectedRole] : [];
                     this.checkRoles();
                 },
                 isAccessRoleSelected(role) {
@@ -1021,55 +972,6 @@
                 searchUsers: debounce(function (evt) {
                     this.refresh({ ...this.options, q: evt })
                 }, 350),
-                updateAccessLevel(index) {
-                    if (typeof index === 'undefined') return;
-                    const selectedAccessLevel = this.accessLevels[index] || this.accessLevels[0];
-                    this.editedItem.access_level = selectedAccessLevel;
-
-                    if (selectedAccessLevel.value === 'full_access') {
-                        this.roles.find(role => {
-                            if (role.name.toLowerCase() === 'admin') {
-                                this.editedItem.roles = [role];
-                                this.checkRoles();
-                            }
-                        });
-                    } else {
-                        this.editedItem.roles = []
-                    }
-                },
-                applyAccessLevelRules(item) {
-                    const { value } = item?.access_level || {};
-
-                    if (!value || value === 'disabled') {
-                        item.active = false;
-                        item.roles = [];
-                    } else if (value === 'view_only') {
-                        item.active = true;
-                        item.roles = [];
-                    } else if (value === 'write_only') {
-                        item.active = true;
-                    } else if (value === 'full_access') {
-                        item.active = true;
-                    }
-
-                    return item
-                },
-                computeAccessLevel(user) {
-                    if (!user.active) {
-                        return { name: "Disabled", value: "disabled" };
-                    }
-
-                    const hasSystemRole = Array.isArray(user.roles) && user.roles.length > 0;
-
-                    if (hasSystemRole) {
-                        return { name: "Full Access", value: "full_access" };
-                    } else {
-                        return { name: "View Only", value: "view_only" };
-                    }
-
-                    // Future support
-                    // if (someCondition) return { name: "Write Only", value: "write_only" };
-                }
             }
         });
 
