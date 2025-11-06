@@ -4890,7 +4890,15 @@ def api_userhistory(userid: t.id) -> Response:
 @roles_accepted("Admin", "Mod")
 def api_users() -> Response:
     """
-    API endpoint to feed users data in json format , supports paging and search.
+    API endpoint to feed users data in json format, supports paging, search, and filtering.
+
+    Query Parameters:
+        - page: Page number (default: 1)
+        - per_page: Items per page (default: PER_PAGE)
+        - q: Search term (searches username, email, name)
+        - active: Filter by account status (true/false)
+        - twoFactor: Filter by 2FA status (true/false)
+        - roles: Comma-separated role IDs for filtering (use 0 for users without roles)
 
     Returns:
         - json feed of users / error.
@@ -4898,9 +4906,55 @@ def api_users() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
     q = request.args.get("q")
+    active = request.args.get("active")
+    two_factor = request.args.get("twoFactor")
+    roles = request.args.get("roles")
+
     query = []
+
+    # Search filter (username, email, name)
     if q is not None:
-        query.append(User.name.ilike("%" + q + "%"))
+        search_term = f"%{q}%"
+        query.append(
+            or_(
+                User.username.ilike(search_term),
+                User.email.ilike(search_term),
+                User.name.ilike(search_term),
+            )
+        )
+
+    # Account status filter
+    if active is not None:
+        is_active = active.lower() == "true"
+        query.append(User.active == is_active)
+
+    # 2FA status filter
+    if two_factor is not None:
+        has_2fa = two_factor.lower() == "true"
+        if has_2fa:
+            query.append(or_(User.tf_primary_method.isnot(None), User.webauthn.any()))
+        else:
+            query.append(and_(User.tf_primary_method.is_(None), ~User.webauthn.any()))
+
+    # Roles filter (multi-select)
+    if roles:
+        role_ids = [int(r.strip()) for r in roles.split(",") if r.strip().isdigit()]
+        if role_ids:
+            # Support id 0 for users without roles
+            if 0 in role_ids:
+                actual_role_ids = [rid for rid in role_ids if rid > 0]
+                if actual_role_ids:
+                    # Users with no roles OR users with selected roles
+                    query.append(
+                        or_(~User.roles.any(), User.roles.any(Role.id.in_(actual_role_ids)))
+                    )
+                else:
+                    # Only users with no roles
+                    query.append(~User.roles.any())
+            else:
+                # Only users with selected roles
+                query.append(User.roles.any(Role.id.in_(role_ids)))
+
     result = (
         User.query.filter(*query)
         .order_by(User.username)
@@ -5171,7 +5225,7 @@ def api_user_create(
             f"User {username} has been created by {current_user.username} successfully.",
         )
         return HTTPResponse.created(
-            message=f"User {username} has been created successfully",
+            message=f"New User '{user.name}' successfully added!",
             data={"item": user.to_dict()},
         )
     else:
@@ -5260,7 +5314,7 @@ def api_user_update(
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
             )
-            return HTTPResponse.success(message=f"Saved User {user.id} {user.name}")
+            return HTTPResponse.success(message=f"User '{user.name}' updated successfully.")
         else:
             return HTTPResponse.error(f"Error saving User {user.id} {user.name}", status=500)
     else:
@@ -5309,7 +5363,7 @@ def api_user_force_reset(validated_data: dict) -> Response:
         message = f"Forced password reset already requested: {reset_key}"
         return HTTPResponse.error(message)
     user.set_security_reset_key()
-    message = f"Forced password reset has been set for user {user.username}"
+    message = f"User ‘{user.name}’ will reset password at next sign-in."
     return HTTPResponse.success(message=message)
 
 

@@ -10,10 +10,11 @@
             v-if="user && userDrawer"
             :closable="true"
             @close="userDrawer=false"
-            @edit="editItem"
-            @reset-password="forcePassReset"
-            @revoke2fa="revoke2fa"
-            @logout-all="logoutAllUserSessions"
+            @edit="editItem($event)"
+            @reset-password="openForcePasswordResetDialog($event)"
+            @revoke2fa="openRevoke2FADialog($event)"
+            @logout-all="openLogoutAllUserSessionsDialog($event)"
+            @change-password="openChangePasswordDialog($event)"
             :user="user"
         ></user-card>
     </v-card>
