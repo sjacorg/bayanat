@@ -128,7 +128,7 @@
 
                                         <v-list>
                                             <v-list-item
-                                                v-for="role in [{ 'id': 0, 'name': 'View Only'}, ...roles]"
+                                                v-for="role in [{ 'id': 0, 'name': 'View'}, ...roles]"
                                                 :key="role.id"
                                                 @click="setRoleFilters(role.id); refresh()"
                                                 :active="Boolean(options?.roles?.includes(role.id))"
@@ -246,14 +246,14 @@
                         </template>
 
                         <template v-slot:item.2fa="{ item }">
-                            <v-chip variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1">
+                            <v-chip variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1 font-weight-medium">
                                 <v-icon start size="large">${getUser2FaMeta(item)?.icon}</v-icon>
                                 ${getUser2FaMeta(item)?.text}
                             </v-chip>
                         </template>
 
                         <template v-slot:item.status="{ item }">
-                            <v-chip variant="text" :color="getUserStatusMeta(item)?.color" class="ma-1">
+                            <v-chip variant="text" :color="getUserStatusMeta(item)?.color" class="ma-1 font-weight-medium">
                                 <v-icon start size="large">${getUserStatusMeta(item)?.icon}</v-icon>
                                 ${getUserStatusMeta(item)?.text}
                             </v-chip>
@@ -261,7 +261,7 @@
 
                         <template v-slot:item.roles="{ item }">
                             <v-chip v-for="role in item.roles" class="ma-1">
-                                ${role.name}
+                                ${systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name}
                             </v-chip>
                         </template>
 
@@ -352,11 +352,11 @@
                                         </v-row>
 
                                         <v-row>
-                                            <v-col cols="12" md="6">
+                                            <v-col cols="12" lg="6">
                                                 <div class="mb-3 text-body-1">{{ _('System Role') }}</div>
                                                 <div class="d-flex flex-wrap ga-3 mb-7">
                                                     <v-btn-toggle
-                                                        :model-value="Math.max(systemRoles.findIndex(role => editedItem?.roles?.some(r => r?.name?.toLowerCase?.() === role?.value?.toLowerCase?.())), 0)"
+                                                        :model-value="selectedRoleIndex"
                                                         @update:model-value="updateSystemRole($event)"
                                                         variant="outlined"
                                                         divided
@@ -364,10 +364,10 @@
                                                     >
                                                         <v-btn v-for="(role) in systemRoles" :key="role?.value">${role.name}</v-btn>
                                                     </v-btn-toggle>
-                                                    <div class="text-caption text-medium-emphasis">${systemRoles.find(role => editedItem?.roles?.some(r => r?.name?.toLowerCase?.() === role?.value?.toLowerCase?.()))?.description || systemRoles[0]?.description}</div>
+                                                    <div class="text-caption text-medium-emphasis">${selectedRole?.description}</div>
                                                 </div>
                                             </v-col>
-                                            <v-col cols="12" md="6">
+                                            <v-col cols="12" lg="6">
                                                 <div class="mb-3 text-body-1">{{ _('Access Role') }}</div>
                                                 <div class="d-flex flex-wrap ga-3 mb-7">
                                                     <toggle-button
@@ -547,6 +547,25 @@
                 formTitle() {
                     return this.isNewUser ? "{{_('Add New User')}}" : "{{_('Edit User')}}";
                 },
+                selectedRoleIndex() {
+                    // No roles means "no role yet" → null
+                    if (!this.editedItem?.roles) return null;
+
+                    // roles = [] → View only → index 0
+                    if (this.editedItem.roles.length === 0) return 0;
+
+                    const index = this.systemRoles.findIndex(role =>
+                        this.editedItem.roles.some(r => r?.name?.toLowerCase() === role?.value?.toLowerCase())
+                    );
+
+                    // No match → View only (index 0)
+                    return index >= 0 ? index : 0;
+                },
+                selectedRole() {
+                    return this.selectedRoleIndex != null
+                        ? this.systemRoles[this.selectedRoleIndex]
+                        : null
+                }
             },
 
             created() {
@@ -947,15 +966,32 @@
                         this.saving = false;
                     }
                 },
-                updateSystemRole(index) {
+               updateSystemRole(index) {
                     if (index === null || index === undefined) return;
-                    const systemRole = this.systemRoles?.[index] || this.systemRoles[0];
-                    if (!this.editedItem?.roles) this.editedItem.roles = []
-                    const selectedRole = this.roles.find(r => r.name.toLowerCase() === systemRole.value.toLowerCase());
 
-                    this.editedItem.roles = systemRole ? [selectedRole] : [];
+                    // default to view-only
+                    const systemRole = this.systemRoles?.[index] ?? this.systemRoles[0];
+
+                    // Ensure roles array exists
+                    if (!Array.isArray(this.editedItem?.roles)) {
+                        this.editedItem.roles = [];
+                    }
+
+                    const selectedRole = this.roles?.find(
+                        r => r?.name?.toLowerCase() === systemRole?.value?.toLowerCase()
+                    );
+
+                    // If no match, treat as view-only (empty)
+                    if (!selectedRole) {
+                        this.editedItem.roles = [];
+                    } else {
+                        this.editedItem.roles = [selectedRole];
+                    }
+
+                    this.editedItem.active = true;
                     this.checkRoles();
                 },
+
                 isAccessRoleSelected(role) {
                     return this.editedItem?.access_roles?.some(r => r.value === role.value)
                 },

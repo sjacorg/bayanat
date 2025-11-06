@@ -103,6 +103,10 @@ const UserCard = Vue.defineComponent({
         },
       });
     },
+    getTwoFactorDeviceMeta(device) {
+      if (device.type === 'authenticator') return { icon: 'mdi-lock-clock', color: 'success', text: device.name };
+      return { icon: 'mdi-lock-clock', color: 'success', text: device.name };
+    },
   },
 
   data: function () {
@@ -130,9 +134,9 @@ const UserCard = Vue.defineComponent({
                     {{ user.id }}
                   </v-chip>
   
-                  <v-chip :color="user.active ? 'success' : null">
-                    <v-icon class="mr-1" size="x-large">{{ user.active ? 'mdi-account-check' : 'mdi-account-cancel'}}</v-icon>
-                    {{ user.active ? translations.active_ : translations.inactive_ }}
+                  <v-chip :color="$root.getUserStatusMeta(user)?.color">
+                    <v-icon class="mr-1" size="x-large">{{ $root.getUserStatusMeta(user)?.icon }}</v-icon>
+                    {{ $root.getUserStatusMeta(user)?.text }}
                   </v-chip>
                 </div>
     
@@ -248,7 +252,16 @@ const UserCard = Vue.defineComponent({
                       hide-left-icon
                       :model-value="true"
                     >
-                      {{ role.name }}
+                      {{ $root.systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name }}
+                    </toggle-button>
+                  </template>
+                  <template v-else>
+                    <toggle-button
+                      read-only
+                      hide-left-icon
+                      :model-value="true"
+                    >
+                      {{ translations.view_ }}
                     </toggle-button>
                   </template>
                 </div>
@@ -267,6 +280,30 @@ const UserCard = Vue.defineComponent({
                       {{ role.name }}
                     </toggle-button>
                   </template>
+                </div>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <div class="mb-3 text-body-1">{{ translations.twoFactorAuthentication_ }}</div>
+                <div class="d-flex flex-wrap ga-3">
+                  <div
+                    v-if="user?.two_factor_devices?.length > 0"
+                    class="d-flex flex-column ga-2 font-weight-medium text-success"
+                  >
+                    <v-chip v-for="device in user.two_factor_devices" :key="device.id" :color="getTwoFactorDeviceMeta(device)?.color" variant="text" class="font-weight-medium">
+                      <v-icon start size="large">{{ getTwoFactorDeviceMeta(device)?.icon }}</v-icon>
+                      {{ getTwoFactorDeviceMeta(device)?.text }}
+                    </v-chip>
+                  </div>
+
+                  <v-chip
+                    v-else
+                    color="warning"
+                    variant="text"
+                    class="font-weight-medium"
+                  >
+                    <v-icon start size="large">mdi-lock-open-alert</v-icon>
+                    {{ translations.twoFaInactive_ }}
+                  </div>
                 </div>
               </v-col>
             </v-row>
@@ -291,38 +328,13 @@ const UserCard = Vue.defineComponent({
 
         <v-card variant="flat">
           <v-card-text class="px-6">
-            <v-row>
-              <v-col cols="12" md="4">
-                <div class="mb-3 text-body-1">{{ translations.twoFactorAuthentication_ }}</div>
-                <div class="d-flex flex-wrap ga-3">
-                  <div
-                    v-if="user?.two_factor_devices?.length > 0"
-                    class="d-flex flex-column ga-2 font-weight-medium text-success"
-                  >
-                    <div
-                      v-for="device in user.two_factor_devices"
-                      :key="device.id"
-                      class="d-flex align-center ga-2"
-                    >
-                      <v-icon
-                        :icon="device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive'"
-                        color="success"
-                        size="small"
-                      />
-                      {{ device.name }}
-                    </div>
-                  </div>
-
-                  <div
-                    v-else
-                    class="d-flex align-center ga-2 font-weight-medium text-warning"
-                  >
-                    <v-icon color="warning" size="small">mdi-lock-open-alert</v-icon>
-                    {{ translations.noTwoFactorMethods_ }}
-                  </div>
-                </div>
-              </v-col>
-            </v-row>
+            <div class="mb-3 text-body-1">{{ translations.manageAccount_ }}</div>
+            <div class="d-flex flex-wrap ga-3">
+              <v-btn>{{ translations.reactivateAccount_ }}</v-btn>
+              <v-btn>{{ translations.suspendAccount_ }}</v-btn>
+              <v-btn>{{ translations.enableAccount_ }}</v-btn>
+              <v-btn>{{ translations.disableAccount_ }}</v-btn>
+            </div>
           </v-card-text>
         </v-card>
 
