@@ -135,7 +135,7 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
     finally:
         # Cleanup - only runs if we acquired the lock (got past the check above)
         # If lock acquisition failed, we returned early before entering try block
-        disable_maintenance()
+        # Don't clear maintenance here - let maintenance page detect completion
         end_update()
 
 
