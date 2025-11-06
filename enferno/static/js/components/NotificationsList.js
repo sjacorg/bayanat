@@ -62,7 +62,7 @@ const NotificationsList = Vue.defineComponent({
             }
 
             // Add redirect click handler for System Update notifications
-            if (window.__is_admin__ && notification.title?.includes('System Update')) {
+            if (window.__is_admin__ && notification.title?.toLowerCase()?.includes('system update')) {
                 props.onClick = () => {
                     window.location.href = '/admin/system-update'
                 }

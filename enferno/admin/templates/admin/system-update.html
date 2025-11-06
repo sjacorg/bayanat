@@ -24,15 +24,25 @@
                         <div>
                             <div><b v-if="item?.user?.username">${item.user.username}</b><b v-else>{{ _('System') }}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
                             <show-details show-more-text="{{ _('See detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-                                <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-4 overflow-auto w-100" max-height="471px">
-                                    <v-data-table class="mb-1 bg-transparent" density="compact" hide-default-footer :items="updateHistory" :headers="[
+                                <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-2 overflow-auto w-100" max-height="471px">
+                                    <v-data-table class="bg-transparent" density="compact" hide-default-footer :items="[item]" :headers="[
                                         { title: `{{ _('From') }}`, value: 'version_from' },
                                         { title: `{{ _('To') }}`, value: 'version_to' },
                                         { title: `{{ _('Status') }}`, value: 'status' },
                                     ]"
                                     >
+                                        <template v-slot:item.status="{ item }">
+                                            <v-chip variant="text" :prepend-icon="item.status === 'success' ? 'mdi-check-circle' : 'mdi-minus-circle'" :color="item.status === 'success' ? 'success' : 'red'">
+                                                <template v-if="item.status === 'success'">
+                                                    {{ _('Success') }}
+                                                </template>
+                                                <template v-else>
+                                                    {{ _('Failed') }}
+                                                </template>
+                                            </v-chip>
+                                        </template>
                                     </v-data-table>
-                                    <!-- <div>{{ _('The update initiated by admin could not be completed. Please check your network connection or try again later.') }}</div> -->
+                                    <div v-if="item.status === 'failed'" class="text-caption text-red">{{ _('The update could not be completed. Please check your network connection or try again later.') }}</div>
                                 </v-sheet>
                             </show-details>
                         </div>
@@ -418,7 +428,11 @@
         },
 
         mounted() {
-            this.md = markdownit({ linkify: true });
+            this.md = markdownit({
+                html: true,
+                linkify: true,
+                typographer: true
+            });
             this.checkForScheduledUpdate();
             this.loadReleaseNotes();
             // Fetch and populate update info

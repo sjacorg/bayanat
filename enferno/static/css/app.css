@@ -946,7 +946,7 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 /* Pre > code (blocks) */
-.markdown-content pre > code {
+.markdown-content pre code {
     display: block;
     white-space: pre-wrap;  /* wrap long lines */
     word-break: break-word;
@@ -956,4 +956,13 @@ div.jsondiffpatch-child-node-type-array:after {
     border-radius: 4px;
     font-family: 'Fira Code', 'Monaco', monospace;
     font-size: 0.85em;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid rgba(var(--v-theme-surface-light));
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: rgba(var(--v-theme-on-background));
+  background: rgba(var(--v-theme-background));
 }
