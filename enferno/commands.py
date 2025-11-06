@@ -669,7 +669,10 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         # 3) Fetch tags and get latest release from remote
         click.echo("Fetching latest release...")
         subprocess.run(
-            ["git", "fetch", "--tags", "--prune"], check=True, timeout=120, cwd=project_root
+            ["git", "fetch", "--tags", "--prune", "--force"],
+            check=True,
+            timeout=120,
+            cwd=project_root,
         )
 
         # Get latest tag from remote (not local tags)
