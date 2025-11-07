@@ -79,6 +79,9 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
             # Clear release notes cache so new version is fetched
             rds.delete("bayanat:release:notes")
 
+            # Signal app to auto-clear maintenance on startup (handles all update types)
+            rds.set("bayanat:maintenance:auto_clear", "1", ex=60)
+
             # Only record history if version actually changed
             if new_version != current_version:
                 UpdateHistory(
