@@ -181,6 +181,12 @@ class User(UserMixin, db.Model, BaseMixin):
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
+    @property
+    def is_active(self):
+        """User is active only if active flag is True AND user has at least one role."""
+        # Require both active=True and at least one role
+        return self.active and len(self.roles) > 0
+
     # email confirmation
     confirmed_at = db.Column(db.DateTime())
     # tracking
