@@ -141,12 +141,8 @@ def register_maintenance_middleware(app) -> None:
     @app.before_request
     def check_maintenance_mode() -> Optional[tuple[str, int]]:
         """Check if maintenance mode is enabled and redirect to maintenance page."""
-        # Skip for static files, maintenance page, and update status endpoint
-        if (
-            request.path.startswith("/static/")
-            or request.path == "/maintenance"
-            or request.path == "/admin/api/system/update/status"
-        ):
+        # Skip for static files and maintenance page itself
+        if request.path.startswith("/static/") or request.path == "/maintenance":
             return None
 
         # Check maintenance mode
