@@ -260,8 +260,13 @@
                         </template>
 
                         <template v-slot:item.roles="{ item }">
-                            <v-chip v-for="role in item.roles" class="ma-1">
-                                ${systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name}
+                            <template v-if="item.roles.length">
+                                <v-chip v-for="role in item.roles" :key="role.id" class="ma-1">
+                                    ${systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name}
+                                </v-chip>
+                            </template>
+                            <v-chip v-else-if="!item.deleted" class="ma-1">
+                                ${systemRoles[0].name}
                             </v-chip>
                         </template>
 
