@@ -5,6 +5,7 @@ from flask import Flask, render_template, current_app
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security import current_user
+from enferno.utils.maintenance import disable_maintenance
 
 from enferno.admin.constants import Constants
 import enferno.commands as commands
@@ -87,6 +88,11 @@ def create_app(config_object=Config):
     register_commands(app)
     register_signals(app)
     register_maintenance_middleware(app)
+
+    # Auto-clear maintenance after successful update (all update types)
+    if rds.get("bayanat:maintenance:auto_clear"):
+        disable_maintenance()
+        rds.delete("bayanat:maintenance:auto_clear")
 
     return app
 
@@ -284,7 +290,7 @@ def handle_uncaught_exception(e):
         error message
     """
     from werkzeug.exceptions import HTTPException
-    from flask import request, current_app
+    from flask import request
     from flask_security.decorators import current_user
 
     if isinstance(e, HTTPException) and e.code < 500:
