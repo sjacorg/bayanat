@@ -1,7 +1,10 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func, text, select
+from sqlalchemy import or_, not_, and_, func, text, select, literal_column, bindparam
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from sqlalchemy import String, Integer, DateTime
+from sqlalchemy.dialects.postgresql import ARRAY
+from datetime import datetime, time
 
 from enferno.extensions import db
 from enferno.admin.models import (
@@ -21,7 +24,12 @@ from enferno.admin.models import (
     ActorProfile,
     Activity,
 )
+from enferno.admin.models.DynamicField import DynamicField
 from enferno.user.models import Role
+from enferno.utils.logging_utils import get_logger
+
+
+logger = get_logger()
 
 
 # helper methods
@@ -140,6 +148,185 @@ class SearchUtils:
     def build_activity_query(self):
         """Build a query for the activity model."""
         return self.activity_query(self.search)
+
+    def _validate_dynamic_field_name(self, field_name: str, searchable_meta: dict) -> str:
+        """
+        Validate and sanitize a dynamic field name for SQL usage.
+
+        This acts as a security barrier ensuring field names are safe SQL identifiers.
+        Returns the validated field name or None if invalid.
+        """
+        if not field_name or field_name not in searchable_meta:
+            return None
+        # Ensure field name contains only safe characters (alphanumeric + underscore)
+        if not field_name.replace("_", "").isalnum():
+            return None
+        return field_name
+
+    def _apply_dynamic_field_filters(self, conditions: list, q: dict, entity_type: str):
+        """
+        Apply dynamic field filters to search conditions.
+
+        Args:
+            conditions: List of conditions to append to
+            q: Search query dictionary
+            entity_type: Entity type ('bulletin', 'incident', 'actor')
+        """
+        # Dynamic custom fields
+        # Accept a permissive list of dicts under key "dyn"
+        # Example: {"name": "case_number", "op": "contains", "value": "2024-"}
+        try:
+            dyn_filters = q.get("dyn", []) or []
+            if isinstance(dyn_filters, list) and dyn_filters:
+                # Preload searchable field meta for the entity type
+                searchable_meta = {
+                    f.name: f
+                    for f in db.session.query(DynamicField)
+                    .filter(
+                        DynamicField.entity_type == entity_type,
+                        DynamicField.active.is_(True),
+                        DynamicField.searchable.is_(True),
+                    )
+                    .all()
+                }
+
+                def _coerce_text(raw):
+                    if raw is None:
+                        return ""
+                    return str(raw).strip()
+
+                def _normalize_select_values(raw):
+                    if raw is None:
+                        return []
+                    if isinstance(raw, (list, tuple, set)):
+                        return [str(v).strip() for v in raw if v is not None and str(v).strip()]
+                    text_value = _coerce_text(raw)
+                    return [text_value] if text_value else []
+
+                for item in dyn_filters:
+                    if not isinstance(item, dict):
+                        logger.warning("dyn filter skipped: invalid item", extra={"item": item})
+                        continue
+
+                    # Validate and sanitize field name (acts as security barrier for CodeQL)
+                    raw_name = item.get("name")
+                    name = self._validate_dynamic_field_name(raw_name, searchable_meta)
+                    if not name:
+                        logger.warning(
+                            "dyn filter skipped: invalid dynamic field name",
+                            extra={"field_name": raw_name},
+                        )
+                        continue
+
+                    op = (item.get("op") or "eq").lower()
+                    value = item.get("value")
+                    df = searchable_meta[name]
+                    # Skip SQLAlchemy column check - use raw SQL for dynamic fields
+                    # This avoids issues with dynamic columns not being in the model metadata
+
+                    # Contains for TEXT and LONG_TEXT fields
+                    if (
+                        df.field_type
+                        in (
+                            DynamicField.TEXT,
+                            DynamicField.LONG_TEXT,
+                        )
+                        and op == "contains"
+                    ):
+                        value_str = _coerce_text(value)
+                        if value_str:
+                            param_key = f"{name}_contains_{len(conditions)}"
+                            conditions.append(
+                                literal_column(name, type_=String()).ilike(
+                                    bindparam(param_key, f"%{value_str}%")
+                                )
+                            )
+                        continue
+
+                    # NUMBER equality
+                    if df.field_type == DynamicField.NUMBER and op == "eq":
+                        try:
+                            num = int(value) if value is not None else None
+                            if num is not None:
+                                param_key = f"{name}_eq_{len(conditions)}"
+                                conditions.append(
+                                    literal_column(name, type_=Integer())
+                                    == bindparam(param_key, num)
+                                )
+                        except (TypeError, ValueError):
+                            logger.warning(
+                                "dyn filter number cast failed",
+                                extra={"field": name, "value": value},
+                            )
+                        continue
+
+                    # DATETIME between
+                    if df.field_type == DynamicField.DATETIME and op == "between":
+                        if isinstance(value, (list, tuple)) and len(value) >= 1:
+                            dates = [d for d in value[:2] if d]
+                            if dates:
+                                start_date = parse(dates[0]).date()
+                                end_date = parse(dates[1]).date() if len(dates) > 1 else start_date
+                                start_datetime = datetime.combine(start_date, time.min)
+                                end_datetime = datetime.combine(end_date, time.max)
+                                suffix = len(conditions)
+                                conditions.append(
+                                    literal_column(name, type_=DateTime()).between(
+                                        bindparam(f"{name}_start_{suffix}", start_datetime),
+                                        bindparam(f"{name}_end_{suffix}", end_datetime),
+                                    )
+                                )
+                        continue
+
+                    # SELECT field operations
+                    if df.field_type == DynamicField.SELECT:
+                        values = _normalize_select_values(value)
+                        array_col = literal_column(name, type_=ARRAY(String()))
+
+                        if op == "contains":
+                            lookup = values[0] if values else ""
+                            if lookup:
+                                param_key = f"{name}_contains_{len(conditions)}"
+                                conditions.append(
+                                    func.array_to_string(array_col, " ").ilike(
+                                        bindparam(param_key, f"%{lookup}%")
+                                    )
+                                )
+                        elif op == "eq":
+                            if values:
+                                param_key = f"{name}_eq_{len(conditions)}"
+                                conditions.append(
+                                    array_col.contains(
+                                        bindparam(param_key, [values[0]], type_=ARRAY(String()))
+                                    )
+                                )
+                        elif op == "any":
+                            if values:
+                                param_key = f"{name}_any_{len(conditions)}"
+                                conditions.append(
+                                    array_col.overlap(
+                                        bindparam(param_key, values, type_=ARRAY(String()))
+                                    )
+                                )
+                        elif op == "all":
+                            if values:
+                                param_key = f"{name}_all_{len(conditions)}"
+                                conditions.append(
+                                    array_col.contains(
+                                        bindparam(param_key, values, type_=ARRAY(String()))
+                                    )
+                                )
+                        continue
+
+                    # Fallback: log unsupported operator
+                    logger.warning(
+                        "dyn filter skipped: unsupported operator",
+                        extra={"field": name, "op": op, "field_type": df.field_type},
+                    )
+
+        except Exception as e:
+            # Fail-safe: dynamic filters should never break search
+            logger.warning("dyn filters evaluation failed", exc_info=e)
 
     def bulletin_query(self, q: dict):
         """Build a select statement for bulletin search"""
@@ -356,6 +543,9 @@ class SearchUtils:
                 conditions.extend(
                     [Bulletin.events.any(condition) for condition in event_conditions]
                 )
+
+        # Dynamic custom fields
+        self._apply_dynamic_field_filters(conditions, q, "bulletin")
 
         # Access Roles
         if roles := q.get("roles"):
@@ -902,6 +1092,9 @@ class SearchUtils:
                 path = f'$[*] ? (@.number like_regex "{number_value}" flag "i")'
                 conditions.append(func.jsonb_path_exists(Actor.id_number, path))
 
+        # Dynamic custom fields
+        self._apply_dynamic_field_filters(conditions, q, "actor")
+
         # Related to bulletin search
         if rel_to_bulletin := q.get("rel_to_bulletin"):
             bulletin = db.session.get(Bulletin, int(rel_to_bulletin))
@@ -1086,6 +1279,9 @@ class SearchUtils:
             conditions.append(
                 Incident.claimed_violations.any(ClaimedViolation.id.in_(claimed_violation_ids))
             )
+
+        # Dynamic custom fields
+        self._apply_dynamic_field_filters(conditions, q, "incident")
 
         # Relations
         if rel_to_bulletin := q.get("rel_to_bulletin"):

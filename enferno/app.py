@@ -279,8 +279,14 @@ def handle_uncaught_exception(e):
     if isinstance(e, HTTPException) and e.code < 500:
         return e.get_response()
 
+    # Avoid triggering DB access on failed transactions when logging user id
+    try:
+        uid = current_user.get_id() if current_user else None
+    except Exception:
+        uid = None
+
     logger.error(
-        f"user_id: {current_user.id if hasattr(current_user, 'id') else None} endpoint: {request.path if request else None}",
+        f"user_id: {uid} endpoint: {request.path if request else None}",
         exc_info=True,
     )
     return "Internal Server Error", 500

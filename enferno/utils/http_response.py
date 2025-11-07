@@ -1,6 +1,11 @@
 import json
+
+
 from typing import Any
 from flask import Response
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class HTTPResponse:
@@ -22,8 +27,9 @@ class HTTPResponse:
     def _json_error(message: str, status: int = 400, errors: Any = None) -> Response:
         """Standard JSON response for error."""
         response_data = {"message": message}
+        # Log errors but don't expose them to prevent information leakage
         if errors:
-            response_data["errors"] = errors
+            logger.error(f"Error details: {errors}")
         return Response(json.dumps(response_data), status=status, content_type="application/json")
 
     @staticmethod

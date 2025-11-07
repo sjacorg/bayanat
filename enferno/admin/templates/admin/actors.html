@@ -318,6 +318,7 @@
     <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
+    <script src="/static/js/mixins/form-builder-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -363,6 +364,7 @@
     <script src="/static/js/components/IdNumberDynamicField.js"></script>
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
+    <script src="/static/js/components/FieldRenderer.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/SnapshotDialog.js"></script>
@@ -396,7 +398,7 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [mediaMixin, globalMixin, relationsMixin],
+            mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin],
 
             data: () => ({
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
@@ -1463,7 +1465,7 @@
 
                 editItem(item) {
                     this.actorDrawer = false;
-
+                    this.fetchDynamicFields({ entityType: 'actor' });
                     this.fetchIdNumberTypes();
 
                     if (!item.id) {
@@ -1513,7 +1515,7 @@
 
 
                 confirmClose() {
-                    if (confirm(translations.confirm_)) {
+                    if (confirm(translations.areYouSure_)) {
                         this.close();
                     }
                 },
@@ -1693,6 +1695,7 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('ReadMore', ReadMore);
+        app.component('FieldRenderer', FieldRenderer);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);
