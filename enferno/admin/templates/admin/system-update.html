@@ -358,8 +358,8 @@
                 api.post('/admin/api/system/update', {
                     skip_backup: false
                 }).then(response => {
-                    // Start polling for update status
-                    this.pollUpdateStatus();
+                    // Redirect to maintenance page (will auto-clear when update completes)
+                    window.location.href = '/maintenance';
                 }).catch(error => {
                     this.showSnack(error.response?.data?.message || "{{ _('Update failed') }}", 'error');
                     this.updating = false;
