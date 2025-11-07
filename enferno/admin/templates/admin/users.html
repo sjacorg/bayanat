@@ -918,12 +918,9 @@
 
                     this.saving = true;
 
-                    const payload = {...this.editedItem};
-                    if (payload.access_roles) delete payload.access_roles; // 👈 TODO: Remove this line once it's supported by backend
-
                     // edit mode
                     if (payload.id) {
-                        api.put(`/admin/api/user/`, {item: payload}, { suppressGlobalErrorHandler: true })
+                        api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
