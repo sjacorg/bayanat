@@ -1,40 +1,87 @@
+const actionSections = {
+  suspend: {
+    title: (name) => `You're about to suspend the account for user \"${name}\"`,
+    confirmationText: (name) => `By entering your password, you will confirm the suspend action for user \"${name}\"`,
+    acceptButtonText: "Suspend Account",
+    acceptButtonColor: "warning",
+    blocks: [
+      { icon: "mdi-account-circle", title: "Intended for", description: "Temporary suspensions, such as during internal investigations or when the user is on leave." },
+      { icon: "mdi-account-key", title: "Roles and Access Removal", bullets: ["The user will no longer be able to log in to Bayanat.", "Their system roles, access permissions, and assigned items will remain unchanged."] },
+    ],
+  },
+  reactivate: {
+    title: (name) => `You're about to reactivate user \"${name}\"`,
+    confirmationText: (name) => `By entering your password, you will confirm the reactivation for user \"${name}\"`,
+    acceptButtonText: "Reactivate Account",
+    acceptButtonColor: "success",
+    blocks: [
+      { icon: "mdi-account", title: "Roles and Access Restoration", bullets: ["Previous system roles and access permissions will be restored.", "User can log in to Bayanat and perform actions allowed by their roles."] },
+      { icon: "mdi-key", title: "Profile and Contributions", bullets: ["The user will be able to view and edit items they previously had access to."] },
+    ],
+  },
+  disable: {
+    title: (name) => `You're about to disable the account for user \"${name}\"`,
+    confirmationText: (name) => `By entering your password, you will confirm the disable action for user \"${name}\"`,
+    acceptButtonText: "Disable Account",
+    acceptButtonColor: "error",
+    blocks: [
+      { icon: "mdi-account-circle", title: "Intended for", description: "Permanently ending a user's access to Bayanat, such as when they leave the organization." },
+      { icon: "mdi-account-key", title: "Roles and Access Removal", bullets: ["The user will no longer be able to log in to Bayanat.", "All system roles and access permissions will be removed.", "Items assigned to the user will be unassigned and available for reassignment."] },
+      { icon: "mdi-briefcase-clock-outline", title: "Profile and Contributions", bullets: ["The user's profile will be retained for archival purposes.", "Items created or updated by the user will remain in Bayanat.", "Activity history will continue to reflect the user's contributions."] },
+    ],
+  },
+  enable: {
+    title: (name) => `You're about to enable the account for user \"${name}\"`,
+    confirmationText: (name) => `By entering your password, you will confirm enabling the account for user \"${name}\"`,
+    acceptButtonText: "Enable Account",
+    acceptButtonColor: "success",
+    blocks: [
+      { icon: "mdi-account", title: "Roles and Access Restoration", bullets: ["The user will be able to log in once a system role is assigned.", "User can use their existing password to access Bayanat."] },
+      { icon: "mdi-key", title: "Profile and Contributions", bullets: ["The user's previous profile and contributions remain intact."] },
+    ],
+  },
+}
+
 const UserCard = Vue.defineComponent({
   props: ['user', 'closable'],
   emits: ['close', 'edit', 'resetPassword', 'revoke2fa', 'logoutAll', 'changePassword'],
-  watch: {
-    user: function (val, old) {
-      this.resetSessions();
-      this.fetchSessions();
-    },
+  components: { ConfirmDialog },
+  data() {
+    return {
+      translations: window.translations,
+      show: false,
+      sessions: [],
+      page: 1,
+      perPage: 5,
+      more: true,
+      actionSections,
+    };
   },
   computed: {
+    isUserSuspended() {
+      return !this.user.active && !this.user?.deleted;
+    },
+    isUserDisabled() {
+      return !this.user.active && this.user?.deleted;
+    },
+    isUserEnabled() {
+      return !this.user?.deleted;
+    },
     permissions() {
-      return [
-        {
-          value: this.user.view_usernames,
-          label: this.user.view_usernames ? this.translations.canViewUsernames_ : this.translations.cannotViewUsernames_
-        },
-        {
-          value: this.user.view_simple_history,
-          label: this.user.view_simple_history ? this.translations.canViewSimpleHistory_ : this.translations.cannotViewSimpleHistory_
-        },
-        {
-          value: this.user.view_full_history,
-          label: this.user.view_full_history ? this.translations.canViewFullHistory_ : this.translations.cannotViewFullHistory_
-        },
-        {
-          value: this.user.can_edit_locations,
-          label: this.user.can_edit_locations ? this.translations.canEditLocations_ : this.translations.cannotEditLocations_
-        },
-        {
-          value: this.user.can_export,
-          label: this.user.can_export ? this.translations.canExport_ : this.translations.cannotExport_
-        },
-        {
-          value: this.user.can_self_assign,
-          label: this.user.can_self_assign ? this.translations.canSelfAssign_ : this.translations.cannotSelfAssign_
-        }
+      // [permissionKey, translationIfAllowed, translationIfDenied]
+      const rows = [
+        ['view_usernames', 'canViewUsernames_', 'cannotViewUsernames_'],
+        ['view_simple_history', 'canViewSimpleHistory_', 'cannotViewSimpleHistory_'],
+        ['view_full_history', 'canViewFullHistory_', 'cannotViewFullHistory_'],
+        ['can_edit_locations', 'canEditLocations_', 'cannotEditLocations_'],
+        ['can_export', 'canExport_', 'cannotExport_'],
+        ['can_self_assign', 'canSelfAssign_', 'cannotSelfAssign_'],
       ];
+
+      return rows.map(([key, yes, no]) => ({
+        value: this.user[key],
+        label: this.user[key] ? this.translations[yes] : this.translations[no],
+      }));
     }
   },
   mounted() {
@@ -104,23 +151,67 @@ const UserCard = Vue.defineComponent({
       });
     },
     getTwoFactorDeviceMeta(device) {
-      if (device.type === 'authenticator') return { icon: 'mdi-lock-clock', color: 'success', text: device.name };
-      return { icon: 'mdi-lock-clock', color: 'success', text: device.name };
+      return { icon: device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive', color: 'success', text: device.name };
+    },
+    openAccountDialog(mode) {
+      this.$refs.accountActionDialog.show({
+        dialogProps: { width: 691 },
+        data: { mode },
+        acceptProps: { text: actionSections[mode].acceptButtonText, color: actionSections[mode].acceptButtonColor },
+        onAccept: async () => {
+          console.log(`${mode} account...`)
+        }
+      })
+    },
+
+    suspendAccount() {
+      this.openAccountDialog("suspend");
+    },
+    disableAccount() {
+      this.openAccountDialog("disable");
+    },
+    reactivateAccount() {
+      this.openAccountDialog("reactivate");
+    },
+    enableAccount() {
+      this.openAccountDialog("enable");
     },
   },
-
-  data: function () {
-    return {
-      translations: window.translations,
-      show: false,
-      sessions: [],
-      page: 1,
-      perPage: 5,
-      more: true,
-    };
+  watch: {
+    user(val, old) {
+      this.resetSessions();
+      this.fetchSessions();
+    },
   },
-
   template: `
+      <confirm-dialog ref="accountActionDialog">
+        <template #title="{ data }">
+          {{ actionSections[data.mode].title(user.name) }}
+        </template>
+        <template #default="{ data }">
+          <div class="text-body-2 mb-6 mt-3">What you should know</div>
+          <div class="d-flex flex-column ga-6">
+            <div v-for="(block, index) in actionSections[data.mode].blocks" :key="index" class="d-flex">
+              <v-avatar color="white">
+                <v-icon color="primary" size="x-large">{{ block.icon }}</v-icon>
+              </v-avatar>
+    
+              <div class="ml-3">
+                <h4 class="text-primary">{{ block.title }}</h4>
+                <div v-if="block?.description" class="text-body-2">{{ block.description }}</div>
+                <ul v-if="block?.bullets" class="text-body-2 pl-5">
+                  <li v-for="(bullet, index) in block.bullets" :key="index">{{ bullet }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="text-body-2 mt-6">
+            {{ actionSections[data.mode].confirmationText(user.name) }}
+            <v-text-field variant="filled" class="mt-3"></v-text-field>
+          </div>
+        </template>
+      </confirm-dialog>
+
       <v-card class="mx-auto">
         <v-sheet class="px-6 py-5 d-flex align-center">
           <v-toolbar-title>
@@ -152,7 +243,7 @@ const UserCard = Vue.defineComponent({
               </div>
 
               <v-chip
-                v-if="user.force_reset"
+                v-if="user.force_reset && isUserEnabled"
                 color="error"
                 variant="text"
                 class="font-weight-medium"
@@ -162,74 +253,76 @@ const UserCard = Vue.defineComponent({
               </v-chip>
   
               <div class="d-flex justify-space-between ga-2 align-center">
-                <v-tooltip
-                  location="bottom"
-                  :text="user.force_reset ? translations.passwordResetAlreadyRequested_ : translations.forcePasswordReset_"
-                >
-                  <template #activator="{props}">
-                    <div v-bind="props">
-                      <v-btn
-                        :disabled="user.force_reset != null"
-                        color="error"
-                        density="comfortable"
-                        icon="mdi-lock-reset"
-                        @click="$emit('resetPassword', user)"
-                      ></v-btn>
-                    </div>
-                  </template>
-                </v-tooltip>
+                <template v-if="isUserEnabled">
+                  <v-tooltip
+                    location="bottom"
+                    :text="user.force_reset ? translations.passwordResetAlreadyRequested_ : translations.forcePasswordReset_"
+                  >
+                    <template #activator="{props}">
+                      <div v-bind="props">
+                        <v-btn
+                          :disabled="user.force_reset != null"
+                          color="error"
+                          density="comfortable"
+                          icon="mdi-lock-reset"
+                          @click="$emit('resetPassword', user)"
+                        ></v-btn>
+                      </div>
+                    </template>
+                  </v-tooltip>
 
-                <v-tooltip
-                  location="bottom"
-                  :text="translations.changePassword_"
-                >
-                  <template #activator="{props}">
-                    <div v-bind="props">
-                      <v-btn
-                        :disabled="user.force_reset != null"
-                        color="warning"
-                        density="comfortable"
-                        icon="mdi-form-textbox-password"
-                        @click="$emit('changePassword', user)"
-                      ></v-btn>
-                    </div>
-                  </template>
-                </v-tooltip>
+                  <v-tooltip
+                    location="bottom"
+                    :text="translations.changePassword_"
+                  >
+                    <template #activator="{props}">
+                      <div v-bind="props">
+                        <v-btn
+                          :disabled="user.force_reset != null"
+                          color="warning"
+                          density="comfortable"
+                          icon="mdi-form-textbox-password"
+                          @click="$emit('changePassword', user)"
+                        ></v-btn>
+                      </div>
+                    </template>
+                  </v-tooltip>
 
-                <v-tooltip
-                  v-if="user.two_factor_devices && user.two_factor_devices.length > 0"
-                  location="bottom"
-                  :text="translations.revoke2fa_"
-                >
-                  <template #activator="{props}">
-                    <div v-bind="props">
-                      <v-btn
-                        
-                        @click.stop="$emit('revoke2fa', user.id)"
-                        variant="outlined"
-                        color="warning"
-                        density="comfortable"
-                        icon="mdi-lock-remove"
-                      ></v-btn>
-                    </div>
-                  </template>
-                </v-tooltip>
+                  <v-tooltip
+                    v-if="user.two_factor_devices && user.two_factor_devices.length > 0"
+                    location="bottom"
+                    :text="translations.revoke2fa_"
+                  >
+                    <template #activator="{props}">
+                      <div v-bind="props">
+                        <v-btn
+                          
+                          @click.stop="$emit('revoke2fa', user.id)"
+                          variant="outlined"
+                          color="warning"
+                          density="comfortable"
+                          icon="mdi-lock-remove"
+                        ></v-btn>
+                      </div>
+                    </template>
+                  </v-tooltip>
 
-                <v-tooltip
-                  location="bottom"
-                  :text="translations.editUser_"
-                >
-                  <template #activator="{props}">
-                    <div v-bind="props">
-                      <v-btn
-                        variant="outlined"
-                        density="comfortable"
-                        icon="mdi-pencil"
-                        @click="$emit('edit', user)"
-                      ></v-btn>
-                    </div>
-                  </template>
-                </v-tooltip>
+                  <v-tooltip
+                    location="bottom"
+                    :text="translations.editUser_"
+                  >
+                    <template #activator="{props}">
+                      <div v-bind="props">
+                        <v-btn
+                          variant="outlined"
+                          density="comfortable"
+                          icon="mdi-pencil"
+                          @click="$emit('edit', user)"
+                        ></v-btn>
+                      </div>
+                    </template>
+                  </v-tooltip>
+                </template>
 
                 <v-btn v-if="closable" size="small" variant="flat" icon="mdi-close" @click="$emit('close')"></v-btn>
               </div>
@@ -238,7 +331,7 @@ const UserCard = Vue.defineComponent({
         </v-sheet>
         <v-divider></v-divider>
 
-        <v-card variant="flat">
+        <v-card v-if="isUserEnabled" variant="flat">
           <v-card-text class="px-6">
             <v-row>
               <v-col cols="12" sm="6" md="4">
@@ -310,7 +403,7 @@ const UserCard = Vue.defineComponent({
           </v-card-text>
         </v-card>
 
-        <v-card variant="flat">
+        <v-card v-if="isUserEnabled" variant="flat">
           <v-card-text class="px-6">
             <div class="mb-3 text-body-1">{{ translations.userPermissions_ }}</div>
             <div class="d-flex flex-wrap ga-3">
@@ -330,15 +423,15 @@ const UserCard = Vue.defineComponent({
           <v-card-text class="px-6">
             <div class="mb-3 text-body-1">{{ translations.manageAccount_ }}</div>
             <div class="d-flex flex-wrap ga-3">
-              <v-btn>{{ translations.reactivateAccount_ }}</v-btn>
-              <v-btn>{{ translations.suspendAccount_ }}</v-btn>
-              <v-btn>{{ translations.enableAccount_ }}</v-btn>
-              <v-btn>{{ translations.disableAccount_ }}</v-btn>
+              <v-btn v-if="isUserSuspended" @click="reactivateAccount()" variant="outlined" color="success" prepend-icon="mdi-play-circle">{{ translations.reactivateAccount_ }}</v-btn>
+              <v-btn v-if="!isUserSuspended" @click="suspendAccount()" variant="outlined" color="warning" prepend-icon="mdi-pause-circle">{{ translations.suspendAccount_ }}</v-btn>
+              <v-btn v-if="isUserDisabled" @click="enableAccount()" variant="outlined" color="success" prepend-icon="mdi-arrow-down-thin-circle-outline">{{ translations.enableAccount_ }}</v-btn>
+              <v-btn v-if="!isUserDisabled" @click="disableAccount()" variant="outlined" color="error" prepend-icon="mdi-minus-circle">{{ translations.disableAccount_ }}</v-btn>
             </div>
           </v-card-text>
         </v-card>
 
-        <v-card class="mt-2" variant="flat">
+        <v-card v-if="isUserEnabled" class="mt-2" variant="flat">
           <v-card-text class="px-6">
             <div class="d-flex justify-space-between align-center mb-2">
               <div class="text-body-1">{{ translations.userSessions_ }}</div>
