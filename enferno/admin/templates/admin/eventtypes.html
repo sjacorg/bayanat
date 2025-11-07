@@ -212,7 +212,7 @@
                     {title: "{{_('For Actors')}}", value: "for_actor"},
                     {title: "{{_('For Bulletins')}}", value: "for_bulletin"},
                     {title: "{{_('Comments')}}", value: "comments"},
-                    {% if current_user.roles_in(['Admin','Mod']) %}
+                    {% if current_user.roles_in(['Admin','Moderator']) %}
                         {title: "{{_('Actions')}}", value: "action", sortable: false}
                     {% endif %}
                 ],
