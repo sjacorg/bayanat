@@ -55,6 +55,8 @@ const UserCard = Vue.defineComponent({
       perPage: 5,
       more: true,
       actionSections,
+      showPassword: false,
+      password: '',
     };
   },
   computed: {
@@ -159,7 +161,14 @@ const UserCard = Vue.defineComponent({
         data: { mode },
         acceptProps: { text: actionSections[mode].acceptButtonText, color: actionSections[mode].acceptButtonColor },
         onAccept: async () => {
-          console.log(`${mode} account...`)
+          await api.post(`/admin/api/user/${this.user.id}/${mode}`, { password: this.password });
+          await this.$root.refreshUser(this.user.id);
+          this.showPassword = false;
+          this.password = '';
+        },
+        onReject() {
+          this.showPassword = false;
+          this.password = '';
         }
       })
     },
@@ -184,7 +193,7 @@ const UserCard = Vue.defineComponent({
     },
   },
   template: `
-      <confirm-dialog ref="accountActionDialog">
+      <confirm-dialog ref="accountActionDialog" :disabled-accept="!password">
         <template #title="{ data }">
           {{ actionSections[data.mode].title(user.name) }}
         </template>
@@ -207,7 +216,15 @@ const UserCard = Vue.defineComponent({
           </div>
           <div class="text-body-2 mt-6">
             {{ actionSections[data.mode].confirmationText(user.name) }}
-            <v-text-field variant="filled" class="mt-3"></v-text-field>
+            <v-text-field
+              v-model="password"
+              label="Confirm with your password"
+              :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              :type="showPassword ? 'text' : 'password'"
+              @click:append-inner="showPassword = !showPassword"
+              variant="filled"
+              class="mt-3"
+            ></v-text-field>
           </div>
         </template>
       </confirm-dialog>
