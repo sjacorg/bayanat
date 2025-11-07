@@ -303,7 +303,7 @@ const UserCard = Vue.defineComponent({
                   >
                     <v-icon start size="large">mdi-lock-open-alert</v-icon>
                     {{ translations.twoFaInactive_ }}
-                  </div>
+                  </v-chip>
                 </div>
               </v-col>
             </v-row>
