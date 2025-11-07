@@ -1,4 +1,10 @@
 const ConfirmDialog = Vue.defineComponent({
+  props: {
+    disabledAccept: {
+      type: Boolean,
+      default: false,
+    }
+  },
   data() {
     return {
       translations: window.translations,
@@ -107,9 +113,10 @@ const ConfirmDialog = Vue.defineComponent({
             </v-btn>
 
             <v-btn
-              :loading="loading"
-              @click="ok"
               v-bind="acceptProps"
+              :loading="loading"
+              :disabled="disabledAccept || acceptProps.disabled"
+              @click="ok"
             >
               {{ acceptProps.text }}
             </v-btn>
