@@ -245,7 +245,7 @@ def ctx() -> dict:
 
 # Labels routes
 @admin.route("/labels/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def labels() -> str:
     """
     Endpoint to render the labels backend page.
@@ -312,7 +312,7 @@ def api_labels() -> Response:
 
 
 @admin.post("/api/label/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(LabelRequestModel)
 def api_label_create(
     validated_data: dict,
@@ -342,7 +342,7 @@ def api_label_create(
 
 
 @admin.put("/api/label/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(LabelRequestModel)
 def api_label_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -418,7 +418,7 @@ def api_label_import() -> str:
 
 # EventType routes
 @admin.route("/eventtypes/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def eventtypes() -> str:
     """
     Endpoint to render event types backend
@@ -462,7 +462,7 @@ def api_eventtypes() -> Response:
 
 
 @admin.post("/api/eventtype/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(EventtypeRequestModel)
 def api_eventtype_create(
     validated_data: dict,
@@ -495,7 +495,7 @@ def api_eventtype_create(
 
 
 @admin.put("/api/eventtype/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(EventtypeRequestModel)
 def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -609,7 +609,7 @@ def api_potentialviolations(page: int) -> Response:
 
 
 @admin.post("/api/potentialviolation/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(PotentialViolationRequestModel)
 def api_potentialviolation_create(
     validated_data: dict,
@@ -642,7 +642,7 @@ def api_potentialviolation_create(
 
 
 @admin.put("/api/potentialviolation/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(PotentialViolationRequestModel)
 def api_potentialviolation_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -755,7 +755,7 @@ def api_claimedviolations(page: int) -> Response:
 
 
 @admin.post("/api/claimedviolation/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(ClaimedViolationRequestModel)
 def api_claimedviolation_create(
     validated_data: dict,
@@ -788,7 +788,7 @@ def api_claimedviolation_create(
 
 
 @admin.put("/api/claimedviolation/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(ClaimedViolationRequestModel)
 def api_claimedviolation_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -873,7 +873,7 @@ def api_claimedviolation_import() -> Response:
 
 # Sources routes
 @admin.route("/sources/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def sources() -> str:
     """
     Endpoint to render sources backend page.
@@ -921,7 +921,7 @@ def api_sources() -> Response:
 
 
 @admin.post("/api/source/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(SourceRequestModel)
 def api_source_create(
     validated_data: dict,
@@ -953,7 +953,7 @@ def api_source_create(
 
 
 @admin.put("/api/source/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(SourceRequestModel)
 def api_source_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -1041,7 +1041,7 @@ def api_source_import() -> Response:
 
 @admin.route("/locations/", defaults={"id": None})
 @admin.route("/locations/<int:id>")
-@roles_accepted("Admin", "Mod", "DA")
+@roles_accepted("Admin", "Moderator", "Analyst")
 def locations(id: Optional[t.id]) -> str:
     """
     Endpoint for locations management.
@@ -1090,7 +1090,7 @@ def api_locations(validated_data: dict) -> Response:
 
 
 @admin.post("/api/location/")
-@roles_accepted("Admin", "Mod", "DA")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(LocationRequestModel)
 def api_location_create(
     validated_data: dict,
@@ -1104,7 +1104,7 @@ def api_location_create(
     Returns:
         - success/error string based on the operation result.
     """
-    if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
+    if not current_user.roles_in(["Admin", "Moderator"]) and not current_user.can_edit_locations:
         return HTTPResponse.forbidden("User not allowed to create Locations")
 
     location = Location()
@@ -1127,7 +1127,7 @@ def api_location_create(
 
 
 @admin.put("/api/location/<int:id>")
-@roles_accepted("Admin", "Mod", "DA")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(LocationRequestModel)
 def api_location_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -1140,7 +1140,7 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
+    if not current_user.roles_in(["Admin", "Moderator"]) and not current_user.can_edit_locations:
         return HTTPResponse.forbidden("User not allowed to create Locations")
 
     location = Location.query.get(id)
@@ -3280,7 +3280,7 @@ def api_bulletins(validated_data: dict) -> Response:
 
 
 @admin.post("/api/bulletin/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @can_assign_roles
 @validate_with(BulletinRequestModel)
 def api_bulletin_create(
@@ -3327,7 +3327,7 @@ def api_bulletin_create(
 
 
 @admin.put("/api/bulletin/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(BulletinRequestModel)
 def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -3397,7 +3397,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review bulletin endpoint
 @admin.put("/api/bulletin/review/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(BulletinReviewRequestModel)
 def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -3476,7 +3476,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
 
 # bulk update bulletin endpoint
 @admin.put("/api/bulletin/bulk/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(BulletinBulkUpdateRequestModel)
 def api_bulletin_bulk_update(
     validated_data: dict,
@@ -3624,7 +3624,7 @@ def api_bulletin_import() -> Response:
 
 
 @admin.put("/api/bulletin/assign/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(BulletinSelfAssignRequestModel)
 def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3690,7 +3690,7 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.put("/api/actor/assign/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorSelfAssignRequestModel)
 def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3747,7 +3747,7 @@ def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.put("/api/incident/assign/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(IncidentSelfAssignRequestModel)
 def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3811,7 +3811,7 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.post("/api/media/chunk")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 def api_medias_chunk() -> Response:
     """
     Endpoint for uploading media files based on file system settings.
@@ -3931,7 +3931,7 @@ def api_medias_chunk() -> Response:
 
 
 @admin.post("/api/media/upload/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 def api_medias_upload() -> Response:
     """
     Endpoint to upload screenshots based on file system settings.
@@ -4126,7 +4126,7 @@ def api_local_serve_media(
 
 
 @admin.post("/api/inline/upload")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 def api_inline_medias_upload() -> Response:
     """
     Endpoint to upload inline media files.
@@ -4167,7 +4167,7 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 
 @admin.put("/api/media/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(MediaRequestModel)
 def api_media_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4372,7 +4372,7 @@ def api_actors(validated_data: dict) -> Response:
 
 # create actor endpoint
 @admin.post("/api/actor/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorRequestModel)
 @can_assign_roles
 def api_actor_create(
@@ -4418,7 +4418,7 @@ def api_actor_create(
 
 # update actor endpoint
 @admin.put("/api/actor/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorRequestModel)
 def api_actor_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4492,7 +4492,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review actor endpoint
 @admin.put("/api/actor/review/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorReviewRequestModel)
 def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4558,7 +4558,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
 
 # bulk update actor endpoint
 @admin.put("/api/actor/bulk/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(ActorBulkUpdateRequestModel)
 def api_actor_bulk_update(
     validated_data: dict,
@@ -4887,7 +4887,7 @@ def api_userhistory(userid: t.id) -> Response:
 
 
 @admin.route("/api/users/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def api_users() -> Response:
     """
     API endpoint to feed users data in json format , supports paging and search.
@@ -5637,7 +5637,7 @@ def api_role_update(id: t.id, validated_data: dict) -> Response:
     if role is None:
         return HTTPResponse.not_found("Role not found")
 
-    if role.name in ["Admin", "Mod", "DA"]:
+    if role.name in ["Admin", "Moderator", "Analyst"]:
         return HTTPResponse.forbidden("Cannot edit System Roles")
 
     role = role.from_json(validated_data["item"])
@@ -5669,7 +5669,7 @@ def api_role_delete(
         return HTTPResponse.not_found("Role not found")
 
     # forbid deleting system roles
-    if role.name in ["Admin", "Mod", "DA"]:
+    if role.name in ["Admin", "Moderator", "Analyst"]:
         return HTTPResponse.forbidden("Cannot delete System Roles")
     # forbid delete roles assigned to restricted items
     if role.bulletins.first() or role.actors.first() or role.incidents.first():
@@ -5876,7 +5876,7 @@ def api_incidents(validated_data: dict) -> Response:
 
 
 @admin.post("/api/incident/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @can_assign_roles
 @validate_with(IncidentRequestModel)
 def api_incident_create(
@@ -5926,7 +5926,7 @@ def api_incident_create(
 
 # update incident endpoint
 @admin.put("/api/incident/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(IncidentRequestModel)
 def api_incident_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -6002,7 +6002,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review incident endpoint
 @admin.put("/api/incident/review/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(IncidentReviewRequestModel)
 def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -6067,7 +6067,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
 
 # bulk update incident endpoint
 @admin.put("/api/incident/bulk/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(IncidentBulkUpdateRequestModel)
 def api_incident_bulk_update(
     validated_data: dict,
@@ -6282,7 +6282,7 @@ def api_activities(validated_data: dict) -> Response:
 
 
 @admin.route("/api/bulk/status/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def bulk_status() -> Response:
     """Endpoint to get status update about background bulk operations."""
     uid = current_user.id
@@ -6793,7 +6793,7 @@ def api_mark_all_notifications_read():
 
 
 @admin.post("/api/bulletin/web")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(WebImportValidationModel)
 def api_bulletin_web_import(validated_data: dict) -> Response:
     """Import bulletin from web URL"""
