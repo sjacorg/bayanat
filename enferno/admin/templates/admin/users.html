@@ -477,6 +477,7 @@
 
         const app = createApp({
             delimiters: delimiters,
+            mixins: [globalMixin],
             data: () => ({
                 dialog: dialog,
                 loading: true,
@@ -539,9 +540,6 @@
                     { name: 'Inactive', value: 'false' },
                 ],
             }),
-
-            mixins: [globalMixin],
-
             computed: {
                 editedUserHasAdminRole() {
                     return this.editedItem?.roles?.some(role => role?.id === this.adminRoleId) ?? false;
@@ -595,7 +593,6 @@
 
             },
             mounted() {
-
                 if (this.$route.params.id) {
                     this.showUser(this.$route.params.id);
                 }
