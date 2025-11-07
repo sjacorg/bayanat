@@ -64,9 +64,10 @@
                         <h1 class="text-h5 mb-5">{{ _('System Update') }}</h1>
                         <div class="d-flex align-center ga-2 mb-2">
                             <span>Bayanat ${latestVersion}</span>
-                            <v-chip v-if="isUpToDate" color="success" variant="flat">{{ _('Up to date') }}</v-chip>
-                            <v-chip v-else color="warning" variant="flat">{{ _('Update available') }}</v-chip>
+                            <v-chip v-if="isUpToDate" color="success" prepend-icon="mdi-check" variant="flat">{{ _('Up to date') }}</v-chip>
+                            <v-chip v-else color="warning" prepend-icon="mdi-download" variant="flat">{{ _('Update available') }}</v-chip>
                         </div>
+                        
                         <template v-if="isUpToDate">
                             <div class="text-body-2 mb-2 font-weight-medium">{{ _('Your system is on the latest version of Bayanat') }}</div>
                             <div class="text-body-2 mb-2">{{ _('Last successful check for updates:') }}<span class="ml-1">${lastCheckTime}</span></div>
@@ -146,7 +147,7 @@
                 <div class="d-flex align-center justify-space-between mb-2">
                     <div>
                         <h1 class="text-h5 mb-5">{{ _('Release Notes') }}</h1>
-                        <h2>Bayanat ${latestVersion}</h2>
+                        <h2>Bayanat ${releaseNotes.version}</h2>
                     </div>
                     <div>
                         <v-btn href="https://github.com/sjacorg/bayanat/releases" target="_blank" variant="plain" append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>
@@ -457,5 +458,6 @@
 
     app.component('ShowDetails', ShowDetails);
     app.use(vuetify).mount('#app');
+    window.app = app;
 </script>
 {% endblock %}
