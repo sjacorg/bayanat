@@ -138,5 +138,9 @@
             &copy; {{ current_year }} Bayanat | {{ _('Maintenance in Progress') }}
         </div>
     </div>
+    <script>
+        // Auto-refresh to check if maintenance cleared
+        setInterval(() => window.location.reload(), 10000);
+    </script>
 </body>
 </html> 
