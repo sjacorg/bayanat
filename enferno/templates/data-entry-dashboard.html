@@ -1,0 +1,54 @@
+{% extends 'data-entry-layout.html' %} {% block content %}
+
+<v-main class="">
+  <v-container fluid>
+    <v-card class="pa-2 overflow-y-auto d-flex flex-column" height="calc(100vh - 96px)">
+      <v-container class="text-center" max-width="702">
+        <v-card-title class="text-h5 font-weight-bold pb-1">
+          {{ _('Data Entry Portal') }}
+        </v-card-title>
+        <v-card-subtitle>
+          {{ _('Enter information about a person, organization, or document to contribute new data to Bayanat.') }}
+        </v-card-subtitle>
+      </v-container>
+
+      <v-divider class="mt-5 mb-6"></v-divider>
+
+      <v-card-text>
+        <v-container max-width="702">
+          <div class="text-h6 mb-2">{{ _('Start new entry for') }}:</div>
+          <v-select
+            label="Select data type"
+            :items="[{title: 'Actor', value: 'actor'}, {title: 'Organization', value: 'organization' }, {title: 'Document (Bulletin)', value: 'document'}]"
+          ></v-select>
+          <div class="d-flex mt-2">
+            <v-spacer></v-spacer>
+            <v-btn disabled color="primary">
+              {{ _('Continue') }}
+            </v-btn>
+          </div>
+        </v-container>
+      </v-card-text>
+    </v-card>
+  </v-container>
+</v-main>
+
+{% endblock %} {% block js %}
+<script type="module">
+  const {createApp} = Vue;
+  const {createVuetify} = Vuetify;
+
+  const vuetify = createVuetify(vuetifyConfig);
+
+  const app = createApp({
+      delimiters: ['${', '}'],
+      mixins: [globalMixin],
+      data: () => ({
+          drawer: false,
+      }),
+      methods: {},
+  });
+
+  app.use(vuetify).mount('#app');
+</script>
+{% endblock %}
