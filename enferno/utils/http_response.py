@@ -24,12 +24,18 @@ class HTTPResponse:
         return Response(json.dumps(response_data), status=status, content_type="application/json")
 
     @staticmethod
-    def _json_error(message: str, status: int = 400, errors: Any = None) -> Response:
+    def _json_error(
+        message: str, status: int = 400, errors: Any = None, expose_errors: bool | None = None
+    ) -> Response:
         """Standard JSON response for error."""
         response_data = {"message": message}
-        # Log errors but don't expose them to prevent information leakage
+        should_expose = expose_errors if expose_errors is not None else status < 500
         if errors:
-            logger.error(f"Error details: {errors}")
+            if should_expose:
+                response_data["errors"] = errors
+            else:
+                # Log errors we are not sending to the client to aid troubleshooting
+                logger.error("Error details: %s", errors)
         return Response(json.dumps(response_data), status=status, content_type="application/json")
 
     @staticmethod
@@ -45,9 +51,11 @@ class HTTPResponse:
         return HTTPResponse._json_response(data, message, 201)
 
     @staticmethod
-    def error(message: str, status: int = 400, errors: Any = None) -> Response:
+    def error(
+        message: str, status: int = 400, errors: Any = None, expose_errors: bool | None = None
+    ) -> Response:
         """Error response with custom status"""
-        return HTTPResponse._json_error(message, status, errors)
+        return HTTPResponse._json_error(message, status, errors, expose_errors)
 
     @staticmethod
     def not_found(message: str = "Not found") -> Response:
