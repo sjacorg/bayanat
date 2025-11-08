@@ -184,8 +184,7 @@ class User(UserMixin, db.Model, BaseMixin):
     @property
     def is_active(self):
         """User is active only if active flag is True AND user has at least one role."""
-        # Require both active=True and at least one role
-        return self.active and len(self.roles) > 0
+        return self.active and bool(self.roles)
 
     # email confirmation
     confirmed_at = db.Column(db.DateTime())
