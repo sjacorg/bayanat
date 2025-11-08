@@ -173,6 +173,26 @@ class Notification(db.Model, BaseMixin):
         return notifications
 
     @staticmethod
+    def create_for_all_users(
+        title,
+        message,
+        category=NotificationCategories.ANNOUNCEMENT.value,
+        is_urgent=True,
+        send_email=False,
+    ):
+        """Create notifications for all users"""
+        users = db.session.scalars(select(User)).all()
+        notifications = []
+
+        for user in users:
+            notification = Notification.create_for_user(
+                user, title, message, category, is_urgent, send_email
+            )
+            notifications.append(notification)
+
+        return notifications
+
+    @staticmethod
     def send_notification_for_event(event, user, title, message, category=None, is_urgent=False):
         """Send notification to user based on event configuration"""
         config = get_notification_config(event)
@@ -186,6 +206,7 @@ class Notification(db.Model, BaseMixin):
                 is_urgent=is_urgent,
                 send_email=config.get("email", False),
             )
+        return None
 
     @staticmethod
     def send_admin_notification_for_event(event, title, message, category=None, is_urgent=False):
@@ -200,6 +221,24 @@ class Notification(db.Model, BaseMixin):
                 is_urgent=is_urgent,
                 send_email=config.get("email", True),  # Default to email for admin notifications
             )
+        return []
+
+    @staticmethod
+    def send_notification_to_all_users(event, title, message, category=None, is_urgent=False):
+        """Send notification to all users based on event configuration"""
+        config = get_notification_config(event)
+
+        if config.get("enabled", True):
+            return Notification.create_for_all_users(
+                title=title,
+                message=message,
+                category=category
+                or config.get("category", NotificationCategories.ANNOUNCEMENT.value),
+                is_urgent=is_urgent,
+                send_email=config.get("email", False),
+            )
+
+        return []
 
 
 def get_notification_config(event):
