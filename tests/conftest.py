@@ -210,8 +210,8 @@ def users(session):
     from enferno.admin.models import Activity
 
     admin_role = Role.query.filter(Role.name == "Admin").first()
-    da_role = Role.query.filter(Role.name == "DA").first()
-    mod_role = Role.query.filter(Role.name == "Mod").first()
+    da_role = Role.query.filter(Role.name == "Analyst").first()
+    mod_role = Role.query.filter(Role.name == "Moderator").first()
     admin_user = User(username="TestAdmin", password="password", active=1)
     admin_user.roles.append(admin_role)
     admin_user.name = "Admin"
@@ -223,7 +223,7 @@ def users(session):
     admin_user_sa.fs_uniquifier = uuid4().hex
     da_user = User(username="TestDA", password="password", active=1)
     da_user.roles.append(da_role)
-    da_user.name = "DA"
+    da_user.name = "Analyst"
     da_user.fs_uniquifier = uuid4().hex
     da_user_sa = User(username="TestDASA", password="password", active=1)
     da_user_sa.roles.append(da_role)
@@ -232,7 +232,7 @@ def users(session):
     da_user_sa.fs_uniquifier = uuid4().hex
     mod_user = User(username="TestMod", password="password", active=1)
     mod_user.roles.append(mod_role)
-    mod_user.name = "Mod"
+    mod_user.name = "Moderator"
     mod_user.fs_uniquifier = uuid4().hex
     mod_user_sa = User(username="TestModSA", password="password", active=1)
     mod_user_sa.roles.append(mod_role)
