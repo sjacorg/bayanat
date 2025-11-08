@@ -6784,9 +6784,11 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
             if error:
                 db.session.rollback()
                 status = 500 if error.startswith("Database error:") else 400
-                return HTTPResponse.error(
-                    f"Failed to create field '{field_title}': {error}", status=status
-                )
+
+                # Log the error for auditing
+                logger.error(f"Error creating field '{field_title}': {error}")
+
+                return HTTPResponse.error(f"Failed to create field '{field_title}'", status=status)
             created_count += 1
 
         # Updates
