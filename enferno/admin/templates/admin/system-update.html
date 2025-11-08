@@ -147,7 +147,7 @@
                 <div class="d-flex align-center justify-space-between mb-2">
                     <div>
                         <h1 class="text-h5 mb-5">{{ _('Release Notes') }}</h1>
-                        <h2>Bayanat ${releaseNotes.version}</h2>
+                        <h2>Bayanat ${releaseNotes?.version || latestVersion}</h2>
                     </div>
                     <div>
                         <v-btn href="https://github.com/sjacorg/bayanat/releases" target="_blank" variant="plain" append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>
