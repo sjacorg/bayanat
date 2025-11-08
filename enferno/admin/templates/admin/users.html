@@ -128,7 +128,7 @@
 
                                         <v-list>
                                             <v-list-item
-                                                v-for="role in [{ 'id': 0, 'name': 'View'}, ...roles]"
+                                                v-for="role in [...roles]"
                                                 :key="role.id"
                                                 @click="setRoleFilters(role.id); refresh()"
                                                 :active="Boolean(options?.roles?.includes(role.id))"
@@ -522,14 +522,9 @@
 
                 systemRoles: [
                     { name: "{{ _('View') }}", value: 'view', description: "{{ _('Users can view items in Actors, Bulletins, and Incidents but cannot edit or add new items.') }}" },
-                    { name: "{{ _('Data Analyst') }}", value: 'da', description: "{{ _('User can view all items and edit only those assigned to them. User can review assigned items for peer review.') }}" },
-                    { name: "{{ _('Moderator') }}", value: 'mod', description: "{{ _('User can manage system data, edit assigned items, and perform bulk updates.') }}" },
+                    { name: "{{ _('Data Analyst') }}", value: 'analyst', description: "{{ _('User can view all items and edit only those assigned to them. User can review assigned items for peer review.') }}" },
+                    { name: "{{ _('Moderator') }}", value: 'moderator', description: "{{ _('User can manage system data, edit assigned items, and perform bulk updates.') }}" },
                     { name: "{{ _('Administrator') }}", value: 'admin', description: "{{ _('Full access to all items and actions, including Activity Monitor and user management across the system.') }}" },
-                ],
-                accessRoles: [
-                    { name: "{{ _('Incident Access') }}", value: 'incident_access' },
-                    { name: "{{ _('Actor Access') }}", value: 'actor_access' },
-                    { name: "{{ _('Bulletin Access') }}", value: 'bulletin_access' },
                 ],
                 accountStatusOptions: [
                     { name: 'Active', value: 'true' },
@@ -541,6 +536,18 @@
                 ],
             }),
             computed: {
+                accessRoles() {
+                    return this.roles?.filter(role => !this.systemRoles.some(systemRole => systemRole.value === role.name.toLowerCase()));
+                },
+                editedItemAccessRoles() {
+                    return this.editedItem.roles?.filter(role => this.accessRoles?.some(accessRole => accessRole.name.toLowerCase() === role.name.toLowerCase()));
+                },
+                userAccessRoles() {
+                    return this.user.roles?.filter(role => this.accessRoles?.some(accessRole => accessRole.name.toLowerCase() === role.name.toLowerCase()));
+                },
+                userSystemRoles() {
+                    return this.user.roles?.filter(role => this.systemRoles?.some(systemRole => systemRole.value.toLowerCase() === role.name.toLowerCase()));
+                },
                 editedUserHasAdminRole() {
                     return this.editedItem?.roles?.some(role => role?.id === this.adminRoleId) ?? false;
                 },
@@ -551,18 +558,11 @@
                     return this.isNewUser ? "{{_('Add New User')}}" : "{{_('Edit User')}}";
                 },
                 selectedRoleIndex() {
-                    // No roles means "no role yet" → null
-                    if (!this.editedItem?.roles) return null;
+                    if (!this.editedItem?.roles?.length) return null;
 
-                    // roles = [] → View only → index 0
-                    if (this.editedItem.roles.length === 0) return 0;
-
-                    const index = this.systemRoles.findIndex(role =>
+                    return this.systemRoles.findIndex(role =>
                         this.editedItem.roles.some(r => r?.name?.toLowerCase() === role?.value?.toLowerCase())
-                    );
-
-                    // No match → View only (index 0)
-                    return index >= 0 ? index : 0;
+                    ) || 0;
                 },
                 selectedRole() {
                     return this.selectedRoleIndex != null
@@ -791,7 +791,7 @@
                         this.editedItem.can_edit_locations = true;
                         this.editedItem.can_export = true;
                         this.editedItem.can_import_web = true;
-                        this.editedItem.access_roles = [...this.accessRoles];
+                        this.editedItem.roles = [this.roles[0], ...this.accessRoles];
                         return true;
                     }
                     return false;
@@ -919,7 +919,7 @@
                     this.saving = true;
 
                     // edit mode
-                    if (payload.id) {
+                    if (this.editedItem.id) {
                         api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
@@ -934,7 +934,7 @@
                     } else {
                         // create mode
                         axios
-                            .post("/admin/api/user/", {item: payload}, { suppressGlobalErrorHandler: true })
+                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
@@ -968,40 +968,35 @@
                updateSystemRole(index) {
                     if (index === null || index === undefined) return;
 
-                    // default to view-only
-                    const systemRole = this.systemRoles?.[index] ?? this.systemRoles[0];
+                    const systemRole = this.systemRoles?.[index];
 
-                    // Ensure roles array exists
-                    if (!Array.isArray(this.editedItem?.roles)) {
-                        this.editedItem.roles = [];
-                    }
+                    if (!Array.isArray(this.editedItem?.roles)) this.editedItem.roles = [];
 
                     const selectedRole = this.roles?.find(
                         r => r?.name?.toLowerCase() === systemRole?.value?.toLowerCase()
                     );
 
-                    // If no match, treat as view-only (empty)
+                    const preservedRoles = this.editedItem.roles.filter(r => this.accessRoles.some(ar => ar.name.toLowerCase() === r.name.toLowerCase()));
+
                     if (!selectedRole) {
-                        this.editedItem.roles = [];
+                        this.editedItem.roles = [...preservedRoles];
                     } else {
-                        this.editedItem.roles = [selectedRole];
+                        this.editedItem.roles = [selectedRole, ...preservedRoles];
                     }
 
                     this.editedItem.active = true;
                     this.checkRoles();
                 },
-
                 isAccessRoleSelected(role) {
-                    return this.editedItem?.access_roles?.some(r => r.value === role.value)
+                    return this.editedItemAccessRoles?.some(r => r.name === role.name)
                 },
                 toggleAccessRole(role) {
-                    if (!this.editedItem?.access_roles) this.editedItem.access_roles = []
-                    
-                    const index = this.editedItem.access_roles.findIndex(r => r.value === role.value)
+                    const index = this.editedItem.roles.findIndex(r => r.name.toLowerCase() === role.name.toLowerCase())
+                    console.log({ index });
                     if (index !== -1) {
-                        this.editedItem.access_roles.splice(index, 1) // remove
+                        this.editedItem.roles.splice(index, 1) // remove
                     } else {
-                        this.editedItem.access_roles.push(role) // add
+                        this.editedItem.roles.push(role) // add
                     }
                 },
                 searchUsers: debounce(function (evt) {

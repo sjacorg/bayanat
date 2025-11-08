@@ -354,9 +354,9 @@ const UserCard = Vue.defineComponent({
               <v-col cols="12" sm="6" md="4">
                 <div class="mb-3 text-body-1">{{ translations.systemRole_ }}</div>
                 <div class="d-flex flex-wrap ga-3">
-                  <template v-if="user.roles.length">
+                  <template v-if="$root.userSystemRoles?.length">
                     <toggle-button
-                      v-for="(role, index) in user.roles"
+                      v-for="(role, index) in $root.userSystemRoles"
                       :key="index"
                       read-only
                       hide-left-icon
@@ -379,9 +379,9 @@ const UserCard = Vue.defineComponent({
               <v-col cols="12" sm="6" md="4">
                 <div class="mb-3 text-body-1">{{ translations.accessRole_ }}</div>
                 <div class="d-flex flex-wrap ga-3">
-                  <template v-if="user?.access_roles?.length">
+                  <template v-if="$root.userAccessRoles?.length">
                     <toggle-button
-                      v-for="(role, index) in user.access_roles"
+                      v-for="(role, index) in $root.userAccessRoles"
                       :key="index"
                       read-only
                       hide-left-icon
