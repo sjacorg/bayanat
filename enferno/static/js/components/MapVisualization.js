@@ -8,13 +8,15 @@ const MapVisualization = Vue.defineComponent({
   },
   emits: ['update:open'],
   data: () => ({
+    mapsApiEndpoint: mapsApiEndpoint,
     translations: window.translations,
-    maplibreStyle: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
     tooltip: null,
     menu: false,
     windowWidth: window.innerWidth,
     windowHeight: window.innerHeight,
     mapInitialized: false,
+    attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
 
     // ✅ New UI states
     loading: false,
@@ -39,6 +41,15 @@ const MapVisualization = Vue.defineComponent({
     });
   },
   methods: {
+    buildTileUrls(template) {
+      const subs = ['a', 'b', 'c'];
+
+      if (template.includes('{s}')) {
+        return subs.map(s => template.replace('{s}', s));
+      }
+
+      return [template];
+    },
     async fetchData() {
       this.loading = true;
       this.loadingMessage = translations.startingGeneration_;
@@ -116,7 +127,25 @@ const MapVisualization = Vue.defineComponent({
       // Initialize Maplibre
       this.map = new MaplibreGL.Map({
         container: 'map',
-        style: this.maplibreStyle,
+        style: {
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: this.buildTileUrls(this.mapsApiEndpoint),
+              tileSize: 256,
+              attribution: this.attribution,
+              maxzoom: 19,
+            },
+          },
+          layers: [
+            {
+              id: 'osm',
+              type: 'raster',
+              source: 'osm',
+            },
+          ],
+        },
         interactive: false,
         center: [initialViewState.longitude, initialViewState.latitude],
         zoom: initialViewState.zoom,
