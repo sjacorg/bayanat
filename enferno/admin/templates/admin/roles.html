@@ -170,7 +170,7 @@
 
                                 </template>
                                 <template v-slot:item.action="{ item }">
-                                    <template v-if="!['Admin','Moderator','Analyst'].includes(item.name)">
+                                    <template v-if="!['Admin','Moderator','Analyst','View'].includes(item.name)">
                                         <v-icon small class="mr-2" @click="editItem(item)">
                                             mdi-pencil
                                         </v-icon>
