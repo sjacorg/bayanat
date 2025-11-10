@@ -269,8 +269,8 @@ const MapVisualization = Vue.defineComponent({
         <v-btn icon="mdi-close" @click="$emit('update:open', false)"></v-btn>
       </v-toolbar>
 
-      <v-sheet class="relative fill-height">
-        <div id="map-visualization" class="relative fill-height">
+      <v-sheet class="relative">
+        <div id="map-visualization" class="relative">
           <div id="map"></div>
           <canvas id="deck-canvas"></canvas>
 
