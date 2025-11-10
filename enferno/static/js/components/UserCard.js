@@ -1,7 +1,7 @@
 const actionSections = {
   suspend: {
     title: (name) => `You're about to suspend the account for user \"${name}\"`,
-    confirmationText: (name) => `By entering your password, you will confirm the suspend action for user \"${name}\"`,
+    confirmationText: (name) => `By entering the user\'s username, you will confirm the suspend action for user \"${name}\"`,
     acceptButtonText: "Suspend Account",
     acceptButtonColor: "warning",
     blocks: [
@@ -11,7 +11,7 @@ const actionSections = {
   },
   reactivate: {
     title: (name) => `You're about to reactivate user \"${name}\"`,
-    confirmationText: (name) => `By entering your password, you will confirm the reactivation for user \"${name}\"`,
+    confirmationText: (name) => `By entering the user\'s username, you will confirm the reactivation for user \"${name}\"`,
     acceptButtonText: "Reactivate Account",
     acceptButtonColor: "success",
     blocks: [
@@ -21,7 +21,7 @@ const actionSections = {
   },
   disable: {
     title: (name) => `You're about to disable the account for user \"${name}\"`,
-    confirmationText: (name) => `By entering your password, you will confirm the disable action for user \"${name}\"`,
+    confirmationText: (name) => `By entering the user\'s username, you will confirm the disable action for user \"${name}\"`,
     acceptButtonText: "Disable Account",
     acceptButtonColor: "error",
     blocks: [
@@ -32,7 +32,7 @@ const actionSections = {
   },
   enable: {
     title: (name) => `You're about to enable the account for user \"${name}\"`,
-    confirmationText: (name) => `By entering your password, you will confirm enabling the account for user \"${name}\"`,
+    confirmationText: (name) => `By entering the user\'s username, you will confirm enabling the account for user \"${name}\"`,
     acceptButtonText: "Enable Account",
     acceptButtonColor: "success",
     blocks: [
@@ -55,8 +55,7 @@ const UserCard = Vue.defineComponent({
       perPage: 5,
       more: true,
       actionSections,
-      showPassword: false,
-      password: '',
+      username: '',
     };
   },
   computed: {
@@ -173,15 +172,13 @@ const UserCard = Vue.defineComponent({
         data: { mode },
         acceptProps: { text: actionSections[mode].acceptButtonText, color: actionSections[mode].acceptButtonColor },
         onAccept: async () => {
-          await api.post(`/admin/api/user/${this.user.id}/${mode}`, { password: this.password });
+          await api.post(`/admin/api/user/${this.user.id}/${mode}`);
           await this.$root.refreshUser(this.user.id);
-          this.showPassword = false;
-          this.password = '';
+          this.username = '';
           this.displayAccountStatusUpdatedMessage(mode);
         },
         onReject() {
-          this.showPassword = false;
-          this.password = '';
+          this.username = '';
         }
       })
     },
@@ -206,7 +203,7 @@ const UserCard = Vue.defineComponent({
     },
   },
   template: `
-      <confirm-dialog ref="accountActionDialog" :disabled-accept="!password">
+      <confirm-dialog ref="accountActionDialog" :disabled-accept="username !== user.username">
         <template #title="{ data }">
           {{ actionSections[data.mode].title(user.name) }}
         </template>
@@ -228,13 +225,10 @@ const UserCard = Vue.defineComponent({
             </div>
           </div>
           <div class="text-body-2 mt-6">
-            {{ actionSections[data.mode].confirmationText(user.name) }}
+            {{ actionSections[data.mode].confirmationText(user.username) }}
             <v-text-field
-              v-model="password"
-              label="Confirm with your password"
-              :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-              :type="showPassword ? 'text' : 'password'"
-              @click:append-inner="showPassword = !showPassword"
+              v-model="username"
+              label="Enter username to confirm"
               variant="filled"
               class="mt-3"
             ></v-text-field>
