@@ -376,6 +376,7 @@
                                                         :model-value="isAccessRoleSelected(role)"
                                                         @update:model-value="toggleAccessRole(role)"
                                                         :read-only="editedUserHasAdminRole"
+                                                        :hide-left-icon="editedUserHasAdminRole"
                                                     >
                                                         ${role.name}
                                                     </toggle-button>
@@ -385,31 +386,31 @@
 
                                         <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
                                         <div class="d-flex flex-wrap ga-3 mb-7">
-                                            <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole">
+                                            <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
                                                 {{ _('Can View Usernames') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole">
+                                            <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
                                                 {{ _('Can View Full History') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole">
+                                            <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
                                                 {{ _('Can View Simple History') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole">
+                                            <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
                                                 {{ _('Can Self-Assign') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole">
+                                            <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
                                                 {{ _('Can Edit Locations') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole">
+                                            <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
                                                 {{ _('Can Request Exports') }}
                                             </toggle-button>
 
-                                            <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole">
+                                            <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
                                                 {{ _('Can Import From Web') }}
                                             </toggle-button>
                                         </div>
@@ -998,7 +999,6 @@
                 },
                 toggleAccessRole(role) {
                     const index = this.editedItem.roles.findIndex(r => r.name.toLowerCase() === role.name.toLowerCase())
-                    console.log({ index });
                     if (index !== -1) {
                         this.editedItem.roles.splice(index, 1) // remove
                     } else {
