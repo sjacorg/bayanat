@@ -43,3 +43,4 @@ from .Settings import Settings
 from .Source import Source
 from .WorkflowStatus import WorkflowStatus
 from .Notification import Notification
+from .UserHistory import UserHistory

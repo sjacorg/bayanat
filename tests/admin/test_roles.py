@@ -27,7 +27,9 @@ def create_role(session):
 
 @pytest.fixture(scope="function")
 def clean_slate_roles(session):
-    Role.query.filter(not_(Role.name.in_(["Admin", "DA", "Mod"]))).delete(synchronize_session=False)
+    Role.query.filter(not_(Role.name.in_(["Admin", "Analyst", "Moderator"]))).delete(
+        synchronize_session=False
+    )
 
 
 @pytest.fixture(scope="function")
