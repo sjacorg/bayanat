@@ -155,6 +155,18 @@ const UserCard = Vue.defineComponent({
     getTwoFactorDeviceMeta(device) {
       return { icon: device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive', color: 'success', text: device.name };
     },
+    displayAccountStatusUpdatedMessage(action) {
+      switch (action) {
+        case 'suspend':
+          return this.$root.showSnack(this.translations.userHasBeenSuspended_(this.user.name));
+        case 'reactivate':
+          return this.$root.showSnack(this.translations.userHasBeenReactivated_(this.user.name));
+        case 'enable':
+          return this.$root.showSnack(this.translations.userHasBeenEnabled_(this.user.name));
+        case 'disable':
+          return this.$root.showSnack(this.translations.userHasBeenDisabled_(this.user.name));
+      }
+    },
     openAccountDialog(mode) {
       this.$refs.accountActionDialog.show({
         dialogProps: { width: 691 },
@@ -165,6 +177,7 @@ const UserCard = Vue.defineComponent({
           await this.$root.refreshUser(this.user.id);
           this.showPassword = false;
           this.password = '';
+          this.displayAccountStatusUpdatedMessage(mode);
         },
         onReject() {
           this.showPassword = false;
