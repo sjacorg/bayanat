@@ -377,9 +377,9 @@ const UserCard = Vue.defineComponent({
                     {{ $root.systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name }}
                   </toggle-button>
                 </div>
-                <div v-else class="d-flex align-center text-disabled">
+                <v-btn v-else @click="$emit('edit', user)" variant="plain" class="d-flex align-center text-disabled" style="padding: 0;">
                   <v-icon class="mr-1">mdi-alert-circle-outline</v-icon> {{ this.translations.assignSystemRole_ }}
-                </div>
+                </v-btn>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <div class="mb-3 text-body-1">{{ translations.accessRole_ }}</div>
@@ -394,9 +394,9 @@ const UserCard = Vue.defineComponent({
                     {{ role.name }}
                   </toggle-button>
                 </div>
-                <div v-else class="d-flex align-center text-disabled">
+                <v-btn v-else @click="$emit('edit', user)" variant="plain" class="d-flex align-center text-disabled" style="padding: 0;">
                   <v-icon class="mr-1">mdi-alert-circle-outline</v-icon> {{ this.translations.assignAccessRole_ }}
-                </div>
+                </v-btn>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <div class="mb-3 text-body-1">{{ translations.twoFactorAuthentication_ }}</div>
@@ -439,9 +439,9 @@ const UserCard = Vue.defineComponent({
                 {{ permission.label }}
               </toggle-button>
             </div>
-            <div v-else class="d-flex align-center text-disabled">
+            <v-btn v-else @click="$emit('edit', user)" variant="plain" class="d-flex align-center text-disabled" style="padding: 0;">
               <v-icon class="mr-1">mdi-alert-circle-outline</v-icon> {{ this.translations.assignUserPermissions_ }}
-            </div>
+            </v-btn>
           </v-card-text>
         </v-card>
 
