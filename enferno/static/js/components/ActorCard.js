@@ -362,31 +362,27 @@ const ActorCard = Vue.defineComponent({
             </v-card>
           </div>
 
-          <div
-            v-else-if="$root.isFieldActiveAndHasContent(field, 'actor_profiles', actor.id)"
-            :class="$root.fieldClassDrawer(field)"
-          >
-            <actor-profiles :actor-id="actor.id"></actor-profiles>
+          <div :class="$root.fieldClassDrawer(field)" v-else-if="field.name === 'actor_profiles'">
+            <div v-if="$root.isFieldActiveAndHasContent(field, 'actor_profiles', actor.id)">
+              <actor-profiles :actor-id="actor.id" />
+            </div>
+
+            <div>
+              <v-divider></v-divider>
+              <v-card variant="flat">
+                <global-map v-model="mapLocations"></global-map>
+              </v-card>
+            </div>
           </div>
 
-          <!-- Render map after actor_profiles to maintain visual flow -->
-          <div
-            v-else-if="field.field_type === 'actor_profiles'"
-            :class="$root.fieldClassDrawer(field)"
-          >
-            <v-divider></v-divider>
-            <v-card variant="flat">
-              <global-map v-model="mapLocations"></global-map>
-            </v-card>
-          </div>
-
-          <div
-            v-else-if="$root.isFieldActiveAndHasContent(field, 'events', mapLocations)"
-            :class="$root.fieldClassDrawer(field)"
-          >
-            <v-divider></v-divider>
-            <v-card variant="flat">
-              <global-map v-model="mapLocations"></global-map>
+          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'events_section', actor.events)" :class="$root.fieldClassDrawer(field)">
+            <v-card class="ma-2">
+              <v-toolbar density="compact">
+                <v-toolbar-title class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
+              </v-toolbar>
+              <v-card-text class="pt-0 px-2 pb-2">
+                <event-card v-for="(event, index) in actor.events" :number="index+1" :key="event.id" :event="event"></event-card>
+              </v-card-text>
             </v-card>
           </div>
 

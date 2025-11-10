@@ -234,14 +234,16 @@ const IncidentCard = Vue.defineComponent({
               </v-card>
             </div>
 
-            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'events', incident.events)" :class="$root.fieldClassDrawer(field)">
-              <v-card class="ma-2">
-                <v-card-text class="pa-2">
-                  <div class="px-1 title black--text">{{ translations.events_ }}</div>
-                  <event-card v-for="(event, index) in incident.events" :key="event.id" :number="index+1" :event="event"></event-card>
-                </v-card-text>
-              </v-card>
-            </div>
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'events_section', incident.events)" :class="$root.fieldClassDrawer(field)">
+            <v-card class="ma-2">
+              <v-toolbar density="compact">
+                <v-toolbar-title class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
+              </v-toolbar>
+              <v-card-text class="pt-0 px-2 pb-2">
+                <event-card v-for="(event, index) in incident.events" :number="index+1" :key="event.id" :event="event"></event-card>
+              </v-card-text>
+            </v-card>
+          </div>
 
             <div v-else-if="$root.isFieldActive(field, 'related_bulletins')" :class="$root.fieldClassDrawer(field)">
               <related-bulletins-card v-if="incident" :entity="incident" :relationInfo="$root.itobInfo"></related-bulletins-card>
