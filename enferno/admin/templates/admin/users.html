@@ -184,7 +184,7 @@
 
 
                         <template v-slot:item.action="{ item }">
-                            <div class="d-flex">
+                            <div v-if="!item?.deleted" class="d-flex">
                                 <v-tooltip location="top" text="{{ _('Edit User') }}">
                                     <template #activator="{props}">
                                         <div v-bind="props" class="d-inline-block">
@@ -246,7 +246,7 @@
                         </template>
 
                         <template v-slot:item.2fa="{ item }">
-                            <v-chip variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1 font-weight-medium">
+                            <v-chip v-if="!item?.deleted" variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1 font-weight-medium">
                                 <v-icon start size="large">${getUser2FaMeta(item)?.icon}</v-icon>
                                 ${getUser2FaMeta(item)?.text}
                             </v-chip>
@@ -260,14 +260,11 @@
                         </template>
 
                         <template v-slot:item.roles="{ item }">
-                            <template v-if="item.roles.length">
-                                <v-chip v-for="role in item.roles" :key="role.id" class="ma-1">
+                            <template v-if="getUserSystemRoles(item).length">
+                                <v-chip v-for="role in getUserSystemRoles(item)" :key="role.id" class="ma-1">
                                     ${systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name}
                                 </v-chip>
                             </template>
-                            <v-chip v-else-if="!item.deleted" class="ma-1">
-                                ${systemRoles[0].name}
-                            </v-chip>
                         </template>
 
                         <template v-slot:no-data></template>
@@ -546,7 +543,7 @@
                     return this.user.roles?.filter(role => this.accessRoles?.some(accessRole => accessRole.name.toLowerCase() === role.name.toLowerCase()));
                 },
                 userSystemRoles() {
-                    return this.user.roles?.filter(role => this.systemRoles?.some(systemRole => systemRole.value.toLowerCase() === role.name.toLowerCase()));
+                    return this.getUserSystemRoles(this.user);
                 },
                 editedUserHasAdminRole() {
                     return this.editedItem?.roles?.some(role => role?.id === this.adminRoleId) ?? false;
@@ -610,6 +607,9 @@
 
 
             methods: {
+                getUserSystemRoles(user) {
+                    return user.roles?.filter(role => this.systemRoles?.some(systemRole => systemRole.value.toLowerCase() === role.name.toLowerCase())) ?? [];
+                },
                 getUser2FaMeta(user) {
                     if (user.two_factor_devices && user.two_factor_devices.length > 0) return { color: 'success', text: "{{ _('2FA Active') }}", icon: 'mdi-lock-check' }
                     return { color: 'warning', text: "{{ _('2FA Inactive') }}", icon: 'mdi-lock-open-alert' }
@@ -678,6 +678,12 @@
                 refreshUser(user_id) {
                     api.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
+                        
+                        // Update existing user in the items list
+                        const index = this.items.findIndex(u => u.id === user_id);
+                        if (index !== -1) {
+                            this.items[index] = { ...this.items[index], ...response.data };
+                        }
                     })
                 },
 
@@ -917,10 +923,12 @@
                     }
 
                     this.saving = true;
+                    const payload = { ...this.editedItem };
+                    delete payload.deleted; // Remove deleted field from payload
 
                     // edit mode
-                    if (this.editedItem.id) {
-                        api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
+                    if (payload.id) {
+                        api.put(`/admin/api/user/`, {item: payload}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
@@ -934,7 +942,7 @@
                     } else {
                         // create mode
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
+                            .post("/admin/api/user/", {item: payload}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
