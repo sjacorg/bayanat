@@ -41,8 +41,8 @@ const MapVisualization = Vue.defineComponent({
     });
   },
   methods: {
-    buildTileUrls(template) {
-      const subs = ['a', 'b', 'c'];
+    buildTileUrls(template, subdomains) {
+      const subs = subdomains ?? ['a', 'b', 'c'];
 
       if (template.includes('{s}')) {
         return subs.map(s => template.replace('{s}', s));
