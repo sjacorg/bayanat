@@ -64,7 +64,7 @@ const UserCard = Vue.defineComponent({
       return !this.user.active && !this.user?.deleted;
     },
     isUserDisabled() {
-      return !this.user.active && this.user?.deleted;
+      return this.user?.deleted;
     },
     isUserEnabled() {
       return !this.user?.deleted;
