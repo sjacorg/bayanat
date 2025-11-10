@@ -362,22 +362,17 @@ const ActorCard = Vue.defineComponent({
             </v-card>
           </div>
 
-          <div
-            v-else-if="$root.isFieldActiveAndHasContent(field, 'actor_profiles', actor.id)"
-            :class="$root.fieldClassDrawer(field)"
-          >
-            <actor-profiles :actor-id="actor.id"></actor-profiles>
-          </div>
+          <div :class="$root.fieldClassDrawer(field)" v-else-if="field.name === 'actor_profiles'">
+            <div v-if="$root.isFieldActiveAndHasContent(field, 'actor_profiles', actor.id)">
+              <actor-profiles :actor-id="actor.id" />
+            </div>
 
-          <!-- Render map after actor_profiles to maintain visual flow -->
-          <div
-            v-else-if="field.field_type === 'actor_profiles'"
-            :class="$root.fieldClassDrawer(field)"
-          >
-            <v-divider></v-divider>
-            <v-card variant="flat">
-              <global-map v-model="mapLocations"></global-map>
-            </v-card>
+            <div>
+              <v-divider></v-divider>
+              <v-card variant="flat">
+                <global-map v-model="mapLocations"></global-map>
+              </v-card>
+            </div>
           </div>
 
           <div v-else-if="$root.isFieldActiveAndHasContent(field, 'events_section', actor.events)" :class="$root.fieldClassDrawer(field)">
