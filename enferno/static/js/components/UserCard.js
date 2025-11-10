@@ -366,7 +366,7 @@ const UserCard = Vue.defineComponent({
             <v-row>
               <v-col cols="12" sm="6" md="4">
                 <div class="mb-3 text-body-1">{{ translations.systemRole_ }}</div>
-                <div class="d-flex flex-wrap ga-3">
+                <div v-if="$root.userSystemRoles.length" class="d-flex flex-wrap ga-3">
                   <toggle-button
                     v-for="(role, index) in $root.userSystemRoles"
                     :key="index"
@@ -377,21 +377,25 @@ const UserCard = Vue.defineComponent({
                     {{ $root.systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name }}
                   </toggle-button>
                 </div>
+                <div v-else class="d-flex align-center text-disabled">
+                  <v-icon class="mr-1">mdi-alert-circle-outline</v-icon> {{ this.translations.assignSystemRole_ }}
+                </div>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <div class="mb-3 text-body-1">{{ translations.accessRole_ }}</div>
-                <div class="d-flex flex-wrap ga-3">
-                  <template v-if="$root.userAccessRoles?.length">
-                    <toggle-button
-                      v-for="(role, index) in $root.userAccessRoles"
-                      :key="index"
-                      read-only
-                      hide-left-icon
-                      :model-value="true"
-                    >
-                      {{ role.name }}
-                    </toggle-button>
-                  </template>
+                <div v-if="$root.userAccessRoles.length" class="d-flex flex-wrap ga-3">
+                  <toggle-button
+                    v-for="(role, index) in $root.userAccessRoles"
+                    :key="index"
+                    read-only
+                    hide-left-icon
+                    :model-value="true"
+                  >
+                    {{ role.name }}
+                  </toggle-button>
+                </div>
+                <div v-else class="d-flex align-center text-disabled">
+                  <v-icon class="mr-1">mdi-alert-circle-outline</v-icon> {{ this.translations.assignAccessRole_ }}
                 </div>
               </v-col>
               <v-col cols="12" sm="6" md="4">
@@ -425,7 +429,7 @@ const UserCard = Vue.defineComponent({
         <v-card v-if="isUserEnabled" variant="flat">
           <v-card-text class="px-6">
             <div class="mb-3 text-body-1">{{ translations.userPermissions_ }}</div>
-            <div class="d-flex flex-wrap ga-3">
+            <div v-if="permissions.some(p => p.value)" class="d-flex flex-wrap ga-3">
               <toggle-button
                 v-for="(permission, index) in permissions"
                 :key="index"
@@ -434,6 +438,9 @@ const UserCard = Vue.defineComponent({
               >
                 {{ permission.label }}
               </toggle-button>
+            </div>
+            <div v-else class="d-flex align-center text-disabled">
+              <v-icon class="mr-1">mdi-alert-circle-outline</v-icon> {{ this.translations.assignUserPermissions_ }}
             </div>
           </v-card-text>
         </v-card>
