@@ -957,11 +957,13 @@
                 async changePassword() {
                     try {
                         this.saving = true;
-                        const response = await api.put(`/admin/api/user/`, { item: this.editedItem }, { suppressGlobalErrorHandler: true });
+                        const payload = { ...this.editedItem };
+                        delete payload.deleted; // Remove deleted field from payload
+                        const response = await api.put(`/admin/api/user/`, { item: payload }, { suppressGlobalErrorHandler: true });
                         this.showSnack(response.data);
 
                         if (this.askUserToChangePassword && this.editedItem?.force_reset === null) {
-                            await this.forcePasswordReset({ item: this.editedItem });
+                            await this.forcePasswordReset(payload);
                         }
 
                         await this.refresh();
