@@ -1000,7 +1000,8 @@
                     return this.editedItemAccessRoles?.some(r => r.name === role.name)
                 },
                 toggleAccessRole(role) {
-                    const index = this.editedItem.roles.findIndex(r => r.name.toLowerCase() === role.name.toLowerCase())
+                    if (!Array.isArray(this.editedItem.roles)) this.editedItem.roles = [];
+                    const index = this.editedItem.roles?.findIndex(r => r.name.toLowerCase() === role.name.toLowerCase())
                     if (index !== -1) {
                         this.editedItem.roles.splice(index, 1) // remove
                     } else {
