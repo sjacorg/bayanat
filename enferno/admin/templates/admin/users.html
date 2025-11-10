@@ -197,51 +197,53 @@
                                         </div>
                                     </template>
                                 </v-tooltip>
-                                <v-tooltip
-                                    location="top"
-                                    text="{{ _('Change Password') }}"
-                                >
-                                    <template #activator="{props}">
-                                        <div v-bind="props">
-                                        <v-btn
-                                            density="comfortable"
-                                            variant="plain"
-                                            icon="mdi-form-textbox-password"
-                                            @click.stop="openChangePasswordDialog(item)"
-                                        ></v-btn>
-                                        </div>
-                                    </template>
-                                </v-tooltip>
-                                <v-tooltip location="top"
-                                        :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force Password Reset') }}'">
-                                    <template #activator="{props}">
-                                        <div v-bind="props" class="d-inline-block">
+                                <template v-if="userId !== item.id">
+                                    <v-tooltip
+                                        location="top"
+                                        text="{{ _('Change Password') }}"
+                                    >
+                                        <template #activator="{props}">
+                                            <div v-bind="props">
                                             <v-btn
-                                                :disabled="item.force_reset != null"
-                                                @click.stop="openForcePasswordResetDialog(item)"
+                                                density="comfortable"
                                                 variant="plain"
-                                                size="small"
-                                                icon="mdi-lock-reset">
-                                            </v-btn>
-                                            <v-icon v-if="item.force_reset" class="ml-n3" color="error">mdi-exclamation-thick</v-icon>
-                                        </div>
-                                    </template>
-                                </v-tooltip>
+                                                icon="mdi-form-textbox-password"
+                                                @click.stop="openChangePasswordDialog(item)"
+                                            ></v-btn>
+                                            </div>
+                                        </template>
+                                    </v-tooltip>
+                                    <v-tooltip location="top"
+                                            :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force Password Reset') }}'">
+                                        <template #activator="{props}">
+                                            <div v-bind="props" class="d-inline-block">
+                                                <v-btn
+                                                    :disabled="item.force_reset != null"
+                                                    @click.stop="openForcePasswordResetDialog(item)"
+                                                    variant="plain"
+                                                    size="small"
+                                                    icon="mdi-lock-reset">
+                                                </v-btn>
+                                                <v-icon v-if="item.force_reset" class="ml-n3" color="error">mdi-exclamation-thick</v-icon>
+                                            </div>
+                                        </template>
+                                    </v-tooltip>
 
-                                <v-tooltip location="top"
-                                        v-if="item?.two_factor_devices?.length > 0"
-                                        :text="'{{ _('Revoke 2FA') }}'">
-                                    <template #activator="{props}">
-                                        <v-btn
-                                                @click.stop="openRevoke2FADialog(item.id)"
-                                                variant="plain"
-                                                v-bind="props"
-                                                size="small"
-                                                icon="mdi-lock-remove">
-                                        </v-btn>
-                                        
-                                    </template>
-                                </v-tooltip>
+                                    <v-tooltip location="top"
+                                            v-if="item?.two_factor_devices?.length > 0"
+                                            :text="'{{ _('Revoke 2FA') }}'">
+                                        <template #activator="{props}">
+                                            <v-btn
+                                                    @click.stop="openRevoke2FADialog(item.id)"
+                                                    variant="plain"
+                                                    v-bind="props"
+                                                    size="small"
+                                                    icon="mdi-lock-remove">
+                                            </v-btn>
+                                            
+                                        </template>
+                                    </v-tooltip>
+                                </template>
                             </div>
                         </template>
 
@@ -475,6 +477,7 @@
             delimiters: delimiters,
             mixins: [globalMixin],
             data: () => ({
+                userId: window.__userId__,
                 dialog: dialog,
                 loading: true,
                 saving: false,

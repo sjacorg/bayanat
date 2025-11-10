@@ -266,70 +266,74 @@ const UserCard = Vue.defineComponent({
                 </div>
               </div>
 
-              <v-chip
-                v-if="user.force_reset && isUserEnabled"
-                color="error"
-                variant="text"
-                class="font-weight-medium"
-              >
-                <v-icon size="x-large">mdi-exclamation</v-icon>
-                {{ translations.passwordResetRequested_ }}
-              </v-chip>
+              <template v-if="$root.userId !== user.id">
+                <v-chip
+                  v-if="user.force_reset && isUserEnabled"
+                  color="error"
+                  variant="text"
+                  class="font-weight-medium"
+                >
+                  <v-icon size="x-large">mdi-exclamation</v-icon>
+                  {{ translations.passwordResetRequested_ }}
+                </v-chip>
+              </template>
   
               <div class="d-flex justify-space-between ga-2 align-center">
                 <template v-if="isUserEnabled">
-                  <v-tooltip
-                    location="bottom"
-                    :text="user.force_reset ? translations.passwordResetAlreadyRequested_ : translations.forcePasswordReset_"
-                  >
-                    <template #activator="{props}">
-                      <div v-bind="props">
-                        <v-btn
-                          :disabled="user.force_reset != null"
-                          color="error"
-                          density="comfortable"
-                          icon="mdi-lock-reset"
-                          @click="$emit('resetPassword', user)"
-                        ></v-btn>
-                      </div>
-                    </template>
-                  </v-tooltip>
+                  <template v-if="$root.userId !== user.id">
+                    <v-tooltip
+                      location="bottom"
+                      :text="user.force_reset ? translations.passwordResetAlreadyRequested_ : translations.forcePasswordReset_"
+                    >
+                      <template #activator="{props}">
+                        <div v-bind="props">
+                          <v-btn
+                            :disabled="user.force_reset != null"
+                            color="error"
+                            density="comfortable"
+                            icon="mdi-lock-reset"
+                            @click="$emit('resetPassword', user)"
+                          ></v-btn>
+                        </div>
+                      </template>
+                    </v-tooltip>
 
-                  <v-tooltip
-                    location="bottom"
-                    :text="translations.changePassword_"
-                  >
-                    <template #activator="{props}">
-                      <div v-bind="props">
-                        <v-btn
-                          :disabled="user.force_reset != null"
-                          color="warning"
-                          density="comfortable"
-                          icon="mdi-form-textbox-password"
-                          @click="$emit('changePassword', user)"
-                        ></v-btn>
-                      </div>
-                    </template>
-                  </v-tooltip>
+                    <v-tooltip
+                      location="bottom"
+                      :text="translations.changePassword_"
+                    >
+                      <template #activator="{props}">
+                        <div v-bind="props">
+                          <v-btn
+                            :disabled="user.force_reset != null"
+                            color="warning"
+                            density="comfortable"
+                            icon="mdi-form-textbox-password"
+                            @click="$emit('changePassword', user)"
+                          ></v-btn>
+                        </div>
+                      </template>
+                    </v-tooltip>
 
-                  <v-tooltip
-                    v-if="user.two_factor_devices && user.two_factor_devices.length > 0"
-                    location="bottom"
-                    :text="translations.revoke2fa_"
-                  >
-                    <template #activator="{props}">
-                      <div v-bind="props">
-                        <v-btn
-                          
-                          @click.stop="$emit('revoke2fa', user.id)"
-                          variant="outlined"
-                          color="warning"
-                          density="comfortable"
-                          icon="mdi-lock-remove"
-                        ></v-btn>
-                      </div>
-                    </template>
-                  </v-tooltip>
+                    <v-tooltip
+                      v-if="user.two_factor_devices && user.two_factor_devices.length > 0"
+                      location="bottom"
+                      :text="translations.revoke2fa_"
+                    >
+                      <template #activator="{props}">
+                        <div v-bind="props">
+                          <v-btn
+                            
+                            @click.stop="$emit('revoke2fa', user.id)"
+                            variant="outlined"
+                            color="warning"
+                            density="comfortable"
+                            icon="mdi-lock-remove"
+                          ></v-btn>
+                        </div>
+                      </template>
+                    </v-tooltip>
+                  </template>
 
                   <v-tooltip
                     location="bottom"
@@ -439,7 +443,7 @@ const UserCard = Vue.defineComponent({
           </v-card-text>
         </v-card>
 
-        <v-card variant="flat">
+        <v-card v-if="$root.userId !== user.id" variant="flat">
           <v-card-text class="px-6">
             <div class="mb-3 text-body-1">{{ translations.manageAccount_ }}</div>
             <div class="d-flex flex-wrap ga-3">
