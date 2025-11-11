@@ -7,35 +7,38 @@ const MapVisualization = Vue.defineComponent({
     query: { type: Array, default: () => [{}] },
   },
   emits: ['update:open'],
+
   data: () => ({
+    // API / Tile URLs
     mapsApiEndpoint: mapsApiEndpoint,
     googleTileUrl: `https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}&key=${window.__GOOGLE_MAPS_API_KEY__}`,
     translations: window.translations,
+
+    // UI state
     tooltip: null,
     menu: false,
     windowWidth: window.innerWidth,
     windowHeight: window.innerHeight,
-    mapInitialized: false,
-    attribution:
-      '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-    googleAttribution:
-      '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
-
-    // ✅ New UI states
     loading: false,
     loadingMessage: '',
     errorMessage: '',
+
+    // Map state
+    mapInitialized: false,
+    map: null,
+    deck: null,
+
+    // Attribution
+    attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
   }),
+
   watch: {
     open(val) {
-      if (val) {
-        this.clearMap();
-        this.initMap();
-      } else {
-        this.clearMap();
-      }
+      val ? this.initMapFlow() : this.clearMap();
     },
   },
+
   mounted() {
     window.addEventListener('resize', () => {
       this.windowWidth = window.innerWidth;
@@ -43,197 +46,154 @@ const MapVisualization = Vue.defineComponent({
       this.menu = false;
     });
   },
+
   methods: {
-    buildTileUrls(template, subdomains) {
-      const subs = subdomains ?? ['a', 'b', 'c'];
-
-      if (template.includes('{s}')) {
-        return subs.map((s) => template.replace('{s}', s));
-      }
-
-      return [template];
+    // ------------------
+    // Utils
+    // ------------------
+    buildTileUrls(template, subdomains = ['a','b','c']) {
+      return template.includes('{s}') ? subdomains.map(s => template.replace('{s}', s)) : [template];
     },
+
+    getInitialViewState(locations) {
+      if (!locations?.length) return { longitude: 0, latitude: 0, zoom: 1, pitch: 0, bearing: 0 };
+      const validLocs = locations.filter(l => Number.isFinite(l.lon) && Number.isFinite(l.lat));
+      return FlowmapBundle.FlowmapData.getViewStateForLocations(validLocs, loc => [loc.lon, loc.lat], [this.windowWidth, this.windowHeight], { pad: 0.3 });
+    },
+
+    createFlowmapLayer(locations, flows) {
+      if (!locations.length || !flows.length) return null;
+      return new FlowmapBundle.FlowmapLayers.FlowmapLayer({
+        id: 'flowmap-layer',
+        data: { locations, flows },
+        pickable: true,
+        getLocationId: d => d.id,
+        getLocationLat: d => d.lat,
+        getLocationLon: d => d.lon,
+        getLocationName: d => d.name,
+        getFlowOriginId: f => f.origin,
+        getFlowDestId: f => f.dest,
+        getFlowMagnitude: f => f.count,
+        darkMode: false,
+        colorScheme: 'TealGrn',
+        clusteringEnabled: true,
+        highlightColor: 'orange',
+        fadeEnabled: true,
+        onClick: this.onClick,
+      });
+    },
+
+    createBaseToggleControl() {
+      return {
+        onAdd: map => {
+          this._map = map;
+          const container = document.createElement('div');
+          container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+          const btn = document.createElement('button');
+          btn.innerHTML = '🗺️';
+          btn.title = 'Toggle Base Map';
+          let current = 'osm';
+          btn.onclick = () => {
+            const showGoogle = current === 'osm';
+            map.setLayoutProperty('osm-layer', 'visibility', showGoogle ? 'none' : 'visible');
+            map.setLayoutProperty('google-layer', 'visibility', showGoogle ? 'visible' : 'none');
+            current = showGoogle ? 'google' : 'osm';
+            btn.innerHTML = current === 'google' ? '🌎' : '🗺️';
+          };
+          container.appendChild(btn);
+          this._container = container;
+          return container;
+        },
+        onRemove: () => { this._container.remove(); this._map = undefined; },
+      };
+    },
+
     async fetchData() {
       this.loading = true;
-      this.loadingMessage = translations.startingGeneration_;
+      this.loadingMessage = this.translations.startingGeneration_;
       this.errorMessage = '';
-
       try {
-        // Step 1: Start generation
         const startRes = await api.post(this.visualizeEndpoint, { q: this.query });
         const taskId = startRes?.data?.task_id;
-        if (!taskId) throw new Error(translations.mapGenerationFailed_);
+        if (!taskId) throw new Error(this.translations.mapGenerationFailed_);
 
-        // Step 2: Wait for task completion via status endpoint
-        let status = 'pending';
-        let error = null;
-
+        // Poll status
+        let status = 'pending', error = null;
         while (status === 'pending') {
           const res = await api.get(this.statusEndpoint);
           status = res?.data?.status;
           error = res?.data?.error;
-
           if (status === 'pending') {
-            this.loadingMessage = translations.waitingForMapGeneration_;
-            await new Promise((r) => setTimeout(r, 2000)); // small delay before polling again
+            this.loadingMessage = this.translations.waitingForMapGeneration_;
+            await new Promise(r => setTimeout(r, 2000));
           }
         }
+        if (status === 'error') throw new Error(error || this.translations.mapGenerationFailed_);
 
-        if (status === 'error') throw new Error(error || translations.mapGenerationFailed_);
-
-        // Step 3: Fetch the data
-        this.loadingMessage = translations.fetchingVisualizationData_;
+        this.loadingMessage = this.translations.fetchingVisualizationData_;
         const dataRes = await api.get(this.dataEndpoint);
-        const { locations, flows } = dataRes.data || {};
-        return { locations, flows };
+        return {
+          locations: Array.isArray(dataRes.data?.locations) ? dataRes.data.locations : [],
+          flows: Array.isArray(dataRes.data?.flows) ? dataRes.data.flows : [],
+        };
       } catch (err) {
         console.error(err);
-        this.errorMessage = err.message || translations.mapGenerationFailed_;
+        this.errorMessage = err.message || this.translations.mapGenerationFailed_;
         return { locations: [], flows: [] };
       } finally {
         this.loading = false;
       }
     },
 
-    async initMap() {
+    async initMapFlow() {
+      this.clearMap();
       this.loading = true;
-      this.loadingMessage = translations.preparingMap_;
-      const data = await this.fetchData();
+      this.loadingMessage = this.translations.preparingMap_;
 
-      if (this.errorMessage) return; // stop if error
+      const { locations, flows } = await this.fetchData();
+      if (this.errorMessage) return;
 
-      this.loadingMessage = translations.renderingMap_;
-      let { locations, flows } = data;
-      const [width, height] = [this.windowWidth, this.windowHeight];
+      const initialViewState = this.getInitialViewState(locations);
 
-      // Ensure locations and flows are arrays
-      locations = Array.isArray(locations) ? locations : [];
-      flows = Array.isArray(flows) ? flows : [];
+      this.initMaplibre(initialViewState);
+      this.initDeck(locations, flows, initialViewState);
 
-      // Initial view state
-      const initialViewState =
-        locations.length > 0
-          ? FlowmapBundle.FlowmapData.getViewStateForLocations(
-              locations.filter((l) => Number.isFinite(l.lon) && Number.isFinite(l.lat)),
-              (loc) => [loc.lon, loc.lat],
-              [width, height],
-              { pad: 0.3 },
-            )
-          : {
-              longitude: 0,
-              latitude: 0,
-              zoom: 1,
-              pitch: 0,
-              bearing: 0,
-            };
+      this.mapInitialized = true;
+      this.loading = false;
+    },
 
-      // Initialize Maplibre
+    initMaplibre(initialViewState) {
       this.map = new MaplibreGL.Map({
         container: 'map',
-        style: {
-          version: 8,
-          sources: {
-            osm: {
-              type: 'raster',
-              tiles: this.buildTileUrls(this.mapsApiEndpoint),
-              tileSize: 256,
-              attribution: this.attribution,
-              maxzoom: 19,
-            },
-          },
-          layers: [
-            {
-              id: 'osm-layer',
-              type: 'raster',
-              source: 'osm',
-            },
-          ],
-        },
         interactive: false,
         center: [initialViewState.longitude, initialViewState.latitude],
         zoom: initialViewState.zoom,
         bearing: initialViewState.bearing,
         pitch: initialViewState.pitch,
+        style: {
+          version: 8,
+          sources: { osm: { type: 'raster', tiles: this.buildTileUrls(this.mapsApiEndpoint), tileSize: 256, attribution: this.attribution, maxzoom: 19 } },
+          layers: [{ id: 'osm-layer', type: 'raster', source: 'osm' }],
+        },
       });
-
       this.map.addControl(new MaplibreGL.NavigationControl(), 'top-right');
       this.map.addControl(new MaplibreGL.FullscreenControl(), 'top-right');
-      const myControl = {
-        onAdd(map) {
-          this._map = map;
+      this.map.addControl(this.createBaseToggleControl(), 'top-right');
 
-          const container = document.createElement('div');
-          container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
-
-          const btn = document.createElement('button');
-          btn.innerHTML = "🗺️";
-          btn.title = "Toggle Base Map";
-          let current = "osm";
-
-          btn.onclick = () => {
-            const showGoogle = current === "osm";
-
-            map.setLayoutProperty("osm-layer", "visibility", showGoogle ? "none" : "visible");
-            map.setLayoutProperty("google-layer", "visibility", showGoogle ? "visible" : "none");
-
-            current = showGoogle ? "google" : "osm";
-            btn.innerHTML = current === "google" ? "🌎" : "🗺️";
-          };
-
-          container.appendChild(btn);
-          this._container = container;
-          return container;
-        },
-
-        onRemove() {
-          this._container.remove();
-          this._map = undefined;
-        },
-      };
-      this.map.addControl(myControl, 'top-right');
-      this.map.on("load", () => {
-        this.map.addSource("google", {
-          type: "raster",
-          tiles: this.buildTileUrls(this.googleTileUrl, ["mt0", "mt1", "mt2", "mt3"]),
+      this.map.on('load', () => {
+        this.map.addSource('google', {
+          type: 'raster',
+          tiles: this.buildTileUrls(this.googleTileUrl, ['mt0','mt1','mt2','mt3']),
           tileSize: 256,
           maxzoom: 20,
-          attribution: this.googleAttribution
+          attribution: this.googleAttribution,
         });
-
-        this.map.addLayer({
-          id: "google-layer",
-          type: "raster",
-          source: "google",
-          layout: { visibility: "none" },
-        });
+        this.map.addLayer({ id: 'google-layer', type: 'raster', source: 'google', layout: { visibility: 'none' } });
       });
+    },
 
-      const layers = [];
-
-      if (locations.length > 0 && flows.length > 0) {
-        layers.push(
-          new FlowmapBundle.FlowmapLayers.FlowmapLayer({
-            id: 'my-flowmap-layer',
-            data: { locations, flows },
-            pickable: true,
-            getLocationId: (d) => d.id,
-            getLocationLat: (d) => d.lat,
-            getLocationLon: (d) => d.lon,
-            getLocationName: (d) => d.name,
-            getFlowOriginId: (f) => f.origin,
-            getFlowDestId: (f) => f.dest,
-            getFlowMagnitude: (f) => f.count,
-            darkMode: false,
-            colorScheme: 'TealGrn',
-            clusteringEnabled: true,
-            highlightColor: 'orange',
-            fadeEnabled: true,
-            onClick: this.onClick,
-          }),
-        );
-      }
-
-      // Initialize Deck
+    initDeck(locations, flows, initialViewState) {
+      const flowLayer = this.createFlowmapLayer(locations, flows);
       this.deck = new FlowmapBundle.DeckCore.Deck({
         canvas: 'deck-canvas',
         width: '100%',
@@ -241,6 +201,7 @@ const MapVisualization = Vue.defineComponent({
         initialViewState,
         controller: true,
         map: true,
+        layers: flowLayer ? [flowLayer] : [],
         onViewStateChange: ({ viewState }) => {
           this.map.jumpTo({
             center: [viewState.longitude, viewState.latitude],
@@ -250,36 +211,27 @@ const MapVisualization = Vue.defineComponent({
           });
           this.menu = false;
         },
-        layers,
       });
 
       this.map.on('move', () => {
         if (!this.deck) return;
-
         const center = this.map.getCenter();
-        const zoom = this.map.getZoom();
-        const bearing = this.map.getBearing();
-        const pitch = this.map.getPitch();
-
         this.deck.setProps({
           viewState: {
             longitude: center.lng,
             latitude: center.lat,
-            zoom,
-            bearing,
-            pitch,
+            zoom: this.map.getZoom(),
+            bearing: this.map.getBearing(),
+            pitch: this.map.getPitch(),
             transitionDuration: 0,
           },
         });
       });
-
-      this.mapInitialized = true;
-      this.loading = false;
     },
 
     clearMap() {
-      if (this.deck) this.deck.finalize();
-      if (this.map) this.map.remove();
+      this.deck?.finalize();
+      this.map?.remove();
       this.deck = this.map = null;
       this.mapInitialized = false;
       this.tooltip = null;
@@ -290,48 +242,34 @@ const MapVisualization = Vue.defineComponent({
 
     retry() {
       this.errorMessage = '';
-      this.initMap();
+      this.initMapFlow();
     },
 
     onClick(info) {
-      if (!info || !info.object) return;
+      if (!info?.object) return;
       const obj = info.object;
+      const title = obj.type === 'flow' ? this.translations.flowDetails_ : this.translations.locationDetails_;
+      const details = obj.type === 'flow'
+        ? [
+            { label: this.translations.origin_, value: obj.origin.name },
+            { label: this.translations.destination_, value: obj.dest.name },
+            { label: this.translations.count_, value: obj.count },
+          ]
+        : [
+            { label: this.translations.name_, value: obj.name },
+            { label: this.translations.totalIn_, value: obj.totals?.incomingCount || 0 },
+            { label: this.translations.totalOut_, value: obj.totals?.outgoingCount || 0 },
+          ];
 
-      let title = '';
-      let details = [];
-
-      if (obj.type === 'flow') {
-        title = translations.flowDetails_;
-        details = [
-          { label: translations.origin_, value: obj.origin.name },
-          { label: translations.destination_, value: obj.dest.name },
-          { label: translations.count_, value: obj.count },
-        ];
-      } else if (obj.type === 'location') {
-        const totals = obj.totals || { incomingCount: 0, outgoingCount: 0 };
-        title = translations.locationDetails_;
-        details = [
-          { label: translations.name_, value: obj.name },
-          { label: translations.totalIn_, value: totals.incomingCount },
-          { label: translations.totalOut_, value: totals.outgoingCount },
-        ];
-      }
-
-      const content = `
-        <div style="min-width:220px;">
+      this.tooltip = {
+        x: info.x,
+        y: info.y,
+        content: `<div style="min-width:220px;">
           <div style="font-weight:600;margin-bottom:6px;">${title}</div>
           <div style="border-top:1px solid #e0e0e0;margin-bottom:4px;"></div>
-          ${details
-            .map(
-              (d) => `
-            <div style="margin-bottom:4px;">
-              <div style="font-weight:500;">${d.label}</div>
-              <div>${d.value}</div>
-            </div>`,
-            )
-            .join('')}
-        </div>`;
-      this.tooltip = { x: info.x, y: info.y, content };
+          ${details.map(d => `<div style="margin-bottom:4px;"><div style="font-weight:500;">${d.label}</div><div>${d.value}</div></div>`).join('')}
+        </div>`,
+      };
       this.menu = true;
     },
   },
