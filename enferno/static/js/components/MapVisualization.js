@@ -9,14 +9,17 @@ const MapVisualization = Vue.defineComponent({
   emits: ['update:open'],
   data: () => ({
     mapsApiEndpoint: mapsApiEndpoint,
+    googleTileUrl: `https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}&key=${window.__GOOGLE_MAPS_API_KEY__}`,
     translations: window.translations,
     tooltip: null,
     menu: false,
     windowWidth: window.innerWidth,
     windowHeight: window.innerHeight,
     mapInitialized: false,
-    attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-    googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
+    attribution:
+      '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    googleAttribution:
+      '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
 
     // ✅ New UI states
     loading: false,
@@ -45,7 +48,7 @@ const MapVisualization = Vue.defineComponent({
       const subs = subdomains ?? ['a', 'b', 'c'];
 
       if (template.includes('{s}')) {
-        return subs.map(s => template.replace('{s}', s));
+        return subs.map((s) => template.replace('{s}', s));
       }
 
       return [template];
@@ -140,7 +143,7 @@ const MapVisualization = Vue.defineComponent({
           },
           layers: [
             {
-              id: 'osm',
+              id: 'osm-layer',
               type: 'raster',
               source: 'osm',
             },
@@ -151,6 +154,58 @@ const MapVisualization = Vue.defineComponent({
         zoom: initialViewState.zoom,
         bearing: initialViewState.bearing,
         pitch: initialViewState.pitch,
+      });
+
+      this.map.addControl(new MaplibreGL.NavigationControl(), 'top-right');
+      this.map.addControl(new MaplibreGL.FullscreenControl(), 'top-right');
+      const myControl = {
+        onAdd(map) {
+          this._map = map;
+
+          const container = document.createElement('div');
+          container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+
+          const btn = document.createElement('button');
+          btn.innerHTML = "🗺️";
+          btn.title = "Toggle Base Map";
+          let current = "osm";
+
+          btn.onclick = () => {
+            const showGoogle = current === "osm";
+
+            map.setLayoutProperty("osm-layer", "visibility", showGoogle ? "none" : "visible");
+            map.setLayoutProperty("google-layer", "visibility", showGoogle ? "visible" : "none");
+
+            current = showGoogle ? "google" : "osm";
+            btn.innerHTML = current === "google" ? "🌎" : "🗺️";
+          };
+
+          container.appendChild(btn);
+          this._container = container;
+          return container;
+        },
+
+        onRemove() {
+          this._container.remove();
+          this._map = undefined;
+        },
+      };
+      this.map.addControl(myControl, 'top-right');
+      this.map.on("load", () => {
+        this.map.addSource("google", {
+          type: "raster",
+          tiles: this.buildTileUrls(this.googleTileUrl, ["mt0", "mt1", "mt2", "mt3"]),
+          tileSize: 256,
+          maxzoom: 20,
+          attribution: this.googleAttribution
+        });
+
+        this.map.addLayer({
+          id: "google-layer",
+          type: "raster",
+          source: "google",
+          layout: { visibility: "none" },
+        });
       });
 
       const layers = [];
@@ -196,6 +251,26 @@ const MapVisualization = Vue.defineComponent({
           this.menu = false;
         },
         layers,
+      });
+
+      this.map.on('move', () => {
+        if (!this.deck) return;
+
+        const center = this.map.getCenter();
+        const zoom = this.map.getZoom();
+        const bearing = this.map.getBearing();
+        const pitch = this.map.getPitch();
+
+        this.deck.setProps({
+          viewState: {
+            longitude: center.lng,
+            latitude: center.lat,
+            zoom,
+            bearing,
+            pitch,
+            transitionDuration: 0,
+          },
+        });
       });
 
       this.mapInitialized = true;
