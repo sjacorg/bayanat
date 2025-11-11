@@ -13,7 +13,7 @@
     {% include 'admin/partials/export_drawer.html' %}
     <v-main>
         {% include 'admin/partials/actor_advsearch.html' %}
-        <map-visualization v-model:open="mapVisualizationOpen" :query="search"></map-visualization>
+        <map-visualization ref="mapVisualizationRef" v-model:open="mapVisualizationOpen" :query="search" @advanced-search="advSearchExpand = true"></map-visualization>
 
         <v-container fluid>
             <v-tooltip text="{{ _('Map visualization') }}">
@@ -1110,6 +1110,10 @@
                                 this.countType = response.data.totalType
                             }
                             this.nextCursor = response.data.nextCursor || null;
+
+                            if (this.mapVisualizationOpen) {
+                                this.$refs.mapVisualizationRef.fetchData()
+                            }
                         })
                         .catch((error) => {
                             console.error('Error loading data:', error);

@@ -6,7 +6,7 @@ const MapVisualization = Vue.defineComponent({
     dataEndpoint: { type: String, default: '/admin/api/flowmap/data' },
     query: { type: Array, default: () => [{}] },
   },
-  emits: ['update:open'],
+  emits: ['update:open', 'advancedSearch'],
 
   data: () => ({
     // API / Tile URLs
@@ -177,7 +177,7 @@ const MapVisualization = Vue.defineComponent({
       });
       this.map.addControl(new MaplibreGL.NavigationControl({ showCompass: false }), 'top-left');
       this.map.addControl(new MaplibreGL.FullscreenControl(), 'top-left');
-      this.map.addControl(this.createBaseToggleControl(), 'top-left');
+      if (window.__GOOGLE_MAPS_API_KEY__) this.map.addControl(this.createBaseToggleControl(), 'top-left');
 
       this.map.on('load', () => {
         this.map.addSource('google', {
@@ -278,6 +278,7 @@ const MapVisualization = Vue.defineComponent({
       <v-toolbar color="primary" dark>
         <v-toolbar-title>{{ translations.mapVisualization_ }}</v-toolbar-title>
         <v-spacer></v-spacer>
+        <v-btn prepend-icon="mdi-ballot" variant="elevated" @click="$emit('advancedSearch')">Advanced search</v-btn>
         <v-btn icon="mdi-close" @click="$emit('update:open', false)"></v-btn>
       </v-toolbar>
 
