@@ -1112,7 +1112,7 @@
                             this.nextCursor = response.data.nextCursor || null;
 
                             if (this.mapVisualizationOpen) {
-                                this.$refs.mapVisualizationRef.fetchData()
+                                this.$refs.mapVisualizationRef.initMapFlow()
                             }
                         })
                         .catch((error) => {
