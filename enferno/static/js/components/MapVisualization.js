@@ -145,7 +145,6 @@ const MapVisualization = Vue.defineComponent({
     },
 
     async initMapFlow() {
-      this.clearMap();
       this.loading = true;
       this.loadingMessage = this.translations.preparingMap_;
 
@@ -154,8 +153,11 @@ const MapVisualization = Vue.defineComponent({
 
       const initialViewState = this.getInitialViewState(locations);
 
-      this.initMaplibre(initialViewState);
-      this.initDeck(locations, flows, initialViewState);
+      if (!this.map) {
+        this.initMaplibre(initialViewState);
+      }
+
+      this.updateDeck(locations, flows, initialViewState);
 
       this.mapInitialized = true;
       this.loading = false;
@@ -191,41 +193,65 @@ const MapVisualization = Vue.defineComponent({
       });
     },
 
-    initDeck(locations, flows, initialViewState) {
+    updateDeck(locations, flows, viewState) {
+      this.menu = null;
+      this.tooltip = null;
       const flowLayer = this.createFlowmapLayer(locations, flows);
-      this.deck = new FlowmapBundle.DeckCore.Deck({
-        canvas: 'deck-canvas',
-        width: '100%',
-        height: '100%',
-        initialViewState,
-        controller: true,
-        map: true,
-        layers: flowLayer ? [flowLayer] : [],
-        onViewStateChange: ({ viewState }) => {
-          this.map.jumpTo({
-            center: [viewState.longitude, viewState.latitude],
-            zoom: viewState.zoom,
-            bearing: viewState.bearing,
-            pitch: viewState.pitch,
-          });
-          this.menu = false;
-        },
-      });
 
-      this.map.on('move', () => {
-        if (!this.deck) return;
-        const center = this.map.getCenter();
-        this.deck.setProps({
-          viewState: {
-            longitude: center.lng,
-            latitude: center.lat,
-            zoom: this.map.getZoom(),
-            bearing: this.map.getBearing(),
-            pitch: this.map.getPitch(),
-            transitionDuration: 0,
+      // First time
+      if (!this.deck) {
+        this.deck = new FlowmapBundle.DeckCore.Deck({
+          canvas: 'deck-canvas',
+          width: '100%',
+          height: '100%',
+          initialViewState: viewState,
+          controller: true,
+          map: true,
+          layers: flowLayer ? [flowLayer] : [],
+          onViewStateChange: ({ viewState }) => {
+            this.map.jumpTo({
+              center: [viewState.longitude, viewState.latitude],
+              zoom: viewState.zoom,
+              bearing: viewState.bearing,
+              pitch: viewState.pitch,
+            });
+            this.menu = false;
           },
         });
+
+        this.map.on('move', () => {
+          if (!this.deck) return;
+          const center = this.map.getCenter();
+          this.deck.setProps({
+            viewState: {
+              longitude: center.lng,
+              latitude: center.lat,
+              zoom: this.map.getZoom(),
+              bearing: this.map.getBearing(),
+              pitch: this.map.getPitch(),
+              transitionDuration: 0,
+            },
+          });
+        });
+
+        return;
+      }
+
+      // Later calls → only update the layer
+      this.deck.setProps({
+        layers: flowLayer ? [flowLayer] : [],
       });
+
+      // Optional: recenter to data
+      if (viewState) {
+        this.deck.setProps({ viewState });
+        this.map.jumpTo({
+          center: [viewState.longitude, viewState.latitude],
+          zoom: viewState.zoom,
+          bearing: viewState.bearing,
+          pitch: viewState.pitch,
+        });
+      }
     },
 
     clearMap() {
