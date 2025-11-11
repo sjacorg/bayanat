@@ -90,7 +90,7 @@ const MapVisualization = Vue.defineComponent({
           const container = document.createElement('div');
           container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
           const btn = document.createElement('button');
-          btn.innerHTML = '🗺️';
+          btn.innerHTML = '<img src="/static/css/images/layers.png" class="pa-1 w-100" />';
           btn.title = 'Toggle Base Map';
           let current = 'osm';
           btn.onclick = () => {
@@ -98,7 +98,6 @@ const MapVisualization = Vue.defineComponent({
             map.setLayoutProperty('osm-layer', 'visibility', showGoogle ? 'none' : 'visible');
             map.setLayoutProperty('google-layer', 'visibility', showGoogle ? 'visible' : 'none');
             current = showGoogle ? 'google' : 'osm';
-            btn.innerHTML = current === 'google' ? '🌎' : '🗺️';
           };
           container.appendChild(btn);
           this._container = container;
@@ -176,9 +175,9 @@ const MapVisualization = Vue.defineComponent({
           layers: [{ id: 'osm-layer', type: 'raster', source: 'osm' }],
         },
       });
-      this.map.addControl(new MaplibreGL.NavigationControl(), 'top-right');
-      this.map.addControl(new MaplibreGL.FullscreenControl(), 'top-right');
-      this.map.addControl(this.createBaseToggleControl(), 'top-right');
+      this.map.addControl(new MaplibreGL.NavigationControl({ showCompass: false }), 'top-left');
+      this.map.addControl(new MaplibreGL.FullscreenControl(), 'top-left');
+      this.map.addControl(this.createBaseToggleControl(), 'top-left');
 
       this.map.on('load', () => {
         this.map.addSource('google', {
