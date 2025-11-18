@@ -9,10 +9,6 @@ const SearchField = Vue.defineComponent({
     itemTitle: String,
     itemValue: String,
     api: String,
-    method: {
-      type: String,
-      default: 'get',
-    },
     queryParams: {
       type: Object,
       default: () => ({}),
@@ -43,7 +39,8 @@ const SearchField = Vue.defineComponent({
       this.debouncedSearch(search);
     },
     debouncedSearch: debounce(function (search) {
-      api[this.method](this.api, {
+      api
+        .get(this.api, {
           params: {
             q: search,
             ...this.queryParams,
