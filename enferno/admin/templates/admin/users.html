@@ -503,9 +503,6 @@
                 editedIndex: -1,
                 roles: [],
                 editedItem: {},
-                defaultItem: {
-                    active: false
-                },
                 isAdmin: false,
                 userDrawer: false,
                 user: null,
@@ -870,7 +867,7 @@
                 },
 
                 createItem() {
-                    this.editedItem = {...this.defaultItem};
+                    this.editedItem = {};
                     this.dialog = true;
                 },
 
@@ -893,7 +890,7 @@
                     setTimeout(() => {
                         this.serverErrors = {};
                         this.isStrongPassword = false;
-                        this.editedItem = Object.assign({}, this.defaultItem);
+                        this.editedItem = {};
                         this.editedIndex = -1;
                     }, 300);
                 },
@@ -904,7 +901,7 @@
                         this.askUserToChangePassword = true;
                         this.serverErrors = {};
                         this.isStrongPassword = false;
-                        this.editedItem = Object.assign({}, this.defaultItem);
+                        this.editedItem = {};
                     }, 300);
                 },
 
@@ -996,7 +993,6 @@
                         this.editedItem.roles = [selectedRole, ...preservedRoles];
                     }
 
-                    this.editedItem.active = true;
                     this.checkRoles();
                 },
                 isAccessRoleSelected(role) {
