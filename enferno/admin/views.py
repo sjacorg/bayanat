@@ -14,7 +14,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, asc, select, func
+from sqlalchemy import desc, or_, asc, select, func, and_
 from werkzeug.utils import safe_join, secure_filename
 from flask_security.twofactor import tf_disable
 import shortuuid
