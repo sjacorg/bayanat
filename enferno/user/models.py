@@ -390,8 +390,9 @@ class User(UserMixin, db.Model, BaseMixin):
 
         # active field can only be set during creation (user has no id yet)
         # For existing users, use dedicated endpoints: suspend, disable, reactivate, enable
-        if not self.id and "active" in item:
-            self.active = item.get("active")
+        if not self.id:
+            # Default to True for new users, allow explicit override
+            self.active = item.get("active", True)
 
         return self
 
