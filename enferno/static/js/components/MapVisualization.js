@@ -125,7 +125,6 @@ const MapVisualization = Vue.defineComponent({
         
         <!--  MAP  -->
         <flowmap
-          v-if="!loading && !errorMessage"
           :locations="locations"
           :flows="flows"
           style="width:100%; height:100%;"

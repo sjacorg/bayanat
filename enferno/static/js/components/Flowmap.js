@@ -34,13 +34,6 @@ const Flowmap = Vue.defineComponent({
       minWeight: null,
       maxWeight: null,
 
-      debug: {
-        selected: 'none',
-        entities: 0,
-        segments: 0,
-        arrows: 0,
-      },
-
       // Inline Styles
       rootStyle: {
         width: '100%',
@@ -65,20 +58,6 @@ const Flowmap = Vue.defineComponent({
         pointerEvents: 'none',
         width: '100%',
         height: '100%',
-      },
-      debugPanelStyle: {
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        background: 'rgba(0,0,0,0.7)',
-        color: '#0f0',
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        padding: '8px 10px',
-        borderRadius: '6px',
-        maxWidth: '220px',
-        lineHeight: '1.4',
-        zIndex: '1000',
       },
       clearBtnStyle: {
         position: 'absolute',
@@ -151,9 +130,9 @@ const Flowmap = Vue.defineComponent({
       this.map.on('click', this.onMapClick);
 
       // 🔹 FAST PATH: just reposition precomputed shapes
-    this.map.on('move', this.scheduleFrame);
-    this.map.on('zoom', this.scheduleFrame);
-    this.map.on('zoomanim', this.scheduleFrame);
+      this.map.on('move', this.scheduleFrame);
+      this.map.on('zoom', this.scheduleFrame);
+      this.map.on('zoomanim', this.scheduleFrame);
 
       // 🔹 HEAVY PATH: recompute clusters only when zoom ends
       this.map.on('zoomend', this.rebuildShapes);
@@ -161,14 +140,14 @@ const Flowmap = Vue.defineComponent({
       window.addEventListener('resize', this.resizeCanvas);
     },
     scheduleFrame() {
-  if (this.frameRequested) return;
-  this.frameRequested = true;
+      if (this.frameRequested) return;
+      this.frameRequested = true;
 
-  requestAnimationFrame(() => {
-    this.drawFrame();
-    this.frameRequested = false;
-  });
-},
+      requestAnimationFrame(() => {
+        this.drawFrame();
+        this.frameRequested = false;
+      });
+    },
 
     initPoints() {
       this.points = {};
@@ -311,12 +290,6 @@ const Flowmap = Vue.defineComponent({
       this.maxWeight = null;
 
       if (!flows.length) {
-        this.debug = {
-          selected: this.selectedPoint ?? 'none',
-          entities: 0,
-          segments: 0,
-          arrows: 0,
-        };
         this.drawFrame();
         return;
       }
@@ -414,14 +387,6 @@ const Flowmap = Vue.defineComponent({
 
       this.flowGroups = flowGroups;
 
-      // Debug will get arrow count after drawFrame
-      this.debug = {
-        selected: this.selectedPoint ?? 'none',
-        entities: flows.length,
-        segments: Object.keys(flowGroups).length,
-        arrows: 0,
-      };
-
       // Draw once with fresh shapes
       this.drawFrame();
     },
@@ -441,12 +406,6 @@ const Flowmap = Vue.defineComponent({
       this.dotShapes = [];
 
       if (!this.clusterDefs.length || !Object.keys(this.flowGroups).length) {
-        this.debug = {
-          selected: this.selectedPoint ?? 'none',
-          entities: this.currentFlows.length,
-          segments: Object.keys(this.flowGroups).length,
-          arrows: 0,
-        };
         return;
       }
 
@@ -550,13 +509,6 @@ const Flowmap = Vue.defineComponent({
           key: c.memberIds.join(','),
         });
       });
-
-      this.debug = {
-        selected: this.selectedPoint ?? 'none',
-        entities: this.currentFlows.length,
-        segments: Object.keys(this.flowGroups).length,
-        arrows: this.arrowShapes.length,
-      };
     },
 
     /* =============================================
@@ -660,7 +612,7 @@ const Flowmap = Vue.defineComponent({
           const ids = dot.key.split(',').map(Number);
           this.selectedPoint = ids[0];
 
-        //   const names = ids.map((id) => this.points[id]?.label || id);
+          //   const names = ids.map((id) => this.points[id]?.label || id);
 
           let outgoing = 0;
           let incoming = 0;
@@ -673,9 +625,9 @@ const Flowmap = Vue.defineComponent({
           // Selection changes → recompute (so flows and radii reflect filter)
           this.rebuildShapes();
 
-        //   alert(
-        //     `Clicked cluster: ${names.join(', ')}\nOutgoing: ${outgoing}\nIncoming: ${incoming}`,
-        //   );
+          //   alert(
+          //     `Clicked cluster: ${names.join(', ')}\nOutgoing: ${outgoing}\nIncoming: ${incoming}`,
+          //   );
           return;
         }
       }
@@ -712,15 +664,6 @@ const Flowmap = Vue.defineComponent({
 
         <!-- Canvas Overlay -->
         <canvas ref="overlay" :style="overlayStyle"></canvas>
-
-        <!-- Debug Panel -->
-        <div :style="debugPanelStyle">
-          <b>Debug Info</b><br />
-          Selected: {{ debug.selected }}<br />
-          Entities drawn: {{ debug.entities }}<br />
-          Segments drawn: {{ debug.segments }}<br />
-          Arrows drawn: {{ debug.arrows }}
-        </div>
 
         <!-- Clear Filter -->
         <div :style="clearBtnStyle" @click="clearFilter">
