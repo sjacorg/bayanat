@@ -90,6 +90,7 @@ const Flowmap = Vue.defineComponent({
     locations: {
       deep: true,
       handler() {
+        this.selectedPoint = null;
         this.initPoints();
         this.rebuildShapes();
       },
@@ -97,6 +98,7 @@ const Flowmap = Vue.defineComponent({
     flows: {
       deep: true,
       handler() {
+        this.selectedPoint = null;
         this.rebuildShapes();
       },
     },
