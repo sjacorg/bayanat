@@ -390,6 +390,7 @@
     <script src="/static/js/force-graph.min.js"></script>
 
     <script src="/static/js/components/MapVisualization.js"></script>
+    <script src="/static/js/components/Flowmap.js"></script>
 
     <script src="/static/js/components/MissingPersonCard.js"></script>
     <script src="/static/js/components/MissingPersonField.js"></script>
@@ -1737,6 +1738,7 @@
         app.component('VueDropzone', VueDropzone);
 
         app.component('MapVisualization', MapVisualization);
+        app.component('Flowmap', Flowmap);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {
