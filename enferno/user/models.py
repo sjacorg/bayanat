@@ -387,7 +387,12 @@ class User(UserMixin, db.Model, BaseMixin):
         self.can_edit_locations = item.get("can_edit_locations", False)
         self.can_export = item.get("can_export", False)
         self.can_import_web = item.get("can_import_web", False)
-        self.active = item.get("active")
+
+        # active field can only be set during creation (user has no id yet)
+        # For existing users, use dedicated endpoints: suspend, disable, reactivate, enable
+        if not self.id and "active" in item:
+            self.active = item.get("active")
+
         return self
 
     def create_revision(self, user_id: int = None, created: datetime = None) -> None:
