@@ -251,13 +251,26 @@ def users(session):
     self_assign_dict["mod"] = mod_user_sa
     self_assign_dict["da"] = da_user_sa
     yield admin_user, da_user, mod_user, self_assign_dict
+    from enferno.admin.models.UserHistory import UserHistory
+    from enferno.user.models import roles_users
+
     user_ids = [admin_user.id, da_user.id, mod_user.id] + [
         user.id for user in self_assign_dict.values()
     ]
+    # Delete dependencies first
+    session.query(UserHistory).filter(UserHistory.target_user_id.in_(user_ids)).delete(
+        synchronize_session=False
+    )
+    session.query(UserHistory).filter(UserHistory.user_id.in_(user_ids)).delete(
+        synchronize_session=False
+    )
     session.query(Activity).filter(Activity.user_id.in_(user_ids)).delete(synchronize_session=False)
     session.query(Notification).filter(Notification.user_id.in_(user_ids)).delete(
         synchronize_session=False
     )
+    session.execute(roles_users.delete().where(roles_users.c.user_id.in_(user_ids)))
+    session.commit()
+    # Now delete users
     session.delete(admin_user)
     session.delete(da_user)
     session.delete(mod_user)
