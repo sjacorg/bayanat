@@ -140,13 +140,13 @@ const Flowmap = Vue.defineComponent({
       this.map.on('move', this.scheduleFrame);
       this.map.on('zoom', this.scheduleFrame);
       this.map.on('zoomanim', this.scheduleFrame);
-      
-      // 🔹 HEAVY PATH: recompute clusters when zoom ends
-      // this.map.on('moveend', this.rebuildShapes);
+
+      // 🔹 HEAVY PATH: recompute clusters when zoom starts
       this.map.on('zoomstart', this.rebuildShapes);
 
       window.addEventListener('resize', this.resizeCanvas);
     },
+
     scheduleFrame() {
       if (this.frameRequested) return;
       this.frameRequested = true;
@@ -213,21 +213,12 @@ const Flowmap = Vue.defineComponent({
       let t = (weight - min) / (max - min);
 
       // 👇 DYNAMIC RANGE COMPRESSION
-      // If max-min small, reduce scale aggressively
       const range = max - min;
       const compression = Math.min(1, range / 5);
-      // Example:
-      // range=1 → compression=0.2
-      // range=2 → compression=0.4
-      // range=10→ compression=1 (full effect)
 
       t = t * compression;
-
-      // Map 0..compression → 0..1
-      // So we still reach end of scale but softly
       t = Math.min(1, t);
 
-      // Interpolate inside width range
       const minW = widths[0];
       const maxW = widths[widths.length - 1];
 
@@ -239,13 +230,12 @@ const Flowmap = Vue.defineComponent({
 
       let t = (weight - minW) / (maxW - minW);
 
-      // dynamic compression
       const range = maxW - minW;
       const compression = Math.min(1, range / 5);
       t = Math.min(1, t * compression);
 
       const sat = 55 + t * 25;
-      const light = 60 - t * 50; // compressed scale now
+      const light = 60 - t * 50;
       return `hsl(173, ${sat}%, ${light}%)`;
     },
 
@@ -309,7 +299,7 @@ const Flowmap = Vue.defineComponent({
 
     /* =============================================
      HEAVY REBUILD (CLUSTERS & GROUPS)
-     Runs when: flows change, locations change, zoomend, selection change
+     Runs when: flows change, locations change, zoom, selection change
     ============================================= */
     rebuildShapes() {
       if (!this.map || !this.ctx) return;
@@ -371,29 +361,22 @@ const Flowmap = Vue.defineComponent({
         const centerLon = count ? sumLon / count : 0;
 
         // Cluster traffic → dot size
-        // -------- dynamic compressed dot radius --------
         let clusterTotal = 0;
         memberIds.forEach((id) => {
           clusterTotal += locationTraffic[id] || 0;
         });
 
-        // If no range or all equal → middle dot size
+        let radius;
         if (this.minWeight === this.maxWeight) {
           radius = this.dotSizes[Math.floor(this.dotSizes.length / 2)];
         } else {
           const ranges = this.dotSizes;
-
-          // normalize 0..1
           let t = (clusterTotal - this.minWeight) / (this.maxWeight - this.minWeight);
-
-          // dynamic compression (same as arrows)
           const range = this.maxWeight - this.minWeight;
           const compression = Math.min(1, range / 5);
           t = Math.min(1, t * compression);
-
           const minR = ranges[0];
           const maxR = ranges[ranges.length - 1];
-
           radius = minR + t * (maxR - minR);
         }
 
@@ -442,7 +425,7 @@ const Flowmap = Vue.defineComponent({
 
     /* =============================================
      FAST FRAME DRAWING
-     Runs on: move, zoomanim, zoomend (after rebuild), resize
+     Runs on: move, zoomanim, zoom, resize
      Uses ONLY precomputed clusterDefs + flowGroups
     ============================================= */
     drawFrame() {
@@ -474,7 +457,6 @@ const Flowmap = Vue.defineComponent({
       // ------------------------------------------------------
 
       const arrowSegments = [];
-
       const groups = this.flowGroups;
 
       Object.keys(groups).forEach((key) => {
@@ -493,19 +475,19 @@ const Flowmap = Vue.defineComponent({
         const spacing = 4;
         const { offsetA1, offsetB1, offsetA2, offsetB2 } = this.computeOffsets(A, B, spacing);
 
-        // forward direction
+        // forward direction (clusterFrom -> clusterTo)
         group.flows.forEach((f) => {
           arrowSegments.push({
             from: offsetA1,
             to: offsetB1,
             weight: f.weight,
             width: this.getArrowWidth(f.weight),
-            fromKey: f.fromKey,
-            toKey: f.toKey,
+            clusterFrom: group.fromClusterId,
+            clusterTo: group.toClusterId,
           });
         });
 
-        // backward direction
+        // backward direction (clusterTo -> clusterFrom)
         if (opposite) {
           opposite.flows.forEach((f) => {
             arrowSegments.push({
@@ -513,8 +495,8 @@ const Flowmap = Vue.defineComponent({
               to: offsetA2,
               weight: f.weight,
               width: this.getArrowWidth(f.weight),
-              fromKey: f.fromKey,
-              toKey: f.toKey,
+              clusterFrom: group.toClusterId,
+              clusterTo: group.fromClusterId,
             });
           });
         }
@@ -529,8 +511,8 @@ const Flowmap = Vue.defineComponent({
           seg.from,
           seg.to,
           seg.width,
-          seg.fromKey,
-          seg.toKey,
+          seg.clusterFrom,
+          seg.clusterTo,
           seg.weight,
           minW,
           maxW,
@@ -563,7 +545,7 @@ const Flowmap = Vue.defineComponent({
     /* =============================================
      ARROW DRAWING (per arrow, used by drawFrame)
     ============================================= */
-    drawArrowRect(p1, p2, width, fromKey, toKey, weight, minW, maxW) {
+    drawArrowRect(p1, p2, width, clusterFrom, clusterTo, weight, minW, maxW) {
       const ctx = this.ctx;
       const dx = p2.x - p1.x;
       const dy = p2.y - p1.y;
@@ -602,13 +584,13 @@ const Flowmap = Vue.defineComponent({
         pStart: p1,
         pTip,
         width,
-        fromKey: String(fromKey),
-        toKey: String(toKey),
+        clusterFrom,
+        clusterTo,
       });
     },
 
     /* =============================================
-     CLICK HANDLING
+     CLICK HANDLING HELPERS
     ============================================= */
     pointInCircle(x, y, dot) {
       const dx = x - dot.center.x;
@@ -646,12 +628,51 @@ const Flowmap = Vue.defineComponent({
       return { outgoing, incoming };
     },
 
-    getClusterArrowTraffic(from, to) {
-      return this.currentFlows
-        .filter((f) => f.from == from && f.to == to)
-        .reduce((s, f) => s + f.weight, 0);
+    // NEW: cluster-aware arrow aggregation with pair breakdown
+    getClusterArrowDetails(clusterFrom, clusterTo) {
+      const fromCluster = this.clusterDefs[clusterFrom];
+      const toCluster = this.clusterDefs[clusterTo];
+      if (!fromCluster || !toCluster) {
+        return { total: 0, pairs: [], fromMembers: [], toMembers: [] };
+      }
+
+      const fromMembers = fromCluster.memberIds;
+      const toMembers = toCluster.memberIds;
+
+      const pairsMap = new Map();
+      let total = 0;
+
+      this.currentFlows.forEach((f) => {
+        if (fromMembers.includes(f.from) && toMembers.includes(f.to)) {
+          total += f.weight;
+          const key = `${f.from}|${f.to}`;
+          if (!pairsMap.has(key)) {
+            pairsMap.set(key, {
+              fromId: f.from,
+              toId: f.to,
+              weight: 0,
+            });
+          }
+          const entry = pairsMap.get(key);
+          entry.weight += f.weight;
+        }
+      });
+
+      const pairs = Array.from(pairsMap.values()).map((p) => ({
+        ...p,
+        fromLabel: this.points[p.fromId]?.label || p.fromId,
+        toLabel: this.points[p.toId]?.label || p.toId,
+      }));
+
+      // Sort pairs by weight desc
+      pairs.sort((a, b) => b.weight - a.weight);
+
+      return { total, pairs, fromMembers, toMembers };
     },
 
+    /* =============================================
+     CLICK HANDLING
+    ============================================= */
     onMapClick(e) {
       const p = this.map.latLngToContainerPoint(e.latlng);
 
@@ -661,8 +682,6 @@ const Flowmap = Vue.defineComponent({
           const ids = dot.key.split(',').map(Number);
           this.selectedPoint = ids[0];
 
-          //   const names = ids.map((id) => this.points[id]?.label || id);
-
           let outgoing = 0;
           let incoming = 0;
           ids.forEach((id) => {
@@ -671,12 +690,7 @@ const Flowmap = Vue.defineComponent({
             incoming += t.incoming;
           });
 
-          // Selection changes → recompute (so flows and radii reflect filter)
           this.rebuildShapes();
-
-          //   alert(
-          //     `Clicked cluster: ${names.join(', ')}\nOutgoing: ${outgoing}\nIncoming: ${incoming}`,
-          //   );
           return;
         }
       }
@@ -684,15 +698,29 @@ const Flowmap = Vue.defineComponent({
       // Then arrows
       for (const arrow of this.arrowShapes) {
         if (this.pointOnArrow(p.x, p.y, arrow)) {
-          const from = Number(arrow.fromKey);
-          const to = Number(arrow.toKey);
+          const { clusterFrom, clusterTo } = arrow;
+          const { total, pairs, fromMembers, toMembers } =
+            this.getClusterArrowDetails(clusterFrom, clusterTo);
 
-          const fromName = this.points[from]?.label || from;
-          const toName = this.points[to]?.label || to;
+          const fromNames = fromMembers.map((id) => this.points[id]?.label || id);
+          const toNames = toMembers.map((id) => this.points[id]?.label || id);
 
-          const total = this.getClusterArrowTraffic(from, to);
+          let msg =
+            `Cluster arrow:\n` +
+            `${fromNames.join(', ')} → ${toNames.join(', ')}\n\n`;
 
-          alert(`Clicked arrow: ${fromName} → ${toName}\nTrips: ${total}`);
+          if (pairs.length) {
+            msg += 'Pairs:\n';
+            pairs.forEach((p) => {
+              msg += `${p.fromLabel} → ${p.toLabel}: ${p.weight}\n`;
+            });
+          } else {
+            msg += 'No direct flows between these clusters in current filter.\n';
+          }
+
+          msg += `\nCombined trips: ${total}`;
+
+          alert(msg);
           return;
         }
       }
@@ -722,7 +750,6 @@ const Flowmap = Vue.defineComponent({
         }
       }
 
-      // Update cursor
       this.$refs.mapContainer.style.cursor = hovering ? 'pointer' : 'grab';
     },
 
