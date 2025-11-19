@@ -91,6 +91,8 @@ const Flowmap = Vue.defineComponent({
       deep: true,
       handler() {
         this.selectedPoint = null;
+        this.minWeight = null;
+        this.maxWeight = null;
         this.initPoints();
         this.rebuildShapes();
       },
@@ -99,6 +101,8 @@ const Flowmap = Vue.defineComponent({
       deep: true,
       handler() {
         this.selectedPoint = null;
+        this.minWeight = null;
+        this.maxWeight = null;
         this.rebuildShapes();
       },
     },
@@ -130,14 +134,16 @@ const Flowmap = Vue.defineComponent({
       }
 
       this.map.on('click', this.onMapClick);
+      this.map.on('mousemove', this.onMapHover);
 
       // 🔹 FAST PATH: just reposition precomputed shapes
       this.map.on('move', this.scheduleFrame);
       this.map.on('zoom', this.scheduleFrame);
       this.map.on('zoomanim', this.scheduleFrame);
-
-      // 🔹 HEAVY PATH: recompute clusters only when zoom ends
-      this.map.on('zoomend', this.rebuildShapes);
+      
+      // 🔹 HEAVY PATH: recompute clusters when zoom ends
+      // this.map.on('moveend', this.rebuildShapes);
+      this.map.on('zoomstart', this.rebuildShapes);
 
       window.addEventListener('resize', this.resizeCanvas);
     },
@@ -194,25 +200,53 @@ const Flowmap = Vue.defineComponent({
     },
 
     getArrowWidth(weight) {
-      const min = this.minWeight ?? weight;
-      const max = this.maxWeight ?? weight;
+      const widths = this.arrowWidths;
+      const min = this.minWeight;
+      const max = this.maxWeight;
 
+      // Edge case: all weights identical
       if (min === max) {
-        return this.arrowWidths[this.arrowWidths.length - 1] || 2;
+        return widths[1]; // small but not tiny
       }
 
-      const t = (weight - min) / (max - min || 1);
-      const idx = Math.round(t * (this.arrowWidths.length - 1));
-      return this.arrowWidths[idx] || 2;
+      // Normalize 0..1
+      let t = (weight - min) / (max - min);
+
+      // 👇 DYNAMIC RANGE COMPRESSION
+      // If max-min small, reduce scale aggressively
+      const range = max - min;
+      const compression = Math.min(1, range / 5);
+      // Example:
+      // range=1 → compression=0.2
+      // range=2 → compression=0.4
+      // range=10→ compression=1 (full effect)
+
+      t = t * compression;
+
+      // Map 0..compression → 0..1
+      // So we still reach end of scale but softly
+      t = Math.min(1, t);
+
+      // Interpolate inside width range
+      const minW = widths[0];
+      const maxW = widths[widths.length - 1];
+
+      return minW + t * (maxW - minW);
     },
 
     getArrowColor(weight, minW, maxW) {
-      if (minW === maxW) return 'hsl(174, 49%, 50%)';
+      if (minW === maxW) return 'hsl(173, 55%, 32%)';
 
-      const t = (weight - minW) / (maxW - minW || 1);
-      const light = 80 - t * 50; // 80% → 30%
+      let t = (weight - minW) / (maxW - minW);
 
-      return `hsl(174, 49%, ${light}%)`;
+      // dynamic compression
+      const range = maxW - minW;
+      const compression = Math.min(1, range / 5);
+      t = Math.min(1, t * compression);
+
+      const sat = 55 + t * 25;
+      const light = 60 - t * 50; // compressed scale now
+      return `hsl(173, ${sat}%, ${light}%)`;
     },
 
     /* =============================================
@@ -288,18 +322,18 @@ const Flowmap = Vue.defineComponent({
       this.clusterDefs = [];
       this.clusterByLocationId = {};
       this.flowGroups = {};
-      this.minWeight = null;
-      this.maxWeight = null;
 
       if (!flows.length) {
         this.drawFrame();
         return;
       }
 
-      // Compute global weight range once
-      const weights = flows.map((f) => f.weight);
-      this.minWeight = Math.min(...weights);
-      this.maxWeight = Math.max(...weights);
+      // Compute global weight range once per flow dataset
+      if (this.minWeight === null || this.maxWeight === null) {
+        const weights = flows.map((f) => f.weight);
+        this.minWeight = Math.min(...weights);
+        this.maxWeight = Math.max(...weights);
+      }
 
       // Per-location traffic (for dot radius)
       const locationTraffic = {};
@@ -337,18 +371,31 @@ const Flowmap = Vue.defineComponent({
         const centerLon = count ? sumLon / count : 0;
 
         // Cluster traffic → dot size
+        // -------- dynamic compressed dot radius --------
         let clusterTotal = 0;
         memberIds.forEach((id) => {
           clusterTotal += locationTraffic[id] || 0;
         });
 
-        let radiusIdx = 0;
-        if (clusterTotal > 0) {
-          radiusIdx = Math.round(
-            ((clusterTotal - 1) / (clusterTotal + 1)) * (this.dotSizes.length - 1),
-          );
+        // If no range or all equal → middle dot size
+        if (this.minWeight === this.maxWeight) {
+          radius = this.dotSizes[Math.floor(this.dotSizes.length / 2)];
+        } else {
+          const ranges = this.dotSizes;
+
+          // normalize 0..1
+          let t = (clusterTotal - this.minWeight) / (this.maxWeight - this.minWeight);
+
+          // dynamic compression (same as arrows)
+          const range = this.maxWeight - this.minWeight;
+          const compression = Math.min(1, range / 5);
+          t = Math.min(1, t * compression);
+
+          const minR = ranges[0];
+          const maxR = ranges[ranges.length - 1];
+
+          radius = minR + t * (maxR - minR);
         }
-        const radius = this.dotSizes[radiusIdx] || this.dotSizes[0] || 6;
 
         this.clusterDefs.push({
           id: index,
@@ -540,7 +587,7 @@ const Flowmap = Vue.defineComponent({
       ctx.beginPath();
       ctx.moveTo(bodyLen, -width / 2);
       ctx.lineTo(bodyLen + tipW, -width / 2);
-      ctx.lineTo(bodyLen, width + 3);
+      ctx.lineTo(bodyLen, width + 10);
       ctx.closePath();
       ctx.fill();
 
@@ -649,6 +696,34 @@ const Flowmap = Vue.defineComponent({
           return;
         }
       }
+    },
+
+    onMapHover(e) {
+      if (!this.map || !this.canvas) return;
+
+      const p = this.map.latLngToContainerPoint(e.latlng);
+      let hovering = false;
+
+      // Check dots
+      for (const dot of this.dotShapes) {
+        if (this.pointInCircle(p.x, p.y, dot)) {
+          hovering = true;
+          break;
+        }
+      }
+
+      // Check arrows only if not found in dots
+      if (!hovering) {
+        for (const a of this.arrowShapes) {
+          if (this.pointOnArrow(p.x, p.y, a)) {
+            hovering = true;
+            break;
+          }
+        }
+      }
+
+      // Update cursor
+      this.$refs.mapContainer.style.cursor = hovering ? 'pointer' : 'grab';
     },
 
     clearFilter() {
