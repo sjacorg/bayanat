@@ -8,7 +8,7 @@ const BulletinResult = Vue.defineComponent({
     }
   },
 
-  template: /*html*/`
+  template: `
     <template v-if="!hide">
       <v-card v-if="!bulletin.restricted" hover class="ma-2">
         <v-toolbar density="compact" class="d-flex px-2">
@@ -17,14 +17,19 @@ const BulletinResult = Vue.defineComponent({
                   size="small"># {{ bulletin.originid }}
           </v-chip>
           <v-spacer></v-spacer>
-          <v-chip variant="text" v-if="bulletin.publish_date" size="small">{{ bulletin.publish_date }}</v-chip>
+          <v-chip variant="text" v-if="bulletin.publish_date" size="small">{{ $root.formatDate(bulletin.publish_date) }}</v-chip>
         </v-toolbar>
-        <v-card-title class="text-subtitle-2 text-wrap text-break">{{bulletin.title}}</v-card-title>
+        <v-card-title class="text-wrap text-break">
+          <v-row>
+            <v-col><uni-field disable-spacing :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field></v-col>
+            <v-col><uni-field disable-spacing :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field></v-col>
+          </v-row>
+        </v-card-title>
         <v-divider></v-divider>
         <slot name="header"></slot>
         
         
-        <v-card-text v-if="bulletin.locations?.length || bulletin.sources?.length">
+        <v-card-text class="px-1" v-if="bulletin.locations?.length || bulletin.sources?.length">
               <v-list-item v-if="bulletin.locations?.length" :title="translations.locations_">
                 <v-list-item-subtitle opacity="1">
                   <div class="flex-chips">
