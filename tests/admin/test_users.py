@@ -142,7 +142,6 @@ def user_to_dict(user):
     return {
         "name": user.name,
         "username": user.username,
-        "active": user.active,
         "password": user.password,
         "email": user.email,
     }
