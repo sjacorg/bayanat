@@ -4331,6 +4331,7 @@ def api_actors(validated_data: dict) -> Response:
                 {
                     "id": item.id,
                     "name": item.name,
+                    "name_ar": item.name_ar,
                     "first_name": item.first_name,
                     "first_name_ar": item.first_name_ar,
                     "last_name": item.last_name,
