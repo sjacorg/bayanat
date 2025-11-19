@@ -28,6 +28,8 @@ from tests.models.admin import (
 @pytest.fixture(scope="function")
 def clean_slate_users(session):
     from enferno.extensions import rds
+    from enferno.user.models import roles_users
+    from enferno.admin.models.UserHistory import UserHistory
 
     # Clear Redis security keys to prevent persistence between tests
     try:
@@ -38,8 +40,14 @@ def clean_slate_users(session):
     except Exception:
         pass  # Redis might not be available in some test environments
 
+    # Delete in order of dependencies
+    session.query(UserHistory).delete(synchronize_session=False)
     session.query(Activity).delete(synchronize_session=False)
     session.query(Notification).delete(synchronize_session=False)
+    session.query(Session).delete(synchronize_session=False)
+    session.query(WebAuthn).delete(synchronize_session=False)
+    # Delete roles_users associations before deleting users
+    session.execute(roles_users.delete())
     session.query(User).delete(synchronize_session=False)
     session.commit()
     yield
@@ -47,16 +55,32 @@ def clean_slate_users(session):
 
 @pytest.fixture(scope="function")
 def create_user(session):
+    from enferno.admin.models.UserHistory import UserHistory
+    from enferno.user.models import roles_users
+
     user = UserFactory()
     session.add(user)
     session.commit()
     yield user
     try:
+        # Delete dependencies first and commit
+        session.query(UserHistory).filter(UserHistory.target_user_id == user.id).delete(
+            synchronize_session=False
+        )
+        session.query(UserHistory).filter(UserHistory.user_id == user.id).delete(
+            synchronize_session=False
+        )
         session.query(Activity).filter(Activity.user_id == user.id).delete(
             synchronize_session=False
         )
-        session.delete(user)
+        session.execute(roles_users.delete().where(roles_users.c.user_id == user.id))
         session.commit()
+        # Refresh session and delete the user
+        session.expire_all()
+        user_to_delete = session.query(User).get(user.id)
+        if user_to_delete:
+            session.delete(user_to_delete)
+            session.commit()
     except:
         pass
 
