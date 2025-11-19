@@ -6321,11 +6321,7 @@ def check_graph_status() -> Response:
 @validate_with(FlowmapVisualizeRequestModel)
 def flowmap_visualize(validated_data: dict) -> Response:
     """Generate actor flowmap visualization."""
-    q = validated_data["q"]
-    if not q:
-        return HTTPResponse.error("No query provided")
-
-    task_id = generate_actor_flowmap.delay(q, current_user.id)
+    task_id = generate_actor_flowmap.delay(validated_data["q"], current_user.id)
     return HTTPResponse.success(data={"task_id": task_id.id})
 
 
