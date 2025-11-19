@@ -19,13 +19,16 @@ const ReadMore = Vue.defineComponent({
     },
     previewStyle() {
       if (this.expanded) {
-        return {}; // no clamp when expanded
+        return {
+          wordBreak: 'break-word',
+        }; // no clamp when expanded
       }
       return {
         display: '-webkit-box',
         WebkitLineClamp: this.previewLines,
         WebkitBoxOrient: 'vertical',
         overflow: 'hidden',
+        wordBreak: 'break-word',
       };
     },
   },

@@ -516,7 +516,7 @@ const ActorCard = Vue.defineComponent({
             v-model="diffDialog"
             max-width="770px"
         >
-          <v-card class="pa-5 overflow-auto">
+          <v-card class="diff-dialog-content pa-5">
             <v-card-text>
               <div v-html="diffResult">
               </div>
