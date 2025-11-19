@@ -69,7 +69,7 @@ const RelatedBulletinsCard = Vue.defineComponent({
           <bulletin-result v-for="(item,index) in entity.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
-              <v-sheet class="py-2 px-4 border-b d-flex flex-column ga-1">
+              <v-sheet class="pa-2 border-b d-flex flex-column ga-1">
                 <v-list-item-title variant="flat"  class="text-caption mt-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
                 <div class="mb-2">
                   <div class="text-caption font-weight-bold mt-2">{{ translations.probability_ }}</div>

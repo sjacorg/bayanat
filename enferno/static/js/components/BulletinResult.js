@@ -29,7 +29,7 @@ const BulletinResult = Vue.defineComponent({
         <slot name="header"></slot>
         
         
-        <v-card-text class="px-1" v-if="bulletin.locations?.length || bulletin.sources?.length">
+        <v-card-text v-if="bulletin.locations?.length || bulletin.sources?.length">
               <v-list-item v-if="bulletin.locations?.length" :title="translations.locations_">
                 <v-list-item-subtitle opacity="1">
                   <div class="flex-chips">
