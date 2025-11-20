@@ -1399,10 +1399,11 @@
 
                 saveConfiguration() {
                     this.overlay = true
-                    
+
                     // If restoring default config set eitem and labels
                     if (this.defaultConfig) {
                         this.eitem = this.defaultConfig?.config;
+                        this.showSnack("{{_('Secret fields are not included in the revision history and will not be reverted.')}}", {timeout: 10000});
                     }
 
                     this.preprocessConfig();
