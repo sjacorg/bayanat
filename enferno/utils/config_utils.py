@@ -335,7 +335,7 @@ class ConfigManager:
             "WEB_IMPORT": cfg.WEB_IMPORT,
             "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
             "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
-            "YTDLP_COOKIES": cfg.YTDLP_COOKIES or "",
+            "YTDLP_COOKIES": ConfigManager.MASK_STRING if cfg.YTDLP_COOKIES else "",
             "NOTIFICATIONS": cfg.NOTIFICATIONS,
         }
         return conf
@@ -347,27 +347,25 @@ class ConfigManager:
     @staticmethod
     def write_config(conf):
         from enferno.admin.models import AppConfig, Activity
-
-        # handle secrets
         from enferno.settings import Config as cfg
 
-        if conf.get("AWS_SECRET_ACCESS_KEY") == ConfigManager.MASK_STRING:
-            # Keep existing secret
-            conf["AWS_SECRET_ACCESS_KEY"] = cfg.AWS_SECRET_ACCESS_KEY
-
-        if conf.get("MAIL_PASSWORD") == ConfigManager.MASK_STRING:
-            # Keep existing secret
-            conf["MAIL_PASSWORD"] = cfg.MAIL_PASSWORD
+        # Handle masked secrets - restore from current config
+        for secret_field in AppConfig.SECRET_FIELDS:
+            if conf.get(secret_field) == ConfigManager.MASK_STRING:
+                conf[secret_field] = getattr(cfg, secret_field, "")
 
         if ConfigManager.validate(conf):
             try:
-                # write config version to db
+                # Exclude secrets from database revision history
+                sanitized_conf = {
+                    key: value for key, value in conf.items() if key not in AppConfig.SECRET_FIELDS
+                }
+
                 app_config = AppConfig()
-                app_config.config = conf
+                app_config.config = sanitized_conf
                 app_config.user_id = current_user.id
                 app_config.save()
 
-                # record activity
                 Activity.create(
                     current_user,
                     Activity.ACTION_CREATE,
@@ -376,6 +374,7 @@ class ConfigManager:
                     "config",
                 )
 
+                # Write full config (including secrets) to file system
                 with open(ConfigManager.CONFIG_FILE_PATH, "w") as f:
                     f.write(json.dumps(conf, indent=2))
                     logger.info("New configuration saved.")
