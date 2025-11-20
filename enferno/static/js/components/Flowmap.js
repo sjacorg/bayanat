@@ -34,6 +34,15 @@ const Flowmap = Vue.defineComponent({
       minWeight: null,
       maxWeight: null,
 
+      // Tooltip data
+      tooltip: {
+        visible: false,
+        x: 0,
+        y: 0,
+        type: null, // "dot" | "arrow"
+        content: null,
+      },
+
       // Inline Styles
       rootStyle: {
         width: '100%',
@@ -72,6 +81,18 @@ const Flowmap = Vue.defineComponent({
         cursor: 'pointer',
         zIndex: '1000',
         boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+      },
+      tooltipStyle: {
+        position: 'absolute',
+        background: 'rgba(0,0,0,0.85)',
+        color: '#fff',
+        padding: '6px 10px',
+        borderRadius: '6px',
+        fontSize: '12px',
+        pointerEvents: 'none',
+        maxWidth: '300px',
+        zIndex: '2000',
+        whiteSpace: 'pre-line',
       },
     };
   },
@@ -715,36 +736,6 @@ const Flowmap = Vue.defineComponent({
           return;
         }
       }
-
-      // Then arrows
-      for (const arrow of this.arrowShapes) {
-        if (this.pointOnArrow(p.x, p.y, arrow)) {
-          const { clusterFrom, clusterTo } = arrow;
-          const { total, pairs, fromMembers, toMembers } =
-            this.getClusterArrowDetails(clusterFrom, clusterTo);
-
-          const fromNames = fromMembers.map((id) => this.points[id]?.label || id);
-          const toNames = toMembers.map((id) => this.points[id]?.label || id);
-
-          let msg =
-            `Cluster arrow:\n` +
-            `${fromNames.join(', ')} → ${toNames.join(', ')}\n\n`;
-
-          if (pairs.length) {
-            msg += 'Pairs:\n';
-            pairs.forEach((p) => {
-              msg += `${p.fromLabel} → ${p.toLabel}: ${p.weight}\n`;
-            });
-          } else {
-            msg += 'No direct flows between these clusters in current filter.\n';
-          }
-
-          msg += `\nCombined trips: ${total}`;
-
-          alert(msg);
-          return;
-        }
-      }
     },
 
     onMapHover(e) {
@@ -752,26 +743,81 @@ const Flowmap = Vue.defineComponent({
 
       const p = this.map.latLngToContainerPoint(e.latlng);
       let hovering = false;
+      let tooltipText = null;
 
-      // Check dots
+      // Check DOTS
       for (const dot of this.dotShapes) {
         if (this.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
+
+          const ids = dot.key.split(',').map(Number);
+          const names = ids.map((id) => this.points[id]?.label || id);
+
+          let outgoing = 0;
+          let incoming = 0;
+
+          ids.forEach((id) => {
+            const t = this.getClusterTraffic(id);
+            outgoing += t.outgoing;
+            incoming += t.incoming;
+          });
+
+          tooltipText =
+            `Cluster:\n` +
+            `${names.join(', ')}\n\n` +
+            `Outgoing: ${outgoing}\n` +
+            `Incoming: ${incoming}`;
+
           break;
         }
       }
 
-      // Check arrows only if not found in dots
+      // Check ARROWS if no dot match
       if (!hovering) {
-        for (const a of this.arrowShapes) {
-          if (this.pointOnArrow(p.x, p.y, a)) {
+        for (const arrow of this.arrowShapes) {
+          if (this.pointOnArrow(p.x, p.y, arrow)) {
             hovering = true;
+
+            const { clusterFrom, clusterTo } = arrow;
+            const { total, pairs, fromMembers, toMembers } =
+              this.getClusterArrowDetails(clusterFrom, clusterTo);
+
+            const fromNames = fromMembers.map((id) => this.points[id]?.label || id);
+            const toNames = toMembers.map((id) => this.points[id]?.label || id);
+
+            tooltipText =
+              `Flow:\n` +
+              `${fromNames.join(', ')} → ${toNames.join(', ')}\n\n` +
+              `Total Trips: ${total}`;
+
+            if (pairs.length) {
+              tooltipText += `\n\nRoutes:\n`;
+              pairs.slice(0, 5).forEach((p) => {
+                tooltipText += `${p.fromLabel} → ${p.toLabel}: ${p.weight}\n`;
+              });
+
+              if (pairs.length > 5) {
+                tooltipText += `...and ${pairs.length - 5} more`;
+              }
+            }
+
             break;
           }
         }
       }
 
+      // Update cursor
       this.$refs.mapContainer.style.cursor = hovering ? 'pointer' : 'grab';
+
+      // Tooltip handling
+      if (hovering) {
+        this.tooltip.visible = true;
+        this.tooltip.x = p.x + 12;
+        this.tooltip.y = p.y + 12;
+        this.tooltip.content = tooltipText;
+      } else {
+        this.tooltip.visible = false;
+      }
     },
 
     clearFilter() {
@@ -793,6 +839,18 @@ const Flowmap = Vue.defineComponent({
         <!-- Clear Filter -->
         <div :style="clearBtnStyle" @click="clearFilter">
           Clear Filter
+        </div>
+
+        <!-- Tooltip -->
+        <div
+          v-if="tooltip.visible"
+          :style="{
+            ...tooltipStyle,
+            left: tooltip.x + 'px',
+            top:  tooltip.y + 'px'
+          }"
+        >
+          {{ tooltip.content }}
         </div>
 
       </div>
