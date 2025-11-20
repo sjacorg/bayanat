@@ -1,36 +1,30 @@
 const MapVisualization = Vue.defineComponent({
   props: {
     open: Boolean,
-    visualizeEndpoint: { type: String, default: "/admin/api/flowmap/visualize" },
-    statusEndpoint:    { type: String, default: "/admin/api/flowmap/status" },
-    dataEndpoint:      { type: String, default: "/admin/api/flowmap/data" },
+    visualizeEndpoint: { type: String, default: '/admin/api/flowmap/visualize' },
+    statusEndpoint: { type: String, default: '/admin/api/flowmap/status' },
+    dataEndpoint: { type: String, default: '/admin/api/flowmap/data' },
     query: { type: Array, default: () => [{}] },
+    search: { type: String, default: '' },
   },
 
-  emits: ["update:open", "advancedSearch"],
+  emits: ['update:open', 'advancedSearch', 'resetSearch', 'doSearch', 'update:search'],
 
   data: () => ({
     translations: window.translations,
 
     loading: false,
-    loadingMessage: "",
-    errorMessage: "",
+    loadingMessage: '',
+    errorMessage: '',
 
     locations: [],
     flows: [],
-
-    sheetStyle: {
-      position: "relative",
-      width: "100%",
-      height: "calc(100vh - 64px)", // subtract toolbar height
-      overflow: "hidden"
-    },
   }),
 
   watch: {
     open(val) {
       if (val) this.initMapFlow();
-    }
+    },
   },
 
   methods: {
@@ -39,8 +33,8 @@ const MapVisualization = Vue.defineComponent({
     ------------------------------------------------- */
     async initMapFlow() {
       this.loading = true;
-      this.errorMessage = "";
-      this.loadingMessage = this.translations.preparingMap_ ?? "Preparing map...";
+      this.errorMessage = '';
+      this.loadingMessage = this.translations.preparingMap_ ?? 'Preparing map...';
 
       const result = await this.fetchData();
 
@@ -57,31 +51,31 @@ const MapVisualization = Vue.defineComponent({
 
     async fetchData() {
       this.loading = true;
-      this.loadingMessage = this.translations.startingGeneration_ ?? "Starting…";
+      this.loadingMessage = this.translations.startingGeneration_ ?? 'Starting…';
 
       try {
         const start = await api.post(this.visualizeEndpoint, { q: this.query });
         const taskId = start?.data?.task_id;
 
-        if (!taskId) throw new Error("Flowmap generation failed.");
+        if (!taskId) throw new Error('Flowmap generation failed.');
 
-        let status = "pending";
+        let status = 'pending';
         let error = null;
 
-        while (status === "pending") {
+        while (status === 'pending') {
           const res = await api.get(this.statusEndpoint);
           status = res?.data?.status;
           error = res?.data?.error;
 
-          if (status === "pending") {
-            this.loadingMessage = this.translations.waitingForMapGeneration_ ?? "Processing…";
-            await new Promise(r => setTimeout(r, 1500));
+          if (status === 'pending') {
+            this.loadingMessage = this.translations.waitingForMapGeneration_ ?? 'Processing…';
+            await new Promise((r) => setTimeout(r, 1500));
           }
         }
 
-        if (status === "error") throw new Error(error || "Map generation error.");
+        if (status === 'error') throw new Error(error || 'Map generation error.');
 
-        this.loadingMessage = this.translations.fetchingVisualizationData_ ?? "Loading data…";
+        this.loadingMessage = this.translations.fetchingVisualizationData_ ?? 'Loading data…';
 
         const dataRes = await api.get(this.dataEndpoint);
 
@@ -89,10 +83,9 @@ const MapVisualization = Vue.defineComponent({
           locations: Array.isArray(dataRes.data?.locations) ? dataRes.data.locations : [],
           flows: Array.isArray(dataRes.data?.flows) ? dataRes.data.flows : [],
         };
-
       } catch (err) {
         console.error(err);
-        this.errorMessage = err.message || "Something went wrong";
+        this.errorMessage = err.message || 'Something went wrong';
         return { locations: [], flows: [] };
       } finally {
         this.loading = false;
@@ -100,65 +93,115 @@ const MapVisualization = Vue.defineComponent({
     },
 
     retry() {
-      this.errorMessage = "";
+      this.errorMessage = '';
       this.initMapFlow();
-    }
+    },
   },
 
   template: `
     <v-dialog fullscreen :model-value="open">
-      <v-toolbar color="primary" dark>
-        <v-toolbar-title>{{ translations.mapVisualization_ }}</v-toolbar-title>
-        <v-spacer></v-spacer>
+      <v-toolbar color="primary" density="comfortable">
 
-        <v-btn prepend-icon="mdi-ballot"
-               variant="elevated"
-               @click="$emit('advancedSearch')">
-          Advanced search
-        </v-btn>
+        <!-- Left: Title -->
+        <v-toolbar-title class="flex-grow-1">
+          {{ translations.mapVisualization_ }}
+        </v-toolbar-title>
 
-        <v-btn icon="mdi-close"
-               @click="$emit('update:open', false)"></v-btn>
-      </v-toolbar>
+        <!-- Center: Search -->
+        <v-text-field
+          class="mx-6"
+          style="max-width: 420px;"
+          variant="solo"
+          density="comfortable"
+          hide-details="auto"
 
-      <div :style="sheetStyle">
-        
-        <!--  MAP  -->
-        <flowmap
-          :locations="locations"
-          :flows="flows"
-          style="width:100%; height:100%;"
+          :model-value="search"
+          @update:model-value="$emit('update:search', $event)"
+          @keydown.enter="$emit('doSearch', search)"
+
+          append-icon="mdi-ballot"
+          :append-inner-icon="!search ? '' : 'mdi-close'"
+          @click:append-inner="
+            $emit('update:search', '');
+            $emit('resetSearch')
+          "
+          @click:append="$emit('advancedSearch')"
+          prepend-inner-icon="mdi-magnify"
+          :label="translations.search_"
         />
 
-        <!-- LOADING OVERLAY -->
-        <v-overlay
-          v-model="loading"
-          persistent
-          class="d-flex align-center justify-center"
-          :content-class="'d-flex flex-column align-center justify-center'"
-        >
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            size="64"
-          />
-          <div style="margin-top:16px; font-size:17px;">
-            {{ loadingMessage }}
-          </div>
-        </v-overlay>
+        <!-- Right: Close -->
+        <v-btn
+          icon="mdi-close"
+          variant="text"
+          @click="$emit('update:open', false)"
+        />
+      </v-toolbar>
 
-        <!-- ERROR -->
-        <v-container v-if="errorMessage" style="height:100%; display:flex; align-items:center; justify-content:center;">
-          <v-card style="padding:32px; text-align:center;">
-            <v-icon color="error" size="64">mdi-alert-circle-outline</v-icon>
-            <div style="margin-top:12px; font-size:18px;">{{ errorMessage }}</div>
-            <v-btn color="primary" style="margin-top:16px;" @click="retry">
-              Retry
-            </v-btn>
-          </v-card>
-        </v-container>
+      <!-- MAP + OVERLAYS -->
+      <v-container fluid class="pa-0 fill-height">
 
-</div>
+        <v-row no-gutters class="fill-height">
+          <v-col class="fill-height position-relative">
+
+            <!-- MAP -->
+            <flowmap
+              :locations="locations"
+              :flows="flows"
+              class="w-100 h-100"
+            />
+
+            <!-- LOADING OVERLAY -->
+            <v-overlay
+              v-model="loading"
+              persistent
+              contained
+              class="d-flex align-center justify-center"
+            >
+              <v-card elevation="6" rounded="lg" class="pa-6 text-center">
+                <v-progress-circular
+                  indeterminate
+                  color="primary"
+                  size="64"
+                />
+                <div class="text-subtitle-1 mt-4">
+                  {{ loadingMessage }}
+                </div>
+              </v-card>
+            </v-overlay>
+
+            <!-- ERROR OVERLAY -->
+            <div
+              v-if="errorMessage"
+              class="d-flex align-center justify-center fill-height"
+            >
+              <v-card class="pa-8 text-center" max-width="420">
+
+                <v-icon
+                  color="error"
+                  size="64"
+                  class="mb-4"
+                >
+                  mdi-alert-circle-outline
+                </v-icon>
+
+                <div class="text-h6 mb-4">
+                  {{ errorMessage }}
+                </div>
+
+                <v-btn
+                  color="primary"
+                  @click="retry"
+                >
+                  Retry
+                </v-btn>
+
+              </v-card>
+            </div>
+
+          </v-col>
+        </v-row>
+      </v-container>
     </v-dialog>
   `,
 });

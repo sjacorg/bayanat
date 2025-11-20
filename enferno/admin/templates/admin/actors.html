@@ -12,7 +12,15 @@
     {% include 'admin/partials/export_drawer.html' %}
     <v-main>
         {% include 'admin/partials/actor_advsearch.html' %}
-        <map-visualization ref="mapVisualizationRef" v-model:open="mapVisualizationOpen" :query="search" @advanced-search="advSearchExpand = true"></map-visualization>
+        <map-visualization
+            ref="mapVisualizationRef"
+            v-model:open="mapVisualizationOpen"
+            v-model:search.trim="search[0].tsv"
+            :query="search"
+            @advanced-search="advSearchExpand = true"
+            @do-search="doSearch"
+            @reset-search="resetSearch"
+        ></map-visualization>
 
         <v-container fluid>
             <v-tooltip text="{{ _('Map visualization') }}">
