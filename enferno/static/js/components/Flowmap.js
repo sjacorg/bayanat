@@ -547,6 +547,7 @@ const Flowmap = Vue.defineComponent({
     ============================================= */
     drawArrowRect(p1, p2, width, clusterFrom, clusterTo, weight, minW, maxW) {
       const ctx = this.ctx;
+
       const dx = p2.x - p1.x;
       const dy = p2.y - p1.y;
       const len = Math.sqrt(dx * dx + dy * dy);
@@ -555,31 +556,51 @@ const Flowmap = Vue.defineComponent({
       const tipW = Math.max(width * 6, 25);
       const bodyLen = Math.max(len - tipW, 0);
       const angle = Math.atan2(dy, dx);
+      const overlap = 1;
 
       ctx.save();
       ctx.translate(p1.x, p1.y);
       ctx.rotate(angle);
 
-      ctx.fillStyle = this.getArrowColor(weight, minW, maxW);
-
-      // Body
-      ctx.fillRect(0, -width / 2, bodyLen, width);
-
-      // Tip
+      // --- Build arrow path as ONE shape ---
       ctx.beginPath();
-      ctx.moveTo(bodyLen, -width / 2);
+
+      // Top body
+      ctx.moveTo(0, -width / 2);
+      ctx.lineTo(bodyLen, -width / 2);
+
+      // Tip top
       ctx.lineTo(bodyLen + tipW, -width / 2);
-      ctx.lineTo(bodyLen, width + 10);
+
+      // Tip bottom (your asymmetry)
+      ctx.lineTo(bodyLen - overlap, width + 10);
+
+      // Body bottom
+      ctx.lineTo(bodyLen - overlap, width / 2);
+      ctx.lineTo(0, width / 2);
+
       ctx.closePath();
+
+      // --- Stroke shadow FIRST ---
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "rgba(255,255,255,1)"; // your chosen shadow color
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // --- Fill arrow ---
+      ctx.fillStyle = this.getArrowColor(weight, minW, maxW);
       ctx.fill();
 
       ctx.restore();
 
+      // Tip point for hit-testing
       const pTip = {
         x: p1.x + Math.cos(angle) * (bodyLen + tipW),
         y: p1.y + Math.sin(angle) * (bodyLen + tipW),
       };
 
+      // Preserve your shape info
       this.arrowShapes.push({
         pStart: p1,
         pTip,
