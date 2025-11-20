@@ -14,16 +14,14 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.admin.models import Activity
+from enferno.admin.models import Activity, AppConfig
 from enferno.settings import Config
+from enferno.utils.config_utils import ConfigManager
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
 from enferno.utils.validation_utils import (
-    SanitizedField,
-    one_must_exist,
     validate_email_format,
     validate_password_policy,
-    validate_username,
     validate_username_constraints,
     validate_field_type,
 )
@@ -509,7 +507,7 @@ class OptsModel(BaseValidationModel):
             ValueError: If the opts is not a valid value.
         """
         if v and len(v):
-            if not v.lower() in [x.lower() for x in Constants.CLASSIC_OPTS]:
+            if v.lower() not in [x.lower() for x in Constants.CLASSIC_OPTS]:
                 raise ValueError("Invalid value for opts")
         return v
 
@@ -614,8 +612,8 @@ class PartialActorProfileModel(BaseValidationModel):
     @classmethod
     def validate_opts(cls, v, valid_opts):
         if v and len(v):
-            if not v.lower() in [x.lower() for x in valid_opts]:
-                raise ValueError(f"Invalid value for opts")
+            if v.lower() not in [x.lower() for x in valid_opts]:
+                raise ValueError("Invalid value for opts")
         return v
 
     @field_validator("publish_date", "documentation_date")
@@ -1209,7 +1207,7 @@ class QueryBaseModel(StrictValidationModel):
         for field in old_fields:
             if field in data:
                 raise ValueError(
-                    f"The query sent is incompatible with this version. Please delete and re-create the query."
+                    "The query sent is incompatible with this version. Please delete and re-create the query."
                 )
         return data
 
@@ -1495,7 +1493,7 @@ class UserValidationModel(StrictValidationModel):
 
         try:
             v = validate_email_format(v)
-        except ValidationError as e:
+        except ValidationError:
             raise ValueError("Invalid email format")
 
         if Config.get("MAIL_ALLOWED_DOMAINS") and "*" not in Config.get("MAIL_ALLOWED_DOMAINS"):
@@ -1798,6 +1796,17 @@ class ConfigValidationModel(StrictValidationModel):
 
     @model_validator(mode="before")
     @classmethod
+    def restore_masked_secrets(cls, values):
+        """Restore masked secret values from current config before validation."""
+        # Restore each masked secret from current running config
+        for secret_field in AppConfig.SECRET_FIELDS:
+            if values.get(secret_field) == ConfigManager.MASK_STRING:
+                values[secret_field] = getattr(Config, secret_field, "")
+
+        return values
+
+    @model_validator(mode="before")
+    @classmethod
     def validate_rules(cls, values):
         if values.get("RECAPTCHA_ENABLED") and not (
             values.get("RECAPTCHA_PUBLIC_KEY")
@@ -2051,7 +2060,6 @@ class DynamicFieldBulkSaveModel(StrictValidationModel):
         if v not in allowed:
             raise ValueError(f"entity_type must be one of: {', '.join(allowed)}")
         return v
-
 
 
 class ActivityQueryValidationModel(StrictValidationModel):
