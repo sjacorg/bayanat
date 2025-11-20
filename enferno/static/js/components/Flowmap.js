@@ -10,6 +10,8 @@ const Flowmap = Vue.defineComponent({
       canvas: null,
       ctx: null,
       frameRequested: false,
+      mapsApiEndpoint: mapsApiEndpoint,
+      translations: window.translations,
 
       // Location id -> { latlng, label }
       points: {},
@@ -42,6 +44,10 @@ const Flowmap = Vue.defineComponent({
         type: null, // "dot" | "arrow"
         content: null,
       },
+
+      // Tile attribution
+      attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      googleAttribution: `&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©${this.currentYear} Google, Maxar Technologies`,
     };
   },
 
@@ -77,6 +83,12 @@ const Flowmap = Vue.defineComponent({
     },
   },
 
+  computed: {
+    currentYear() {
+      return new Date().getFullYear();
+    },
+  },
+
   methods: {
     /* =============================================
      MAP INITIALIZATION
@@ -87,7 +99,28 @@ const Flowmap = Vue.defineComponent({
 
       this.map = L.map(el).setView([45.52, -73.57], 12);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+      const osmLayer = L.tileLayer(this.mapsApiEndpoint, { attribution: this.attribution }).addTo(this.map);
+      
+      // If Google maps api key exists then add google layer and control
+      if (window.__GOOGLE_MAPS_API_KEY__) {
+        const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+          attribution: this.googleAttribution,
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        });
+        const baseMaps = { 'OpenStreetMap': osmLayer, 'Google Satellite': googleLayer };
+        L.control.layers(baseMaps).addTo(this.map);
+      }
+
+      // Add the fullscreen control with improved readability
+      this.map.addControl(
+        new L.Control.Fullscreen({
+          title: {
+            false: this.translations.enterFullscreen_,
+            true: this.translations.exitFullscreen_,
+          },
+        }),
+      );
 
       // Fit to valid locations
       const validLocs = this.locations.filter(
@@ -684,6 +717,18 @@ const Flowmap = Vue.defineComponent({
           return;
         }
       }
+
+       // 2️⃣ Arrow clicks
+      for (const arrow of this.arrowShapes) {
+        if (this.pointOnArrow(p.x, p.y, arrow)) {
+          return;
+        }
+      }
+
+      // 3️⃣ NOTHING HIT → clear filter
+      if (this.selectedPoint !== null) {
+        this.clearFilter();
+      }
     },
 
     onMapHover(e) {
@@ -786,18 +831,6 @@ const Flowmap = Vue.defineComponent({
         class="position-absolute top-0 left-0 w-100 h-100 pointer-events-none"
         style="zIndex: 1000;"
       ></canvas>
-
-      <!-- Clear Filter Button -->
-      <v-btn
-        class="position-absolute text-none"
-        :style="{ zIndex: '1000', left: '16px', bottom: '16px' }"
-        color="white"
-        variant="elevated"
-        density="compact"
-        @click="clearFilter"
-      >
-        Clear Filter
-      </v-btn>
 
       <!-- Tooltip -->
       <v-card
