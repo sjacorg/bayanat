@@ -303,7 +303,7 @@ class ConfigManager:
             "DEDUP_TOOL": cfg.DEDUP_TOOL,
             "BABEL_DEFAULT_LOCALE": cfg.BABEL_DEFAULT_LOCALE,
             "MAPS_API_ENDPOINT": cfg.MAPS_API_ENDPOINT,
-            "GOOGLE_MAPS_API_KEY": cfg.GOOGLE_MAPS_API_KEY,
+            "GOOGLE_MAPS_API_KEY": ConfigManager.MASK_STRING if cfg.GOOGLE_MAPS_API_KEY else "",
             "DEDUP_LOW_DISTANCE": cfg.DEDUP_LOW_DISTANCE,
             "DEDUP_MAX_DISTANCE": cfg.DEDUP_MAX_DISTANCE,
             "DEDUP_BATCH_SIZE": cfg.DEDUP_BATCH_SIZE,
@@ -356,7 +356,7 @@ class ConfigManager:
 
         if ConfigManager.validate(conf):
             try:
-                # Exclude secrets from database revision history
+                # Create sanitized config without secrets
                 sanitized_conf = {
                     key: value for key, value in conf.items() if key not in AppConfig.SECRET_FIELDS
                 }
