@@ -377,7 +377,7 @@ const Flowmap = Vue.defineComponent({
         const oppositeKey = `${group.toClusterId}|${group.fromClusterId}`;
         const opposite = groups[oppositeKey];
 
-        const spacing = 4;
+        const spacing = FlowmapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
         const { offsetA1, offsetB1, offsetA2, offsetB2 } = FlowmapUtils.computeOffsets(
           A,
           B,

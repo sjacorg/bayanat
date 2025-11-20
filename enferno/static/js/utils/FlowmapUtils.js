@@ -32,6 +32,7 @@ const FlowmapUtils = {
     },
 
     sizes: {
+      bidirectionalArrowSpacing: 4,
       arrowWidths: [2, 5, 7, 12], // Thin → thick based on traffic
       dotSizes: [6, 8, 10, 12, 14, 16],
     },
