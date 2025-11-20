@@ -702,15 +702,14 @@ const Flowmap = Vue.defineComponent({
       <canvas
         ref="overlay"
         class="position-absolute top-0 left-0 w-100 h-100 pointer-events-none"
-        style="zIndex: 1000;"
+        style="zIndex: 999;"
       ></canvas>
 
       <!-- Tooltip -->
       <v-card
         v-if="tooltip.visible"
-        class="position-absolute pa-3 text-white"
-        color="black"
-        style="max-width: 320px; zIndex: 1000;"
+        class="position-absolute pa-3"
+        style="max-width: 320px; zIndex: 999;"
         :style="{
           left: tooltip.x + 'px',
           top: tooltip.y + 'px'
