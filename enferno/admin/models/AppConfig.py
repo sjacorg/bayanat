@@ -20,6 +20,7 @@ class AppConfig(db.Model, BaseMixin):
         "AWS_SECRET_ACCESS_KEY",
         "MAIL_PASSWORD",
         "YTDLP_COOKIES",
+        "GOOGLE_MAPS_API_KEY",
     }
 
     id = db.Column(db.Integer, primary_key=True)
