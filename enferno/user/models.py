@@ -181,6 +181,11 @@ class User(UserMixin, db.Model, BaseMixin):
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
+    @property
+    def is_active(self):
+        """User is active only if active flag is True AND user has at least one role."""
+        return self.active and bool(self.roles)
+
     # email confirmation
     confirmed_at = db.Column(db.DateTime())
     # tracking
@@ -382,8 +387,32 @@ class User(UserMixin, db.Model, BaseMixin):
         self.can_edit_locations = item.get("can_edit_locations", False)
         self.can_export = item.get("can_export", False)
         self.can_import_web = item.get("can_import_web", False)
-        self.active = item.get("active")
+
+        # active field can only be set during creation (user has no id yet)
+        # For existing users, use dedicated endpoints: suspend, disable, reactivate, enable
+        if not self.id:
+            # Default to True for new users, allow explicit override
+            self.active = item.get("active", True)
+
         return self
+
+    def create_revision(self, user_id: int = None, created: datetime = None) -> None:
+        """
+        Create a new revision in the history table.
+
+        Args:
+            - user_id: the id of the user making the change.
+            - created: the created date.
+        """
+        from enferno.admin.models import UserHistory
+
+        if not user_id:
+            user_id = getattr(current_user, "id", 1)
+        h = UserHistory(target_user_id=self.id, data=self.to_dict(), user_id=user_id)
+        if created:
+            h.created_at = created
+            h.updated_at = created
+        h.save()
 
     @property
     def two_factor_devices(self) -> Dict[str, Any]:
@@ -432,6 +461,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "name": self.secure_name,
             "username": self.secure_username,
             "active": self.active,
+            "deleted": self.deleted,
         }
 
     def to_dict(self) -> dict:
@@ -445,6 +475,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "email": self.secure_email,
             "username": self.secure_username,
             "active": self.active,
+            "deleted": self.deleted,
             "roles": [role.to_dict() for role in self.roles],
             "view_usernames": self.view_usernames,
             "view_simple_history": self.view_simple_history,

@@ -84,7 +84,7 @@
 
 
                                 <v-spacer></v-spacer>
-                                {% if current_user.roles_in(['Admin','DA']) %}
+                                {% if current_user.roles_in(['Admin','Analyst']) %}
                                     <v-btn @click="editItem" color="primary" variant="elevated" class="ma-2"
                                     >{{ _('New Incident') }}</v-btn
                                     >
@@ -534,7 +534,7 @@
                 headers: [
                     {title: "{{_('ID')}}", value: "id", width: 12, sortable: false},
                     {title: "{{_('Title')}}", value: "title", width: 300, sortable: false},
-                    {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
+                    {% if (current_user.has_role('Admin') or current_user.has_role('Analyst')) %}
                         {title: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
                         {title: "{{_('Access Groups')}}", value: "roles", width: 130, sortable: false},
                     {% endif %}
@@ -1171,7 +1171,7 @@
                     if (this.has_role(this.currentUser, 'Admin')) {
                         return true;
                     }
-                    if (this.has_role(this.currentUser, 'Mod')) {
+                    if (this.has_role(this.currentUser, 'Moderator')) {
                         return true;
                     }
                     return false;
@@ -1196,7 +1196,7 @@
                     if (this.has_role(this.currentUser, 'Admin')) {
                         return true;
                     }
-                    if (!this.has_role(this.currentUser, 'DA')) {
+                    if (!this.has_role(this.currentUser, 'Analyst')) {
                         return false;
                     }
                     const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];

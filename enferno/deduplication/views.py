@@ -48,7 +48,7 @@ def deduplication_app_context() -> dict:
 
 
 @deduplication.route("/dashboard/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def deduplication_dash() -> str:
     """
     Endpoint for rendering deduplication dashboard page.

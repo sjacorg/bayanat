@@ -14,7 +14,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, asc, select, func
+from sqlalchemy import desc, or_, asc, select, func, and_
 from werkzeug.utils import safe_join, secure_filename
 from flask_security.twofactor import tf_disable
 import shortuuid
@@ -35,6 +35,7 @@ from enferno.admin.models import (
     BulletinHistory,
     ActorHistory,
     LocationHistory,
+    UserHistory,
     PotentialViolation,
     ClaimedViolation,
     Activity,
@@ -244,7 +245,7 @@ def ctx() -> dict:
 
 # Labels routes
 @admin.route("/labels/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def labels() -> str:
     """
     Endpoint to render the labels backend page.
@@ -311,7 +312,7 @@ def api_labels() -> Response:
 
 
 @admin.post("/api/label/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(LabelRequestModel)
 def api_label_create(
     validated_data: dict,
@@ -341,7 +342,7 @@ def api_label_create(
 
 
 @admin.put("/api/label/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(LabelRequestModel)
 def api_label_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -417,7 +418,7 @@ def api_label_import() -> str:
 
 # EventType routes
 @admin.route("/eventtypes/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def eventtypes() -> str:
     """
     Endpoint to render event types backend
@@ -461,7 +462,7 @@ def api_eventtypes() -> Response:
 
 
 @admin.post("/api/eventtype/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(EventtypeRequestModel)
 def api_eventtype_create(
     validated_data: dict,
@@ -494,7 +495,7 @@ def api_eventtype_create(
 
 
 @admin.put("/api/eventtype/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(EventtypeRequestModel)
 def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -608,7 +609,7 @@ def api_potentialviolations(page: int) -> Response:
 
 
 @admin.post("/api/potentialviolation/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(PotentialViolationRequestModel)
 def api_potentialviolation_create(
     validated_data: dict,
@@ -641,7 +642,7 @@ def api_potentialviolation_create(
 
 
 @admin.put("/api/potentialviolation/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(PotentialViolationRequestModel)
 def api_potentialviolation_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -754,7 +755,7 @@ def api_claimedviolations(page: int) -> Response:
 
 
 @admin.post("/api/claimedviolation/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(ClaimedViolationRequestModel)
 def api_claimedviolation_create(
     validated_data: dict,
@@ -787,7 +788,7 @@ def api_claimedviolation_create(
 
 
 @admin.put("/api/claimedviolation/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(ClaimedViolationRequestModel)
 def api_claimedviolation_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -872,7 +873,7 @@ def api_claimedviolation_import() -> Response:
 
 # Sources routes
 @admin.route("/sources/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def sources() -> str:
     """
     Endpoint to render sources backend page.
@@ -920,7 +921,7 @@ def api_sources() -> Response:
 
 
 @admin.post("/api/source/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(SourceRequestModel)
 def api_source_create(
     validated_data: dict,
@@ -952,7 +953,7 @@ def api_source_create(
 
 
 @admin.put("/api/source/<int:id>")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(SourceRequestModel)
 def api_source_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -1040,7 +1041,7 @@ def api_source_import() -> Response:
 
 @admin.route("/locations/", defaults={"id": None})
 @admin.route("/locations/<int:id>")
-@roles_accepted("Admin", "Mod", "DA")
+@roles_accepted("Admin", "Moderator", "Analyst")
 def locations(id: Optional[t.id]) -> str:
     """
     Endpoint for locations management.
@@ -1089,7 +1090,7 @@ def api_locations(validated_data: dict) -> Response:
 
 
 @admin.post("/api/location/")
-@roles_accepted("Admin", "Mod", "DA")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(LocationRequestModel)
 def api_location_create(
     validated_data: dict,
@@ -1103,7 +1104,7 @@ def api_location_create(
     Returns:
         - success/error string based on the operation result.
     """
-    if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
+    if not current_user.roles_in(["Admin", "Moderator"]) and not current_user.can_edit_locations:
         return HTTPResponse.forbidden("User not allowed to create Locations")
 
     location = Location()
@@ -1126,7 +1127,7 @@ def api_location_create(
 
 
 @admin.put("/api/location/<int:id>")
-@roles_accepted("Admin", "Mod", "DA")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(LocationRequestModel)
 def api_location_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -1139,7 +1140,7 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
+    if not current_user.roles_in(["Admin", "Moderator"]) and not current_user.can_edit_locations:
         return HTTPResponse.forbidden("User not allowed to create Locations")
 
     location = Location.query.get(id)
@@ -3279,7 +3280,7 @@ def api_bulletins(validated_data: dict) -> Response:
 
 
 @admin.post("/api/bulletin/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @can_assign_roles
 @validate_with(BulletinRequestModel)
 def api_bulletin_create(
@@ -3326,7 +3327,7 @@ def api_bulletin_create(
 
 
 @admin.put("/api/bulletin/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(BulletinRequestModel)
 def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -3396,7 +3397,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review bulletin endpoint
 @admin.put("/api/bulletin/review/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(BulletinReviewRequestModel)
 def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -3475,7 +3476,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
 
 # bulk update bulletin endpoint
 @admin.put("/api/bulletin/bulk/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(BulletinBulkUpdateRequestModel)
 def api_bulletin_bulk_update(
     validated_data: dict,
@@ -3623,7 +3624,7 @@ def api_bulletin_import() -> Response:
 
 
 @admin.put("/api/bulletin/assign/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(BulletinSelfAssignRequestModel)
 def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3689,7 +3690,7 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.put("/api/actor/assign/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorSelfAssignRequestModel)
 def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3746,7 +3747,7 @@ def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.put("/api/incident/assign/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(IncidentSelfAssignRequestModel)
 def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3810,7 +3811,7 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.post("/api/media/chunk")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 def api_medias_chunk() -> Response:
     """
     Endpoint for uploading media files based on file system settings.
@@ -3930,7 +3931,7 @@ def api_medias_chunk() -> Response:
 
 
 @admin.post("/api/media/upload/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 def api_medias_upload() -> Response:
     """
     Endpoint to upload screenshots based on file system settings.
@@ -4125,7 +4126,7 @@ def api_local_serve_media(
 
 
 @admin.post("/api/inline/upload")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 def api_inline_medias_upload() -> Response:
     """
     Endpoint to upload inline media files.
@@ -4166,7 +4167,7 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 
 @admin.put("/api/media/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(MediaRequestModel)
 def api_media_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4371,7 +4372,7 @@ def api_actors(validated_data: dict) -> Response:
 
 # create actor endpoint
 @admin.post("/api/actor/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorRequestModel)
 @can_assign_roles
 def api_actor_create(
@@ -4417,7 +4418,7 @@ def api_actor_create(
 
 # update actor endpoint
 @admin.put("/api/actor/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorRequestModel)
 def api_actor_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4491,7 +4492,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review actor endpoint
 @admin.put("/api/actor/review/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(ActorReviewRequestModel)
 def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4557,7 +4558,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
 
 # bulk update actor endpoint
 @admin.put("/api/actor/bulk/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(ActorBulkUpdateRequestModel)
 def api_actor_bulk_update(
     validated_data: dict,
@@ -4853,14 +4854,51 @@ def api_locationhistory(locationid: t.id) -> Response:
     return HTTPResponse.success(data=response)
 
 
+# User History Helpers
+
+
+@admin.route("/api/userhistory/<int:userid>")
+@require_view_history
+def api_userhistory(userid: t.id) -> Response:
+    """
+    Endpoint to get revision history of a user.
+
+    Args:
+        - userid: id of the user.
+
+    Returns:
+        - json feed of user's history / error.
+    """
+    result = (
+        db.session.execute(
+            select(UserHistory)
+            .where(UserHistory.target_user_id == userid)
+            .order_by(desc(UserHistory.created_at))
+        )
+        .scalars()
+        .all()
+    )
+    # For standardization
+    response = {"items": [item.to_dict() for item in result]}
+    return HTTPResponse.success(data=response)
+
+
 # user management routes
 
 
 @admin.route("/api/users/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def api_users() -> Response:
     """
-    API endpoint to feed users data in json format , supports paging and search.
+    API endpoint to feed users data in json format, supports paging, search, and filtering.
+
+    Query Parameters:
+        - page: Page number (default: 1)
+        - per_page: Items per page (default: PER_PAGE)
+        - q: Search term (searches username, email, name)
+        - active: Filter by account status (true/false)
+        - twoFactor: Filter by 2FA status (true/false)
+        - roles: Comma-separated role IDs for filtering (use 0 for users without roles)
 
     Returns:
         - json feed of users / error.
@@ -4868,9 +4906,55 @@ def api_users() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
     q = request.args.get("q")
+    active = request.args.get("active")
+    two_factor = request.args.get("twoFactor")
+    roles = request.args.get("roles")
+
     query = []
+
+    # Search filter (username, email, name)
     if q is not None:
-        query.append(User.name.ilike("%" + q + "%"))
+        search_term = f"%{q}%"
+        query.append(
+            or_(
+                User.username.ilike(search_term),
+                User.email.ilike(search_term),
+                User.name.ilike(search_term),
+            )
+        )
+
+    # Account status filter
+    if active is not None:
+        is_active = active.lower() == "true"
+        query.append(User.active == is_active)
+
+    # 2FA status filter
+    if two_factor is not None:
+        has_2fa = two_factor.lower() == "true"
+        if has_2fa:
+            query.append(or_(User.tf_primary_method.isnot(None), User.webauthn.any()))
+        else:
+            query.append(and_(User.tf_primary_method.is_(None), ~User.webauthn.any()))
+
+    # Roles filter (multi-select)
+    if roles:
+        role_ids = [int(r.strip()) for r in roles.split(",") if r.strip().isdigit()]
+        if role_ids:
+            # Support id 0 for users without roles
+            if 0 in role_ids:
+                actual_role_ids = [rid for rid in role_ids if rid > 0]
+                if actual_role_ids:
+                    # Users with no roles OR users with selected roles
+                    query.append(
+                        or_(~User.roles.any(), User.roles.any(Role.id.in_(actual_role_ids)))
+                    )
+                else:
+                    # Only users with no roles
+                    query.append(~User.roles.any())
+            else:
+                # Only users with selected roles
+                query.append(User.roles.any(Role.id.in_(role_ids)))
+
     result = (
         User.query.filter(*query)
         .order_by(User.username)
@@ -5141,7 +5225,7 @@ def api_user_create(
             f"User {username} has been created by {current_user.username} successfully.",
         )
         return HTTPResponse.created(
-            message=f"User {username} has been created successfully",
+            message=f"New User '{user.name}' successfully added!",
             data={"item": user.to_dict()},
         )
     else:
@@ -5214,6 +5298,8 @@ def api_user_update(
 
         user = user.from_json(u)
         if user.save():
+            # Create history revision
+            user.create_revision()
             # Record activity
             Activity.create(
                 current_user,
@@ -5228,7 +5314,7 @@ def api_user_update(
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
             )
-            return HTTPResponse.success(message=f"Saved User {user.id} {user.name}")
+            return HTTPResponse.success(message=f"User '{user.name}' updated successfully.")
         else:
             return HTTPResponse.error(f"Error saving User {user.id} {user.name}", status=500)
     else:
@@ -5277,7 +5363,7 @@ def api_user_force_reset(validated_data: dict) -> Response:
         message = f"Forced password reset already requested: {reset_key}"
         return HTTPResponse.error(message)
     user.set_security_reset_key()
-    message = f"Forced password reset has been set for user {user.username}"
+    message = f"User ‘{user.name}’ will reset password at next sign-in."
     return HTTPResponse.success(message=message)
 
 
@@ -5295,6 +5381,183 @@ def api_user_force_reset_all() -> Response:
         if not user.security_reset_key:
             user.set_security_reset_key()
     return HTTPResponse.success(message="Forced password reset has been set for all users")
+
+
+@admin.post("/api/user/<int:id>/suspend")
+@roles_required("Admin")
+def api_user_suspend(id: int) -> Response:
+    """
+    Temporarily suspend a user account.
+
+    Args:
+        - id: id of the user to suspend.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if not user.active:
+        return HTTPResponse.success(message="User is already suspended or disabled")
+
+    user.active = False
+    user.save()
+    user.logout_other_sessions()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="suspended",
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.UPDATE_USER,
+        "User Suspended",
+        f"User {user.username} has been suspended by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(message=f"User {user.username} suspended successfully")
+
+
+@admin.post("/api/user/<int:id>/reactivate")
+@roles_required("Admin")
+def api_user_reactivate(id: int) -> Response:
+    """
+    Reactivate a suspended user account.
+
+    Args:
+        - id: id of the user to reactivate.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if user.deleted:
+        return HTTPResponse.forbidden("Cannot reactivate a disabled user")
+
+    if user.active:
+        return HTTPResponse.success(message="User is already active")
+
+    user.active = True
+    user.save()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="reactivated",
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.UPDATE_USER,
+        "User Reactivated",
+        f"User {user.username} has been reactivated by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(message=f"User {user.username} reactivated successfully")
+
+
+@admin.post("/api/user/<int:id>/disable")
+@roles_required("Admin")
+def api_user_disable(id: int) -> Response:
+    """
+    Disable account for user leaving organization.
+
+    Args:
+        - id: id of the user to disable.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if user.deleted:
+        return HTTPResponse.success(message="User is already disabled")
+
+    user.active = False
+    user.deleted = True
+    user.roles = []
+    user.view_usernames = False
+    user.view_simple_history = False
+    user.view_full_history = False
+    user.can_self_assign = False
+    user.can_edit_locations = False
+    user.can_export = False
+    user.can_import_web = False
+    user.save()
+    user.logout_other_sessions()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="disabled",
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.UPDATE_USER,
+        "User Disabled",
+        f"User {user.username} has been disabled by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(message=f"User {user.username} disabled successfully")
+
+
+@admin.post("/api/user/<int:id>/enable")
+@roles_required("Admin")
+def api_user_enable(id: int) -> Response:
+    """
+    Re-enable a disabled account.
+
+    Args:
+        - id: id of the user to enable.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    if not user.deleted:
+        return HTTPResponse.success(message="User is already enabled")
+
+    user.active = True
+    user.deleted = False
+    user.save()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="enabled",
+    )
+
+    Notification.send_admin_notification_for_event(
+        Constants.NotificationEvent.UPDATE_USER,
+        "User Enabled",
+        f"User {user.username} has been enabled by {current_user.username}.",
+    )
+
+    return HTTPResponse.success(
+        message=f"User {user.username} enabled successfully. Admin must assign roles."
+    )
 
 
 @admin.delete("/api/user/<int:id>")
@@ -5428,7 +5691,7 @@ def api_role_update(id: t.id, validated_data: dict) -> Response:
     if role is None:
         return HTTPResponse.not_found("Role not found")
 
-    if role.name in ["Admin", "Mod", "DA"]:
+    if role.name in ["Admin", "Moderator", "Analyst"]:
         return HTTPResponse.forbidden("Cannot edit System Roles")
 
     role = role.from_json(validated_data["item"])
@@ -5460,7 +5723,7 @@ def api_role_delete(
         return HTTPResponse.not_found("Role not found")
 
     # forbid deleting system roles
-    if role.name in ["Admin", "Mod", "DA"]:
+    if role.name in ["Admin", "Moderator", "Analyst"]:
         return HTTPResponse.forbidden("Cannot delete System Roles")
     # forbid delete roles assigned to restricted items
     if role.bulletins.first() or role.actors.first() or role.incidents.first():
@@ -5667,7 +5930,7 @@ def api_incidents(validated_data: dict) -> Response:
 
 
 @admin.post("/api/incident/")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @can_assign_roles
 @validate_with(IncidentRequestModel)
 def api_incident_create(
@@ -5717,7 +5980,7 @@ def api_incident_create(
 
 # update incident endpoint
 @admin.put("/api/incident/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(IncidentRequestModel)
 def api_incident_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -5793,7 +6056,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review incident endpoint
 @admin.put("/api/incident/review/<int:id>")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(IncidentReviewRequestModel)
 def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -5858,7 +6121,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
 
 # bulk update incident endpoint
 @admin.put("/api/incident/bulk/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 @validate_with(IncidentBulkUpdateRequestModel)
 def api_incident_bulk_update(
     validated_data: dict,
@@ -6073,7 +6336,7 @@ def api_activities(validated_data: dict) -> Response:
 
 
 @admin.route("/api/bulk/status/")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Moderator")
 def bulk_status() -> Response:
     """Endpoint to get status update about background bulk operations."""
     uid = current_user.id
@@ -6584,7 +6847,7 @@ def api_mark_all_notifications_read():
 
 
 @admin.post("/api/bulletin/web")
-@roles_accepted("Admin", "DA")
+@roles_accepted("Admin", "Analyst")
 @validate_with(WebImportValidationModel)
 def api_bulletin_web_import(validated_data: dict) -> Response:
     """Import bulletin from web URL"""

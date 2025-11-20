@@ -86,29 +86,14 @@ def generate_user_roles() -> None:
     """
     Generates standard user roles.
     """
-    # create admin role if it doesn't exist
-    r = Role.query.filter_by(name="Admin").first()
-    if not r:
-        role = Role()
-        role.name = "Admin"
-        role.description = "System Role"
-        role.save()
+    roles = ["Admin", "Analyst", "Moderator", "View"]
 
-    # create DA role, if not exists
-    r = Role.query.filter_by(name="DA").first()
-    if not r:
-        role = Role()
-        role.name = "DA"
-        role.description = "System Role"
-        role.save()
+    for role_name in roles:
+        r = db.session.execute(db.select(Role).filter_by(name=role_name)).scalar_one_or_none()
 
-    # create MOD role, if not exists
-    r = Role.query.filter_by(name="Mod").first()
-    if not r:
-        role = Role()
-        role.name = "Mod"
-        role.description = "System Role"
-        role.save()
+        if not r:
+            role = Role(name=role_name, description="System Role")
+            role.save()
 
 
 def generate_workflow_statues() -> None:

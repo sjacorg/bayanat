@@ -9,13 +9,13 @@
         <v-list-item prepend-icon="mdi-hazard-lights" title="{{ _('Incidents') }}" href="/admin/incidents/"
                      key="incidents"></v-list-item>
 
-        {% if current_user.has_role('Admin') or current_user.has_role('Mod') or current_user.has_role('DA') %}
+        {% if current_user.has_role('Admin') or current_user.has_role('Moderator') or current_user.has_role('Analyst') %}
             <!-- Primary Data (Locations) -->
             <v-list-item prepend-icon="mdi-folder-marker" title="{{ _('Locations') }}" href="/admin/locations/"
                          key="locations"></v-list-item>
         {% endif %}
 
-        {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
+        {% if current_user.has_role('Admin') or current_user.has_role('Moderator') %}
             <v-list-item prepend-icon="mdi-google-circles-extended" title="{{ _('Sources') }}" href="/admin/sources/"
                          key="sources"></v-list-item>
 
@@ -53,7 +53,7 @@
         {% endif %}
 
         {% if deduplication %}
-            {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
+            {% if current_user.has_role('Admin') or current_user.has_role('Moderator') %}
                 <v-list-item prepend-icon="mdi-link-variant-plus" title="{{ _('Deduplication') }}"
                              href="/deduplication/dashboard/" key="deduplication"></v-list-item>
             {% endif %}

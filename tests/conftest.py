@@ -210,8 +210,8 @@ def users(session):
     from enferno.admin.models import Activity
 
     admin_role = Role.query.filter(Role.name == "Admin").first()
-    da_role = Role.query.filter(Role.name == "DA").first()
-    mod_role = Role.query.filter(Role.name == "Mod").first()
+    da_role = Role.query.filter(Role.name == "Analyst").first()
+    mod_role = Role.query.filter(Role.name == "Moderator").first()
     admin_user = User(username="TestAdmin", password="password", active=1)
     admin_user.roles.append(admin_role)
     admin_user.name = "Admin"
@@ -223,7 +223,7 @@ def users(session):
     admin_user_sa.fs_uniquifier = uuid4().hex
     da_user = User(username="TestDA", password="password", active=1)
     da_user.roles.append(da_role)
-    da_user.name = "DA"
+    da_user.name = "Analyst"
     da_user.fs_uniquifier = uuid4().hex
     da_user_sa = User(username="TestDASA", password="password", active=1)
     da_user_sa.roles.append(da_role)
@@ -232,7 +232,7 @@ def users(session):
     da_user_sa.fs_uniquifier = uuid4().hex
     mod_user = User(username="TestMod", password="password", active=1)
     mod_user.roles.append(mod_role)
-    mod_user.name = "Mod"
+    mod_user.name = "Moderator"
     mod_user.fs_uniquifier = uuid4().hex
     mod_user_sa = User(username="TestModSA", password="password", active=1)
     mod_user_sa.roles.append(mod_role)
@@ -251,13 +251,26 @@ def users(session):
     self_assign_dict["mod"] = mod_user_sa
     self_assign_dict["da"] = da_user_sa
     yield admin_user, da_user, mod_user, self_assign_dict
+    from enferno.admin.models.UserHistory import UserHistory
+    from enferno.user.models import roles_users
+
     user_ids = [admin_user.id, da_user.id, mod_user.id] + [
         user.id for user in self_assign_dict.values()
     ]
+    # Delete dependencies first
+    session.query(UserHistory).filter(UserHistory.target_user_id.in_(user_ids)).delete(
+        synchronize_session=False
+    )
+    session.query(UserHistory).filter(UserHistory.user_id.in_(user_ids)).delete(
+        synchronize_session=False
+    )
     session.query(Activity).filter(Activity.user_id.in_(user_ids)).delete(synchronize_session=False)
     session.query(Notification).filter(Notification.user_id.in_(user_ids)).delete(
         synchronize_session=False
     )
+    session.execute(roles_users.delete().where(roles_users.c.user_id.in_(user_ids)))
+    session.commit()
+    # Now delete users
     session.delete(admin_user)
     session.delete(da_user)
     session.delete(mod_user)
