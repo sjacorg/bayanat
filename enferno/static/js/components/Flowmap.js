@@ -10,7 +10,6 @@ const Flowmap = Vue.defineComponent({
       canvas: null,
       ctx: null,
       frameRequested: false,
-      mapsApiEndpoint: mapsApiEndpoint,
       translations: window.translations,
 
       // Location id -> { latlng, label }
@@ -31,8 +30,6 @@ const Flowmap = Vue.defineComponent({
       currentFlows: [], // normalized + filtered flows
 
       // Visual scaling
-      arrowWidths: [2, 5, 7, 12],
-      dotSizes: [6, 8, 10, 12, 14, 16],
       minWeight: null,
       maxWeight: null,
 
@@ -44,10 +41,6 @@ const Flowmap = Vue.defineComponent({
         type: null, // "dot" | "arrow"
         content: null,
       },
-
-      // Tile attribution
-      attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      googleAttribution: `&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©${this.currentYear} Google, Maxar Technologies`,
     };
   },
 
@@ -97,16 +90,16 @@ const Flowmap = Vue.defineComponent({
       const el = this.$refs.mapContainer;
       if (!el) return this.$nextTick(() => this.initMap());
 
-      this.map = L.map(el).setView([45.52, -73.57], 12);
+      this.map = L.map(el).setView(geoMapDefaultCenter, FlowmapUtils.CONFIG.map.defaultZoom);
 
-      const osmLayer = L.tileLayer(this.mapsApiEndpoint, { attribution: this.attribution }).addTo(this.map);
+      const osmLayer = L.tileLayer(FlowmapUtils.CONFIG.map.osm.url, { attribution: FlowmapUtils.CONFIG.map.osm.attribution }).addTo(this.map);
       
       // If Google maps api key exists then add google layer and control
       if (window.__GOOGLE_MAPS_API_KEY__) {
-        const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-          attribution: this.googleAttribution,
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        const googleLayer = L.tileLayer(FlowmapUtils.CONFIG.map.google.url, {
+          attribution: FlowmapUtils.CONFIG.attribution.google,
+          maxZoom: FlowmapUtils.CONFIG.map.google.maxZoom,
+          subdomains: FlowmapUtils.CONFIG.map.google.subdomains,
         });
         const baseMaps = { 'OpenStreetMap': osmLayer, 'Google Satellite': googleLayer };
         L.control.layers(baseMaps).addTo(this.map);
@@ -132,7 +125,7 @@ const Flowmap = Vue.defineComponent({
         this.map.fitBounds(bounds);
       } else {
         // Fallback world view
-        this.map.setView([20, 0], 2);
+        this.map.setView(geoMapDefaultCenter, 2);
       }
 
       this.map.on('click', this.onMapClick);
@@ -201,104 +194,6 @@ const Flowmap = Vue.defineComponent({
       return base.filter((f) => f.from === this.selectedPoint || f.to === this.selectedPoint);
     },
 
-    getArrowWidth(weight) {
-      const widths = this.arrowWidths;
-      const min = this.minWeight;
-      const max = this.maxWeight;
-
-      // Edge case: all weights identical
-      if (min === max) {
-        return widths[1]; // small but not tiny
-      }
-
-      // Normalize 0..1
-      let t = (weight - min) / (max - min);
-
-      // 👇 DYNAMIC RANGE COMPRESSION
-      const range = max - min;
-      const compression = Math.min(1, range / 5);
-
-      t = t * compression;
-      t = Math.min(1, t);
-
-      const minW = widths[0];
-      const maxW = widths[widths.length - 1];
-
-      return minW + t * (maxW - minW);
-    },
-
-    getArrowColor(weight, minW, maxW) {
-      if (minW === maxW) return 'hsl(173, 55%, 32%)';
-
-      let t = (weight - minW) / (maxW - minW);
-
-      const range = maxW - minW;
-      const compression = Math.min(1, range / 5);
-      t = Math.min(1, t * compression);
-
-      const sat = 55 + t * 25;
-      const light = 60 - t * 50;
-      return `hsl(173, ${sat}%, ${light}%)`;
-    },
-
-    /* =============================================
-     UTILITIES
-    ============================================= */
-    computeOffsets(p1, p2, offset) {
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const len = Math.sqrt(dx * dx + dy * dy);
-
-      if (len === 0) {
-        return { offsetA1: p1, offsetB1: p2, offsetA2: p1, offsetB2: p2 };
-      }
-
-      const ox = -(dy / len) * offset;
-      const oy = (dx / len) * offset;
-
-      return {
-        offsetA1: { x: p1.x + ox, y: p1.y + oy },
-        offsetB1: { x: p2.x + ox, y: p2.y + oy },
-        offsetA2: { x: p1.x - ox, y: p1.y - oy },
-        offsetB2: { x: p2.x - ox, y: p2.y - oy },
-      };
-    },
-
-    clusterPoints(pixels) {
-      const threshold = 50; // px
-      const keys = Object.keys(pixels);
-      const clusters = [];
-      const visited = new Set();
-
-      for (let i = 0; i < keys.length; i++) {
-        if (visited.has(keys[i])) continue;
-
-        const p1 = pixels[keys[i]];
-        const cluster = { keys: [keys[i]], x: p1.x, y: p1.y };
-        visited.add(keys[i]);
-
-        for (let j = i + 1; j < keys.length; j++) {
-          if (visited.has(keys[j])) continue;
-          const p2 = pixels[keys[j]];
-          const dx = p2.x - p1.x;
-          const dy = p2.y - p1.y;
-
-          if (Math.sqrt(dx * dx + dy * dy) < threshold) {
-            cluster.keys.push(keys[j]);
-            cluster.x += p2.x;
-            cluster.y += p2.y;
-            visited.add(keys[j]);
-          }
-        }
-
-        cluster.x /= cluster.keys.length;
-        cluster.y /= cluster.keys.length;
-        clusters.push(cluster);
-      }
-
-      return clusters;
-    },
-
     /* =============================================
      HEAVY REBUILD (CLUSTERS & GROUPS)
      Runs when: flows change, locations change, zoom, selection change
@@ -340,7 +235,7 @@ const Flowmap = Vue.defineComponent({
         pixels[id] = this.map.latLngToContainerPoint(this.points[id].latlng);
       }
 
-      const rawClusters = this.clusterPoints(pixels);
+      const rawClusters = FlowmapUtils.clusterPoints(pixels);
 
       // Build clusterDefs + mapping locId → clusterId
       rawClusters.forEach((c, index) => {
@@ -369,10 +264,11 @@ const Flowmap = Vue.defineComponent({
         });
 
         let radius;
+        const dotSizes = FlowmapUtils.CONFIG.sizes.dotSizes
         if (this.minWeight === this.maxWeight) {
-          radius = this.dotSizes[Math.floor(this.dotSizes.length / 2)];
+          radius = dotSizes[Math.floor(dotSizes.length / 2)];
         } else {
-          const ranges = this.dotSizes;
+          const ranges = dotSizes;
           let t = (clusterTotal - this.minWeight) / (this.maxWeight - this.minWeight);
           const range = this.maxWeight - this.minWeight;
           const compression = Math.min(1, range / 5);
@@ -475,7 +371,7 @@ const Flowmap = Vue.defineComponent({
         const opposite = groups[oppositeKey];
 
         const spacing = 4;
-        const { offsetA1, offsetB1, offsetA2, offsetB2 } = this.computeOffsets(A, B, spacing);
+        const { offsetA1, offsetB1, offsetA2, offsetB2 } = FlowmapUtils.computeOffsets(A, B, spacing);
 
         // forward direction (clusterFrom -> clusterTo)
         group.flows.forEach((f) => {
@@ -483,7 +379,7 @@ const Flowmap = Vue.defineComponent({
             from: offsetA1,
             to: offsetB1,
             weight: f.weight,
-            width: this.getArrowWidth(f.weight),
+            width: FlowmapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
             clusterFrom: group.fromClusterId,
             clusterTo: group.toClusterId,
           });
@@ -496,7 +392,7 @@ const Flowmap = Vue.defineComponent({
               from: offsetB2,
               to: offsetA2,
               weight: f.weight,
-              width: this.getArrowWidth(f.weight),
+              width: FlowmapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
               clusterFrom: group.toClusterId,
               clusterTo: group.fromClusterId,
             });
@@ -530,10 +426,10 @@ const Flowmap = Vue.defineComponent({
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#28726c';
+        ctx.fillStyle = FlowmapUtils.CONFIG.colors.dot.fill;
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = '#fff';
+        ctx.strokeStyle = FlowmapUtils.CONFIG.colors.dot.stroke;
         ctx.stroke();
 
         this.dotShapes.push({
@@ -591,7 +487,7 @@ const Flowmap = Vue.defineComponent({
       ctx.stroke();
 
       // --- Fill arrow ---
-      ctx.fillStyle = this.getArrowColor(weight, minW, maxW);
+      ctx.fillStyle = FlowmapUtils.getArrowColor(weight, minW, maxW);
       ctx.fill();
 
       ctx.restore();
@@ -615,29 +511,6 @@ const Flowmap = Vue.defineComponent({
     /* =============================================
      CLICK HANDLING HELPERS
     ============================================= */
-    pointInCircle(x, y, dot) {
-      const dx = x - dot.center.x;
-      const dy = y - dot.center.y;
-      return dx * dx + dy * dy <= dot.radius * dot.radius;
-    },
-
-    pointOnArrow(x, y, a) {
-      const dx = a.pTip.x - a.pStart.x;
-      const dy = a.pTip.y - a.pStart.y;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (!len) return false;
-
-      const ux = dx / len;
-      const uy = dy / len;
-      const px = x - a.pStart.x;
-      const py = y - a.pStart.y;
-
-      const proj = px * ux + py * uy;
-      if (proj < 0 || proj > len) return false;
-
-      const perp = Math.abs(-uy * px + ux * py);
-      return perp <= a.width / 2 + 4;
-    },
 
     getClusterTraffic(id) {
       let outgoing = 0;
@@ -701,7 +574,7 @@ const Flowmap = Vue.defineComponent({
 
       // Try dots first
       for (const dot of this.dotShapes) {
-        if (this.pointInCircle(p.x, p.y, dot)) {
+        if (FlowmapUtils.pointInCircle(p.x, p.y, dot)) {
           const ids = dot.key.split(',').map(Number);
           this.selectedPoint = ids[0];
 
@@ -720,7 +593,7 @@ const Flowmap = Vue.defineComponent({
 
        // 2️⃣ Arrow clicks
       for (const arrow of this.arrowShapes) {
-        if (this.pointOnArrow(p.x, p.y, arrow)) {
+        if (FlowmapUtils.pointOnArrow(p.x, p.y, arrow)) {
           return;
         }
       }
@@ -740,7 +613,7 @@ const Flowmap = Vue.defineComponent({
 
       // Check DOTS
       for (const dot of this.dotShapes) {
-        if (this.pointInCircle(p.x, p.y, dot)) {
+        if (FlowmapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
 
           const ids = dot.key.split(',').map(Number);
@@ -768,7 +641,7 @@ const Flowmap = Vue.defineComponent({
       // Check ARROWS if no dot match
       if (!hovering) {
         for (const arrow of this.arrowShapes) {
-          if (this.pointOnArrow(p.x, p.y, arrow)) {
+          if (FlowmapUtils.pointOnArrow(p.x, p.y, arrow)) {
             hovering = true;
 
             const { clusterFrom, clusterTo } = arrow;
@@ -820,7 +693,7 @@ const Flowmap = Vue.defineComponent({
   },
 
   template: `
-    <v-container fluid class="pa-0 fill-height position-relative">
+    <v-container fluid class="pa-0 fill-height position-relative overflow-hidden">
 
       <!-- Map -->
       <div ref="mapContainer" class="w-100 h-100 position-relative"></div>
