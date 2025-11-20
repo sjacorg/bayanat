@@ -90,10 +90,17 @@ const Flowmap = Vue.defineComponent({
       const el = this.$refs.mapContainer;
       if (!el) return this.$nextTick(() => this.initMap());
 
-      this.map = L.map(el).setView(geoMapDefaultCenter, FlowmapUtils.CONFIG.map.defaultZoom);
+      const worldBounds = L.latLngBounds(L.latLng(-85, -180), L.latLng(85, 180));
+
+      this.map = L.map(el, {
+        minZoom: FlowmapUtils.CONFIG.map.minZoom,
+        maxBoundsViscosity: FlowmapUtils.CONFIG.map.maxBoundsViscosity,
+        worldCopyJump: FlowmapUtils.CONFIG.map.worldCopyJump,
+        maxBounds: worldBounds,
+      }).setView(geoMapDefaultCenter, FlowmapUtils.CONFIG.map.defaultZoom);
 
       const osmLayer = L.tileLayer(FlowmapUtils.CONFIG.map.osm.url, { attribution: FlowmapUtils.CONFIG.map.osm.attribution }).addTo(this.map);
-      
+
       // If Google maps api key exists then add google layer and control
       if (window.__GOOGLE_MAPS_API_KEY__) {
         const googleLayer = L.tileLayer(FlowmapUtils.CONFIG.map.google.url, {
@@ -101,7 +108,7 @@ const Flowmap = Vue.defineComponent({
           maxZoom: FlowmapUtils.CONFIG.map.google.maxZoom,
           subdomains: FlowmapUtils.CONFIG.map.google.subdomains,
         });
-        const baseMaps = { 'OpenStreetMap': osmLayer, 'Google Satellite': googleLayer };
+        const baseMaps = { OpenStreetMap: osmLayer, 'Google Satellite': googleLayer };
         L.control.layers(baseMaps).addTo(this.map);
       }
 
@@ -264,7 +271,7 @@ const Flowmap = Vue.defineComponent({
         });
 
         let radius;
-        const dotSizes = FlowmapUtils.CONFIG.sizes.dotSizes
+        const dotSizes = FlowmapUtils.CONFIG.sizes.dotSizes;
         if (this.minWeight === this.maxWeight) {
           radius = dotSizes[Math.floor(dotSizes.length / 2)];
         } else {
@@ -371,7 +378,11 @@ const Flowmap = Vue.defineComponent({
         const opposite = groups[oppositeKey];
 
         const spacing = 4;
-        const { offsetA1, offsetB1, offsetA2, offsetB2 } = FlowmapUtils.computeOffsets(A, B, spacing);
+        const { offsetA1, offsetB1, offsetA2, offsetB2 } = FlowmapUtils.computeOffsets(
+          A,
+          B,
+          spacing,
+        );
 
         // forward direction (clusterFrom -> clusterTo)
         group.flows.forEach((f) => {
@@ -480,9 +491,9 @@ const Flowmap = Vue.defineComponent({
       ctx.closePath();
 
       // --- Stroke shadow FIRST ---
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      ctx.strokeStyle = "rgba(255,255,255,1)"; // your chosen shadow color
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,255,255,1)'; // your chosen shadow color
       ctx.lineWidth = 2;
       ctx.stroke();
 
@@ -591,7 +602,7 @@ const Flowmap = Vue.defineComponent({
         }
       }
 
-       // 2️⃣ Arrow clicks
+      // 2️⃣ Arrow clicks
       for (const arrow of this.arrowShapes) {
         if (FlowmapUtils.pointOnArrow(p.x, p.y, arrow)) {
           return;
@@ -645,8 +656,10 @@ const Flowmap = Vue.defineComponent({
             hovering = true;
 
             const { clusterFrom, clusterTo } = arrow;
-            const { total, pairs, fromMembers, toMembers } =
-              this.getClusterArrowDetails(clusterFrom, clusterTo);
+            const { total, pairs, fromMembers, toMembers } = this.getClusterArrowDetails(
+              clusterFrom,
+              clusterTo,
+            );
 
             const fromNames = fromMembers.map((id) => this.points[id]?.label || id);
             const toNames = toMembers.map((id) => this.points[id]?.label || id);

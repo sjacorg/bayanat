@@ -15,6 +15,9 @@ const FlowmapUtils = {
 
     map: {
       defaultZoom: 12,
+      minZoom: 2,
+      maxBoundsViscosity: 0.5,
+      worldCopyJump: true,
       osm: {
         url: window.__MAPS_API_ENDPOINT__,
         attribution:
