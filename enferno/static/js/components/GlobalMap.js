@@ -13,7 +13,10 @@ const GlobalMap = Vue.defineComponent({
     },
     filteredLocations() {
       return this.locations.filter(loc => this.selectedLocations.includes(loc.eventtype) || !('eventtype' in loc));
-    }
+    },
+    currentYear() {
+      return new Date().getFullYear();
+    },
   },
 
   data: function () {
@@ -33,7 +36,7 @@ const GlobalMap = Vue.defineComponent({
       lat: geoMapDefaultCenter.lat,
       lng: geoMapDefaultCenter.lng,
       attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
+      googleAttribution: `&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©${this.currentYear} Google, Maxar Technologies`,
       measureControls: null,
       selectedLocations: [],
     };
