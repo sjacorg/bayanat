@@ -103,14 +103,15 @@ const MapVisualization = Vue.defineComponent({
       <v-toolbar color="primary" density="comfortable">
 
         <!-- Left: Title -->
-        <v-toolbar-title class="flex-grow-1">
-          {{ translations.mapVisualization_ }}
-        </v-toolbar-title>
+        <div class="w-33 ml-4">
+          <v-toolbar-title>
+            {{ translations.mapVisualization_ }}
+          </v-toolbar-title>
+        </div>
 
         <!-- Center: Search -->
         <v-text-field
-          class="mx-6"
-          style="max-width: 420px;"
+          class="w-33"
           variant="solo"
           density="comfortable"
           hide-details="auto"
@@ -131,11 +132,14 @@ const MapVisualization = Vue.defineComponent({
         />
 
         <!-- Right: Close -->
-        <v-btn
-          icon="mdi-close"
-          variant="text"
-          @click="$emit('update:open', false)"
-        />
+        <div class="w-33 mr-4 d-flex">
+          <v-spacer></v-spacer>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            @click="$emit('update:open', false)"
+          />
+        </div>
       </v-toolbar>
 
       <!-- MAP + OVERLAYS -->

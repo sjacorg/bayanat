@@ -42,58 +42,6 @@ const Flowmap = Vue.defineComponent({
         type: null, // "dot" | "arrow"
         content: null,
       },
-
-      // Inline Styles
-      rootStyle: {
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-      },
-      wrapperStyle: {
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-      },
-      mapStyle: {
-        width: '100%',
-        height: '100%',
-        background: '#ddd',
-      },
-      overlayStyle: {
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        zIndex: '1000',
-        pointerEvents: 'none',
-        width: '100%',
-        height: '100%',
-      },
-      clearBtnStyle: {
-        position: 'absolute',
-        bottom: '10px',
-        left: '10px',
-        background: '#fff',
-        color: '#000',
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        padding: '6px 10px',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        zIndex: '1000',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-      },
-      tooltipStyle: {
-        position: 'absolute',
-        background: 'rgba(0,0,0,0.85)',
-        color: '#fff',
-        padding: '6px 10px',
-        borderRadius: '6px',
-        fontSize: '12px',
-        pointerEvents: 'none',
-        maxWidth: '300px',
-        zIndex: '2000',
-        whiteSpace: 'pre-line',
-      },
     };
   },
 
@@ -827,33 +775,48 @@ const Flowmap = Vue.defineComponent({
   },
 
   template: `
-    <div :style="rootStyle">
-      <div :style="wrapperStyle">
+    <v-container fluid class="pa-0 fill-height position-relative">
 
-        <!-- Map -->
-        <div ref="mapContainer" :style="mapStyle"></div>
+      <!-- Map -->
+      <div ref="mapContainer" class="w-100 h-100 position-relative"></div>
 
-        <!-- Canvas Overlay -->
-        <canvas ref="overlay" :style="overlayStyle"></canvas>
+      <!-- Canvas Overlay -->
+      <canvas
+        ref="overlay"
+        class="position-absolute top-0 left-0 w-100 h-100 pointer-events-none"
+        style="zIndex: 1000;"
+      ></canvas>
 
-        <!-- Clear Filter -->
-        <div :style="clearBtnStyle" @click="clearFilter">
-          Clear Filter
-        </div>
+      <!-- Clear Filter Button -->
+      <v-btn
+        class="position-absolute text-none"
+        :style="{ zIndex: '1000', left: '16px', bottom: '16px' }"
+        color="white"
+        variant="elevated"
+        density="compact"
+        @click="clearFilter"
+      >
+        Clear Filter
+      </v-btn>
 
-        <!-- Tooltip -->
-        <div
-          v-if="tooltip.visible"
-          :style="{
-            ...tooltipStyle,
-            left: tooltip.x + 'px',
-            top:  tooltip.y + 'px'
-          }"
-        >
+      <!-- Tooltip -->
+      <v-card
+        v-if="tooltip.visible"
+        class="position-absolute pa-3 text-white"
+        color="black"
+        style="max-width: 320px; zIndex: 1000;"
+        :style="{
+          left: tooltip.x + 'px',
+          top: tooltip.y + 'px'
+        }"
+        elevation="6"
+      >
+        <div class="text-body-2" style="white-space: pre-line;">
           {{ tooltip.content }}
         </div>
+      </v-card>
 
-      </div>
-    </div>
+    </v-container>
+
   `,
 });
