@@ -12,6 +12,7 @@ const MapVisualization = Vue.defineComponent({
 
   data: () => ({
     translations: window.translations,
+    actorDrawer: false,
 
     loading: false,
     loadingMessage: '',
@@ -19,6 +20,18 @@ const MapVisualization = Vue.defineComponent({
 
     locations: [],
     flows: [],
+
+    people: [
+      { id: 21353, name: 'Daniel Davies' },
+      { id: 32145, name: 'Rebecca Alexander' },
+      { id: 23524, name: 'Shawn Ochoa' },
+      { id: 21342, name: 'David Kelly' },
+      { id: 31342, name: 'Kelly King' },
+      { id: 24382, name: 'Christine Romero' },
+      { id: 29472, name: 'Samuel Matthews' },
+      { id: 21647, name: 'Joan Sanders' },
+      { id: 28421, name: 'Darren Burton' },
+    ],
   }),
 
   watch: {
@@ -99,8 +112,8 @@ const MapVisualization = Vue.defineComponent({
   },
 
   template: `
-    <v-dialog fullscreen :model-value="open">
-      <v-toolbar color="primary" density="comfortable">
+    <v-dialog fullscreen class="map-visualization-dialog" :model-value="open">
+      <v-toolbar color="primary">
 
         <!-- Left: Title -->
         <div class="w-33 ml-4">
@@ -144,67 +157,93 @@ const MapVisualization = Vue.defineComponent({
 
       <!-- MAP + OVERLAYS -->
       <v-container fluid class="pa-0 fill-height">
+        <!-- MAP -->
+        <flowmap
+          :locations="locations"
+          :flows="flows"
+          class="w-100 h-100"
+        />
 
-        <v-row no-gutters class="fill-height">
-          <v-col class="fill-height position-relative">
-
-            <!-- MAP -->
-            <flowmap
-              :locations="locations"
-              :flows="flows"
-              class="w-100 h-100"
+        <!-- LOADING OVERLAY -->
+        <v-overlay
+          v-model="loading"
+          persistent
+          contained
+          class="d-flex align-center justify-center"
+        >
+          <v-card elevation="6" rounded="lg" class="pa-6 text-center">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              size="64"
             />
+            <div class="text-subtitle-1 mt-4">
+              {{ loadingMessage }}
+            </div>
+          </v-card>
+        </v-overlay>
 
-            <!-- LOADING OVERLAY -->
-            <v-overlay
-              v-model="loading"
-              persistent
-              contained
-              class="d-flex align-center justify-center"
+        <!-- ERROR OVERLAY -->
+        <div
+          v-if="errorMessage"
+          class="d-flex align-center justify-center fill-height"
+        >
+          <v-card class="pa-8 text-center" max-width="420">
+
+            <v-icon
+              color="error"
+              size="64"
+              class="mb-4"
             >
-              <v-card elevation="6" rounded="lg" class="pa-6 text-center">
-                <v-progress-circular
-                  indeterminate
-                  color="primary"
-                  size="64"
-                />
-                <div class="text-subtitle-1 mt-4">
-                  {{ loadingMessage }}
-                </div>
-              </v-card>
-            </v-overlay>
+              mdi-alert-circle-outline
+            </v-icon>
 
-            <!-- ERROR OVERLAY -->
-            <div
-              v-if="errorMessage"
-              class="d-flex align-center justify-center fill-height"
-            >
-              <v-card class="pa-8 text-center" max-width="420">
-
-                <v-icon
-                  color="error"
-                  size="64"
-                  class="mb-4"
-                >
-                  mdi-alert-circle-outline
-                </v-icon>
-
-                <div class="text-h6 mb-4">
-                  {{ errorMessage }}
-                </div>
-
-                <v-btn
-                  color="primary"
-                  @click="retry"
-                >
-                  Retry
-                </v-btn>
-
-              </v-card>
+            <div class="text-h6 mb-4">
+              {{ errorMessage }}
             </div>
 
-          </v-col>
-        </v-row>
+            <v-btn
+              color="primary"
+              @click="retry"
+            >
+              Retry
+            </v-btn>
+
+          </v-card>
+        </div>
+
+        <!-- Drawer -->
+        <v-navigation-drawer
+          v-model="actorDrawer"
+          location="right"
+          width="380"
+        >
+          <!-- Toggle button that sticks out -->
+          <v-card class="position-absolute pa-1" :style="{ left: '-48px', top: '50%', transform: 'translateY(-50%)', borderRadius: '12px 0 0 12px' }">
+            <v-btn icon size="small" @click="actorDrawer = !actorDrawer">
+              <v-icon>
+                {{ actorDrawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
+              </v-icon>
+            </v-btn>
+          </v-card>
+
+          <!-- Content -->
+          <v-container>
+            <v-card
+              v-for="person in people"
+              :key="person.id"
+              class="mb-2 pa-4 rounded-lg"
+              elevation="1"
+            >
+              <div class="d-flex align-center ga-2">
+                <v-chip> ID {{ person.id }} </v-chip>
+                <span class="text-subtitle-2 font-weight-medium">
+                  {{ person.name }}
+                </span>
+              </div>
+            </v-card>
+          </v-container>
+        </v-navigation-drawer>
       </v-container>
     </v-dialog>
   `,
