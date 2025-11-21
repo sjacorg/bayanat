@@ -1,4 +1,4 @@
-const FlowmapUtils = {
+const TrafficMapUtils = {
   CONFIG: {
     colors: {
       arrow: {
@@ -128,7 +128,7 @@ const FlowmapUtils = {
   },
 
   getArrowWidth(weight, minWeight, maxWeight) {
-    const widths = FlowmapUtils.CONFIG.sizes.arrowWidths;
+    const widths = this.CONFIG.sizes.arrowWidths;
     const min = minWeight;
     const max = maxWeight;
 

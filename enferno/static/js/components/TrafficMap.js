@@ -1,4 +1,4 @@
-const Flowmap = Vue.defineComponent({
+const TrafficMap = Vue.defineComponent({
   props: {
     locations: { type: Array, required: true },
     flows: { type: Array, required: true },
@@ -93,20 +93,20 @@ const Flowmap = Vue.defineComponent({
       const worldBounds = L.latLngBounds(L.latLng(-85, -180), L.latLng(85, 180));
 
       this.map = L.map(el, {
-        minZoom: FlowmapUtils.CONFIG.map.minZoom,
-        maxBoundsViscosity: FlowmapUtils.CONFIG.map.maxBoundsViscosity,
-        worldCopyJump: FlowmapUtils.CONFIG.map.worldCopyJump,
+        minZoom: TrafficMapUtils.CONFIG.map.minZoom,
+        maxBoundsViscosity: TrafficMapUtils.CONFIG.map.maxBoundsViscosity,
+        worldCopyJump: TrafficMapUtils.CONFIG.map.worldCopyJump,
         maxBounds: worldBounds,
-      }).setView(geoMapDefaultCenter, FlowmapUtils.CONFIG.map.defaultZoom);
+      }).setView(geoMapDefaultCenter, TrafficMapUtils.CONFIG.map.defaultZoom);
 
-      const osmLayer = L.tileLayer(FlowmapUtils.CONFIG.map.osm.url, { attribution: FlowmapUtils.CONFIG.map.osm.attribution }).addTo(this.map);
+      const osmLayer = L.tileLayer(TrafficMapUtils.CONFIG.map.osm.url, { attribution: TrafficMapUtils.CONFIG.map.osm.attribution }).addTo(this.map);
 
       // If Google maps api key exists then add google layer and control
       if (window.__GOOGLE_MAPS_API_KEY__) {
-        const googleLayer = L.tileLayer(FlowmapUtils.CONFIG.map.google.url, {
-          attribution: FlowmapUtils.CONFIG.attribution.google,
-          maxZoom: FlowmapUtils.CONFIG.map.google.maxZoom,
-          subdomains: FlowmapUtils.CONFIG.map.google.subdomains,
+        const googleLayer = L.tileLayer(TrafficMapUtils.CONFIG.map.google.url, {
+          attribution: TrafficMapUtils.CONFIG.attribution.google,
+          maxZoom: TrafficMapUtils.CONFIG.map.google.maxZoom,
+          subdomains: TrafficMapUtils.CONFIG.map.google.subdomains,
         });
         const baseMaps = { OpenStreetMap: osmLayer, 'Google Satellite': googleLayer };
         L.control.layers(baseMaps).addTo(this.map);
@@ -242,7 +242,7 @@ const Flowmap = Vue.defineComponent({
         pixels[id] = this.map.latLngToContainerPoint(this.points[id].latlng);
       }
 
-      const rawClusters = FlowmapUtils.clusterPoints(pixels);
+      const rawClusters = TrafficMapUtils.clusterPoints(pixels);
 
       // Build clusterDefs + mapping locId → clusterId
       rawClusters.forEach((c, index) => {
@@ -271,7 +271,7 @@ const Flowmap = Vue.defineComponent({
         });
 
         let radius;
-        const dotSizes = FlowmapUtils.CONFIG.sizes.dotSizes;
+        const dotSizes = TrafficMapUtils.CONFIG.sizes.dotSizes;
         if (this.minWeight === this.maxWeight) {
           radius = dotSizes[Math.floor(dotSizes.length / 2)];
         } else {
@@ -377,8 +377,8 @@ const Flowmap = Vue.defineComponent({
         const oppositeKey = `${group.toClusterId}|${group.fromClusterId}`;
         const opposite = groups[oppositeKey];
 
-        const spacing = FlowmapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
-        const { offsetA1, offsetB1, offsetA2, offsetB2 } = FlowmapUtils.computeOffsets(
+        const spacing = TrafficMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
+        const { offsetA1, offsetB1, offsetA2, offsetB2 } = TrafficMapUtils.computeOffsets(
           A,
           B,
           spacing,
@@ -390,7 +390,7 @@ const Flowmap = Vue.defineComponent({
             from: offsetA1,
             to: offsetB1,
             weight: f.weight,
-            width: FlowmapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
+            width: TrafficMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
             clusterFrom: group.fromClusterId,
             clusterTo: group.toClusterId,
           });
@@ -403,7 +403,7 @@ const Flowmap = Vue.defineComponent({
               from: offsetB2,
               to: offsetA2,
               weight: f.weight,
-              width: FlowmapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
+              width: TrafficMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
               clusterFrom: group.toClusterId,
               clusterTo: group.fromClusterId,
             });
@@ -437,10 +437,10 @@ const Flowmap = Vue.defineComponent({
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = FlowmapUtils.CONFIG.colors.dot.fill;
+        ctx.fillStyle = TrafficMapUtils.CONFIG.colors.dot.fill;
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = FlowmapUtils.CONFIG.colors.dot.stroke;
+        ctx.strokeStyle = TrafficMapUtils.CONFIG.colors.dot.stroke;
         ctx.stroke();
 
         this.dotShapes.push({
@@ -498,7 +498,7 @@ const Flowmap = Vue.defineComponent({
       ctx.stroke();
 
       // --- Fill arrow ---
-      ctx.fillStyle = FlowmapUtils.getArrowColor(weight, minW, maxW);
+      ctx.fillStyle = TrafficMapUtils.getArrowColor(weight, minW, maxW);
       ctx.fill();
 
       ctx.restore();
@@ -585,7 +585,7 @@ const Flowmap = Vue.defineComponent({
 
       // Try dots first
       for (const dot of this.dotShapes) {
-        if (FlowmapUtils.pointInCircle(p.x, p.y, dot)) {
+        if (TrafficMapUtils.pointInCircle(p.x, p.y, dot)) {
           const ids = dot.key.split(',').map(Number);
           this.selectedPoint = ids[0];
 
@@ -604,7 +604,7 @@ const Flowmap = Vue.defineComponent({
 
       // 2️⃣ Arrow clicks
       for (const arrow of this.arrowShapes) {
-        if (FlowmapUtils.pointOnArrow(p.x, p.y, arrow)) {
+        if (TrafficMapUtils.pointOnArrow(p.x, p.y, arrow)) {
           return;
         }
       }
@@ -624,7 +624,7 @@ const Flowmap = Vue.defineComponent({
 
       // Check DOTS
       for (const dot of this.dotShapes) {
-        if (FlowmapUtils.pointInCircle(p.x, p.y, dot)) {
+        if (TrafficMapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
 
           const ids = dot.key.split(',').map(Number);
@@ -652,7 +652,7 @@ const Flowmap = Vue.defineComponent({
       // Check ARROWS if no dot match
       if (!hovering) {
         for (const arrow of this.arrowShapes) {
-          if (FlowmapUtils.pointOnArrow(p.x, p.y, arrow)) {
+          if (TrafficMapUtils.pointOnArrow(p.x, p.y, arrow)) {
             hovering = true;
 
             const { clusterFrom, clusterTo } = arrow;

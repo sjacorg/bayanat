@@ -79,7 +79,7 @@ const MapVisualization = Vue.defineComponent({
         const start = await api.post(this.visualizeEndpoint, { q: this.query });
         const taskId = start?.data?.task_id;
 
-        if (!taskId) throw new Error('Flowmap generation failed.');
+        if (!taskId) throw new Error('TrafficMap generation failed.');
 
         let status = 'pending';
         let error = null;
@@ -222,7 +222,7 @@ const MapVisualization = Vue.defineComponent({
       <!-- MAP + OVERLAYS -->
       <v-container fluid class="pa-0 fill-height">
         <!-- MAP -->
-        <flowmap
+        <traffic-map
           :locations="locations"
           :flows="flows"
           class="w-100 h-100"
