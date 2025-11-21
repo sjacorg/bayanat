@@ -155,7 +155,7 @@ const BulletinSearchBox = Vue.defineComponent({
                   clearable
               ></v-text-field>
               
-              <template v-if="$root.isFieldActiveByName('tags')">
+              <template v-if="$root.isFieldActiveByName('tags', { entityType: 'bulletin' })">
               <v-combobox
                   v-model="q.tags"
                   :label="translations.inTags_"
@@ -197,14 +197,14 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col v-if="$root.isFieldActiveByName('publish_date')" cols="12">
+            <v-col v-if="$root.isFieldActiveByName('publish_date', { entityType: 'bulletin' })" cols="12">
                 <pop-date-range-field
                     :label="translations.publishDate_"
                     v-model="q.pubdate"
                 />
             </v-col>
 
-            <v-col v-if="$root.isFieldActiveByName('documentation_date')" cols="12">
+            <v-col v-if="$root.isFieldActiveByName('documentation_date', { entityType: 'bulletin' })" cols="12">
                 <pop-date-range-field
                     :label="translations.documentationDate_"
                     v-model="q.docdate"
@@ -229,7 +229,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col v-if="$root.isFieldActiveByName('events_section')" md="12">
+            <v-col v-if="$root.isFieldActiveByName('events_section', { entityType: 'bulletin' })" md="12">
               <v-card class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
@@ -380,7 +380,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
           <v-row>
 
-            <v-col v-if="$root.isFieldActiveByName('sources')">
+            <v-col v-if="$root.isFieldActiveByName('sources', { entityType: 'bulletin' })">
               <search-field
                     v-model="q.sources"
                     api="/admin/api/sources/"
@@ -412,7 +412,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col v-if="$root.isFieldActiveByName('labels')">
+            <v-col v-if="$root.isFieldActiveByName('labels', { entityType: 'bulletin' })">
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
@@ -443,7 +443,7 @@ const BulletinSearchBox = Vue.defineComponent({
             </v-col>
           </v-row>
           <v-row>
-            <v-col v-if="$root.isFieldActiveByName('ver_labels')">
+            <v-col v-if="$root.isFieldActiveByName('ver_labels', { entityType: 'bulletin' })">
                 <search-field
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
@@ -473,7 +473,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col v-if="$root.isFieldActiveByName('locations')">
+            <v-col v-if="$root.isFieldActiveByName('locations', { entityType: 'bulletin' })">
                 <location-search-field
                     v-model="q.locations"
                     api="/admin/api/locations/"
@@ -501,7 +501,7 @@ const BulletinSearchBox = Vue.defineComponent({
             </v-col>
           </v-row>
 
-          <v-sheet v-if="$root.isFieldActiveByName('geo_locations')" class="ma-4">
+          <v-sheet v-if="$root.isFieldActiveByName('geo_locations', { entityType: 'bulletin' })" class="ma-4">
             <span class="caption pt-2">{{ translations.geospatial_ }}</span>
 
 
@@ -532,7 +532,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-sheet>
 
           <div>
-            <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields" :key="index">
+            <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields.bulletin" :key="index">
               <v-text-field
                   v-if="['text', 'long_text'].includes(field.field_type)"
                   :label="field.title"
