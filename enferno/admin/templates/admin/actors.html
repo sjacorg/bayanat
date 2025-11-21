@@ -21,6 +21,8 @@
             @advanced-search="advSearchExpand = true"
             @do-search="doSearch"
             @reset-search="resetSearch"
+            @show-entity-details="showActor($event.id, { width: 398 })"
+            @close-entity-details="actorDrawer = false; actorDrawerSettings = {}"
         ></map-visualization>
 
         <v-container fluid>
@@ -532,6 +534,7 @@
                 relateIncidentTerm: "",
 
                 actorDrawer: false,
+                actorDrawerSettings: {},
                 bulkActorDrawer: false,
 
                 exportDrawer: false,
@@ -1311,8 +1314,9 @@
 
                 },
 
-                showActor(id) {
+                showActor(id, options = {}) {
                     this.actorLoader = true;
+                    this.actorDrawerSettings = options
 
                     this.fetchIdNumberTypes();
 

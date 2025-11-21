@@ -9,11 +9,11 @@ const MapVisualization = Vue.defineComponent({
     search: { type: String, default: '' },
   },
 
-  emits: ['update:open', 'advancedSearch', 'resetSearch', 'doSearch', 'update:search'],
+  emits: ['update:open', 'advancedSearch', 'resetSearch', 'doSearch', 'update:search', 'showEntityDetails', 'closeEntityDetails'],
 
   data: () => ({
     translations: window.translations,
-    actorDrawer: false,
+    entityDrawer: false,
 
     loading: false,
     loadingMessage: '',
@@ -180,6 +180,14 @@ const MapVisualization = Vue.defineComponent({
           this.entities.loading = false;
         });
     },
+
+    toggleEntityDrawer() {
+      this.entityDrawer = !this.entityDrawer
+
+      if (!this.entityDrawer) {
+        this.$emit('closeEntityDetails')
+      }
+    }
   },
 
   template: `
@@ -221,7 +229,7 @@ const MapVisualization = Vue.defineComponent({
           <v-btn
             icon="mdi-close"
             variant="text"
-            @click="$emit('update:open', false)"
+            @click="$emit('update:open', false); $emit('closeEntityDetails');"
           />
         </div>
       </v-toolbar>
@@ -285,15 +293,16 @@ const MapVisualization = Vue.defineComponent({
 
         <!-- Drawer -->
         <v-navigation-drawer
-          v-model="actorDrawer"
+          v-model="entityDrawer"
           location="right"
-          width="380"
+          width="398"
+          :scrim="false"
         >
           <!-- Toggle button that sticks out -->
           <v-card class="position-absolute pa-1" :style="{ left: '-48px', top: '50%', transform: 'translateY(-50%)', borderRadius: '12px 0 0 12px' }">
-            <v-btn icon size="small" @click="actorDrawer = !actorDrawer">
+            <v-btn icon size="small" @click="toggleEntityDrawer()">
               <v-icon>
-                {{ actorDrawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
+                {{ entityDrawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
               </v-icon>
             </v-btn>
           </v-card>
@@ -306,6 +315,7 @@ const MapVisualization = Vue.defineComponent({
                 :key="entity.id"
                 class="mb-2 pa-4 rounded-lg"
                 elevation="2"
+                @click="$emit('showEntityDetails', entity)"
               >
                 <div class="d-flex align-center ga-2">
                   <v-chip> ID {{ entity.id }} </v-chip>
