@@ -18,7 +18,7 @@ const IncidentResult = Vue.defineComponent({
           
           <v-card-title class="text-wrap text-break">
             <v-row>
-              <v-col><uni-field disable-spacing :caption="translations.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field></v-col>
+              <v-col><uni-field disable-spacing :caption="translations.title_" :english="incident.title"></uni-field></v-col>
             </v-row>
           </v-card-title>
           <v-divider></v-divider>

@@ -19,13 +19,7 @@ const ActorResult = Vue.defineComponent({
         </v-toolbar>
         <v-card-title class="text-wrap text-break">
           <v-row>
-            <template v-if="actor.name || actor.name_ar">
-              <v-col><uni-field disable-spacing :caption="translations.name_" :english="actor.name" :arabic="actor.name_ar"></uni-field></v-col>
-            </template>
-            <template v-else>
-              <v-col><uni-field disable-spacing :caption="translations.firstName_" :english="actor.first_name" :arabic="actor.first_name_ar"></uni-field></v-col>
-              <v-col><uni-field disable-spacing :caption="translations.lastName_" :english="actor.last_name" :arabic="actor.last_name_ar"></uni-field></v-col>
-            </template>
+            <v-col><uni-field disable-spacing :caption="translations.name_" :english="actor.name"></uni-field></v-col>
           </v-row>
         </v-card-title>
         <v-divider></v-divider>
