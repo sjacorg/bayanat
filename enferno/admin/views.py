@@ -3237,7 +3237,9 @@ def api_bulletins(validated_data: dict) -> Response:
                 {
                     "id": item.id,
                     "title": item.title,
+                    "title_ar": item.title_ar,
                     "sjac_title": item.sjac_title,
+                    "sjac_title_ar": item.sjac_title_ar,
                     "status": item.status,
                     "assigned_to": (
                         {"id": item.assigned_to.id, "name": item.assigned_to.name}
