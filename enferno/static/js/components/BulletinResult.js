@@ -19,7 +19,7 @@ const BulletinResult = Vue.defineComponent({
           <v-spacer></v-spacer>
           <v-chip variant="text" v-if="bulletin.publish_date" size="small">{{ $root.formatDate(bulletin.publish_date) }}</v-chip>
         </v-toolbar>
-        <v-card-title class="text-wrap text-break">
+        <v-card-title class="text-wrap text-break pt-0">
           <uni-field class="pa-0" disable-spacing :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
           <uni-field class="pa-0" disable-spacing :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
         </v-card-title>
