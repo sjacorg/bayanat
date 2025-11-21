@@ -1684,6 +1684,9 @@ class ConfigValidationModel(StrictValidationModel):
             return None
         if not isinstance(v, str):
             raise ValueError("Invalid value for GOOGLE_MAPS_API_KEY")
+        # Allow masked value (user not changing secret)
+        if v == ConfigManager.MASK_STRING:
+            return v
         if len(v) < 30 or len(v) > 60:
             raise ValueError("Invalid value for GOOGLE_MAPS_API_KEY")
         return v
@@ -1691,6 +1694,9 @@ class ConfigValidationModel(StrictValidationModel):
     def validate_recaptcha_key(v):
         if not isinstance(v, str):
             return None
+        # Allow masked value (user not changing secret)
+        if v == ConfigManager.MASK_STRING:
+            return v
         if len(v) < 20 or len(v) > 50:
             return None
         return v
@@ -1698,6 +1704,9 @@ class ConfigValidationModel(StrictValidationModel):
     def validate_google_key(v):
         if not isinstance(v, str):
             return None
+        # Allow masked value (user not changing secret)
+        if v == ConfigManager.MASK_STRING:
+            return v
         if len(v) < 20 or len(v) > 100:
             return None
         return v
@@ -1793,17 +1802,6 @@ class ConfigValidationModel(StrictValidationModel):
             return None
 
         return v
-
-    @model_validator(mode="before")
-    @classmethod
-    def restore_masked_secrets(cls, values):
-        """Restore masked secret values from current config before validation."""
-        # Restore each masked secret from current running config
-        for secret_field in AppConfig.SECRET_FIELDS:
-            if values.get(secret_field) == ConfigManager.MASK_STRING:
-                values[secret_field] = getattr(Config, secret_field, "")
-
-        return values
 
     @model_validator(mode="before")
     @classmethod
@@ -1914,11 +1912,15 @@ class FullConfigValidationModel(ConfigValidationModel):
     @model_validator(mode="before")
     def validate_mail_settings(cls, values):
         if values.get("MAIL_ENABLED"):
+            mail_password = values.get("MAIL_PASSWORD")
             if (
                 not values.get("MAIL_SERVER")
                 or not values.get("MAIL_PORT")
                 or not values.get("MAIL_USERNAME")
-                or not values.get("MAIL_PASSWORD")
+                or not (
+                    mail_password
+                    and (mail_password == ConfigManager.MASK_STRING or len(mail_password) > 0)
+                )
                 or not values.get("MAIL_DEFAULT_SENDER")
             ):
                 raise ValueError(
