@@ -17,6 +17,7 @@
             v-model:open="mapVisualizationOpen"
             v-model:search.trim="search[0].tsv"
             :query="search"
+            entities-endpoint="/admin/api/actors/"
             @advanced-search="advSearchExpand = true"
             @do-search="doSearch"
             @reset-search="resetSearch"

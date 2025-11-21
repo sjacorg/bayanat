@@ -4,6 +4,7 @@ const MapVisualization = Vue.defineComponent({
     visualizeEndpoint: { type: String, default: '/admin/api/flowmap/visualize' },
     statusEndpoint: { type: String, default: '/admin/api/flowmap/status' },
     dataEndpoint: { type: String, default: '/admin/api/flowmap/data' },
+    entitiesEndpoint: { type: String, default: '/admin/api/actors/' },
     query: { type: Array, default: () => [{}] },
     search: { type: String, default: '' },
   },
@@ -21,22 +22,30 @@ const MapVisualization = Vue.defineComponent({
     locations: [],
     flows: [],
 
-    people: [
-      { id: 21353, name: 'Daniel Davies' },
-      { id: 32145, name: 'Rebecca Alexander' },
-      { id: 23524, name: 'Shawn Ochoa' },
-      { id: 21342, name: 'David Kelly' },
-      { id: 31342, name: 'Kelly King' },
-      { id: 24382, name: 'Christine Romero' },
-      { id: 29472, name: 'Samuel Matthews' },
-      { id: 21647, name: 'Joan Sanders' },
-      { id: 28421, name: 'Darren Burton' },
-    ],
+    infiniteScrollCallback: null,
+    entities: {
+      loading: false,
+      items: [],
+      cursor: null,
+      nextCursor: null,
+      perPage: 30,
+      total: null,
+    },
   }),
 
   watch: {
     open(val) {
-      if (val) this.initMapFlow();
+      if (val) {
+        this.resetEntities();
+        this.initMapFlow();
+      }
+    },
+
+    query: {
+      deep: true,
+      handler() {
+        this.resetEntities();
+      },
     },
   },
 
@@ -108,6 +117,61 @@ const MapVisualization = Vue.defineComponent({
     retry() {
       this.errorMessage = '';
       this.initMapFlow();
+    },
+
+    resetEntities() {
+      this.entities.items = [];
+      this.entities.cursor = null;
+      this.entities.nextCursor = null;
+      this.entities.total = null;
+    },
+
+    loadEntities(options) {
+      if (options?.done) {
+        this.infiniteScrollCallback = options.done;
+      }
+
+      if (this.entities.loading) return;
+
+      this.entities.loading = true;
+
+      const payload = {
+        q: this.query, // 👈 EXACT SAME QUERY AS PARENT
+        per_page: this.entities.perPage,
+        cursor: this.entities.cursor, // null for first request
+        include_count: true,
+      };
+
+      api
+        .post(this.entitiesEndpoint, payload)
+        .then((response) => {
+          const data = response.data;
+
+          if (!this.entities.cursor) {
+            this.entities.items = data.items;
+          } else {
+            this.entities.items.push(...data.items);
+          }
+
+          // Save new cursor
+          this.entities.cursor = data.nextCursor || null;
+          this.entities.nextCursor = data.nextCursor || null;
+
+          if ('total' in data) {
+            this.entities.total = data.total;
+          }
+
+          const hasMore = !!data.nextCursor;
+
+          options?.done?.(hasMore ? 'ok' : 'empty');
+        })
+        .catch((err) => {
+          console.error('Entity load failed:', err);
+          options?.done?.('error');
+        })
+        .finally(() => {
+          this.entities.loading = false;
+        });
     },
   },
 
@@ -228,20 +292,22 @@ const MapVisualization = Vue.defineComponent({
           </v-card>
 
           <!-- Content -->
-          <v-container>
-            <v-card
-              v-for="person in people"
-              :key="person.id"
-              class="mb-2 pa-4 rounded-lg"
-              elevation="1"
-            >
-              <div class="d-flex align-center ga-2">
-                <v-chip> ID {{ person.id }} </v-chip>
-                <span class="text-subtitle-2 font-weight-medium">
-                  {{ person.name }}
-                </span>
-              </div>
-            </v-card>
+          <v-container class="pt-0">
+            <v-infinite-scroll class="overflow-visible" :empty-text="!entities.items?.length ? translations.noItemsAvailable_ : translations.noMoreItemsToLoad_" :items="entities.items" @load="loadEntities({ ...$event })">
+              <v-card
+                v-for="entity in entities.items"
+                :key="entity.id"
+                class="mb-2 pa-4 rounded-lg"
+                elevation="2"
+              >
+                <div class="d-flex align-center ga-2">
+                  <v-chip> ID {{ entity.id }} </v-chip>
+                  <span class="text-subtitle-2 font-weight-medium">
+                    {{ entity.name }}
+                  </span>
+                </div>
+              </v-card>
+            </v-infinite-scroll>
           </v-container>
         </v-navigation-drawer>
       </v-container>
