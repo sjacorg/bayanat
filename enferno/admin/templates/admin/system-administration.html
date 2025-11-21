@@ -1050,38 +1050,6 @@
     </v-dialog>
 
 
-    <!-- Revert changes confirmation dialog -->
-    <v-dialog v-model="revertChangesDialog" max-width="900">
-        <v-card>
-            <v-card-title class="d-flex justify-space-between align-center">
-                {{ _('Are you sure you want to revert to this version?') }}
-            </v-card-title>
-            <v-card-text class="pa-4">
-                <div class="mb-5">
-                    {{ _('Version settings changed by') }} <b>@${defaultConfig?.user?.username}</b> - ${formatDate(defaultConfig?.created_at, dateFormats.standardDatetime, dateOptions.local)}.
-                </div>
-
-                <show-details v-if="configDiff" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}" side="end">
-                    <diff-renderer class="mt-2" :diff="configDiff"></diff-renderer>
-                </show-details>
-
-                <v-sheet v-else class=" text-center mt-3 align-center">
-                    <v-icon left>mdi-alert</v-icon>
-                    {{ _('No changes detected') }}
-                </v-sheet>
-
-            </v-card-text>
-            <v-card-actions class="pa-4 justify-end">
-                <v-btn variant="flat" @click="closeSaveDialog">{{ _('Cancel') }}
-                </v-btn>
-                <v-btn variant="elevated" color="primary" :disabled="!configDiff" @click.stop="saveConfiguration" class="ml-4">
-                    {{ _('Confirm') }}
-                </v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-dialog>
-
-
     <!-- Restarting Bayanat overlay -->
     <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
         <v-card>
@@ -1162,7 +1130,6 @@
 
                 overlay: false,
                 saveChangesDialog: false,
-                revertChangesDialog: false,
 
                 loading: true,
 
@@ -1271,14 +1238,16 @@
                 },
 
                 revertVersion(config) {
+                    // Apply the old revision config to the form (client-side only)
+                    // Secrets are not in the revision, so they'll keep their current masked values
                     try {
-                        this.defaultConfig = { ...config, config: structuredClone(config.config) };
+                        this.eitem = { ...this.eitem, ...structuredClone(config.config) };
                     } catch (error) {
-                        this.defaultConfig = { ...config, config: JSON.parse(JSON.stringify(config.config)) };
+                        this.eitem = { ...this.eitem, ...JSON.parse(JSON.stringify(config.config)) };
                     }
 
                     this.showRevisions = false;
-                    this.showRevertConfigDiff();
+                    this.$root.showSnack(this.translations.revisionApplied_ || "Revision applied to form. Review and save to confirm changes.");
                 },
 
                 showDefaultConfigDiff() {
@@ -1289,11 +1258,6 @@
                 showConfigDiff() {
                     this.configDiff = DiffTool.getAndRenderDiff(this.exconfig, this.eitem, this.configLabels);
                     this.saveChangesDialog = true;
-                },
-                
-                showRevertConfigDiff() {
-                    this.configDiff = DiffTool.getAndRenderDiff(this.convertEmptyStringsToNulls(this.eitem), this.defaultConfig?.config, this.defaultConfig.labels);
-                    this.revertChangesDialog = true;
                 },
                 convertEmptyStringsToNulls(obj) {
                     if(obj === "") return null;
@@ -1400,12 +1364,6 @@
                 saveConfiguration() {
                     this.overlay = true
 
-                    // If restoring default config set eitem and labels
-                    if (this.defaultConfig) {
-                        this.eitem = this.defaultConfig?.config;
-                        this.showSnack("{{_('Secret fields are not included in the revision history and will not be reverted.')}}", {timeout: 10000});
-                    }
-
                     this.preprocessConfig();
                     api.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
                         this.reloadApp();
@@ -1420,7 +1378,6 @@
 
                 closeSaveDialog() {
                     this.saveChangesDialog = false;
-                    this.revertChangesDialog = false;
                     this.defaultConfig = null;
                 },
 
