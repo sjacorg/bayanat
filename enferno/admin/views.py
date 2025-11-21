@@ -3237,9 +3237,7 @@ def api_bulletins(validated_data: dict) -> Response:
                 {
                     "id": item.id,
                     "title": item.title,
-                    "title_ar": item.title_ar,
                     "sjac_title": item.sjac_title,
-                    "sjac_title_ar": item.sjac_title_ar,
                     "status": item.status,
                     "assigned_to": (
                         {"id": item.assigned_to.id, "name": item.assigned_to.name}
@@ -4331,11 +4329,6 @@ def api_actors(validated_data: dict) -> Response:
                 {
                     "id": item.id,
                     "name": item.name,
-                    "name_ar": item.name_ar,
-                    "first_name": item.first_name,
-                    "first_name_ar": item.first_name_ar,
-                    "last_name": item.last_name,
-                    "last_name_ar": item.last_name_ar,
                     "status": item.status,
                     "assigned_to": (
                         {"id": item.assigned_to.id, "name": item.assigned_to.name}
@@ -5633,7 +5626,6 @@ def api_incidents(validated_data: dict) -> Response:
                 {
                     "id": item.id,
                     "title": item.title,
-                    "title_ar": item.title_ar,
                     "status": item.status,
                     "assigned_to": (
                         {"id": item.assigned_to.id, "name": item.assigned_to.name}
