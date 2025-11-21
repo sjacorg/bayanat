@@ -124,6 +124,13 @@ const MapVisualization = Vue.defineComponent({
       this.entities.cursor = null;
       this.entities.nextCursor = null;
       this.entities.total = null;
+      this.entities.loading = false;
+      this.infiniteScrollCallback = null;
+
+      // Reset the v-infinite-scroll internal state
+      this.$nextTick(() => {
+        this.$refs?.infiniteScroll?.reset();
+      });
     },
 
     loadEntities(options) {
@@ -293,7 +300,7 @@ const MapVisualization = Vue.defineComponent({
 
           <!-- Content -->
           <v-container class="pt-0">
-            <v-infinite-scroll class="overflow-visible" :empty-text="!entities.items?.length ? translations.noItemsAvailable_ : translations.noMoreItemsToLoad_" :items="entities.items" @load="loadEntities({ ...$event })">
+            <v-infinite-scroll ref="infiniteScroll" class="overflow-visible" :empty-text="!entities.items?.length ? translations.noItemsAvailable_ : translations.noMoreItemsToLoad_" :items="entities.items" @load="loadEntities({ ...$event })">
               <v-card
                 v-for="entity in entities.items"
                 :key="entity.id"
