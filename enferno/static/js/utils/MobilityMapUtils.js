@@ -1,4 +1,4 @@
-const TrafficMapUtils = {
+const MobilityMapUtils = {
   CONFIG: {
     colors: {
       arrow: {

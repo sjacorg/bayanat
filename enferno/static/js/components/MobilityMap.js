@@ -1,4 +1,4 @@
-const TrafficMap = Vue.defineComponent({
+const MobilityMap = Vue.defineComponent({
   props: {
     locations: { type: Array, required: true },
     flows: { type: Array, required: true },
@@ -93,20 +93,20 @@ const TrafficMap = Vue.defineComponent({
       const worldBounds = L.latLngBounds(L.latLng(-85, -180), L.latLng(85, 180));
 
       this.map = L.map(el, {
-        minZoom: TrafficMapUtils.CONFIG.map.minZoom,
-        maxBoundsViscosity: TrafficMapUtils.CONFIG.map.maxBoundsViscosity,
-        worldCopyJump: TrafficMapUtils.CONFIG.map.worldCopyJump,
+        minZoom: MobilityMapUtils.CONFIG.map.minZoom,
+        maxBoundsViscosity: MobilityMapUtils.CONFIG.map.maxBoundsViscosity,
+        worldCopyJump: MobilityMapUtils.CONFIG.map.worldCopyJump,
         maxBounds: worldBounds,
-      }).setView(geoMapDefaultCenter, TrafficMapUtils.CONFIG.map.defaultZoom);
+      }).setView(geoMapDefaultCenter, MobilityMapUtils.CONFIG.map.defaultZoom);
 
-      const osmLayer = L.tileLayer(TrafficMapUtils.CONFIG.map.osm.url, { attribution: TrafficMapUtils.CONFIG.map.osm.attribution }).addTo(this.map);
+      const osmLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.osm.url, { attribution: MobilityMapUtils.CONFIG.map.osm.attribution }).addTo(this.map);
 
       // If Google maps api key exists then add google layer and control
       if (window.__GOOGLE_MAPS_API_KEY__) {
-        const googleLayer = L.tileLayer(TrafficMapUtils.CONFIG.map.google.url, {
-          attribution: TrafficMapUtils.CONFIG.attribution.google,
-          maxZoom: TrafficMapUtils.CONFIG.map.google.maxZoom,
-          subdomains: TrafficMapUtils.CONFIG.map.google.subdomains,
+        const googleLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.google.url, {
+          attribution: MobilityMapUtils.CONFIG.attribution.google,
+          maxZoom: MobilityMapUtils.CONFIG.map.google.maxZoom,
+          subdomains: MobilityMapUtils.CONFIG.map.google.subdomains,
         });
         const baseMaps = { OpenStreetMap: osmLayer, 'Google Satellite': googleLayer };
         L.control.layers(baseMaps).addTo(this.map);
@@ -242,7 +242,7 @@ const TrafficMap = Vue.defineComponent({
         pixels[id] = this.map.latLngToContainerPoint(this.points[id].latlng);
       }
 
-      const rawClusters = TrafficMapUtils.clusterPoints(pixels);
+      const rawClusters = MobilityMapUtils.clusterPoints(pixels);
 
       // Build clusterDefs + mapping locId → clusterId
       rawClusters.forEach((c, index) => {
@@ -271,7 +271,7 @@ const TrafficMap = Vue.defineComponent({
         });
 
         let radius;
-        const dotSizes = TrafficMapUtils.CONFIG.sizes.dotSizes;
+        const dotSizes = MobilityMapUtils.CONFIG.sizes.dotSizes;
         if (this.minWeight === this.maxWeight) {
           radius = dotSizes[Math.floor(dotSizes.length / 2)];
         } else {
@@ -377,8 +377,8 @@ const TrafficMap = Vue.defineComponent({
         const oppositeKey = `${group.toClusterId}|${group.fromClusterId}`;
         const opposite = groups[oppositeKey];
 
-        const spacing = TrafficMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
-        const { offsetA1, offsetB1, offsetA2, offsetB2 } = TrafficMapUtils.computeOffsets(
+        const spacing = MobilityMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
+        const { offsetA1, offsetB1, offsetA2, offsetB2 } = MobilityMapUtils.computeOffsets(
           A,
           B,
           spacing,
@@ -390,7 +390,7 @@ const TrafficMap = Vue.defineComponent({
             from: offsetA1,
             to: offsetB1,
             weight: f.weight,
-            width: TrafficMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
+            width: MobilityMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
             clusterFrom: group.fromClusterId,
             clusterTo: group.toClusterId,
           });
@@ -403,7 +403,7 @@ const TrafficMap = Vue.defineComponent({
               from: offsetB2,
               to: offsetA2,
               weight: f.weight,
-              width: TrafficMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
+              width: MobilityMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
               clusterFrom: group.toClusterId,
               clusterTo: group.fromClusterId,
             });
@@ -437,10 +437,10 @@ const TrafficMap = Vue.defineComponent({
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = TrafficMapUtils.CONFIG.colors.dot.fill;
+        ctx.fillStyle = MobilityMapUtils.CONFIG.colors.dot.fill;
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = TrafficMapUtils.CONFIG.colors.dot.stroke;
+        ctx.strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke;
         ctx.stroke();
 
         this.dotShapes.push({
@@ -498,7 +498,7 @@ const TrafficMap = Vue.defineComponent({
       ctx.stroke();
 
       // --- Fill arrow ---
-      ctx.fillStyle = TrafficMapUtils.getArrowColor(weight, minW, maxW);
+      ctx.fillStyle = MobilityMapUtils.getArrowColor(weight, minW, maxW);
       ctx.fill();
 
       ctx.restore();
@@ -585,7 +585,7 @@ const TrafficMap = Vue.defineComponent({
 
       // Try dots first
       for (const dot of this.dotShapes) {
-        if (TrafficMapUtils.pointInCircle(p.x, p.y, dot)) {
+        if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           const ids = dot.key.split(',').map(Number);
           this.selectedPoint = ids[0];
 
@@ -604,7 +604,7 @@ const TrafficMap = Vue.defineComponent({
 
       // 2️⃣ Arrow clicks
       for (const arrow of this.arrowShapes) {
-        if (TrafficMapUtils.pointOnArrow(p.x, p.y, arrow)) {
+        if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow)) {
           return;
         }
       }
@@ -624,7 +624,7 @@ const TrafficMap = Vue.defineComponent({
 
       // Check DOTS
       for (const dot of this.dotShapes) {
-        if (TrafficMapUtils.pointInCircle(p.x, p.y, dot)) {
+        if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
 
           const ids = dot.key.split(',').map(Number);
@@ -652,7 +652,7 @@ const TrafficMap = Vue.defineComponent({
       // Check ARROWS if no dot match
       if (!hovering) {
         for (const arrow of this.arrowShapes) {
-          if (TrafficMapUtils.pointOnArrow(p.x, p.y, arrow)) {
+          if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow)) {
             hovering = true;
 
             const { clusterFrom, clusterTo } = arrow;

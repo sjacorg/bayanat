@@ -79,7 +79,7 @@ const MapVisualization = Vue.defineComponent({
         const start = await api.post(this.visualizeEndpoint, { q: this.query });
         const taskId = start?.data?.task_id;
 
-        if (!taskId) throw new Error('TrafficMap generation failed.');
+        if (!taskId) throw new Error('MobilityMap generation failed.');
 
         let status = 'pending';
         let error = null;
