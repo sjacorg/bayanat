@@ -222,7 +222,7 @@ const MapVisualization = Vue.defineComponent({
       <!-- MAP + OVERLAYS -->
       <v-container fluid class="pa-0 fill-height">
         <!-- MAP -->
-        <traffic-map
+        <mobility-map
           :locations="locations"
           :flows="flows"
           class="w-100 h-100"
