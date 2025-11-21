@@ -16,11 +16,7 @@ const IncidentResult = Vue.defineComponent({
             
           </v-toolbar>
           
-          <v-card-title class="text-wrap text-break">
-            <v-row>
-              <v-col><uni-field disable-spacing :caption="translations.title_" :english="incident.title"></uni-field></v-col>
-            </v-row>
-          </v-card-title>
+          <v-card-title class="text-subtitle-2 text-wrap text-break">{{incident.title}}</v-card-title>
           <v-divider></v-divider>
           <slot name="header"></slot>
             

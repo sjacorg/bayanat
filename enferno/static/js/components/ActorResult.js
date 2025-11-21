@@ -17,11 +17,7 @@ const ActorResult = Vue.defineComponent({
           <v-spacer></v-spacer>
           <v-chip variant="text" v-if="actor.publish_date" size="small">{{ $root.formatDate(actor.publish_date) }}</v-chip>
         </v-toolbar>
-        <v-card-title class="text-wrap text-break">
-          <v-row>
-            <v-col><uni-field disable-spacing :caption="translations.name_" :english="actor.name"></uni-field></v-col>
-          </v-row>
-        </v-card-title>
+        <v-card-title class="text-subtitle-2 text-wrap text-break">{{actor.name}}</v-card-title>
         <v-divider></v-divider>
         <slot name="header"></slot>
 
