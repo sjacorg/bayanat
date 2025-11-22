@@ -1,12 +1,13 @@
 <v-navigation-drawer
       v-model="actorDrawer"
-      clipped
-      fixed
+      absolute
+      floating
       location="right"
       temporary
-      width="520"
+      :width="actorDrawerSettings?.width ?? 520"
       app
       disable-route-watcher
+      :style="{ zIndex: 3000 }"
     >
       <v-container v-if="actorLoader" fluid class="h-screen">
         <v-layout justify-center align-center>
