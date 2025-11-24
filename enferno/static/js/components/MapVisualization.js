@@ -224,6 +224,8 @@ const MapVisualization = Vue.defineComponent({
     toggleEntityDrawer() {
       this.entities.drawer = !this.entities.drawer;
 
+      this.$refs.mobilityMapRef.tooltip.visible = false
+
       if (!this.entities.drawer) {
         this.$emit('closeEntityDetails');
         this.entities.selected = null;
@@ -284,6 +286,7 @@ const MapVisualization = Vue.defineComponent({
       <v-container fluid class="pa-0 fill-height">
         <!-- MAP -->
         <mobility-map
+          ref="mobilityMapRef"
           :locations="selectedEntityMapData?.locations || locations"
           :flows="selectedEntityMapData?.flows || flows"
           class="w-100 h-100"

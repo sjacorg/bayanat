@@ -38,8 +38,8 @@ const MobilityMap = Vue.defineComponent({
         visible: false,
         x: 0,
         y: 0,
-        type: null, // "dot" | "arrow"
-        content: null,
+        type: null,
+        data: null,
       },
     };
   },
@@ -620,7 +620,6 @@ const MobilityMap = Vue.defineComponent({
 
       const p = this.map.latLngToContainerPoint(e.latlng);
       let hovering = false;
-      let tooltipText = null;
 
       // Check DOTS
       for (const dot of this.dotShapes) {
@@ -639,11 +638,13 @@ const MobilityMap = Vue.defineComponent({
             incoming += t.incoming;
           });
 
-          tooltipText =
-            `Cluster:\n` +
-            `${names.join(', ')}\n\n` +
-            `Outgoing: ${outgoing}\n` +
-            `Incoming: ${incoming}`;
+          this.tooltip.type = 'dot';
+          this.tooltip.data = {
+            title: this.translations.locationDetails_ || 'Location Details',
+            name: names.join(', '),
+            totalIn: incoming,
+            totalOut: outgoing,
+          };
 
           break;
         }
@@ -656,7 +657,7 @@ const MobilityMap = Vue.defineComponent({
             hovering = true;
 
             const { clusterFrom, clusterTo } = arrow;
-            const { total, pairs, fromMembers, toMembers } = this.getClusterArrowDetails(
+            const { total, fromMembers, toMembers } = this.getClusterArrowDetails(
               clusterFrom,
               clusterTo,
             );
@@ -664,21 +665,13 @@ const MobilityMap = Vue.defineComponent({
             const fromNames = fromMembers.map((id) => this.points[id]?.label || id);
             const toNames = toMembers.map((id) => this.points[id]?.label || id);
 
-            tooltipText =
-              `Flow:\n` +
-              `${fromNames.join(', ')} → ${toNames.join(', ')}\n\n` +
-              `Total Trips: ${total}`;
-
-            if (pairs.length) {
-              tooltipText += `\n\nRoutes:\n`;
-              pairs.slice(0, 5).forEach((p) => {
-                tooltipText += `${p.fromLabel} → ${p.toLabel}: ${p.weight}\n`;
-              });
-
-              if (pairs.length > 5) {
-                tooltipText += `...and ${pairs.length - 5} more`;
-              }
-            }
+            this.tooltip.type = 'arrow';
+            this.tooltip.data = {
+              title: this.translations.flowDetails_ || 'Flow Details',
+              from: fromNames.join(', '),
+              to: toNames.join(', '),
+              total,
+            };
 
             break;
           }
@@ -690,12 +683,37 @@ const MobilityMap = Vue.defineComponent({
 
       // Tooltip handling
       if (hovering) {
+        const container = this.$refs.mapContainer;
+        const mapRect = container.getBoundingClientRect();
+
+        const tooltipWidth = 220;   // same as your v-card width
+        const tooltipHeight = 110;  // approx height of your tooltip
+        const padding = 12;
+
+        let x = p.x + padding;
+        let y = p.y + padding;
+
+        // Flip horizontally if overflowing right
+        if (x + tooltipWidth > mapRect.width) {
+          x = p.x - tooltipWidth - padding;
+        }
+
+        // Flip vertically if overflowing bottom
+        if (y + tooltipHeight > mapRect.height) {
+          y = p.y - tooltipHeight - padding;
+        }
+
+        // Clamp to left/top just in case
+        x = Math.max(padding, x);
+        y = Math.max(padding, y);
+
         this.tooltip.visible = true;
-        this.tooltip.x = p.x + 12;
-        this.tooltip.y = p.y + 12;
-        this.tooltip.content = tooltipText;
+        this.tooltip.x = x;
+        this.tooltip.y = y;
       } else {
         this.tooltip.visible = false;
+        this.tooltip.data = null;
+        this.tooltip.type = null;
       }
     },
 
@@ -720,19 +738,58 @@ const MobilityMap = Vue.defineComponent({
 
       <!-- Tooltip -->
       <v-card
-        v-if="tooltip.visible"
+        v-if="tooltip.visible && tooltip.data"
         class="position-absolute pa-3"
-        style="max-width: 320px; zIndex: 999;"
-        :style="{
-          left: tooltip.x + 'px',
-          top: tooltip.y + 'px'
-        }"
-        elevation="6"
+        style="width: 220px; zIndex: 9999; border-radius: 10px;"
+        :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
+        elevation="4"
       >
-        <div class="text-body-2" style="white-space: pre-line;">
-          {{ tooltip.content }}
+
+        <!-- Title -->
+        <div class="text-caption text-medium-emphasis mb-2 font-weight-bold">
+          {{ tooltip.data.title }}
         </div>
+
+        <v-divider class="mb-2"></v-divider>
+
+        <!-- DOT TOOLTIP -->
+        <template v-if="tooltip.type === 'dot'">
+          <div class="text-subtitle-2 font-weight-bold mb-1">
+            {{ tooltip.data.name }}
+          </div>
+
+          <div class="d-flex justify-space-between text-body-2">
+            <div>
+              <span class="font-weight-medium">
+                {{ translations.totalIn_ || 'In' }}:
+              </span>
+              {{ tooltip.data.totalIn }}
+            </div>
+
+            <div>
+              <span class="font-weight-medium">
+                {{ translations.totalOut_ || 'Out' }}:
+              </span>
+              {{ tooltip.data.totalOut }}
+            </div>
+          </div>
+        </template>
+
+        <!-- ARROW TOOLTIP -->
+        <template v-if="tooltip.type === 'arrow'">
+          <div class="text-subtitle-2 font-weight-bold mb-1">
+            {{ tooltip.data.from }} → {{ tooltip.data.to }}
+          </div>
+
+          <div class="text-body-2">
+            <span class="font-weight-medium">
+              {{ translations.totalTrips_ || 'Trips' }}:
+            </span>
+            {{ tooltip.data.total }}
+          </div>
+        </template>
       </v-card>
+
 
     </v-container>
 
