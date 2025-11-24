@@ -104,7 +104,7 @@ const MobilityMap = Vue.defineComponent({
       // If Google maps api key exists then add google layer and control
       if (window.__GOOGLE_MAPS_API_KEY__) {
         const googleLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.google.url, {
-          attribution: MobilityMapUtils.CONFIG.attribution.google,
+          attribution: MobilityMapUtils.CONFIG.map.google.attribution,
           maxZoom: MobilityMapUtils.CONFIG.map.google.maxZoom,
           subdomains: MobilityMapUtils.CONFIG.map.google.subdomains,
         });
