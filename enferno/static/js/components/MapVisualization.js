@@ -9,7 +9,15 @@ const MapVisualization = Vue.defineComponent({
     search: { type: String, default: '' },
   },
 
-  emits: ['update:open', 'advancedSearch', 'resetSearch', 'doSearch', 'update:search', 'showEntityDetails', 'closeEntityDetails'],
+  emits: [
+    'update:open',
+    'advancedSearch',
+    'resetSearch',
+    'doSearch',
+    'update:search',
+    'showEntityDetails',
+    'closeEntityDetails',
+  ],
 
   data: () => ({
     translations: window.translations,
@@ -74,31 +82,42 @@ const MapVisualization = Vue.defineComponent({
 
     async fetchData() {
       this.loading = true;
-      this.loadingMessage = this.translations.startingGeneration_ ?? 'Starting…';
+      this.loadingMessage = this.translations.startingGeneration_;
 
       try {
+        // 1. Start the background job
         const start = await api.post(this.visualizeEndpoint, { q: this.query });
         const taskId = start?.data?.task_id;
 
-        if (!taskId) throw new Error('MobilityMap generation failed.');
-
-        let status = 'pending';
-        let error = null;
-
-        while (status === 'pending') {
-          const res = await api.get(this.statusEndpoint);
-          status = res?.data?.status;
-          error = res?.data?.error;
-
-          if (status === 'pending') {
-            this.loadingMessage = this.translations.waitingForMapGeneration_ ?? 'Processing…';
-            await new Promise((r) => setTimeout(r, 1500));
-          }
+        if (!taskId) {
+          throw new Error('MobilityMap generation failed.');
         }
 
-        if (status === 'error') throw new Error(error || 'Map generation error.');
+        // 2. Poll status using the helper
+        this.loadingMessage = this.translations.waitingForMapGeneration_;
 
-        this.loadingMessage = this.translations.fetchingVisualizationData_ ?? 'Loading data…';
+        const statusResult = await FlowmapUtils.pollUntilDone(
+          async () => {
+            const res = await api.get(this.statusEndpoint);
+
+            return {
+              status: res?.data?.status,
+              error: res?.data?.error,
+            };
+          },
+          {
+            interval: 1500,
+            timeout: 60000,
+          },
+        );
+
+        // 3. Handle errors
+        if (statusResult.status === 'error') {
+          throw new Error(statusResult.error || 'Map generation error.');
+        }
+
+        // 4. Fetch generated data
+        this.loadingMessage = this.translations.fetchingVisualizationData_;
 
         const dataRes = await api.get(this.dataEndpoint);
 
@@ -109,7 +128,10 @@ const MapVisualization = Vue.defineComponent({
       } catch (err) {
         console.error(err);
         this.errorMessage = err.message || 'Something went wrong';
-        return { locations: [], flows: [] };
+        return {
+          locations: [],
+          flows: [],
+        };
       } finally {
         this.loading = false;
       }
@@ -183,12 +205,12 @@ const MapVisualization = Vue.defineComponent({
     },
 
     toggleEntityDrawer() {
-      this.entityDrawer = !this.entityDrawer
+      this.entityDrawer = !this.entityDrawer;
 
       if (!this.entityDrawer) {
-        this.$emit('closeEntityDetails')
+        this.$emit('closeEntityDetails');
       }
-    }
+    },
   },
 
   template: `

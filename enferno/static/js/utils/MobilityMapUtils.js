@@ -176,4 +176,24 @@ const MobilityMapUtils = {
       offsetB2: { x: p2.x - ox, y: p2.y - oy },
     };
   },
+
+  async pollUntilDone(
+    checkFn,
+    { interval = 1500, timeout = 60000, pendingValue = 'pending', statusKey = 'status' } = {},
+  ) {
+    const start = Date.now();
+
+    while (Date.now() - start < timeout) {
+      const result = await checkFn();
+      const status = result?.[statusKey];
+
+      if (status !== pendingValue) {
+        return result;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+
+    throw new Error('Polling timeout');
+  },
 };
