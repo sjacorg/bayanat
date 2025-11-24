@@ -8,7 +8,7 @@ const MapVisualization = Vue.defineComponent({
     query: { type: Array, default: () => [{}] },
     search: { type: String, default: '' },
     entity: { type: Object, default: () => null },
-    entityLoader: { type: Boolean, default: false }
+    entityLoader: { type: Boolean, default: false },
   },
 
   emits: [
@@ -64,11 +64,11 @@ const MapVisualization = Vue.defineComponent({
 
   computed: {
     selectedEntityMapData() {
-      if (!this.entities.selected) return null
-      if (this.entityLoader) return null
+      if (!this.entities.selected) return null;
+      if (this.entityLoader) return null;
 
-      return MobilityMapUtils.parseEventsToMapData(this.entity?.events)
-    }
+      return MobilityMapUtils.parseEventsToMapData(this.entity?.events);
+    },
   },
 
   methods: {
@@ -134,6 +134,9 @@ const MapVisualization = Vue.defineComponent({
 
         const dataRes = await api.get(this.dataEndpoint);
 
+        const metadata = dataRes.data?.metadata || {};
+        this.$root.showSnack(this.translations.loadedLocationsFlowsAndActors_(metadata));
+
         return {
           locations: Array.isArray(dataRes.data?.locations) ? dataRes.data.locations : [],
           flows: Array.isArray(dataRes.data?.flows) ? dataRes.data.flows : [],
@@ -141,6 +144,7 @@ const MapVisualization = Vue.defineComponent({
       } catch (err) {
         console.error(err);
         this.errorMessage = err.message || 'Something went wrong';
+        this.$root.showSnack(handleRequestError(err));
         return {
           locations: [],
           flows: [],
@@ -227,9 +231,9 @@ const MapVisualization = Vue.defineComponent({
     },
 
     onEntityClick(entity) {
-      this.$emit('showEntityDetails', entity)
+      this.$emit('showEntityDetails', entity);
       this.entities.selected = entity;
-    }
+    },
   },
 
   template: `
