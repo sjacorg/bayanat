@@ -15,7 +15,7 @@
         </v-layout>
       </v-container>
 
-      <actor-card v-if="actorDrawer && actor" :show-edit="true" :close="true" @edit="editItem" :active="actorDrawer" :log="true" :diff="true" :key="actor.id" @close="actorDrawer=false" :actor="actor"></actor-card>
+      <actor-card v-if="actorDrawer && actor" :close-icon="actorDrawerSettings?.closeIcon" :close-position="actorDrawerSettings?.closePosition" :show-edit="true" :close="true" @edit="editItem" :active="actorDrawer" :log="true" :diff="true" :key="actor.id" @close="actorDrawer=false" :actor="actor"></actor-card>
       <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
       <visualization ref="viz" @error="showSnack($event)"></visualization>
     </v-navigation-drawer>  

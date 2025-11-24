@@ -21,7 +21,7 @@
             @advanced-search="advSearchExpand = true"
             @do-search="doSearch"
             @reset-search="resetSearch"
-            @show-entity-details="showActor($event.id, { width: 398 })"
+            @show-entity-details="showActor($event.id, { width: 398, closeIcon: 'mdi-arrow-left', closePosition: 'prepend' })"
             @close-entity-details="actorDrawer = false; actorDrawerSettings = {}"
         ></map-visualization>
 
