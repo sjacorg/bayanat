@@ -6,7 +6,6 @@ const MobilityMap = Vue.defineComponent({
 
   data() {
     return {
-      map: null,
       canvas: null,
       ctx: null,
       frameRequested: false,
@@ -45,6 +44,10 @@ const MobilityMap = Vue.defineComponent({
   },
 
   mounted() {
+    // IMPORTANT: do NOT define `map` inside data()
+    // Leaflet map objects must stay non-reactive or Vue will break internal state (e.g. during zoom).
+    // This keeps it as a runtime-only property instead of a Vue-tracked one.
+    this.map = null;
     this.$nextTick(() => {
       this.initMap();
       this.initPoints();
