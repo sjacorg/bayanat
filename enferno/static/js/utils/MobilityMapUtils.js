@@ -14,10 +14,16 @@ const MobilityMapUtils = {
     },
 
     map: {
+      bounds: {
+        south: -85,
+        west: -360,
+        north: 85,
+        east: 360,
+      },
       defaultZoom: 12,
       minZoom: 2,
-      maxBoundsViscosity: 0.5,
-      worldCopyJump: true,
+      maxBoundsViscosity: 0.1,
+      worldCopyJump: false,
       osm: {
         url: window.__MAPS_API_ENDPOINT__,
         attribution:

@@ -90,7 +90,7 @@ const MobilityMap = Vue.defineComponent({
       const el = this.$refs.mapContainer;
       if (!el) return this.$nextTick(() => this.initMap());
 
-      const worldBounds = L.latLngBounds(L.latLng(-85, -180), L.latLng(85, 180));
+      const worldBounds = L.latLngBounds(L.latLng(MobilityMapUtils.CONFIG.map.bounds.south, MobilityMapUtils.CONFIG.map.bounds.west), L.latLng(MobilityMapUtils.CONFIG.map.bounds.north, MobilityMapUtils.CONFIG.map.bounds.east));
 
       this.map = L.map(el, {
         minZoom: MobilityMapUtils.CONFIG.map.minZoom,
