@@ -34,10 +34,11 @@ const MapVisualization = Vue.defineComponent({
   }),
 
   watch: {
-    open(val) {
-      if (val) {
+    open(isOpen) {
+      if (isOpen) {
         this.resetEntities();
         this.initMapFlow();
+        this.entityDrawer = false;
       }
     },
 
