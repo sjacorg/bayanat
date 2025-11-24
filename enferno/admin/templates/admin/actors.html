@@ -18,11 +18,13 @@
             v-model:search.trim="search[0].tsv"
             :query="search"
             entities-endpoint="/admin/api/actors/"
+            :entity="actor"
+            :entity-loader="actorLoader"
             @advanced-search="advSearchExpand = true"
             @do-search="doSearch"
             @reset-search="resetSearch"
             @show-entity-details="showActor($event.id, { width: 398, closeIcon: 'mdi-arrow-left', closePosition: 'prepend' })"
-            @close-entity-details="actorDrawer = false; actorDrawerSettings = {}"
+            @close-entity-details="closeActorDrawer()"
         ></map-visualization>
 
         <v-container fluid>
@@ -1330,6 +1332,18 @@
                     });
                 },
 
+                closeActorDrawer() {
+                    this.actorLoader = false;
+                    this.actorDrawer = false;
+
+                    this.actor = null;
+                    this.actorDrawerSettings = null;
+
+                    if (this.$refs.mapVisualizationRef?.entities) {
+                        this.$refs.mapVisualizationRef.entities.selected = null;
+                    }
+                },
+
                 searchUsers: debounce(function (evt) {
                     this.searchLoading[evt.target.dataset.loader] = true;
 
@@ -1505,7 +1519,7 @@
 
 
                 editItem(item) {
-                    this.actorDrawer = false;
+                    this.closeActorDrawer();
                     this.fetchDynamicFields({ entityType: 'actor' });
                     this.fetchIdNumberTypes();
 

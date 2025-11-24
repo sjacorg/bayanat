@@ -196,4 +196,62 @@ const MobilityMapUtils = {
 
     throw new Error('Polling timeout');
   },
+
+  parseEventsToMapData(events) {
+    if (!Array.isArray(events)) {
+      return { locations: [], flows: [] };
+    }
+
+    // 1. Sort events chronologically
+    const sorted = [...events].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
+
+    const locationMap = new Map();
+    const flowMap = new Map();
+
+    // 2. Build locations
+    sorted.forEach((event) => {
+      const loc = event.location;
+      if (!loc) return;
+
+      const id = loc.id;
+
+      if (!locationMap.has(id)) {
+        locationMap.set(id, {
+          id,
+          name: loc.full_location || loc.title,
+          lat: loc.latlng?.lat ?? loc.lat,
+          lon: loc.latlng?.lng ?? loc.lng,
+          total_events: 0,
+        });
+      }
+
+      locationMap.get(id).total_events += 1;
+    });
+
+    // 3. Build flows
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const current = sorted[i].location;
+      const next = sorted[i + 1].location;
+
+      if (!current || !next) continue;
+      if (current.id === next.id) continue;
+
+      const key = `${current.id}->${next.id}`;
+
+      if (!flowMap.has(key)) {
+        flowMap.set(key, {
+          origin: current.id,
+          dest: next.id,
+          count: 0,
+        });
+      }
+
+      flowMap.get(key).count += 1;
+    }
+
+    return {
+      locations: Array.from(locationMap.values()),
+      flows: Array.from(flowMap.values()),
+    };
+  },
 };

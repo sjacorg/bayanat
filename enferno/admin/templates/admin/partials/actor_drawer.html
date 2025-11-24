@@ -7,7 +7,7 @@
       :width="actorDrawerSettings?.width ?? 520"
       app
       disable-route-watcher
-      :style="{ zIndex: 3000 }"
+      :style="{ zIndex: 2410 }"
     >
       <v-container v-if="actorLoader" fluid class="h-screen">
         <v-layout justify-center align-center>
@@ -15,7 +15,7 @@
         </v-layout>
       </v-container>
 
-      <actor-card v-if="actorDrawer && actor" :close-icon="actorDrawerSettings?.closeIcon" :close-position="actorDrawerSettings?.closePosition" :show-edit="true" :close="true" @edit="editItem" :active="actorDrawer" :log="true" :diff="true" :key="actor.id" @close="actorDrawer=false" :actor="actor"></actor-card>
+      <actor-card v-if="actorDrawer && actor" :close-icon="actorDrawerSettings?.closeIcon" :close-position="actorDrawerSettings?.closePosition" :show-edit="true" :close="true" @edit="editItem" :active="actorDrawer" :log="true" :diff="true" :key="actor.id" @close="closeActorDrawer()" :actor="actor"></actor-card>
       <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
       <visualization ref="viz" @error="showSnack($event)"></visualization>
     </v-navigation-drawer>  

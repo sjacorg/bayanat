@@ -7,6 +7,8 @@ const MapVisualization = Vue.defineComponent({
     entitiesEndpoint: { type: String, default: '/admin/api/actors/' },
     query: { type: Array, default: () => [{}] },
     search: { type: String, default: '' },
+    entity: { type: Object, default: () => null },
+    entityLoader: { type: Boolean, default: false }
   },
 
   emits: [
@@ -21,7 +23,6 @@ const MapVisualization = Vue.defineComponent({
 
   data: () => ({
     translations: window.translations,
-    entityDrawer: false,
 
     loading: false,
     loadingMessage: '',
@@ -32,6 +33,8 @@ const MapVisualization = Vue.defineComponent({
 
     infiniteScrollCallback: null,
     entities: {
+      selected: null,
+      drawer: false,
       loading: false,
       items: [],
       cursor: null,
@@ -46,7 +49,7 @@ const MapVisualization = Vue.defineComponent({
       if (isOpen) {
         this.resetEntities();
         this.initMapFlow();
-        this.entityDrawer = false;
+        this.entities.drawer = false;
       }
     },
 
@@ -54,8 +57,18 @@ const MapVisualization = Vue.defineComponent({
       deep: true,
       handler() {
         this.resetEntities();
+        this.$emit('closeEntityDetails');
       },
     },
+  },
+
+  computed: {
+    selectedEntityMapData() {
+      if (!this.entities.selected) return null
+      if (this.entityLoader) return null
+
+      return MobilityMapUtils.parseEventsToMapData(this.entity?.events)
+    }
   },
 
   methods: {
@@ -96,7 +109,7 @@ const MapVisualization = Vue.defineComponent({
         // 2. Poll status using the helper
         this.loadingMessage = this.translations.waitingForMapGeneration_;
 
-        const statusResult = await FlowmapUtils.pollUntilDone(
+        const statusResult = await MobilityMapUtils.pollUntilDone(
           async () => {
             const res = await api.get(this.statusEndpoint);
 
@@ -205,12 +218,18 @@ const MapVisualization = Vue.defineComponent({
     },
 
     toggleEntityDrawer() {
-      this.entityDrawer = !this.entityDrawer;
+      this.entities.drawer = !this.entities.drawer;
 
-      if (!this.entityDrawer) {
+      if (!this.entities.drawer) {
         this.$emit('closeEntityDetails');
+        this.entities.selected = null;
       }
     },
+
+    onEntityClick(entity) {
+      this.$emit('showEntityDetails', entity)
+      this.entities.selected = entity;
+    }
   },
 
   template: `
@@ -261,14 +280,14 @@ const MapVisualization = Vue.defineComponent({
       <v-container fluid class="pa-0 fill-height">
         <!-- MAP -->
         <mobility-map
-          :locations="locations"
-          :flows="flows"
+          :locations="selectedEntityMapData?.locations || locations"
+          :flows="selectedEntityMapData?.flows || flows"
           class="w-100 h-100"
         />
 
         <!-- LOADING OVERLAY -->
         <v-overlay
-          v-model="loading"
+          :model-value="loading || entityLoader"
           persistent
           contained
           class="d-flex align-center justify-center"
@@ -316,7 +335,7 @@ const MapVisualization = Vue.defineComponent({
 
         <!-- Drawer -->
         <v-navigation-drawer
-          v-model="entityDrawer"
+          v-model="entities.drawer"
           location="right"
           width="398"
           :scrim="false"
@@ -325,7 +344,7 @@ const MapVisualization = Vue.defineComponent({
           <v-card class="position-absolute pa-1" :style="{ left: '-48px', top: '50%', transform: 'translateY(-50%)', borderRadius: '12px 0 0 12px' }">
             <v-btn icon size="small" @click="toggleEntityDrawer()">
               <v-icon>
-                {{ entityDrawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
+                {{ entities.drawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
               </v-icon>
             </v-btn>
           </v-card>
@@ -338,7 +357,7 @@ const MapVisualization = Vue.defineComponent({
                 :key="entity.id"
                 class="mb-2 pa-4 rounded-lg"
                 elevation="2"
-                @click="$emit('showEntityDetails', entity)"
+                @click="onEntityClick(entity)"
               >
                 <div class="d-flex align-center ga-2">
                   <v-chip> ID {{ entity.id }} </v-chip>
