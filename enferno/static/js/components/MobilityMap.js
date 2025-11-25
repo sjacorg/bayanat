@@ -57,7 +57,10 @@ const MobilityMap = Vue.defineComponent({
       this.initPoints();
       this.initCanvas();
       // First full build
-      this.rebuildShapes();
+      this.map.once('moveend', () => {
+        this.rebuildShapes();
+        this.scheduleFrame();
+      });
     });
   },
 
@@ -226,6 +229,17 @@ const MobilityMap = Vue.defineComponent({
     ============================================= */
     rebuildShapes() {
       if (!this.map || !this.ctx) return;
+
+      const zoom = this.map.getZoom();
+
+      // Only activate zoom collapse AFTER we have clusters
+      if (zoom < 4 && this.clusterDefs.length > 0) {
+        this.clusterDefs.forEach(c => {
+          c.radius = Math.max(c.radius * 0.7, 3);
+        });
+        this.drawFrame();
+        return;
+      }
 
       const flows = this.getFilteredFlows();
       this.currentFlows = flows;
