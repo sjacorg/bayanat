@@ -2,6 +2,10 @@ const MobilityMap = Vue.defineComponent({
   props: {
     locations: { type: Array, required: true },
     flows: { type: Array, required: true },
+    viewportPadding: {
+      type: Object,
+      default: () => ({}),   // can be { right: 400 } or {} or even undefined keys
+    },
   },
 
   data() {
@@ -75,6 +79,18 @@ const MobilityMap = Vue.defineComponent({
         this.minWeight = null;
         this.maxWeight = null;
         this.rebuildShapes();
+
+        this.$nextTick(() => {
+          this.zoomToFlows();
+        });
+      },
+    },
+    viewportPadding: {
+      deep: true,
+      handler() {
+        this.$nextTick(() => {
+          this.zoomToFlows();
+        });
       },
     },
   },
@@ -723,6 +739,50 @@ const MobilityMap = Vue.defineComponent({
     clearFilter() {
       this.selectedPoint = null;
       this.rebuildShapes();
+    },
+
+    zoomToFlows({
+      padding = 40,
+      maxZoom = 12,
+    } = {}) {
+      if (!this.map || !this.currentFlows?.length) return;
+
+      const points = [];
+
+      this.currentFlows.forEach((flow) => {
+        const from = this.points[flow.from]?.latlng;
+        const to = this.points[flow.to]?.latlng;
+
+        if (from) points.push(from);
+        if (to) points.push(to);
+      });
+
+      if (!points.length) return;
+
+      const bounds = L.latLngBounds(points);
+      if (!bounds.isValid()) return;
+
+      // ✅ Normalize missing keys safely
+      const {
+        top = 0,
+        right = 0,
+        bottom = 0,
+        left = 0,
+      } = this.viewportPadding || {};
+
+      this.map.fitBounds(bounds, {
+        paddingTopLeft: [
+          left + padding,
+          top + padding,
+        ],
+        paddingBottomRight: [
+          right + padding,
+          bottom + padding,
+        ],
+        maxZoom,
+        animate: true,
+        duration: 0.6,
+      });
     },
   },
 
