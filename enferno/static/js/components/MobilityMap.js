@@ -643,7 +643,7 @@ const MobilityMap = Vue.defineComponent({
 
           this.tooltip.type = 'dot';
           this.tooltip.data = {
-            title: this.translations.locationDetails_ || 'Location Details',
+            title: this.translations.locationDetails_,
             name: names.join(', '),
             totalIn: incoming,
             totalOut: outgoing,
@@ -670,7 +670,7 @@ const MobilityMap = Vue.defineComponent({
 
             this.tooltip.type = 'arrow';
             this.tooltip.data = {
-              title: this.translations.flowDetails_ || 'Flow Details',
+              title: this.translations.flowDetails_,
               from: fromNames.join(', '),
               to: toNames.join(', '),
               total,
@@ -749,7 +749,7 @@ const MobilityMap = Vue.defineComponent({
       >
 
         <!-- Title -->
-        <div class="text-caption text-medium-emphasis mb-2 font-weight-bold">
+        <div class="text-subtitle-2 font-weight-bold mb-1">
           {{ tooltip.data.title }}
         </div>
 
@@ -757,37 +757,45 @@ const MobilityMap = Vue.defineComponent({
 
         <!-- DOT TOOLTIP -->
         <template v-if="tooltip.type === 'dot'">
-          <div class="text-subtitle-2 font-weight-bold mb-1">
+          <div class="text-subtitle-2 font-weight-bold">
+            {{ translations.name_ }}
+          </div>
+          <div class="text-body-2 mb-2">
             {{ tooltip.data.name }}
           </div>
-
-          <div class="d-flex justify-space-between text-body-2">
-            <div>
-              <span class="font-weight-medium">
-                {{ translations.totalIn_ || 'In' }}:
-              </span>
-              {{ tooltip.data.totalIn }}
-            </div>
-
-            <div>
-              <span class="font-weight-medium">
-                {{ translations.totalOut_ || 'Out' }}:
-              </span>
-              {{ tooltip.data.totalOut }}
-            </div>
+          <div class="text-subtitle-2 font-weight-bold">
+            {{ translations.totalIn_ }}
+          </div>
+          <div class="text-body-2 mb-2">
+            {{ tooltip.data.totalIn }}
+          </div>
+          <div class="text-subtitle-2 font-weight-bold">
+            {{ translations.totalOut_ }}
+          </div>
+          <div class="text-body-2 mb-2">
+            {{ tooltip.data.totalOut }}
           </div>
         </template>
 
         <!-- ARROW TOOLTIP -->
         <template v-if="tooltip.type === 'arrow'">
-          <div class="text-subtitle-2 font-weight-bold mb-1">
-            {{ tooltip.data.from }} → {{ tooltip.data.to }}
+          <div class="text-subtitle-2 font-weight-bold">
+            {{ translations.origin_ }}
           </div>
-
-          <div class="text-body-2">
-            <span class="font-weight-medium">
-              {{ translations.totalTrips_ || 'Trips' }}:
-            </span>
+          <div class="text-body-2 mb-2">
+            {{ tooltip.data.from }}
+          </div>
+          <div class="text-subtitle-2 font-weight-bold">
+            {{ translations.destination_ }}
+          </div>
+          <div class="text-body-2 mb-2">
+            {{ tooltip.data.to }}
+          </div>
+          
+          <div class="text-subtitle-2 font-weight-bold">
+            {{ translations.count_ }}
+          </div>
+          <div class="text-body-2 mb-2">
             {{ tooltip.data.total }}
           </div>
         </template>

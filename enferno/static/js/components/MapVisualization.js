@@ -334,7 +334,7 @@ const MapVisualization = Vue.defineComponent({
               color="primary"
               @click="retry"
             >
-              Retry
+              {{ translations.retry_ }}
             </v-btn>
 
           </v-card>
@@ -367,7 +367,7 @@ const MapVisualization = Vue.defineComponent({
                 @click="onEntityClick(entity)"
               >
                 <div class="d-flex align-center ga-2">
-                  <v-chip> ID {{ entity.id }} </v-chip>
+                  <v-chip> {{ translations.id_ }} {{ entity.id }} </v-chip>
                   <span class="text-subtitle-2 font-weight-medium">
                     {{ entity.name }}
                   </span>
