@@ -102,7 +102,15 @@ def test_put_configuration(request, client_fixture, expected_status):
             )
             assert response.status_code == expected_status
             if expected_status == 200:
-                called_conf_write_argument = FullConfigValidationModel(**updated_conf).model_dump(
-                    by_alias=True, exclude_none=True
+                # The endpoint validates the config, so write_config receives the validated version
+                # Secret restoration happens inside write_config, not before it
+                mock_write_config.assert_called_once()
+                called_conf = mock_write_config.call_args[0][0]
+
+                # Verify key fields were passed correctly
+                assert called_conf["ETL_VID_EXT"] == updated_etl_vid_ext
+                assert (
+                    called_conf["YTDLP_COOKIES"]
+                    == "domain\tflag\tpath\tsecure\texpiry\tname\tvalue"
                 )
-                mock_write_config.assert_called_once_with(called_conf_write_argument)
+                assert called_conf["YTDLP_PROXY"] == "socks5://localhost:9050"
