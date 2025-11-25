@@ -310,6 +310,39 @@ def api_labels() -> Response:
     return HTTPResponse.success(data=response)
 
 
+@admin.route("/api/labels/tree")
+def api_labels_tree() -> Response:
+    """
+    API endpoint to return labels in tree structure for Vuetify tree component.
+
+    Query params:
+        - typ: Filter by type (for_bulletin, for_actor, for_incident, for_offline)
+        - fltr: Filter by verification (verified, all, unverified)
+
+    Returns:
+        - JSON tree structure with nested children.
+    """
+    conditions = []
+
+    typ = request.args.get("typ")
+    if typ and typ in ["for_bulletin", "for_actor", "for_incident", "for_offline"]:
+        conditions.append(getattr(Label, typ) == True)
+
+    fltr = request.args.get("fltr")
+    if fltr == "verified":
+        conditions.append(Label.verified == True)
+    elif fltr == "all":
+        pass
+    else:
+        conditions.append(or_(Label.verified == False, Label.verified == None))
+
+    stmt = select(Label).where(*conditions)
+    labels = db.session.scalars(stmt).all()
+    tree = Label.build_tree(labels)
+
+    return HTTPResponse.success(data={"items": tree, "total": len(labels)})
+
+
 @admin.post("/api/label/")
 @roles_accepted("Admin", "Mod")
 @validate_with(LabelRequestModel)
