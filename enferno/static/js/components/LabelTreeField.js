@@ -170,6 +170,8 @@ const LabelTreeField = Vue.defineComponent({
         :search="search"
         :open-all="openAll"
         :disabled="disabled"
+        indent-lines
+        separate-roots
       />
 
     </template>
@@ -233,6 +235,8 @@ const LabelTreeField = Vue.defineComponent({
               :open-all="openAll"
               :disabled="disabled"
               style="max-height: 400px; overflow-y: auto"
+              indent-lines
+                separate-roots
             />
 
           </v-card-text>
