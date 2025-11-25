@@ -107,6 +107,13 @@
                                         <tinymce-editor :init="tinyConfig" :key="descKey" v-model="editedItem.description"></tinymce-editor>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <label-tree-field
+                                            v-model="editedItem.labels"
+                                            api="/admin/api/labels/tree" :query-params="{ typ: 'for_bulletin' }"
+                                            multiple
+                                            :inline="false"
+                                        />
+
                                         <search-field v-model="editedItem.labels" api="/admin/api/labels/" :query-params="{ typ: 'for_bulletin' }"
                                             item-title="title" item-value="id" :multiple="true" :show-copy-icon="advFeatures"
                                             label="{{ _('Labels') }}"></search-field>
