@@ -4,7 +4,7 @@ const MobilityMap = Vue.defineComponent({
     flows: { type: Array, required: true },
     viewportPadding: {
       type: Object,
-      default: () => ({}),   // can be { right: 400 } or {} or even undefined keys
+      default: () => ({}),
     },
   },
 
@@ -15,28 +15,32 @@ const MobilityMap = Vue.defineComponent({
       frameRequested: false,
       translations: window.translations,
 
+      // Morphing state
+      morphing: false,
+      morphProgress: 1,
+      morphFrom: null,
+      morphTo: null,
+      lastZoom: null,
+
       // Location id -> { latlng, label }
       points: {},
 
-      // Interaction
       selectedPoint: null,
       hoveredArrow: null,
 
-      // Hit-test shapes (in screen space)
+      // Hit-test shapes
       dotShapes: [],
       arrowShapes: [],
 
-      // Precomputed logical structures
-      clusterDefs: [], // [{ id, memberIds, centerLat, centerLon, radius }]
-      clusterByLocationId: {}, // locId -> clusterId
-      flowGroups: {}, // "fromClusterId|toClusterId" -> { fromClusterId, toClusterId, flows: [...] }
-      currentFlows: [], // normalized + filtered flows
+      // Precomputed
+      clusterDefs: [],
+      clusterByLocationId: {},
+      flowGroups: {},
+      currentFlows: [],
 
-      // Visual scaling
       minWeight: null,
       maxWeight: null,
 
-      // Tooltip data
       tooltip: {
         visible: false,
         x: 0,
@@ -48,15 +52,13 @@ const MobilityMap = Vue.defineComponent({
   },
 
   mounted() {
-    // IMPORTANT: do NOT define `map` inside data()
-    // Leaflet map objects must stay non-reactive or Vue will break internal state (e.g. during zoom).
-    // This keeps it as a runtime-only property instead of a Vue-tracked one.
     this.map = null;
+
     this.$nextTick(() => {
       this.initMap();
       this.initPoints();
       this.initCanvas();
-      // First full build
+
       this.map.once('moveend', () => {
         this.rebuildShapes();
         this.scheduleFrame();
@@ -75,12 +77,14 @@ const MobilityMap = Vue.defineComponent({
         this.rebuildShapes();
       },
     },
+
     flows: {
       deep: true,
       handler() {
         this.selectedPoint = null;
         this.minWeight = null;
         this.maxWeight = null;
+
         this.rebuildShapes();
 
         this.$nextTick(() => {
@@ -88,6 +92,7 @@ const MobilityMap = Vue.defineComponent({
         });
       },
     },
+
     viewportPadding: {
       deep: true,
       handler() {
@@ -98,21 +103,18 @@ const MobilityMap = Vue.defineComponent({
     },
   },
 
-  computed: {
-    currentYear() {
-      return new Date().getFullYear();
-    },
-  },
-
   methods: {
-    /* =============================================
-     MAP INITIALIZATION
-    ============================================= */
+
+    /* ================= MAP INIT ================= */
+
     initMap() {
       const el = this.$refs.mapContainer;
       if (!el) return this.$nextTick(() => this.initMap());
 
-      const worldBounds = L.latLngBounds(L.latLng(MobilityMapUtils.CONFIG.map.bounds.south, MobilityMapUtils.CONFIG.map.bounds.west), L.latLng(MobilityMapUtils.CONFIG.map.bounds.north, MobilityMapUtils.CONFIG.map.bounds.east));
+      const worldBounds = L.latLngBounds(
+        L.latLng(MobilityMapUtils.CONFIG.map.bounds.south, MobilityMapUtils.CONFIG.map.bounds.west),
+        L.latLng(MobilityMapUtils.CONFIG.map.bounds.north, MobilityMapUtils.CONFIG.map.bounds.east)
+      );
 
       this.map = L.map(el, {
         minZoom: MobilityMapUtils.CONFIG.map.minZoom,
@@ -121,54 +123,126 @@ const MobilityMap = Vue.defineComponent({
         maxBounds: worldBounds,
       }).setView(geoMapDefaultCenter, MobilityMapUtils.CONFIG.map.defaultZoom);
 
-      const osmLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.osm.url, { attribution: MobilityMapUtils.CONFIG.map.osm.attribution }).addTo(this.map);
+      const osmLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.osm.url, {
+        attribution: MobilityMapUtils.CONFIG.map.osm.attribution,
+      }).addTo(this.map);
 
-      // If Google maps api key exists then add google layer and control
       if (window.__GOOGLE_MAPS_API_KEY__) {
         const googleLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.google.url, {
           attribution: MobilityMapUtils.CONFIG.map.google.attribution,
           maxZoom: MobilityMapUtils.CONFIG.map.google.maxZoom,
           subdomains: MobilityMapUtils.CONFIG.map.google.subdomains,
         });
-        const baseMaps = { OpenStreetMap: osmLayer, 'Google Satellite': googleLayer };
-        L.control.layers(baseMaps).addTo(this.map);
+        L.control.layers({ OpenStreetMap: osmLayer, 'Google Satellite': googleLayer }).addTo(this.map);
       }
 
-      // Add the fullscreen control with improved readability
-      this.map.addControl(
-        new L.Control.Fullscreen({
-          title: {
-            false: this.translations.enterFullscreen_,
-            true: this.translations.exitFullscreen_,
-          },
-        }),
+      this.map.addControl(new L.Control.Fullscreen({
+        title: {
+          false: this.translations.enterFullscreen_,
+          true: this.translations.exitFullscreen_,
+        },
+      }));
+
+      const validLocs = this.locations.filter(loc =>
+        Number.isFinite(loc.lat) && Number.isFinite(loc.lon)
       );
 
-      // Fit to valid locations
-      const validLocs = this.locations.filter(
-        (loc) => Number.isFinite(loc.lat) && Number.isFinite(loc.lon),
-      );
-
-      if (validLocs.length > 0) {
-        const bounds = L.latLngBounds(validLocs.map((loc) => [loc.lat, loc.lon]));
+      if (validLocs.length) {
+        const bounds = L.latLngBounds(validLocs.map(loc => [loc.lat, loc.lon]));
         this.map.fitBounds(bounds);
-      } else {
-        // Fallback world view
-        this.map.setView(geoMapDefaultCenter, 2);
       }
 
       this.map.on('click', this.onMapClick);
       this.map.on('mousemove', this.onMapHover);
 
-      // 🔹 FAST PATH: just reposition precomputed shapes
       this.map.on('move', this.scheduleFrame);
       this.map.on('zoom', this.scheduleFrame);
       this.map.on('zoomanim', this.scheduleFrame);
 
-      // 🔹 HEAVY PATH: recompute clusters when zoom starts
-      this.map.on('zoomstart', this.rebuildShapes);
+      // Morph instead of hard rebuild
+      this.map.on('zoomend', this.startMorph);
 
       window.addEventListener('resize', this.resizeCanvas);
+    },
+
+    /* ================= MORPH CORE ================= */
+    startMorph() {
+      if (this.morphing || !this.clusterDefs.length) return;
+
+      const oldClusters = JSON.parse(JSON.stringify(this.clusterDefs));
+      const oldFlows = JSON.parse(JSON.stringify(this.flowGroups));
+
+      // Generate new target
+      this.rebuildShapes();
+      if (!this.clusterDefs.length) {
+        this.morphing = false;
+        return;
+      }
+
+      const newClusters = JSON.parse(JSON.stringify(this.clusterDefs));
+      const newFlows = JSON.parse(JSON.stringify(this.flowGroups));
+
+      const fullTarget = [...newClusters];
+      const maxDist = 150;
+
+      oldClusters.forEach(oldC => {
+        const match = MobilityMapUtils.findClosestCluster(oldC, newClusters, (lat, lng) => this.map.latLngToContainerPoint([lat, lng]));
+        if (!match.cluster || match.dist > maxDist) {
+          fullTarget.push({
+            ...oldC,
+            radius: 0,
+            fadingOut: true,
+          });
+        }
+      });
+
+      this.morphFrom = { clusters: oldClusters, flows: oldFlows };
+      this.morphTo = { clusters: fullTarget, flows: newFlows };
+
+      this.morphProgress = 0;
+      this.morphing = true;
+      this.lastZoom = this.map.getZoom();
+
+      this.animateMorph();
+    },
+
+    animateMorph() {
+      if (!this.morphing) return;
+
+      const zoom = this.map.getZoom();
+      const speed = 0.1;
+      this.lastZoom = zoom;
+
+      this.morphProgress += speed;
+
+      if (this.morphProgress >= 1) {
+        this.morphProgress = 1;
+        this.morphing = false;
+
+        this.clusterDefs = this.morphTo.clusters.filter(c => !c.fadingOut);
+        this.flowGroups = this.morphTo.flows;
+        this.drawFrame();
+        return;
+      }
+
+      const interpolated = this.morphTo.clusters.map(target => {
+        const { cluster: oldC } = MobilityMapUtils.findClosestCluster(target, this.morphFrom.clusters, (lat, lng) => this.map.latLngToContainerPoint([lat, lng]));
+
+        if (!oldC) return target;
+
+        return {
+          ...target,
+          centerLat: MobilityMapUtils.lerp(oldC.centerLat, target.centerLat, this.morphProgress),
+          centerLon: MobilityMapUtils.lerp(oldC.centerLon, target.centerLon, this.morphProgress),
+          radius: MobilityMapUtils.lerp(oldC.radius, target.radius, this.morphProgress),
+        };
+      });
+
+      this.clusterDefs = interpolated;
+      this.flowGroups = this.morphTo.flows;
+
+      this.drawFrame();
+      requestAnimationFrame(this.animateMorph.bind(this));
     },
 
     scheduleFrame() {
@@ -209,21 +283,6 @@ const MobilityMap = Vue.defineComponent({
     },
 
     /* =============================================
-     FLOW NORMALIZATION & SCALING
-    ============================================= */
-    getFilteredFlows() {
-      const base = this.flows.map((f) => ({
-        from: f.origin,
-        to: f.dest,
-        weight: f.count,
-      }));
-
-      if (!this.selectedPoint) return base;
-
-      return base.filter((f) => f.from === this.selectedPoint || f.to === this.selectedPoint);
-    },
-
-    /* =============================================
      HEAVY REBUILD (CLUSTERS & GROUPS)
      Runs when: flows change, locations change, zoom, selection change
     ============================================= */
@@ -241,7 +300,7 @@ const MobilityMap = Vue.defineComponent({
         return;
       }
 
-      const flows = this.getFilteredFlows();
+      const flows = MobilityMapUtils.filterFlows(this.flows, this.selectedPoint);
       this.currentFlows = flows;
 
       this.dotShapes = [];
@@ -255,107 +314,19 @@ const MobilityMap = Vue.defineComponent({
         return;
       }
 
-      // Compute global weight range once per flow dataset
-      if (this.minWeight === null || this.maxWeight === null) {
-        const weights = flows.map((f) => f.weight);
-        this.minWeight = Math.min(...weights);
-        this.maxWeight = Math.max(...weights);
-      }
-
-      // Per-location traffic (for dot radius)
-      const locationTraffic = {};
-      flows.forEach((f) => {
-        locationTraffic[f.from] = (locationTraffic[f.from] || 0) + f.weight;
-        locationTraffic[f.to] = (locationTraffic[f.to] || 0) + f.weight;
+      const result = MobilityMapUtils.buildClusters({
+        points: this.points,
+        flows,
+        map: this.map,
+        minWeight: this.minWeight,
+        maxWeight: this.maxWeight,
       });
 
-      // Project all locations → pixels (at current zoom) for clustering
-      const pixels = {};
-      for (const id in this.points) {
-        pixels[id] = this.map.latLngToContainerPoint(this.points[id].latlng);
-      }
-
-      const rawClusters = MobilityMapUtils.clusterPoints(pixels);
-
-      // Build clusterDefs + mapping locId → clusterId
-      rawClusters.forEach((c, index) => {
-        const memberIds = c.keys.map((k) => Number(k));
-
-        // Approximate cluster center in lat/lon = average of member locations
-        let sumLat = 0;
-        let sumLon = 0;
-        let count = 0;
-        memberIds.forEach((id) => {
-          const pt = this.points[id];
-          if (pt) {
-            sumLat += pt.latlng.lat;
-            sumLon += pt.latlng.lng;
-            count++;
-          }
-        });
-
-        const centerLat = count ? sumLat / count : 0;
-        const centerLon = count ? sumLon / count : 0;
-
-        // Cluster traffic → dot size
-        let clusterTotal = 0;
-        memberIds.forEach((id) => {
-          clusterTotal += locationTraffic[id] || 0;
-        });
-
-        let radius;
-        const dotSizes = MobilityMapUtils.CONFIG.sizes.dotSizes;
-        if (this.minWeight === this.maxWeight) {
-          radius = dotSizes[Math.floor(dotSizes.length / 2)];
-        } else {
-          const ranges = dotSizes;
-          let t = (clusterTotal - this.minWeight) / (this.maxWeight - this.minWeight);
-          const range = this.maxWeight - this.minWeight;
-          const compression = Math.min(1, range / 5);
-          t = Math.min(1, t * compression);
-          const minR = ranges[0];
-          const maxR = ranges[ranges.length - 1];
-          radius = minR + t * (maxR - minR);
-        }
-
-        this.clusterDefs.push({
-          id: index,
-          memberIds,
-          centerLat,
-          centerLon,
-          radius,
-        });
-
-        memberIds.forEach((id) => {
-          this.clusterByLocationId[id] = index;
-        });
-      });
-
-      // Group flows by cluster pair
-      const flowGroups = {};
-      flows.forEach((f) => {
-        const fromClusterId = this.clusterByLocationId[f.from];
-        const toClusterId = this.clusterByLocationId[f.to];
-
-        if (fromClusterId == null || toClusterId == null) return;
-        if (fromClusterId === toClusterId) return; // skip self-loop in cluster
-
-        const key = `${fromClusterId}|${toClusterId}`;
-        if (!flowGroups[key]) {
-          flowGroups[key] = {
-            fromClusterId,
-            toClusterId,
-            flows: [],
-          };
-        }
-        flowGroups[key].flows.push({
-          fromKey: f.from,
-          toKey: f.to,
-          weight: f.weight,
-        });
-      });
-
-      this.flowGroups = flowGroups;
+      this.clusterDefs = result.clusters;
+      this.clusterByLocationId = result.clusterByLocationId;
+      this.flowGroups = result.flowGroups;
+      this.minWeight = result.minWeight;
+      this.maxWeight = result.maxWeight;
 
       // Draw once with fresh shapes
       this.drawFrame();

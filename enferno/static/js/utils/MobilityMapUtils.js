@@ -254,4 +254,167 @@ const MobilityMapUtils = {
       flows: Array.from(flowMap.values()),
     };
   },
+
+  findClosestCluster(newCluster, oldClusters, projFn) {
+    let closest = null;
+    let minDist = Infinity;
+
+    const newPx = projFn(newCluster.centerLat, newCluster.centerLon);
+
+    oldClusters.forEach((old) => {
+      const oldPx = projFn(old.centerLat, old.centerLon);
+      const dist = Math.hypot(newPx.x - oldPx.x, newPx.y - oldPx.y);
+
+      if (dist < minDist) {
+        minDist = dist;
+        closest = old;
+      }
+    });
+
+    return { cluster: closest, dist: minDist };
+  },
+
+  lerp(a, b, t) {
+    return a + (b - a) * t;
+  },
+
+  filterFlows(flows, selectedPoint = null) {
+  const base = flows.map(f => ({
+    from: f.origin,
+    to: f.dest,
+    weight: f.count,
+  }));
+
+  if (!selectedPoint) return base;
+
+  return base.filter(
+    f => f.from === selectedPoint || f.to === selectedPoint
+  );
+},
+buildClusters({ points, flows, map, minWeight, maxWeight }) {
+  const clusterDefs = [];
+  const clusterByLocationId = {};
+  const flowGroups = {};
+
+  // ---- Weight range ----
+  if (minWeight === null || maxWeight === null) {
+    const weights = flows.map(f => f.weight);
+    minWeight = Math.min(...weights);
+    maxWeight = Math.max(...weights);
+  }
+
+  // ---- Traffic per location ----
+  const locationTraffic = {};
+  flows.forEach((f) => {
+    locationTraffic[f.from] = (locationTraffic[f.from] || 0) + f.weight;
+    locationTraffic[f.to]   = (locationTraffic[f.to]   || 0) + f.weight;
+  });
+
+  // ---- Project points to pixels ----
+  const pixels = {};
+  for (const id in points) {
+    pixels[id] = map.latLngToContainerPoint(points[id].latlng);
+  }
+
+  // ---- Raw clustering ----
+  const rawClusters = MobilityMapUtils.clusterPoints(pixels);
+
+  // ---- Build cluster objects ----
+  rawClusters.forEach((c, index) => {
+    const memberIds = c.keys.map(k => Number(k));
+
+    // Center in lat/lon
+    let sumLat = 0;
+    let sumLon = 0;
+    let count = 0;
+
+    memberIds.forEach((id) => {
+      const pt = points[id];
+      if (!pt) return;
+      sumLat += pt.latlng.lat;
+      sumLon += pt.latlng.lng;
+      count++;
+    });
+
+    const centerLat = count ? sumLat / count : 0;
+    const centerLon = count ? sumLon / count : 0;
+
+    // Cluster traffic total
+    let clusterTotal = 0;
+    memberIds.forEach((id) => {
+      clusterTotal += locationTraffic[id] || 0;
+    });
+
+    // Radius scaling
+    const radius = MobilityMapUtils.getClusterRadius(
+      clusterTotal,
+      minWeight,
+      maxWeight
+    );
+
+    clusterDefs.push({
+      id: index,
+      memberIds,
+      centerLat,
+      centerLon,
+      radius,
+    });
+
+    memberIds.forEach((id) => {
+      clusterByLocationId[id] = index;
+    });
+  });
+
+  // ---- Group flows by cluster pairs ----
+  flows.forEach((f) => {
+    const fromClusterId = clusterByLocationId[f.from];
+    const toClusterId   = clusterByLocationId[f.to];
+
+    if (fromClusterId == null || toClusterId == null) return;
+    if (fromClusterId === toClusterId) return;
+
+    const key = `${fromClusterId}|${toClusterId}`;
+
+    if (!flowGroups[key]) {
+      flowGroups[key] = {
+        fromClusterId,
+        toClusterId,
+        flows: [],
+      };
+    }
+
+    flowGroups[key].flows.push({
+      fromKey: f.from,
+      toKey: f.to,
+      weight: f.weight,
+    });
+  });
+
+  return {
+    clusters: clusterDefs,
+    clusterByLocationId,
+    flowGroups,
+    minWeight,
+    maxWeight,
+  };
+},
+getClusterRadius(clusterTotal, minWeight, maxWeight) {
+  const dotSizes = MobilityMapUtils.CONFIG.sizes.dotSizes;
+
+  if (minWeight === maxWeight) {
+    return dotSizes[Math.floor(dotSizes.length / 2)];
+  }
+
+  let t = (clusterTotal - minWeight) / (maxWeight - minWeight);
+
+  const range = maxWeight - minWeight;
+  const compression = Math.min(1, range / 5);
+  t = Math.min(1, t * compression);
+
+  const minR = dotSizes[0];
+  const maxR = dotSizes[dotSizes.length - 1];
+
+  return minR + t * (maxR - minR);
+}
+
 };
