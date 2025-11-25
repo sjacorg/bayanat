@@ -24,6 +24,8 @@ const MapVisualization = Vue.defineComponent({
   data: () => ({
     translations: window.translations,
 
+    localSearch: '',
+
     loading: false,
     loadingMessage: '',
     errorMessage: '',
@@ -47,6 +49,7 @@ const MapVisualization = Vue.defineComponent({
   watch: {
     open(isOpen) {
       if (isOpen) {
+        this.localSearch = this.search;
         this.resetEntities();
         this.initMapFlow();
         this.entities.drawer = false;
@@ -224,7 +227,7 @@ const MapVisualization = Vue.defineComponent({
     toggleEntityDrawer() {
       this.entities.drawer = !this.entities.drawer;
 
-      this.$refs.mobilityMapRef.tooltip.visible = false
+      this.$refs.mobilityMapRef.tooltip.visible = false;
 
       if (!this.entities.drawer) {
         this.$emit('closeEntityDetails');
@@ -255,17 +258,18 @@ const MapVisualization = Vue.defineComponent({
           variant="solo"
           density="comfortable"
           hide-details="auto"
-
-          :model-value="search"
-          @update:model-value="$emit('update:search', $event)"
-          @keydown.enter="$emit('doSearch', search)"
-
-          append-icon="mdi-ballot"
-          :append-inner-icon="!search ? '' : 'mdi-close'"
+          v-model="localSearch"
+          @keydown.enter="
+            $emit('update:search', localSearch);
+            $emit('doSearch');
+          "
           @click:append-inner="
+            localSearch = '';
             $emit('update:search', '');
             $emit('resetSearch')
           "
+          append-icon="mdi-ballot"
+          :append-inner-icon="!localSearch ? '' : 'mdi-close'"
           @click:append="$emit('advancedSearch')"
           prepend-inner-icon="mdi-magnify"
           :label="translations.search_"
@@ -290,6 +294,7 @@ const MapVisualization = Vue.defineComponent({
           :locations="selectedEntityMapData?.locations || locations"
           :flows="selectedEntityMapData?.flows || flows"
           class="w-100 h-100"
+          :viewport-padding="{ right: entities.drawer ? 398 : 0, top: 64 }"
         />
 
         <!-- LOADING OVERLAY -->
