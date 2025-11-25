@@ -270,3 +270,39 @@ class Label(db.Model, BaseMixin):
             current_id = parent.parent_label_id
 
         return True
+
+    @staticmethod
+    def build_tree(labels: list["Label"]) -> list[dict[str, Any]]:
+        """
+        Build a tree structure from flat list of labels for Vuetify tree component.
+
+        Args:
+            - labels: list of Label objects.
+
+        Returns:
+            - list of tree nodes with nested children.
+        """
+        nodes_by_id = {}
+        children_by_parent = {}
+
+        # First pass: create nodes and group by parent
+        for label in labels:
+            node = {"id": label.id, "title": label.title}
+            nodes_by_id[label.id] = node
+
+            parent_key = label.parent_label_id or "root"
+            if parent_key not in children_by_parent:
+                children_by_parent[parent_key] = []
+            children_by_parent[parent_key].append(node)
+
+        # Second pass: attach children to parents
+        for label in labels:
+            if label.id in children_by_parent:
+                children = children_by_parent[label.id]
+                children.sort(key=lambda x: x["title"] or "")
+                nodes_by_id[label.id]["children"] = children
+
+        # Return sorted root nodes
+        root_nodes = children_by_parent.get("root", [])
+        root_nodes.sort(key=lambda x: x["title"] or "")
+        return root_nodes
