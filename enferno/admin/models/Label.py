@@ -20,7 +20,13 @@ class Label(db.Model, BaseMixin):
     SQL Alchemy model for labels
     """
 
-    __table_args__ = {"extend_existing": True}
+    MAX_TREE_DEPTH = 5
+
+    __table_args__ = (
+        db.CheckConstraint("id != parent_label_id", name="label_no_self_parent"),
+        db.UniqueConstraint("parent_label_id", "title", name="label_unique_sibling_title"),
+        {"extend_existing": True},
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, index=True)
@@ -64,9 +70,9 @@ class Label(db.Model, BaseMixin):
             "for_incident": self.for_incident,
             "for_offline": self.for_offline,
             "parent": {"id": self.parent.id, "title": self.parent.title} if self.parent else None,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
         }
 
     # custom compact serialization
