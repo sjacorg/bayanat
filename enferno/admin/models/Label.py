@@ -20,8 +20,6 @@ class Label(db.Model, BaseMixin):
     SQL Alchemy model for labels
     """
 
-    MAX_TREE_DEPTH = 5
-
     __table_args__ = (
         db.CheckConstraint("id != parent_label_id", name="label_no_self_parent"),
         db.UniqueConstraint("parent_label_id", "title", name="label_unique_sibling_title"),
@@ -198,17 +196,8 @@ class Label(db.Model, BaseMixin):
         parent_info = json.get("parent")
         if parent_info and "id" in parent_info:
             parent_id = parent_info["id"]
-            if parent_id != self.id:
-                p_label = Label.query.get(parent_id)
-                # Check for circular relations
-                if (
-                    p_label
-                    and p_label.id != self.id
-                    and (not p_label.parent or p_label.parent.id != self.id)
-                ):
-                    self.parent_label_id = p_label.id
-                else:
-                    self.parent_label_id = None
+            if self._is_valid_parent(parent_id):
+                self.parent_label_id = parent_id
             else:
                 self.parent_label_id = None
         else:
@@ -250,3 +239,34 @@ class Label(db.Model, BaseMixin):
         db.session.execute(text("alter sequence label_id_seq restart with :m"), {"m": max_id})
         db.session.commit()
         return ""
+
+    def _is_valid_parent(self, parent_id: int) -> bool:
+        """
+        Check if parent_id is valid (exists and won't create a cycle).
+
+        Args:
+            - parent_id: the proposed parent ID.
+
+        Returns:
+            - True if valid, False otherwise.
+        """
+        if not parent_id:
+            return True
+
+        if self.id and parent_id == self.id:
+            return False
+
+        # Check parent exists and walk up to detect cycles
+        current_id = parent_id
+        visited = {self.id} if self.id else set()
+
+        while current_id:
+            if current_id in visited:
+                return False
+            visited.add(current_id)
+            parent = Label.query.get(current_id)
+            if not parent:
+                return False
+            current_id = parent.parent_label_id
+
+        return True
