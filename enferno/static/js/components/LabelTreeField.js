@@ -235,7 +235,7 @@ const LabelTreeField = Vue.defineComponent({
 
       <!-- Explicit save button (since inline also uses draft state) -->
       <v-btn
-        v-if="!disabled"
+        v-if="!disabled && items.length"
         class="mt-2"
         color="primary"
         @click="commitSelection"
@@ -277,6 +277,7 @@ const LabelTreeField = Vue.defineComponent({
 
                 <!-- Save changes from draftSelected -->
                 <v-btn
+                  v-if="!disabled && items.length"
                   variant="elevated"
                   class="mx-2"
                   @click="commitSelection"
@@ -293,7 +294,22 @@ const LabelTreeField = Vue.defineComponent({
 
               <v-card class="overflow-y-auto">
                 <v-card-text>
-                  <!-- Editable tree -->
+                  <!-- Empty state: no data from API -->
+                  <div
+                    v-if="!items.length && !loading"
+                    class="text-center py-8 text-medium-emphasis"
+                  >
+                    <v-icon size="40" class="mb-2">mdi-folder-outline</v-icon>
+                    <div class="text-body-2 font-weight-medium">
+                      No labels available
+                    </div>
+                    <div class="text-caption">
+                      There are no labels to display yet
+                    </div>
+                  </div>
+
+
+                  <!-- Tree -->
                   <v-treeview
                     v-model:selected="draftSelected"
                     v-model:opened="opened"
