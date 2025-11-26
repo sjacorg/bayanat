@@ -112,16 +112,19 @@
                                             api="/admin/api/labels/tree" :query-params="{ typ: 'for_bulletin' }"
                                             multiple
                                             :dialog-props="rightContainedDialogProps"
+                                            :show-copy-icon="advFeatures"
+                                            label="{{ _('Labels') }}"
                                         />
-
-                                        <search-field v-model="editedItem.labels" api="/admin/api/labels/" :query-params="{ typ: 'for_bulletin' }"
-                                            item-title="title" item-value="id" :multiple="true" :show-copy-icon="advFeatures"
-                                            label="{{ _('Labels') }}"></search-field>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'ver_labels')" :class="[fieldClass(field), 'px-3 py-2']">
-                                        <search-field v-model="editedItem.verLabels" api="/admin/api/labels/"
-                                            :query-params="{ fltr: 'verified', typ: 'for_bulletin' }" item-title="title" item-value="id" :multiple="true"
-                                            :show-copy-icon="advFeatures" label="{{ _('Verified Labels') }}"></search-field>
+                                        <label-tree-field
+                                            v-model="editedItem.verLabels"
+                                            api="/admin/api/labels/tree" :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
+                                            multiple
+                                            :dialog-props="rightContainedDialogProps"
+                                            :show-copy-icon="advFeatures"
+                                            label="{{ _('Verified Labels') }}"
+                                        />
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'locations')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <location-search-field v-model="editedItem.locations" api="/admin/api/locations/" item-title="full_string"

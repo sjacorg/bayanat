@@ -65,15 +65,12 @@
                                     ></search-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
-                                    <search-field
+                                    <label-tree-field
                                         v-model="editedItem.labels"
-                                        api="/admin/api/labels/"
-                                        :query-params="{ typ: 'for_incident' }"
-                                        item-title="title"
-                                        item-value="id"
-                                        :multiple="true"
+                                        api="/admin/api/labels/tree" :query-params="{ typ: 'for_incident' }"
+                                        multiple
                                         label="{{ _('Labels') }}"
-                                    ></search-field>
+                                    />
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'locations')" :class="[fieldClass(field), 'px-3 py-2']">
                                     <location-search-field

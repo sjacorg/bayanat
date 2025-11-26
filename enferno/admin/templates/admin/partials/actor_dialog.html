@@ -389,28 +389,23 @@
 
                                                     <v-card-text>
                                                         <!-- Labels -->
-                                                        <search-field
-                                                                v-model="profile.labels"
-                                                                api="/admin/api/labels/"
-                                                                item-title="title"
-                                                                item-value="id"
-                                                                :multiple="true"
-                                                                :show-copy-icon="advFeatures"
-                                                                label="{{ _('Labels') }}"
-                                                        ></search-field>
+                                                        <label-tree-field
+                                                            v-model="profile.labels"
+                                                            api="/admin/api/labels/tree" :query-params="{ typ: 'for_actor' }"
+                                                            multiple
+                                                            :show-copy-icon="advFeatures"
+                                                            label="{{ _('Labels') }}"
+                                                        />
                                                     </v-card-text>
                                                     <v-card-text>
                                                         <!-- Verified Labels -->
-                                                        <search-field
-                                                                v-model="profile.ver_labels"
-                                                                api="/admin/api/labels/"
-                                                                :query-params="{ fltr: 'verified', typ: 'for_actor' }"
-                                                                item-title="title"
-                                                                item-value="id"
-                                                                :multiple="true"
-                                                                :show-copy-icon="advFeatures"
-                                                                label="{{ _('Verified Labels') }}"
-                                                        ></search-field>
+                                                        <label-tree-field
+                                                            v-model="profile.ver_labels"
+                                                            api="/admin/api/labels/tree" :query-params="{ fltr: 'verified', typ: 'for_actor' }"
+                                                            multiple
+                                                            :show-copy-icon="advFeatures"
+                                                            label="{{ _('Verified Labels') }}"
+                                                        />
                                                     </v-card-text>
 
                                                     <v-container fluid>
