@@ -111,7 +111,7 @@
                                             v-model="editedItem.labels"
                                             api="/admin/api/labels/tree" :query-params="{ typ: 'for_bulletin' }"
                                             multiple
-                                            :inline="false"
+                                            :dialog-props="rightContainedDialogProps"
                                         />
 
                                         <search-field v-model="editedItem.labels" api="/admin/api/labels/" :query-params="{ typ: 'for_bulletin' }"

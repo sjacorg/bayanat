@@ -13,9 +13,10 @@ const LabelTreeField = Vue.defineComponent({
     searchLabel: { type: String, default: 'Search labels' },
     disabled: Boolean,
     openAll: { type: Boolean, default: false },
-    inline: { type: Boolean, default: true },
+    inline: { type: Boolean, default: false },
     dialogTitle: { type: String, default: 'Select labels' },
     label: { type: String, default: 'Labels' },
+    dialogProps: { type: Object },
   },
 
   emits: ['update:model-value', 'loaded', 'error'],
@@ -41,9 +42,9 @@ const LabelTreeField = Vue.defineComponent({
       deep: true,
       handler() {
         if (!this.skipNextSync) {
-          this.resolveSelectionFromTree()
+          this.resolveSelectionFromTree();
         }
-        this.skipNextSync = false
+        this.skipNextSync = false;
       },
     },
 
@@ -52,88 +53,87 @@ const LabelTreeField = Vue.defineComponent({
       handler(val) {
         // 👇 THIS FIXES YOUR ISSUE – user selection now propagates
         const output = this.multiple
-          ? (this.returnObject ? val : val.map(v => v.id))
-          : (this.returnObject ? val[0] || null : val[0]?.id || null)
+          ? this.returnObject
+            ? val
+            : val.map((v) => v.id)
+          : this.returnObject
+          ? val[0] || null
+          : val[0]?.id || null;
 
-        this.skipNextSync = true
-        this.$emit('update:model-value', output)
+        this.skipNextSync = true;
+        this.$emit('update:model-value', output);
       },
     },
   },
 
   mounted() {
-    this.fetchTree()
+    this.fetchTree();
   },
 
   methods: {
     fetchTree() {
-      this.loading = true
-      this.error = null
+      this.loading = true;
+      this.error = null;
 
-      api.get(this.api, { params: this.queryParams })
+      api
+        .get(this.api, { params: this.queryParams })
         .then((response) => {
-          const data = response.data || {}
+          const data = response.data || {};
 
-          this.items = Array.isArray(data.items) ? data.items : []
-          this.flatItems = this.flattenTree(this.items)
-          this.total = data.total || this.items.length
+          this.items = Array.isArray(data.items) ? data.items : [];
+          this.flatItems = this.flattenTree(this.items);
+          this.total = data.total || this.items.length;
 
           if (this.openAll) {
-            this.opened = this.flatItems.map(n => n.id)
+            this.opened = this.flatItems.map((n) => n.id);
           }
 
           // ✅ restore selection correctly
-          this.resolveSelectionFromTree()
+          this.resolveSelectionFromTree();
 
           this.$emit('loaded', {
             items: this.items,
             total: this.total,
-          })
+          });
         })
         .catch((err) => {
-          console.error(err)
-          this.error = err
-          this.$emit('error', err)
+          console.error(err);
+          this.error = err;
+          this.$emit('error', err);
         })
         .finally(() => {
-          this.loading = false
-        })
+          this.loading = false;
+        });
     },
 
     flattenTree(nodes, acc = []) {
-      nodes.forEach(node => {
-        acc.push(node)
+      nodes.forEach((node) => {
+        acc.push(node);
         if (Array.isArray(node.children)) {
-          this.flattenTree(node.children, acc)
+          this.flattenTree(node.children, acc);
         }
-      })
-      return acc
+      });
+      return acc;
     },
 
     resolveSelectionFromTree() {
-      if (!this.flatItems.length) return
+      if (!this.flatItems.length) return;
 
       const inputIds = this.multiple
-        ? (
-            Array.isArray(this.modelValue)
-              ? this.modelValue.map(v => this.returnObject ? v?.id : v)
-              : []
-          )
-        : (
-            this.modelValue
-              ? [this.returnObject ? this.modelValue?.id : this.modelValue]
-              : []
-          )
+        ? Array.isArray(this.modelValue)
+          ? this.modelValue.map((v) => (this.returnObject ? v?.id : v))
+          : []
+        : this.modelValue
+        ? [this.returnObject ? this.modelValue?.id : this.modelValue]
+        : [];
 
-      const resolved = this.flatItems.filter(node =>
-        inputIds.includes(node.id)
-      )
+      const resolved = this.flatItems.filter((node) => inputIds.includes(node.id));
 
-      this.internalSelected = resolved
+      this.internalSelected = resolved;
     },
 
     valueComparator(a, b) {
-      return (a?.id ?? a) === (b?.id ?? b)
+      return (a?.id ?? a) === (b?.id ?? b);
     },
   },
 
@@ -142,7 +142,6 @@ const LabelTreeField = Vue.defineComponent({
 
     <!-- INLINE MODE -->
     <template v-if="inline">
-
       <v-text-field
         v-if="showSearch"
         v-model="search"
@@ -178,7 +177,6 @@ const LabelTreeField = Vue.defineComponent({
 
     <!-- DIALOG MODE -->
     <template v-else>
-
       <v-select
         prepend-inner-icon="mdi-label"
         @click="dialog = true"
@@ -200,57 +198,76 @@ const LabelTreeField = Vue.defineComponent({
         </template>
       </v-select>
 
-      <v-dialog v-model="dialog" max-width="800">
-        <v-card>
+        <div :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !dialog }]" :style="$root?.rightDialogProps?.['content-props']?.style">
+            <div class="position-relative h-100 w-100">
+                <v-dialog v-model="dialog" v-bind="dialogProps || { 'max-width': '880px' }">
+                    <v-card elevation="4">
+                        <!-- Toolbar -->
+                        <v-toolbar color="dark-primary" class="px-4">
+                            <div class="w-33">
+                                <v-toolbar-title>{{ dialogTitle }}</v-toolbar-title>
+                            </div>
 
-          <v-card-title>{{ dialogTitle }}</v-card-title>
+                            <v-spacer></v-spacer>
 
-          <v-card-text>
+                            <v-text-field
+                                class="w-33"
+                                v-if="showSearch"
+                                v-model="search"
+                                :label="searchLabel"
+                                prepend-inner-icon="mdi-magnify"
+                                density="compact"
+                                hide-details
+                                clearable
+                                variant="solo"
+                            />
 
-            <v-text-field
-              v-if="showSearch"
-              v-model="search"
-              :label="searchLabel"
-              prepend-inner-icon="mdi-magnify"
-              density="compact"
-              hide-details
-              clearable
-              class="mb-3"
-            />
+                            <v-spacer></v-spacer>
 
-            <v-treeview
-              v-model:selected="internalSelected"
-              v-model:opened="opened"
-              :items="items"
-              item-value="id"
-              item-title="title"
-              :value-comparator="valueComparator"
-              :return-object="true"
-              :selectable="multiple ? selectable : false"
-              :select-strategy="multiple ? selectStrategy : 'single-independent'"
-              :activatable="multiple ? false : true"
-              :active-strategy="multiple ? undefined : 'single-independent'"
-              :open-on-click="openOnClick"
-              :search="search"
-              :open-all="openAll"
-              :disabled="disabled"
-              style="max-height: 400px; overflow-y: auto"
-              indent-lines
-                separate-roots
-            />
+                            <div class="w-33 d-flex justify-end">
+                                <v-btn icon="mdi-close" @click="dialog = false"></v-btn>
+                            </div>
+                        </v-toolbar>
 
-          </v-card-text>
+                        <v-card class="overflow-y-auto">
+                            <v-card-text>
+                                <!-- Tree -->
+                                <v-treeview
+                                    v-model:selected="internalSelected"
+                                    v-model:opened="opened"
+                                    :items="items"
+                                    item-value="id"
+                                    item-title="title"
+                                    :value-comparator="valueComparator"
+                                    :return-object="true"
+                                    :selectable="multiple ? selectable : false"
+                                    :select-strategy="multiple ? selectStrategy : 'single-independent'"
+                                    :activatable="multiple ? false : true"
+                                    :active-strategy="multiple ? undefined : 'single-independent'"
+                                    :open-on-click="openOnClick"
+                                    :search="search"
+                                    :open-all="openAll"
+                                    :disabled="disabled"
+                                    indent-lines
+                                    separate-roots
+                                >
+                                    <template #no-data>
+                                        <div
+                                            class="text-center py-8 text-medium-emphasis"
+                                        >
+                                            <v-icon size="40" class="mb-2">mdi-folder-search</v-icon>
+                                            <div>No matching labels found</div>
+                                            <div class="text-caption">Try adjusting your search</div>
+                                        </div>
+                                    </template>
+                                </v-treeview>
+                            </v-card-text>
+                        </v-card>
 
-          <v-card-actions>
-            <v-spacer />
-            <v-btn variant="text" @click="dialog = false">
-              Done
-            </v-btn>
-          </v-card-actions>
-
-        </v-card>
-      </v-dialog>
-
+                    </v-card>
+                </v-dialog>
+            </div>
+        </div>
     </template>
   </div>
   `,
