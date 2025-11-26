@@ -219,6 +219,11 @@ const LabelTreeField = Vue.defineComponent({
 
             <v-card class="overflow-y-auto">
               <v-card-text>
+                <div class="text-caption text-medium-emphasis mb-2">
+                  {{ draftSelected.length }} 
+                  {{ draftSelected.length === 1 ? translations.labelSelected_ : translations.labelsSelected_ }}
+                </div>
+
                 <!-- Empty state: no data from API -->
                 <div
                   v-if="!items.length && !loading"
