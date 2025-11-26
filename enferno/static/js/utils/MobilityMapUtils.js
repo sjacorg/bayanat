@@ -39,8 +39,8 @@ const MobilityMapUtils = {
 
     sizes: {
       bidirectionalArrowSpacing: 4,
-      arrowWidths: [2, 5, 7, 12], // Thin → thick based on traffic
-      dotSizes: [6, 8, 10, 12, 14, 16],
+      arrowWidths: [2, 5, 8, 13, 18],
+      dotSizes: [6, 9, 12, 15, 18, 22],
     },
 
     clustering: {
@@ -310,6 +310,9 @@ buildClusters({ points, flows, map, minWeight, maxWeight }) {
     locationTraffic[f.to]   = (locationTraffic[f.to]   || 0) + f.weight;
   });
 
+  // ---- Compute cluster traffic range ----
+const clusterTotals = [];
+
   // ---- Project points to pixels ----
   const pixels = {};
   for (const id in points) {
@@ -345,11 +348,15 @@ buildClusters({ points, flows, map, minWeight, maxWeight }) {
       clusterTotal += locationTraffic[id] || 0;
     });
 
+    clusterTotals.push(clusterTotal);
+    const clusterMin = Math.min(...clusterTotals);
+    const clusterMax = Math.max(...clusterTotals);
+
     // Radius scaling
     const radius = MobilityMapUtils.getClusterRadius(
       clusterTotal,
-      minWeight,
-      maxWeight
+      clusterMin,
+      clusterMax
     );
 
     clusterDefs.push({
