@@ -9,12 +9,12 @@ const LabelTreeField = Vue.defineComponent({
     returnObject: { type: Boolean, default: true },
     activatable: { type: Boolean, default: false },
     openOnClick: { type: Boolean, default: true },
-    showCopyIcon: { type: Boolean, default: true },
+    showCopyIcon: { type: Boolean, default: false },
     disabled: Boolean,
     openAll: { type: Boolean, default: false },
     inline: { type: Boolean, default: false },
-    dialogTitle: { type: String, default: 'Select labels' },
-    label: { type: String, default: 'Labels' },
+    dialogTitle: { type: String, default: window.translations.selectLabels_ },
+    label: { type: String, default: window.translations.labels_ },
     dialogProps: { type: Object },
   },
 
@@ -200,11 +200,11 @@ const LabelTreeField = Vue.defineComponent({
 
         navigator.clipboard.writeText(textToCopy)
             .then(() => {
-            this.$root?.showSnack?.(this.translations.copied_ || 'Copied to clipboard');
+              this.$root.showSnack(this.translations.copiedToClipboard_);
             })
             .catch(err => {
-            console.error('Clipboard error:', err);
-            this.$root?.showSnack?.('Copy failed');
+              console.error('Clipboard error:', err);
+              this.$root.showSnack(this.translations.failedToCopyToClipboard_);
             });
         },
   },
@@ -301,10 +301,10 @@ const LabelTreeField = Vue.defineComponent({
                   >
                     <v-icon size="40" class="mb-2">mdi-folder-outline</v-icon>
                     <div class="text-body-2 font-weight-medium">
-                      No labels available
+                      {{ translations.noLabelsAvailable_ }}
                     </div>
                     <div class="text-caption">
-                      There are no labels to display yet
+                      {{ translations.thereAreNoLabelsToDisplayYet_ }}
                     </div>
                   </div>
 
