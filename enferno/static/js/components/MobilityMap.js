@@ -645,7 +645,7 @@ const MobilityMap = Vue.defineComponent({
           this.tooltip.type = 'dot';
           this.tooltip.data = {
             title: this.translations.locationDetails_,
-            name: names.join(', '),
+            name: MobilityMapUtils.tooltipCityNames(names),
             totalIn: incoming,
             totalOut: outgoing,
           };
@@ -672,8 +672,8 @@ const MobilityMap = Vue.defineComponent({
             this.tooltip.type = 'arrow';
             this.tooltip.data = {
               title: this.translations.flowDetails_,
-              from: fromNames.join(', '),
-              to: toNames.join(', '),
+              from: MobilityMapUtils.tooltipCityNames(fromNames),
+              to: MobilityMapUtils.tooltipCityNames(toNames),
               total,
             };
 

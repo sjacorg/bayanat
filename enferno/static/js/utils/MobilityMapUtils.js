@@ -422,6 +422,16 @@ getClusterRadius(clusterTotal, minWeight, maxWeight) {
   const maxR = dotSizes[dotSizes.length - 1];
 
   return minR + t * (maxR - minR);
+},
+tooltipCityNames(names = []) {
+  const MAX_VISIBLE = 3;
+
+  if (names.length > MAX_VISIBLE) {
+    const visible = names.slice(0, MAX_VISIBLE);
+    return `${visible.join(', ')} and ${names.length - MAX_VISIBLE} more`;
+  }
+
+  return names.join(', ');
 }
 
 };
