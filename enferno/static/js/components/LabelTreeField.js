@@ -11,13 +11,12 @@ const LabelTreeField = Vue.defineComponent({
     openOnClick: { type: Boolean, default: true },
     showCopyIcon: { type: Boolean, default: false },
     disabled: Boolean,
-    openAll: { type: Boolean, default: false },
     dialogTitle: { type: String, default: window.translations.selectLabels_ },
     label: { type: String, default: window.translations.labels_ },
     dialogProps: { type: Object },
   },
 
-  emits: ['update:model-value', 'loaded', 'error'],
+  emits: ['update:model-value'],
 
   data() {
     return {
@@ -27,10 +26,8 @@ const LabelTreeField = Vue.defineComponent({
       // Tree data
       items: [],
       flatItems: [],
-      total: 0,
 
       loading: false,
-      error: null,
 
       // Controls which tree nodes are expanded
       opened: [],
@@ -40,9 +37,6 @@ const LabelTreeField = Vue.defineComponent({
 
       // Temporary selection used in UI before clicking Save
       draftSelected: [],
-
-      // Ensures we only fetch once
-      hasLoaded: false,
     };
   },
 
@@ -60,7 +54,7 @@ const LabelTreeField = Vue.defineComponent({
     dialog(val) {
         if (val) {
             // Dialog opened → lazy load tree
-            this.fetchTreeOnce();
+            this.fetchTree();
         } else {
             // Dialog closed → discard unsaved changes
             this.draftSelected = [...this.internalSelected];
@@ -69,45 +63,21 @@ const LabelTreeField = Vue.defineComponent({
   },
 
   methods: {
-    fetchTreeOnce() {
-        if (this.hasLoaded) return;
-        this.hasLoaded = true;
-        this.fetchTree();
-    },
     async fetchTree() {
       this.loading = true;
-      this.error = null;
 
       try {
-        const response = await api.get(this.api, {
-          params: this.queryParams,
-        });
-
+        const response = await api.get(this.api, { params: this.queryParams });
         const data = response.data || {};
-
         this.items = Array.isArray(data.items) ? data.items : [];
 
         // Flatten for fast ID lookup when resolving selection
         this.flatItems = this.flattenTree(this.items);
 
-        this.total = data.total || this.items.length;
-
-        // Optionally expand all nodes
-        if (this.openAll) {
-          this.opened = this.flatItems.map((n) => n.id);
-        }
-
         // Try to match incoming modelValue to fetched tree items
         this.restoreSelectionFromModel();
-
-        this.$emit('loaded', {
-          items: this.items,
-          total: this.total,
-        });
       } catch (err) {
         console.error(err);
-        this.error = err;
-        this.$emit('error', err);
       } finally {
         this.loading = false;
       }
@@ -278,7 +248,6 @@ const LabelTreeField = Vue.defineComponent({
                   :activatable="multiple ? false : true"
                   :active-strategy="multiple ? undefined : 'single-independent'"
                   :open-on-click="openOnClick"
-                  :open-all="openAll"
                   :disabled="disabled"
                   indent-lines
                   separate-roots
