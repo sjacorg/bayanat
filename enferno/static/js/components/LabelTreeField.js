@@ -12,7 +12,6 @@ const LabelTreeField = Vue.defineComponent({
     showCopyIcon: { type: Boolean, default: false },
     disabled: Boolean,
     openAll: { type: Boolean, default: false },
-    inline: { type: Boolean, default: false },
     dialogTitle: { type: String, default: window.translations.selectLabels_ },
     label: { type: String, default: window.translations.labels_ },
     dialogProps: { type: Object },
@@ -23,8 +22,6 @@ const LabelTreeField = Vue.defineComponent({
   data() {
     return {
       translations: window.translations,
-
-      // Controls dialog visibility (only used when inline = false)
       dialog: false,
 
       // Tree data
@@ -69,13 +66,6 @@ const LabelTreeField = Vue.defineComponent({
             this.draftSelected = [...this.internalSelected];
         }
     },
-  },
-
-  mounted() {
-    // Only load immediately in inline mode
-    if (this.inline) {
-        this.fetchTreeOnce();
-    }
   },
 
   methods: {
@@ -181,7 +171,6 @@ const LabelTreeField = Vue.defineComponent({
       this.internalSelected = [...this.draftSelected];
       this.$emit('update:model-value', val);
 
-      // Close dialog after save (ignored if inline mode)
       this.dialog = false;
     },
 
@@ -211,130 +200,95 @@ const LabelTreeField = Vue.defineComponent({
 
   template: `
   <div class="label-tree-field">
-
-    <!-- INLINE MODE -->
-    <template v-if="inline">
-      <v-treeview
-        v-model:selected="draftSelected"
-        v-model:opened="opened"
-        :items="items"
-        item-value="id"
-        item-title="title"
-        :value-comparator="valueComparator"
-        :return-object="true"
-        :selectable="multiple ? selectable : false"
-        :select-strategy="multiple ? selectStrategy : 'single-independent'"
-        :activatable="multiple ? false : true"
-        :active-strategy="multiple ? undefined : 'single-independent'"
-        :open-on-click="openOnClick"
-        :open-all="openAll"
-        :disabled="disabled"
-        indent-lines
-        separate-roots
-      />
-
-      <!-- Explicit save button (since inline also uses draft state) -->
-      <v-btn
-        v-if="!disabled && items.length"
-        class="mt-2"
-        color="primary"
-        @click="commitSelection"
-      >
-        {{ translations.save_ }}
-      </v-btn>
-    </template>
-
     <!-- DIALOG MODE -->
-    <template v-else>
-      <!-- Read-only preview of committed selection -->
-      <v-select
-        prepend-inner-icon="mdi-magnify"
-        @click="dialog = true"
-        :model-value="internalSelected"
-        :label="label"
-        chips
-        multiple
-        readonly
-      >
-        <template v-if="showCopyIcon" v-slot:append>
-            <v-btn icon="mdi-content-copy" variant="plain" @click.stop="copyValue"></v-btn>
-        </template>
-      </v-select>
+    <!-- Read-only preview of committed selection -->
+    <v-select
+      prepend-inner-icon="mdi-magnify"
+      @click="dialog = true"
+      :model-value="internalSelected"
+      :label="label"
+      chips
+      multiple
+      readonly
+    >
+      <template v-if="showCopyIcon" v-slot:append>
+          <v-btn icon="mdi-content-copy" variant="plain" @click.stop="copyValue"></v-btn>
+      </template>
+    </v-select>
 
-      <!-- Floating right-side dialog -->
-      <div 
-        :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !dialog }]" 
-        :style="$root?.rightDialogProps?.['content-props']?.style"
-      >
-        <div class="position-relative h-100 w-100">
-          <v-dialog v-model="dialog" v-bind="dialogProps || { 'max-width': '880px' }">
-            <v-card elevation="4">
+    <!-- Floating right-side dialog -->
+    <div 
+      :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !dialog }]" 
+      :style="$root?.rightDialogProps?.['content-props']?.style"
+    >
+      <div class="position-relative h-100 w-100">
+        <v-dialog v-model="dialog" v-bind="dialogProps || { 'max-width': '880px' }">
+          <v-card elevation="4">
 
-              <!-- Toolbar -->
-              <v-toolbar color="dark-primary" class="px-4">
-                <v-toolbar-title>{{ dialogTitle }}</v-toolbar-title>
-                <v-spacer></v-spacer>
+            <!-- Toolbar -->
+            <v-toolbar color="dark-primary" class="px-4">
+              <v-toolbar-title>{{ dialogTitle }}</v-toolbar-title>
+              <v-spacer></v-spacer>
 
-                <!-- Save changes from draftSelected -->
-                <v-btn
-                  v-if="!disabled && items.length"
-                  variant="elevated"
-                  class="mx-2"
-                  @click="commitSelection"
+              <!-- Save changes from draftSelected -->
+              <v-btn
+                v-if="!disabled && items.length"
+                variant="elevated"
+                class="mx-2"
+                @click="commitSelection"
+              >
+                {{ translations.save_ }}
+              </v-btn>
+
+              <!-- Close without saving -->
+              <v-btn
+                icon="mdi-close"
+                @click="dialog = false"
+              ></v-btn>
+            </v-toolbar>
+
+            <v-card class="overflow-y-auto">
+              <v-card-text>
+                <!-- Empty state: no data from API -->
+                <div
+                  v-if="!items.length && !loading"
+                  class="text-center py-8 text-medium-emphasis"
                 >
-                  {{ translations.save_ }}
-                </v-btn>
-
-                <!-- Close without saving -->
-                <v-btn
-                  icon="mdi-close"
-                  @click="dialog = false"
-                ></v-btn>
-              </v-toolbar>
-
-              <v-card class="overflow-y-auto">
-                <v-card-text>
-                  <!-- Empty state: no data from API -->
-                  <div
-                    v-if="!items.length && !loading"
-                    class="text-center py-8 text-medium-emphasis"
-                  >
-                    <v-icon size="40" class="mb-2">mdi-folder-outline</v-icon>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ translations.noLabelsAvailable_ }}
-                    </div>
-                    <div class="text-caption">
-                      {{ translations.thereAreNoLabelsToDisplayYet_ }}
-                    </div>
+                  <v-icon size="40" class="mb-2">mdi-folder-outline</v-icon>
+                  <div class="text-body-2 font-weight-medium">
+                    {{ translations.noLabelsAvailable_ }}
                   </div>
+                  <div class="text-caption">
+                    {{ translations.thereAreNoLabelsToDisplayYet_ }}
+                  </div>
+                </div>
 
 
-                  <!-- Tree -->
-                  <v-treeview
-                    v-model:selected="draftSelected"
-                    v-model:opened="opened"
-                    :items="items"
-                    item-value="id"
-                    item-title="title"
-                    :value-comparator="valueComparator"
-                    :return-object="true"
-                    :selectable="multiple ? selectable : false"
-                    :select-strategy="multiple ? selectStrategy : 'single-independent'"
-                    :activatable="multiple ? false : true"
-                    :active-strategy="multiple ? undefined : 'single-independent'"
-                    :open-on-click="openOnClick"
-                    :open-all="openAll"
-                    :disabled="disabled"
-                    indent-lines
-                    separate-roots
-                  />
-                </v-card-text>
-              </v-card>
+                <!-- Tree -->
+                <v-treeview
+                  v-model:selected="draftSelected"
+                  v-model:opened="opened"
+                  :items="items"
+                  item-value="id"
+                  item-title="title"
+                  :value-comparator="valueComparator"
+                  :return-object="true"
+                  :selectable="multiple ? selectable : false"
+                  :select-strategy="multiple ? selectStrategy : 'single-independent'"
+                  :activatable="multiple ? false : true"
+                  :active-strategy="multiple ? undefined : 'single-independent'"
+                  :open-on-click="openOnClick"
+                  :open-all="openAll"
+                  :disabled="disabled"
+                  indent-lines
+                  separate-roots
+                />
+              </v-card-text>
             </v-card>
-          </v-dialog>
-        </div>
+          </v-card>
+        </v-dialog>
       </div>
-    </template>
+    </div>
   </div>
   `,
 });
