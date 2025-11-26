@@ -1247,6 +1247,13 @@ class BulletinQueryValidationModel(QueryBaseModel):
     exTags: Optional[list[str]] = Field(default_factory=list)
     exExact: Optional[bool] = False
     opExTags: Optional[bool] = False
+    # Chips-based multi-term text search
+    searchTerms: Optional[list[str]] = Field(default_factory=list)
+    opTerms: Optional[bool] = False
+    termsExact: Optional[bool] = False
+    exTerms: Optional[list[str]] = Field(default_factory=list)
+    opExTerms: Optional[bool] = False
+    exTermsExact: Optional[bool] = False
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
