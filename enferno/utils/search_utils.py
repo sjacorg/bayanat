@@ -149,6 +149,38 @@ class SearchUtils:
         """Build a query for the activity model."""
         return self.activity_query(self.search)
 
+    def _build_term_conditions(
+        self, column: ColumnElement, terms: list, exact: bool = False, negate: bool = False
+    ) -> list:
+        """
+        Build ILIKE conditions for multi-term text search.
+
+        Args:
+            column: The SQLAlchemy column to search on
+            terms: List of search terms (each can contain multiple words)
+            exact: If True, search term as phrase; if False, split into words
+            negate: If True, negate conditions (for exclude)
+
+        Returns:
+            List of SQLAlchemy conditions
+        """
+        result = []
+        for term in terms:
+            if not term or not term.strip():
+                continue
+
+            if exact:
+                cond = column.ilike(f"%{term}%")
+                result.append(~cond if negate else cond)
+            else:
+                words = [w for w in term.split() if w.strip()]
+                if words:
+                    word_conds = [
+                        ~column.ilike(f"%{w}%") if negate else column.ilike(f"%{w}%") for w in words
+                    ]
+                    result.append(and_(*word_conds) if len(word_conds) > 1 else word_conds[0])
+        return result
+
     def _validate_dynamic_field_name(self, field_name: str, searchable_meta: dict) -> str:
         """
         Validate and sanitize a dynamic field name for SQL usage.
@@ -407,6 +439,26 @@ class SearchUtils:
                 conditions.append(or_(*tag_conditions))
             else:
                 conditions.append(and_(*tag_conditions))
+
+        # Search Terms - chips-based multi-term text search
+        if search_terms := q.get("searchTerms"):
+            exact = q.get("termsExact", False)
+            term_conds = self._build_term_conditions(Bulletin.search, search_terms, exact)
+            if term_conds:
+                if q.get("opTerms", False):
+                    conditions.append(or_(*term_conds))
+                else:
+                    conditions.extend(term_conds)
+
+        # Exclude Search Terms
+        if ex_terms := q.get("exTerms"):
+            exact = q.get("exTermsExact", False)
+            ex_conds = self._build_term_conditions(Bulletin.search, ex_terms, exact, negate=True)
+            if ex_conds:
+                if q.get("opExTerms", False):
+                    conditions.append(or_(*ex_conds))
+                else:
+                    conditions.extend(ex_conds)
 
         # Labels
         if labels := q.get("labels", []):
