@@ -546,6 +546,45 @@ const MobilityMap = Vue.defineComponent({
      CLICK HANDLING HELPERS
     ============================================= */
 
+    getClusterTraffic(targetCluster) {
+  let outgoing = 0;
+  let incoming = 0;
+
+  const targetMembers = new Set(targetCluster.memberIds);
+
+  // ✅ No selection → show full totals
+  if (!this.selectedPoint) {
+    this.currentFlows.forEach((f) => {
+      if (targetMembers.has(f.from)) outgoing += f.weight;
+      if (targetMembers.has(f.to)) incoming += f.weight;
+    });
+
+    return { outgoing, incoming };
+  }
+
+  // ✅ Selection active → only flows involving the selected cluster
+  if (this.selectedPoint.type === 'cluster') {
+    const selectedMembers = new Set(this.selectedPoint.memberIds);
+
+    this.currentFlows.forEach((f) => {
+      const fromInSelected = selectedMembers.has(f.from);
+      const toInSelected = selectedMembers.has(f.to);
+
+      const fromInTarget = targetMembers.has(f.from);
+      const toInTarget = targetMembers.has(f.to);
+
+      // Flow from selected → target
+      if (fromInSelected && toInTarget) outgoing += f.weight;
+
+      // Flow from target → selected
+      if (fromInTarget && toInSelected) incoming += f.weight;
+    });
+
+    return { outgoing, incoming };
+  }
+
+  return { outgoing: 0, incoming: 0 };
+},
     getClusterTraffic(input) {
       let outgoing = 0;
       let incoming = 0;
@@ -668,9 +707,10 @@ const MobilityMap = Vue.defineComponent({
 
           ids.forEach((id) => {
             const cluster = this.clusterDefs[dot.clusterId];
-            const traffic = this.getClusterTraffic(cluster);
-            outgoing += traffic.outgoing;
-            incoming += traffic.incoming;
+const traffic = this.getClusterTraffic(cluster);
+
+outgoing = traffic.outgoing;
+incoming = traffic.incoming;
           });
 
           this.tooltip.type = 'dot';
