@@ -707,10 +707,10 @@ const MobilityMap = Vue.defineComponent({
 
           ids.forEach((id) => {
             const cluster = this.clusterDefs[dot.clusterId];
-const traffic = this.getClusterTraffic(cluster);
+            const traffic = this.getClusterTraffic(cluster);
 
-outgoing = traffic.outgoing;
-incoming = traffic.incoming;
+            outgoing = traffic.outgoing;
+            incoming = traffic.incoming;
           });
 
           this.tooltip.type = 'dot';
