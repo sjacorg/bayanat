@@ -20,13 +20,11 @@ const MobilityMap = Vue.defineComponent({
       morphProgress: 1,
       morphFrom: null,
       morphTo: null,
-      lastZoom: null,
 
       // Location id -> { latlng, label }
       points: {},
 
       selectedPoint: null,
-      hoveredArrow: null,
 
       // Hit-test shapes
       dotShapes: [],
@@ -34,7 +32,6 @@ const MobilityMap = Vue.defineComponent({
 
       // Precomputed
       clusterDefs: [],
-      clusterByLocationId: {},
       flowGroups: {},
       currentFlows: [],
 
@@ -104,7 +101,6 @@ const MobilityMap = Vue.defineComponent({
   },
 
   methods: {
-
     /* ================= MAP INIT ================= */
 
     initMap() {
@@ -113,7 +109,7 @@ const MobilityMap = Vue.defineComponent({
 
       const worldBounds = L.latLngBounds(
         L.latLng(MobilityMapUtils.CONFIG.map.bounds.south, MobilityMapUtils.CONFIG.map.bounds.west),
-        L.latLng(MobilityMapUtils.CONFIG.map.bounds.north, MobilityMapUtils.CONFIG.map.bounds.east)
+        L.latLng(MobilityMapUtils.CONFIG.map.bounds.north, MobilityMapUtils.CONFIG.map.bounds.east),
       );
 
       this.map = L.map(el, {
@@ -133,22 +129,26 @@ const MobilityMap = Vue.defineComponent({
           maxZoom: MobilityMapUtils.CONFIG.map.google.maxZoom,
           subdomains: MobilityMapUtils.CONFIG.map.google.subdomains,
         });
-        L.control.layers({ OpenStreetMap: osmLayer, 'Google Satellite': googleLayer }).addTo(this.map);
+        L.control
+          .layers({ OpenStreetMap: osmLayer, 'Google Satellite': googleLayer })
+          .addTo(this.map);
       }
 
-      this.map.addControl(new L.Control.Fullscreen({
-        title: {
-          false: this.translations.enterFullscreen_,
-          true: this.translations.exitFullscreen_,
-        },
-      }));
+      this.map.addControl(
+        new L.Control.Fullscreen({
+          title: {
+            false: this.translations.enterFullscreen_,
+            true: this.translations.exitFullscreen_,
+          },
+        }),
+      );
 
-      const validLocs = this.locations.filter(loc =>
-        Number.isFinite(loc.lat) && Number.isFinite(loc.lon)
+      const validLocs = this.locations.filter(
+        (loc) => Number.isFinite(loc.lat) && Number.isFinite(loc.lon),
       );
 
       if (validLocs.length) {
-        const bounds = L.latLngBounds(validLocs.map(loc => [loc.lat, loc.lon]));
+        const bounds = L.latLngBounds(validLocs.map((loc) => [loc.lat, loc.lon]));
         this.map.fitBounds(bounds);
       }
 
@@ -185,8 +185,10 @@ const MobilityMap = Vue.defineComponent({
       const fullTarget = [...newClusters];
       const maxDist = 150;
 
-      oldClusters.forEach(oldC => {
-        const match = MobilityMapUtils.findClosestCluster(oldC, newClusters, (lat, lng) => this.map.latLngToContainerPoint([lat, lng]));
+      oldClusters.forEach((oldC) => {
+        const match = MobilityMapUtils.findClosestCluster(oldC, newClusters, (lat, lng) =>
+          this.map.latLngToContainerPoint([lat, lng]),
+        );
         if (!match.cluster || match.dist > maxDist) {
           fullTarget.push({
             ...oldC,
@@ -201,7 +203,6 @@ const MobilityMap = Vue.defineComponent({
 
       this.morphProgress = 0;
       this.morphing = true;
-      this.lastZoom = this.map.getZoom();
 
       this.animateMorph();
     },
@@ -211,7 +212,6 @@ const MobilityMap = Vue.defineComponent({
 
       const zoom = this.map.getZoom();
       const speed = 0.1;
-      this.lastZoom = zoom;
 
       this.morphProgress += speed;
 
@@ -219,14 +219,18 @@ const MobilityMap = Vue.defineComponent({
         this.morphProgress = 1;
         this.morphing = false;
 
-        this.clusterDefs = this.morphTo.clusters.filter(c => !c.fadingOut);
+        this.clusterDefs = this.morphTo.clusters.filter((c) => !c.fadingOut);
         this.flowGroups = this.morphTo.flows;
         this.drawFrame();
         return;
       }
 
-      const interpolated = this.morphTo.clusters.map(target => {
-        const { cluster: oldC } = MobilityMapUtils.findClosestCluster(target, this.morphFrom.clusters, (lat, lng) => this.map.latLngToContainerPoint([lat, lng]));
+      const interpolated = this.morphTo.clusters.map((target) => {
+        const { cluster: oldC } = MobilityMapUtils.findClosestCluster(
+          target,
+          this.morphFrom.clusters,
+          (lat, lng) => this.map.latLngToContainerPoint([lat, lng]),
+        );
 
         if (!oldC) return target;
 
@@ -302,7 +306,6 @@ const MobilityMap = Vue.defineComponent({
       this.dotShapes = [];
       this.arrowShapes = [];
       this.clusterDefs = [];
-      this.clusterByLocationId = {};
       this.flowGroups = {};
 
       if (!flows.length) {
@@ -319,7 +322,6 @@ const MobilityMap = Vue.defineComponent({
       });
 
       this.clusterDefs = result.clusters;
-      this.clusterByLocationId = result.clusterByLocationId;
       this.flowGroups = result.flowGroups;
       this.minWeight = result.minWeight;
       this.maxWeight = result.maxWeight;
@@ -346,97 +348,128 @@ const MobilityMap = Vue.defineComponent({
         return;
       }
 
-      // Map clusterId → current pixel coordinates (center)
+      // Map cluster → screen coords
       const clusterPixels = {};
       this.clusterDefs.forEach((c) => {
         const latlng = L.latLng(c.centerLat, c.centerLon);
-        const p = this.map.latLngToContainerPoint(latlng);
-        clusterPixels[c.id] = p;
+        clusterPixels[c.id] = this.map.latLngToContainerPoint(latlng);
       });
 
-      const minW = this.minWeight ?? 0;
-      const maxW = this.maxWeight ?? 0;
+      const baseSpacing = MobilityMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
 
-      // ------------------------------------------------------
-      // SORTED ARROW DRAWING (heaviest flows always on top)
-      // ------------------------------------------------------
+      // ============================
+      // 1️⃣ Merge flows by direction
+      // ============================
+      const mergedArrows = {};
 
-      const arrowSegments = [];
-      const groups = this.flowGroups;
-
-      Object.keys(groups).forEach((key) => {
-        const group = groups[key];
-
+      Object.values(this.flowGroups).forEach((group) => {
         const fromPx = clusterPixels[group.fromClusterId];
         const toPx = clusterPixels[group.toClusterId];
         if (!fromPx || !toPx) return;
 
-        const A = { x: fromPx.x, y: fromPx.y };
-        const B = { x: toPx.x, y: toPx.y };
+        const key = `${group.fromClusterId}->${group.toClusterId}`;
 
-        const oppositeKey = `${group.toClusterId}|${group.fromClusterId}`;
-        const opposite = groups[oppositeKey];
+        if (!mergedArrows[key]) {
+          mergedArrows[key] = {
+            fromCluster: group.fromClusterId,
+            toCluster: group.toClusterId,
+            start: { x: fromPx.x, y: fromPx.y },
+            end: { x: toPx.x, y: toPx.y },
+            rawPairs: [],
+            weight: 0,
+          };
+        }
 
-        const spacing = MobilityMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
-        const { offsetA1, offsetB1, offsetA2, offsetB2 } = MobilityMapUtils.computeOffsets(
-          A,
-          B,
-          spacing,
-        );
-
-        // forward direction (clusterFrom -> clusterTo)
         group.flows.forEach((f) => {
-          arrowSegments.push({
-            from: offsetA1,
-            to: offsetB1,
+          mergedArrows[key].weight += f.weight;
+          mergedArrows[key].rawPairs.push({
+            fromId: f.fromKey,
+            toId: f.toKey,
             weight: f.weight,
-            width: MobilityMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
-            clusterFrom: group.fromClusterId,
-            clusterTo: group.toClusterId,
           });
         });
-
-        // backward direction (clusterTo -> clusterFrom)
-        if (opposite) {
-          opposite.flows.forEach((f) => {
-            arrowSegments.push({
-              from: offsetB2,
-              to: offsetA2,
-              weight: f.weight,
-              width: MobilityMapUtils.getArrowWidth(f.weight, this.minWeight, this.maxWeight),
-              clusterFrom: group.toClusterId,
-              clusterTo: group.fromClusterId,
-            });
-          });
-        }
       });
 
-      // Sort by weight → draw thin first, heavy last
-      arrowSegments.sort((a, b) => a.weight - b.weight);
+      // ============================
+      // 2️⃣ Compute min/max for MERGED arrows
+      // ============================
+      let arrowMin = Infinity;
+      let arrowMax = -Infinity;
 
-      // Draw sorted
-      arrowSegments.forEach((seg) => {
-        this.drawArrowRect(
-          seg.from,
-          seg.to,
-          seg.width,
-          seg.clusterFrom,
-          seg.clusterTo,
+      Object.values(mergedArrows).forEach((seg) => {
+        if (seg.weight < arrowMin) arrowMin = seg.weight;
+        if (seg.weight > arrowMax) arrowMax = seg.weight;
+      });
+
+      if (!Number.isFinite(arrowMin) || !Number.isFinite(arrowMax)) {
+        arrowMin = arrowMax = 0;
+      }
+
+      // ============================
+      // 3️⃣ Compute final widths (using merged range)
+      // ============================
+      Object.values(mergedArrows).forEach((seg) => {
+        seg.width = MobilityMapUtils.getArrowWidth(
           seg.weight,
-          minW,
-          maxW,
+          arrowMin, // ✅ merged min
+          arrowMax, // ✅ merged max
+          seg.rawPairs,
         );
       });
 
-      // Draw cluster dots
+      // ============================
+      // 3️⃣ Apply bidirectional spacing
+      // ============================
+      Object.values(mergedArrows).forEach((seg) => {
+        const oppositeKey = `${seg.toCluster}->${seg.fromCluster}`;
+        const opposite = mergedArrows[oppositeKey];
+
+        const A = seg.start;
+        const B = seg.end;
+
+        const comp = MobilityMapUtils.CONFIG.sizes.arrowPaddingCompensation;
+
+        const thisHalf = seg.width * comp;
+        const oppositeHalf = opposite ? opposite.width * comp : 0;
+
+        const offset = thisHalf + oppositeHalf + baseSpacing;
+
+        const { offsetA1, offsetB1 } = MobilityMapUtils.computeOffsets(A, B, offset);
+
+        seg.from = offsetA1;
+        seg.to = offsetB1;
+      });
+
+      const finalSegments = Object.values(mergedArrows);
+
+      // ============================
+      // 4️⃣ Draw arrows
+      // ============================
+      finalSegments
+        .sort((a, b) => a.width - b.width) // thin first, thick last
+        .forEach((seg) => {
+          this.drawArrowRect(
+            seg.from,
+            seg.to,
+            seg.width,
+            seg.fromCluster,
+            seg.toCluster,
+            seg.weight,
+            arrowMin,
+            arrowMax,
+            seg.rawPairs,
+          );
+        });
+
+      // ============================
+      // 5️⃣ Draw clusters
+      // ============================
       this.clusterDefs.forEach((c) => {
         const p = clusterPixels[c.id];
         if (!p) return;
 
-        const radius = c.radius;
-
         ctx.beginPath();
-        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, c.radius, 0, Math.PI * 2);
         ctx.fillStyle = MobilityMapUtils.CONFIG.colors.dot.fill;
         ctx.fill();
         ctx.lineWidth = 2;
@@ -445,9 +478,9 @@ const MobilityMap = Vue.defineComponent({
 
         this.dotShapes.push({
           center: { x: p.x, y: p.y },
-          radius,
+          radius: c.radius,
           key: c.memberIds.join(','),
-          clusterId: c.id
+          clusterId: c.id,
         });
       });
     },
@@ -455,7 +488,7 @@ const MobilityMap = Vue.defineComponent({
     /* =============================================
      ARROW DRAWING (per arrow, used by drawFrame)
     ============================================= */
-    drawArrowRect(p1, p2, width, clusterFrom, clusterTo, weight, minW, maxW) {
+    drawArrowRect(p1, p2, width, clusterFrom, clusterTo, weight, minW, maxW, rawPairs = []) {
       const ctx = this.ctx;
 
       const dx = p2.x - p1.x;
@@ -517,6 +550,9 @@ const MobilityMap = Vue.defineComponent({
         width,
         clusterFrom,
         clusterTo,
+
+        // 👇 this is new
+        rawPairs,
       });
     },
 
@@ -599,7 +635,6 @@ const MobilityMap = Vue.defineComponent({
 
       for (const dot of this.dotShapes) {
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
-
           const cluster = this.clusterDefs[dot.clusterId];
           if (!cluster) return;
 
@@ -666,26 +701,39 @@ const MobilityMap = Vue.defineComponent({
 
       // Check ARROWS if no dot match
       if (!hovering) {
-        for (const arrow of this.arrowShapes) {
+        // ✅ Check thick arrows first
+        for (let i = this.arrowShapes.length - 1; i >= 0; i--) {
+          const arrow = this.arrowShapes[i];
+
           if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow)) {
             hovering = true;
 
-            const { clusterFrom, clusterTo } = arrow;
-            const { total, fromMembers, toMembers } = this.getClusterArrowDetails(
-              clusterFrom,
-              clusterTo,
-            );
+            const pairs = arrow.rawPairs || [];
 
-            const fromNames = fromMembers.map((id) => this.points[id]?.label || id);
-            const toNames = toMembers.map((id) => this.points[id]?.label || id);
+            if (pairs.length === 1) {
+              const pair = pairs[0];
+              this.tooltip.type = 'arrow';
+              this.tooltip.data = {
+                title: this.translations.flowDetails_,
+                from: this.points[pair.fromId]?.label,
+                to: this.points[pair.toId]?.label,
+                total: pair.weight,
+                mode: 'direct',
+              };
+            } else {
+              const fromNames = [...new Set(pairs.map((p) => this.points[p.fromId]?.label))];
+              const toNames = [...new Set(pairs.map((p) => this.points[p.toId]?.label))];
+              const total = pairs.reduce((sum, p) => sum + p.weight, 0);
 
-            this.tooltip.type = 'arrow';
-            this.tooltip.data = {
-              title: this.translations.flowDetails_,
-              from: MobilityMapUtils.tooltipCityNames(fromNames),
-              to: MobilityMapUtils.tooltipCityNames(toNames),
-              total,
-            };
+              this.tooltip.type = 'arrow';
+              this.tooltip.data = {
+                title: this.translations.flowDetails_,
+                from: MobilityMapUtils.tooltipCityNames(fromNames),
+                to: MobilityMapUtils.tooltipCityNames(toNames),
+                total,
+                mode: 'clustered',
+              };
+            }
 
             break;
           }
@@ -700,8 +748,8 @@ const MobilityMap = Vue.defineComponent({
         const container = this.$refs.mapContainer;
         const mapRect = container.getBoundingClientRect();
 
-        const tooltipWidth = 220;   // same as your v-card width
-        const tooltipHeight = 110;  // approx height of your tooltip
+        const tooltipWidth = 220; // same as your v-card width
+        const tooltipHeight = 110; // approx height of your tooltip
         const padding = 12;
 
         let x = p.x + padding;
@@ -736,10 +784,7 @@ const MobilityMap = Vue.defineComponent({
       this.rebuildShapes();
     },
 
-    zoomToFlows({
-      padding = 40,
-      maxZoom = 12,
-    } = {}) {
+    zoomToFlows({ padding = 40, maxZoom = 12 } = {}) {
       if (!this.map || !this.currentFlows?.length) return;
 
       const points = [];
@@ -758,22 +803,11 @@ const MobilityMap = Vue.defineComponent({
       if (!bounds.isValid()) return;
 
       // ✅ Normalize missing keys safely
-      const {
-        top = 0,
-        right = 0,
-        bottom = 0,
-        left = 0,
-      } = this.viewportPadding || {};
+      const { top = 0, right = 0, bottom = 0, left = 0 } = this.viewportPadding || {};
 
       this.map.fitBounds(bounds, {
-        paddingTopLeft: [
-          left + padding,
-          top + padding,
-        ],
-        paddingBottomRight: [
-          right + padding,
-          bottom + padding,
-        ],
+        paddingTopLeft: [left + padding, top + padding],
+        paddingBottomRight: [right + padding, bottom + padding],
         maxZoom,
         animate: true,
         duration: 0.6,
