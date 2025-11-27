@@ -4896,7 +4896,7 @@ def api_users() -> Response:
         - page: Page number (default: 1)
         - per_page: Items per page (default: PER_PAGE)
         - q: Search term (searches username, email, name)
-        - active: Filter by account status (true/false)
+        - status: Filter by account status (active/suspended/disabled)
         - twoFactor: Filter by 2FA status (true/false)
         - roles: Comma-separated role IDs for filtering (use 0 for users without roles)
 
@@ -4906,7 +4906,7 @@ def api_users() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
     q = request.args.get("q")
-    active = request.args.get("active")
+    status = request.args.get("status")
     two_factor = request.args.get("twoFactor")
     roles = request.args.get("roles")
 
@@ -4924,9 +4924,12 @@ def api_users() -> Response:
         )
 
     # Account status filter
-    if active is not None:
-        is_active = active.lower() == "true"
-        query.append(User.active == is_active)
+    if status is not None:
+        try:
+            status_enum = UserStatus(status)
+            query.append(User.status == status_enum)
+        except ValueError:
+            pass  # Invalid status value, skip filter
 
     # 2FA status filter
     if two_factor is not None:
