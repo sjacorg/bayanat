@@ -232,7 +232,7 @@ const ActorSearchBox = Vue.defineComponent({
               <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opTags" color="primary"
                             class="me-4"></v-checkbox>
-                <v-checkbox label="Exact Match" v-model="q.inExact" color="primary"
+                <v-checkbox :label="translations.exactMatch_" v-model="q.inExact" color="primary"
                             class="me-4"></v-checkbox>
               </div>
 
