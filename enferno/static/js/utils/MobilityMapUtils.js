@@ -217,7 +217,7 @@ const MobilityMapUtils = {
     const flowMap = new Map();
 
     // 2. Build locations
-    sorted.forEach((event) => {
+    sorted.forEach((event, index) => {
       const loc = event.location;
       if (!loc) return;
 
@@ -226,14 +226,46 @@ const MobilityMapUtils = {
       if (!locationMap.has(id)) {
         locationMap.set(id, {
           id,
-          name: loc.full_location || loc.title,
+          title: loc.title,
+          title_ar: loc.title_ar,
+
+          // ✅ This is what your tooltip uses
+          full_string: loc.full_location || loc.full_string,
+
           lat: loc.latlng?.lat ?? loc.lat,
           lon: loc.latlng?.lng ?? loc.lng,
+
+          parent: loc.parent,
           total_events: 0,
+
+          events: [],
         });
       }
 
-      locationMap.get(id).total_events += 1;
+      const entry = locationMap.get(id);
+      entry.total_events += 1;
+
+      entry.events.push({
+        eventId: event.id,
+
+        // For your "#1, #2, #3…" display
+        number: index + 1,
+
+        title: event.title,
+
+        // ✅ Matches tooltip Expectation
+        eventType: event.eventtype?.title || null,
+
+        // ✅ Match naming used later
+        from_date: event.from_date,
+        to_date: event.to_date,
+
+        estimated: Boolean(event.estimated),
+        main: Boolean(event.main),
+
+        // ✅ Parent shown in tooltip
+        parentId: loc.parent?.id ?? null,
+      });
     });
 
     // 3. Build flows

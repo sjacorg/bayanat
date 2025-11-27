@@ -7,6 +7,7 @@ const MobilityMap = Vue.defineComponent({
       default: () => ({}),
     },
     disableClustering: { type: Boolean, default: false },
+    mode: { type: String, default: () => null }
   },
 
   data() {
@@ -320,7 +321,7 @@ const MobilityMap = Vue.defineComponent({
         map: this.map,
         minWeight: this.minWeight,
         maxWeight: this.maxWeight,
-        disableClustering: this.disableClustering
+        disableClustering: this.disableClustering,
       });
 
       this.clusterDefs = result.clusters;
@@ -549,44 +550,44 @@ const MobilityMap = Vue.defineComponent({
     ============================================= */
 
     getClusterTraffic(targetCluster) {
-  let outgoing = 0;
-  let incoming = 0;
+      let outgoing = 0;
+      let incoming = 0;
 
-  const targetMembers = new Set(targetCluster.memberIds);
+      const targetMembers = new Set(targetCluster.memberIds);
 
-  // ✅ No selection → show full totals
-  if (!this.selectedPoint) {
-    this.currentFlows.forEach((f) => {
-      if (targetMembers.has(f.from)) outgoing += f.weight;
-      if (targetMembers.has(f.to)) incoming += f.weight;
-    });
+      // ✅ No selection → show full totals
+      if (!this.selectedPoint) {
+        this.currentFlows.forEach((f) => {
+          if (targetMembers.has(f.from)) outgoing += f.weight;
+          if (targetMembers.has(f.to)) incoming += f.weight;
+        });
 
-    return { outgoing, incoming };
-  }
+        return { outgoing, incoming };
+      }
 
-  // ✅ Selection active → only flows involving the selected cluster
-  if (this.selectedPoint.type === 'cluster') {
-    const selectedMembers = new Set(this.selectedPoint.memberIds);
+      // ✅ Selection active → only flows involving the selected cluster
+      if (this.selectedPoint.type === 'cluster') {
+        const selectedMembers = new Set(this.selectedPoint.memberIds);
 
-    this.currentFlows.forEach((f) => {
-      const fromInSelected = selectedMembers.has(f.from);
-      const toInSelected = selectedMembers.has(f.to);
+        this.currentFlows.forEach((f) => {
+          const fromInSelected = selectedMembers.has(f.from);
+          const toInSelected = selectedMembers.has(f.to);
 
-      const fromInTarget = targetMembers.has(f.from);
-      const toInTarget = targetMembers.has(f.to);
+          const fromInTarget = targetMembers.has(f.from);
+          const toInTarget = targetMembers.has(f.to);
 
-      // Flow from selected → target
-      if (fromInSelected && toInTarget) outgoing += f.weight;
+          // Flow from selected → target
+          if (fromInSelected && toInTarget) outgoing += f.weight;
 
-      // Flow from target → selected
-      if (fromInTarget && toInSelected) incoming += f.weight;
-    });
+          // Flow from target → selected
+          if (fromInTarget && toInSelected) incoming += f.weight;
+        });
 
-    return { outgoing, incoming };
-  }
+        return { outgoing, incoming };
+      }
 
-  return { outgoing: 0, incoming: 0 };
-},
+      return { outgoing: 0, incoming: 0 };
+    },
     getClusterTraffic(input) {
       let outgoing = 0;
       let incoming = 0;
@@ -658,6 +659,7 @@ const MobilityMap = Vue.defineComponent({
     ============================================= */
     onMapClick(e) {
       if (this.morphing) return;
+      if (this.mode === 'actor') return;
       const p = this.map.latLngToContainerPoint(e.latlng);
 
       for (const dot of this.dotShapes) {
@@ -690,6 +692,29 @@ const MobilityMap = Vue.defineComponent({
       }
     },
 
+    copyCoordinates() {
+      const { lat, lon } = this.tooltip.data;
+
+      const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+
+      navigator.clipboard.writeText(text)
+        .then(() => this.$root?.showSnack?.(this.translations.copiedToClipboard_))
+        .catch(() => this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_));
+    },
+
+    formatTooltipDate(dateStr) {
+      if (!dateStr) return '';
+
+      const isMidnight = dateStr.includes('T00:00');
+
+      return this.$root.formatDate(
+        dateStr,
+        isMidnight
+          ? this.$root.dateFormats.standardDate
+          : this.$root.dateFormats.standardDatetime
+      );
+    },
+
     onMapHover(e) {
       if (!this.map || !this.canvas) return;
 
@@ -701,27 +726,63 @@ const MobilityMap = Vue.defineComponent({
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
 
-          const ids = dot.key.split(',').map(Number);
-          const names = ids.map((id) => this.points[id]?.label || id);
+          if (this.mode === 'actor') {
+            const locationIds = dot.key.split(',').map(Number);
+            const locId = locationIds[0];
 
-          let outgoing = 0;
-          let incoming = 0;
+            const loc = this.locations.find(l => l.id === locId);
+            if (!loc) return;
 
-          ids.forEach((id) => {
-            const cluster = this.clusterDefs[dot.clusterId];
-            const traffic = this.getClusterTraffic(cluster);
+            const event = loc.events?.[loc.events.length - 1] || {};
 
-            outgoing = traffic.outgoing;
-            incoming = traffic.incoming;
-          });
+            this.tooltip.type = 'event';
+            this.tooltip.data = {
+              // Title / Identity
+              title: loc.title || '',
+              number: event?.number ?? null,
+              parentId: event?.parentId ?? null,  // let UI decide to hide, not force "—"
 
-          this.tooltip.type = 'dot';
-          this.tooltip.data = {
-            title: this.translations.locationDetails_,
-            name: MobilityMapUtils.tooltipCityNames(names),
-            totalIn: incoming,
-            totalOut: outgoing,
-          };
+              // Coordinates (keep naming consistent)
+              lat: Number.isFinite(loc.lat) ? loc.lat : null,
+              lon: Number.isFinite(loc.lon) ? loc.lon : null,
+
+              // Location display
+              displayName: loc.full_string || '',
+
+              // Event type label
+              eventType: event?.eventtype?.title || event?.eventType || '',
+
+              // Dates
+              fromDate: event?.from_date || null,
+              toDate: event?.to_date || null,
+
+              // Flags
+              estimated: Boolean(event?.estimated),
+              main: Boolean(event?.main),
+            };
+          } else {
+            const ids = dot.key.split(',').map(Number);
+            const names = ids.map((id) => this.points[id]?.label || id);
+
+            let outgoing = 0;
+            let incoming = 0;
+
+            ids.forEach((id) => {
+              const cluster = this.clusterDefs[dot.clusterId];
+              const traffic = this.getClusterTraffic(cluster);
+
+              outgoing = traffic.outgoing;
+              incoming = traffic.incoming;
+            });
+
+            this.tooltip.type = 'dot';
+            this.tooltip.data = {
+              title: this.translations.locationDetails_,
+              name: MobilityMapUtils.tooltipCityNames(names),
+              totalIn: incoming,
+              totalOut: outgoing,
+            };
+          }
 
           break;
         }
@@ -860,20 +921,105 @@ const MobilityMap = Vue.defineComponent({
       <v-card
         v-if="tooltip.visible && tooltip.data"
         class="position-absolute pa-3"
-        style="width: 220px; zIndex: 9999; border-radius: 10px;"
+        style="max-width: 328px; zIndex: 9999; border-radius: 10px;"
         :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         elevation="4"
       >
+        <!-- EVENT TOOLTIP -->
+        <template v-if="tooltip.type === 'event'">
+          <div class="d-flex flex-column ga-1 text-caption">
 
-        <!-- Title -->
-        <div class="text-subtitle-2 font-weight-bold mb-1">
-          {{ tooltip.data.title }}
-        </div>
+            <!-- HEADER ROW: number + parent + event type -->
+            <div class="d-flex align-center">
 
-        <v-divider class="mb-2"></v-divider>
+              <!-- Number -->
+              <div v-if="tooltip.data.number" class="d-flex align-center">
+                #{{ tooltip.data.number }}
+              </div>
+
+              <!-- Parent ID -->
+              <div v-if="tooltip.data.parentId && tooltip.data.parentId !== '—'" class="d-flex align-center">
+                <v-icon size="16" class="mr-1">mdi-link</v-icon>
+                {{ tooltip.data.parentId }}
+              </div>
+
+              <!-- Event Type -->
+              <div v-if="tooltip.data.eventType" class="d-flex align-center">
+                <v-icon size="16" class="mr-1">mdi-calendar-range</v-icon>
+                {{ tooltip.data.eventType }}
+              </div>
+            </div>
+
+            <!-- EVENT TITLE -->
+            <h4>
+              {{ tooltip.data.title || '' }}
+            </h4>
+
+            <!-- LOCATION LINE -->
+            <div class="d-flex align-center">
+              <v-icon size="18" class="mr-1">mdi-map-marker-outline</v-icon>
+
+              {{ tooltip.data.displayName || '' }}
+
+              <!-- COPY COORDINATES BUTTON -->
+              <v-btn
+                v-if="Number.isFinite(tooltip.data.lat) && Number.isFinite(tooltip.data.lon)"
+                icon
+                size="x-small"
+                class="ml-1"
+                :title="translations.copyCoordinates_"
+                @click="copyCoordinates"
+              >
+                <v-icon size="16">mdi-content-copy</v-icon>
+              </v-btn>
+            </div>
+
+            <!-- MAIN INCIDENT FLAG -->
+            <div v-if="tooltip.data.main">
+              {{ translations.mainIncident_ }}
+            </div>
+
+            <!-- DATE ROW -->
+            <div v-if="tooltip.data.fromDate || tooltip.data.toDate" class="d-flex align-center">
+
+              <!-- Estimated / Exact Icon -->
+              <v-icon
+                size="16"
+                class="mr-1"
+                :title="tooltip.data.estimated 
+                  ? translations.timingForThisEventIsEstimated_ 
+                  : ''"
+              >
+                {{ tooltip.data.estimated ? 'mdi-calendar-question' : 'mdi-calendar-clock' }}
+              </v-icon>
+
+              <!-- FROM DATE -->
+              <span v-if="tooltip.data.fromDate" class="chip mr-1">
+                {{ formatTooltipDate(tooltip.data.fromDate) }}
+              </span>
+
+              <!-- ARROW -->
+              <v-icon v-if="tooltip.data.fromDate && tooltip.data.toDate" size="14" class="mr-1">
+                mdi-arrow-right
+              </v-icon>
+
+              <!-- TO DATE -->
+              <span v-if="tooltip.data.toDate" class="chip">
+                {{ formatTooltipDate(tooltip.data.toDate) }}
+              </span>
+            </div>
+
+          </div>
+        </template>
 
         <!-- DOT TOOLTIP -->
         <template v-if="tooltip.type === 'dot'">
+          <div class="text-subtitle-2 font-weight-bold mb-1">
+            {{ tooltip.data.title }}
+          </div>
+
+          <v-divider class="mb-2"></v-divider>
+
           <div class="text-subtitle-2 font-weight-bold">
             {{ translations.name_ }}
           </div>
@@ -896,6 +1042,12 @@ const MobilityMap = Vue.defineComponent({
 
         <!-- ARROW TOOLTIP -->
         <template v-if="tooltip.type === 'arrow'">
+          <div class="text-subtitle-2 font-weight-bold mb-1">
+            {{ tooltip.data.title }}
+          </div>
+
+          <v-divider class="mb-2"></v-divider>
+
           <div class="text-subtitle-2 font-weight-bold">
             {{ translations.origin_ }}
           </div>

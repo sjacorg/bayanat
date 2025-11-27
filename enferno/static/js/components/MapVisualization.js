@@ -296,6 +296,7 @@ const MapVisualization = Vue.defineComponent({
           class="w-100 h-100"
           :viewport-padding="{ right: entities.drawer ? 398 : 0, top: 64 }"
           :disable-clustering="Boolean(entities.selected)"
+          :mode="Boolean(entities.selected) ? 'actor' : null"
         />
 
         <!-- LOADING OVERLAY -->
