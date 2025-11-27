@@ -96,22 +96,19 @@ const MobilityMapUtils = {
   },
 
   // Hit test for arrow segments
-  pointOnArrow(x, y, a) {
-    const dx = a.pTip.x - a.pStart.x;
-    const dy = a.pTip.y - a.pStart.y;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (!len) return false;
+  pointOnArrow(px, py, arrow, ctx) {
+    // Convert world point into arrow local space
+    const dx = px - arrow.origin.x;
+    const dy = py - arrow.origin.y;
 
-    const ux = dx / len;
-    const uy = dy / len;
-    const px = x - a.pStart.x;
-    const py = y - a.pStart.y;
+    const cos = Math.cos(-arrow.angle);
+    const sin = Math.sin(-arrow.angle);
 
-    const proj = px * ux + py * uy;
-    if (proj < 0 || proj > len) return false;
+    // Rotate point backwards
+    const localX = dx * cos - dy * sin;
+    const localY = dx * sin + dy * cos;
 
-    const perp = Math.abs(-uy * px + ux * py);
-    return perp <= a.width / 2 + 4;
+    return ctx.isPointInPath(arrow.hitPath, localX, localY);
   },
 
   // Returns arrow color based on weight range

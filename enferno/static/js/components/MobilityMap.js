@@ -496,63 +496,49 @@ const MobilityMap = Vue.defineComponent({
       const len = Math.sqrt(dx * dx + dy * dy);
       if (len === 0) return;
 
+      const angle = Math.atan2(dy, dx);
+
       const tipW = Math.max(width * 6, 25);
       const bodyLen = Math.max(len - tipW, 0);
-      const angle = Math.atan2(dy, dx);
       const overlap = 1;
+
+      // ✅ Build arrow as a Path2D
+      const path = new Path2D();
+
+      path.moveTo(0, -width / 2);
+      path.lineTo(bodyLen, -width / 2);
+      path.lineTo(bodyLen + tipW, -width / 2);
+      path.lineTo(bodyLen - overlap, width + 10);
+      path.lineTo(bodyLen - overlap, width / 2);
+      path.lineTo(0, width / 2);
+      path.closePath();
 
       ctx.save();
       ctx.translate(p1.x, p1.y);
       ctx.rotate(angle);
 
-      // --- Build arrow path as ONE shape ---
-      ctx.beginPath();
-
-      // Top body
-      ctx.moveTo(0, -width / 2);
-      ctx.lineTo(bodyLen, -width / 2);
-
-      // Tip top
-      ctx.lineTo(bodyLen + tipW, -width / 2);
-
-      // Tip bottom (your asymmetry)
-      ctx.lineTo(bodyLen - overlap, width + 10);
-
-      // Body bottom
-      ctx.lineTo(bodyLen - overlap, width / 2);
-      ctx.lineTo(0, width / 2);
-
-      ctx.closePath();
-
-      // --- Stroke shadow FIRST ---
+      // Stroke first
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(255,255,255,1)'; // your chosen shadow color
+      ctx.strokeStyle = 'rgba(255,255,255,1)';
       ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.stroke(path);
 
-      // --- Fill arrow ---
+      // Fill
       ctx.fillStyle = MobilityMapUtils.getArrowColor(weight, minW, maxW);
-      ctx.fill();
+      ctx.fill(path);
 
       ctx.restore();
 
-      // Tip point for hit-testing
-      const pTip = {
-        x: p1.x + Math.cos(angle) * (bodyLen + tipW),
-        y: p1.y + Math.sin(angle) * (bodyLen + tipW),
-      };
-
-      // Preserve your shape info
+      // ✅ Store actual shape for hit-testing
       this.arrowShapes.push({
-        pStart: p1,
-        pTip,
-        width,
+        origin: p1,
+        angle,
+        hitPath: path,
         clusterFrom,
         clusterTo,
-
-        // 👇 this is new
         rawPairs,
+        weight,
       });
     },
 
@@ -652,7 +638,7 @@ const MobilityMap = Vue.defineComponent({
 
       // 2️⃣ Arrow clicks
       for (const arrow of this.arrowShapes) {
-        if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow)) {
+        if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow, this.ctx)) {
           return;
         }
       }
@@ -705,7 +691,7 @@ const MobilityMap = Vue.defineComponent({
         for (let i = this.arrowShapes.length - 1; i >= 0; i--) {
           const arrow = this.arrowShapes[i];
 
-          if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow)) {
+          if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow, this.ctx)) {
             hovering = true;
 
             const pairs = arrow.rawPairs || [];
