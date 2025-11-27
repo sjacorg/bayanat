@@ -148,6 +148,13 @@ const BulletinSearchBox = Vue.defineComponent({
                   persistent-hint
               ></v-text-field>
 
+              <v-text-field
+                  class="mb-4"
+                  v-model="q.originid"
+                  :label="translations.originId_"
+                  clearable
+              ></v-text-field>
+
               <!-- Search terms -->
               <v-combobox
                   v-model="q.searchTerms"
@@ -178,13 +185,6 @@ const BulletinSearchBox = Vue.defineComponent({
                 <v-checkbox :label="translations.exactMatch_" v-model="q.exTermsExact" color="primary" class="me-4"></v-checkbox>
               </div>
               <!-- End terms -->
-
-              <v-text-field
-                  class="mb-4"
-                  v-model="q.originid"
-                  :label="translations.originId_"
-                  clearable
-              ></v-text-field>
               
               <template v-if="$root.isFieldActiveByName('tags', { entityType: 'bulletin' })">
               <v-combobox
