@@ -118,7 +118,7 @@ from enferno.tasks import (
     generate_graph,
     regenerate_locations,
 )
-from enferno.user.models import User, Role, Session
+from enferno.user.models import User, Role, Session, UserStatus
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.form_history_utils import record_form_history
@@ -5399,12 +5399,14 @@ def api_user_suspend(id: int) -> Response:
     if not user:
         return HTTPResponse.not_found("User not found")
 
-    if not user.active:
-        return HTTPResponse.success(message="User is already suspended or disabled")
+    if user.status == UserStatus.SUSPENDED:
+        return HTTPResponse.success(message="User is already suspended")
 
-    user.active = False
+    if user.status == UserStatus.DISABLED:
+        return HTTPResponse.bad_request("Cannot suspend a disabled user. Enable first.")
+
+    user.set_status(UserStatus.SUSPENDED)
     user.save()
-    user.logout_other_sessions()
 
     Activity.create(
         current_user,
