@@ -5557,6 +5557,65 @@ def api_user_enable(id: int) -> Response:
     )
 
 
+@admin.post("/api/user/<int:id>/status")
+@roles_required("Admin")
+def api_user_set_status(id: int) -> Response:
+    """
+    Set user status. Unified endpoint for status changes.
+
+    Args:
+        - id: id of the user.
+
+    Returns:
+        - success/error response.
+    """
+    user = db.session.get(User, id)
+    if not user:
+        return HTTPResponse.not_found("User not found")
+
+    new_status = request.json.get("status") if request.json else None
+    if not new_status:
+        return HTTPResponse.error("Missing status field")
+    try:
+        status_enum = UserStatus(new_status)
+    except ValueError:
+        return HTTPResponse.error(
+            f"Invalid status: {new_status}. Must be: active, suspended, disabled"
+        )
+
+    if user.status == status_enum:
+        return HTTPResponse.success(message=f"User is already {new_status}")
+
+    # Disabled users must go through suspended first (to assign roles)
+    if user.status == UserStatus.DISABLED and status_enum == UserStatus.ACTIVE:
+        return HTTPResponse.error(
+            "Cannot activate disabled user directly. Set to 'suspended' first, assign roles, then activate."
+        )
+
+    old_status = user.status.value
+    try:
+        if user.status == UserStatus.DISABLED and status_enum == UserStatus.SUSPENDED:
+            # Enable: just set status directly (no roles to check)
+            user.status = UserStatus.SUSPENDED
+            user.active = False
+        else:
+            user.set_status(status_enum)
+        user.save()
+    except ValueError as e:
+        return HTTPResponse.error(str(e))
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details=f"status: {old_status} → {new_status}",
+    )
+
+    return HTTPResponse.success(message=f"User {user.username} is now {new_status}")
+
+
 @admin.delete("/api/user/<int:id>")
 @roles_required("Admin")
 def api_user_delete(
