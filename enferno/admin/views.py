@@ -5403,7 +5403,7 @@ def api_user_suspend(id: int) -> Response:
         return HTTPResponse.success(message="User is already suspended")
 
     if user.status == UserStatus.DISABLED:
-        return HTTPResponse.bad_request("Cannot suspend a disabled user. Enable first.")
+        return HTTPResponse.error("Cannot suspend a disabled user")
 
     user.set_status(UserStatus.SUSPENDED)
     user.save()
@@ -5442,14 +5442,17 @@ def api_user_reactivate(id: int) -> Response:
     if not user:
         return HTTPResponse.not_found("User not found")
 
-    if user.deleted:
-        return HTTPResponse.forbidden("Cannot reactivate a disabled user")
+    if user.status == UserStatus.DISABLED:
+        return HTTPResponse.error("Cannot reactivate a disabled user. Use enable instead.")
 
-    if user.active:
+    if user.status == UserStatus.ACTIVE:
         return HTTPResponse.success(message="User is already active")
 
-    user.active = True
-    user.save()
+    try:
+        user.set_status(UserStatus.ACTIVE)
+        user.save()
+    except ValueError as e:
+        return HTTPResponse.error(str(e))
 
     Activity.create(
         current_user,
