@@ -5488,21 +5488,11 @@ def api_user_disable(id: int) -> Response:
     if not user:
         return HTTPResponse.not_found("User not found")
 
-    if user.deleted:
+    if user.status == UserStatus.DISABLED:
         return HTTPResponse.success(message="User is already disabled")
 
-    user.active = False
-    user.deleted = True
-    user.roles = []
-    user.view_usernames = False
-    user.view_simple_history = False
-    user.view_full_history = False
-    user.can_self_assign = False
-    user.can_edit_locations = False
-    user.can_export = False
-    user.can_import_web = False
+    user.set_status(UserStatus.DISABLED)
     user.save()
-    user.logout_other_sessions()
 
     Activity.create(
         current_user,
