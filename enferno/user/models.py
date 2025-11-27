@@ -185,15 +185,26 @@ class User(UserMixin, db.Model, BaseMixin):
     email = db.Column(db.String(255), nullable=True)
     username = db.Column(db.String(255), nullable=True, unique=True)
     password = db.Column(db.String(255), nullable=False)
+
+    # User account status - single source of truth
+    status = db.Column(
+        db.Enum(UserStatus, values_callable=lambda x: [e.value for e in x]),
+        default=UserStatus.ACTIVE,
+        nullable=False,
+        index=True,
+    )
+
+    # DEPRECATED: Keep during migration, sync with status field
     active = db.Column(db.Boolean, default=False)
+
     roles = db.relationship(
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
     @property
     def is_active(self):
-        """User is active only if active flag is True AND user has at least one role."""
-        return self.active and bool(self.roles)
+        """Flask-Security requires this. User can login if status is ACTIVE and has roles."""
+        return self.status == UserStatus.ACTIVE and bool(self.roles)
 
     # email confirmation
     confirmed_at = db.Column(db.DateTime())
