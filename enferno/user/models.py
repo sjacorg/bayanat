@@ -442,11 +442,16 @@ class User(UserMixin, db.Model, BaseMixin):
         self.can_export = item.get("can_export", False)
         self.can_import_web = item.get("can_import_web", False)
 
-        # active field can only be set during creation (user has no id yet)
-        # For existing users, use dedicated endpoints: suspend, disable, reactivate, enable
+        # Status can only be set during creation (user has no id yet)
+        # For existing users, use set_status() or dedicated endpoints
         if not self.id:
-            # Default to True for new users, allow explicit override
-            self.active = item.get("active", True)
+            status_str = item.get("status", "active")
+            try:
+                self.status = UserStatus(status_str)
+            except ValueError:
+                self.status = UserStatus.ACTIVE
+            # Sync deprecated active field
+            self.active = self.status == UserStatus.ACTIVE
 
         return self
 
