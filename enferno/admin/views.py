@@ -5516,7 +5516,8 @@ def api_user_disable(id: int) -> Response:
 @roles_required("Admin")
 def api_user_enable(id: int) -> Response:
     """
-    Re-enable a disabled account.
+    Re-enable a disabled account. Sets status to SUSPENDED (not ACTIVE)
+    since roles were cleared on disable. Admin must assign roles then reactivate.
 
     Args:
         - id: id of the user to enable.
@@ -5528,11 +5529,12 @@ def api_user_enable(id: int) -> Response:
     if not user:
         return HTTPResponse.not_found("User not found")
 
-    if not user.deleted:
+    if user.status != UserStatus.DISABLED:
         return HTTPResponse.success(message="User is already enabled")
 
-    user.active = True
-    user.deleted = False
+    # Set to SUSPENDED, not ACTIVE - user has no roles after disable
+    user.status = UserStatus.SUSPENDED
+    user.active = False
     user.save()
 
     Activity.create(
@@ -5551,7 +5553,7 @@ def api_user_enable(id: int) -> Response:
     )
 
     return HTTPResponse.success(
-        message=f"User {user.username} enabled successfully. Admin must assign roles."
+        message=f"User {user.username} enabled. Assign roles and reactivate to restore access."
     )
 
 
