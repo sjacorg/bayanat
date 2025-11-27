@@ -289,18 +289,14 @@ const MobilityMap = Vue.defineComponent({
     rebuildShapes() {
       if (!this.map || !this.ctx) return;
 
-      const zoom = this.map.getZoom();
+      const flows = MobilityMapUtils.filterFlows(this.flows, this.selectedPoint);
+      if (this.selectedPoint && flows.length === 0) {
+        console.warn('Selection produced no flows, resetting filter');
+        this.selectedPoint = null;
 
-      // Only activate zoom collapse AFTER we have clusters
-      if (zoom < 4 && this.clusterDefs.length > 0) {
-        this.clusterDefs.forEach(c => {
-          c.radius = Math.max(c.radius * 0.7, 3);
-        });
-        this.drawFrame();
-        return;
+        return this.rebuildShapes(); // retry with no filter
       }
 
-      const flows = MobilityMapUtils.filterFlows(this.flows, this.selectedPoint);
       this.currentFlows = flows;
 
       this.dotShapes = [];
@@ -451,6 +447,7 @@ const MobilityMap = Vue.defineComponent({
           center: { x: p.x, y: p.y },
           radius,
           key: c.memberIds.join(','),
+          clusterId: c.id
         });
       });
     },
@@ -527,13 +524,25 @@ const MobilityMap = Vue.defineComponent({
      CLICK HANDLING HELPERS
     ============================================= */
 
-    getClusterTraffic(id) {
+    getClusterTraffic(input) {
       let outgoing = 0;
       let incoming = 0;
 
+      // Single location
+      if (typeof input === 'number') {
+        this.currentFlows.forEach((f) => {
+          if (f.from === input) outgoing += f.weight;
+          if (f.to === input) incoming += f.weight;
+        });
+        return { outgoing, incoming };
+      }
+
+      // Cluster
+      const memberSet = new Set(input.memberIds);
+
       this.currentFlows.forEach((f) => {
-        if (f.from == id) outgoing += f.weight;
-        if (f.to == id) incoming += f.weight;
+        if (memberSet.has(f.from)) outgoing += f.weight;
+        if (memberSet.has(f.to)) incoming += f.weight;
       });
 
       return { outgoing, incoming };
@@ -585,21 +594,21 @@ const MobilityMap = Vue.defineComponent({
      CLICK HANDLING
     ============================================= */
     onMapClick(e) {
+      if (this.morphing) return;
       const p = this.map.latLngToContainerPoint(e.latlng);
 
-      // Try dots first
       for (const dot of this.dotShapes) {
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
-          const ids = dot.key.split(',').map(Number);
-          this.selectedPoint = ids[0];
 
-          let outgoing = 0;
-          let incoming = 0;
-          ids.forEach((id) => {
-            const t = this.getClusterTraffic(id);
-            outgoing += t.outgoing;
-            incoming += t.incoming;
-          });
+          const cluster = this.clusterDefs[dot.clusterId];
+          if (!cluster) return;
+
+          // NEW: select cluster instead of random member
+          this.selectedPoint = {
+            type: 'cluster',
+            clusterId: dot.clusterId,
+            memberIds: cluster.memberIds,
+          };
 
           this.rebuildShapes();
           return;
@@ -637,9 +646,10 @@ const MobilityMap = Vue.defineComponent({
           let incoming = 0;
 
           ids.forEach((id) => {
-            const t = this.getClusterTraffic(id);
-            outgoing += t.outgoing;
-            incoming += t.incoming;
+            const cluster = this.clusterDefs[dot.clusterId];
+            const traffic = this.getClusterTraffic(cluster);
+            outgoing += traffic.outgoing;
+            incoming += traffic.incoming;
           });
 
           this.tooltip.type = 'dot';

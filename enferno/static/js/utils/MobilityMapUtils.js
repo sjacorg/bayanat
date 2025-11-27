@@ -38,7 +38,7 @@ const MobilityMapUtils = {
     },
 
     sizes: {
-      bidirectionalArrowSpacing: 4,
+      bidirectionalArrowSpacing: 3,
       arrowWidths: [2, 5, 8, 13, 18],
       dotSizes: [6, 9, 12, 15, 18, 22],
     },
@@ -287,9 +287,23 @@ const MobilityMapUtils = {
 
   if (!selectedPoint) return base;
 
-  return base.filter(
-    f => f.from === selectedPoint || f.to === selectedPoint
-  );
+  // Single location
+  if (typeof selectedPoint === 'number') {
+    return base.filter(
+      f => f.from === selectedPoint || f.to === selectedPoint
+    );
+  }
+
+  // Cluster selection
+  if (selectedPoint.type === 'cluster') {
+    const members = new Set(selectedPoint.memberIds);
+
+    return base.filter(
+      f => members.has(f.from) || members.has(f.to)
+    );
+  }
+
+  return base;
 },
 buildClusters({ points, flows, map, minWeight, maxWeight }) {
   const clusterDefs = [];
@@ -310,9 +324,6 @@ buildClusters({ points, flows, map, minWeight, maxWeight }) {
     locationTraffic[f.to]   = (locationTraffic[f.to]   || 0) + f.weight;
   });
 
-  // ---- Compute cluster traffic range ----
-const clusterTotals = [];
-
   // ---- Project points to pixels ----
   const pixels = {};
   for (const id in points) {
@@ -322,11 +333,12 @@ const clusterTotals = [];
   // ---- Raw clustering ----
   const rawClusters = MobilityMapUtils.clusterPoints(pixels);
 
-  // ---- Build cluster objects ----
+  // ---- Pass 1: build cluster objects + collect totals ----
+  const clusterTotals = [];
+
   rawClusters.forEach((c, index) => {
     const memberIds = c.keys.map(k => Number(k));
 
-    // Center in lat/lon
     let sumLat = 0;
     let sumLon = 0;
     let count = 0;
@@ -342,34 +354,44 @@ const clusterTotals = [];
     const centerLat = count ? sumLat / count : 0;
     const centerLon = count ? sumLon / count : 0;
 
-    // Cluster traffic total
+    // Cluster traffic total (can be 0 if no in/out)
     let clusterTotal = 0;
     memberIds.forEach((id) => {
       clusterTotal += locationTraffic[id] || 0;
     });
 
     clusterTotals.push(clusterTotal);
-    const clusterMin = Math.min(...clusterTotals);
-    const clusterMax = Math.max(...clusterTotals);
-
-    // Radius scaling
-    const radius = MobilityMapUtils.getClusterRadius(
-      clusterTotal,
-      clusterMin,
-      clusterMax
-    );
 
     clusterDefs.push({
       id: index,
       memberIds,
       centerLat,
       centerLon,
-      radius,
+      traffic: clusterTotal, // temp, for radius calc
+      radius: 0,             // will be set in pass 2
     });
 
     memberIds.forEach((id) => {
       clusterByLocationId[id] = index;
     });
+  });
+
+  // ---- Pass 2: compute global min/max and assign radius ----
+  let clusterMin = 0;
+  let clusterMax = 0;
+
+  if (clusterTotals.length) {
+    clusterMin = Math.min(...clusterTotals);
+    clusterMax = Math.max(...clusterTotals);
+  }
+
+  clusterDefs.forEach((c) => {
+    c.radius = MobilityMapUtils.getClusterRadius(
+      c.traffic,
+      clusterMin,
+      clusterMax
+    );
+    delete c.traffic; // no longer needed
   });
 
   // ---- Group flows by cluster pairs ----
