@@ -259,6 +259,40 @@ class User(UserMixin, db.Model, BaseMixin):
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         rds.delete(key)
 
+    def set_status(self, new_status: UserStatus) -> None:
+        """
+        Set user status with validation and side effects.
+
+        Args:
+            new_status: The new UserStatus to set.
+
+        Raises:
+            ValueError: If trying to activate a user without roles.
+        """
+        if new_status == UserStatus.ACTIVE and not self.roles:
+            raise ValueError("Cannot activate user without roles")
+
+        old_status = self.status
+        self.status = new_status
+
+        # Sync deprecated active field
+        self.active = new_status == UserStatus.ACTIVE
+
+        # Side effects based on new status
+        if new_status == UserStatus.DISABLED:
+            self.roles = []
+            self.view_usernames = False
+            self.view_simple_history = False
+            self.view_full_history = False
+            self.can_self_assign = False
+            self.can_edit_locations = False
+            self.can_export = False
+            self.can_import_web = False
+            self.logout_other_sessions()
+        elif old_status != new_status:
+            # Logout on any status change (suspend or reactivate)
+            self.logout_other_sessions()
+
     def roles_in(self, roles: list) -> bool:
         chk = [self.has_role(r) for r in roles]
         return any(chk)
