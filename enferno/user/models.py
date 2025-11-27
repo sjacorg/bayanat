@@ -1,3 +1,4 @@
+import enum
 import json
 from typing import Any, Dict
 from datetime import datetime
@@ -21,6 +22,14 @@ from enferno.utils.logging_utils import get_logger
 SECURITY_KEY_NAMESPACE = "security:user"
 
 logger = get_logger()
+
+
+class UserStatus(str, enum.Enum):
+    """User account status enum."""
+
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    DISABLED = "disabled"
 
 
 class MutableList(Mutable, list):
