@@ -309,7 +309,7 @@ const MobilityMapUtils = {
 
     return base;
   },
-  buildClusters({ points, flows, map, minWeight, maxWeight }) {
+  buildClusters({ points, flows, map, minWeight, maxWeight, disableClustering }) {
     const clusterDefs = [];
     const clusterByLocationId = {};
     const flowGroups = {};
@@ -335,7 +335,20 @@ const MobilityMapUtils = {
     }
 
     // ---- Raw clustering ----
-    const rawClusters = MobilityMapUtils.clusterPoints(pixels);
+    let rawClusters;
+    if (disableClustering) {
+      rawClusters = Object.keys(pixels).map((key) => {
+        const p = pixels[key];
+
+        return {
+          keys: [key],
+          x: p.x,
+          y: p.y,
+        };
+      });
+    } else {
+      rawClusters = MobilityMapUtils.clusterPoints(pixels, locationTraffic);
+    }
 
     // ---- Pass 1: build cluster objects + collect totals ----
     const clusterTotals = [];

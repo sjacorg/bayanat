@@ -295,6 +295,7 @@ const MapVisualization = Vue.defineComponent({
           :flows="selectedEntityMapData?.flows || flows"
           class="w-100 h-100"
           :viewport-padding="{ right: entities.drawer ? 398 : 0, top: 64 }"
+          :disable-clustering="Boolean(entities.selected)"
         />
 
         <!-- LOADING OVERLAY -->

@@ -6,6 +6,7 @@ const MobilityMap = Vue.defineComponent({
       type: Object,
       default: () => ({}),
     },
+    disableClustering: { type: Boolean, default: false },
   },
 
   data() {
@@ -319,6 +320,7 @@ const MobilityMap = Vue.defineComponent({
         map: this.map,
         minWeight: this.minWeight,
         maxWeight: this.maxWeight,
+        disableClustering: this.disableClustering
       });
 
       this.clusterDefs = result.clusters;
