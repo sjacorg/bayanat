@@ -514,8 +514,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "id": self.id,
             "name": self.secure_name,
             "username": self.secure_username,
-            "active": self.active,
-            "deleted": self.deleted,
+            "status": self.status.value,
         }
 
     def to_dict(self) -> dict:
@@ -528,8 +527,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "google_id": self.google_id,
             "email": self.secure_email,
             "username": self.secure_username,
-            "active": self.active,
-            "deleted": self.deleted,
+            "status": self.status.value,
             "roles": [role.to_dict() for role in self.roles],
             "view_usernames": self.view_usernames,
             "view_simple_history": self.view_simple_history,
