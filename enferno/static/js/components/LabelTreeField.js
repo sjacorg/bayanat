@@ -28,7 +28,6 @@ const LabelTreeField = Vue.defineComponent({
 
       items: [],
       flatItems: [],
-      opened: [],
       internalSelected: [],
     };
   },
@@ -212,7 +211,6 @@ const LabelTreeField = Vue.defineComponent({
             class="text-medium-emphasis"
             density="compact"
             v-model:selected="internalSelected"
-            v-model:opened="opened"
             :items="displayedItems"
             item-value="id"
             item-title="title"
