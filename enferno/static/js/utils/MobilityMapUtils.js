@@ -229,7 +229,6 @@ const MobilityMapUtils = {
           title: loc.title,
           title_ar: loc.title_ar,
 
-          // ✅ This is what your tooltip uses
           full_string: loc.full_location || loc.full_string,
 
           lat: loc.latlng?.lat ?? loc.lat,

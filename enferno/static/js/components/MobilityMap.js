@@ -267,7 +267,7 @@ const MobilityMap = Vue.defineComponent({
       this.locations.forEach((loc) => {
         this.points[loc.id] = {
           latlng: L.latLng(loc.lat, loc.lon),
-          label: loc.name,
+          label: loc.name ?? loc.full_string,
         };
       });
     },
@@ -385,13 +385,19 @@ const MobilityMap = Vue.defineComponent({
         }
 
         group.flows.forEach((f) => {
-          mergedArrows[key].weight += f.weight;
-          mergedArrows[key].rawPairs.push({
-            fromId: f.fromKey,
-            toId: f.toKey,
-            weight: f.weight,
-          });
+        // Support both normal and event flow structure
+        const fromId = f.fromKey ?? f.from ?? f.origin;
+        const toId = f.toKey ?? f.to ?? f.dest;
+        const weight = f.weight ?? f.count ?? 1;
+
+        mergedArrows[key].weight += weight;
+
+        mergedArrows[key].rawPairs.push({
+          fromId,
+          toId,
+          weight,
         });
+      });
       });
 
       // ============================
