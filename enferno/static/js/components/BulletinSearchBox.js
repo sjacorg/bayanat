@@ -158,6 +158,7 @@ const BulletinSearchBox = Vue.defineComponent({
               <!-- Search terms -->
               <v-combobox
                   v-model="q.searchTerms"
+                  @update:model-value="val => q.searchTerms = $root.sanitizeCombobox(val)"
                   :label="translations.searchTerms_"
                   multiple
                   chips
@@ -173,6 +174,7 @@ const BulletinSearchBox = Vue.defineComponent({
               
               <v-combobox
                   v-model="q.exTerms"
+                  @update:model-value="val => q.exTerms = $root.sanitizeCombobox(val)"
                   :label="translations.excludeTerms_"
                   multiple
                   chips
@@ -189,6 +191,7 @@ const BulletinSearchBox = Vue.defineComponent({
               <template v-if="$root.isFieldActiveByName('tags', { entityType: 'bulletin' })">
               <v-combobox
                   v-model="q.tags"
+                  @update:model-value="val => q.tags = $root.sanitizeCombobox(val)"
                   :label="translations.inTags_"
                   multiple
                   chips
@@ -208,6 +211,7 @@ const BulletinSearchBox = Vue.defineComponent({
               
               <v-combobox
                     v-model="q.exTags"
+                    @update:model-value="val => q.exTags = $root.sanitizeCombobox(val)"
                     :label="translations.exTags_"
                     multiple
                     chips
