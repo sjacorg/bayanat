@@ -827,7 +827,7 @@ const MobilityMap = Vue.defineComponent({
         const container = this.$refs.mapContainer;
         const mapRect = container.getBoundingClientRect();
 
-        const tooltipWidth = 220; // same as your v-card width
+        const tooltipWidth = 320; // same as your v-card width
         const tooltipHeight = 110; // approx height of your tooltip
         const padding = 12;
 
@@ -911,7 +911,7 @@ const MobilityMap = Vue.defineComponent({
       <v-card
         v-if="tooltip.visible && tooltip.data"
         class="position-absolute pa-3"
-        style="max-width: 328px; zIndex: 9999; border-radius: 10px;"
+        style="width: 320px; zIndex: 9999; border-radius: 10px;"
         :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         elevation="4"
       >
