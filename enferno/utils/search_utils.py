@@ -1231,6 +1231,26 @@ class SearchUtils:
                 exclude_subquery = select(Incident.id).where(or_(*exclude_conditions))
                 conditions.append(~Incident.id.in_(exclude_subquery))
 
+        # Search Terms - chips-based multi-term text search
+        if search_terms := q.get("searchTerms"):
+            exact = q.get("termsExact", False)
+            term_conds = self._build_term_conditions(Incident.search, search_terms, exact)
+            if term_conds:
+                if q.get("opTerms", False):
+                    conditions.append(or_(*term_conds))
+                else:
+                    conditions.extend(term_conds)
+
+        # Exclude Search Terms
+        if ex_terms := q.get("exTerms"):
+            exact = q.get("exTermsExact", False)
+            ex_conds = self._build_term_conditions(Incident.search, ex_terms, exact, negate=True)
+            if ex_conds:
+                if q.get("opExTerms", False):
+                    conditions.append(or_(*ex_conds))
+                else:
+                    conditions.extend(ex_conds)
+
         # Labels
         if labels := q.get("labels", []):
             ids = [item.get("id") for item in labels]
