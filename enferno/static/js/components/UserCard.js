@@ -180,7 +180,7 @@ const UserCard = Vue.defineComponent({
           this.username = '';
           this.displayAccountStatusUpdatedMessage(mode);
         },
-        onReject() {
+        onReject: () => {
           this.username = '';
         }
       })
