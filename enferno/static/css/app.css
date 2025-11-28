@@ -953,3 +953,15 @@ div.jsondiffpatch-child-node-type-array:after {
 .grid-row-span-2 {
   grid-row: span 2;
 }
+
+/* LabelTreeField */
+.label-tree-field .input--open .v-field {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.label-tree-field .v-card {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: 0 !important;
+    max-height: 440px;
+}
