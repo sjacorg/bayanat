@@ -111,9 +111,9 @@
                                             v-model="editedItem.labels"
                                             api="/admin/api/labels/tree" :query-params="{ typ: 'for_bulletin' }"
                                             multiple
-                                            :dialog-props="rightContainedDialogProps"
                                             :show-copy-icon="advFeatures"
                                             label="{{ _('Labels') }}"
+                                            class="mb-5"
                                         />
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'ver_labels')" :class="[fieldClass(field), 'px-3 py-2']">
@@ -121,9 +121,9 @@
                                             v-model="editedItem.verLabels"
                                             api="/admin/api/labels/tree" :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
                                             multiple
-                                            :dialog-props="rightContainedDialogProps"
                                             :show-copy-icon="advFeatures"
                                             label="{{ _('Verified Labels') }}"
+                                            class="mb-5"
                                         />
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'locations')" :class="[fieldClass(field), 'px-3 py-2']">
