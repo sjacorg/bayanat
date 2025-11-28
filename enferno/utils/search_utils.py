@@ -158,15 +158,15 @@ class SearchUtils:
         Args:
             column: The SQLAlchemy column to search on
             terms: List of search terms (each treated as a phrase)
-            exact: If True, exact match (no wildcards); if False, phrase with wildcards
+            exact: If True, word boundary match; if False, substring match with wildcards
             negate: If True, negate conditions (for exclude)
 
         Returns:
             List of SQLAlchemy conditions
 
         Examples:
-            exact=False: "ahmad ahmad" -> matches %ahmad ahmad%
-            exact=True:  "ahmad ahmad" -> matches exactly "ahmad ahmad" (case-insensitive)
+            exact=False: "open system" -> matches "reopen systems" (substring)
+            exact=True:  "open system" -> matches "the open system" but not "reopen systems"
         """
         result = []
         for term in terms:
@@ -175,8 +175,10 @@ class SearchUtils:
 
             term = term.strip()
             if exact:
-                # Exact match - no wildcards, case-insensitive
-                cond = func.lower(column) == term.lower()
+                # Word boundary match - phrase as whole words (case-insensitive)
+                # \y is PostgreSQL word boundary anchor
+                escaped = re.escape(term)
+                cond = column.op("~*")(f"\\y{escaped}\\y")
             else:
                 # Phrase search with wildcards (default)
                 cond = column.ilike(f"%{term}%")
