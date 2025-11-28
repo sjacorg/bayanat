@@ -1398,6 +1398,13 @@ class ActorQueryModel(QueryBaseModel):
     exTags: Optional[list[str]] = Field(default_factory=list)
     exExact: Optional[bool] = False
     opExTags: Optional[bool] = False
+    # Chips-based multi-term text search
+    searchTerms: Optional[list[str]] = Field(default_factory=list)
+    opTerms: Optional[bool] = False
+    termsExact: Optional[bool] = False
+    exTerms: Optional[list[str]] = Field(default_factory=list)
+    opExTerms: Optional[bool] = False
+    exTermsExact: Optional[bool] = False
     opEthno: Optional[bool] = None
     ethnography: list[PartialEthnographyModel] = Field(default_factory=list)
     opNat: Optional[bool] = None
@@ -1560,6 +1567,13 @@ class IncidentQueryModel(QueryBaseModel):
     ids: list[int] = Field(default_factory=list)
     potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
     claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
+    # Chips-based multi-term text search
+    searchTerms: Optional[list[str]] = Field(default_factory=list)
+    opTerms: Optional[bool] = False
+    termsExact: Optional[bool] = False
+    exTerms: Optional[list[str]] = Field(default_factory=list)
+    opExTerms: Optional[bool] = False
+    exTermsExact: Optional[bool] = False
     # Minimal, permissive container for dynamic-field filters
     # Example item: {"name": "field_123", "op": "contains", "value": "test"}
     dyn: Optional[list[dict]] = Field(default_factory=list)
