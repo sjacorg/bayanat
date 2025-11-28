@@ -667,7 +667,8 @@ const MobilityMap = Vue.defineComponent({
           if (!cluster) return;
 
           if (this.mode === 'event') {
-            this.copyCoordinates()
+            const { lat, lon } = this.tooltip.data;
+            MobilityMapUtils.copyCoordinates({ lat, lon })
             return;
           }
 
@@ -694,29 +695,6 @@ const MobilityMap = Vue.defineComponent({
       if (this.selectedPoint !== null) {
         this.clearFilter();
       }
-    },
-
-    copyCoordinates() {
-      const { lat, lon } = this.tooltip.data;
-
-      const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-
-      navigator.clipboard.writeText(text)
-        .then(() => this.$root?.showSnack?.(this.translations.copiedToClipboard_))
-        .catch(() => this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_));
-    },
-
-    formatTooltipDate(dateStr) {
-      if (!dateStr) return '';
-
-      const isMidnight = dateStr.includes('T00:00');
-
-      return this.$root.formatDate(
-        dateStr,
-        isMidnight
-          ? this.$root.dateFormats.standardDate
-          : this.$root.dateFormats.standardDatetime
-      );
     },
 
     onMapHover(e) {
@@ -972,7 +950,7 @@ const MobilityMap = Vue.defineComponent({
               </v-icon>
 
               <span v-if="tooltip.data.fromDate" class="chip mr-1">
-                {{ formatTooltipDate(tooltip.data.fromDate) }}
+                {{ $root.formatDate(tooltip.data.fromDate, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime) }}
               </span>
 
               <v-icon v-if="tooltip.data.fromDate && tooltip.data.toDate" size="14" class="mr-1">
@@ -980,7 +958,7 @@ const MobilityMap = Vue.defineComponent({
               </v-icon>
 
               <span v-if="tooltip.data.toDate" class="chip">
-                {{ formatTooltipDate(tooltip.data.toDate) }}
+                {{ $root.formatDate(tooltip.data.toDate, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime) }}
               </span>
             </div>
 

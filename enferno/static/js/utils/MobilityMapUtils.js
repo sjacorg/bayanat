@@ -155,7 +155,7 @@ const MobilityMapUtils = {
     const aggFactor = this.getAggregationFactor(rawPairs);
 
     // 3. IMPORTANT: only let heavy flows benefit
-    const weightGate = Math.pow(t, 1.8); 
+    const weightGate = Math.pow(t, 1.8);
     // - small flows ≈ 0
     // - big flows ≈ 1
 
@@ -499,5 +499,13 @@ const MobilityMapUtils = {
     }
 
     return names.join(', ');
+  },
+  copyCoordinates({ lat, lon }) {
+    const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+
+    navigator.clipboard
+      .writeText(text)
+      .then(() => this.$root?.showSnack?.(this.translations.copiedToClipboard_))
+      .catch(() => this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_));
   },
 };
