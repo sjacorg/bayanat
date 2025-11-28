@@ -57,7 +57,7 @@
                                 </div>
                                 <div class="d-flex align-center ga-5 w-100">
                                     <div>{{ _('Filter') }}
-                                        <v-tooltip v-if="activeCount('twoFactor') || activeCount('roles') || activeCount('active')" location="top" text="{{ _('Clear filters') }}">
+                                        <v-tooltip v-if="activeCount('twoFactor') || activeCount('roles') || activeCount('status')" location="top" text="{{ _('Clear filters') }}">
                                             <template #activator="{props}">
                                                 <v-btn v-bind="props" icon="mdi-filter-off-outline" size="small"
                                                     @click="options = {}; refresh()"
