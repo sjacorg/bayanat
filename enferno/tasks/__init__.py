@@ -55,7 +55,7 @@ from enferno.utils.graph_utils import GraphUtils
 import enferno.utils.typing as t
 from enferno.admin.models import SystemInfo
 
-from enferno.utils.backup_utils import pg_dump, upload_to_s3
+from enferno.utils.backup_utils import pg_dump, upload_to_s3, cleanup_old_backups
 
 # Simple test detection - use TestConfig if in test environment
 
@@ -929,7 +929,6 @@ def restart_service(service_name="bayanat"):
     import os
     import signal
     import shutil
-    import requests
     from flask import current_app
 
     # Production mode = systemctl command exists
@@ -1338,6 +1337,12 @@ def daily_backup_cron():
                 logger.error(f"Backup file {filename} not found to delete.", exc_info=True)
             except OSError:
                 logger.error(f"Unable to remove backup file {filename}.", exc_info=True)
+
+    # Cleanup old local backups (skip if using S3 - local files deleted after upload)
+    if not cfg.BACKUPS_S3_BUCKET and cfg.BACKUP_RETENTION_DAYS > 0:
+        deleted = cleanup_old_backups(cfg.BACKUPS_LOCAL_PATH, cfg.BACKUP_RETENTION_DAYS)
+        if deleted:
+            logger.info(f"Backup cleanup: {deleted} old backup(s) removed.")
 
 
 ## Query graph visualization tasks
