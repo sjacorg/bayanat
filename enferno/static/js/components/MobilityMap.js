@@ -659,13 +659,17 @@ const MobilityMap = Vue.defineComponent({
     ============================================= */
     onMapClick(e) {
       if (this.morphing) return;
-      if (this.mode === 'actor') return;
       const p = this.map.latLngToContainerPoint(e.latlng);
 
       for (const dot of this.dotShapes) {
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           const cluster = this.clusterDefs[dot.clusterId];
           if (!cluster) return;
+
+          if (this.mode === 'event') {
+            this.copyCoordinates()
+            return;
+          }
 
           // NEW: select cluster instead of random member
           this.selectedPoint = {
@@ -726,7 +730,7 @@ const MobilityMap = Vue.defineComponent({
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
 
-          if (this.mode === 'actor') {
+          if (this.mode === 'event') {
             const locationIds = dot.key.split(',').map(Number);
             const locId = locationIds[0];
 
@@ -928,61 +932,35 @@ const MobilityMap = Vue.defineComponent({
         <!-- EVENT TOOLTIP -->
         <template v-if="tooltip.type === 'event'">
           <div class="d-flex flex-column ga-1 text-caption">
-
-            <!-- HEADER ROW: number + parent + event type -->
-            <div class="d-flex align-center">
-
-              <!-- Number -->
+            <div class="d-flex ga-2 align-center">
               <div v-if="tooltip.data.number" class="d-flex align-center">
                 #{{ tooltip.data.number }}
               </div>
-
-              <!-- Parent ID -->
               <div v-if="tooltip.data.parentId && tooltip.data.parentId !== '—'" class="d-flex align-center">
                 <v-icon size="16" class="mr-1">mdi-link</v-icon>
                 {{ tooltip.data.parentId }}
               </div>
-
-              <!-- Event Type -->
               <div v-if="tooltip.data.eventType" class="d-flex align-center">
                 <v-icon size="16" class="mr-1">mdi-calendar-range</v-icon>
                 {{ tooltip.data.eventType }}
               </div>
             </div>
 
-            <!-- EVENT TITLE -->
             <h4>
               {{ tooltip.data.title || '' }}
             </h4>
 
-            <!-- LOCATION LINE -->
             <div class="d-flex align-center">
               <v-icon size="18" class="mr-1">mdi-map-marker-outline</v-icon>
 
               {{ tooltip.data.displayName || '' }}
-
-              <!-- COPY COORDINATES BUTTON -->
-              <v-btn
-                v-if="Number.isFinite(tooltip.data.lat) && Number.isFinite(tooltip.data.lon)"
-                icon
-                size="x-small"
-                class="ml-1"
-                :title="translations.copyCoordinates_"
-                @click="copyCoordinates"
-              >
-                <v-icon size="16">mdi-content-copy</v-icon>
-              </v-btn>
             </div>
 
-            <!-- MAIN INCIDENT FLAG -->
             <div v-if="tooltip.data.main">
               {{ translations.mainIncident_ }}
             </div>
-
-            <!-- DATE ROW -->
+            
             <div v-if="tooltip.data.fromDate || tooltip.data.toDate" class="d-flex align-center">
-
-              <!-- Estimated / Exact Icon -->
               <v-icon
                 size="16"
                 class="mr-1"
@@ -993,17 +971,14 @@ const MobilityMap = Vue.defineComponent({
                 {{ tooltip.data.estimated ? 'mdi-calendar-question' : 'mdi-calendar-clock' }}
               </v-icon>
 
-              <!-- FROM DATE -->
               <span v-if="tooltip.data.fromDate" class="chip mr-1">
                 {{ formatTooltipDate(tooltip.data.fromDate) }}
               </span>
 
-              <!-- ARROW -->
               <v-icon v-if="tooltip.data.fromDate && tooltip.data.toDate" size="14" class="mr-1">
                 mdi-arrow-right
               </v-icon>
 
-              <!-- TO DATE -->
               <span v-if="tooltip.data.toDate" class="chip">
                 {{ formatTooltipDate(tooltip.data.toDate) }}
               </span>
