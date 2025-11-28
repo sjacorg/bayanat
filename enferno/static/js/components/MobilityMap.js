@@ -119,6 +119,7 @@ const MobilityMap = Vue.defineComponent({
         maxBoundsViscosity: MobilityMapUtils.CONFIG.map.maxBoundsViscosity,
         worldCopyJump: MobilityMapUtils.CONFIG.map.worldCopyJump,
         maxBounds: worldBounds,
+        zoomAnimation: false,
       }).setView(geoMapDefaultCenter, MobilityMapUtils.CONFIG.map.defaultZoom);
 
       const osmLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.osm.url, {
@@ -951,7 +952,7 @@ const MobilityMap = Vue.defineComponent({
               </v-icon>
 
               <span v-if="tooltip.data.fromDate" class="chip mr-1">
-                {{ $root.formatDate(tooltip.data.fromDate, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime) }}
+                {{ $root.formatDate(tooltip.data.fromDate, tooltip.data.fromDate.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime) }}
               </span>
 
               <v-icon v-if="tooltip.data.fromDate && tooltip.data.toDate" size="14" class="mr-1">
@@ -959,7 +960,7 @@ const MobilityMap = Vue.defineComponent({
               </v-icon>
 
               <span v-if="tooltip.data.toDate" class="chip">
-                {{ $root.formatDate(tooltip.data.toDate, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime) }}
+                {{ $root.formatDate(tooltip.data.toDate, tooltip.data.toDate.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime) }}
               </span>
             </div>
 
