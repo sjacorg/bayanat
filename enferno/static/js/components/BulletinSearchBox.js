@@ -154,6 +154,37 @@ const BulletinSearchBox = Vue.defineComponent({
                   :label="translations.originId_"
                   clearable
               ></v-text-field>
+
+              <!-- Search terms -->
+              <v-combobox
+                  v-model="q.searchTerms"
+                  :label="translations.searchTerms_"
+                  multiple
+                  chips
+                  closable-chips
+                  small-chips
+                  clearable
+              ></v-combobox>
+                    
+              <div class="d-flex align-center flex-wrap">
+                <v-checkbox :label="translations.any_" v-model="q.opTerms" color="primary" class="me-4"></v-checkbox>
+                <v-checkbox :label="translations.exactMatch_" v-model="q.termsExact" color="primary" class="me-4"></v-checkbox>
+              </div>
+              
+              <v-combobox
+                  v-model="q.exTerms"
+                  :label="translations.excludeTerms_"
+                  multiple
+                  chips
+                  closable-chips
+                  clearable
+              ></v-combobox>
+                    
+              <div class="d-flex align-center">
+                <v-checkbox :label="translations.all_" v-model="q.opExTerms" color="primary" class="me-4"></v-checkbox>
+                <v-checkbox :label="translations.exactMatch_" v-model="q.exTermsExact" color="primary" class="me-4"></v-checkbox>
+              </div>
+              <!-- End terms -->
               
               <template v-if="$root.isFieldActiveByName('tags', { entityType: 'bulletin' })">
               <v-combobox
@@ -169,7 +200,7 @@ const BulletinSearchBox = Vue.defineComponent({
               <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.opTags" color="primary" small
                             class="me-4"></v-checkbox>
-                <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
+                <v-checkbox :label="translations.exactMatch_" dense v-model="q.inExact" color="primary" small
                             class="me-4"></v-checkbox>
 
               </div>

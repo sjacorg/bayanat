@@ -188,6 +188,37 @@ const ActorSearchBox = Vue.defineComponent({
                   :label="translations.originId_"
                   clearable
               ></v-text-field>
+
+              <!-- Search terms -->
+              <v-combobox
+                  v-model="q.searchTerms"
+                  :label="translations.searchTerms_"
+                  multiple
+                  chips
+                  closable-chips
+                  small-chips
+                  clearable
+              ></v-combobox>
+                    
+              <div class="d-flex align-center flex-wrap">
+                <v-checkbox :label="translations.any_" v-model="q.opTerms" color="primary" class="me-4"></v-checkbox>
+                <v-checkbox :label="translations.exactMatch_" v-model="q.termsExact" color="primary" class="me-4"></v-checkbox>
+              </div>
+              
+              <v-combobox
+                  v-model="q.exTerms"
+                  :label="translations.excludeTerms_"
+                  multiple
+                  chips
+                  closable-chips
+                  clearable
+              ></v-combobox>
+                    
+              <div class="d-flex align-center">
+                <v-checkbox :label="translations.all_" v-model="q.opExTerms" color="primary" class="me-4"></v-checkbox>
+                <v-checkbox :label="translations.exactMatch_" v-model="q.exTermsExact" color="primary" class="me-4"></v-checkbox>
+              </div>
+              <!-- End terms -->
               
               <template v-if="$root.isFieldActiveByName('tags', { entityType: 'actor' })">
               <v-combobox
@@ -201,7 +232,7 @@ const ActorSearchBox = Vue.defineComponent({
               <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opTags" color="primary"
                             class="me-4"></v-checkbox>
-                <v-checkbox label="Exact Match" v-model="q.inExact" color="primary"
+                <v-checkbox :label="translations.exactMatch_" v-model="q.inExact" color="primary"
                             class="me-4"></v-checkbox>
               </div>
 
