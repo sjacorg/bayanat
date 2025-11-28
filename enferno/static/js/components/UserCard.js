@@ -59,14 +59,17 @@ const UserCard = Vue.defineComponent({
     };
   },
   computed: {
+    isUserActive() {
+      return this.user?.status === 'active';
+    },
     isUserSuspended() {
-      return !this.user.active && !this.user?.deleted;
+      return this.user?.status === 'suspended';
     },
     isUserDisabled() {
-      return this.user?.deleted;
+      return this.user?.status === 'disabled';
     },
     isUserEnabled() {
-      return !this.user?.deleted;
+      return !this.isUserDisabled;
     },
     permissions() {
       // [permissionKey, translationIfAllowed, translationIfDenied]
@@ -449,10 +452,10 @@ const UserCard = Vue.defineComponent({
             <div class="d-flex flex-wrap ga-3">
               <template v-if="isUserEnabled">
                 <v-btn v-if="isUserSuspended" @click="reactivateAccount()" variant="outlined" color="success" prepend-icon="mdi-play-circle">{{ translations.reactivateAccount_ }}</v-btn>
-                <v-btn v-if="!isUserSuspended" @click="suspendAccount()" variant="outlined" color="warning" prepend-icon="mdi-pause-circle">{{ translations.suspendAccount_ }}</v-btn>
+                <v-btn v-if="isUserActive" @click="suspendAccount()" variant="outlined" color="warning" prepend-icon="mdi-pause-circle">{{ translations.suspendAccount_ }}</v-btn>
               </template>
               <v-btn v-if="isUserDisabled" @click="enableAccount()" variant="outlined" color="success" prepend-icon="mdi-arrow-down-thin-circle-outline">{{ translations.enableAccount_ }}</v-btn>
-              <v-btn v-if="!isUserDisabled" @click="disableAccount()" variant="outlined" color="error" prepend-icon="mdi-minus-circle">{{ translations.disableAccount_ }}</v-btn>
+              <v-btn v-if="isUserEnabled" @click="disableAccount()" variant="outlined" color="error" prepend-icon="mdi-minus-circle">{{ translations.disableAccount_ }}</v-btn>
             </div>
           </v-card-text>
         </v-card>

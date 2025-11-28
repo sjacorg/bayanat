@@ -75,7 +75,7 @@
                                                 v-bind="props"
                                             >
                                             <v-badge
-                                                v-if="activeCount('active')"
+                                                v-if="activeCount('status')"
                                                 location="top right"
                                                 :offset-x="-14"
                                                 :offset-y="4"
@@ -93,11 +93,11 @@
                                             <v-list-item
                                                 v-for="option in accountStatusOptions"
                                                 :key="option.value"
-                                                @click="options.active = option.value; refresh()"
-                                                :active="options.active === option.value"
+                                                @click="options.status = option.value; refresh()"
+                                                :active="options.status === option.value"
                                                 color="primary"
                                             >
-                                                <v-list-item-title><v-icon v-if="options.active === option.value" start>mdi-check</v-icon>${option.name}</v-list-item-title>
+                                                <v-list-item-title><v-icon v-if="options.status === option.value" start>mdi-check</v-icon>${option.name}</v-list-item-title>
                                             </v-list-item>
                                         </v-list>
                                     </v-menu>
@@ -523,8 +523,9 @@
                     { name: "{{ _('Administrator') }}", value: 'admin', description: "{{ _('Full access to all items and actions, including Activity Monitor and user management across the system.') }}" },
                 ],
                 accountStatusOptions: [
-                    { name: 'Active', value: 'true' },
-                    { name: 'Inactive', value: 'false' },
+                    { name: "{{ _('Active') }}", value: 'active' },
+                    { name: "{{ _('Suspended') }}", value: 'suspended' },
+                    { name: "{{ _('Disabled') }}", value: 'disabled' },
                 ],
                 twoFactorOptions: [
                     { name: 'Active', value: 'true' },
@@ -614,9 +615,12 @@
                     return { color: 'warning', text: "{{ _('2FA Inactive') }}", icon: 'mdi-lock-open-alert' }
                 },
                 getUserStatusMeta(user) {
-                    if (user.active && !user?.deleted) return { color: 'success', text: "{{ _('Active') }}", icon: 'mdi-account-check' }
-                    if (!user.active && !user?.deleted) return { color: 'warning', text: "{{ _('Suspended') }}", icon: 'mdi-account-clock' }
-                    if (!user.active && user?.deleted) return { text: "{{ _('Disabled') }}", icon: 'mdi-account-cancel' }
+                    const statusMap = {
+                        'active': { color: 'success', text: "{{ _('Active') }}", icon: 'mdi-account-check' },
+                        'suspended': { color: 'warning', text: "{{ _('Suspended') }}", icon: 'mdi-account-clock' },
+                        'disabled': { color: 'default', text: "{{ _('Disabled') }}", icon: 'mdi-account-cancel' },
+                    };
+                    return statusMap[user.status] || statusMap['disabled'];
                 },
                 activeCount(key) {
                     const val = this.options?.[key]
@@ -812,7 +816,7 @@
                     });
 
                     if (this.options?.q) params.append('q', this.options.q);
-                    if (this.options?.active) params.append('active', this.options.active);
+                    if (this.options?.status) params.append('status', this.options.status);
                     if (this.options?.roles?.length) params.append('roles', this.options.roles);
                     if (this.options?.twoFactor) params.append('twoFactor', this.options.twoFactor);
 
@@ -923,7 +927,7 @@
 
                     this.saving = true;
                     const payload = { ...this.editedItem };
-                    delete payload.deleted; // Remove deleted field from payload
+                    delete payload.status; // Remove status field from payload
 
                     // edit mode
                     if (payload.id) {
