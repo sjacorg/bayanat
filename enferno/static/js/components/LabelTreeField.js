@@ -99,7 +99,7 @@ const LabelTreeField = Vue.defineComponent({
         ? Array.isArray(this.modelValue) ? this.modelValue : []
         : this.modelValue ? [this.modelValue] : [];
 
-      // If tree isn't loaded yet, show raw objects directly
+      // If tree isn't loaded yet, use raw objects directly
       if (!this.items.length && this.returnObject) {
         this.internalSelected = raw;
         return;
@@ -107,9 +107,10 @@ const LabelTreeField = Vue.defineComponent({
 
       const ids = raw.map(v => this.returnObject ? v?.id : v);
 
-      this.internalSelected = this.flatItems.filter(node =>
-        ids.includes(node.id)
-      );
+      // ✅ Preserve original modelValue order
+      this.internalSelected = ids
+        .map(id => this.flatItems.find(node => node.id === id))
+        .filter(Boolean); // remove missing ones
     },
 
     emitSelection(val) {
