@@ -772,6 +772,7 @@ const MobilityMap = Vue.defineComponent({
 
       // Check ARROWS if no dot match
       if (!hovering) {
+        this.arrowShapes.sort((a, b) => a.weight - b.weight);
         // ✅ Check thick arrows first
         for (let i = this.arrowShapes.length - 1; i >= 0; i--) {
           const arrow = this.arrowShapes[i];
