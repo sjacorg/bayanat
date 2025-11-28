@@ -184,7 +184,7 @@
 
 
                         <template v-slot:item.action="{ item }">
-                            <div v-if="!item?.deleted" class="d-flex">
+                            <div v-if="item?.status !== 'disabled'" class="d-flex">
                                 <v-tooltip location="top" text="{{ _('Edit User') }}">
                                     <template #activator="{props}">
                                         <div v-bind="props" class="d-inline-block">
@@ -248,7 +248,7 @@
                         </template>
 
                         <template v-slot:item.2fa="{ item }">
-                            <v-chip v-if="!item?.deleted" variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1 font-weight-medium">
+                            <v-chip v-if="item?.status !== 'disabled'" variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1 font-weight-medium">
                                 <v-icon start size="large">${getUser2FaMeta(item)?.icon}</v-icon>
                                 ${getUser2FaMeta(item)?.text}
                             </v-chip>
@@ -962,7 +962,7 @@
                     try {
                         this.saving = true;
                         const payload = { ...this.editedItem };
-                        delete payload.deleted; // Remove deleted field from payload
+                        delete payload.status; // Remove status field from payload
                         const response = await api.put(`/admin/api/user/`, { item: payload }, { suppressGlobalErrorHandler: true });
                         this.showSnack(response.data);
 
