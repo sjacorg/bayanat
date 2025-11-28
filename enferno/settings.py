@@ -277,6 +277,7 @@ class Config(object):
     BACKUPS_AWS_ACCESS_KEY_ID = os.environ.get("BACKUPS_AWS_ACCESS_KEY_ID")
     BACKUPS_AWS_SECRET_ACCESS_KEY = os.environ.get("BACKUPS_AWS_SECRET_ACCESS_KEY")
     BACKUPS_AWS_REGION = os.environ.get("BACKUPS_AWS_REGION")
+    BACKUP_RETENTION_DAYS = int(os.environ.get("BACKUP_RETENTION_DAYS", 30))
 
     # System Updates
     UPDATE_GRACE_PERIOD_MINUTES = int(os.environ.get("UPDATE_GRACE_PERIOD_MINUTES", "15"))
@@ -624,6 +625,7 @@ class TestConfig:
     BACKUPS_AWS_ACCESS_KEY_ID = None
     BACKUPS_AWS_SECRET_ACCESS_KEY = None
     BACKUPS_AWS_REGION = None
+    BACKUP_RETENTION_DAYS = 30
 
     # System Updates (1 minute for fast tests)
     UPDATE_GRACE_PERIOD_MINUTES = 1
