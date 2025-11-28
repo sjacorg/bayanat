@@ -4,16 +4,16 @@ const LabelTreeField = Vue.defineComponent({
     multiple: { type: Boolean, default: true },
     api: { type: String, default: '/admin/api/labels/tree' },
     queryParams: { type: Object, default: () => ({}) },
+
     selectable: { type: Boolean, default: true },
     selectStrategy: { type: String, default: 'independent' },
     returnObject: { type: Boolean, default: true },
     activatable: { type: Boolean, default: false },
     openOnClick: { type: Boolean, default: true },
+
     showCopyIcon: { type: Boolean, default: false },
     disabled: Boolean,
-    dialogTitle: { type: String, default: window.translations.selectLabels_ },
     label: { type: String, default: window.translations.labels_ },
-    dialogProps: { type: Object },
   },
 
   emits: ['update:model-value'],
@@ -21,27 +21,37 @@ const LabelTreeField = Vue.defineComponent({
   data() {
     return {
       translations: window.translations,
-      dialog: false,
+      expand: false,
+      loading: false,
+      fetchedOnce: false,
+      search: '',
 
-      // Tree data
       items: [],
       flatItems: [],
-
-      loading: false,
-
-      // Controls which tree nodes are expanded
       opened: [],
-
-      // Currently committed selection (what parent sees)
       internalSelected: [],
-
-      // Temporary selection used in UI before clicking Save
-      draftSelected: [],
     };
   },
 
+  computed: {
+    displayedItems() {
+      // ✅ Use loaded tree if available
+      if (this.items.length) return this.items;
+
+      // ✅ Otherwise fallback to selected items as a simple tree
+      if (this.internalSelected.length) {
+        return this.internalSelected.map(item => ({
+          ...item,
+          children: [],
+        }));
+      }
+
+      // ✅ Fallback empty
+      return [];
+    }
+  },
+
   watch: {
-    // When parent changes modelValue, re-sync internal state
     modelValue: {
       immediate: true,
       deep: true,
@@ -49,33 +59,24 @@ const LabelTreeField = Vue.defineComponent({
         this.restoreSelectionFromModel();
       },
     },
-
-    // Reset draft state when dialog is closed
-    dialog(val) {
-        if (val) {
-            // Dialog opened → lazy load tree
-            this.fetchTree();
-        } else {
-            // Dialog closed → discard unsaved changes
-            this.draftSelected = [...this.internalSelected];
-        }
-    },
   },
 
   methods: {
-    async fetchTree() {
+    async fetchTreeOnce() {
       this.loading = true;
 
       try {
-        const response = await api.get(this.api, { params: this.queryParams });
+        const response = await api.get(this.api, {
+          params: this.queryParams,
+        });
+
         const data = response.data || {};
         this.items = Array.isArray(data.items) ? data.items : [];
 
-        // Flatten for fast ID lookup when resolving selection
         this.flatItems = this.flattenTree(this.items);
-
-        // Try to match incoming modelValue to fetched tree items
         this.restoreSelectionFromModel();
+
+        this.fetchedOnce = true;
       } catch (err) {
         console.error(err);
       } finally {
@@ -83,7 +84,6 @@ const LabelTreeField = Vue.defineComponent({
       }
     },
 
-    // Turns nested tree structure into a flat list for easy searching
     flattenTree(nodes, acc = []) {
       for (const node of nodes) {
         acc.push(node);
@@ -94,175 +94,157 @@ const LabelTreeField = Vue.defineComponent({
       return acc;
     },
 
-    // Syncs internal selection from v-model
     restoreSelectionFromModel() {
-        // Normalize incoming value to an array
-        const raw = this.multiple
-            ? Array.isArray(this.modelValue) ? this.modelValue : []
-            : this.modelValue ? [this.modelValue] : [];
+      const raw = this.multiple
+        ? Array.isArray(this.modelValue) ? this.modelValue : []
+        : this.modelValue ? [this.modelValue] : [];
 
-        // If tree not loaded yet, fallback to raw modelValue
-        if (!this.flatItems.length) {
-            if (this.returnObject) {
-            // Use raw objects directly (so select displays something)
-            this.internalSelected = raw;
-            this.draftSelected = [...raw];
-            } else {
-            // If only IDs were passed, we can't resolve titles yet
-            // So show empty until fetch happens
-            this.internalSelected = [];
-            this.draftSelected = [];
-            }
-            return;
-        }
+      // If tree isn't loaded yet, show raw objects directly
+      if (!this.items.length && this.returnObject) {
+        this.internalSelected = raw;
+        return;
+      }
 
-        // Normalize to ids
-        const ids = raw.map(v => this.returnObject ? v?.id : v);
+      const ids = raw.map(v => this.returnObject ? v?.id : v);
 
-        // Resolve against tree
-        const resolved = this.flatItems.filter(node => ids.includes(node.id));
-
-        this.internalSelected = resolved;
-        this.draftSelected = [...resolved];
-        },
-
-    // Saves draft selection into modelValue
-    commitSelection() {
-      // Convert internal format into parent format
-      const val = this.multiple
-        ? this.returnObject
-          ? this.draftSelected
-          : this.draftSelected.map(v => v.id)
-        : this.returnObject
-          ? this.draftSelected[0] || null
-          : this.draftSelected[0]?.id || null;
-
-      // Persist change
-      this.internalSelected = [...this.draftSelected];
-      this.$emit('update:model-value', val);
-
-      this.dialog = false;
+      this.internalSelected = this.flatItems.filter(node =>
+        ids.includes(node.id)
+      );
     },
 
-    // Ensures treeview compares objects by ID
-    valueComparator(a, b) {
-      return (a?.id ?? a) === (b?.id ?? b);
+    emitSelection(val) {
+      const value = this.multiple
+        ? this.returnObject ? val : val.map(v => v.id)
+        : this.returnObject ? val[0] || null : val[0]?.id || null;
+
+      this.internalSelected = [...val];
+      this.$emit('update:model-value', value);
+    },
+
+    async toggleExpansionPanel() {
+      if (!this.fetchedOnce) this.fetchTreeOnce(); // don't await, let UI render
+      this.expand = !this.expand;
+    },
+
+    removeChip(item) {
+      const updated = this.internalSelected.filter(
+        selected => selected.id !== item.id
+      );
+
+      this.emitSelection(updated);
     },
 
     copyValue() {
-        const textToCopy = this.internalSelected
-            .map(item => {
-            if (this.returnObject) return item?.title ?? '';
-            return item ?? '';
-            })
-            .join(', ');
+      const text = this.internalSelected
+        .map(item => this.returnObject ? item?.title ?? '' : item ?? '')
+        .join(', ');
 
-        navigator.clipboard.writeText(textToCopy)
-            .then(() => {
-              this.$root.showSnack(this.translations.copiedToClipboard_);
-            })
-            .catch(err => {
-              console.error('Clipboard error:', err);
-              this.$root.showSnack(this.translations.failedToCopyToClipboard_);
-            });
-        },
+      navigator.clipboard.writeText(text)
+        .then(() => this.$root.showSnack(this.translations.copiedToClipboard_))
+        .catch(() => this.$root.showSnack(this.translations.failedToCopyToClipboard_));
+    },
   },
 
   template: `
   <div class="label-tree-field">
-    <!-- DIALOG MODE -->
-    <!-- Read-only preview of committed selection -->
+
+    <!-- Trigger Select -->
     <v-select
-      prepend-inner-icon="mdi-magnify"
-      @click="dialog = true"
       :model-value="internalSelected"
       :label="label"
       chips
-      multiple
+      :multiple="multiple"
       readonly
+      hide-details
+      :loading="loading"
+      :disabled="disabled"
+      :menu-icon="expand ? 'mdi-menu-up' : 'mdi-menu-down'"
+      @click="toggleExpansionPanel"
+      :class="[{ 'input--open': expand }]"
     >
-      <template v-if="showCopyIcon" v-slot:append>
-          <v-btn icon="mdi-content-copy" variant="plain" @click.stop="copyValue"></v-btn>
+
+      <!-- Custom chip -->
+      <template #chip="{ item, props }">
+        <v-chip
+          v-bind="props"
+          closable
+          @click:close="removeChip(item.raw)"
+        >
+          {{ item.raw?.title }}
+        </v-chip>
+      </template>
+
+      <template v-if="showCopyIcon" #append>
+        <v-btn
+          icon="mdi-content-copy"
+          variant="plain"
+          @click.stop="copyValue"
+        />
       </template>
     </v-select>
 
-    <!-- Floating right-side dialog -->
-    <div 
-      :class="['position-fixed h-screen right-0 top-0 z-100', { 'pointer-events-none': !dialog }]" 
-      :style="$root?.rightDialogProps?.['content-props']?.style"
-    >
-      <div class="position-relative h-100 w-100">
-        <v-dialog v-model="dialog" v-bind="dialogProps || { 'max-width': '880px' }">
-          <v-card elevation="4">
+    <!-- Expand Panel -->
+    <v-expand-transition>
+      <v-card
+        v-show="expand"
+        variant="outlined"
+        rounded="md"
+        class="border-sm max-h-[440px] overflow-y-auto"
+      >
+        <v-card-text>
 
-            <!-- Toolbar -->
-            <v-toolbar color="dark-primary" class="px-4">
-              <v-toolbar-title>{{ dialogTitle }}</v-toolbar-title>
-              <v-spacer></v-spacer>
+          <!-- Search Input -->
+          <v-text-field
+            v-model="search"
+            :label="translations.search_"
+            variant="outlined"
+            density="comfortable"
+            clearable
+            prepend-inner-icon="mdi-magnify"
+            class="mb-3"
+            hide-details
+          />
 
-              <!-- Save changes from draftSelected -->
-              <v-btn
-                v-if="!disabled && items.length"
-                variant="elevated"
-                class="mx-2"
-                @click="commitSelection"
-              >
-                {{ translations.save_ }}
-              </v-btn>
+          <!-- Tree -->
+          <v-treeview
+            v-if="displayedItems.length"
+            class="text-medium-emphasis"
+            density="compact"
+            v-model:selected="internalSelected"
+            v-model:opened="opened"
+            :items="displayedItems"
+            item-value="id"
+            item-title="title"
+            return-object
+            :search="search"
+            :filter="(item, search) => item.title.toLowerCase().includes(search.toLowerCase())"
 
-              <!-- Close without saving -->
-              <v-btn
-                icon="mdi-close"
-                @click="dialog = false"
-              ></v-btn>
-            </v-toolbar>
+            :selectable="multiple ? selectable : false"
+            :select-strategy="multiple ? selectStrategy : 'single-independent'"
+            selected-color="blue"
+            :activatable="multiple ? false : true"
+            :active-strategy="multiple ? undefined : 'single-independent'"
+            :open-on-click="openOnClick"
+            :disabled="disabled"
 
-            <v-card class="overflow-y-auto">
-              <v-card-text>
-                <div class="text-caption text-medium-emphasis mb-2">
-                  {{ draftSelected.length }} 
-                  {{ draftSelected.length === 1 ? translations.labelSelected_ : translations.labelsSelected_ }}
-                </div>
+            indent-lines
+            separate-roots
 
-                <!-- Empty state: no data from API -->
-                <div
-                  v-if="!items.length && !loading"
-                  class="text-center py-8 text-medium-emphasis"
-                >
-                  <v-icon size="40" class="mb-2">mdi-folder-outline</v-icon>
-                  <div class="text-body-2 font-weight-medium">
-                    {{ translations.noLabelsAvailable_ }}
-                  </div>
-                  <div class="text-caption">
-                    {{ translations.thereAreNoLabelsToDisplayYet_ }}
-                  </div>
-                </div>
+            @update:selected="emitSelection"
+          />
 
+          <!-- Optional: Fallback Empty -->
+          <div
+            v-else
+            class="text-medium-emphasis text-center py-6"
+          >
+            {{ translations.noLabelsAvailable_ }}
+          </div>
 
-                <!-- Tree -->
-                <v-treeview
-                  v-model:selected="draftSelected"
-                  v-model:opened="opened"
-                  :items="items"
-                  item-value="id"
-                  item-title="title"
-                  :value-comparator="valueComparator"
-                  :return-object="true"
-                  :selectable="multiple ? selectable : false"
-                  :select-strategy="multiple ? selectStrategy : 'single-independent'"
-                  :activatable="multiple ? false : true"
-                  :active-strategy="multiple ? undefined : 'single-independent'"
-                  :open-on-click="openOnClick"
-                  :disabled="disabled"
-                  indent-lines
-                  separate-roots
-                />
-              </v-card-text>
-            </v-card>
-          </v-card>
-        </v-dialog>
-      </div>
-    </div>
+        </v-card-text>
+      </v-card>
+    </v-expand-transition>
+
   </div>
   `,
 });
