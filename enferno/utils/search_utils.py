@@ -153,32 +153,35 @@ class SearchUtils:
         self, column: ColumnElement, terms: list, exact: bool = False, negate: bool = False
     ) -> list:
         """
-        Build ILIKE conditions for multi-term text search.
+        Build search conditions for multi-term text search.
 
         Args:
             column: The SQLAlchemy column to search on
-            terms: List of search terms (each can contain multiple words)
-            exact: If True, search term as phrase; if False, split into words
+            terms: List of search terms (each treated as a phrase)
+            exact: If True, exact match (no wildcards); if False, phrase with wildcards
             negate: If True, negate conditions (for exclude)
 
         Returns:
             List of SQLAlchemy conditions
+
+        Examples:
+            exact=False: "ahmad ahmad" -> matches %ahmad ahmad%
+            exact=True:  "ahmad ahmad" -> matches exactly "ahmad ahmad" (case-insensitive)
         """
         result = []
         for term in terms:
             if not term or not term.strip():
                 continue
 
+            term = term.strip()
             if exact:
-                cond = column.ilike(f"%{term}%")
-                result.append(~cond if negate else cond)
+                # Exact match - no wildcards, case-insensitive
+                cond = func.lower(column) == term.lower()
             else:
-                words = [w for w in term.split() if w.strip()]
-                if words:
-                    word_conds = [
-                        ~column.ilike(f"%{w}%") if negate else column.ilike(f"%{w}%") for w in words
-                    ]
-                    result.append(and_(*word_conds) if len(word_conds) > 1 else word_conds[0])
+                # Phrase search with wildcards (default)
+                cond = column.ilike(f"%{term}%")
+
+            result.append(~cond if negate else cond)
         return result
 
     def _validate_dynamic_field_name(self, field_name: str, searchable_meta: dict) -> str:
