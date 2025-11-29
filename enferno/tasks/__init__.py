@@ -53,7 +53,6 @@ from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
 import enferno.utils.typing as t
-from enferno.admin.models import SystemInfo
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3, cleanup_old_backups
 
@@ -120,7 +119,7 @@ class ContextTask(celery.Task):
 celery.Task = ContextTask
 
 # Register tasks from separate modules (after ContextTask is set)
-from enferno.tasks.update import perform_system_update_task
+from enferno.tasks.update import perform_system_update_task  # noqa: E402
 
 perform_system_update = celery.task(perform_system_update_task)
 
@@ -228,9 +227,9 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
-    for group in chunks:
+    for chunk in chunks:
         # Fetch bulletins
-        bulletins = Bulletin.query.filter(Bulletin.id.in_(group))
+        bulletins = Bulletin.query.filter(Bulletin.id.in_(chunk))
         for bulletin in bulletins:
             # check user can access each bulletin
             if not user.can_access(bulletin):
@@ -295,7 +294,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             db.session.add(bulletin)
 
         revmaps = []
-        bulletins = Bulletin.query.filter(Bulletin.id.in_(group)).all()
+        bulletins = Bulletin.query.filter(Bulletin.id.in_(chunk)).all()
         for bulletin in bulletins:
             # this commits automatically
             tmp = {"bulletin_id": bulletin.id, "user_id": cur_user.id, "data": bulletin.to_dict()}
@@ -370,9 +369,9 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
-    for group in chunks:
+    for chunk in chunks:
         # Fetch bulletins
-        actors = Actor.query.filter(Actor.id.in_(group))
+        actors = Actor.query.filter(Actor.id.in_(chunk))
         for actor in actors:
             # check user can access each actor
             if not user.can_access(actor):
@@ -437,7 +436,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             db.session.add(actor)
 
         revmaps = []
-        actors = Actor.query.filter(Actor.id.in_(group)).all()
+        actors = Actor.query.filter(Actor.id.in_(chunk)).all()
         for actor in actors:
             # this commits automatically
             tmp = {"actor_id": actor.id, "user_id": cur_user.id, "data": actor.to_dict()}
@@ -518,9 +517,9 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
-    for group in chunks:
+    for chunk in chunks:
         # Fetch bulletins
-        incidents = Incident.query.filter(Incident.id.in_(group))
+        incidents = Incident.query.filter(Incident.id.in_(chunk))
         for incident in incidents:
             # check if user can access incident
             if not user.can_access(incident):
@@ -583,7 +582,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             db.session.add(incident)
 
         revmaps = []
-        incidents = Incident.query.filter(Incident.id.in_(group)).all()
+        incidents = Incident.query.filter(Incident.id.in_(chunk)).all()
         for incident in incidents:
             # this commits automatically
             tmp = {"incident_id": incident.id, "user_id": cur_user.id, "data": incident.to_dict()}
@@ -708,7 +707,7 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
         None
     """
     # Deduplication periodic task
-    if cfg.DEDUP_TOOL == True:
+    if cfg.DEDUP_TOOL is True:
         seconds = int(os.environ.get("DEDUP_INTERVAL", cfg.DEDUP_INTERVAL))
         sender.add_periodic_task(seconds, dedup_cron.s(), name="Deduplication Cron")
         logger.info("Deduplication periodic task is set up.")
@@ -1025,19 +1024,19 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     dir_id = Export.generate_export_dir()
     try:
-        for group in chunks:
+        for chunk in chunks:
             if export_request.table == "bulletin":
-                for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)):
+                for bulletin in Bulletin.query.filter(Bulletin.id.in_(chunk)):
                     pdf = PDFUtil(bulletin)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "actor":
-                for actor in Actor.query.filter(Actor.id.in_(group)):
+                for actor in Actor.query.filter(Actor.id.in_(chunk)):
                     pdf = PDFUtil(actor)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "incident":
-                for incident in Incident.query.filter(Incident.id.in_(group)):
+                for incident in Incident.query.filter(Incident.id.in_(chunk)):
                     pdf = PDFUtil(incident)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
@@ -1073,22 +1072,22 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
         with open(f"{file_path}.json", "a") as file:
             file.write("{ \n")
             file.write(f'"{export_type}s": [ \n')
-            for group in chunks:
+            for chunk in chunks:
                 if export_type == "bulletin":
                     batch = ",".join(
                         bulletin.to_json()
-                        for bulletin in Bulletin.query.filter(Bulletin.id.in_(group))
+                        for bulletin in Bulletin.query.filter(Bulletin.id.in_(chunk))
                     )
                     file.write(f"{batch}\n")
                 elif export_type == "actor":
                     batch = ",".join(
-                        actor.to_json() for actor in Actor.query.filter(Actor.id.in_(group))
+                        actor.to_json() for actor in Actor.query.filter(Actor.id.in_(chunk))
                     )
                     file.write(f"{batch}\n")
                 elif export_type == "incident":
                     batch = ",".join(
                         incident.to_json()
-                        for incident in Incident.query.filter(Incident.id.in_(group))
+                        for incident in Incident.query.filter(Incident.id.in_(chunk))
                     )
                     file.write(f"{batch}\n")
                 # less db overhead
@@ -1176,7 +1175,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
     Returns:
         - export_request.id if successful, None otherwise.
     """
-    if previous_result == False:
+    if previous_result is False:
         return False
 
     export_request = Export.query.get(previous_result)
@@ -1249,7 +1248,7 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     Returns:
         - False if previous task failed, None otherwise.
     """
-    if previous_result == False:
+    if previous_result is False:
         return False
 
     export_request = Export.query.get(previous_result)
