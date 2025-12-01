@@ -134,6 +134,7 @@ const IncidentSearchBox = Vue.defineComponent({
             <!-- Search terms -->
             <v-combobox
                 v-model="q.searchTerms"
+                @update:model-value="val => q.searchTerms = $root.sanitizeCombobox(val)"
                 :label="translations.searchTerms_"
                 multiple
                 chips
@@ -149,6 +150,7 @@ const IncidentSearchBox = Vue.defineComponent({
             
             <v-combobox
                 v-model="q.exTerms"
+                @update:model-value="val => q.exTerms = $root.sanitizeCombobox(val)"
                 :label="translations.excludeTerms_"
                 multiple
                 chips

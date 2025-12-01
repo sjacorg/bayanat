@@ -178,5 +178,12 @@ const globalMixin = {
         "onUpdate:translation": () => (serverErrors[translationKey] = null),
       }
     },
+    sanitizeCombobox(arr) {
+      const clean = arr
+        .map(v => (typeof v === 'string' ? v.trim() : v))
+        .filter(v => v);
+
+      return [...new Set(clean)];
+    },
   },
 };
