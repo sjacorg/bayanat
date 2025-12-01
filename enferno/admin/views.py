@@ -5594,20 +5594,9 @@ def api_user_set_status(id: int) -> Response:
     if user.status == status_enum:
         return HTTPResponse.success(message=f"User is already {new_status}")
 
-    # Disabled users must go through suspended first (to assign roles)
-    if user.status == UserStatus.DISABLED and status_enum == UserStatus.ACTIVE:
-        return HTTPResponse.error(
-            "Cannot activate disabled user directly. Set to 'suspended' first, assign roles, then activate."
-        )
-
     old_status = user.status.value
     try:
-        if user.status == UserStatus.DISABLED and status_enum == UserStatus.SUSPENDED:
-            # Enable: just set status directly (no roles to check)
-            user.status = UserStatus.SUSPENDED
-            user.active = False
-        else:
-            user.set_status(status_enum)
+        user.set_status(status_enum)
         user.save()
     except ValueError as e:
         return HTTPResponse.error(str(e))
