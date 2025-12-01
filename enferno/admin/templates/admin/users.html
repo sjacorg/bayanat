@@ -911,8 +911,8 @@
 
                 save(options) {
                     const handleError = (err) => {
-                        const usernameAlreadyTaken = err?.response?.status === 409
-                        const errors = err?.response?.data?.errors
+                        const usernameAlreadyTaken = err?.response?.status === 409;
+                        const errors = err?.response?.data?.errors;
                         if (errors || usernameAlreadyTaken) {
                             this.serverErrors = errors
                             // Override email message for something simpler
@@ -920,8 +920,8 @@
                             if (this.serverErrors?.['item.username']) this.serverErrors['item.username'] = [translations.usernameInvalid_];
                             if (usernameAlreadyTaken) this.serverErrors = { ...this.serverErrors, ['item.username']: [translations.usernameAlreadyTaken_]};
 
-                            this.$nextTick(() => scrollToFirstError())
-                            this.showSnack(handleRequestError(err))
+                            this.$nextTick(() => scrollToFirstError());
+                            this.showSnack(handleRequestError(err));
                         }
                     }
 
@@ -973,7 +973,7 @@
                         await this.refresh();
                         this.closeChangePasswordDialog();
                     } catch (err) {
-                        this.showSnack(handleRequestError(err))
+                        this.showSnack(handleRequestError(err));
                     } finally {
                         this.saving = false;
                     }
