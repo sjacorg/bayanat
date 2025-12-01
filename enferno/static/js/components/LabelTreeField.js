@@ -154,15 +154,14 @@ const LabelTreeField = Vue.defineComponent({
       :label="label"
       chips
       :multiple="multiple"
-      readonly
       hide-details
       :loading="loading"
       :disabled="disabled"
       :menu-icon="expand ? 'mdi-menu-up' : 'mdi-menu-down'"
       @click="toggleExpansionPanel"
       :class="[{ 'input--open': expand }]"
+      hide-no-data
     >
-
       <!-- Custom chip -->
       <template #chip="{ item, props }">
         <v-chip
