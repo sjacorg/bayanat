@@ -6710,7 +6710,9 @@ def api_config_write(
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
         )
-        return HTTPResponse.success(message="Configuration Saved Successfully")
+        return HTTPResponse.success(
+            message="Configuration saved. Secrets excluded from revision history."
+        )
     else:
         return HTTPResponse.error("Unable to Save Configuration", status=500)
 
@@ -7106,8 +7108,9 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
             if error:
                 db.session.rollback()
                 status = 500 if error.startswith("Database error:") else 400
+
                 return HTTPResponse.error(
-                    f"Failed to create field '{field_title}': {error}", status=status
+                    f"Failed to create field '{field_title}'", status=status, errors=[error]
                 )
             created_count += 1
 
@@ -7128,7 +7131,7 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
                 else:
                     status = 400
                 return HTTPResponse.error(
-                    f"Failed to update field '{field_title}': {error}", status=status
+                    f"Failed to update field '{field_title}'", status=status, errors=[error]
                 )
             updated_count += 1
 

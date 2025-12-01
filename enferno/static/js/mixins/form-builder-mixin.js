@@ -3,9 +3,21 @@ const formBuilderMixin = {
     formBuilder: {
       loading: false,
       showRevisions: false,
-      searchableDynamicFields: [],
-      dynamicFields: [],
-      originalFields: [],
+      searchableDynamicFields: {
+        actor: [],
+        bulletin: [],
+        incident: [],
+      },
+      dynamicFields: {
+        actor: [],
+        bulletin: [],
+        incident: [],
+      },
+      originalFields: {
+        actor: [],
+        bulletin: [],
+        incident: [],
+      },
       historyState: { items: [], total: 0, page: 1, per_page: 20 },
     },
     excludedFields: {
@@ -33,40 +45,38 @@ const formBuilderMixin = {
       table: [],
     },
   }),
-  computed: {
-    fixedDynamicFields() {
-      return this.formBuilder.dynamicFields.filter((field) => this.isFixedField(field) && !field.deleted);
+  methods: {
+    fixedDynamicFields({ entityType }) {
+      return this.formBuilder.dynamicFields[entityType].filter((field) => this.isFixedField(field) && !field.deleted);
     },
-    movableDynamicFields() {
-      return this.formBuilder.dynamicFields.filter((field) => !this.isFixedField(field) && !field.deleted);
+    movableDynamicFields({ entityType }) {
+      return this.formBuilder.dynamicFields[entityType].filter((field) => !this.isFixedField(field) && !field.deleted);
     },
-    hasChanges() {
+    filteredDynamicFields({ entityType }) {
+      if (!this.ui.search) return this.formBuilder.dynamicFields[entityType];
+  
+      return this.formBuilder.dynamicFields[entityType].filter((field) => this.fieldTitleMatchesSearch(field) && !field.deleted);
+    },
+    filteredMovableDynamicFields({ entityType }) {
+      if (!this.ui.search) return this.movableDynamicFields({ entityType });
+  
+      return this.movableDynamicFields({ entityType }).filter((field) => this.fieldTitleMatchesSearch(field));
+    },
+    filteredFixedDynamicFields({ entityType }) {
+      if (!this.ui.search) return this.fixedDynamicFields({ entityType });
+  
+      return this.fixedDynamicFields({ entityType }).filter((field) => this.fieldTitleMatchesSearch(field));
+    },
+    hasChanges({ entityType }) {
       const changes = this.computeChanges({
-        previousFields: this.formBuilder.originalFields,
-        currentFields: this.formBuilder.dynamicFields,
+        previousFields: this.formBuilder.originalFields[entityType],
+        currentFields: this.formBuilder.dynamicFields[entityType],
       });
       return Boolean(changes.create.length || changes.update.length || changes.delete.length);
     },
-    filteredDynamicFields() {
-      if (!this.ui.search) return this.formBuilder.dynamicFields;
-
-      return this.formBuilder.dynamicFields.filter((field) => this.fieldTitleMatchesSearch(field) && !field.deleted);
-    },
-    filteredMovableDynamicFields() {
-      if (!this.ui.search) return this.movableDynamicFields;
-
-      return this.movableDynamicFields.filter((field) => this.fieldTitleMatchesSearch(field));
-    },
-    filteredFixedDynamicFields() {
-      if (!this.ui.search) return this.fixedDynamicFields;
-
-      return this.fixedDynamicFields.filter((field) => this.fieldTitleMatchesSearch(field));
-    },
-  },
-  methods: {
     cardDynamicFields(type = 'bulletin') {
       const excludeKeys = this.excludedFields[type] || [];
-      return this.formBuilder.dynamicFields.filter(f => !excludeKeys.includes(f.name));
+      return this.formBuilder.dynamicFields[type].filter(f => !excludeKeys.includes(f.name));
     },
     isFixedField(field) {
       return this.fixedFields.includes(field.name)
@@ -77,7 +87,7 @@ const formBuilderMixin = {
     openRevisionHistoryDrawer() {
       this.formBuilder.showRevisions = true;
     },
-    discardChanges() {
+    discardChanges({ entityType }) {
       this.$confirm({
         title: window.translations.youreAboutToDiscardChanges_,
         message: `${window.translations.discardingWillRemoveAllUnsavedEdits_}\r\n\r\n${window.translations.doYouWantToContinue_}`,
@@ -87,7 +97,7 @@ const formBuilderMixin = {
         },
         dialogProps: { width: 780 },
         onAccept: () => {
-          this.formBuilder.dynamicFields = deepClone(this.formBuilder.originalFields);
+          this.formBuilder.dynamicFields[entityType] = deepClone(this.formBuilder.originalFields[entityType]);
           this.$toast({
             message: window.translations.allUnsavedEditsHaveBeenDiscarded_,
             hideActions: true,
@@ -103,31 +113,24 @@ const formBuilderMixin = {
         },
       });
     },
-    edit({ field }) {
-      const matchingField = this.formBuilder.dynamicFields.find(
-        (dynamicField) => dynamicField.id === field.id,
-      );
-      this.form.editedItem = matchingField;
-      this.ui.selectFieldTypeDialog = true;
-    },
-    saveField(evt) {
-      let idx = this.formBuilder.dynamicFields.findIndex(
-        (dynamicField) => dynamicField.id === evt.id,
+    saveField({ event, entityType }) {
+      let idx = this.formBuilder.dynamicFields[entityType].findIndex(
+        (dynamicField) => dynamicField.id === event.id,
       );
 
-      if (this.formBuilder.dynamicFields[idx] && evt.id) {
+      if (this.formBuilder.dynamicFields[entityType][idx] && event.id) {
         // Update existing field
-        this.formBuilder.dynamicFields[idx] = { ...evt };
+        this.formBuilder.dynamicFields[entityType][idx] = { ...event };
       } else {
         // Add new field
-        this.formBuilder.dynamicFields.push(evt);
+        this.formBuilder.dynamicFields[entityType].push(event);
         this.$nextTick(() => {
-          const el = document.querySelector(`[data-field-id="${evt.id}"]`);
+          const el = document.querySelector(`[data-field-id="${event.id}"]`);
           el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       }
 
-      this.formBuilder.dynamicFields = this.sortFields(this.formBuilder.dynamicFields);
+      this.formBuilder.dynamicFields[entityType] = this.sortFields(this.formBuilder.dynamicFields[entityType]);
     },
 
     buildChangesTable(diff) {
@@ -157,8 +160,8 @@ const formBuilderMixin = {
     showSaveDialog({ entityType }) {
       this.changes.diff = this.computeChanges({
         ignoreSortOrder: true,
-        previousFields: this.formBuilder.originalFields,
-        currentFields: this.formBuilder.dynamicFields,
+        previousFields: this.formBuilder.originalFields[entityType],
+        currentFields: this.formBuilder.dynamicFields[entityType],
       });
       this.changes.table = this.buildChangesTable(this.changes.diff);
 
@@ -185,22 +188,22 @@ const formBuilderMixin = {
           return 'eq';
       }
     },
-    async toggleFieldVisibility({ field }) {
-      const fieldToUpdate = this.formBuilder.dynamicFields.find(
+    async toggleFieldVisibility({ field, entityType }) {
+      const fieldToUpdate = this.formBuilder.dynamicFields[entityType].find(
         (dynamicField) => dynamicField.id === field.id,
       );
 
       fieldToUpdate.active = !fieldToUpdate.active;
       if (fieldToUpdate.active) fieldToUpdate.deleted = false;
     },
-    reindexFields() {
+    reindexFields({ entityType }) {
       // Reindex fields but keep fixed fields sort_order intact
-      this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.map((field, index) => ({
+      this.formBuilder.dynamicFields[entityType] = this.formBuilder.dynamicFields[entityType].map((field, index) => ({
         ...field,
         sort_order: this.fixedFields.includes(field.name) ? field.sort_order : index + 1,
       }));
     },
-    async deleteField({ field }) {
+    async deleteField({ field, entityType }) {
       this.$root.$confirm({
         title: window.translations.youreAboutToDeleteAField_,
         message: `${window.translations.deletingTheFieldWillRemoveItFromYourForm_(
@@ -210,11 +213,11 @@ const formBuilderMixin = {
         dialogProps: { width: 780 },
         onAccept: () => {
           if (String(field.id).startsWith('temp-')) {
-            this.formBuilder.dynamicFields = this.formBuilder.dynamicFields.filter(
+            this.formBuilder.dynamicFields[entityType] = this.formBuilder.dynamicFields[entityType].filter(
               (dynamicField) => dynamicField.id !== field.id,
             );
           } else {
-            const dynamicField = this.formBuilder.dynamicFields.find(
+            const dynamicField = this.formBuilder.dynamicFields[entityType].find(
               (dynamicField) => dynamicField.id === field.id,
             );
             dynamicField.active = false;
@@ -238,7 +241,7 @@ const formBuilderMixin = {
         },
       });
     },
-    initSortable(el) {
+    initSortable(el, { entityType }) {
       if (!el) return;
 
       const sortable = new Sortable(el, {
@@ -290,10 +293,10 @@ const formBuilderMixin = {
           }
 
           // 🔍 Hide drop line if dropping wouldn't move the item
-          const fromIdx = this.formBuilder.dynamicFields.findIndex(
+          const fromIdx = this.formBuilder.dynamicFields[entityType].findIndex(
             (i) => i.id == this.dragDrop.draggingId,
           );
-          const tgtIdx = this.formBuilder.dynamicFields.findIndex((i) => i.id == overId);
+          const tgtIdx = this.formBuilder.dynamicFields[entityType].findIndex((i) => i.id == overId);
           if (!this.wouldMove(fromIdx, tgtIdx, cls)) cls = '';
 
           // Update drop line state
@@ -324,7 +327,7 @@ const formBuilderMixin = {
             return;
           }
 
-          const arr = this.formBuilder.dynamicFields;
+          const arr = this.formBuilder.dynamicFields[entityType];
 
           const fromIdx = arr.findIndex((i) => i.id == this.dragDrop.draggingId);
           const tgtIdx = arr.findIndex((i) => i.id == overId);
@@ -352,7 +355,7 @@ const formBuilderMixin = {
           moved.moved = true;
 
           resetUI();
-          this.reindexFields();
+          this.reindexFields({ entityType });
         },
       });
 
@@ -453,8 +456,8 @@ const formBuilderMixin = {
 
       try {
         const diffChanges = this.computeChanges({
-          previousFields: this.formBuilder.originalFields,
-          currentFields: this.formBuilder.dynamicFields,
+          previousFields: this.formBuilder.originalFields[entityType],
+          currentFields: this.formBuilder.dynamicFields[entityType],
         });
 
         const payload = {
@@ -476,8 +479,8 @@ const formBuilderMixin = {
 
         const res = await api.post(`/admin/api/dynamic-fields/bulk-save`, payload);
 
-        this.formBuilder.dynamicFields = res.data.fields;
-        this.formBuilder.originalFields = deepClone(res.data.fields);
+        this.formBuilder.dynamicFields[entityType] = res.data.fields;
+        this.formBuilder.originalFields[entityType] = deepClone(res.data.fields);
         this.resetHistory();
         this.showSnack(window.translations.fieldsSavedSuccessfully_);
       } catch (err) {
@@ -521,8 +524,8 @@ const formBuilderMixin = {
 
       return field.active && field.name === name;
     },
-    isFieldActiveByName(name) {
-      const matchingField = this.formBuilder.dynamicFields.find((field) => field?.name === name);
+    isFieldActiveByName(name, { entityType }) {
+      const matchingField = this.formBuilder.dynamicFields[entityType].find((field) => field?.name === name);
 
       return Boolean(matchingField?.active);
     },
@@ -586,9 +589,10 @@ const formBuilderMixin = {
         const response = await api.get(
           `/admin/api/dynamic-fields/?entity_type=${entityType}`,
         );
-        this.formBuilder.dynamicFields = response.data.data;
-        this.formBuilder.dynamicFields = this.sortFields(this.formBuilder.dynamicFields);
-        this.formBuilder.originalFields = deepClone(this.formBuilder.dynamicFields); // deep clone
+        const fields = response?.data?.data ?? [];
+        const sortedFields = this.sortFields(fields);
+        this.formBuilder.dynamicFields[entityType] = sortedFields;
+        this.formBuilder.originalFields[entityType] = deepClone(sortedFields); // deep clone
       } catch (err) {
         console.error(err);
         this.showSnack(handleRequestError(err));
@@ -602,10 +606,8 @@ const formBuilderMixin = {
         const response = await api.get(
           `/admin/api/dynamic-fields/?entity_type=${entityType}&active=true&searchable=true`,
         );
-        this.formBuilder.searchableDynamicFields = response.data.data;
-        this.formBuilder.searchableDynamicFields = this.sortFields(
-          this.formBuilder.searchableDynamicFields,
-        );
+        const fields = response?.data?.data ?? [];
+        this.formBuilder.searchableDynamicFields[entityType] = this.sortFields(fields);
       } catch (err) {
         console.error(err);
         this.showSnack(handleRequestError(err));
