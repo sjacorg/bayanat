@@ -259,7 +259,7 @@ const UserCard = Vue.defineComponent({
           {{ actionSections[data.mode].title(user.name) }}
         </template>
         <template #default="{ data }">
-          <div class="text-body-2 mb-6 mt-3">What you should know</div>
+          <div class="text-body-2 mb-6 mt-3">{{ translations.whatYouShouldKnow_ }}</div>
           <div class="d-flex flex-column ga-6">
             <div v-for="(block, index) in actionSections[data.mode].blocks" :key="index" class="d-flex">
               <v-avatar color="white">
@@ -279,7 +279,7 @@ const UserCard = Vue.defineComponent({
             {{ actionSections[data.mode].confirmationText(user.username) }}
             <v-text-field
               v-model="username"
-              label="Enter username to confirm"
+              :label="translations.enterUsernameToConfirm_"
               variant="filled"
               class="mt-3"
             ></v-text-field>
