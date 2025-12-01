@@ -742,25 +742,73 @@ class SearchUtils:
                         )
                         conditions.append(~Actor.id.in_(subquery))
 
-        # Search Terms - chips-based multi-term text search
+        # Search Terms - chips-based multi-term text search (searches both Actor and ActorProfile)
         if search_terms := q.get("searchTerms"):
             exact = q.get("termsExact", False)
-            term_conds = self._build_term_conditions(Actor.search, search_terms, exact)
+            term_conds = []
+            for term in search_terms:
+                if not term or not term.strip():
+                    continue
+                term = term.strip()
+                if exact:
+                    escaped = re.escape(term)
+                    term_conds.append(
+                        or_(
+                            Actor.search.op("~*")(f"\\y{escaped}\\y"),
+                            ActorProfile.search.op("~*")(f"\\y{escaped}\\y"),
+                        )
+                    )
+                else:
+                    term_conds.append(
+                        or_(
+                            Actor.search.ilike(f"%{term}%"),
+                            ActorProfile.search.ilike(f"%{term}%"),
+                        )
+                    )
             if term_conds:
                 if q.get("opTerms", False):
-                    conditions.append(or_(*term_conds))
+                    # OR: match any term
+                    subquery = select(Actor.id).join(Actor.actor_profiles).where(or_(*term_conds))
                 else:
-                    conditions.extend(term_conds)
+                    # AND: match all terms (default)
+                    subquery = select(Actor.id).join(Actor.actor_profiles).where(and_(*term_conds))
+                conditions.append(Actor.id.in_(subquery))
 
-        # Exclude Search Terms
+        # Exclude Search Terms (searches both Actor and ActorProfile)
         if ex_terms := q.get("exTerms"):
             exact = q.get("exTermsExact", False)
-            ex_conds = self._build_term_conditions(Actor.search, ex_terms, exact, negate=True)
+            ex_conds = []
+            for term in ex_terms:
+                if not term or not term.strip():
+                    continue
+                term = term.strip()
+                if exact:
+                    escaped = re.escape(term)
+                    ex_conds.append(
+                        or_(
+                            Actor.search.op("~*")(f"\\y{escaped}\\y"),
+                            ActorProfile.search.op("~*")(f"\\y{escaped}\\y"),
+                        )
+                    )
+                else:
+                    ex_conds.append(
+                        or_(
+                            Actor.search.ilike(f"%{term}%"),
+                            ActorProfile.search.ilike(f"%{term}%"),
+                        )
+                    )
             if ex_conds:
                 if q.get("opExTerms", False):
-                    conditions.append(or_(*ex_conds))
+                    # OR: exclude if matches any term
+                    exclude_subquery = (
+                        select(Actor.id).join(Actor.actor_profiles).where(or_(*ex_conds))
+                    )
                 else:
-                    conditions.extend(ex_conds)
+                    # AND: exclude if matches all terms (default)
+                    exclude_subquery = (
+                        select(Actor.id).join(Actor.actor_profiles).where(and_(*ex_conds))
+                    )
+                conditions.append(~Actor.id.in_(exclude_subquery))
 
         # Origin ID
         originid = (q.get("originid") or "").strip()
