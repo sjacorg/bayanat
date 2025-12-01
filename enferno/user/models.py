@@ -280,7 +280,7 @@ class User(UserMixin, db.Model, BaseMixin):
 
         # Side effects based on new status
         if new_status == UserStatus.DISABLED:
-            self.roles = []
+            # Note: roles are preserved for audit trail - disabled users can't login anyway
             self.view_usernames = False
             self.view_simple_history = False
             self.view_full_history = False
