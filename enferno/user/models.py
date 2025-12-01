@@ -445,13 +445,18 @@ class User(UserMixin, db.Model, BaseMixin):
         # Status can only be set during creation (user has no id yet)
         # For existing users, use set_status() or dedicated endpoints
         if not self.id:
-            status_str = item.get("status", "active")
-            try:
-                self.status = UserStatus(status_str)
-            except ValueError:
-                self.status = UserStatus.ACTIVE
-            # Sync deprecated active field
-            self.active = self.status == UserStatus.ACTIVE
+            # Users without roles default to SUSPENDED - must assign role to activate
+            if not self.roles:
+                self.status = UserStatus.SUSPENDED
+                self.active = False
+            else:
+                status_str = item.get("status", "active")
+                try:
+                    self.status = UserStatus(status_str)
+                except ValueError:
+                    self.status = UserStatus.ACTIVE
+                # Sync deprecated active field
+                self.active = self.status == UserStatus.ACTIVE
 
         return self
 
