@@ -213,7 +213,6 @@ const MobilityMap = Vue.defineComponent({
     animateMorph() {
       if (!this.morphing) return;
 
-      const zoom = this.map.getZoom();
       const speed = 0.1;
 
       this.morphProgress += speed;
@@ -595,29 +594,6 @@ const MobilityMap = Vue.defineComponent({
 
       return { outgoing: 0, incoming: 0 };
     },
-    getClusterTraffic(input) {
-      let outgoing = 0;
-      let incoming = 0;
-
-      // Single location
-      if (typeof input === 'number') {
-        this.currentFlows.forEach((f) => {
-          if (f.from === input) outgoing += f.weight;
-          if (f.to === input) incoming += f.weight;
-        });
-        return { outgoing, incoming };
-      }
-
-      // Cluster
-      const memberSet = new Set(input.memberIds);
-
-      this.currentFlows.forEach((f) => {
-        if (memberSet.has(f.from)) outgoing += f.weight;
-        if (memberSet.has(f.to)) incoming += f.weight;
-      });
-
-      return { outgoing, incoming };
-    },
 
     // NEW: cluster-aware arrow aggregation with pair breakdown
     getClusterArrowDetails(clusterFrom, clusterTo) {
@@ -675,7 +651,7 @@ const MobilityMap = Vue.defineComponent({
 
           if (this.mode === 'event') {
             const { lat, lon } = this.tooltip.data;
-            MobilityMapUtils.copyCoordinates({ lat, lon })
+            MobilityMapUtils.copyCoordinates({ lat, lon });
             return;
           }
 
