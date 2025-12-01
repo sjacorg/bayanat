@@ -1,46 +1,94 @@
-const actionSections = {
+const actionSections = () => ({
   suspend: {
-    title: (name) => `You're about to suspend the account for user \"${name}\"`,
-    confirmationText: (name) => `By entering the user\'s username, you will confirm the suspend action for user \"${name}\"`,
-    acceptButtonText: "Suspend Account",
+    title: (name) => window.translations.youAreAboutToSuspendTheAccountForUser_(name),
+    confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmSuspendForUser_(name),
+    acceptButtonText: window.translations.suspendAccount_,
     acceptButtonColor: "warning",
     blocks: [
-      { icon: "mdi-account-circle", title: "Intended for", description: "Temporary suspensions, such as during internal investigations or when the user is on leave." },
-      { icon: "mdi-account-key", title: "Roles and Access Removal", bullets: ["The user will no longer be able to log in to Bayanat.", "Their system roles, access permissions, and assigned items will remain unchanged."] },
+      {
+        icon: "mdi-account-circle",
+        title: window.translations.intendedFor_,
+        description: window.translations.temporarySuspensionsInternalInvestigationsOrOnLeave_,
+      },
+      {
+        icon: "mdi-account-key",
+        title: window.translations.rolesAndAccessRemoval_,
+        bullets: [
+          window.translations.userCanNoLongerLoginToBayanat_,
+          window.translations.rolesAccessAndAssignmentsRemainUnchanged_,
+        ],
+      },
     ],
   },
   reactivate: {
-    title: (name) => `You're about to reactivate user \"${name}\"`,
-    confirmationText: (name) => `By entering the user\'s username, you will confirm the reactivation for user \"${name}\"`,
-    acceptButtonText: "Reactivate Account",
+    title: (name) => window.translations.youAreAboutToReactivateUser_(name),
+    confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmReactivationForUser_(name),
+    acceptButtonText: window.translations.reactivateAccount_,
     acceptButtonColor: "success",
     blocks: [
-      { icon: "mdi-account", title: "Roles and Access Restoration", bullets: ["Previous system roles and access permissions will be restored.", "User can log in to Bayanat and perform actions allowed by their roles."] },
-      { icon: "mdi-key", title: "Profile and Contributions", bullets: ["The user will be able to view and edit items they previously had access to."] },
+      {
+        icon: "mdi-account",
+        title: window.translations.rolesAndAccessRestoration_,
+        bullets: [
+          window.translations.previousRolesAndAccessPermissionsWillBeRestored_,
+          window.translations.userCanLoginAndPerformRoleActions_,
+        ],
+      },
+      {
+        icon: "mdi-key",
+        title: window.translations.profileAndContributions_,
+        bullets: [
+          window.translations.theUserWillBeAbleToViewAndEditItemsTheyPreviouslyHadAccessTo_,
+        ],
+      },
     ],
   },
   disable: {
-    title: (name) => `You're about to disable the account for user \"${name}\"`,
-    confirmationText: (name) => `By entering the user\'s username, you will confirm the disable action for user \"${name}\"`,
-    acceptButtonText: "Disable Account",
+    title: (name) => window.translations.youAreAboutToDisableTheAccountForUser_(name),
+    confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmDisableForUser_(name),
+    acceptButtonText: window.translations.disableAccount_,
     acceptButtonColor: "error",
     blocks: [
-      { icon: "mdi-account-circle", title: "Intended for", description: "Permanently ending a user's access to Bayanat, such as when they leave the organization." },
-      { icon: "mdi-account-key", title: "Roles and Access Removal", bullets: ["The user will no longer be able to log in to Bayanat.", "All system roles and access permissions will be removed.", "Items assigned to the user will be unassigned and available for reassignment."] },
-      { icon: "mdi-briefcase-clock-outline", title: "Profile and Contributions", bullets: ["The user's profile will be retained for archival purposes.", "Items created or updated by the user will remain in Bayanat.", "Activity history will continue to reflect the user's contributions."] },
+      {
+        icon: "mdi-account-circle",
+        title: window.translations.intendedFor_,
+        description: window.translations.permanentlyEndingUserAccessToBayanat_,
+      },
+      {
+        icon: "mdi-account-key",
+        title: window.translations.accessRemoval_,
+        bullets: [window.translations.userCanNoLongerLoginToBayanat_],
+      },
+      {
+        icon: "mdi-briefcase-clock-outline",
+        title: window.translations.profileAndContributions_,
+        bullets: [
+          window.translations.userProfileRetainedForArchivalPurposes_,
+          window.translations.itemsCreatedOrUpdatedByUserWillRemainInBayanat_,
+          window.translations.activityHistoryWillContinueToReflectUserContributions_,
+        ],
+      },
     ],
   },
   enable: {
-    title: (name) => `You're about to enable the account for user \"${name}\"`,
-    confirmationText: (name) => `By entering the user\'s username, you will confirm enabling the account for user \"${name}\"`,
-    acceptButtonText: "Enable Account",
+    title: (name) => window.translations.youAreAboutToEnableTheAccountForUser_(name),
+    confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmEnableForUser_(name),
+    acceptButtonText: window.translations.enableAccount_,
     acceptButtonColor: "success",
     blocks: [
-      { icon: "mdi-account", title: "Roles and Access Restoration", bullets: ["The user will be able to log in once a system role is assigned.", "User can use their existing password to access Bayanat."] },
-      { icon: "mdi-key", title: "Profile and Contributions", bullets: ["The user's previous profile and contributions remain intact."] },
+      {
+        icon: "mdi-account",
+        title: window.translations.accessRestoration_,
+        bullets: [window.translations.userCanUseExistingPasswordToAccessBayanat_],
+      },
+      {
+        icon: "mdi-key",
+        title: window.translations.profileAndContributions_,
+        bullets: [window.translations.previousProfileAndContributionsRemainIntact_],
+      },
     ],
   },
-}
+});
 
 const UserCard = Vue.defineComponent({
   props: ['user', 'closable'],
@@ -54,7 +102,7 @@ const UserCard = Vue.defineComponent({
       page: 1,
       perPage: 5,
       more: true,
-      actionSections,
+      actionSections: actionSections(),
       username: '',
     };
   },
@@ -173,7 +221,7 @@ const UserCard = Vue.defineComponent({
       this.$refs.accountActionDialog.show({
         dialogProps: { width: 691 },
         data: { mode },
-        acceptProps: { text: actionSections[mode].acceptButtonText, color: actionSections[mode].acceptButtonColor },
+        acceptProps: { text: this.actionSections[mode].acceptButtonText, color: this.actionSections[mode].acceptButtonColor },
         onAccept: async () => {
           await api.post(`/admin/api/user/${this.user.id}/${mode}`);
           await this.$root.refreshUser(this.user.id);
