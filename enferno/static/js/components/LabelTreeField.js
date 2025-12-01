@@ -122,7 +122,7 @@ const LabelTreeField = Vue.defineComponent({
     },
 
     async toggleExpansionPanel() {
-      if (!this.fetchedOnce) this.fetchTreeOnce(); // don't await, let UI render
+      if (!this.fetchedOnce) await this.fetchTreeOnce();
       this.expand = !this.expand;
     },
 
