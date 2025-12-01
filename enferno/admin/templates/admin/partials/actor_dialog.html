@@ -48,8 +48,8 @@
                             </v-btn>
                         </v-btn-toggle>
 
-                        <div v-if="movableDynamicFields.length" class="form-grid mt-4">
-                            <template v-for="(field, index) in movableDynamicFields" :key="field.id">
+                        <div v-if="movableDynamicFields({ entityType: 'actor' }).length" class="form-grid mt-4">
+                            <template v-for="(field, index) in movableDynamicFields({ entityType: 'actor' })" :key="field.id">
                                 <div v-if="isFieldActive(field, 'name') && editedItem.type === 'Entity'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
                                         v-model:original="editedItem.name"
@@ -905,8 +905,8 @@
                                 <field-renderer v-else-if="isFieldActive(field) && !field.core" v-model="editedItem[field.name]" :field="field" :class="[fieldClass(field), 'px-3 py-2']"></field-renderer>
                             </template>
                         </div>
-                        <div v-if="fixedDynamicFields.length" class="form-grid mt-4">
-                            <template v-for="(field, index) in fixedDynamicFields" :key="field.id">
+                        <div v-if="fixedDynamicFields({ entityType: 'actor' }).length" class="form-grid mt-4">
+                            <template v-for="(field, index) in fixedDynamicFields({ entityType: 'actor' })" :key="field.id">
                                 <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
                                     <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
                                         label="{{ _('Comments') }}"
