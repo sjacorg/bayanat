@@ -189,6 +189,7 @@ const LabelTreeField = Vue.defineComponent({
         variant="outlined"
         rounded="md"
         class="border-sm max-h-[440px] overflow-y-auto"
+        :style="{ width: showCopyIcon ? 'calc(100% - 64px)' : '100%' }"
       >
         <v-card-text>
 
