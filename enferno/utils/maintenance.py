@@ -31,7 +31,6 @@ def get_maintenance_file_path() -> Path:
 
     # Create the directory if it doesn't exist
     maintenance_dir.mkdir(exist_ok=True)
-    logger.info(f"Maintenance directory ready: {maintenance_dir}")
 
     return maintenance_dir / MAINTENANCE_FILE
 
