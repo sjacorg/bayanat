@@ -59,6 +59,7 @@ class JsonFormatter(logging.Formatter):
 def get_logger(name="app_logger"):
     """Get a logger instance."""
     logger = logging.getLogger(name)
+    logger.propagate = False
     logger.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
 
     # Prevent race condition when called from multiple threads
