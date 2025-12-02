@@ -669,7 +669,10 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         # 3) Fetch tags and get latest release from remote
         click.echo("Fetching latest release...")
         subprocess.run(
-            ["git", "fetch", "--tags", "--prune"], check=True, timeout=120, cwd=project_root
+            ["git", "fetch", "--tags", "--prune", "--force"],
+            check=True,
+            timeout=120,
+            cwd=project_root,
         )
 
         # Get latest tag from remote (not local tags)
@@ -758,12 +761,11 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         return (False, f"Update failed and rolled back: {e}")
     finally:
         if stashed:
-            try:
-                click.echo("Restoring stashed changes...")
-                subprocess.run(["git", "stash", "pop"], check=True, cwd=project_root)
-            except subprocess.CalledProcessError as pop_err:
-                logger.warning(f"Stash restore failed (likely due to build artifacts): {pop_err}")
-                click.echo("Note: Stash preserved - run 'git stash list' to see saved changes.")
+            logger.info("Local changes were stashed before update")
+            click.echo(
+                "Note: Local changes have been stashed. Review with 'git stash list' "
+                "and apply manually if needed with 'git stash pop'."
+            )
 
 
 @click.command()

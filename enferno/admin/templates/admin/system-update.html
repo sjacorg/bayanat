@@ -17,7 +17,7 @@
         <v-divider></v-divider>
 
         <v-card-text class="px-5">
-        <v-infinite-scroll :empty-text="!updateHistory?.length ? '{{ _("No history yet") }}' : '{{ _('No more items in history') }}'" :items="updateHistory" @load="loadUpdateHistory({ ...$event })">
+        <v-infinite-scroll :empty-text="emptyHistoryText" :items="updateHistory" @load="loadUpdateHistory({ ...$event })">
             <v-timeline density="compact" side="end" align="start">
                 <v-timeline-item v-for="(item, index) in updateHistory" :key="item.id" dot-color="primary" size="10">
                     <div class="mt-n1">
@@ -57,23 +57,23 @@
 <v-main class="">
     <v-container fluid>
         <v-card class="pa-4 overflow-y-auto d-flex flex-column" height="calc(100vh - 96px)">
-
             <!-- Header Section -->
             <v-card-title class="px-5 py-5">
                 <div class="d-flex align-center justify-space-between">
                     <div>
-                        <div class="mb-3 d-flex ga-3 align-center">
-                            {{ _('System Update') }}:
+                        <h1 class="text-h5 mb-5">{{ _('System Update') }}</h1>
+                        <div class="d-flex align-center ga-2 mb-2">
                             <span>Bayanat ${latestVersion}</span>
-                            <v-chip v-if="isUpToDate" color="primary">{{ _('Latest') }}</v-chip>
-                            <v-chip v-else color="primary">{{ _('Available for Update') }}</v-chip>
+                            <v-chip v-if="isUpToDate" color="success" prepend-icon="mdi-check" variant="flat">{{ _('Up to date') }}</v-chip>
+                            <v-chip v-else color="warning" prepend-icon="mdi-download" variant="flat">{{ _('Update available') }}</v-chip>
                         </div>
+                        
                         <template v-if="isUpToDate">
-                            <div class="text-body-2 mb-2 font-weight-medium">{{ _('Your system is up to date') }}</div>
-                            <div class="text-body-2 mb-2">{{ _('Last successful check for update:') }}<span class="ml-1">${lastCheckTime}</span></div>
+                            <div class="text-body-2 mb-2 font-weight-medium">{{ _('Your system is on the latest version of Bayanat') }}</div>
+                            <div class="text-body-2 mb-2">{{ _('Last successful check for updates:') }}<span class="ml-1">${lastCheckTime}</span></div>
                         </template>
                         <template v-else>
-                            <div class="text-body-2 mb-2">{{ _('Released on') }}: ${formatDate(releaseNotes?.published_at)}</div>
+                            <div class="text-body-2 mb-2">{{ _('New version is available for update. Released on') }}: ${formatDate(releaseNotes?.published_at)}</div>
                             <div class="text-body-2 mb-2">{{ _('Current version:') }}<span class="ml-2 font-weight-medium">Bayanat ${currentVersion}</span></div>
                         </template>
                     </div>
@@ -146,7 +146,8 @@
             <v-card-text class="pb-6 pt-3">
                 <div class="d-flex align-center justify-space-between mb-2">
                     <div>
-                        <span class="font-weight-bold">Version:</span> <span class="font-weight-medium">Bayanat ${currentVersion}</span>
+                        <h1 class="text-h5 mb-5">{{ _('Release Notes') }}</h1>
+                        <h2>Bayanat ${releaseNotes?.version || latestVersion}</h2>
                     </div>
                     <div>
                         <v-btn href="https://github.com/sjacorg/bayanat/releases" target="_blank" variant="plain" append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>
@@ -277,6 +278,9 @@
         computed: {
             renderedReleaseNotes() {
                 return this.md.render(this.releaseNotes?.body || '');
+            },
+            emptyHistoryText() {
+                return !this.updateHistory?.length ? '{{ _("No history yet") }}' : '{{ _("No more items in history") }}';
             }
         },
         methods: {
@@ -358,8 +362,8 @@
                 api.post('/admin/api/system/update', {
                     skip_backup: false
                 }).then(response => {
-                    // Start polling for update status
-                    this.pollUpdateStatus();
+                    // Redirect to maintenance page (will auto-clear when update completes)
+                    window.location.href = '/maintenance';
                 }).catch(error => {
                     this.showSnack(error.response?.data?.message || "{{ _('Update failed') }}", 'error');
                     this.updating = false;
@@ -454,5 +458,6 @@
 
     app.component('ShowDetails', ShowDetails);
     app.use(vuetify).mount('#app');
+    window.app = app;
 </script>
 {% endblock %}

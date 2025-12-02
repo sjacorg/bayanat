@@ -76,6 +76,12 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
 
             set_update_message(f"Update complete: {new_version}")
 
+            # Clear release notes cache so new version is fetched
+            rds.delete("bayanat:release:notes")
+
+            # Signal app to auto-clear maintenance on startup (handles all update types)
+            rds.set("bayanat:maintenance:auto_clear", "1", ex=60)
+
             # Only record history if version actually changed
             if new_version != current_version:
                 UpdateHistory(
@@ -132,7 +138,7 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
     finally:
         # Cleanup - only runs if we acquired the lock (got past the check above)
         # If lock acquisition failed, we returned early before entering try block
-        disable_maintenance()
+        # Don't clear maintenance here - let maintenance page detect completion
         end_update()
 
 
