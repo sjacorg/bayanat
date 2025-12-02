@@ -499,7 +499,13 @@ const UserCard = Vue.defineComponent({
             <div class="mb-3 text-body-1">{{ translations.manageAccount_ }}</div>
             <div class="d-flex flex-wrap ga-3">
               <template v-if="isUserEnabled">
-                <v-btn v-if="isUserSuspended" @click="reactivateAccount()" variant="outlined" color="success" prepend-icon="mdi-play-circle">{{ translations.reactivateAccount_ }}</v-btn>
+                <v-tooltip v-if="isUserSuspended" location="bottom" :disabled="user.roles.length" :text="translations.pleaseAssignASystemRoleToReactivateUser_">
+                    <template #activator="{ props }">
+                      <div v-bind="props">
+                        <v-btn :disabled="!user.roles.length" @click="reactivateAccount()" variant="outlined" color="success" prepend-icon="mdi-play-circle">{{ translations.reactivateAccount_ }}</v-btn>
+                      </div>
+                    </template>
+                  </v-tooltip>
                 <v-btn v-if="isUserActive" @click="suspendAccount()" variant="outlined" color="warning" prepend-icon="mdi-pause-circle">{{ translations.suspendAccount_ }}</v-btn>
               </template>
               <v-btn v-if="isUserDisabled" @click="enableAccount()" variant="outlined" color="success" prepend-icon="mdi-arrow-down-thin-circle-outline">{{ translations.enableAccount_ }}</v-btn>
