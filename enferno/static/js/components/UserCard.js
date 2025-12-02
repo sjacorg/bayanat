@@ -258,12 +258,12 @@ const UserCard = Vue.defineComponent({
   template: `
       <confirm-dialog ref="accountActionDialog" :disabled-accept="username !== user.username">
         <template #title="{ data }">
-          {{ actionSections[data.mode].title(user.name) }}
+          {{ actionSections[data?.mode]?.title(user.name) }}
         </template>
         <template #default="{ data }">
           <div class="text-body-2 mb-6 mt-3">{{ translations.whatYouShouldKnow_ }}</div>
           <div class="d-flex flex-column ga-6">
-            <div v-for="(block, index) in actionSections[data.mode].blocks" :key="index" class="d-flex">
+            <div v-for="(block, index) in actionSections[data?.mode]?.blocks" :key="index" class="d-flex">
               <v-avatar color="white">
                 <v-icon color="primary" size="x-large">{{ block.icon }}</v-icon>
               </v-avatar>
@@ -278,7 +278,7 @@ const UserCard = Vue.defineComponent({
             </div>
           </div>
           <div class="text-body-2 mt-6">
-            {{ actionSections[data.mode].confirmationText(user.username) }}
+            {{ actionSections[data?.mode]?.confirmationText(user.username) }}
             <v-text-field
               v-model="username"
               :label="translations.enterUsernameToConfirm_"
