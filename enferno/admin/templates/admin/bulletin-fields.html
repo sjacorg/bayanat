@@ -1,7 +1,7 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
 <!-- Field Creation Modal -->
-<select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField"
+<select-field-type-dialog :model-value="ui.selectFieldTypeDialog" @update:model-value="closeDrawer" @create="saveField({ event: $event, entityType: 'bulletin' })"
   :item="form.editedItem" entity-type="bulletin"></select-field-type-dialog>
 <confirm-dialog ref="reviewAndConfirmDialog">
   <div class="mb-4">{{ _('Please review your updates before applying them to the form.') }}</div>
@@ -80,10 +80,10 @@
           >
             {{ _('Revision history') }}
           </v-btn>
-          <v-btn :disabled="!hasChanges" variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges">{{
+          <v-btn :disabled="!hasChanges({ entityType: 'bulletin' })" variant="outlined" color="primary" prepend-icon="mdi-history" @click="discardChanges({ entityType: 'bulletin' })">{{
             _('Discard Changes') }}</v-btn>
           <v-btn @click="showSaveDialog({ entityType: 'bulletin' })" prepend-icon="mdi-check" variant="outlined" :loading="ui.saving"
-          :disabled="!hasChanges">{{ _('Save Changes') }}</v-btn>
+          :disabled="!hasChanges({ entityType: 'bulletin' })">{{ _('Save Changes') }}</v-btn>
           <v-btn @click="ui.selectFieldTypeDialog = true" prepend-icon="mdi-plus" variant="flat" color="primary">{{
                 _('Add New') }}</v-btn>
         </div>
@@ -98,30 +98,30 @@
         <v-divider vertical></v-divider>
         <v-card variant="flat" class="ml-3 w-100">
           <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0 px-0" style="height: calc(100vh - 176px);">
-            <v-container v-if="formBuilder.loading && !formBuilder.dynamicFields.length" height="130px" class="d-flex justify-center align-center">
+            <v-container v-if="formBuilder.loading && !formBuilder.dynamicFields.bulletin.length" height="130px" class="d-flex justify-center align-center">
               <v-progress-circular indeterminate ></v-progress-circular>
             </v-container>
             
             <div class="d-flex justify-center w-100"></div>
 
             <div ref="mainList" class="form-grid">
-              <div v-for="(field, index) in filteredMovableDynamicFields" :key="field.id" class="sortable-item" :data-id="field.id" :class="[this.fieldClass(field) ,{
+              <div v-for="(field, index) in filteredMovableDynamicFields({ entityType: 'bulletin' })" :key="field.id" class="sortable-item" :data-id="field.id" :class="[this.fieldClass(field) ,{
                   'drop-line': dragDrop.dropLine.id == field.id,
                   [dragDrop.dropLine.cls]: dragDrop.dropLine.id == field.id
                 }]">
                 <field-list-item :field="field" :hide-drag-handle="Boolean(ui.search)"
-                  @toggle-visibility="toggleFieldVisibility" @delete="deleteField" :dragging="Boolean(dragDrop.draggingId)" />
+                  @toggle-visibility="toggleFieldVisibility({ ...$event, entityType: 'bulletin' })" @delete="deleteField({ ...$event, entityType: 'bulletin' })" :dragging="Boolean(dragDrop.draggingId)" />
               </div>
             </div>
             <div class="form-grid">
-              <div v-for="(field, index) in filteredFixedDynamicFields" :key="field.id" :class="[this.fieldClass(field)]">
-                <field-list-item :field="field" hide-drag-handle @toggle-visibility="toggleFieldVisibility" />
+              <div v-for="(field, index) in filteredFixedDynamicFields({ entityType: 'bulletin' })" :key="field.id" :class="[this.fieldClass(field)]">
+                <field-list-item :field="field" hide-drag-handle @toggle-visibility="toggleFieldVisibility({ ...$event, entityType: 'bulletin' })" />
               </div>
             </div>
-            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-if="!filteredDynamicFields.length && !formBuilder.loading && !ui.search">
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-if="!filteredDynamicFields({ entityType: 'bulletin' }).length && !formBuilder.loading && !ui.search">
               {{ _("No fields yet. Start by creating your first field to get started!") }}
             </v-container>
-            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-if="!filteredDynamicFields.length && !formBuilder.loading && ui.search">
+            <v-container height="130px" class="font-italic text-medium-emphasis d-flex justify-center align-center" v-if="!filteredDynamicFields({ entityType: 'bulletin' }).length && !formBuilder.loading && ui.search">
               {{ _("We couldn't find any fields for that search. Try another keyword.") }}
             </v-container>
 
@@ -155,7 +155,7 @@
     async mounted() {
       await this.fetchDynamicFields({ entityType: 'bulletin' });
 
-      this.initSortable(this.$refs.mainList);
+      this.initSortable(this.$refs.mainList, { entityType: 'bulletin' });
     },
   });
 

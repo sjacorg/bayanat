@@ -896,7 +896,19 @@ div.jsondiffpatch-child-node-type-array:after {
     overflow: hidden;
 }
 
-/* Add padding to markdown contentn */
+/* Diff dialog */
+.diff-dialog-content .jsondiffpatch-delta pre {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 cols */
+  grid-auto-rows: minmax(60px, auto);
+}
+
+/* Add padding to markdown content */
 .markdown-content h1:first-child, .markdown-content h2:first-child, .markdown-content h3:first-child,{
     margin-top: 0;
 }

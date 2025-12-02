@@ -14,16 +14,14 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.admin.models import Activity
+from enferno.admin.models import Activity, AppConfig
 from enferno.settings import Config
+from enferno.utils.config_utils import ConfigManager
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
 from enferno.utils.validation_utils import (
-    SanitizedField,
-    one_must_exist,
     validate_email_format,
     validate_password_policy,
-    validate_username,
     validate_username_constraints,
     validate_field_type,
 )
@@ -509,7 +507,7 @@ class OptsModel(BaseValidationModel):
             ValueError: If the opts is not a valid value.
         """
         if v and len(v):
-            if not v.lower() in [x.lower() for x in Constants.CLASSIC_OPTS]:
+            if v.lower() not in [x.lower() for x in Constants.CLASSIC_OPTS]:
                 raise ValueError("Invalid value for opts")
         return v
 
@@ -614,8 +612,8 @@ class PartialActorProfileModel(BaseValidationModel):
     @classmethod
     def validate_opts(cls, v, valid_opts):
         if v and len(v):
-            if not v.lower() in [x.lower() for x in valid_opts]:
-                raise ValueError(f"Invalid value for opts")
+            if v.lower() not in [x.lower() for x in valid_opts]:
+                raise ValueError("Invalid value for opts")
         return v
 
     @field_validator("publish_date", "documentation_date")
@@ -1209,7 +1207,7 @@ class QueryBaseModel(StrictValidationModel):
         for field in old_fields:
             if field in data:
                 raise ValueError(
-                    f"The query sent is incompatible with this version. Please delete and re-create the query."
+                    "The query sent is incompatible with this version. Please delete and re-create the query."
                 )
         return data
 
@@ -1495,7 +1493,7 @@ class UserValidationModel(StrictValidationModel):
 
         try:
             v = validate_email_format(v)
-        except ValidationError as e:
+        except ValidationError:
             raise ValueError("Invalid email format")
 
         if Config.get("MAIL_ALLOWED_DOMAINS") and "*" not in Config.get("MAIL_ALLOWED_DOMAINS"):
@@ -1686,6 +1684,9 @@ class ConfigValidationModel(StrictValidationModel):
             return None
         if not isinstance(v, str):
             raise ValueError("Invalid value for GOOGLE_MAPS_API_KEY")
+        # Allow masked value (user not changing secret)
+        if v == ConfigManager.MASK_STRING:
+            return v
         if len(v) < 30 or len(v) > 60:
             raise ValueError("Invalid value for GOOGLE_MAPS_API_KEY")
         return v
@@ -1693,6 +1694,9 @@ class ConfigValidationModel(StrictValidationModel):
     def validate_recaptcha_key(v):
         if not isinstance(v, str):
             return None
+        # Allow masked value (user not changing secret)
+        if v == ConfigManager.MASK_STRING:
+            return v
         if len(v) < 20 or len(v) > 50:
             return None
         return v
@@ -1700,6 +1704,9 @@ class ConfigValidationModel(StrictValidationModel):
     def validate_google_key(v):
         if not isinstance(v, str):
             return None
+        # Allow masked value (user not changing secret)
+        if v == ConfigManager.MASK_STRING:
+            return v
         if len(v) < 20 or len(v) > 100:
             return None
         return v
@@ -1905,11 +1912,15 @@ class FullConfigValidationModel(ConfigValidationModel):
     @model_validator(mode="before")
     def validate_mail_settings(cls, values):
         if values.get("MAIL_ENABLED"):
+            mail_password = values.get("MAIL_PASSWORD")
             if (
                 not values.get("MAIL_SERVER")
                 or not values.get("MAIL_PORT")
                 or not values.get("MAIL_USERNAME")
-                or not values.get("MAIL_PASSWORD")
+                or not (
+                    mail_password
+                    and (mail_password == ConfigManager.MASK_STRING or len(mail_password) > 0)
+                )
                 or not values.get("MAIL_DEFAULT_SENDER")
             ):
                 raise ValueError(
@@ -2051,7 +2062,6 @@ class DynamicFieldBulkSaveModel(StrictValidationModel):
         if v not in allowed:
             raise ValueError(f"entity_type must be one of: {', '.join(allowed)}")
         return v
-
 
 
 class ActivityQueryValidationModel(StrictValidationModel):
