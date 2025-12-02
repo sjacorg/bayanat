@@ -843,24 +843,16 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 /* CSS Helpers */
-.overflow-unset {
-    overflow: unset;
-}
-.z-1 {
-    z-index: 1;
-}
-.z-100 {
-    z-index: 100;
-}
-.left-auto {
-    left: auto !important;
-}
-.h-fit {
-    height: fit-content;
-}
-.pointer-events-none {
-    pointer-events: none !important;
-}
+.overflow-unset { overflow: var(--v-overflow-unset); }
+.z-1 { z-index: var(--v-z-1); }
+.z-100 { z-index: var(--v-z-100); }
+.left-auto { left: var(--v-left-auto) !important; }
+.h-fit { height: var(--v-h-fit); }
+.pointer-events-none { pointer-events: var(--v-pointer-events-none) !important; }
+.pointer-events-auto { pointer-events: var(--v-pointer-events-auto) !important; }
+.rounded-16 { border-radius: var(--v-rounded-16) !important; }
+.rounded-12 { border-radius: var(--v-rounded-12) !important; }
+.rounded-10 { border-radius: var(--v-rounded-10) !important; }
 
 /* wrap chips */
 .flex-chips {
@@ -885,6 +877,47 @@ div.jsondiffpatch-child-node-type-array:after {
     z-index: 3000 !important;
 }
 
+/* Form builder drag-n-drop */
+.drop-line {
+    position: relative;
+}
+
+.drop-line-above::before,
+.drop-line-below::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: dodgerblue;
+}
+
+.drop-line-above::before {
+    top: 0;
+}
+
+.drop-line-below::before {
+    bottom: 0;
+}
+
+.drop-line-left::before,
+.drop-line-right::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: dodgerblue;
+}
+
+.drop-line-left::before {
+    left: 0;
+}
+
+.drop-line-right::before {
+    right: 0;
+}
+
 /* Line clamp */
 .no-clamp {
     -webkit-line-clamp: unset !important;
@@ -906,6 +939,22 @@ div.jsondiffpatch-child-node-type-array:after {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 cols */
   grid-auto-rows: minmax(60px, auto);
+}
+
+.grid-col-span-1 {
+  grid-column: span 1;
+}
+.grid-col-span-2 {
+  grid-column: span 2;
+}
+.grid-col-2 {
+  grid-column: 2;
+}
+.grid-row-span-1 {
+  grid-row: span 1;
+}
+.grid-row-span-2 {
+  grid-row: span 2;
 }
 
 /* Add padding to markdown content */
