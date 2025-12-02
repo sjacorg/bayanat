@@ -102,11 +102,13 @@ const UserCard = Vue.defineComponent({
       page: 1,
       perPage: 5,
       more: true,
-      actionSections: actionSections(),
       username: '',
     };
   },
   computed: {
+    actionSections() {
+      return actionSections();
+    },
     isUserActive() {
       return this.user?.status === 'active';
     },
