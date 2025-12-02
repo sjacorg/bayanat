@@ -442,10 +442,10 @@
                                             validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
                                         ]"
                                         @input="isStrongPassword = false"
-                                >
-                                    <template #label>{{ _('Temporary Password') }}<span class="text-red">*</span></template>
-                                </v-text-field>
-                                    <v-checkbox v-model="askUserToChangePassword" color="blue" class="text-medium-emphasis text-body-2" label="{{ _('Ask user to change password when they sign in') }}"></v-checkbox>
+                                    >
+                                        <template #label>{{ _('Temporary Password') }}<span class="text-red">*</span></template>
+                                    </v-text-field>
+                                    <v-checkbox v-if="!editedItem?.force_reset" v-model="askUserToChangePassword" color="blue" class="text-medium-emphasis text-body-2" label="{{ _('Ask user to change password when they sign in') }}"></v-checkbox>
                                 </v-card-text>
                             </v-form>
                             <v-card-actions class="px-7 pb-7 pt-0">
@@ -962,11 +962,12 @@
                     try {
                         this.saving = true;
                         const payload = { ...this.editedItem };
+                        const passwordResetRequested = this.editedItem?.force_reset != null;
                         delete payload.status; // Remove status field from payload
                         const response = await api.put(`/admin/api/user/`, { item: payload }, { suppressGlobalErrorHandler: true });
                         this.showSnack(response.data);
 
-                        if (this.askUserToChangePassword && this.editedItem?.force_reset === null) {
+                        if (!passwordResetRequested && this.askUserToChangePassword && this.editedItem?.force_reset === null) {
                             await this.forcePasswordReset(payload);
                         }
 

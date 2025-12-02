@@ -356,7 +356,6 @@ const UserCard = Vue.defineComponent({
                       <template #activator="{props}">
                         <div v-bind="props">
                           <v-btn
-                            :disabled="user.force_reset != null"
                             color="warning"
                             density="comfortable"
                             icon="mdi-form-textbox-password"
