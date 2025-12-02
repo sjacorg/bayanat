@@ -555,11 +555,10 @@
                     return this.isNewUser ? "{{_('Add New User')}}" : "{{_('Edit User')}}";
                 },
                 selectedRoleIndex() {
-                    if (!this.editedItem?.roles?.length) return null;
-
-                    return this.systemRoles.findIndex(role =>
-                        this.editedItem.roles.some(r => r?.name?.toLowerCase() === role?.value?.toLowerCase())
-                    ) || 0;
+                    const idx = this.systemRoles.findIndex(role =>
+                        this.editedItem.roles?.some(r => r?.name?.toLowerCase() === role.value)
+                    );
+                    return idx >= 0 ? idx : null;
                 },
                 selectedRole() {
                     return this.selectedRoleIndex != null
