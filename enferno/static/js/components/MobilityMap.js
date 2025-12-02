@@ -91,15 +91,6 @@ const MobilityMap = Vue.defineComponent({
         });
       },
     },
-
-    viewportPadding: {
-      deep: true,
-      handler() {
-        this.$nextTick(() => {
-          this.zoomToFlows();
-        });
-      },
-    },
   },
 
   methods: {
