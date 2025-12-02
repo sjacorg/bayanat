@@ -49,9 +49,9 @@ const ConfirmDialog = Vue.defineComponent({
         data,
       });
 
-      return new Promise((resolve, rejectPromise) => {
+      return new Promise((resolve, reject) => {
         this.resolvePromise = resolve;
-        this.rejectPromise = rejectPromise;
+        this.rejectPromise = reject;
       });
     },
 
@@ -78,21 +78,19 @@ const ConfirmDialog = Vue.defineComponent({
     },
 
     cleanup() {
-      setTimeout(() => {
-        this.loading = false;
-        this.onAccept = null;
-        this.onReject = null;
-        this.resolvePromise = null;
-        this.rejectPromise = null;
-        this.cancelProps = { text: translations.cancel_, variant: 'outlined' };
-        this.acceptProps = { text: translations.confirm_, color: 'primary', variant: 'flat' };
-        this.dialogProps = {};
-        this.data = null;
-      }, 300)
+      this.loading = false;
+      this.onAccept = null;
+      this.onReject = null;
+      this.resolvePromise = null;
+      this.rejectPromise = null;
+      this.cancelProps = { text: translations.cancel_, variant: 'outlined' };
+      this.acceptProps = { text: translations.confirm_, color: 'primary', variant: 'flat' };
+      this.dialogProps = {};
+      this.data = null;
     },
   },
   template: `
-    <v-dialog v-model="open" v-bind="{ persistent: loading, ...dialogProps}">
+    <v-dialog v-model="open" v-bind="{ persistent: loading, ...dialogProps}" @after-leave="cleanup()">
       <v-card rounded="12">
         <v-card-title class="px-7 pt-6 pb-0">
           <slot name="title" :data="data">{{ title }}</slot>
