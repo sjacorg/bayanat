@@ -1,6 +1,6 @@
 const ToggleButton = Vue.defineComponent({
   props: {
-    modelValue: { type: Boolean, required: true, default: false },
+    modelValue: { type: Boolean, default: false },
     readOnly: { type: Boolean, default: false },
     activeColor: { type: String, default: 'primary' },
     hideLeftIcon: { type: Boolean, default: false },
@@ -8,21 +8,69 @@ const ToggleButton = Vue.defineComponent({
     disabled: { type: Boolean, default: false },
   },
   emits: ['update:modelValue', 'close'],
+
+  computed: {
+    variant() {
+      if (this.modelValue) return 'tonal';
+      if (this.readOnly) return 'tonal';
+      return 'outlined';
+    },
+
+    buttonColor() {
+      return this.modelValue ? this.activeColor : undefined;
+    },
+
+    buttonClasses() {
+      return [
+        'font-weight-medium',
+        { 'text-medium-emphasis cursor-default': this.readOnly }
+      ];
+    },
+
+    showLeftCheck() {
+      return this.modelValue && !this.hideLeftIcon;
+    },
+
+    showLeftCross() {
+      return !this.modelValue && this.readOnly && !this.hideLeftIcon;
+    },
+  },
+
+  methods: {
+    onClick() {
+      if (!this.readOnly) {
+        this.$emit('update:modelValue', !this.modelValue);
+      }
+    },
+  },
+
   template: `
     <v-btn
-      :variant="modelValue || (!modelValue && readOnly) ? 'tonal' : 'outlined'"
-      :color="modelValue ? activeColor : undefined"
-      @click="$emit('update:modelValue', !modelValue)"
-      :class="['font-weight-medium', { 'text-medium-emphasis cursor-default': readOnly }]"
+      :variant="variant"
+      :color="buttonColor"
+      :class="buttonClasses"
       :readonly="readOnly"
       :disabled="disabled"
+      @click="onClick"
     >
-      <template v-if="!hideLeftIcon">
-        <v-icon v-if="modelValue" start size="small">mdi-check</v-icon>
-        <v-icon v-if="!modelValue && readOnly" start size="small">mdi-close</v-icon>
+      <template v-if="showLeftCheck">
+        <v-icon start size="small">mdi-check</v-icon>
       </template>
+
+      <template v-if="showLeftCross">
+        <v-icon start size="small">mdi-close</v-icon>
+      </template>
+
       <slot></slot>
-      <v-icon v-if="closable" @click.stop="$emit('close', modelValue)" end size="small">mdi-close-circle</v-icon>
+
+      <v-icon
+        v-if="closable"
+        end
+        size="small"
+        @click.stop="$emit('close', modelValue)"
+      >
+        mdi-close-circle
+      </v-icon>
     </v-btn>
   `,
 });
