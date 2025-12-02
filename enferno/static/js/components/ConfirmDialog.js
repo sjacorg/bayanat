@@ -59,7 +59,6 @@ const ConfirmDialog = Vue.defineComponent({
       await this.onReject?.();
       this.open = false;
       this.resolvePromise?.(false);
-      this.cleanup();
     },
 
     async ok() {
@@ -69,7 +68,6 @@ const ConfirmDialog = Vue.defineComponent({
         await this.onAccept?.(); // if this throws, code below won't run
         this.open = false;
         this.resolvePromise?.(true);
-        this.cleanup();
       } catch (error) {
         console.log('Something failed when confirming dialog', error)
       } finally {
