@@ -65,9 +65,18 @@ const MobilityMap = Vue.defineComponent({
     });
   },
 
+  beforeUnmount() {
+    this.morphing = false;
+    window.removeEventListener('resize', this.resizeCanvas);
+    if (this.map) {
+      this.map.off();
+      this.map.remove();
+      this.map = null;
+    }
+  },
+
   watch: {
     locations: {
-      deep: true,
       handler() {
         this.selectedPoint = null;
         this.minWeight = null;
@@ -78,7 +87,6 @@ const MobilityMap = Vue.defineComponent({
     },
 
     flows: {
-      deep: true,
       handler() {
         this.selectedPoint = null;
         this.minWeight = null;
@@ -483,6 +491,8 @@ const MobilityMap = Vue.defineComponent({
           clusterId: c.id,
         });
       });
+
+      this.arrowShapes.sort((a, b) => a.weight - b.weight);
     },
 
     /* =============================================
@@ -642,7 +652,9 @@ const MobilityMap = Vue.defineComponent({
 
           if (this.mode === 'event') {
             const { lat, lon } = this.tooltip.data;
-            MobilityMapUtils.copyCoordinates({ lat, lon });
+            MobilityMapUtils.copyCoordinates({ lat, lon })
+              .then(() => this.$root?.showSnack?.(this.translations.copiedToClipboard_))
+              .catch(() => this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_));;
             return;
           }
 
@@ -746,7 +758,6 @@ const MobilityMap = Vue.defineComponent({
 
       // Check ARROWS if no dot match
       if (!hovering) {
-        this.arrowShapes.sort((a, b) => a.weight - b.weight);
         // ✅ Check thick arrows first
         for (let i = this.arrowShapes.length - 1; i >= 0; i--) {
           const arrow = this.arrowShapes[i];
