@@ -677,6 +677,11 @@ const MobilityMap = Vue.defineComponent({
           };
 
           this.rebuildShapes();
+
+          // Force tooltip refresh at current cursor (click doesn't trigger hover)
+          this.$nextTick(() => {
+            this.onMapHover(e);
+          });
           return;
         }
       }
