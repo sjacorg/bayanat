@@ -562,17 +562,28 @@ const MobilityMap = Vue.defineComponent({
 
       const targetMembers = new Set(targetCluster.memberIds);
 
-      // ✅ No selection → show full totals
+      // No selection → show full totals
       if (!this.selectedPoint) {
         this.currentFlows.forEach((f) => {
           if (targetMembers.has(f.from)) outgoing += f.weight;
           if (targetMembers.has(f.to)) incoming += f.weight;
         });
-
         return { outgoing, incoming };
       }
 
-      // ✅ Selection active → only flows involving the selected cluster
+      // Hovering the selected cluster → show full totals
+      if (
+        this.selectedPoint.type === 'cluster' &&
+        this.selectedPoint.clusterId === targetCluster.id
+      ) {
+        this.currentFlows.forEach((f) => {
+          if (targetMembers.has(f.from)) outgoing += f.weight;
+          if (targetMembers.has(f.to)) incoming += f.weight;
+        });
+        return { outgoing, incoming };
+      }
+
+      // Directional logic for other clusters
       if (this.selectedPoint.type === 'cluster') {
         const selectedMembers = new Set(this.selectedPoint.memberIds);
 
