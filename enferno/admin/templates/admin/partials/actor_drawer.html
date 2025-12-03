@@ -7,7 +7,7 @@
       :width="actorDrawerSettings?.width ?? 520"
       app
       disable-route-watcher
-      :style="{ zIndex: 2410 }"
+      :style="actorDrawerSettings?.style"
     >
       <v-container v-if="actorLoader" fluid class="h-screen">
         <v-layout justify-center align-center>
