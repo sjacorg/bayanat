@@ -290,6 +290,7 @@ const MapVisualization = Vue.defineComponent({
       <v-container fluid class="pa-0 fill-height">
         <!-- MAP -->
         <mobility-map
+          v-if="open"
           ref="mobilityMapRef"
           :locations="selectedEntityMapData?.locations || locations"
           :flows="selectedEntityMapData?.flows || flows"
