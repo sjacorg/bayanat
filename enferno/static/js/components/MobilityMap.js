@@ -595,10 +595,10 @@ const MobilityMap = Vue.defineComponent({
           const toInTarget = targetMembers.has(f.to);
 
           // Flow from selected → target
-          if (fromInSelected && toInTarget) outgoing += f.weight;
+          if (fromInSelected && toInTarget) incoming += f.weight;
 
           // Flow from target → selected
-          if (fromInTarget && toInSelected) incoming += f.weight;
+          if (fromInTarget && toInSelected) outgoing += f.weight;
         });
 
         return { outgoing, incoming };
