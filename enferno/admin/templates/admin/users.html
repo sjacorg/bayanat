@@ -961,12 +961,12 @@
                     try {
                         this.saving = true;
                         const payload = { ...this.editedItem };
-                        const passwordResetRequested = this.editedItem?.force_reset != null;
+                        const resetFlagIsSet = this.editedItem?.force_reset != null;
                         delete payload.status; // Remove status field from payload
                         const response = await api.put(`/admin/api/user/`, { item: payload }, { suppressGlobalErrorHandler: true });
                         this.showSnack(response.data);
 
-                        if (!passwordResetRequested && this.askUserToChangePassword && this.editedItem?.force_reset === null) {
+                        if (!resetFlagIsSet && this.askUserToChangePassword) {
                             await this.forcePasswordReset(payload);
                         }
 
