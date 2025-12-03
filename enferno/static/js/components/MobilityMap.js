@@ -561,25 +561,18 @@ const MobilityMap = Vue.defineComponent({
       let incoming = 0;
 
       const targetMembers = new Set(targetCluster.memberIds);
+      const noSelection = !this.selectedPoint;
+      const isSelectedCluster =
+        this.selectedPoint?.type === "cluster" &&
+        this.selectedPoint.memberIds.some(id => targetMembers.has(id));
 
-      // No selection → show full totals
-      if (!this.selectedPoint) {
+       // No selection OR hovering the selected cluster → show full totals
+      if (noSelection || isSelectedCluster) {
         this.currentFlows.forEach((f) => {
           if (targetMembers.has(f.from)) outgoing += f.weight;
-          if (targetMembers.has(f.to)) incoming += f.weight;
+          if (targetMembers.has(f.to))   incoming += f.weight;
         });
-        return { outgoing, incoming };
-      }
 
-      // Hovering the selected cluster → show full totals
-      if (
-        this.selectedPoint.type === 'cluster' &&
-        this.selectedPoint.clusterId === targetCluster.id
-      ) {
-        this.currentFlows.forEach((f) => {
-          if (targetMembers.has(f.from)) outgoing += f.weight;
-          if (targetMembers.has(f.to)) incoming += f.weight;
-        });
         return { outgoing, incoming };
       }
 
@@ -673,7 +666,7 @@ const MobilityMap = Vue.defineComponent({
           this.selectedPoint = {
             type: 'cluster',
             clusterId: dot.clusterId,
-            memberIds: cluster.memberIds,
+            memberIds: [...cluster.memberIds],
           };
 
           this.rebuildShapes();
