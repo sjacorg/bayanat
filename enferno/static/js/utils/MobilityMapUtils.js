@@ -502,9 +502,6 @@ const MobilityMapUtils = {
   copyCoordinates({ lat, lon }) {
     const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
-    navigator.clipboard
-      .writeText(text)
-      .then(() => this.$root?.showSnack?.(this.translations.copiedToClipboard_))
-      .catch(() => this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_));
+    return navigator.clipboard.writeText(text)
   },
 };
