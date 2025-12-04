@@ -382,7 +382,7 @@ const ActorCard = Vue.defineComponent({
               </v-card>
               <v-divider></v-divider>
               <v-card variant="flat">
-                <new-global-map></new-global-map>
+                <new-global-map :entity="actor"></new-global-map>
               </v-card>
             </div>
           </div>
