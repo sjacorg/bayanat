@@ -14,6 +14,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
+from flask_security.utils import verify_password
 from sqlalchemy import desc, or_, asc, select, func, and_
 from werkzeug.utils import safe_join, secure_filename
 from flask_security.twofactor import tf_disable
@@ -5437,10 +5438,18 @@ def api_user_reactivate(id: int) -> Response:
 
     Args:
         - id: id of the user to reactivate.
+        - password: admin's password for confirmation (in request body).
 
     Returns:
         - success/error response.
     """
+    password = request.json.get("password") if request.json else None
+    if not password:
+        return HTTPResponse.error("Password confirmation required")
+
+    if not verify_password(password, current_user.password):
+        return HTTPResponse.forbidden("Invalid password")
+
     user = db.session.get(User, id)
     if not user:
         return HTTPResponse.not_found("User not found")
@@ -5524,10 +5533,18 @@ def api_user_enable(id: int) -> Response:
 
     Args:
         - id: id of the user to enable.
+        - password: admin's password for confirmation (in request body).
 
     Returns:
         - success/error response.
     """
+    password = request.json.get("password") if request.json else None
+    if not password:
+        return HTTPResponse.error("Password confirmation required")
+
+    if not verify_password(password, current_user.password):
+        return HTTPResponse.forbidden("Invalid password")
+
     user = db.session.get(User, id)
     if not user:
         return HTTPResponse.not_found("User not found")
