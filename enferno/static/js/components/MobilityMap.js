@@ -1,5 +1,6 @@
 const MobilityMap = Vue.defineComponent({
   props: {
+    minZoom: { type: Number, default: () => MobilityMapUtils.CONFIG.map.minZoom },
     locations: { type: Array, required: true },
     flows: { type: Array, required: true },
     viewportPadding: {
@@ -114,7 +115,7 @@ const MobilityMap = Vue.defineComponent({
       );
 
       this.map = L.map(el, {
-        minZoom: MobilityMapUtils.CONFIG.map.minZoom,
+        minZoom: this.minZoom,
         maxBoundsViscosity: MobilityMapUtils.CONFIG.map.maxBoundsViscosity,
         worldCopyJump: MobilityMapUtils.CONFIG.map.worldCopyJump,
         maxBounds: worldBounds,
@@ -316,11 +317,6 @@ const MobilityMap = Vue.defineComponent({
       this.clusterDefs = [];
       this.flowGroups = {};
 
-      if (!flows.length) {
-        this.drawFrame();
-        return;
-      }
-
       const result = MobilityMapUtils.buildClusters({
         points: this.points,
         flows,
@@ -353,9 +349,7 @@ const MobilityMap = Vue.defineComponent({
       this.arrowShapes = [];
       this.dotShapes = [];
 
-      if (!this.clusterDefs.length || !Object.keys(this.flowGroups).length) {
-        return;
-      }
+      if (!this.clusterDefs.length) return;
 
       // Map cluster → screen coords
       const clusterPixels = {};
