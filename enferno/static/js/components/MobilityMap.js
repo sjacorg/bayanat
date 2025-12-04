@@ -729,7 +729,7 @@ const MobilityMap = Vue.defineComponent({
               // Title / Identity
               title: loc.title || '',
               number: event?.number ?? null,
-              parentId: event?.parentId ?? null,  // let UI decide to hide, not force "—"
+              parentId: event?.parentId ?? loc?.parentId ?? null,  // let UI decide to hide, not force "—"
 
               // Coordinates (keep naming consistent)
               lat: Number.isFinite(loc.lat) ? loc.lat : null,

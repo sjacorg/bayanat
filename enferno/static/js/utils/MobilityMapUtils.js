@@ -206,14 +206,14 @@ const MobilityMapUtils = {
     throw new Error('Polling timeout');
   },
 
-  parseLocationsToMapData(locations) {
+  parseLocationsToMapData(locations, options) {
     if (!Array.isArray(locations)) {
       return { locations: [], flows: [] };
     }
 
     const parsed = locations
-      .filter(loc => Number.isFinite(loc.lat) || Number.isFinite(loc.latlng?.lat))
-      .map(loc => ({
+      .filter((loc) => Number.isFinite(loc.lat) || Number.isFinite(loc.latlng?.lat))
+      .map((loc) => ({
         id: loc.id,
 
         title: loc.title || null,
@@ -223,7 +223,7 @@ const MobilityMapUtils = {
         lat: loc.latlng?.lat ?? loc.lat ?? null,
         lon: loc.latlng?.lng ?? loc.lng ?? null,
 
-        parent: loc.parent || null,
+        ...(options.showParentId ? { parentId: options.parentId ?? null } : {}),
 
         // No events → but keep structure for tooltip compatibility
         total_events: 0,
@@ -236,7 +236,7 @@ const MobilityMapUtils = {
     };
   },
 
-  parseEventsToMapData(events) {
+  parseEventsToMapData(events, options = {}) {
     if (!Array.isArray(events)) {
       return { locations: [], flows: [] };
     }
@@ -265,7 +265,7 @@ const MobilityMapUtils = {
           lat: loc.latlng?.lat ?? loc.lat,
           lon: loc.latlng?.lng ?? loc.lng,
 
-          parent: loc.parent,
+          ...(options.showParentId ? { parentId: loc.parentId ?? null } : {}),
           total_events: 0,
 
           events: [],
@@ -294,7 +294,7 @@ const MobilityMapUtils = {
         main: Boolean(event.main),
 
         // ✅ Parent shown in tooltip
-        parentId: loc.parent?.id ?? null,
+        ...(options.showParentId ? { parentId: loc.parentId ?? null } : {}),
       });
     });
 
@@ -533,6 +533,6 @@ const MobilityMapUtils = {
   copyCoordinates({ lat, lon }) {
     const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
-    return navigator.clipboard.writeText(text)
+    return navigator.clipboard.writeText(text);
   },
 };
