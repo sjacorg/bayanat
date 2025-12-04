@@ -102,11 +102,13 @@ const UserCard = Vue.defineComponent({
       page: 1,
       perPage: 5,
       more: true,
-      actionSections: actionSections(),
       username: '',
     };
   },
   computed: {
+    actionSections() {
+      return actionSections();
+    },
     isUserActive() {
       return this.user?.status === 'active';
     },
@@ -256,12 +258,12 @@ const UserCard = Vue.defineComponent({
   template: `
       <confirm-dialog ref="accountActionDialog" :disabled-accept="username !== user.username">
         <template #title="{ data }">
-          {{ actionSections[data.mode].title(user.name) }}
+          {{ actionSections[data?.mode]?.title(user.name) }}
         </template>
         <template #default="{ data }">
           <div class="text-body-2 mb-6 mt-3">{{ translations.whatYouShouldKnow_ }}</div>
           <div class="d-flex flex-column ga-6">
-            <div v-for="(block, index) in actionSections[data.mode].blocks" :key="index" class="d-flex">
+            <div v-for="(block, index) in actionSections[data?.mode]?.blocks" :key="index" class="d-flex">
               <v-avatar color="white">
                 <v-icon color="primary" size="x-large">{{ block.icon }}</v-icon>
               </v-avatar>
@@ -276,7 +278,7 @@ const UserCard = Vue.defineComponent({
             </div>
           </div>
           <div class="text-body-2 mt-6">
-            {{ actionSections[data.mode].confirmationText(user.username) }}
+            {{ actionSections[data?.mode]?.confirmationText(user.username) }}
             <v-text-field
               v-model="username"
               :label="translations.enterUsernameToConfirm_"
@@ -356,7 +358,6 @@ const UserCard = Vue.defineComponent({
                       <template #activator="{props}">
                         <div v-bind="props">
                           <v-btn
-                            :disabled="user.force_reset != null"
                             color="warning"
                             density="comfortable"
                             icon="mdi-form-textbox-password"
@@ -499,7 +500,13 @@ const UserCard = Vue.defineComponent({
             <div class="mb-3 text-body-1">{{ translations.manageAccount_ }}</div>
             <div class="d-flex flex-wrap ga-3">
               <template v-if="isUserEnabled">
-                <v-btn v-if="isUserSuspended" @click="reactivateAccount()" variant="outlined" color="success" prepend-icon="mdi-play-circle">{{ translations.reactivateAccount_ }}</v-btn>
+                <v-tooltip v-if="isUserSuspended" location="bottom" :disabled="Boolean(user.roles.length)" :text="translations.pleaseAssignASystemRoleToReactivateUser_">
+                    <template #activator="{ props }">
+                      <div v-bind="props">
+                        <v-btn :disabled="!Boolean(user.roles.length)" @click="reactivateAccount()" variant="outlined" color="success" prepend-icon="mdi-play-circle">{{ translations.reactivateAccount_ }}</v-btn>
+                      </div>
+                    </template>
+                  </v-tooltip>
                 <v-btn v-if="isUserActive" @click="suspendAccount()" variant="outlined" color="warning" prepend-icon="mdi-pause-circle">{{ translations.suspendAccount_ }}</v-btn>
               </template>
               <v-btn v-if="isUserDisabled" @click="enableAccount()" variant="outlined" color="success" prepend-icon="mdi-arrow-down-thin-circle-outline">{{ translations.enableAccount_ }}</v-btn>
