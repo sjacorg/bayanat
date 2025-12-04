@@ -256,7 +256,7 @@ const BulletinCard = Vue.defineComponent({
               <global-map v-model="mapLocations"></global-map>
             </v-card>
             <v-card variant="flat">
-              <new-global-map :entity="bulletin"></new-global-map>
+              <new-global-map :entities="[bulletin]"></new-global-map>
             </v-card>
           </div>
 
