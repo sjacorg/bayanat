@@ -1,6 +1,7 @@
 const MobilityMap = Vue.defineComponent({
   props: {
     minZoom: { type: Number, default: () => MobilityMapUtils.CONFIG.map.minZoom },
+    scrollWheelZoom: { type: Boolean, default: () => MobilityMapUtils.CONFIG.map.scrollWheelZoom },
     locations: { type: Array, required: true },
     flows: { type: Array, required: true },
     viewportPadding: {
@@ -120,6 +121,7 @@ const MobilityMap = Vue.defineComponent({
         worldCopyJump: MobilityMapUtils.CONFIG.map.worldCopyJump,
         maxBounds: worldBounds,
         zoomAnimation: false,
+        scrollWheelZoom: this.scrollWheelZoom,
       }).setView(geoMapDefaultCenter, MobilityMapUtils.CONFIG.map.defaultZoom);
 
       const osmLayer = L.tileLayer(MobilityMapUtils.CONFIG.map.osm.url, {
@@ -861,24 +863,32 @@ const MobilityMap = Vue.defineComponent({
     },
 
     zoomToFlows({ padding = 40, maxZoom = 12 } = {}) {
-      if (!this.map || !this.currentFlows?.length) return;
+      if (!this.map) return;
 
-      const points = [];
+      // 1️⃣ Try to collect flow points first
+      const flowPoints = (this.currentFlows || [])
+        .flatMap(f => [this.points[f.from]?.latlng, this.points[f.to]?.latlng])
+        .filter(Boolean);
 
-      this.currentFlows.forEach((flow) => {
-        const from = this.points[flow.from]?.latlng;
-        const to = this.points[flow.to]?.latlng;
-
-        if (from) points.push(from);
-        if (to) points.push(to);
-      });
+      // 2️⃣ If no flow points, fallback to all location points
+      const locationPoints = Object.values(this.points).map(p => p.latlng);
+      const points = flowPoints.length ? flowPoints : locationPoints;
 
       if (!points.length) return;
 
+      // 3️⃣ If only one point → center & zoom nicely
+      if (points.length === 1) {
+        this.map.setView(points[0], Math.min(maxZoom, 12), {
+          animate: true,
+          duration: 0.6,
+        });
+        return;
+      }
+
+      // 4️⃣ Fit bounds for multiple points
       const bounds = L.latLngBounds(points);
       if (!bounds.isValid()) return;
 
-      // ✅ Normalize missing keys safely
       const { top = 0, right = 0, bottom = 0, left = 0 } = this.viewportPadding || {};
 
       this.map.fitBounds(bounds, {

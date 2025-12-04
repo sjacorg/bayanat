@@ -20,6 +20,7 @@ const MobilityMapUtils = {
         north: 85,
         east: 360,
       },
+      scrollWheelZoom: true,
       defaultZoom: 12,
       minZoom: 2,
       maxBoundsViscosity: 0.1,
@@ -203,6 +204,36 @@ const MobilityMapUtils = {
     }
 
     throw new Error('Polling timeout');
+  },
+
+  parseLocationsToMapData(locations) {
+    if (!Array.isArray(locations)) {
+      return { locations: [], flows: [] };
+    }
+
+    const parsed = locations
+      .filter(loc => Number.isFinite(loc.lat) || Number.isFinite(loc.latlng?.lat))
+      .map(loc => ({
+        id: loc.id,
+
+        title: loc.title || null,
+        title_ar: loc.title_ar || null,
+        full_string: loc.full_string || loc.full_location || loc.name || '',
+
+        lat: loc.latlng?.lat ?? loc.lat ?? null,
+        lon: loc.latlng?.lng ?? loc.lng ?? null,
+
+        parent: loc.parent || null,
+
+        // No events → but keep structure for tooltip compatibility
+        total_events: 0,
+        events: [],
+      }));
+
+    return {
+      locations: parsed,
+      flows: [], // no flows here
+    };
   },
 
   parseEventsToMapData(events) {
