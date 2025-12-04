@@ -4,6 +4,7 @@ const actionSections = () => ({
     confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmSuspendForUser_(name),
     acceptButtonText: window.translations.suspendAccount_,
     acceptButtonColor: "warning",
+    confirmationType: 'username',
     blocks: [
       {
         icon: "mdi-account-circle",
@@ -22,9 +23,10 @@ const actionSections = () => ({
   },
   reactivate: {
     title: (name) => window.translations.youAreAboutToReactivateUser_(name),
-    confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmReactivationForUser_(name),
+    confirmationText: (name) => window.translations.byEnteringYourPasswordYouConfirmReactivationForUser_(name),
     acceptButtonText: window.translations.reactivateAccount_,
     acceptButtonColor: "success",
+    confirmationType: 'password',
     blocks: [
       {
         icon: "mdi-account",
@@ -48,6 +50,7 @@ const actionSections = () => ({
     confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmDisableForUser_(name),
     acceptButtonText: window.translations.disableAccount_,
     acceptButtonColor: "error",
+    confirmationType: 'username',
     blocks: [
       {
         icon: "mdi-account-circle",
@@ -72,9 +75,10 @@ const actionSections = () => ({
   },
   enable: {
     title: (name) => window.translations.youAreAboutToEnableTheAccountForUser_(name),
-    confirmationText: (name) => window.translations.byEnteringUsernameYouConfirmEnableForUser_(name),
+    confirmationText: (name) => window.translations.byEnteringYourPasswordYouConfirmEnablingTheAccountForUser_(name),
     acceptButtonText: window.translations.enableAccount_,
     acceptButtonColor: "success",
+    confirmationType: 'password',
     blocks: [
       {
         icon: "mdi-account",
@@ -103,6 +107,8 @@ const UserCard = Vue.defineComponent({
       perPage: 5,
       more: true,
       username: '',
+      password: '',
+      showPassword: false,
     };
   },
   computed: {
@@ -225,13 +231,21 @@ const UserCard = Vue.defineComponent({
         data: { mode },
         acceptProps: { text: this.actionSections[mode].acceptButtonText, color: this.actionSections[mode].acceptButtonColor },
         onAccept: async () => {
-          await api.post(`/admin/api/user/${this.user.id}/${mode}`);
+          const payload = {};
+          if (this.actionSections[mode].confirmationType === 'password') {
+            payload.password = this.password;
+          }
+          await api.post(`/admin/api/user/${this.user.id}/${mode}`, payload);
           await this.$root.refreshUser(this.user.id);
           this.username = '';
+          this.password = '';
+          this.showPassword = false;
           this.displayAccountStatusUpdatedMessage(mode);
         },
         onReject: () => {
           this.username = '';
+          this.password = '';
+          this.showPassword = false;
         }
       })
     },
@@ -256,7 +270,7 @@ const UserCard = Vue.defineComponent({
     },
   },
   template: `
-      <confirm-dialog ref="accountActionDialog" :disabled-accept="username !== user.username">
+      <confirm-dialog ref="accountActionDialog" :disabled-accept="username !== user.username && !password">
         <template #title="{ data }">
           {{ actionSections[data?.mode]?.title(user.name) }}
         </template>
@@ -280,10 +294,21 @@ const UserCard = Vue.defineComponent({
           <div class="text-body-2 mt-6">
             {{ actionSections[data?.mode]?.confirmationText(user.username) }}
             <v-text-field
+              v-if="actionSections[data?.mode]?.confirmationType === 'username'"
               v-model="username"
               :label="translations.enterUsernameToConfirm_"
               variant="filled"
               class="mt-3"
+            ></v-text-field>
+            <v-text-field
+              v-else
+              v-model="password"
+              :label="translations.confirmWithYourPassword_"
+              variant="filled"
+              class="mt-3"
+              :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              :type="showPassword ? 'text' : 'password'"
+              @click:append-inner="showPassword = !showPassword"
             ></v-text-field>
           </div>
         </template>
