@@ -4858,7 +4858,7 @@ def api_locationhistory(locationid: t.id) -> Response:
 
 
 @admin.route("/api/userhistory/<int:userid>")
-@require_view_history
+@roles_required("Admin")
 def api_userhistory(userid: t.id) -> Response:
     """
     Endpoint to get revision history of a user.
