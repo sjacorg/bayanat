@@ -3,7 +3,6 @@ from typing import Any
 
 from sqlalchemy import JSON
 
-from enferno.admin.models.utils import check_history_access
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
@@ -14,7 +13,8 @@ logger = get_logger()
 
 class UserHistory(db.Model, BaseMixin):
     """
-    SQL Alchemy model for user revisions
+    SQL Alchemy model for user revisions.
+    Access is restricted to Admin role at the endpoint level.
     """
 
     id = db.Column(db.Integer, primary_key=True)
@@ -29,23 +29,11 @@ class UserHistory(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", foreign_keys=[user_id])
 
-    @property
-    def restricted_data(self):
-        return {
-            "name": self.data.get("name"),
-            "username": self.data.get("username"),
-            "email": self.data.get("email"),
-            "active": self.data.get("active"),
-            "roles": self.data.get("roles"),
-        }
-
-    # serialize
-    @check_history_access
-    def to_dict(self, full=False) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the user revision."""
         return {
             "id": self.id,
-            "data": self.data if full else self.restricted_data,
+            "data": self.data,
             "created_at": DateHelper.serialize_datetime(self.created_at),
             "user": self.user.to_compact() if self.user else None,
         }
