@@ -8,12 +8,43 @@ const NewGlobalMap = Vue.defineComponent({
 
   data: () => ({
     translations: window.translations,
+    selectedLocations: [],
   }),
 
+  mounted() {
+    this.selectedLocations = this.uniqueEventTypes
+  },
+
   computed: {
-    mapData() {
-      return MobilityMapUtils.parseEventsToMapData(this.entity?.events);
+    uniqueEventTypes() {
+      return [...new Set(this.mapData.locations.flatMap(loc => loc.events.map(event => event.eventType)).filter(Boolean))];
     },
+    filteredLocations() {
+      // If no filters selected → show all
+      if (!this.selectedLocations.length) return this.mapData.locations;
+
+      return this.mapData.locations.filter(loc => {
+        // If a location has no events → keep it (same behavior as your original logic)
+        if (!loc.events?.length) return true;
+
+        // Keep if ANY of its events matches a selected event type
+        return loc.events.some(ev => this.selectedLocations.includes(ev.eventType));
+      });
+    },
+    mapData() {
+      const e = this.entity || {};
+
+      if (e.class === 'actor') 
+        return MobilityMapUtils.parseEventsToMapData(e.events);
+
+      if (['incident', 'bulletin'].includes(e.class))
+        return MobilityMapUtils.parseLocationsToMapData(e.locations);
+
+      // Fallback (smart)
+      return Array.isArray(e.events)
+        ? MobilityMapUtils.parseEventsToMapData(e.events)
+        : MobilityMapUtils.parseLocationsToMapData(e.locations);
+    }
   },
 
   template: `
@@ -36,7 +67,7 @@ const NewGlobalMap = Vue.defineComponent({
                 </div>
               </div>
 
-              <!-- <v-menu v-if="uniqueEventTypes.length > 1" :close-on-content-click="false">
+              <v-menu v-if="uniqueEventTypes.length > 1" :close-on-content-click="false">
                 <template v-slot:activator="{ props: menuProps }">
                   <v-tooltip location="bottom">
                     <template v-slot:activator="{ props: tooltipProps }">
@@ -46,7 +77,6 @@ const NewGlobalMap = Vue.defineComponent({
                         variant="outlined"
                         density="compact"
                         class="ml-2 mb-4"
-                        @click="this.map.closePopup()"
                       />
                     </template>
                     {{ translations.showOrHideEventTypes_ }}
@@ -73,7 +103,7 @@ const NewGlobalMap = Vue.defineComponent({
                     </template>
                   </v-list-item>
                 </v-list>
-              </v-menu> -->
+              </v-menu>
             </div>
 
             <!-- MAP + OVERLAYS -->
@@ -81,9 +111,12 @@ const NewGlobalMap = Vue.defineComponent({
               <!-- MAP -->
               <mobility-map
                 ref="mobilityMapRef"
-                :locations="mapData?.locations"
-                :flows="mapData?.flows"
-                :mode="'event'"
+                :locations="filteredLocations"
+                :flows="mapData.flows"
+                mode="event"
+                :min-zoom="0"
+                disable-clustering
+                :scroll-wheel-zoom="false"
               />
 
               <!-- LOADING OVERLAY -->
