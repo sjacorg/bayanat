@@ -475,7 +475,7 @@ const MobilityMapUtils = {
     const dotSizes = MobilityMapUtils.CONFIG.sizes.dotSizes;
 
     if (minWeight === maxWeight) {
-      return dotSizes[Math.floor(dotSizes.length / 2)];
+      return dotSizes[0];
     }
 
     let t = (clusterTotal - minWeight) / (maxWeight - minWeight);
