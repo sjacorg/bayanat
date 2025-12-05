@@ -356,7 +356,7 @@
                                         <v-row>
                                             <v-col cols="12" lg="6">
                                                 <div class="mb-3 text-body-1">{{ _('System Role') }}<span class="text-red">*</span></div>
-                                                <div class="d-flex flex-wrap ga-3 mb-7">
+                                                <div class="d-flex flex-wrap ga-3">
                                                     <v-input :model-value="selectedRoleIndex" :messages="selectedRole?.description" :rules="[validationRules.atLeastOneRequired(selectedRoleIndex)]">
                                                         <v-btn-toggle
                                                             :model-value="selectedRoleIndex"
@@ -371,15 +371,19 @@
                                                 </div>
                                             </v-col>
                                             <v-col cols="12" lg="6">
-                                                <div class="mb-3 text-body-1">{{ _('Access Role') }}</div>
+                                                <div class="mb-3 text-body-1">
+                                                    {{ _('Access Role') }}
+                                                    <span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">
+                                                        {{ _('(Admins have unrestricted access regardless of access roles)') }}
+                                                    </span>
+                                                </div>
+
                                                 <div class="d-flex flex-wrap ga-3 mb-7">
                                                     <toggle-button
                                                         v-for="role in accessRoles"
                                                         :key="role.id"
                                                         :model-value="isAccessRoleSelected(role)"
                                                         @update:model-value="toggleAccessRole(role)"
-                                                        :read-only="editedUserHasAdminRole"
-                                                        :hide-left-icon="editedUserHasAdminRole"
                                                     >
                                                         ${role.name}
                                                     </toggle-button>
@@ -791,7 +795,7 @@
 
                 },
 
-                applyAdministratorPrivileges() {
+                applyAllPermissions() {
                     this.editedItem.view_usernames = true;
                     this.editedItem.view_simple_history = true;
                     this.editedItem.view_full_history = true;
@@ -799,12 +803,8 @@
                     this.editedItem.can_edit_locations = true;
                     this.editedItem.can_export = true;
                     this.editedItem.can_import_web = true;
-                    this.editedItem.roles = [this.roles[0], ...this.accessRoles];
                 },
-                clearNonAdminAccess(roles = []) {
-                    this.editedItem.roles = roles ?? [];
-
-                    // Limpia permisos
+                clearAllPermissions() {
                     this.editedItem.view_usernames = false;
                     this.editedItem.view_simple_history = false;
                     this.editedItem.view_full_history = false;
@@ -906,6 +906,8 @@
                         this.isStrongPassword = false;
                         this.editedItem = {};
                         this.editedIndex = -1;
+                        this.beforeAdminPermissions = null;
+                        this.hadAdminRoleBefore = false;
                     }, 300);
                 },
 
@@ -995,7 +997,7 @@
                     const systemRole = this.systemRoles[index];
 
                     if (systemRole.value === 'admin') {
-                        return this.becomeAdmin();
+                        return this.becomeAdmin(systemRole);
                     }
 
                     if (this.hadAdminRoleBefore) {
@@ -1004,14 +1006,37 @@
 
                     this.applyNormalSystemRole(systemRole);
                 },
-                becomeAdmin() {
-                    this.applyAdministratorPrivileges();
+                becomeAdmin(systemRole) {
+                    this.beforeAdminPermissions = {
+                        view_usernames: this.editedItem.view_usernames,
+                        view_simple_history: this.editedItem.view_simple_history,
+                        view_full_history: this.editedItem.view_full_history,
+                        can_self_assign: this.editedItem.can_self_assign,
+                        can_edit_locations: this.editedItem.can_edit_locations,
+                        can_export: this.editedItem.can_export,
+                        can_import_web: this.editedItem.can_import_web,
+                    };
+
+                    const nextRoles = this.buildNextRoles(systemRole);
+                    this.editedItem.roles = nextRoles;
+
+                    this.applyAllPermissions();
                     this.hadAdminRoleBefore = true;
                 },
 
                 leaveAdmin(systemRole) {
-                    const selected = this.getRoleFromName(systemRole.value);
-                    this.clearNonAdminAccess([selected]);
+                    const nextRoles = this.buildNextRoles(systemRole);
+                    this.editedItem.roles = nextRoles;
+
+                    if (this.beforeAdminPermissions) {
+                        // User became admin during this session → restore their previous permissions
+                        Object.assign(this.editedItem, this.beforeAdminPermissions);
+                    } else {
+                        // User was already admin before opening the dialog → default restricted permissions
+                        this.clearAllPermissions();
+                    }
+
+                    this.beforeAdminPermissions = null;
                     this.hadAdminRoleBefore = false;
                 },
                 applyNormalSystemRole(systemRole) {
@@ -1023,7 +1048,7 @@
                     this.hadAdminRoleBefore = false;
                 },
                 getRoleFromName(name) {
-                    return this.roles.find(r => r.name.toLowerCase() === name.toLowerCase());
+                    return this.roles.find(r => r.name.toLowerCase() === name?.toLowerCase());
                 },
                 getPreservedAccessRoles() {
                     if (!Array.isArray(this.editedItem.roles)) this.editedItem.roles = [];
