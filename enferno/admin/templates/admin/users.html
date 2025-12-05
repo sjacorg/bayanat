@@ -994,7 +994,7 @@
 
                     const systemRole = this.systemRoles[index];
 
-                    if (this.isSystemAdmin(systemRole)) {
+                    if (systemRole.value === 'admin') {
                         return this.becomeAdmin();
                     }
 
@@ -1010,8 +1010,8 @@
                 },
 
                 leaveAdmin(systemRole) {
-                    const nextRoles = this.buildNextRoles(systemRole);
-                    this.clearNonAdminAccess(nextRoles);
+                    const selected = this.getRoleFromName(systemRole.value);
+                    this.clearNonAdminAccess([selected]);
                     this.hadAdminRoleBefore = false;
                 },
                 applyNormalSystemRole(systemRole) {
