@@ -355,18 +355,19 @@
 
                                         <v-row>
                                             <v-col cols="12" lg="6">
-                                                <div class="mb-3 text-body-1">{{ _('System Role') }}</div>
+                                                <div class="mb-3 text-body-1">{{ _('System Role') }}<span class="text-red">*</span></div>
                                                 <div class="d-flex flex-wrap ga-3 mb-7">
-                                                    <v-btn-toggle
-                                                        :model-value="selectedRoleIndex"
-                                                        @update:model-value="updateSystemRole($event)"
-                                                        variant="outlined"
-                                                        divided
-                                                        color="primary"
-                                                    >
-                                                        <v-btn v-for="(role) in systemRoles" :key="role?.value">${role.name}</v-btn>
-                                                    </v-btn-toggle>
-                                                    <div class="text-caption text-medium-emphasis">${selectedRole?.description}</div>
+                                                    <v-input :model-value="selectedRoleIndex" :messages="selectedRole?.description" :rules="[validationRules.atLeastOneRequired(selectedRoleIndex)]">
+                                                        <v-btn-toggle
+                                                            :model-value="selectedRoleIndex"
+                                                            @update:model-value="updateSystemRole($event)"
+                                                            variant="outlined"
+                                                            divided
+                                                            color="primary"
+                                                        >
+                                                            <v-btn v-for="(role) in systemRoles" :key="role?.value">${role.name}</v-btn>
+                                                        </v-btn-toggle>
+                                                    </v-input>
                                                 </div>
                                             </v-col>
                                             <v-col cols="12" lg="6">
