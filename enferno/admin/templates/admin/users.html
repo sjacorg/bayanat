@@ -516,6 +516,7 @@
                 adminRoleId: 1,
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
+                hadAdminRoleBefore: false,
 
                 systemRoles: [
                     { name: "{{ _('View') }}", value: 'view', description: "{{ _('View-only users can view and search Actors, Bulletins, and Incidents strictly defined by the system\'s access policies and assigned access roles. They cannot create new items or edit existing ones.') }}" },
@@ -790,20 +791,27 @@
 
                 },
 
-                checkRoles() {
-                    this.isAdmin = this.editedUserHasAdminRole;
-                    if (this.isAdmin) {
-                        this.editedItem.view_usernames = true;
-                        this.editedItem.view_simple_history = true;
-                        this.editedItem.view_full_history = true;
-                        this.editedItem.can_self_assign = true;
-                        this.editedItem.can_edit_locations = true;
-                        this.editedItem.can_export = true;
-                        this.editedItem.can_import_web = true;
-                        this.editedItem.roles = [this.roles[0], ...this.accessRoles];
-                        return true;
-                    }
-                    return false;
+                applyAdministratorPrivileges() {
+                    this.editedItem.view_usernames = true;
+                    this.editedItem.view_simple_history = true;
+                    this.editedItem.view_full_history = true;
+                    this.editedItem.can_self_assign = true;
+                    this.editedItem.can_edit_locations = true;
+                    this.editedItem.can_export = true;
+                    this.editedItem.can_import_web = true;
+                    this.editedItem.roles = [this.roles[0], ...this.accessRoles];
+                },
+                clearNonAdminAccess(roles = []) {
+                    this.editedItem.roles = roles ?? [];
+
+                    // Limpia permisos
+                    this.editedItem.view_usernames = false;
+                    this.editedItem.view_simple_history = false;
+                    this.editedItem.view_full_history = false;
+                    this.editedItem.can_self_assign = false;
+                    this.editedItem.can_edit_locations = false;
+                    this.editedItem.can_export = false;
+                    this.editedItem.can_import_web = false;
                 },
 
                 refresh(options) {
@@ -873,6 +881,7 @@
                 createItem() {
                     this.editedItem = {};
                     this.dialog = true;
+                    this.hadAdminRoleBefore = false;
                 },
 
                 editItem(item) {
@@ -882,6 +891,7 @@
                     this.isUsernameAvailable = false;
                     this.initialUsername = item.username;
                     this.dialog = true;
+                    this.hadAdminRoleBefore = this.editedUserHasAdminRole;
                 },
 
 
@@ -979,26 +989,51 @@
                         this.saving = false;
                     }
                 },
-               updateSystemRole(index) {
-                    if (index === null || index === undefined) return;
+                updateSystemRole(index) {
+                    if (index == null) return;
 
-                    const systemRole = this.systemRoles?.[index];
+                    const systemRole = this.systemRoles[index];
 
-                    if (!Array.isArray(this.editedItem?.roles)) this.editedItem.roles = [];
-
-                    const selectedRole = this.roles?.find(
-                        r => r?.name?.toLowerCase() === systemRole?.value?.toLowerCase()
-                    );
-
-                    const preservedRoles = this.editedItem.roles.filter(r => this.accessRoles.some(ar => ar.name.toLowerCase() === r.name.toLowerCase()));
-
-                    if (!selectedRole) {
-                        this.editedItem.roles = [...preservedRoles];
-                    } else {
-                        this.editedItem.roles = [selectedRole, ...preservedRoles];
+                    if (this.isSystemAdmin(systemRole)) {
+                        return this.becomeAdmin();
                     }
 
-                    this.checkRoles();
+                    if (this.hadAdminRoleBefore) {
+                        return this.leaveAdmin(systemRole);
+                    }
+
+                    this.applyNormalSystemRole(systemRole);
+                },
+                becomeAdmin() {
+                    this.applyAdministratorPrivileges();
+                    this.hadAdminRoleBefore = true;
+                },
+
+                leaveAdmin(systemRole) {
+                    const nextRoles = this.buildNextRoles(systemRole);
+                    this.clearNonAdminAccess(nextRoles);
+                    this.hadAdminRoleBefore = false;
+                },
+                applyNormalSystemRole(systemRole) {
+                    const selectedRole = this.getRoleFromName(systemRole.value);
+                    const accessRoles = this.getPreservedAccessRoles();
+                    this.editedItem.roles = selectedRole
+                        ? [selectedRole, ...accessRoles]
+                        : accessRoles;
+                    this.hadAdminRoleBefore = false;
+                },
+                getRoleFromName(name) {
+                    return this.roles.find(r => r.name.toLowerCase() === name.toLowerCase());
+                },
+                getPreservedAccessRoles() {
+                    return this.editedItem.roles.filter(r =>
+                        this.accessRoles.some(a => a.name.toLowerCase() === r.name.toLowerCase())
+                    );
+                },
+                buildNextRoles(systemRole) {
+                    const selected = this.getRoleFromName(systemRole.value);
+                    const access = this.getPreservedAccessRoles();
+                    return selected ? [selected, ...access] : access;
                 },
                 isAccessRoleSelected(role) {
                     return this.editedItemAccessRoles?.some(r => r.name === role.name)
