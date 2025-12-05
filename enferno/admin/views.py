@@ -3281,7 +3281,7 @@ def api_bulletins(validated_data: dict) -> Response:
 
 
 @admin.post("/api/bulletin/")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @can_assign_roles
 @validate_with(BulletinRequestModel)
 def api_bulletin_create(
@@ -3328,7 +3328,7 @@ def api_bulletin_create(
 
 
 @admin.put("/api/bulletin/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(BulletinRequestModel)
 def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -3398,7 +3398,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review bulletin endpoint
 @admin.put("/api/bulletin/review/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(BulletinReviewRequestModel)
 def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -3625,7 +3625,7 @@ def api_bulletin_import() -> Response:
 
 
 @admin.put("/api/bulletin/assign/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(BulletinSelfAssignRequestModel)
 def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3691,7 +3691,7 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.put("/api/actor/assign/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(ActorSelfAssignRequestModel)
 def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3748,7 +3748,7 @@ def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.put("/api/incident/assign/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(IncidentSelfAssignRequestModel)
 def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
     """
@@ -3812,7 +3812,7 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.post("/api/media/chunk")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 def api_medias_chunk() -> Response:
     """
     Endpoint for uploading media files based on file system settings.
@@ -3932,7 +3932,7 @@ def api_medias_chunk() -> Response:
 
 
 @admin.post("/api/media/upload/")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 def api_medias_upload() -> Response:
     """
     Endpoint to upload screenshots based on file system settings.
@@ -4127,7 +4127,7 @@ def api_local_serve_media(
 
 
 @admin.post("/api/inline/upload")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 def api_inline_medias_upload() -> Response:
     """
     Endpoint to upload inline media files.
@@ -4168,7 +4168,7 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 
 @admin.put("/api/media/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(MediaRequestModel)
 def api_media_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4373,7 +4373,7 @@ def api_actors(validated_data: dict) -> Response:
 
 # create actor endpoint
 @admin.post("/api/actor/")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(ActorRequestModel)
 @can_assign_roles
 def api_actor_create(
@@ -4419,7 +4419,7 @@ def api_actor_create(
 
 # update actor endpoint
 @admin.put("/api/actor/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(ActorRequestModel)
 def api_actor_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -4493,7 +4493,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review actor endpoint
 @admin.put("/api/actor/review/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(ActorReviewRequestModel)
 def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -6000,7 +6000,7 @@ def api_incidents(validated_data: dict) -> Response:
 
 
 @admin.post("/api/incident/")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @can_assign_roles
 @validate_with(IncidentRequestModel)
 def api_incident_create(
@@ -6050,7 +6050,7 @@ def api_incident_create(
 
 # update incident endpoint
 @admin.put("/api/incident/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(IncidentRequestModel)
 def api_incident_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -6126,7 +6126,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
 
 # Add/Update review incident endpoint
 @admin.put("/api/incident/review/<int:id>")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(IncidentReviewRequestModel)
 def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
     """
@@ -6919,7 +6919,7 @@ def api_mark_all_notifications_read():
 
 
 @admin.post("/api/bulletin/web")
-@roles_accepted("Admin", "Analyst")
+@roles_accepted("Admin", "Moderator", "Analyst")
 @validate_with(WebImportValidationModel)
 def api_bulletin_web_import(validated_data: dict) -> Response:
     """Import bulletin from web URL"""
