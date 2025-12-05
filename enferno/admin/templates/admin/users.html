@@ -519,7 +519,7 @@
 
                 systemRoles: [
                     { name: "{{ _('View') }}", value: 'view', description: "{{ _('View-only users can view and search Actors, Bulletins, and Incidents strictly defined by the system\'s access policies and assigned access roles. They cannot create new items or edit existing ones.') }}" },
-                    { name: "{{ _('Data Analyst') }}", value: 'analyst', description: "{{ _('Analysts can view and search Actors, Bulletins, and Incidents permitted by the system\'s access policies and assigned access roles. They can create new items, as well as edit and review items specifically assigned to them.') }}" },
+                    { name: "{{ _('Analyst') }}", value: 'analyst', description: "{{ _('Analysts can view and search Actors, Bulletins, and Incidents permitted by the system\'s access policies and assigned access roles. They can create new items, as well as edit and review items specifically assigned to them.') }}" },
                     { name: "{{ _('Moderator') }}", value: 'moderator', description: "{{ _('Moderators assist Administrators in managing the system. They can add or edit secondary items (Labels, Locations, Component Data) and perform bulk assignments. This role includes the same creation and access privileges as Analysts, subject to access policies and assigned access roles.') }}" },
                     { name: "{{ _('Administrator') }}", value: 'admin', description: "{{ _('Administrators have unrestricted access to all system items, settings, logs, and actions. They manage users, access controls, approve export requests and import data in bulk via Bayanat tools. Only trusted, trained and competent users should be assigned this role.') }}" },
                 ],
