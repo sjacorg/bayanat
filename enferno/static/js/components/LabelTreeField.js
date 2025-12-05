@@ -188,11 +188,10 @@ const LabelTreeField = Vue.defineComponent({
         v-show="expand"
         variant="outlined"
         rounded="md"
-        class="border-sm max-h-[440px] overflow-y-auto"
+        class="border-sm"
         :style="{ width: showCopyIcon ? 'calc(100% - 64px)' : '100%' }"
       >
         <v-card-text>
-
           <!-- Search Input -->
           <v-text-field
             v-model="search"
@@ -201,10 +200,10 @@ const LabelTreeField = Vue.defineComponent({
             density="comfortable"
             clearable
             prepend-inner-icon="mdi-magnify"
-            class="mb-3"
             hide-details
           />
-
+        </v-card-text>
+        <v-card-text class="overflow-y-auto pt-0" style="max-height: 359px;">
           <!-- Tree -->
           <v-treeview
             v-if="displayedItems.length"
