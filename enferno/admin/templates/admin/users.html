@@ -1026,6 +1026,7 @@
                     return this.roles.find(r => r.name.toLowerCase() === name.toLowerCase());
                 },
                 getPreservedAccessRoles() {
+                    if (!Array.isArray(this.editedItem.roles)) this.editedItem.roles = [];
                     return this.editedItem.roles.filter(r =>
                         this.accessRoles.some(a => a.name.toLowerCase() === r.name.toLowerCase())
                     );
