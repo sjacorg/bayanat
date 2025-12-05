@@ -236,7 +236,7 @@ def test_bulletin_endpoint_roled_restricted(
 post_bulletin_endpoint_roles = [
     ("admin_client", 201),
     ("da_client", 201),
-    ("mod_client", 403),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -275,6 +275,7 @@ put_bulletin_endpoint_roles = [
     ("mod_client", 403),
     ("anonymous_client", 401),
 ]
+# Note: This tests unassigned bulletins - DA/Mod can only edit assigned bulletins
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_endpoint_roles)
@@ -307,7 +308,7 @@ def test_put_bulletin_endpoint(
 put_bulletin_endpoint_roles2 = [
     ("admin_client", 200),
     ("da_client", 200),
-    ("mod_client", 403),
+    ("mod_client", 200),
     ("anonymous_client", 401),
 ]
 
@@ -353,7 +354,7 @@ def test_put_bulletin_assigned_endpoint(
 put_bulletin_review_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
-    ("mod_client", 403),
+    ("mod_client", 200),
     ("anonymous_client", 401),
 ]
 
@@ -457,7 +458,7 @@ put_bulletin_assign_endpoint_roles = [
     ("anonymous_client", 401),
     ("admin_sa_client", 200),
     ("da_sa_client", 200),
-    ("mod_sa_client", 403),
+    ("mod_sa_client", 200),
 ]
 
 

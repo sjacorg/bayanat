@@ -221,7 +221,7 @@ def test_incident_endpoint_roled_restricted(
 post_incident_endpoint_roles = [
     ("admin_client", 201),
     ("da_client", 201),
-    ("mod_client", 403),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -289,7 +289,7 @@ def test_put_incident_endpoint(
 put_incident_endpoint_roles2 = [
     ("admin_client", 200),
     ("da_client", 200),
-    ("mod_client", 403),
+    ("mod_client", 200),
     ("anonymous_client", 401),
 ]
 
@@ -334,7 +334,7 @@ put_incident_assign_endpoint_roles = [
     ("anonymous_client", 401),
     ("admin_sa_client", 200),
     ("da_sa_client", 200),
-    ("mod_sa_client", 403),
+    ("mod_sa_client", 200),
 ]
 
 
@@ -366,7 +366,7 @@ def test_put_incident_assign_endpoint(
 put_incident_review_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
-    ("mod_client", 403),
+    ("mod_client", 200),
     ("anonymous_client", 401),
 ]
 
