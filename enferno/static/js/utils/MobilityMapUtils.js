@@ -104,18 +104,14 @@ const MobilityMapUtils = {
 
   // Hit test for arrow segments
   pointOnArrow(px, py, arrow, ctx) {
-    // Convert world point into arrow local space
-    const dx = px - arrow.origin.x;
-    const dy = py - arrow.origin.y;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.translate(arrow.origin.x, arrow.origin.y);
+    ctx.rotate(arrow.angle);
+    const isHit = ctx.isPointInPath(arrow.hitPath, px, py);
+    ctx.restore();
 
-    const cos = Math.cos(-arrow.angle);
-    const sin = Math.sin(-arrow.angle);
-
-    // Rotate point backwards
-    const localX = dx * cos - dy * sin;
-    const localY = dx * sin + dy * cos;
-
-    return ctx.isPointInPath(arrow.hitPath, localX, localY);
+    return isHit;
   },
 
   // Returns arrow color based on weight range
