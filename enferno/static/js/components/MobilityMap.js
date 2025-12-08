@@ -489,11 +489,21 @@ const MobilityMap = Vue.defineComponent({
 
         // 🟡 Draw label if cluster has more than 1 location
         if (c.memberIds.length > 1) {
-          ctx.fillStyle = '#ffffff';
-          ctx.font = `${Math.max(12, c.radius)}px sans-serif`;
+          const label = c.memberIds.length;
+          const fontSize = Math.max(10, c.radius);
+
+          ctx.font = `${fontSize}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(c.memberIds.length, p.x, p.y);
+
+          // Stroke first (for sharp edge)
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+          ctx.strokeText(label, p.x, p.y);
+
+          // Fill on top
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(label, p.x, p.y);
         }
 
         this.dotShapes.push({
@@ -764,7 +774,7 @@ const MobilityMap = Vue.defineComponent({
               incoming = traffic.incoming;
             });
 
-            this.tooltip.type = 'dot';
+            this.tooltip.type = 'cluster';
             this.tooltip.data = {
               title: this.translations.locationDetails_,
               name: MobilityMapUtils.tooltipCityNames(names),
@@ -995,7 +1005,7 @@ const MobilityMap = Vue.defineComponent({
         </template>
 
         <!-- DOT TOOLTIP -->
-        <template v-if="tooltip.type === 'dot'">
+        <template v-if="tooltip.type === 'cluster'">
           <div class="text-subtitle-2 font-weight-bold mb-1">
             {{ tooltip.data.title }}
           </div>
