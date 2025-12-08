@@ -465,7 +465,7 @@ const MobilityMapUtils = {
     const clusterTotals = [];
 
     rawClusters.forEach((c, index) => {
-      const memberIds = c.keys.map((k) => k);
+      const memberIds = c.keys.map((k) => Number(k));
 
       let sumLat = 0;
       let sumLon = 0;
