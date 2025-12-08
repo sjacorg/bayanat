@@ -685,6 +685,12 @@ const MobilityMap = Vue.defineComponent({
           const cluster = this.clusterDefs[dot.clusterId];
           if (!cluster) return;
 
+          // If cluster has multiple members → zoom in
+          if (cluster.memberIds.length > 1) {
+            this.zoomToCluster(cluster.memberIds);
+            return;
+          }
+
           if (this.mode === 'event') {
             const { lat, lon } = this.tooltip.data;
             MobilityMapUtils.copyCoordinates({ lat, lon })
@@ -892,6 +898,34 @@ const MobilityMap = Vue.defineComponent({
     clearFilter() {
       this.selectedPoint = null;
       this.rebuildShapes();
+    },
+
+    zoomToCluster(memberIds, { padding = 60, maxZoom = 12 } = {}) {
+      if (!this.map) return;
+
+      const pts = memberIds
+        .map(id => this.points[id]?.latlng)
+        .filter(Boolean);
+
+      if (!pts.length) return;
+
+      // If only one point → center & zoom nicely
+      if (pts.length === 1) {
+        this.map.setView(pts[0], maxZoom, {
+          animate: true,
+          duration: 0.6,
+        });
+        return;
+      }
+
+      const bounds = L.latLngBounds(pts);
+
+      this.map.fitBounds(bounds, {
+        padding: [padding, padding],
+        maxZoom,
+        animate: true,
+        duration: 0.6,
+      });
     },
 
     zoomToFlows({ padding = 40, maxZoom = 12 } = {}) {
