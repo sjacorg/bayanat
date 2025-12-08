@@ -192,25 +192,24 @@ const MobilityMap = Vue.defineComponent({
         this.map.fitBounds(bounds);
       }
 
-      // 📏 ADD HERE
-      if (!this.measureControls && L.control.polylineMeasure) {
-        this.measureControls = L.control.polylineMeasure({
-          position: 'topleft',
-          unit: 'kilometres',
-          fixedLine: {
-            color: 'rgba(67,157,146,0.77)',
-            weight: 2,
-          },
-          arrow: {
-            color: 'rgba(67,157,146,0.77)',
-          },
-          showBearings: false,
-          clearMeasurementsOnStop: false,
-          showClearControl: true,
-          showUnitControl: true,
-        });
-        this.measureControls.addTo(this.map);
-      }
+      // if (!this.measureControls && L.control.polylineMeasure) {
+      //   this.measureControls = L.control.polylineMeasure({
+      //     position: 'topleft',
+      //     unit: 'kilometres',
+      //     fixedLine: {
+      //       color: 'rgba(67,157,146,0.77)',
+      //       weight: 2,
+      //     },
+      //     arrow: {
+      //       color: 'rgba(67,157,146,0.77)',
+      //     },
+      //     showBearings: false,
+      //     clearMeasurementsOnStop: false,
+      //     showClearControl: true,
+      //     showUnitControl: true,
+      //   });
+      //   this.measureControls.addTo(this.map);
+      // }
 
       this.map.on('click', this.onMapClick);
       this.map.on('mousemove', this.onMapHover);
@@ -1034,7 +1033,7 @@ const MobilityMap = Vue.defineComponent({
       <canvas
         ref="overlay"
         class="position-absolute top-0 left-0 w-100 h-100 pointer-events-none"
-        style="zIndex: 999;"
+        :style="{ zIndex: 999, opacity: measuringActive ? 0.5 : 1 }"
       ></canvas>
 
       <!-- Tooltip -->
