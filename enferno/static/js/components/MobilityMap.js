@@ -608,7 +608,7 @@ const MobilityMap = Vue.defineComponent({
       }
 
       // Directional logic for other clusters
-      if (this.selectedPoint.type === 'dot') {
+      if (this.selectedPoint.type === 'cluster') {
         const selectedMembers = new Set(this.selectedPoint.memberIds);
 
         this.currentFlows.forEach((f) => {
