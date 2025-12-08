@@ -11,12 +11,12 @@ const MobilityMapUtils = {
         fill: '#28726c', // Cluster point color
         stroke: '#fff', // Cluster outline
       },
-      location: "#00a1f1",
-      geo: "#ffbb00",
-      geoMain: "#000000",
-      event: "#257e74",
+      location: '#00a1f1',
+      geo: '#ffbb00',
+      geoMain: '#000000',
+      event: '#257e74',
       cluster: 'rgba(148, 215, 110, 1)',
-      clusterStroke: 'rgba(148, 215, 110, 0.5)'
+      clusterStroke: 'rgba(148, 215, 110, 0.5)',
     },
 
     map: {
@@ -366,7 +366,7 @@ const MobilityMapUtils = {
         comment: loc.comment || null,
       }));
 
-      console.log(2, parsed)
+    console.log(2, parsed);
 
     return {
       locations: parsed,
@@ -583,5 +583,28 @@ const MobilityMapUtils = {
     const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
     return navigator.clipboard.writeText(text);
+  },
+  getClusterVisualStyle(c, memberColors) {
+    let fillColor = this.CONFIG.colors.dot.fill;
+    let strokeStyle = this.CONFIG.colors.dot.stroke;
+    let strokeWidth = 2;
+    let dotSize = c.radius;
+
+    if (memberColors.size === 1) {
+      const type = [...memberColors][0];
+      if (type === 'location') fillColor = this.CONFIG.colors.location;
+      if (type === 'event') fillColor = this.CONFIG.colors.event;
+      if (type === 'geo') fillColor = this.CONFIG.colors.geo;
+      if (type === 'geo-main') fillColor = this.CONFIG.colors.geoMain;
+    }
+
+    if (c.memberIds.length > 1) {
+      fillColor = this.CONFIG.colors.cluster;
+      strokeStyle = this.CONFIG.colors.clusterStroke;
+      strokeWidth = c.radius * 1.25;
+      dotSize = c.radius * 1.2;
+    }
+
+    return { fillColor, strokeStyle, strokeWidth, dotSize };
   },
 };

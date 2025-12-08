@@ -52,8 +52,6 @@ const NewGlobalMap = Vue.defineComponent({
         }
       }
 
-      console.log(allLocations)
-
       return { locations: allLocations, flows: allFlows };
     },
 

@@ -486,26 +486,7 @@ const MobilityMap = Vue.defineComponent({
           c.memberIds.map((id) => this.points[id]?.markerType)
         );
 
-        let fillColor = MobilityMapUtils.CONFIG.colors.dot.fill; // default
-        let strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke; // default
-        let strokeWidth = 2; // default
-        let dotSize = c.radius;
-
-        if (memberColors.size === 1) {
-          const type = [...memberColors][0];
-
-          if (type === 'location') fillColor = MobilityMapUtils.CONFIG.colors.location;
-          if (type === 'event') fillColor = MobilityMapUtils.CONFIG.colors.event;
-          if (type === 'geo') fillColor = MobilityMapUtils.CONFIG.colors.geo;
-          if (type === 'geo-main') fillColor = MobilityMapUtils.CONFIG.colors.geoMain;
-        }
-
-        if (c.memberIds.length > 1) {
-          fillColor = MobilityMapUtils.CONFIG.colors.cluster;
-          strokeStyle = MobilityMapUtils.CONFIG.colors.clusterStroke;
-          strokeWidth = c.radius * 1.25;
-          dotSize = c.radius * 1.2;
-        }
+        const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(c, memberColors);
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);
