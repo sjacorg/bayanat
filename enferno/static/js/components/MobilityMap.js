@@ -826,30 +826,43 @@ const MobilityMap = Vue.defineComponent({
         const container = this.$refs.mapContainer;
         const mapRect = container.getBoundingClientRect();
 
-        const tooltipWidth = 320; // same as your v-card width
-        const tooltipHeight = 110; // approx height of your tooltip
         const padding = 12;
 
+        // Prepare raw coords first
         let x = p.x + padding;
         let y = p.y + padding;
 
-        // Flip horizontally if overflowing right
-        if (x + tooltipWidth > mapRect.width) {
-          x = p.x - tooltipWidth - padding;
-        }
-
-        // Flip vertically if overflowing bottom
-        if (y + tooltipHeight > mapRect.height) {
-          y = p.y - tooltipHeight - padding;
-        }
-
-        // Clamp to left/top just in case
-        x = Math.max(padding, x);
-        y = Math.max(padding, y);
-
+        // Temporarily show tooltip so DOM size renders
         this.tooltip.visible = true;
         this.tooltip.x = x;
         this.tooltip.y = y;
+
+        this.$nextTick(() => {
+          const card = this.$refs.tooltipCard;
+          if (!card) return;
+
+          const cardRect = card.$el
+            ? card.$el.getBoundingClientRect()
+            : card.getBoundingClientRect();
+
+          const tooltipWidth = cardRect.width;
+          const tooltipHeight = cardRect.height;
+
+          // Now adjust x/y to avoid overflow
+          if (x + tooltipWidth > mapRect.width) {
+            x = p.x - tooltipWidth - padding;
+          }
+          if (y + tooltipHeight > mapRect.height) {
+            y = p.y - tooltipHeight - padding;
+          }
+
+          // Clamp
+          x = Math.max(padding, x);
+          y = Math.max(padding, y);
+
+          this.tooltip.x = x;
+          this.tooltip.y = y;
+        });
       } else {
         this.tooltip.visible = false;
         this.tooltip.data = null;
@@ -917,8 +930,9 @@ const MobilityMap = Vue.defineComponent({
       <!-- Tooltip -->
       <v-card
         v-if="tooltip.visible && tooltip.data"
+        ref="tooltipCard"
         class="position-absolute pa-3"
-        style="width: 320px; zIndex: 9999; border-radius: 10px;"
+        style="zIndex: 9999; border-radius: 10px;"
         :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         elevation="4"
       >
