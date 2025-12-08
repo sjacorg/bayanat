@@ -716,7 +716,7 @@ const MobilityMap = Vue.defineComponent({
           hovering = true;
 
           if (this.mode === 'event') {
-            const locationIds = dot.key.split(',').map(Number);
+            const locationIds = dot.key.split(',');
             const locId = locationIds[0];
 
             const loc = this.locations.find(l => l.id === locId);
@@ -750,7 +750,7 @@ const MobilityMap = Vue.defineComponent({
               main: Boolean(event?.main),
             };
           } else {
-            const ids = dot.key.split(',').map(Number);
+            const ids = dot.key.split(',');
             const names = ids.map((id) => this.points[id]?.label || id);
 
             let outgoing = 0;

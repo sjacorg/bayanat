@@ -44,7 +44,15 @@ const NewGlobalMap = Vue.defineComponent({
           const parsed = MobilityMapUtils.parseLocationsToMapData(e.locations, opts);
           allLocations.push(...parsed.locations);
         }
+
+        // 3️⃣ NEW: GEO LOCATIONS
+        if (Array.isArray(e.geoLocations)) {
+          const parsed = MobilityMapUtils.parseGeoLocationsToMapData(e.geoLocations, opts);
+          allLocations.push(...parsed.locations);
+        }
       }
+
+      console.log(allLocations)
 
       return { locations: allLocations, flows: allFlows };
     },
@@ -143,7 +151,6 @@ const NewGlobalMap = Vue.defineComponent({
               mode="event"
               :min-zoom="0"
               :scroll-wheel-zoom="false"
-              disable-clustering
             />
 
             <!-- LOADER -->

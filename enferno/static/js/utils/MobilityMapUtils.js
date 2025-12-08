@@ -214,7 +214,7 @@ const MobilityMapUtils = {
     const parsed = locations
       .filter((loc) => Number.isFinite(loc.lat) || Number.isFinite(loc.latlng?.lat))
       .map((loc) => ({
-        id: loc.id,
+        id: `loc-${loc.id}`,
 
         title: loc.title || null,
         title_ar: loc.title_ar || null,
@@ -325,6 +325,46 @@ const MobilityMapUtils = {
     };
   },
 
+  parseGeoLocationsToMapData(geoLocations, options = {}) {
+    if (!Array.isArray(geoLocations)) {
+      return { locations: [], flows: [] };
+    }
+
+    const parsed = geoLocations
+      .filter((loc) => Number.isFinite(loc.lat) && Number.isFinite(loc.lng))
+      .map((loc) => ({
+        id: `geo-${loc.id}`, // keep IDs separate from event/locations
+
+        title: loc.title || null,
+        title_ar: null,
+
+        full_string: loc.title || loc.full_string || loc.full_location || loc.geotype?.title || '',
+
+        lat: loc.lat,
+        lon: loc.lng,
+
+        ...(options.showParentId ? { parentId: options.parentId ?? null } : {}),
+
+        // match the structure of other location parsers
+        total_events: 0,
+        events: [],
+
+        // Used for styling / tooltip differentiation (optional)
+        markerType: 'geo',
+        geotypeId: loc.geotype?.id ?? null,
+        geotypeTitle: loc.geotype?.title ?? null,
+        main: Boolean(loc.main),
+        comment: loc.comment || null,
+      }));
+
+      console.log(2, parsed)
+
+    return {
+      locations: parsed,
+      flows: [],
+    };
+  },
+
   findClosestCluster(newCluster, oldClusters, projFn) {
     let closest = null;
     let minDist = Infinity;
@@ -416,7 +456,7 @@ const MobilityMapUtils = {
     const clusterTotals = [];
 
     rawClusters.forEach((c, index) => {
-      const memberIds = c.keys.map((k) => Number(k));
+      const memberIds = c.keys.map((k) => k);
 
       let sumLat = 0;
       let sumLon = 0;
