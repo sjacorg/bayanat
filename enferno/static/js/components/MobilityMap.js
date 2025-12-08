@@ -482,11 +482,11 @@ const MobilityMap = Vue.defineComponent({
         if (!p) return;
 
         // Determine cluster color based on members
-        const memberColors = new Set(
+        const markerTypes = new Set(
           c.memberIds.map((id) => this.points[id]?.markerType)
         );
 
-        const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(c, memberColors);
+        const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(c, markerTypes);
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);

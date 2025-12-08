@@ -584,20 +584,22 @@ const MobilityMapUtils = {
 
     return navigator.clipboard.writeText(text);
   },
-  getClusterVisualStyle(c, memberColors) {
+  getClusterVisualStyle(c, markerTypes) {
     let fillColor = this.CONFIG.colors.dot.fill;
     let strokeStyle = this.CONFIG.colors.dot.stroke;
     let strokeWidth = 2;
     let dotSize = c.radius;
 
-    if (memberColors.size === 1) {
-      const type = [...memberColors][0];
+    // Set color based on marker types if uniform
+    if (markerTypes.size === 1) {
+      const type = [...markerTypes][0];
       if (type === 'location') fillColor = this.CONFIG.colors.location;
       if (type === 'event') fillColor = this.CONFIG.colors.event;
       if (type === 'geo') fillColor = this.CONFIG.colors.geo;
       if (type === 'geo-main') fillColor = this.CONFIG.colors.geoMain;
     }
 
+    // If it's clustered, use cluster style
     if (c.memberIds.length > 1) {
       fillColor = this.CONFIG.colors.cluster;
       strokeStyle = this.CONFIG.colors.clusterStroke;
