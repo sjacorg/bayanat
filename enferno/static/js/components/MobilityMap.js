@@ -728,8 +728,8 @@ const MobilityMap = Vue.defineComponent({
             this.tooltip.data = {
               // Title / Identity
               title: loc.title || '',
-              number: event?.number ?? null,
-              parentId: event?.parentId ?? loc?.parentId ?? null,  // let UI decide to hide, not force "—"
+              number: loc?.number ?? event?.number ?? null,
+              parentId: loc?.parentId ?? event?.parentId ?? null,  // let UI decide to hide, not force "—"
 
               // Coordinates (keep naming consistent)
               lat: Number.isFinite(loc.lat) ? loc.lat : null,
@@ -747,7 +747,7 @@ const MobilityMap = Vue.defineComponent({
 
               // Flags
               estimated: Boolean(event?.estimated),
-              main: Boolean(event?.main),
+              main: Boolean(loc?.main ?? event?.main),
             };
           } else {
             const ids = dot.key.split(',');
