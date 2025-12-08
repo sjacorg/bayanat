@@ -18,6 +18,7 @@ const MobilityMap = Vue.defineComponent({
       ctx: null,
       frameRequested: false,
       translations: window.translations,
+      measureControls: null,
 
       // Morphing state
       morphing: false,
@@ -112,6 +113,12 @@ const MobilityMap = Vue.defineComponent({
     },
   },
 
+  computed: {
+    measuringActive() {
+      return this.measureControls?._measuring === true;
+    }
+  },
+
   methods: {
     initResizeObserver() {
       const el = this.$refs.mapContainer;
@@ -183,6 +190,26 @@ const MobilityMap = Vue.defineComponent({
       if (validLocs.length) {
         const bounds = L.latLngBounds(validLocs.map((loc) => [loc.lat, loc.lon]));
         this.map.fitBounds(bounds);
+      }
+
+      // 📏 ADD HERE
+      if (!this.measureControls && L.control.polylineMeasure) {
+        this.measureControls = L.control.polylineMeasure({
+          position: 'topleft',
+          unit: 'kilometres',
+          fixedLine: {
+            color: 'rgba(67,157,146,0.77)',
+            weight: 2,
+          },
+          arrow: {
+            color: 'rgba(67,157,146,0.77)',
+          },
+          showBearings: false,
+          clearMeasurementsOnStop: false,
+          showClearControl: true,
+          showUnitControl: true,
+        });
+        this.measureControls.addTo(this.map);
       }
 
       this.map.on('click', this.onMapClick);
@@ -705,6 +732,7 @@ const MobilityMap = Vue.defineComponent({
      CLICK HANDLING
     ============================================= */
     onMapClick(e) {
+      if (this.measuringActive) return;
       if (this.morphing) return;
       const p = this.map.latLngToContainerPoint(e.latlng);
 
@@ -758,6 +786,7 @@ const MobilityMap = Vue.defineComponent({
     },
 
     onMapHover(e) {
+      if (this.measuringActive) return;
       if (!this.map || !this.canvas) return;
 
       const p = this.map.latLngToContainerPoint(e.latlng);
