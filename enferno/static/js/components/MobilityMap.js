@@ -506,12 +506,12 @@ const MobilityMap = Vue.defineComponent({
           ctx.textBaseline = 'middle';
 
           // Stroke first (for sharp edge)
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 2;
           ctx.strokeStyle = 'rgba(0,0,0,0.85)';
           ctx.strokeText(label, p.x, p.y);
 
           // Fill on top
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = '#fff';
           ctx.fillText(label, p.x, p.y);
         }
 
