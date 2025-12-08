@@ -366,8 +366,6 @@ const MobilityMapUtils = {
         comment: loc.comment || null,
       }));
 
-    console.log(2, parsed);
-
     return {
       locations: parsed,
       flows: [],
