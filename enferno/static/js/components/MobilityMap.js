@@ -60,6 +60,9 @@ const MobilityMap = Vue.defineComponent({
       this.initPoints();
       this.initCanvas();
 
+      // observe parent resizing
+      this.initResizeObserver();
+
       this.map.once('moveend', () => {
         this.rebuildShapes();
         this.scheduleFrame();
@@ -70,6 +73,12 @@ const MobilityMap = Vue.defineComponent({
   beforeUnmount() {
     this.morphing = false;
     window.removeEventListener('resize', this.resizeCanvas);
+
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
+
     if (this.map) {
       this.map.off();
       this.map.remove();
@@ -104,6 +113,25 @@ const MobilityMap = Vue.defineComponent({
   },
 
   methods: {
+    initResizeObserver() {
+      const el = this.$refs.mapContainer;
+      if (!el) return;
+
+      this._resizeObserver = new ResizeObserver(() => {
+        if (!this.map) return;
+
+        // Update Leaflet internal size
+        this.map.invalidateSize({ animate: false });
+
+        // Resize canvas overlay
+        this.resizeCanvas();
+
+        // Redraw overlays
+        this.scheduleFrame();
+      });
+
+      this._resizeObserver.observe(el);
+    },
     /* ================= MAP INIT ================= */
 
     initMap() {
