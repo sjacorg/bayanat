@@ -796,6 +796,18 @@ const MobilityMap = Vue.defineComponent({
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
 
+            const cluster = this.clusterDefs[dot.clusterId];
+
+            // 🛑 EVENT MODE: NO TOOLTIP, JUST POINTER FOR CLUSTERS WITH MORE THAN ONE MEMBER
+            if (this.mode === 'event' && cluster.memberIds.length > 1) {
+                // Set cursor to hand and exit (no tooltip)
+                this.$refs.mapContainer.style.cursor = 'pointer';
+                this.tooltip.visible = false;
+                this.tooltip.data = null;
+                this.tooltip.type = null;
+                return;
+            }
+
           if (this.mode === 'event') {
             const locationIds = dot.key.split(',').map(Number);
             const locId = locationIds[0];
