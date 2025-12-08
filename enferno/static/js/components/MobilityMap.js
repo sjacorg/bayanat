@@ -269,6 +269,8 @@ const MobilityMap = Vue.defineComponent({
         this.points[loc.id] = {
           latlng: L.latLng(loc.lat, loc.lon),
           label: loc.name ?? loc.full_string,
+          markerType: loc.markerType || null,
+          main: loc.main ?? false,
         };
       });
     },
@@ -479,9 +481,25 @@ const MobilityMap = Vue.defineComponent({
         const p = clusterPixels[c.id];
         if (!p) return;
 
+        // Determine cluster color based on members
+        const memberColors = new Set(
+          c.memberIds.map((id) => this.points[id]?.markerType)
+        );
+
+        let fillColor = MobilityMapUtils.CONFIG.colors.dot.fill; // default
+
+        if (memberColors.size === 1) {
+          const type = [...memberColors][0];
+
+          if (type === 'location') fillColor = MobilityMapUtils.CONFIG.colors.location;
+          if (type === 'event') fillColor = MobilityMapUtils.CONFIG.colors.event;
+          if (type === 'geo') fillColor = MobilityMapUtils.CONFIG.colors.geo;
+          if (type === 'geo-main') fillColor = MobilityMapUtils.CONFIG.colors.geoMain;
+        }
+
         ctx.beginPath();
         ctx.arc(p.x, p.y, c.radius, 0, Math.PI * 2);
-        ctx.fillStyle = MobilityMapUtils.CONFIG.colors.dot.fill;
+        ctx.fillStyle = fillColor;
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke;
@@ -599,7 +617,7 @@ const MobilityMap = Vue.defineComponent({
       }
 
       // Directional logic for other clusters
-      if (this.selectedPoint.type === 'cluster') {
+      if (this.selectedPoint.type === 'dot') {
         const selectedMembers = new Set(this.selectedPoint.memberIds);
 
         this.currentFlows.forEach((f) => {
@@ -774,7 +792,7 @@ const MobilityMap = Vue.defineComponent({
               incoming = traffic.incoming;
             });
 
-            this.tooltip.type = 'cluster';
+            this.tooltip.type = 'dot';
             this.tooltip.data = {
               title: this.translations.locationDetails_,
               name: MobilityMapUtils.tooltipCityNames(names),
@@ -1005,7 +1023,7 @@ const MobilityMap = Vue.defineComponent({
         </template>
 
         <!-- DOT TOOLTIP -->
-        <template v-if="tooltip.type === 'cluster'">
+        <template v-if="tooltip.type === 'dot'">
           <div class="text-subtitle-2 font-weight-bold mb-1">
             {{ tooltip.data.title }}
           </div>

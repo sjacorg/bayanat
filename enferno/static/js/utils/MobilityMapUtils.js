@@ -11,6 +11,10 @@ const MobilityMapUtils = {
         fill: '#28726c', // Cluster point color
         stroke: '#fff', // Cluster outline
       },
+      location: "#00a1f1",
+      geo: "#ffbb00",
+      geoMain: "#000000",
+      event: "#257e74",
     },
 
     map: {
@@ -228,6 +232,7 @@ const MobilityMapUtils = {
         // No events → but keep structure for tooltip compatibility
         total_events: 0,
         events: [],
+        markerType: 'location',
       }));
 
     return {
@@ -268,6 +273,7 @@ const MobilityMapUtils = {
           ...(options.showParentId ? { parentId: loc.parentId ?? null } : {}),
           total_events: 0,
 
+          markerType: 'event',
           events: [],
         });
       }
@@ -351,7 +357,7 @@ const MobilityMapUtils = {
         events: [],
 
         // Used for styling / tooltip differentiation (optional)
-        markerType: 'geo',
+        markerType: Boolean(loc.main) ? 'geo-main' : 'geo',
         geotypeId: loc.geotype?.id ?? null,
         geotypeTitle: loc.geotype?.title ?? null,
         main: Boolean(loc.main),
