@@ -15,6 +15,8 @@ const MobilityMapUtils = {
       geo: "#ffbb00",
       geoMain: "#000000",
       event: "#257e74",
+      cluster: 'rgba(148, 215, 110, 1)',
+      clusterStroke: 'rgba(148, 215, 110, 0.5)'
     },
 
     map: {

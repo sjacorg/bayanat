@@ -487,6 +487,9 @@ const MobilityMap = Vue.defineComponent({
         );
 
         let fillColor = MobilityMapUtils.CONFIG.colors.dot.fill; // default
+        let strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke; // default
+        let strokeWidth = 2; // default
+        let dotSize = c.radius;
 
         if (memberColors.size === 1) {
           const type = [...memberColors][0];
@@ -497,12 +500,19 @@ const MobilityMap = Vue.defineComponent({
           if (type === 'geo-main') fillColor = MobilityMapUtils.CONFIG.colors.geoMain;
         }
 
+        if (c.memberIds.length > 1) {
+          fillColor = MobilityMapUtils.CONFIG.colors.cluster;
+          strokeStyle = MobilityMapUtils.CONFIG.colors.clusterStroke;
+          strokeWidth = c.radius * 1.25;
+          dotSize = c.radius * 1.2;
+        }
+
         ctx.beginPath();
-        ctx.arc(p.x, p.y, c.radius, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);
         ctx.fillStyle = fillColor;
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke;
+        ctx.lineWidth = strokeWidth;
+        ctx.strokeStyle = strokeStyle;
         ctx.stroke();
 
         // 🟡 Draw label if cluster has more than 1 location

@@ -103,7 +103,7 @@ const NewGlobalMap = Vue.defineComponent({
                 {{ translations.geoMarkers_ }}
               </div>
               <div class="caption">
-                <v-icon small color="#00f166">mdi-checkbox-blank-circle</v-icon>
+                <v-icon small color="#257e74">mdi-checkbox-blank-circle</v-icon>
                 {{ translations.events_ }}
               </div>
             </div>
