@@ -220,7 +220,7 @@ const MobilityMapUtils = {
     const parsed = locations
       .filter((loc) => Number.isFinite(loc.lat) || Number.isFinite(loc.latlng?.lat))
       .map((loc) => ({
-        id: `loc-${loc.id}`,
+        id: loc.id,
 
         title: loc.title || null,
         title_ar: loc.title_ar || null,
@@ -341,7 +341,7 @@ const MobilityMapUtils = {
     const parsed = geoLocations
       .filter((loc) => Number.isFinite(loc.lat) && Number.isFinite(loc.lng))
       .map((loc, index) => ({
-        id: `geo-${loc.id}`, // keep IDs separate from event/locations
+        id: loc.id, // keep IDs separate from event/locations
         number: index + 1,
 
         title: loc.title || null,

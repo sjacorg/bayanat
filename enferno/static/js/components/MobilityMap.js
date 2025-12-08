@@ -266,7 +266,7 @@ const MobilityMap = Vue.defineComponent({
     initPoints() {
       this.points = {};
       this.locations.forEach((loc) => {
-        this.points[String(loc.id)] = {
+        this.points[loc.id] = {
           latlng: L.latLng(loc.lat, loc.lon),
           label: loc.name ?? loc.full_string,
           markerType: loc.markerType || null,
@@ -735,10 +735,10 @@ const MobilityMap = Vue.defineComponent({
           hovering = true;
 
           if (this.mode === 'event') {
-            const locationIds = dot.key.split(',');
+            const locationIds = dot.key.split(',').map(Number);
             const locId = locationIds[0];
 
-            const loc = this.locations.find(l => String(l.id) === locId);
+            const loc = this.locations.find(l => l.id === locId);
             if (!loc) return;
 
             const event = loc.events?.[loc.events.length - 1] || {};
@@ -769,7 +769,7 @@ const MobilityMap = Vue.defineComponent({
               main: Boolean(loc?.main ?? event?.main),
             };
           } else {
-            const ids = dot.key.split(',');
+            const ids = dot.key.split(',').map(Number);
             const names = ids.map((id) => this.points[id]?.label || id);
 
             let outgoing = 0;
