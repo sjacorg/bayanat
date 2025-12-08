@@ -130,6 +130,7 @@
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'global_map')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <global-map  ref="globalmap" :model-value="compLocations"></global-map>
+                                        <new-global-map :entities="[editedItem]"></new-global-map>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'publish_date')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
