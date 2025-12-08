@@ -266,7 +266,7 @@ const MobilityMap = Vue.defineComponent({
     initPoints() {
       this.points = {};
       this.locations.forEach((loc) => {
-        this.points[loc.id] = {
+        this.points[String(loc.id)] = {
           latlng: L.latLng(loc.lat, loc.lon),
           label: loc.name ?? loc.full_string,
           markerType: loc.markerType || null,
@@ -747,7 +747,7 @@ const MobilityMap = Vue.defineComponent({
             const locationIds = dot.key.split(',');
             const locId = locationIds[0];
 
-            const loc = this.locations.find(l => l.id === locId);
+            const loc = this.locations.find(l => String(l.id) === locId);
             if (!loc) return;
 
             const event = loc.events?.[loc.events.length - 1] || {};
