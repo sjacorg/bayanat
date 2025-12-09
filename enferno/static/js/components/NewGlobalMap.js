@@ -52,6 +52,12 @@ const NewGlobalMap = Vue.defineComponent({
         }
       }
 
+      // Ensure unique numeric IDs for the map.
+      // (Different sources can overlap → missing/merged markers)
+      allLocations.forEach((loc, index) => {
+        loc.id = index + 1;
+      });
+
       return { locations: allLocations, flows: allFlows };
     },
 

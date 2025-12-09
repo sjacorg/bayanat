@@ -208,15 +208,29 @@ const MobilityMapUtils = {
     throw new Error('Polling timeout');
   },
 
+  createIdGenerator(list) {
+    const ids = list
+      .map(item => Number(item.id))
+      .filter(n => Number.isFinite(n));
+
+    let max = ids.length ? Math.max(...ids) : 0;
+
+    return () => ++max;
+  },
+
   parseLocationsToMapData(locations, options) {
     if (!Array.isArray(locations)) {
       return { locations: [], flows: [] };
     }
 
+    const nextId = this.createIdGenerator(locations);
+
     const parsed = locations
       .filter((loc) => Number.isFinite(loc.lat) || Number.isFinite(loc.latlng?.lat))
-      .map((loc) => ({
-        id: loc.id,
+      .map((loc) => { 
+        const id = Number.isFinite(Number(loc.id)) ? Number(loc.id) : nextId();
+        return {
+        id,
 
         title: loc.title || null,
         title_ar: loc.title_ar || null,
@@ -231,7 +245,7 @@ const MobilityMapUtils = {
         total_events: 0,
         events: [],
         markerType: 'location',
-      }));
+      }});
 
     return {
       locations: parsed,
@@ -244,6 +258,8 @@ const MobilityMapUtils = {
       return { locations: [], flows: [] };
     }
 
+    const nextId = this.createIdGenerator(events.map(ev => ev.location || {}));
+
     // 1. Sort events chronologically
     const sorted = [...events].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
 
@@ -255,7 +271,7 @@ const MobilityMapUtils = {
       const loc = event.location;
       if (!loc) return;
 
-      const id = loc.id;
+      const id = Number.isFinite(Number(loc.id)) ? Number(loc.id) : nextId();
 
       if (!locationMap.has(id)) {
         locationMap.set(id, {
@@ -334,33 +350,40 @@ const MobilityMapUtils = {
       return { locations: [], flows: [] };
     }
 
+    const nextId = this.createIdGenerator(geoLocations);
+
     const parsed = geoLocations
       .filter((loc) => Number.isFinite(loc.lat) && Number.isFinite(loc.lng))
-      .map((loc, index) => ({
-        id: loc.id, // keep IDs separate from event/locations
-        number: index + 1,
+      .map((loc, index) => {
+        const id = Number.isFinite(Number(loc.id)) ? Number(loc.id) : nextId();
 
-        title: loc.title || null,
-        title_ar: null,
+        return {
+          id, // keep IDs separate from event/locations
+          number: index + 1,
 
-        full_string: loc.title || loc.full_string || loc.full_location || loc.geotype?.title || '',
+          title: loc.title || null,
+          title_ar: null,
 
-        lat: loc.lat,
-        lon: loc.lng,
+          full_string:
+            loc.title || loc.full_string || loc.full_location || loc.geotype?.title || '',
 
-        ...(options.showParentId ? { parentId: options.parentId ?? null } : {}),
+          lat: loc.lat,
+          lon: loc.lng,
 
-        // match the structure of other location parsers
-        total_events: 0,
-        events: [],
+          ...(options.showParentId ? { parentId: options.parentId ?? null } : {}),
 
-        // Used for styling / tooltip differentiation (optional)
-        markerType: Boolean(loc.main) ? 'geo-main' : 'geo',
-        geotypeId: loc.geotype?.id ?? null,
-        geotypeTitle: loc.geotype?.title ?? null,
-        main: Boolean(loc.main),
-        comment: loc.comment || null,
-      }));
+          // match the structure of other location parsers
+          total_events: 0,
+          events: [],
+
+          // Used for styling / tooltip differentiation (optional)
+          markerType: Boolean(loc.main) ? 'geo-main' : 'geo',
+          geotypeId: loc.geotype?.id ?? null,
+          geotypeTitle: loc.geotype?.title ?? null,
+          main: Boolean(loc.main),
+          comment: loc.comment || null,
+        };
+      });
 
     return {
       locations: parsed,
