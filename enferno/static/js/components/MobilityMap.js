@@ -279,11 +279,18 @@ const MobilityMap = Vue.defineComponent({
     resizeCanvas() {
       if (!this.canvas || !this.$refs.mapContainer) return;
 
-      const { clientWidth, clientHeight } = this.$refs.mapContainer;
-      this.canvas.width = clientWidth;
-      this.canvas.height = clientHeight;
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-      // Canvas size changed → clusters based on pixel distance should update
+      const { clientWidth, clientHeight } = this.$refs.mapContainer;
+      const dpr = window.devicePixelRatio || 1;
+
+      this.canvas.width = clientWidth * dpr;
+      this.canvas.height = clientHeight * dpr;
+      this.canvas.style.width = clientWidth + 'px';
+      this.canvas.style.height = clientHeight + 'px';
+
+      this.ctx.scale(dpr, dpr);
+
       this.rebuildShapes();
     },
 
@@ -483,6 +490,25 @@ const MobilityMap = Vue.defineComponent({
         ctx.lineWidth = 2;
         ctx.strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke;
         ctx.stroke();
+
+        // 🟡 Draw label if cluster has more than 1 location
+        if (c.memberIds.length > 1) {
+          const label = c.memberIds.length;
+          const fontSize = Math.max(10, c.radius);
+
+          ctx.font = `${fontSize}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Stroke first (for sharp edge)
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+          ctx.strokeText(label, p.x, p.y);
+
+          // Fill on top
+          ctx.fillStyle = '#fff';
+          ctx.fillText(label, p.x, p.y);
+        }
 
         this.dotShapes.push({
           center: { x: p.x, y: p.y },
