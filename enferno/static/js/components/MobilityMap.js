@@ -10,7 +10,7 @@ const MobilityMap = Vue.defineComponent({
       default: () => ({}),
     },
     disableClustering: { type: Boolean, default: false },
-    mode: { type: String, default: () => null }
+    mode: { type: String, default: () => null },
   },
 
   data() {
@@ -118,7 +118,7 @@ const MobilityMap = Vue.defineComponent({
   computed: {
     measuringActive() {
       return this.measureControls?._measuring === true;
-    }
+    },
   },
 
   methods: {
@@ -429,6 +429,34 @@ const MobilityMap = Vue.defineComponent({
         clusterPixels[c.id] = this.map.latLngToContainerPoint(latlng);
       });
 
+      /* ========================================
+        SPIDERIFY identical-coordinate clusters
+        (insert THIS whole block here)
+      ======================================== */
+      const spiderified = {};
+
+      this.clusterDefs.forEach((c) => {
+        if (!c.identicalCoords || c.memberIds.length <= 1) return;
+
+        const centerPx = clusterPixels[c.id];
+        const count = c.memberIds.length;
+
+        // Distance of nodes from center
+        const radius = Math.max(c.radius * 2.2, 22);
+        const angleStep = (Math.PI * 2) / count;
+
+        spiderified[c.id] = [];
+
+        for (let i = 0; i < count; i++) {
+          const angle = angleStep * i;
+          spiderified[c.id].push({
+            memberId: c.memberIds[i],
+            x: centerPx.x + Math.cos(angle) * radius,
+            y: centerPx.y + Math.sin(angle) * radius,
+          });
+        }
+      });
+
       const baseSpacing = MobilityMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
 
       // ============================
@@ -455,19 +483,19 @@ const MobilityMap = Vue.defineComponent({
         }
 
         group.flows.forEach((f) => {
-        // Support both normal and event flow structure
-        const fromId = f.fromKey ?? f.from ?? f.origin;
-        const toId = f.toKey ?? f.to ?? f.dest;
-        const weight = f.weight ?? f.count ?? 1;
+          // Support both normal and event flow structure
+          const fromId = f.fromKey ?? f.from ?? f.origin;
+          const toId = f.toKey ?? f.to ?? f.dest;
+          const weight = f.weight ?? f.count ?? 1;
 
-        mergedArrows[key].weight += weight;
+          mergedArrows[key].weight += weight;
 
-        mergedArrows[key].rawPairs.push({
-          fromId,
-          toId,
-          weight,
+          mergedArrows[key].rawPairs.push({
+            fromId,
+            toId,
+            weight,
+          });
         });
-      });
       });
 
       // ============================
@@ -549,45 +577,126 @@ const MobilityMap = Vue.defineComponent({
         if (!p) return;
 
         // Determine cluster color based on members
-        const markerTypes = new Set(
-          c.memberIds.map((id) => this.points[id]?.markerType)
-        );
+        const markerTypes = new Set(c.memberIds.map((id) => this.points[id]?.markerType));
 
-        const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(c, markerTypes, this.clickToZoomCluster);
+        const { fillColor, strokeStyle, strokeWidth, dotSize } =
+          MobilityMapUtils.getClusterVisualStyle(c, markerTypes, this.clickToZoomCluster);
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);
-        ctx.fillStyle = fillColor;
-        ctx.fill();
-        ctx.lineWidth = strokeWidth;
-        ctx.strokeStyle = strokeStyle;
-        ctx.stroke();
+        if (c.memberIds.length > 1 && spiderified[c.id]) {
+          const center = clusterPixels[c.id];
+          const nodes = spiderified[c.id];
 
-        // 🟡 Draw label if cluster has more than 1 location
-        if (c.memberIds.length > 1) {
-          const label = c.memberIds.length;
-          const fontSize = Math.max(10, c.radius);
+          // add center to hit-test
+          // this.dotShapes.push({
+          //   center: { x: center.x, y: center.y },
+          //   radius: centerDotSize,
+          //   key: c.memberIds.join(','),
+          //   clusterId: c.id,
+          //   isSpiderCenter: true,
+          // });
 
-          ctx.font = `${fontSize}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-
-          // Stroke first (for sharp edge)
+          // --- 1. SPIDER LEGS ---
+          ctx.save();
+          ctx.strokeStyle = "rgba(0,0,0,1)";
           ctx.lineWidth = 2;
-          ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-          ctx.strokeText(label, p.x, p.y);
 
-          // Fill on top
-          ctx.fillStyle = '#fff';
-          ctx.fillText(label, p.x, p.y);
+          nodes.forEach(n => {
+            ctx.beginPath();
+            ctx.moveTo(center.x, center.y);
+            ctx.lineTo(n.x, n.y);
+            ctx.stroke();
+          });
+
+          // --- 2. CENTER DOT (cluster style) ---
+          const {
+            fillColor: centerFill,
+            strokeStyle: centerStroke,
+            strokeWidth: centerStrokeWidth,
+            dotSize: centerDotSize,
+          } = MobilityMapUtils.getClusterVisualStyle(
+                c,
+                markerTypes,
+                this.clickToZoomCluster // cluster style
+              );
+
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, MobilityMapUtils.CONFIG.sizes.dotSizes[0], 0, Math.PI * 2);
+          ctx.fillStyle = MobilityMapUtils.CONFIG.colors.cluster;
+          ctx.fill();
+          ctx.lineWidth = centerStrokeWidth;
+          ctx.strokeStyle = centerStroke;
+          ctx.stroke();
+
+          ctx.restore();
+
+          // --- 3. SPIDER DOTS (individual node style) ---
+          nodes.forEach(n => {
+            const loc = this.points[n.memberId];
+            const nodeMarkerType = loc?.markerType ? new Set([loc.markerType]) : new Set();
+
+            const {
+              fillColor: nodeFill,
+              strokeStyle: nodeStroke,
+              strokeWidth: nodeStrokeWidth,
+              dotSize: nodeDotSize,
+            } = MobilityMapUtils.getClusterVisualStyle(
+                  c,
+                  nodeMarkerType,    // **individual marker type**
+                  false              // **never cluster style for spider node**
+                );
+
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, nodeDotSize, 0, Math.PI * 2);
+            ctx.fillStyle = nodeFill;
+            ctx.fill();
+            ctx.lineWidth = nodeStrokeWidth;
+            ctx.strokeStyle = nodeStroke;
+            ctx.stroke();
+
+            this.dotShapes.push({
+              center: { x: n.x, y: n.y },
+              radius: nodeDotSize,
+              key: String(n.memberId),
+              clusterId: c.id,
+            });
+          });
+
+          return; 
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+          ctx.lineWidth = strokeWidth;
+          ctx.strokeStyle = strokeStyle;
+          ctx.stroke();
+
+          // 🟡 Draw label if cluster has more than 1 location
+          if (c.memberIds.length > 1) {
+            const label = c.memberIds.length;
+            const fontSize = Math.max(10, c.radius);
+
+            ctx.font = `${fontSize}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Stroke first (for sharp edge)
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+            ctx.strokeText(label, p.x, p.y);
+
+            // Fill on top
+            ctx.fillStyle = '#fff';
+            ctx.fillText(label, p.x, p.y);
+          }
+
+          this.dotShapes.push({
+            center: { x: p.x, y: p.y },
+            radius: c.radius,
+            key: c.memberIds.join(','),
+            clusterId: c.id,
+          });
         }
-
-        this.dotShapes.push({
-          center: { x: p.x, y: p.y },
-          radius: c.radius,
-          key: c.memberIds.join(','),
-          clusterId: c.id,
-        });
       });
 
       this.arrowShapes.sort((a, b) => a.weight - b.weight);
@@ -661,14 +770,14 @@ const MobilityMap = Vue.defineComponent({
       const targetMembers = new Set(targetCluster.memberIds);
       const noSelection = !this.selectedPoint;
       const isSelectedCluster =
-        this.selectedPoint?.type === "cluster" &&
-        this.selectedPoint.memberIds.some(id => targetMembers.has(id));
+        this.selectedPoint?.type === 'cluster' &&
+        this.selectedPoint.memberIds.some((id) => targetMembers.has(id));
 
-       // No selection OR hovering the selected cluster → show full totals
+      // No selection OR hovering the selected cluster → show full totals
       if (noSelection || isSelectedCluster) {
         this.currentFlows.forEach((f) => {
           if (targetMembers.has(f.from)) outgoing += f.weight;
-          if (targetMembers.has(f.to))   incoming += f.weight;
+          if (targetMembers.has(f.to)) incoming += f.weight;
         });
 
         return { outgoing, incoming };
@@ -763,7 +872,7 @@ const MobilityMap = Vue.defineComponent({
             const { lat, lon } = this.tooltip.data;
             MobilityMapUtils.copyCoordinates({ lat, lon })
               .then(() => this.$root?.showSnack?.(this.translations.copiedToClipboard_))
-              .catch(() => this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_));;
+              .catch(() => this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_));
             return;
           }
 
@@ -809,23 +918,24 @@ const MobilityMap = Vue.defineComponent({
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
 
-            const cluster = this.clusterDefs[dot.clusterId];
+          const cluster = this.clusterDefs[dot.clusterId];
+          const isSpider = dot.key.indexOf(',') === -1 && cluster.memberIds.length > 1;
 
-            // 🛑 EVENT MODE: NO TOOLTIP, JUST POINTER FOR CLUSTERS WITH MORE THAN ONE MEMBER
-            if (this.mode === 'event' && cluster.memberIds.length > 1) {
-                // Set cursor to hand and exit (no tooltip)
-                this.$refs.mapContainer.style.cursor = 'pointer';
-                this.tooltip.visible = false;
-                this.tooltip.data = null;
-                this.tooltip.type = null;
-                return;
-            }
+          // 🛑 EVENT MODE: NO TOOLTIP, JUST POINTER FOR CLUSTERS WITH MORE THAN ONE MEMBER
+          if (this.mode === 'event' && cluster.memberIds.length > 1 && !isSpider) {
+            // Set cursor to hand and exit (no tooltip)
+            this.$refs.mapContainer.style.cursor = 'pointer';
+            this.tooltip.visible = false;
+            this.tooltip.data = null;
+            this.tooltip.type = null;
+            return;
+          }
 
           if (this.mode === 'event') {
             const locationIds = dot.key.split(',').map(Number);
             const locId = locationIds[0];
 
-            const loc = this.locations.find(l => l.id === locId);
+            const loc = this.locations.find((l) => l.id === locId);
             if (!loc) return;
 
             const event = loc.events?.[loc.events.length - 1] || {};
@@ -835,7 +945,7 @@ const MobilityMap = Vue.defineComponent({
               // Title / Identity
               title: loc.title || '',
               number: loc?.number ?? event?.number ?? null,
-              parentId: loc?.parentId ?? event?.parentId ?? null,  // let UI decide to hide, not force "—"
+              parentId: loc?.parentId ?? event?.parentId ?? null, // let UI decide to hide, not force "—"
 
               // Coordinates (keep naming consistent)
               lat: Number.isFinite(loc.lat) ? loc.lat : null,
@@ -984,9 +1094,7 @@ const MobilityMap = Vue.defineComponent({
     zoomToCluster(memberIds, { padding = 60, maxZoom = 12 } = {}) {
       if (!this.map) return;
 
-      const pts = memberIds
-        .map(id => this.points[id]?.latlng)
-        .filter(Boolean);
+      const pts = memberIds.map((id) => this.points[id]?.latlng).filter(Boolean);
 
       if (!pts.length) return;
 
@@ -1012,7 +1120,7 @@ const MobilityMap = Vue.defineComponent({
     zoomToAll({ padding = 60, maxZoom = 12 } = {}) {
       if (!this.map) return;
 
-      const allIds = Object.keys(this.points).map(id => Number(id));
+      const allIds = Object.keys(this.points).map((id) => Number(id));
       const uniqueIds = Array.from(new Set(allIds));
 
       if (!uniqueIds.length) return;

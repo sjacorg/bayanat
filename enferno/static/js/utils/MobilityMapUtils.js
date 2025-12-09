@@ -504,7 +504,7 @@ const MobilityMapUtils = {
       memberIds.forEach((id) => {
         clusterTotal += locationTraffic[id] || 0;
       });
-
+      const identicalCoords = this.areAllSameCoords(memberIds, points);
       clusterTotals.push(clusterTotal);
 
       clusterDefs.push({
@@ -513,6 +513,7 @@ const MobilityMapUtils = {
         centerLat,
         centerLon,
         traffic: clusterTotal, // temp, for radius calc
+        identicalCoords,
         radius: 0, // will be set in pass 2
       });
 
@@ -617,7 +618,7 @@ const MobilityMapUtils = {
     }
 
     // If it's clustered, use cluster style
-    if (c.memberIds.length > 1 && clickToZoomCluster) {
+    if (c.memberIds.length > 1 && clickToZoomCluster && !c.identicalCoords) {
       fillColor = this.CONFIG.colors.cluster;
       strokeStyle = this.CONFIG.colors.clusterStroke;
       strokeWidth = c.radius * 1.25;
@@ -626,4 +627,12 @@ const MobilityMapUtils = {
 
     return { fillColor, strokeStyle, strokeWidth, dotSize };
   },
+  areAllSameCoords(memberIds, points) {
+    if (memberIds.length <= 1) return false;
+    const first = points[memberIds[0]].latlng;
+    return memberIds.every(id => {
+      const ll = points[id].latlng;
+      return ll.lat === first.lat && ll.lng === first.lng;
+    });
+  }
 };
