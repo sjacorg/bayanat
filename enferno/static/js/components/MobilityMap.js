@@ -609,10 +609,8 @@ const MobilityMap = Vue.defineComponent({
 
           // --- 2. CENTER DOT (cluster style) ---
           const {
-            fillColor: centerFill,
             strokeStyle: centerStroke,
             strokeWidth: centerStrokeWidth,
-            dotSize: centerDotSize,
           } = MobilityMapUtils.getClusterVisualStyle(
                 c,
                 markerTypes,
