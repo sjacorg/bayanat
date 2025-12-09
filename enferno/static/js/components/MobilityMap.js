@@ -16,6 +16,7 @@ const MobilityMap = Vue.defineComponent({
       ctx: null,
       frameRequested: false,
       translations: window.translations,
+      zooming: false,
 
       // Morphing state
       morphing: false,
@@ -162,7 +163,18 @@ const MobilityMap = Vue.defineComponent({
       this.map.on('zoomanim', this.scheduleFrame);
 
       // Morph instead of hard rebuild
-      this.map.on('zoomend', this.startMorph);
+      this.map.on('zoomstart', () => {
+        this.zooming = true;
+      });
+      this.map.on('zoomend', () => {
+        if (!this.zooming) return;
+        this.zooming = false;
+
+        // Allow canvas to update center points correctly
+        requestAnimationFrame(() => {
+          this.startMorph();
+        });
+      });
 
       window.addEventListener('resize', this.resizeCanvas);
     },
