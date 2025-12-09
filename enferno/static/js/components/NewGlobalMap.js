@@ -54,8 +54,25 @@ const NewGlobalMap = Vue.defineComponent({
 
       // Ensure unique numeric IDs for the map.
       // (Different sources can overlap → missing/merged markers)
+      // 1) Build id map
+      const idMap = new Map();
       allLocations.forEach((loc, index) => {
-        loc.id = index + 1;
+        const oldId = loc.id;
+        const newId = index + 1;
+        idMap.set(oldId, newId);
+        loc.id = newId;
+      });
+
+      // 2) Remap flows to the new IDs
+      allFlows.forEach(flow => {
+        if (idMap.has(flow.origin)) flow.origin = idMap.get(flow.origin);
+        if (idMap.has(flow.dest))   flow.dest   = idMap.get(flow.dest);
+
+        if (idMap.has(flow.from)) flow.from = idMap.get(flow.from);
+        if (idMap.has(flow.to))   flow.to   = idMap.get(flow.to);
+
+        if (idMap.has(flow.fromKey)) flow.fromKey = idMap.get(flow.fromKey);
+        if (idMap.has(flow.toKey))   flow.toKey   = idMap.get(flow.toKey);
       });
 
       return { locations: allLocations, flows: allFlows };
