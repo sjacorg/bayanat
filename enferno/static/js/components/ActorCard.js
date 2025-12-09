@@ -6,6 +6,7 @@ const ActorCard = Vue.defineComponent({
     diff: { type: Boolean, default: false },
     showEdit: { type: Boolean, default: true },
     close: { type: Boolean, default: false },
+    hideMap: { type: Boolean, default: false },
     closeIcon: { type: String, default: 'mdi-close' },
     closePosition: { type: String, default: 'append', validator: v => ['append', 'prepend'].includes(v) }
   },
@@ -375,7 +376,7 @@ const ActorCard = Vue.defineComponent({
               <actor-profiles :actor-id="actor.id" />
             </div>
 
-            <div>
+            <div v-if="!hideMap">
               <v-divider></v-divider>
               <v-card variant="flat">
                 <global-map v-model="mapLocations"></global-map>

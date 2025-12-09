@@ -220,7 +220,6 @@ const MobilityMap = Vue.defineComponent({
       this.map.on('zoomanim', this.scheduleFrame);
 
       // Morph instead of hard rebuild
-
       this.map.on('zoomstart', () => {
         this.zooming = true;
       });
