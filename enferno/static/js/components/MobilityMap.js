@@ -1,5 +1,6 @@
 const MobilityMap = Vue.defineComponent({
   props: {
+    clickToZoomCluster: { type: Boolean, default: false },
     minZoom: { type: Number, default: () => MobilityMapUtils.CONFIG.map.minZoom },
     scrollWheelZoom: { type: Boolean, default: () => MobilityMapUtils.CONFIG.map.scrollWheelZoom },
     locations: { type: Array, required: true },
@@ -552,7 +553,7 @@ const MobilityMap = Vue.defineComponent({
           c.memberIds.map((id) => this.points[id]?.markerType)
         );
 
-        const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(c, markerTypes);
+        const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(c, markerTypes, this.clickToZoomCluster);
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);
@@ -753,7 +754,7 @@ const MobilityMap = Vue.defineComponent({
           if (!cluster) return;
 
           // If cluster has multiple members → zoom in
-          if (cluster.memberIds.length > 1) {
+          if (cluster.memberIds.length > 1 && this.clickToZoomCluster) {
             this.zoomToCluster(cluster.memberIds);
             return;
           }

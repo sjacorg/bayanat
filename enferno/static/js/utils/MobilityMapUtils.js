@@ -601,7 +601,7 @@ const MobilityMapUtils = {
 
     return navigator.clipboard.writeText(text);
   },
-  getClusterVisualStyle(c, markerTypes) {
+  getClusterVisualStyle(c, markerTypes, clickToZoomCluster) {
     let fillColor = this.CONFIG.colors.dot.fill;
     let strokeStyle = this.CONFIG.colors.dot.stroke;
     let strokeWidth = 2;
@@ -617,7 +617,7 @@ const MobilityMapUtils = {
     }
 
     // If it's clustered, use cluster style
-    if (c.memberIds.length > 1) {
+    if (c.memberIds.length > 1 && clickToZoomCluster) {
       fillColor = this.CONFIG.colors.cluster;
       strokeStyle = this.CONFIG.colors.clusterStroke;
       strokeWidth = c.radius * 1.25;
