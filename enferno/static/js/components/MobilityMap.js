@@ -108,7 +108,7 @@ const MobilityMap = Vue.defineComponent({
         this.rebuildShapes();
 
         this.$nextTick(() => {
-          this.zoomToFlows();
+          this.zoomToAll();
         });
       },
     },
@@ -1009,42 +1009,15 @@ const MobilityMap = Vue.defineComponent({
       });
     },
 
-    zoomToFlows({ padding = 40, maxZoom = 12 } = {}) {
+    zoomToAll({ padding = 60, maxZoom = 12 } = {}) {
       if (!this.map) return;
 
-      // 1️⃣ Try to collect flow points first
-      const flowPoints = (this.currentFlows || [])
-        .flatMap(f => [this.points[f.from]?.latlng, this.points[f.to]?.latlng])
-        .filter(Boolean);
+      const allIds = Object.keys(this.points).map(id => Number(id));
+      const uniqueIds = Array.from(new Set(allIds));
 
-      // 2️⃣ If no flow points, fallback to all location points
-      const locationPoints = Object.values(this.points).map(p => p.latlng);
-      const points = flowPoints.length ? flowPoints : locationPoints;
+      if (!uniqueIds.length) return;
 
-      if (!points.length) return;
-
-      // 3️⃣ If only one point → center & zoom nicely
-      if (points.length === 1) {
-        this.map.setView(points[0], Math.min(maxZoom, 12), {
-          animate: true,
-          duration: 0.6,
-        });
-        return;
-      }
-
-      // 4️⃣ Fit bounds for multiple points
-      const bounds = L.latLngBounds(points);
-      if (!bounds.isValid()) return;
-
-      const { top = 0, right = 0, bottom = 0, left = 0 } = this.viewportPadding || {};
-
-      this.map.fitBounds(bounds, {
-        paddingTopLeft: [left + padding, top + padding],
-        paddingBottomRight: [right + padding, bottom + padding],
-        maxZoom,
-        animate: true,
-        duration: 0.6,
-      });
+      this.zoomToCluster(uniqueIds, { padding, maxZoom });
     },
   },
 
