@@ -26,8 +26,8 @@
                     </v-toolbar>
 
                     <v-card-text class="overflow-y-auto" :style="{ height: 'calc(100vh - 189px)' }">
-                        <v-treeview class="labels-treeview" disabled density="compact" :items="items" item-value="id" item-title="title"
-                            return-object indent-lines separate-roots :search="q" class="opacity-100">
+                        <v-treeview class="labels-treeview" v-model:opened="opened" disabled density="compact" :items="items" item-value="id" item-title="title"
+                            indent-lines separate-roots :search="q" class="opacity-100">
                             <template v-slot:append="{ item, depth, isFirst, isLast }">
                                 <v-btn size="small"
                                    variant="plain"
@@ -144,7 +144,7 @@
                         </v-row>
 
                         <v-alert v-if="hasParent" type="info" variant="tonal"> {{ _('Flags inherited from parent label') }} </v-alert>
-                        <v-alert v-if="hasChildren" type="warning" variant="tonal"> {{ _('This label has child labels. Changing flags will update all children.') }} </v-alert>
+                        <v-alert v-if="!hasParent && hasChildren" type="warning" variant="tonal"> {{ _('This label has child labels. Changing flags will update all children.') }} </v-alert>
                     </v-container>
                 </v-card-text>
             </v-form>
@@ -172,6 +172,7 @@ const app = createApp({
         loading: true,
         csvFile: null,
         options: {},
+        opened: [],
 
         headers: [
             { title: "{{_('ID')}}", value: "id" },
