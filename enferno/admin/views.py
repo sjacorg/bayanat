@@ -273,6 +273,10 @@ def api_labels() -> Response:
     typ = request.args.get("typ", None)
     if typ and typ in ["for_bulletin", "for_actor", "for_incident", "for_offline"]:
         query.append(getattr(Label, typ) == True)
+
+    exclude = request.args.get("exclude", None, int)
+    if exclude:
+        query.append(Label.id != exclude)
     fltr = request.args.get("fltr", None)
 
     if fltr == "verified":
