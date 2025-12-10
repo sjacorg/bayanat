@@ -326,7 +326,21 @@ class Label(db.Model, BaseMixin):
 
         # First pass: create nodes and group by parent
         for label in labels:
-            node = {"id": label.id, "title": label.title}
+            node = {
+                "id": label.id,
+                "title": label.title,
+                "title_ar": label.title_ar,
+                "comments": label.comments,
+                "comments_ar": label.comments_ar,
+                "verified": label.verified,
+                "for_bulletin": label.for_bulletin,
+                "for_actor": label.for_actor,
+                "for_incident": label.for_incident,
+                "for_offline": label.for_offline,
+                "parent": (
+                    {"id": label.parent.id, "title": label.parent.title} if label.parent else None
+                ),
+            }
             nodes_by_id[label.id] = node
 
             parent_key = label.parent_label_id or "root"
