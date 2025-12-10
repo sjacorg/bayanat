@@ -183,6 +183,17 @@ class Label(db.Model, BaseMixin):
         Returns:
             - the label object.
         """
+        # Capture old values for cascade detection (only on update)
+        old_values = {}
+        if self.id:
+            old_values = {
+                "verified": self.verified,
+                "for_bulletin": self.for_bulletin,
+                "for_actor": self.for_actor,
+                "for_incident": self.for_incident,
+                "for_offline": self.for_offline,
+            }
+
         self.title = json["title"]
         self.title_ar = json["title_ar"] if "title_ar" in json else ""
         self.comments = json["comments"] if "comments" in json else ""
@@ -193,13 +204,19 @@ class Label(db.Model, BaseMixin):
         self.for_incident = json.get("for_incident", False)
         self.for_offline = json.get("for_offline", False)
 
+        # Handle parent assignment
         parent_info = json.get("parent")
         if parent_info and "id" in parent_info:
             parent_id = parent_info["id"]
             if not self._is_valid_parent(parent_id):
                 raise ValueError("Invalid parent: creates cycle or does not exist")
+            self.parent_label_id = parent_id
+        elif parent_info is not None:
+            self.parent_label_id = None
 
-            parent = Label.query.get(parent_id)
+        # Validate against parent (new or existing)
+        if self.parent_label_id:
+            parent = Label.query.get(self.parent_label_id)
             if parent:
                 if self.verified != parent.verified:
                     raise ValueError("Label verified status must match parent")
@@ -208,11 +225,24 @@ class Label(db.Model, BaseMixin):
                     if getattr(self, flag) != getattr(parent, flag):
                         raise ValueError(f"Child {flag} must match parent")
 
-            self.parent_label_id = parent_id
-        else:
-            self.parent_label_id = None
+        # Cascade changes to children
+        if old_values:
+            self._cascade_to_children(old_values)
 
         return self
+
+    def _cascade_to_children(self, old_values: dict) -> None:
+        """Cascade verified and for_* flag changes to all children."""
+        fields = ["verified", "for_bulletin", "for_actor", "for_incident", "for_offline"]
+        changed = {f: getattr(self, f) for f in fields if getattr(self, f) != old_values.get(f)}
+
+        if not changed:
+            return
+
+        for child in self.sub_label:
+            for field, value in changed.items():
+                setattr(child, field, value)
+            child._cascade_to_children(old_values)
 
     # import csv data into db
     @staticmethod
