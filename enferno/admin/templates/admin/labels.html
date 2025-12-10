@@ -1,396 +1,343 @@
 {% extends 'layout.html' %}
 {% block content %}
 
+<v-main>
+    <v-container fluid>
+        <v-card height="calc(100vh - 93px)">
+            <v-container fluid class="h-100">
+                <v-card class="h-100">
+                    <v-toolbar flat color="white" title="{{ _('Labels') }}">
 
-            <v-main>
-                <v-container fluid>
-                            <v-card>
-                                <v-card-text>
-                                    <v-data-table-server
-                                            height="calc(100vh - 260px)"
-                                            fixed-header
-                                            @update:options="refresh"
-                                            :page="options.page"
-                                            :headers="headers"
-                                            :items="items"
-                                            :loading="loading"
-                                            :items-length="itemsLength"
-                                            class="elevation-1"
-                                    >
-                                        <template v-slot:top>
-                                            <v-toolbar flat color="white" title="{{ _('Labels') }}">
+                        <v-text-field prepend-inner-icon="mdi-magnify" variant="outlined" class="mt-6" density="compact" clearable v-model="q"
+                            @click:clear="resetSearch" label="{{ _('Search') }}">
+                        </v-text-field>
 
-                                                <v-text-field
-                                                        variant="outlined"
-                                                        class="mt-6"
-                                                        density="compact"
-                                                        clearable
-                                                        v-model="q"
-                                                        @click:clear="resetSearch"
-                                                        @keydown.enter="refresh()"
-                                                        label="{{ _('Search') }}">
-                                                </v-text-field>
+                        <v-spacer></v-spacer>
 
-                                                <v-spacer></v-spacer>
+                        {% if current_user.roles_in(['Admin']) %}
+                        <v-btn variant="outlined" class="mr-2" @click="imDialog = true">
+                            {{ _('Import CSV') }}
+                        </v-btn>
+                        {% endif %}
 
-                                                <v-btn
-                                                    color="primary"
-                                                    variant="elevated"
-                                                    class="ma-2"
-                                                    @click="dialog=true">
-                                                    {{ _('New Item') }}
-                                                </v-btn>
+                        <v-btn color="primary" variant="elevated" class="mr-6" @click="dialog = true">
+                            {{ _('New Label') }}
+                        </v-btn>
+                    </v-toolbar>
 
-                                                <v-dialog v-model="dialog" max-width="900px" @after-leave="resetForm()">
-                                                    <v-card :title="formTitle" class="pa-4">
-                                                        <v-card-text>
-                                                            <v-container>
-                                                                <v-row>
-                                                                    <v-col cols="12" md="6">
-                                                                        <v-text-field
-                                                                                variant="solo"
-                                                                                v-model="editedItem.title"
-                                                                                label="{{ _('Title') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                    <v-col cols="12" md="6">
-                                                                        <v-text-field
-                                                                                variant="solo"
-                                                                                v-model="editedItem.title_ar"
-                                                                                label="{{ _('Title (AR)') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                </v-row>
-                                                                <v-row>
-                                                                    <v-col cols="12" md="6">
-                                                                        <v-text-field
-                                                                                variant="solo"
-                                                                                v-model="editedItem.comments"
-                                                                                label="{{ _('Comments') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                    <v-col cols="12" md="6">
-                                                                        <v-text-field
-                                                                                variant="solo"
-                                                                                v-model="editedItem.comments_ar"
-                                                                                label="{{ _('Comments (AR)') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                </v-row>
-                                                                <v-row>
-                                                                    <v-col cols="12" md="6">
-                                                                        <search-field
-                                                                                api="/admin/api/labels/"
-                                                                                item-title="title"
-                                                                                label="{{ _('Parent') }}"
-                                                                                v-model="editedItem.parent"
-                                                                                @update:model-value="onParentChanged"
-                                                                                item-value="id"
-                                                                                :multiple="false"
-                                                                                :query-params="{ fltr: 'all' }"
-                                                                        ></search-field>
-                                                                    </v-col>
-                                                                </v-row>
+                    <v-card-text class="overflow-y-auto" :style="{ height: 'calc(100vh - 189px)' }">
+                        <v-treeview disabled density="compact" :items="items" item-value="id" item-title="title"
+                            return-object indent-lines separate-roots :search="q" class="opacity-100">
+                            <template v-slot:append="{ item, depth, isFirst, isLast }">
+                                <v-btn size="small"
+                                   variant="plain"
+                                   @click.stop="editItem(item)"
+                                   icon="mdi-pencil"
+                                ></v-btn>
+                                <v-btn size="small"
+                                   variant="plain"
+                                   @click.stop="deleteItem(item)"
+                                   icon="mdi-delete-sweep"
+                                ></v-btn>
+                            </template>
+                        </v-treeview>
+                    </v-card-text>
+                </v-card>
+            </v-container>
+        </v-card>
+    </v-container>
 
-                                                                <v-row>
-                                                                    <v-col cols="12" md="2">
-                                                                        <v-checkbox
-                                                                                v-model="editedItem.verified"
-                                                                                label="{{ _('Verified Labels') }}"
-                                                                                :disabled="hasParent"
-                                                                        ></v-checkbox>
-                                                                    </v-col>
-                                                                    <v-col cols="12" md="2">
-                                                                        <v-checkbox
-                                                                                v-model="editedItem.for_bulletin"
-                                                                                label="{{ _('Bulletin') }}"
-                                                                                :disabled="hasParent"
-                                                                        ></v-checkbox>
+    <!-- Import CSV Dialog -->
+    <v-dialog v-model="imDialog" width="500">
+        <v-card>
+            <v-toolbar color="dark-primary">
+                <v-toolbar-title>{{ _('Import CSV') }}</v-toolbar-title>
+                <v-spacer></v-spacer>
 
-                                                                    </v-col>
+                <template #append>
+                    <v-btn variant="elevated" @click="validateCsvFormAndSave" class="mx-2">{{ _('Save CSV') }}</v-btn>
+                    <v-btn icon="mdi-close" @click="imDialog=false"></v-btn>
+                </template>
+            </v-toolbar>
+            
+            <v-form @submit.prevent="validateCsvFormAndSave" ref="csvForm">
+                <v-card-text>
+                    <v-file-input v-model="csvFile" show-size accept=".csv"
+                        label="{{ _('Select CSV File') }}" :rules="[validationRules.required()]"></v-file-input>
+                </v-card-text>
+            </v-form>
+        </v-card>
+    </v-dialog>
 
-                                                                    <v-col cols="12" md="2">
-                                                                        <v-checkbox
-                                                                                v-model="editedItem.for_actor"
-                                                                                label="{{ _('Actor') }}"
-                                                                                :disabled="hasParent"
-                                                                        ></v-checkbox>
+    <!-- Create/Edit Dialog -->
+    <v-dialog v-model="dialog" max-width="900px" @after-leave="resetForm()">
+        <v-card>
+            <v-toolbar color="dark-primary">
+                <v-toolbar-title>${formTitle} ${this.editedItem?.id}</v-toolbar-title>
+                <v-spacer></v-spacer>
+    
+                <template #append>
+                    <v-btn variant="elevated" @click="validateFormAndSave" class="mx-2">{{ _('Save Label') }}</v-btn>
+                    <v-btn icon="mdi-close" @click="close"></v-btn>
+                </template>
+            </v-toolbar>
 
-                                                                    </v-col>
+            <v-form @submit.prevent="validateFormAndSave" ref="form">
+                <v-card-text>
+                    <v-container>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-text-field v-model="editedItem.title"
+                                    label="{{ _('Title') }}" :rules="[validationRules.required()]"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <v-text-field v-model="editedItem.title_ar"
+                                    label="{{ _('Title (AR)') }}"></v-text-field>
+                            </v-col>
+                        </v-row>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-text-field v-model="editedItem.comments"
+                                    label="{{ _('Comments') }}"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <v-text-field v-model="editedItem.comments_ar"
+                                    label="{{ _('Comments (AR)') }}"></v-text-field>
+                            </v-col>
+                        </v-row>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <search-field api="/admin/api/labels/" item-title="title" label="{{ _('Parent') }}"
+                                    v-model="editedItem.parent" @update:model-value="onParentChanged" item-value="id"
+                                    :multiple="false" :query-params="{ fltr: 'all' }"></search-field>
+                            </v-col>
+                        </v-row>
 
-                                                                    <v-col cols="12" md="2">
-                                                                        <v-checkbox
-                                                                                v-model="editedItem.for_incident"
-                                                                                label="{{ _('Incident') }}"
-                                                                                :disabled="hasParent"
-                                                                        ></v-checkbox>
+                        <v-row>
+                            <v-col cols="12" md="2">
+                                <v-checkbox v-model="editedItem.verified" label="{{ _('Verified Labels') }}"
+                                    :disabled="hasParent"></v-checkbox>
+                            </v-col>
+                            <v-col cols="12" md="2">
+                                <v-checkbox v-model="editedItem.for_bulletin" label="{{ _('Bulletin') }}"
+                                    :disabled="hasParent"></v-checkbox>
 
-                                                                    </v-col>
+                            </v-col>
 
-                                                                    <v-col cols="12" md="2">
-                                                                        <v-checkbox
-                                                                                v-model="editedItem.for_offline"
-                                                                                label="{{ _('Offline') }}"
-                                                                                :disabled="hasParent"
-                                                                        ></v-checkbox>
+                            <v-col cols="12" md="2">
+                                <v-checkbox v-model="editedItem.for_actor" label="{{ _('Actor') }}"
+                                    :disabled="hasParent"></v-checkbox>
 
-                                                                    </v-col>
+                            </v-col>
 
-                                                                </v-row>
-                                                            </v-container>
-                                                        </v-card-text>
+                            <v-col cols="12" md="2">
+                                <v-checkbox v-model="editedItem.for_incident" label="{{ _('Incident') }}"
+                                    :disabled="hasParent"></v-checkbox>
 
-                                                        <v-card-actions>
-                                                            <v-spacer></v-spacer>
-                                                            <v-btn
-                                                                    @click="close"
-                                                            >{{ _('Cancel') }}</v-btn
-                                                            >
-                                                            <v-btn
-                                                                    color="primary"
-                                                                    variant="elevated"
-                                                                    @click="save"
-                                                            >{{ _('Save') }}</v-btn
-                                                            >
-                                                        </v-card-actions>
-                                                    </v-card>
-                                                </v-dialog>
+                            </v-col>
 
-                                                <v-dialog v-model="imDialog" width="500">
+                            <v-col cols="12" md="2">
+                                <v-checkbox v-model="editedItem.for_offline" label="{{ _('Offline') }}"
+                                    :disabled="hasParent"></v-checkbox>
 
-                                                    {% if current_user.roles_in(['Admin']) %}
-                                                    <template v-slot:activator="{ props }">
-                                                        <v-btn
-                                                            color="secondary"
-                                                            variant="elevated"
-                                                            class="ma-2"
-                                                            v-bind="props">
-                                                            {{ _('Import CSV') }}
-                                                        </v-btn>
-                                                    </template>
-                                                    {% endif %}
-                                                    
-                                                    <v-card>
-                                                        <v-card-title>
-                                                            <span class="headline">{{ _('Import CSV') }}</span>
-                                                        </v-card-title>
+                            </v-col>
+                        </v-row>
 
-                                                        <v-card-text>
-                                                            <v-container>
-                                                                <v-row>
-                                                                    <v-col cols="12" md="12">
-                                                                        <v-file-input v-model="csvFile" show-size
-                                                                                      accept=".csv"
-                                                                                      label="{{ _('Select CSV File') }}"></v-file-input>
-
-                                                                    </v-col>
-                                                                </v-row>
-                                                            </v-container>
-                                                        </v-card-text>
-
-                                                        <v-card-actions>
-                                                            <v-spacer></v-spacer>
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="imDialog=false"
-                                                            >{{ _('Cancel') }}</v-btn
-                                                            >
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="importCSV"
-                                                            >{{ _('Save') }}</v-btn
-                                                            >
-                                                        </v-card-actions>
-                                                    </v-card>
-
-                                                </v-dialog>
-
-                                            </v-toolbar>
-                                        </template>
-
-                                        <template #['item.comments']="{ item }">
-                                            <div class="line-clamp-1">${item.comments}</div>
-                                        </template>
-
-                                        <template v-slot:item.action="{ item }">
-
-                                            <v-icon small class="mr-2" @click="editItem(item)">
-                                                mdi-pencil
-                                            </v-icon>
-
-
-                                            <v-icon small @click="deleteItem(item)">
-                                                mdi-delete-sweep
-                                            </v-icon>
-                                        </template>
-
-                                        <template v-slot:no-data></template>
-                                    </v-data-table-server>
-                                </v-card-text>
-                            </v-card>
-                </v-container>
-            </v-main>
+                        <v-alert v-if="hasParent" type="info" variant="tonal"> {{ _('Flags inherited from parent label') }} </v-alert>
+                        <v-alert v-if="hasChildren" type="warning" variant="tonal"> {{ _('This label has child labels. Changing flags will update all children.') }} </v-alert>
+                    </v-container>
+                </v-card-text>
+            </v-form>
+        </v-card>
+    </v-dialog>
+</v-main>
 
 {% endblock %} {% block js %}
-    <script src="/static/js/components/SearchField.js"></script>
-    <script>
+<script src="/static/js/components/SearchField.js"></script>
 
-        const {createApp} = Vue;
-        const {createVuetify} = Vuetify;
-        const vuetify = createVuetify(vuetifyConfig);
+<script>
+const { createApp } = Vue;
+const { createVuetify } = Vuetify;
+const vuetify = createVuetify(vuetifyConfig);
 
-        const app = createApp({
-            delimiters: delimiters,
-            mixins: [globalMixin],
-            data: () => ({
-                dialog: dialog,
-                imDialog: false,
-                drawer: drawer,
-                loading: true,
-                csvFile: null,
-                options: {},
+const app = createApp({
+    delimiters: delimiters,
+    mixins: [globalMixin],
+    data: () => ({
+        validationRules: validationRules,
+        translations: translations,
+        dialog: false,
+        imDialog: false,
+        drawer: drawer,
+        loading: true,
+        csvFile: null,
+        options: {},
 
-                headers: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Comments')}}", value: "comments"},
-                    {title: "{{_('Parent')}}", value: "parent.title"},
-                    {title: "{{_('Verified')}}", value: "verified"},
-                    {title: "{{_('Bulletin')}}", value: "for_bulletin"},
-                    {title: "{{_('Actor')}}", value: "for_actor"},
-                    {title: "{{_('Incident')}}", value: "for_incident"},
-                    {title: "{{_('Offline')}}", value: "for_offline"},
-                    {% if current_user.roles_in(['Admin','Mod']) %}
-                        {title: "{{_('Actions')}}", value: "action", sortable: false}
-                    {% endif %}
-                ],
+        headers: [
+            { title: "{{_('ID')}}", value: "id" },
+            { title: "{{_('Title')}}", value: "title" },
+            { title: "{{_('Comments')}}", value: "comments" },
+            { title: "{{_('Parent')}}", value: "parent.title" },
+            { title: "{{_('Verified')}}", value: "verified" },
+            { title: "{{_('Bulletin')}}", value: "for_bulletin" },
+            { title: "{{_('Actor')}}", value: "for_actor" },
+            { title: "{{_('Incident')}}", value: "for_incident" },
+            { title: "{{_('Offline')}}", value: "for_offline" },
+            {% if current_user.roles_in(['Admin', 'Mod']) %}
+                    { title: "{{_('Actions')}}", value: "action", sortable: false }
+                {% endif %}
+            ],
 
-                items: [],
-                parentList: [],
-                itemsLength: 10,
-                editedIndex: -1,
-                q: '',
-                editedItem: {
-                    title: "",
-                    parent: null
-                },
-                defaultItem: {
-                    title: ""
-                }
-            }),
+        items: [],
+        parentList: [],
+        q: '',
+        editedItem: {
+            title: "",
+            parent: null
+        },
+        defaultItem: {
+            title: ""
+        }
+    }),
 
-            computed: {
-                formTitle() {
-                    return this.editedIndex === -1 ? "{{_('New Item')}}" : "{{_('Edit Item')}}";
-                },
-                hasParent() {
-                    return Boolean(this.editedItem.parent);
-                },
-                parentFlags() {
-                    const {
-                        verified = false,
-                        for_bulletin = false,
-                        for_actor = false,
-                        for_incident = false,
-                        for_offline = false
-                    } = this.editedItem.parent || {};
+    mounted() {
+        this.refresh();
+    },
 
-                    return { verified, for_bulletin, for_actor, for_incident, for_offline };
-                }
-            },
+    computed: {
+        formTitle() {
+            return this.editedItem?.id ? "{{_('Edit Label')}}" : "{{_('New Label')}}";
+        },
+        hasParent() {
+            return Boolean(this.editedItem.parent);
+        },
+        hasChildren() {
+            return Boolean(this.editedItem.children);
+        },
+        parentFlags() {
+            const {
+                verified = false,
+                for_bulletin = false,
+                for_actor = false,
+                for_incident = false,
+                for_offline = false
+            } = this.editedItem.parent || {};
 
-            methods: {
-                onParentChanged(nextParentValue) {
-                    if (!nextParentValue) return;
+            return { verified, for_bulletin, for_actor, for_incident, for_offline };
+        }
+    },
 
-                    this.editedItem.verified = this.parentFlags.verified;
-                    this.editedItem.for_bulletin = this.parentFlags.for_bulletin;
-                    this.editedItem.for_actor = this.parentFlags.for_actor;
-                    this.editedItem.for_incident = this.parentFlags.for_incident;
-                    this.editedItem.for_offline = this.parentFlags.for_offline;
-                },
-                refresh(options) {
-                    this.options = options || { ...this.options, page: 1 };
-                    this.loading = true;
+    methods: {
+        onParentChanged(nextParentValue) {
+            if (!nextParentValue) return;
 
-                    api.get(`/admin/api/labels/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&fltr=all&q=${this.q}`).then(response => {
-                        this.itemsLength = response.data.total;
-                        this.items = response.data.items;
-                    }).finally(() => {
-                        this.loading = false;
-                    });
-                },
+            this.editedItem.verified = this.parentFlags.verified;
+            this.editedItem.for_bulletin = this.parentFlags.for_bulletin;
+            this.editedItem.for_actor = this.parentFlags.for_actor;
+            this.editedItem.for_incident = this.parentFlags.for_incident;
+            this.editedItem.for_offline = this.parentFlags.for_offline;
+        },
+        refresh(options) {
+            this.loading = true;
+            api.get(`/admin/api/labels/tree?fltr=all`).then(response => {
+                this.items = response.data.items;
+            }).finally(() => {
+                this.loading = false;
+            });
+        },
 
-                resetSearch() {
-                    this.q = '';
+        resetSearch() {
+            this.q = '';
+        },
+
+        importCSV() {
+            const reqData = new FormData();
+            reqData.append('csv', this.csvFile)
+            api.post('/admin/api/label/import/', reqData).then(response => {
+                this.imDialog = false;
+                this.refresh();
+                this.showSnack(response.data);
+            })
+
+        },
+
+        searchParents: debounce(function (evt) {
+            api.get(`/admin/api/labels/?q=${evt.target.value}`).then(response => {
+                this.parentList = response.data.items;
+            })
+        }, 500),
+
+        editItem(item) {
+            this.editedItem = Object.assign({}, item);
+            this.dialog = true;
+        },
+
+        deleteItem(item) {
+            this.$confirm({
+                title: "{{ _('You’re about to delete this label') }}",
+                message: `{{ _('This action is permanent and cannot be undone.') }}\r\n\r\n\"${item.title}\"\r\n\r\n{{ _('Do you want to continue?') }}`,
+                acceptProps: { text: "{{ _('Delete Label') }}", color: 'red' },
+                dialogProps: { width: 780 },
+                onAccept: async () => {
+                    const response = await api.delete(`/admin/api/label/${item.id}`)
+                    this.showSnack(response.data);
                     this.refresh()
                 },
+            });
+        },
 
-                importCSV() {
-                    const reqData = new FormData();
-                    reqData.append('csv', this.csvFile)
-                    api.post('/admin/api/label/import/', reqData).then(response => {
-                        this.imDialog = false;
-                        this.refresh();
+        close() {
+            this.dialog = false;
+        },
+
+        save() {
+            const payload = { item: this.editedItem };
+            if (payload.item.children) delete payload.item.children;
+
+            if (this.editedItem?.id) {
+                api.put(`/admin/api/label/${this.editedItem.id}`, payload)
+                    .then(response => {
                         this.showSnack(response.data);
+                        this.refresh()
                     })
-
-                },
-
-                searchParents: debounce(function (evt) {
-
-                    api.get(`/admin/api/labels/?q=${evt.target.value}`).then(response => {
-                        this.parentList = response.data.items;
-                    })
-                }, 500),
-
-                editItem(item) {
-                    this.editedIndex = this.items.indexOf(item);
-                    this.editedItem = Object.assign({}, item);
-                    this.dialog = true;
-                },
-
-                deleteItem(item) {
-                    if (confirm("{{_('Are you sure you want to delete this item?')}}")) {
-                        api.delete(`/admin/api/label/${item.id}`)
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh()
-                            })
-                    }
-                },
-
-                close() {
-                    this.dialog = false;
-                },
-
-                save() {
-                    if (this.editedIndex > -1) {
-                        api.put(`/admin/api/label/${this.editedItem.id}`, {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh()
-                            })
-                    } else {
-                        api
-                            .post("/admin/api/label/", {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh()
-                            });
-                    }
-                    this.close();
-                },
-
-                resetForm() {
-                    this.editedItem = Object.assign({}, this.defaultItem);
-                    this.editedIndex = -1;
-                }
+            } else {
+                api
+                    .post("/admin/api/label/", payload)
+                    .then(response => {
+                        this.showSnack(response.data);
+                        this.refresh()
+                    });
             }
-        });
-        app.component('SearchField', SearchField);
-        app.use(vuetify).mount('#app');
-    </script>
+            this.close();
+        },
+
+        resetForm() {
+            this.editedItem = Object.assign({}, this.defaultItem);
+        },
+        validateFormAndSave() {
+            this.$refs.form.validate().then(({ valid, errors }) => {
+                if (valid) {
+                    this.save();
+                } else {
+                    this.$root.showSnack(translations.pleaseReviewFormForErrors_);
+                    scrollToFirstError();
+                }
+            });
+        },
+        validateCsvFormAndSave() {
+            this.$refs.csvForm.validate().then(({ valid, errors }) => {
+                if (valid) {
+                    this.importCSV();
+                } else {
+                    this.$root.showSnack(translations.pleaseReviewFormForErrors_);
+                    scrollToFirstError();
+                }
+            });
+        },
+    }
+});
+
+app.component('SearchField', SearchField);
+app.use(vuetify).mount('#app');
+</script>
 {% endblock %}
