@@ -196,10 +196,19 @@ class Label(db.Model, BaseMixin):
         parent_info = json.get("parent")
         if parent_info and "id" in parent_info:
             parent_id = parent_info["id"]
-            if self._is_valid_parent(parent_id):
-                self.parent_label_id = parent_id
-            else:
-                self.parent_label_id = None
+            if not self._is_valid_parent(parent_id):
+                raise ValueError("Invalid parent: creates cycle or does not exist")
+
+            parent = Label.query.get(parent_id)
+            if parent:
+                if self.verified != parent.verified:
+                    raise ValueError("Label verified status must match parent")
+
+                for flag in ["for_bulletin", "for_actor", "for_incident", "for_offline"]:
+                    if getattr(self, flag) != getattr(parent, flag):
+                        raise ValueError(f"Child {flag} must match parent")
+
+            self.parent_label_id = parent_id
         else:
             self.parent_label_id = None
 

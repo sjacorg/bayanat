@@ -359,7 +359,10 @@ def api_label_create(
         - success/error string based on the operation result.
     """
     label = Label()
-    created = label.from_json(validated_data["item"])
+    try:
+        created = label.from_json(validated_data["item"])
+    except ValueError as e:
+        return HTTPResponse.error(str(e), status=400)
     if created.save():
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
@@ -390,7 +393,10 @@ def api_label_update(id: t.id, validated_data: dict) -> Response:
     """
     label = Label.query.get(id)
     if label is not None:
-        label = label.from_json(validated_data["item"])
+        try:
+            label = label.from_json(validated_data["item"])
+        except ValueError as e:
+            return HTTPResponse.error(str(e), status=400)
         label.save()
         Activity.create(
             current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
