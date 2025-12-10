@@ -268,8 +268,36 @@ const app = createApp({
         }, 500),
 
         editItem(item) {
-            this.editedItem = Object.assign({}, item);
+            const nextItem = { ...item };
+
+            // Ensure parent object stays intact
+            const parentId = item.parent?.id;
+
+            if (parentId) {
+                const parent = this.findLabelById(parentId); // recursive lookup
+
+                if (parent) {
+                    nextItem.for_actor = parent.for_actor;
+                    nextItem.for_bulletin = parent.for_bulletin;
+                    nextItem.for_incident = parent.for_incident;
+                    nextItem.for_offline = parent.for_offline;
+                    nextItem.verified = parent.verified;
+                }
+            }
+
+            this.editedItem = nextItem;
             this.dialog = true;
+        },
+
+        findLabelById(id, list = this.items) {
+            for (const label of list) {
+                if (label.id === id) return label;
+                if (label.children?.length) {
+                    const found = this.findLabelById(id, label.children);
+                    if (found) return found;
+                }
+            }
+            return null;
         },
 
         deleteItem(item) {
@@ -299,18 +327,19 @@ const app = createApp({
                     .then(response => {
                         this.showSnack(response.data);
                         this.refresh()
-                    })
+                        this.close();
+                    });
             } else {
                 api
                     .post("/admin/api/label/", payload)
                     .then(response => {
                         this.showSnack(response.data);
                         this.refresh()
+                        this.close();
                     });
             }
-            this.close();
         },
-
+        
         resetForm() {
             this.editedItem = Object.assign({}, this.defaultItem);
         },
