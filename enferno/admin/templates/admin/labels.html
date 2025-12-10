@@ -26,7 +26,7 @@
                     </v-toolbar>
 
                     <v-card-text class="overflow-y-auto" :style="{ height: 'calc(100vh - 189px)' }">
-                        <v-treeview disabled density="compact" :items="items" item-value="id" item-title="title"
+                        <v-treeview class="labels-treeview" disabled density="compact" :items="items" item-value="id" item-title="title"
                             return-object indent-lines separate-roots :search="q" class="opacity-100">
                             <template v-slot:append="{ item, depth, isFirst, isLast }">
                                 <v-btn size="small"
@@ -109,7 +109,7 @@
                             <v-col cols="12" md="6">
                                 <search-field api="/admin/api/labels/" item-title="title" label="{{ _('Parent') }}"
                                     v-model="editedItem.parent" @update:model-value="onParentChanged" item-value="id"
-                                    :multiple="false" :query-params="{ fltr: 'all' }"></search-field>
+                                    :multiple="false" :query-params="{ fltr: 'all', exclude: editedItem?.id }"></search-field>
                             </v-col>
                         </v-row>
 
