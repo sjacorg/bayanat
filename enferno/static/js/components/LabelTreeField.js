@@ -215,7 +215,6 @@ const LabelTreeField = Vue.defineComponent({
             item-title="title"
             return-object
             :search="search"
-            :filter="(item, search) => item.title.toLowerCase().includes(search.toLowerCase())"
 
             :selectable="multiple ? selectable : false"
             :select-strategy="multiple ? selectStrategy : 'single-independent'"
