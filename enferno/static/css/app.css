@@ -964,3 +964,8 @@ div.jsondiffpatch-child-node-type-array:after {
     border-top-right-radius: 0;
     border-top: 0 !important;
 }
+.labels-treeview .v-list-item--disabled, .labels-treeview.v-list--disabled {
+    opacity: 1;
+    user-select: auto;
+    pointer-events: auto;
+}
