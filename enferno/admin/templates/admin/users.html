@@ -702,10 +702,18 @@
                     this.hloading = true;
                     axios
                         .get(`/admin/api/userhistory/${user.id}`)
-                        .then((response) => {
-                            this.revisionState.history = response.data.items;
+                        .then(({ data }) => {
+                            this.revisionState.history = data.items.map(item => ({
+                                ...item,
+                                data: {
+                                    ...item.data,
+                                    roles: (item.data?.roles || []).map(r => r.name)
+                                }
+                            }));
+
                             this.revisionState.user = user;
-                        }).finally(() => {
+                        })
+                        .finally(() => {
                             this.hloading = false;
                         });
                 },
