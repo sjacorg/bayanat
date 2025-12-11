@@ -205,14 +205,15 @@ class Label(db.Model, BaseMixin):
         self.for_offline = json.get("for_offline", False)
 
         # Handle parent assignment
-        parent_info = json.get("parent")
-        if parent_info and "id" in parent_info:
-            parent_id = parent_info["id"]
-            if not self._is_valid_parent(parent_id):
-                raise ValueError("Invalid parent: creates cycle or does not exist")
-            self.parent_label_id = parent_id
-        elif parent_info is not None:
-            self.parent_label_id = None
+        if "parent" in json:
+            parent_info = json["parent"]
+            if parent_info and "id" in parent_info:
+                parent_id = parent_info["id"]
+                if not self._is_valid_parent(parent_id):
+                    raise ValueError("Invalid parent: creates cycle or does not exist")
+                self.parent_label_id = parent_id
+            else:
+                self.parent_label_id = None
 
         # Validate against parent (new or existing)
         if self.parent_label_id:
