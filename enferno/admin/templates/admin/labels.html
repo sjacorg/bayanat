@@ -271,23 +271,30 @@ const app = createApp({
         editItem(item) {
             const nextItem = { ...item };
 
-            // Ensure parent object stays intact
-            const parentId = item.parent?.id;
+            // Find top most ancestor
+            const rootParent = this.findRootParent(nextItem);
 
-            if (parentId) {
-                const parent = this.findLabelById(parentId); // recursive lookup
-
-                if (parent) {
-                    nextItem.for_actor = parent.for_actor;
-                    nextItem.for_bulletin = parent.for_bulletin;
-                    nextItem.for_incident = parent.for_incident;
-                    nextItem.for_offline = parent.for_offline;
-                    nextItem.verified = parent.verified;
-                }
+            // If the label has any ancestor, lock to root values
+            if (rootParent && rootParent.id !== item.id) {
+                nextItem.for_actor = rootParent.for_actor;
+                nextItem.for_bulletin = rootParent.for_bulletin;
+                nextItem.for_incident = rootParent.for_incident;
+                nextItem.for_offline = rootParent.for_offline;
+                nextItem.verified = rootParent.verified;
             }
 
             this.editedItem = nextItem;
             this.dialog = true;
+        },
+
+        findRootParent(label) {
+            let current = label;
+
+            while (current?.parent?.id) {
+                current = this.findLabelById(current.parent.id);
+            }
+
+            return current; // returns root
         },
 
         findLabelById(id, list = this.items) {
