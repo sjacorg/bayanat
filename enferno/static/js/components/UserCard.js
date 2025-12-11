@@ -96,7 +96,7 @@ const actionSections = () => ({
 
 const UserCard = Vue.defineComponent({
   props: ['user', 'closable'],
-  emits: ['close', 'edit', 'resetPassword', 'revoke2fa', 'logoutAll', 'changePassword'],
+  emits: ['close', 'edit', 'resetPassword', 'revoke2fa', 'logoutAll', 'changePassword', 'showHistory'],
   components: { ConfirmDialog },
   data() {
     return {
@@ -112,6 +112,9 @@ const UserCard = Vue.defineComponent({
     };
   },
   computed: {
+    logAllowed() {
+      return this.$root.currentUser.view_simple_history;
+    },
     actionSections() {
       return actionSections();
     },
@@ -357,6 +360,22 @@ const UserCard = Vue.defineComponent({
               </template>
   
               <div class="d-flex justify-space-between ga-2 align-center">
+                <v-tooltip
+                  v-if="logAllowed"
+                  location="bottom"
+                  :text="translations.revisionHistory_"
+                >
+                  <template #activator="{props}">
+                    <div v-bind="props">
+                      <v-btn
+                        density="comfortable"
+                        icon="mdi-history"
+                        @click="$emit('showHistory', user)"
+                      ></v-btn>
+                    </div>
+                  </template>
+                </v-tooltip>
+
                 <template v-if="isUserEnabled">
                   <template v-if="$root.userId !== user.id">
                     <v-tooltip
