@@ -12,7 +12,7 @@ const GlobalMap = Vue.defineComponent({
       return [...new Set(this.locations.map(loc => loc.eventtype).filter(Boolean))];
     },
     filteredLocations() {
-      return this.locations.filter(loc => this.selectedLocations.includes(loc.eventtype) || !('eventtype' in loc));
+      return this.locations.filter(loc => this.selectedEventTypes.includes(loc.eventtype) || !('eventtype' in loc));
     },
     currentYear() {
       return new Date().getFullYear();
@@ -38,7 +38,7 @@ const GlobalMap = Vue.defineComponent({
       attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
       googleAttribution: `&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©${this.currentYear} Google, Maxar Technologies`,
       measureControls: null,
-      selectedLocations: [],
+      selectedEventTypes: [],
     };
   },
 
@@ -52,7 +52,7 @@ const GlobalMap = Vue.defineComponent({
 
       if (val?.length || val !== old) {
         this.locations = val;
-        this.selectedLocations = [...this.uniqueEventTypes];
+        this.selectedEventTypes = [...this.uniqueEventTypes];
         this.fitMarkers();
         this.updateMapBounds();
       }
@@ -60,7 +60,7 @@ const GlobalMap = Vue.defineComponent({
         this.map.setView([this.lat, this.lng]);
       }
     },
-    selectedLocations(val) {
+    selectedEventTypes(val) {
       this.clearAllLayers();
       this.fitMarkers();
     },
@@ -363,7 +363,7 @@ const GlobalMap = Vue.defineComponent({
                     <template v-slot:activator="{ props: tooltipProps }">
                       <v-btn
                         v-bind="{ ...menuProps, ...tooltipProps }"
-                        icon="mdi-dots-vertical"
+                        icon="mdi-tag-multiple"
                         variant="outlined"
                         density="compact"
                         class="ml-2 mb-4"
@@ -375,7 +375,7 @@ const GlobalMap = Vue.defineComponent({
                 </template>
 
                 <v-list
-                  v-model:selected="selectedLocations"
+                  v-model:selected="selectedEventTypes"
                   select-strategy="leaf"
                 >
                   <v-list-item
