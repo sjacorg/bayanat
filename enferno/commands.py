@@ -387,6 +387,95 @@ def import_docs(file) -> None:
         click.echo("=== Done ===")
 
 
+# ------------------ Local Import --------------------------- #
+
+
+@click.command()
+@with_appcontext
+@click.argument("folder_path")
+@click.option("--limit", "-l", default=None, type=int, help="Max files to process")
+@click.option("--offset", "-o", default=0, type=int, help="Skip first N files")
+@click.option("--dry-run", is_flag=True, help="Show what would be imported")
+def import_local(folder_path, limit, offset, dry_run):
+    """Import files from local folder into Bayanat."""
+    from enferno.tasks import process_local_file
+
+    if not os.path.isdir(folder_path):
+        click.echo(f"Error: {folder_path} is not a valid directory")
+        return
+
+    # Use extensions from config
+    ext_list = [f".{e.lower()}" for e in Config.get("MEDIA_ALLOWED_EXTENSIONS", [])]
+    click.echo(f"Looking for files with extensions: {ext_list}")
+
+    # Scan folder recursively
+    all_files = []
+    for root, dirs, files in os.walk(folder_path):
+        for filename in files:
+            if any(filename.lower().endswith(ext) for ext in ext_list):
+                all_files.append(os.path.join(root, filename))
+
+    # Sort for consistent ordering (enables resume via offset)
+    all_files.sort()
+
+    click.echo(f"Found {len(all_files)} files matching extensions")
+
+    # Apply offset and limit
+    files_to_process = all_files[offset:]
+    if limit:
+        files_to_process = files_to_process[:limit]
+
+    click.echo(f"Processing {len(files_to_process)} files (offset={offset}, limit={limit})")
+
+    if dry_run:
+        click.echo("\n=== DRY RUN - No files will be imported ===")
+        for f in files_to_process[:20]:  # Show first 20
+            click.echo(f"  {f}")
+        if len(files_to_process) > 20:
+            click.echo(f"  ... and {len(files_to_process) - 20} more")
+        return
+
+    # Generate batch ID
+    batch_id = shortuuid.uuid()[:9]
+    click.echo(f"Batch ID: {batch_id}")
+
+    queued = 0
+    skipped = 0
+
+    with click.progressbar(files_to_process, label="Queueing files", show_pos=True) as bar:
+        for file_path in bar:
+            # Check if already imported
+            existing = DataImport.query.filter(DataImport.file == file_path).first()
+            if existing:
+                skipped += 1
+                continue
+
+            # Create DataImport record
+            data_import = DataImport(
+                user_id=1,
+                table="bulletin",
+                file=file_path,
+                batch_id=batch_id,
+                data={"mode": "local"},
+            )
+            data_import.add_to_log(f"Queued for import: {file_path}")
+            data_import.save()
+
+            # Queue Celery task
+            process_local_file.delay(
+                file_path=file_path,
+                batch_id=batch_id,
+                user_id=1,
+                data_import_id=data_import.id,
+            )
+            queued += 1
+
+    click.echo(f"\n=== Done ===")
+    click.echo(f"Queued: {queued}")
+    click.echo(f"Skipped (already imported): {skipped}")
+    click.echo(f"Batch ID: {batch_id}")
+
+
 # ------------------ YouTube ETL --------------------------- #
 
 import os
@@ -525,7 +614,9 @@ def import_telegram(bucket, folder, html):
                     Delimiter="/",
                 )
 
-                html_files = [x["Key"] for x in objects.get("Contents", []) if x["Key"].endswith(".html")]
+                html_files = [
+                    x["Key"] for x in objects.get("Contents", []) if x["Key"].endswith(".html")
+                ]
 
                 if not html_files:
                     click.echo(f"Channel {channel} has no messages HTML file... Skipping")
@@ -540,14 +631,14 @@ def import_telegram(bucket, folder, html):
                         Key=file,
                     )
                     html_file = messages_file["Body"].read().decode("utf-8")
-                    
+
                     messages.extend(parse_html_messages(html_file))
                     click.echo(f"Parsed {len(messages)} messages from HTML file")
-                
+
                 # Sort messages by reverse id
                 messages.sort(key=lambda x: int(x["id"]), reverse=True)
-                
-            # preprocess to link media 
+
+            # preprocess to link media
             processed_messages = []
             temp_group = []
             click.echo(f"Processing channel {channel}")
@@ -583,7 +674,7 @@ def import_telegram(bucket, folder, html):
                         data_imports = []
                         main_id = None
                         messages.reverse()
-                        
+
                         for message in messages:
                             data = {
                                 "mode": 4,  # Telegram import mode
@@ -615,7 +706,7 @@ def import_telegram(bucket, folder, html):
                             # and the rest as linked messages
                             if main_id is None:
                                 main_id = data_import.id
-                            
+
                             data_imports.append(data_import.id)
 
                         process_telegram_media.delay(

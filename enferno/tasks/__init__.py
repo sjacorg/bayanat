@@ -1671,6 +1671,40 @@ def process_doc(
         log.fail(e)
 
 
+from enferno.data_import.utils.local_import import LocalImport
+
+
+@celery.task(bind=True, max_retries=3, rate_limit="10/s")
+def process_local_file(
+    self, file_path: str, batch_id: str, user_id: int, data_import_id: int
+) -> None:
+    """Process a single local file import."""
+    try:
+        data_import = DataImport.query.get(data_import_id)
+        if not data_import:
+            logger.error(f"DataImport {data_import_id} not found")
+            return
+
+        importer = LocalImport(
+            file_path=file_path,
+            batch_id=batch_id,
+            user_id=user_id,
+            data_import=data_import,
+        )
+        importer.process()
+        return "done"
+
+    except OperationalError as e:
+        logger.error(f"Database error processing {file_path}. Retrying...")
+        self.retry(exc=e, countdown=random.randrange(30, 60))
+
+    except Exception as e:
+        logger.error(f"Error processing {file_path}: {e}")
+        data_import = DataImport.query.get(data_import_id)
+        if data_import:
+            data_import.fail(str(e))
+
+
 from enferno.data_import.utils.youtube_import import YouTubeImport
 
 
@@ -1703,6 +1737,7 @@ def process_etl(self, batch_id: t.id, meta: str, data_import_id: t.id) -> None:
 
 from enferno.data_import.utils.telegram_import import TelegramImport
 
+
 @celery.task(bind=True, max_retries=5)
 def process_telegram_media(self, data_imports: list) -> None:
     try:
@@ -1712,7 +1747,9 @@ def process_telegram_media(self, data_imports: list) -> None:
         di.process()
         return "done"
     except OperationalError as e:
-        logger.error(f"Encountered an error while processing Telegram Imports {data_imports}. Retrying...")
+        logger.error(
+            f"Encountered an error while processing Telegram Imports {data_imports}. Retrying..."
+        )
         self.retry(exc=e, countdown=random.randrange(40, 80))
     except Exception as e:
         logger.error(f"Encountered an error while processing Telegram Imports {data_imports}: {e}")
