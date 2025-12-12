@@ -23,6 +23,7 @@ const MapVisualization = Vue.defineComponent({
 
   data: () => ({
     translations: window.translations,
+    selectedEventTypes: [],
 
     localSearch: '',
 
@@ -72,9 +73,77 @@ const MapVisualization = Vue.defineComponent({
 
       return MobilityMapUtils.parseEventsToMapData(this.entity?.events);
     },
+    computedMapData() {
+      // If an actos has been selected, use its map data else use the full data
+      const baseData = this.selectedEntityMapData
+        ? this.selectedEntityMapData
+        : {
+            locations: this.locations,
+            flows: this.flows,
+          };
+
+      return this.filterMapData(baseData);
+    },
+    uniqueEventTypes() {
+      const uniqueTypes = new Set();
+
+      this.locations.forEach((loc) => {
+        if (loc.events_by_type) {
+          Object.keys(loc.events_by_type).forEach((eventType) => uniqueTypes.add(eventType));
+        }
+      })
+      this.flows.forEach((flow) => {
+        if (flow.events_by_type) {
+          Object.keys(flow.events_by_type).forEach((eventType) => uniqueTypes.add(eventType));
+        }
+      })
+      return [...uniqueTypes];
+    },
   },
 
   methods: {
+    matchesSelectedEventTypes(entity) {
+      // No filters selected → show everything
+      if (!this.selectedEventTypes.length) return true;
+
+      const types = Object.keys(entity.events_by_type || {});
+      if (!types.length) return true;
+
+      return types.some(type =>
+        this.selectedEventTypes.includes(type)
+      );
+    },
+
+    filterMapData(baseData) {
+      const { locations = [], flows = [] } = baseData;
+
+      // STEP 1: filter flows first + add count
+      const visibleFlows = flows
+        .filter(this.matchesSelectedEventTypes)
+        .map(flow => ({
+          ...flow,
+          count: Object.values(flow.events_by_type || {})
+            .reduce((sum, value) => sum + value, 0),
+        }));
+
+      // STEP 2: collect required location IDs from visible flows
+      const requiredLocationIds = new Set();
+      visibleFlows.forEach(flow => {
+        requiredLocationIds.add(flow.origin);
+        requiredLocationIds.add(flow.dest);
+      });
+
+      // STEP 3: filter locations
+      const visibleLocations = locations.filter(loc =>
+        this.matchesSelectedEventTypes(loc) ||
+        requiredLocationIds.has(loc.id)
+      );
+
+      return {
+        locations: visibleLocations,
+        flows: visibleFlows,
+      };
+    },
     /* -------------------------------------------------
        API ORCHESTRATION
     ------------------------------------------------- */
@@ -92,6 +161,9 @@ const MapVisualization = Vue.defineComponent({
 
       this.locations = result.locations;
       this.flows = result.flows;
+
+      // Preselect all event types, omit Residence and Birth by default
+      this.selectedEventTypes = [...this.uniqueEventTypes].filter(t => t !== 'Residence' && t !== 'Birth');
 
       this.loading = false;
     },
@@ -274,6 +346,43 @@ const MapVisualization = Vue.defineComponent({
           prepend-inner-icon="mdi-magnify"
           :label="translations.search_"
         />
+        <v-menu v-if="uniqueEventTypes.length > 1" :close-on-content-click="false">
+          <template v-slot:activator="{ props: menuProps }">
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <v-btn
+                  v-bind="{ ...menuProps, ...tooltipProps }"
+                  icon="mdi-tag-multiple"
+                  variant="text"
+                  density="compact"
+                  class="ml-4"
+                />
+              </template>
+              {{ translations.showOrHideEventTypes_ }}
+            </v-tooltip>
+          </template>
+
+          <v-list
+            v-model:selected="selectedEventTypes"
+            select-strategy="leaf"
+          >
+            <v-list-item
+              v-for="(eventType, index) in uniqueEventTypes"
+              :key="index"
+              :title="eventType"
+              :value="eventType"
+            >
+              <template v-slot:prepend="{ isSelected, select }">
+                <v-list-item-action start>
+                  <v-checkbox-btn
+                    :model-value="isSelected"
+                    @update:model-value="select"
+                  />
+                </v-list-item-action>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-menu>
 
         <!-- Right: Close -->
         <div class="w-33 mr-4 d-flex">
@@ -292,8 +401,8 @@ const MapVisualization = Vue.defineComponent({
         <mobility-map
           v-if="open"
           ref="mobilityMapRef"
-          :locations="selectedEntityMapData?.locations || locations"
-          :flows="selectedEntityMapData?.flows || flows"
+          :locations="computedMapData.locations"
+          :flows="computedMapData.flows"
           class="w-100 h-100"
           :viewport-padding="{ right: entities.drawer ? 398 : 0, top: 64 }"
           :disable-clustering="Boolean(entities.selected)"
