@@ -64,6 +64,16 @@ const MapVisualization = Vue.defineComponent({
         this.$emit('closeEntityDetails');
       },
     },
+    entity: {
+      handler(nextValue) {
+        // When an entity is selected, show all event types
+        if (nextValue && Object.keys(nextValue).length === 0) {
+          this.selectedEventTypes = [...this.uniqueEventTypes].filter(t => t !== 'Residence' && t !== 'Birth');
+        } else {
+          this.selectedEventTypes = [...this.uniqueEventTypes];
+        }
+      },
+    },
   },
 
   computed: {
@@ -74,7 +84,7 @@ const MapVisualization = Vue.defineComponent({
       return MobilityMapUtils.parseEventsToMapData(this.entity?.events);
     },
     computedMapData() {
-      // If an actos has been selected, use its map data else use the full data
+      // If an actor has been selected, use its map data else use the full data
       const baseData = this.selectedEntityMapData
         ? this.selectedEntityMapData
         : {
@@ -86,6 +96,15 @@ const MapVisualization = Vue.defineComponent({
     },
     uniqueEventTypes() {
       const uniqueTypes = new Set();
+
+      if (this.entity?.events) {
+        this.entity.events.forEach((event) => {
+          if (event?.eventtype?.title) {
+            uniqueTypes.add(event.eventtype.title);
+          }
+        })
+        return [...uniqueTypes];
+      }
 
       this.locations.forEach((loc) => {
         if (loc.events_by_type) {
@@ -394,7 +413,7 @@ const MapVisualization = Vue.defineComponent({
           />
         </div>
       </v-toolbar>
-
+      
       <!-- MAP + OVERLAYS -->
       <v-container fluid class="pa-0 fill-height">
         <!-- MAP -->
