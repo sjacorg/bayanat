@@ -467,12 +467,82 @@
     </v-main>
     {% include 'admin/partials/user_drawer.html' %}
 
+    <!-- Revision history sidebar -->
+    <v-navigation-drawer v-model="historyDrawer" location="right" temporary width="630" disable-route-watcher>
+        <v-card flat>
+            <v-card-title class="pa-6">
+                {{ _('Revision history') }} - (${this.revisionState.user?.username})
+            </v-card-title>
+    
+            <!-- Loading -->
+            <div v-if="hloading" class="text-center py-6">
+                <v-progress-circular indeterminate size="32"></v-progress-circular>
+            </div>
+    
+            <!-- Empty -->
+            <div v-else-if="revisionState.history.length === 0" class="text-center py-6 text-medium-emphasis">
+                <v-icon size="40" class="mb-2">mdi-history</v-icon>
+                {{ _('No revision history available.') }}
+            </div>
+    
+            <!-- Timeline -->
+            <v-card-text v-else class="px-6">
+                <v-timeline density="compact" side="end" align="start">
+                    <v-timeline-item v-for="(revision, index) in revisionState.history" :key="revision.id || index" dot-color="primary"
+                        size="10">
+                        <div class="mt-n1">
+                            <!-- Header -->
+                            <div>
+                                <v-chip size="x-small" label class="mr-2">${revision.data.status}</v-chip>
+                                <b>${revision.user.username}</b>
+                                {{ _('updated user') }}
+    
+                                <!-- Current version label -->
+                                <b v-if="index === 0">
+                                    ({{ _('Current settings') }})
+                                </b>
+    
+                                <!-- Created at -->
+                                <span class="text-muted">
+                                    – ${formatDate(revision.created_at, dateFormats.standardDatetime, dateOptions.local)}
+                                </span>
+                            </div>
+    
+                            <!-- No diff between this revision and previous -->
+                            <div v-if="index > 0 && !DiffTool.hasDiff(revisionState.history[index + 1]?.data, revision.data)"
+                                class="font-italic text-medium-emphasis mt-1"
+                            >
+                                {{ _('No changes in this configuration') }}
+                            </div>
+    
+                            <!-- Diff details -->
+                            <show-details v-else-if="index !== revisionState.history.length - 1 && diffAllowed"
+                                show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}"
+                                class="mt-2"
+                            >
+                                <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionState.history[index + 1]?.data, revision.data)" />
+                            </show-details>
+                        </div>
+                    </v-timeline-item>
+                </v-timeline>
+    
+            </v-card-text>
+        </v-card>
+    </v-navigation-drawer>
+
+
 
 {% endblock %} {% block js %}
     <script src="/static/js/components/UserCard.js"></script>
     <script src="/static/js/components/ToggleButton.js"></script>
+    <script src="/static/js/components/ShowDetails.js"></script>
+    <script src="/static/js/diff-tool.js"></script>
+    <script src="/static/js/components/DiffRenderer.js"></script>
 
-    <script>
+   <script type="module">
+        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
+        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
+        import '/static/js/jsondiffpatch/formatters/base.js'
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
@@ -492,6 +562,13 @@
                 validationRules: validationRules,
                 options: {},
                 search: '',
+                revisionState: {
+                    user: null,
+                    history: [],
+                },
+                hloading: false,
+                historyDrawer: false,
+                DiffTool: DiffTool,
 
                 headers: [
                     {title: "{{_('ID')}}", value: "id"},
@@ -521,6 +598,7 @@
                 changePasswordDialog: false,
                 askUserToChangePassword: true,
                 hadAdminRoleBefore: false,
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
 
                 systemRoles: [
                     { name: "{{ _('View') }}", value: 'view', description: "{{ _('View-only users can view and search Actors, Bulletins, and Incidents strictly defined by the system\'s access policies and assigned access roles. They cannot create new items or edit existing ones.') }}" },
@@ -539,6 +617,9 @@
                 ],
             }),
             computed: {
+                diffAllowed() {
+                    return this.currentUser.view_full_history;
+                },
                 accessRoles() {
                     return this.roles?.filter(role => !this.systemRoles.some(systemRole => systemRole.value === role.name.toLowerCase()));
                 },
@@ -612,6 +693,30 @@
 
 
             methods: {
+                openHistoryDrawer(user) {
+                    this.userDrawer = false;
+                    this.historyDrawer = true;
+                    this.loadRevisions(user);
+                },
+                loadRevisions(user) {
+                    this.hloading = true;
+                    axios
+                        .get(`/admin/api/userhistory/${user.id}`)
+                        .then(({ data }) => {
+                            this.revisionState.history = data.items.map(item => ({
+                                ...item,
+                                data: {
+                                    ...item.data,
+                                    roles: (item.data?.roles || []).map(r => r.name)
+                                }
+                            }));
+
+                            this.revisionState.user = user;
+                        })
+                        .finally(() => {
+                            this.hloading = false;
+                        });
+                },
                 getUserSystemRoles(user) {
                     return user.roles?.filter(role => this.systemRoles?.some(systemRole => systemRole.value.toLowerCase() === role.name.toLowerCase())) ?? [];
                 },
@@ -1079,8 +1184,13 @@
             }
         });
 
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
+
         app.component('UserCard', UserCard);
         app.component('ToggleButton', ToggleButton);
+        app.component('ShowDetails', ShowDetails);
+        app.component('DiffRenderer', DiffRenderer);
         app.use(router).use(vuetify).mount('#app')
     </script>
 {% endblock %}
