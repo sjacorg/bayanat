@@ -152,7 +152,7 @@ def user_to_dict(user):
 get_users_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
-    ("mod_client", 200),
+    ("mod_client", 403),
     ("anonymous_client", 401),
 ]
 
@@ -161,6 +161,27 @@ get_users_endpoint_roles = [
 def test_get_users_endpoint(request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get("/admin/api/users/", headers={"Content-Type": "application/json"})
+    assert response.status_code == expected_status
+    if expected_status == 200:
+        conform_to_schema_or_fail(convert_empty_strings_to_none(response.json), UsersResponseModel)
+
+
+##### GET /admin/api/users/assignable #####
+
+get_users_assignable_endpoint_roles = [
+    ("admin_client", 200),
+    ("da_client", 403),
+    ("mod_client", 200),
+    ("anonymous_client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", get_users_assignable_endpoint_roles)
+def test_get_users_assignable_endpoint(request, client_fixture, expected_status):
+    client_ = request.getfixturevalue(client_fixture)
+    response = client_.get(
+        "/admin/api/users/assignable/", headers={"Content-Type": "application/json"}
+    )
     assert response.status_code == expected_status
     if expected_status == 200:
         conform_to_schema_or_fail(convert_empty_strings_to_none(response.json), UsersResponseModel)
