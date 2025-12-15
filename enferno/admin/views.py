@@ -4887,6 +4887,51 @@ def api_userhistory(userid: t.id) -> Response:
 # user management routes
 
 
+@admin.route("/api/users/assignable/")
+@roles_accepted("Admin", "Moderator")
+def api_users_assignable() -> Response:
+    """
+    API endpoint for listing active users available for assignment tasks.
+    Returns a simplified user list with only active users.
+
+    Query Parameters:
+        - page: Page number (default: 1)
+        - per_page: Items per page (default: PER_PAGE)
+        - q: Search term (searches username, name)
+
+    Returns:
+        - json feed of active users in compact format.
+    """
+    page = request.args.get("page", 1, int)
+    per_page = request.args.get("per_page", PER_PAGE, int)
+    q = request.args.get("q")
+
+    query = [User.status == UserStatus.ACTIVE]
+
+    if q is not None:
+        search_term = f"%{q}%"
+        query.append(
+            or_(
+                User.username.ilike(search_term),
+                User.name.ilike(search_term),
+            )
+        )
+
+    result = (
+        User.query.filter(*query)
+        .order_by(User.username)
+        .paginate(page=page, per_page=per_page, count=True)
+    )
+
+    response = {
+        "items": [item.to_compact() for item in result.items],
+        "perPage": per_page,
+        "total": result.total,
+    }
+
+    return HTTPResponse.success(data=response)
+
+
 @admin.route("/api/users/")
 @roles_accepted("Admin", "Moderator")
 def api_users() -> Response:
