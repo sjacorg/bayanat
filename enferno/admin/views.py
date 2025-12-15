@@ -4933,7 +4933,7 @@ def api_users_assignable() -> Response:
 
 
 @admin.route("/api/users/")
-@roles_accepted("Admin", "Moderator")
+@roles_required("Admin")
 def api_users() -> Response:
     """
     API endpoint to feed users data in json format, supports paging, search, and filtering.
