@@ -22,7 +22,7 @@
                 <div class="d-flex">
                     <search-field
                         v-model="bulk.assigned_to_id"
-                        api="/admin/api/users/"
+                        api="/admin/api/users/assignable"
                         item-title="name"
                         item-value="id"
                         :return-object="false"
@@ -38,7 +38,7 @@
                 <div class="d-flex">
                     <search-field
                         v-model="bulk.first_peer_reviewer_id"
-                        api="/admin/api/users/"
+                        api="/admin/api/users/assignable"
                         item-title="name"
                         item-value="id"
                         :multiple="false"
