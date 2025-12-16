@@ -182,18 +182,12 @@ fi
 
 mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 
-# Setup daemon permissions (CRITICAL SECURITY FEATURE)
+# Setup daemon permissions for service restarts only
 cat > /etc/sudoers.d/bayanat-daemon << 'EOF'
 bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active bayanat
 bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat
 bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart caddy
 bayanat-daemon ALL=(ALL) NOPASSWD: /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat-celery
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat fetch --tags --prune
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat tag --list --sort=-version\:refname
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat describe --tags --exact-match
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/bin/git -C /opt/bayanat checkout *
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/local/bin/uv --directory /opt/bayanat sync --frozen
-bayanat-daemon ALL=(bayanat) NOPASSWD: /usr/local/bin/bayanat-apply-migrations.sh
 EOF
 
 # Create API handler
@@ -213,24 +207,6 @@ body=""
 respond() { printf "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s" ${#1} "$1"; }
 
 case "$path" in
-    "/update-bayanat")
-        log "Starting update"
-        # Fetch tags
-        sudo -u bayanat /usr/bin/git -C /opt/bayanat fetch --tags --prune
-        # Get latest tag
-        latest_tag=$(sudo -u bayanat /usr/bin/git -C /opt/bayanat tag --list --sort=-version:refname | head -n1)
-        current_tag=$(sudo -u bayanat /usr/bin/git -C /opt/bayanat describe --tags --exact-match 2>/dev/null || echo "none")
-        log "Current: $current_tag, Latest: $latest_tag"
-        [ "$current_tag" = "$latest_tag" ] && { respond '{"success":true,"message":"Already up to date"}'; exit; }
-        # Checkout latest release
-        sudo -u bayanat /usr/bin/git -C /opt/bayanat checkout "$latest_tag"
-        log "Running uv sync"
-        sudo -u bayanat /usr/local/bin/uv --directory /opt/bayanat sync --frozen
-        log "Applying migrations"
-        sudo -u bayanat /usr/local/bin/bayanat-apply-migrations.sh
-        respond "{\"success\":true,\"message\":\"Updated to $latest_tag, restarting service\"}"
-        sudo /usr/bin/systemd-run --on-active=1s /usr/bin/systemctl restart bayanat
-        ;;
     "/restart-service")
         log "Restart request - body='$body'"
         service=$(echo "$body" | jq -r '.service // empty')
@@ -256,16 +232,6 @@ HANDLER
 chmod +x /usr/local/bin/bayanat-handler.sh
 mkdir -p /var/log/bayanat && chown -R bayanat-daemon:bayanat-daemon /var/log/bayanat
 
-# Create migration wrapper script
-cat > /usr/local/bin/bayanat-apply-migrations.sh << 'MIGRATIONS'
-#!/bin/bash
-cd /opt/bayanat
-export FLASK_APP=run.py
-exec /usr/local/bin/uv run flask apply-migrations
-MIGRATIONS
-chmod +x /usr/local/bin/bayanat-apply-migrations.sh
-chown root:root /usr/local/bin/bayanat-apply-migrations.sh
-
 # Create socket services (CRITICAL API FEATURE)
 cat > /etc/systemd/system/bayanat-api.socket << 'EOF'
 [Unit]
@@ -288,8 +254,6 @@ ExecStart=/usr/local/bin/bayanat-handler.sh
 StandardInput=socket
 StandardOutput=socket
 EOF
-
-sudo -u bayanat-daemon git config --global --add safe.directory /opt/bayanat
 
 # Start services
 systemctl daemon-reload
