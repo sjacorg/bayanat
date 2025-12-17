@@ -22,8 +22,8 @@ const thumbnailContent = `
     </v-img>
 
     <!-- PDF preview -->
-    <div v-else-if="mediaType === 'pdf'"
-            class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
+    <div ref="pdfThumbnailRef" v-else-if="mediaType === 'pdf'"
+            class="d-flex align-center justify-center bg-grey-lighten-2 h-100 overflow-hidden">
       <v-icon size="64" color="red">mdi-file-pdf-box</v-icon>
     </div>
 
@@ -145,6 +145,7 @@ const MediaCard = Vue.defineComponent({
       videoThumbnail: null,
       translations: window.translations,
       thumbnailBrightness: 0,
+      pdfCanvas: null,
       iconMap: {
         image: 'mdi-image',
         video: 'mdi-video',
@@ -179,6 +180,8 @@ const MediaCard = Vue.defineComponent({
           if (this.mediaType === 'video') {
             this.getVideoDuration();
             this.generateVideoThumbnail();
+          } else if (this.mediaType === 'pdf') {
+            this.generatePdfThumbnail();
           }
         })
         .catch(error => console.error('Error fetching media:', error))
@@ -206,6 +209,57 @@ const MediaCard = Vue.defineComponent({
         video.onloadedmetadata = () => {
           this.videoDuration = video.duration;
         };
+      }
+    },
+    async generatePdfThumbnail() {
+      try {
+        if (!this.$refs.pdfThumbnailRef) return;
+        if (this.pdfCanvas) {
+          this.$refs.pdfThumbnailRef.classList.remove("align-center");
+          this.$refs.pdfThumbnailRef.classList.add("pa-4", "align-start");
+          this.$refs.pdfThumbnailRef.innerHTML = "";
+          this.$refs.pdfThumbnailRef.appendChild(this.pdfCanvas);
+          return;
+        }
+
+        const pdf = await pdfjsLib.getDocument(this.s3url).promise;
+        const page = await pdf.getPage(1);
+
+        const THUMB_WIDTH = 240;
+        const DPR = window.devicePixelRatio || 1;
+
+        // Base viewport (CSS size)
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = THUMB_WIDTH / baseViewport.width;
+
+        // Render viewport (high DPI)
+        const renderViewport = page.getViewport({
+          scale: scale * DPR
+        });
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Internal resolution
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
+
+        // Display size
+        canvas.style.borderRadius = "4px";
+        canvas.classList.add("w-100");
+
+        await page.render({
+          canvasContext: ctx,
+          viewport: renderViewport
+        }).promise;
+
+        this.pdfCanvas = canvas;
+        this.$refs.pdfThumbnailRef.classList.remove("align-center");
+        this.$refs.pdfThumbnailRef.classList.add("pa-4", "align-start");
+        this.$refs.pdfThumbnailRef.innerHTML = "";
+        this.$refs.pdfThumbnailRef.appendChild(this.pdfCanvas);
+      } catch (err) {
+        console.error("PDF thumbnail error:", err);
       }
     },
     generateVideoThumbnail() {
@@ -253,6 +307,15 @@ const MediaCard = Vue.defineComponent({
         .then(() => this.$root.showSnack('Copied to clipboard'))
         .catch(() => this.$root.showSnack('Failed to copy to clipboard'));
     },
+  },
+  watch: {
+    miniMode() {
+      if (this.mediaType === 'pdf') {
+        this.$nextTick(() => {
+          this.generatePdfThumbnail();
+        });
+      }
+    }
   },
   template: /*html*/`
     <!-- Mini mode card -->
