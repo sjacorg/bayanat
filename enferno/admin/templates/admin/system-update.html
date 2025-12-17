@@ -99,7 +99,7 @@
                                 </v-tooltip>
                             </template>
                             <v-list>
-                                <v-list-item @click="confirmScheduledUpdate">
+                                <v-list-item @click="confirmUpdate('scheduled')">
                                     <template v-slot:prepend>
                                         <v-icon>mdi-clock-outline</v-icon>
                                     </template>
@@ -107,7 +107,7 @@
                                     <v-list-item-subtitle>{{ _('In 15 minutes with user notification') }}</v-list-item-subtitle>
                                 </v-list-item>
 
-                                <v-list-item @click="confirmUpdate">
+                                <v-list-item @click="confirmUpdate('immediate')">
                                     <template v-slot:prepend>
                                         <v-icon>mdi-flash</v-icon>
                                     </template>
@@ -168,75 +168,32 @@
 </v-main>
 
 <!-- Update Confirmation Dialog (Immediate) -->
-<v-dialog v-model="showConfirm" max-width="500">
-    <v-card>
-        <v-card-title>{{ _('Confirm Immediate Update') }}</v-card-title>
-        <v-divider></v-divider>
-
-        <v-card-text class="py-6">
-            <v-alert
-                type="warning"
-                icon="mdi-alert"
-                class="mb-4">
-                {{ _('The system will be immediately unavailable during the update.') }}
-            </v-alert>
-
-            <p>{{ _('Update from version') }} <strong>${currentVersion}</strong> {{ _('to') }} <strong>${latestVersion}</strong>?</p>
-            <p class="text-caption text-disabled mt-4">{{ _('This process typically takes a few minutes.') }}</p>
-        </v-card-text>
-
-        <v-divider></v-divider>
-        <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="showConfirm = false" variant="text">
-                {{ _('Cancel') }}
-            </v-btn>
-            <v-btn
-                @click="triggerUpdate"
-                color="primary"
-                variant="elevated"
-                :loading="updating">
-                {{ _('Update Now') }}
-            </v-btn>
-        </v-card-actions>
-    </v-card>
-</v-dialog>
-
-<!-- Scheduled Update Confirmation Dialog -->
-<v-dialog v-model="showScheduledConfirm" max-width="500">
-    <v-card>
-        <v-card-title>{{ _('Schedule System Update') }}</v-card-title>
-        <v-divider></v-divider>
-
-        <v-card-text class="py-6">
-            <v-alert
-                type="info"
-                icon="mdi-clock-outline"
-                class="mb-4">
-                {{ _('All users will be notified about the scheduled update.') }}
-            </v-alert>
-
-            <p>{{ _('Update from version') }} <strong>${currentVersion}</strong> {{ _('to') }} <strong>${latestVersion}</strong></p>
-            <p class="mt-4">{{ _('The update will start in') }} <strong>15 {{ _('minutes') }}</strong>.</p>
-            <p class="text-caption text-disabled mt-2">{{ _('Users will receive a notification to save their work and log out.') }}</p>
-        </v-card-text>
-
-        <v-divider></v-divider>
-        <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="showScheduledConfirm = false" variant="text">
-                {{ _('Cancel') }}
-            </v-btn>
-            <v-btn
-                @click="triggerScheduledUpdate"
-                color="primary"
-                variant="elevated"
-                :loading="scheduling">
-                {{ _('Schedule Update') }}
-            </v-btn>
-        </v-card-actions>
-    </v-card>
-</v-dialog>
+<confirm-dialog ref="confirmUpdateDialog">
+    <template #title="{ data }">
+        ${actionSections[data?.mode]?.title}
+    </template>
+    <template #default="{ data }">
+        <div class="text-body-2 mb-6 mt-3">{{ _('What you should know') }}</div>
+        <div class="d-flex flex-column ga-6">
+            <div v-for="(block, index) in actionSections[data?.mode]?.blocks" :key="index" class="d-flex">
+                <v-avatar color="white">
+                    <v-icon color="primary" size="x-large">${block.icon}</v-icon>
+                </v-avatar>
+                
+                <div class="ml-3">
+                    <h4 class="text-primary">${block.title}</h4>
+                    <div v-if="block?.description" class="text-body-2">${block.description}</div>
+                    <ul v-if="block?.bullets" class="text-body-2 pl-5">
+                        <li v-for="(bullet, index) in block.bullets" :key="index">${bullet}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="text-error font-weight-bold mt-6">{{ _('Important Notice') }}</div>
+        <div class="font-weight-bold text-body-2 ">{{ _('Proceed at your own risk.') }}</div>
+        <div class="text-body-2">{{ _('We STRONGLY RECOMMEND maintaining your own independent backup system to protect against unexpected failures.') }}</div>
+    </template>
+</confirm-dialog>
 
 {% endblock %}
 
@@ -249,6 +206,88 @@
     const { createVuetify } = Vuetify;
 
     const vuetify = createVuetify(vuetifyConfig);
+
+    const actionSections = {
+        immediate: {
+            title: "{{ _('You\'re about to update Bayanat to the latest version.') }} ",
+            acceptButtonText: "{{ _('Update Bayanat') }}",
+            blocks: [
+                {
+                    icon: "mdi-cloud-upload-outline",
+                    title: "{{ _('Backup Creation') }}",
+                    bullets: [
+                        "{{ _('Create a local backup of your database on the server to safeguard against potential issues during the update.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-monitor-arrow-down-variant",
+                    title: "{{ _('Download and Installation') }}",
+                    bullets: [
+                        "{{ _('Download the latest version of Bayanat from the official GitHub repository.') }}",
+                        "{{ _('Install any new dependencies required for this version.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-database-outline",
+                    title: "{{ _('Database Migrations') }}",
+                    bullets: [
+                        "{{ _('Apply database migrations necessary for compatibility with the updated version.') }}",
+                        "{{ _('Verify the database structure after migrations to ensure integrity.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-restart",
+                    title: "{{ _('System Restart') }}",
+                    bullets: [
+                        "{{ _('Restart services and bring Bayanat back online.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-sync-alert",
+                    title: "{{ _('Failure Recovery') }}",
+                    bullets: [
+                        "{{ _('If any issue occurs during the update, Bayanat will automatically restore the backup and revert to the previous version.') }}",
+                    ],
+                },
+            ],
+        },
+        scheduled: {
+            title: "{{ _('You\'re about to schedule a system update.') }}",
+            acceptButtonText: "{{ _('Schedule Update') }}",
+            blocks: [
+                {
+                    icon: "mdi-bell-alert-outline",
+                    title: "{{ _('User Notification') }}",
+                    bullets: [
+                        "{{ _('All active users will be notified that a system update is scheduled.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-clock-outline",
+                    title: "{{ _('Grace Period') }}",
+                    bullets: [
+                        "{{ _('The update will start in 15 minutes.') }}",
+                        "{{ _('Users can safely finish ongoing tasks during this time.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-cloud-upload-outline",
+                    title: "{{ _('Safe Update Process') }}",
+                    bullets: [
+                        "{{ _('A backup will be created before the update starts.') }}",
+                        "{{ _('If anything fails, the system will automatically recover.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-restart",
+                    title: "{{ _('Automatic Restart') }}",
+                    bullets: [
+                        "{{ _('Services will restart automatically once the update completes.') }}",
+                    ],
+                },
+            ],
+        },
+    };
 
     const app = createApp({
         delimiters: delimiters,
@@ -267,8 +306,6 @@
             updateProgress: 0,
             updateStatus: "{{ _('Initializing update') }}",
             showHistory: false,
-            showConfirm: false,
-            showScheduledConfirm: false,
             releaseNotes: null,
             updateHistory: [],
             updateTimer: null,
@@ -281,7 +318,10 @@
             },
             emptyHistoryText() {
                 return !this.updateHistory?.length ? '{{ _("No history yet") }}' : '{{ _("No more items in history") }}';
-            }
+            },
+            actionSections() {
+                return actionSections;
+            },
         },
         methods: {
             applyVersionInfo(data) {
@@ -319,20 +359,27 @@
                     });
             },
 
-            confirmUpdate() {
-                this.showConfirm = true;
-            },
-
-            confirmScheduledUpdate() {
-                this.showScheduledConfirm = true;
+            confirmUpdate(mode = 'immediate') {
+                this.$refs.confirmUpdateDialog.show({
+                    dialogProps: { width: 883 },
+                    data: { mode },
+                    acceptProps: { text: this.actionSections[mode].acceptButtonText },
+                    onAccept: async () => {
+                        console.log(mode)
+                        if (mode === 'scheduled') {
+                            await this.triggerScheduledUpdate();
+                        } else {
+                            await this.triggerUpdate();
+                        }
+                    },
+                });
             },
 
             triggerScheduledUpdate() {
-                this.showScheduledConfirm = false;
                 this.scheduling = true;
 
                 // Call the new scheduled update endpoint
-                api.post('/admin/api/system/update/schedule', {
+                return api.post('/admin/api/system/update/schedule', {
                     skip_backup: false
                 }).then(response => {
                     this.updateScheduled = true;
@@ -353,13 +400,12 @@
             },
 
             triggerUpdate() {
-                this.showConfirm = false;
                 this.updating = true;
                 this.updateProgress = 30;
                 this.updateStatus = "{{ _('Starting system update') }}";
 
                 // Trigger the update via existing API endpoint
-                api.post('/admin/api/system/update', {
+                return api.post('/admin/api/system/update', {
                     skip_backup: false
                 }).then(response => {
                     // Redirect to maintenance page (will auto-clear when update completes)
