@@ -34,6 +34,9 @@ const mediaMixin = {
     enableAttach() {
       return this.editedMedia.files && this.editedMedia.files.length > 0;
     },
+    dropzone() {
+      return Array.isArray(this.$refs.dropzone) ? this.$refs.dropzone[0].dz : this.$refs.dropzone.dz;
+    },
   },
 
   methods: {
@@ -48,7 +51,7 @@ const mediaMixin = {
       // Log the added file for debugging or monitoring
 
       // Get the Dropzone instance
-      const dropzone = this.$refs.dropzone.dz;
+      const dropzone = this.dropzone;
 
       // Check if there are any files in the Dropzone
       if (dropzone.files.length) {
@@ -86,7 +89,7 @@ const mediaMixin = {
       }
       if(this.editedItem.medias.some(m => m.etag === file.etag)) {
         this.showSnack(file.name + ' is already uploaded. Skipping...');
-        this.$refs.dropzone.dz.removeFile(file);
+        this.dropzone.removeFile(file);
         return;
       }
       this.editedMedia.files.push(file);
@@ -313,7 +316,7 @@ const mediaMixin = {
         this.editedItem.medias.push(item);
       }
 
-      this.$refs.dropzone.dz.removeAllFiles();
+      this.dropzone.removeAllFiles();
       this.closeMediaDialog();
     },
 
