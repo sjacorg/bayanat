@@ -2,7 +2,7 @@ const getDefaultMedia = () => ({
   title: '',
   files: [],
   category: null,
-})
+});
 
 const mediaMixin = {
   mixins: [reauthMixin],
@@ -12,59 +12,37 @@ const mediaMixin = {
       mediaDialog: false,
       snapshotDialog: false,
       media: null,
+
       editedMedia: {
         title: '',
         files: [],
         category: '',
       },
+
       expandedMedia: null,
       expandedMediaType: null,
+
       mediaPlayer: null,
       videoMeta: {},
       snapshot: null,
+
       cropper: {
         fullCanvas: null,
         canvas: null,
         tool: null,
         active: false,
+        previewScale: 1,
+        time: null,
       },
     };
   },
 
   /* ------------------------------------------------------------------
-   * COMPUTED — normalized refs
+   * COMPUTED (NO REFS HERE)
    * ------------------------------------------------------------------ */
   computed: {
     enableAttach() {
       return this.editedMedia.files?.length > 0;
-    },
-
-    dropzone() {
-      return this.getRef(this.$refs.dropzone)?.dz || null;
-    },
-
-    inlineMediaRenderer() {
-      return this.getRef(this.$refs.inlineMediaRendererRef);
-    },
-
-    inlineMediaRendererEl() {
-      return this.inlineMediaRenderer?.$el || null;
-    },
-
-    imageViewer() {
-      return this.inlineMediaRenderer?.$refs?.imageViewer || null;
-    },
-
-    pdfViewer() {
-      return this.inlineMediaRenderer?.$refs?.pdfViewer || null;
-    },
-
-    playerContainer() {
-      return (
-        this.inlineMediaRenderer?.$refs?.playerContainer ||
-        this.$refs.playerContainer ||
-        null
-      );
     },
   },
 
@@ -72,30 +50,60 @@ const mediaMixin = {
    * METHODS
    * ------------------------------------------------------------------ */
   methods: {
-    /* ---------- ref helper ---------- */
+    /* ---------- generic ref helper ---------- */
     getRef(ref) {
       if (!ref) return null;
       return Array.isArray(ref) ? ref[0] : ref;
     },
 
+    /* ---------- refs (RESOLVED AT CALL TIME) ---------- */
+    getDropzone() {
+      return this.getRef(this.$refs.dropzone)?.dz || null;
+    },
+
+    getInlineMediaRenderer() {
+      return this.getRef(this.$refs.inlineMediaRendererRef) || null;
+    },
+
+    getInlineMediaRendererEl() {
+      return this.getInlineMediaRenderer()?.$el || null;
+    },
+
+    getImageViewer() {
+      return this.getInlineMediaRenderer()?.$refs?.imageViewer || null;
+    },
+
+    getPdfViewer() {
+      return this.getInlineMediaRenderer()?.$refs?.pdfViewer || null;
+    },
+
+    getPlayerContainer() {
+      return (
+        this.getInlineMediaRenderer()?.$refs?.playerContainer ||
+        this.getRef(this.$refs.playerContainer) ||
+        null
+      );
+    },
+
+    /* ---------- errors ---------- */
     showError(err, message) {
       if ([401].includes(err?.xhr?.status)) {
         this.showLoginDialog();
       }
-      this.showSnack(handleRequestError({ response: { data: message }}));
+      this.showSnack(handleRequestError({ response: { data: message } }));
     },
 
     /* ---------- Dropzone ---------- */
     fileAdded(file) {
-      const dz = this.dropzone;
+      const dz = this.getDropzone();
       if (!dz) return;
 
       for (let i = 0; i < dz.files.length - 1; i++) {
-        const existingFile = dz.files[i];
+        const existing = dz.files[i];
         if (
-          existingFile.name === file.name &&
-          existingFile.size === file.size &&
-          existingFile.lastModified?.toString() === file.lastModified?.toString()
+          existing.name === file.name &&
+          existing.size === file.size &&
+          existing.lastModified?.toString() === file.lastModified?.toString()
         ) {
           dz.removeFile(file);
           break;
@@ -113,16 +121,14 @@ const mediaMixin = {
       file.etag = response.data.etag;
       file.filename = response.data.filename;
 
-      if (response.data.original_filename) {
+      if (response.data.original_filename && !this.editedMedia.title) {
         file.original_filename = response.data.original_filename;
-        if (!this.editedMedia.title) {
-          this.editedMedia.title = response.data.original_filename;
-        }
+        this.editedMedia.title = response.data.original_filename;
       }
 
       if (this.editedItem.medias.some(m => m.etag === file.etag)) {
         this.showSnack(`${file.name} is already uploaded. Skipping…`);
-        this.dropzone?.removeFile(file);
+        this.getDropzone()?.removeFile(file);
         return;
       }
 
@@ -142,8 +148,10 @@ const mediaMixin = {
       if (this.cropper.active) this.destroyCrop();
       this.openSnapshotDialog();
 
-      const videoElement = this.mediaPlayer.el().querySelector('video');
-      videoElement.pause();
+      const video = this.mediaPlayer?.el()?.querySelector('video');
+      if (!video) return;
+
+      video.pause();
 
       const { width, height } = this.videoMeta;
       const maxSize = 600;
@@ -155,14 +163,14 @@ const mediaMixin = {
       const fullCanvas = document.createElement('canvas');
       fullCanvas.width = width;
       fullCanvas.height = height;
-      fullCanvas.getContext('2d').drawImage(videoElement, 0, 0);
+      fullCanvas.getContext('2d').drawImage(video, 0, 0);
       this.cropper.fullCanvas = fullCanvas;
 
       const previewCanvas = document.createElement('canvas');
       previewCanvas.width = previewWidth;
       previewCanvas.height = previewHeight;
       previewCanvas.getContext('2d').drawImage(
-        videoElement,
+        video,
         0, 0, width, height,
         0, 0, previewWidth, previewHeight
       );
@@ -171,17 +179,18 @@ const mediaMixin = {
       this.cropper.previewScale = scale;
 
       this.$nextTick(() => {
-        const previewImage = document.querySelector('#cropImg');
-        previewImage.src = previewCanvas.toDataURL('image/jpeg');
+        const img = document.querySelector('#cropImg');
+        if (!img) return;
 
-        this.cropper.time = Math.round(videoElement.currentTime * 10) / 10;
-        this.cropper.tool = new Croppr(previewImage);
+        img.src = previewCanvas.toDataURL('image/jpeg');
+        this.cropper.time = Math.round(video.currentTime * 10) / 10;
+        this.cropper.tool = new Croppr(img);
         this.cropper.active = true;
       });
 
       this.snapshot = {
         ...this.videoMeta,
-        time: Math.round(videoElement.currentTime * 10) / 10,
+        time: Math.round(video.currentTime * 10) / 10,
         fileType: 'image/jpeg',
         ready: true,
       };
@@ -208,7 +217,6 @@ const mediaMixin = {
         const uploaded = response.data;
         this.snapshot.filename = uploaded.filename;
         this.snapshot.etag = uploaded.etag;
-        this.snapshot.ready = true;
 
         if (this.editedItem.medias.some(m => m.etag === uploaded.etag)) {
           this.showSnack('1 duplicate item skipped.');
@@ -226,9 +234,9 @@ const mediaMixin = {
         });
 
         this.closeSnapshotDialog();
-      } catch (error) {
-        console.error(error?.response?.data || error);
-        this.showSnack(error?.response?.data || 'Upload failed.');
+      } catch (e) {
+        console.error(e);
+        this.showSnack('Upload failed.');
       }
     },
 
@@ -270,12 +278,16 @@ const mediaMixin = {
       this.disposeMediaPlayer();
       this.media = media;
 
+      const container = this.getPlayerContainer();
+      if (!container?.isConnected) return;
+
       const videoElement = buildVideoElement();
       if (mediaType === 'audio') {
         videoElement.poster = '/static/img/waveform.png';
       }
 
-      this.playerContainer?.prepend(videoElement);
+      container.prepend(videoElement);
+      if (!videoElement.isConnected) return;
 
       this.mediaPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
       this.mediaPlayer.src({ src: media.s3url, type: media.fileType });
@@ -286,7 +298,9 @@ const mediaMixin = {
     },
 
     handleMetaData() {
-      const video = this.mediaPlayer.el().querySelector('video');
+      const video = this.mediaPlayer?.el()?.querySelector('video');
+      if (!video) return;
+
       this.videoMeta = {
         filename: video.src.getFilename(),
         time: video.currentTime,
@@ -327,7 +341,7 @@ const mediaMixin = {
         });
       }
 
-      this.dropzone?.removeAllFiles();
+      this.getDropzone()?.removeAllFiles();
       this.closeMediaDialog();
     },
 
@@ -335,6 +349,7 @@ const mediaMixin = {
       this.destroyCrop();
       this.editedMedia.files = [];
       this.mediaDialog = false;
+
       setTimeout(() => {
         this.editedMedia = getDefaultMedia();
       }, 300);
@@ -354,7 +369,7 @@ const mediaMixin = {
           this.viewMedia({ media, mediaType });
         }
 
-        this.inlineMediaRendererEl?.scrollIntoView({
+        this.getInlineMediaRendererEl()?.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         });
@@ -373,10 +388,10 @@ const mediaMixin = {
           this.mediaPlayer?.requestFullscreen();
           break;
         case 'image':
-          this.imageViewer?.requestFullscreen();
+          this.getImageViewer()?.requestFullscreen();
           break;
         case 'pdf':
-          this.pdfViewer?.requestFullscreen();
+          this.getPdfViewer()?.requestFullscreen();
           break;
       }
     },
