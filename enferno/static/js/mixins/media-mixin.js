@@ -32,19 +32,17 @@ const mediaMixin = {
   },
 
   /* ------------------------------------------------------------------
-   * COMPUTED — normalized refs live here
+   * COMPUTED — normalized refs
    * ------------------------------------------------------------------ */
   computed: {
     enableAttach() {
       return this.editedMedia.files?.length > 0;
     },
 
-    // Dropzone instance
     dropzone() {
       return this.getRef(this.$refs.dropzone)?.dz || null;
     },
 
-    // Inline media renderer
     inlineMediaRenderer() {
       return this.getRef(this.$refs.inlineMediaRendererRef);
     },
@@ -53,7 +51,6 @@ const mediaMixin = {
       return this.inlineMediaRenderer?.$el || null;
     },
 
-    // Inline renderer children
     imageViewer() {
       return this.inlineMediaRenderer?.$refs?.imageViewer || null;
     },
@@ -93,17 +90,15 @@ const mediaMixin = {
       const dz = this.dropzone;
       if (!dz) return;
 
-      if (dz.files.length) {
-        for (let i = 0; i < dz.files.length - 1; i++) {
-          const existingFile = dz.files[i];
-          if (
-            existingFile.name === file.name &&
-            existingFile.size === file.size &&
-            existingFile.lastModified?.toString() === file.lastModified?.toString()
-          ) {
-            dz.removeFile(file);
-            break;
-          }
+      for (let i = 0; i < dz.files.length - 1; i++) {
+        const existingFile = dz.files[i];
+        if (
+          existingFile.name === file.name &&
+          existingFile.size === file.size &&
+          existingFile.lastModified?.toString() === file.lastModified?.toString()
+        ) {
+          dz.removeFile(file);
+          break;
         }
       }
     },
@@ -178,6 +173,8 @@ const mediaMixin = {
       this.$nextTick(() => {
         const previewImage = document.querySelector('#cropImg');
         previewImage.src = previewCanvas.toDataURL('image/jpeg');
+
+        this.cropper.time = Math.round(videoElement.currentTime * 10) / 10;
         this.cropper.tool = new Croppr(previewImage);
         this.cropper.active = true;
       });
@@ -195,10 +192,51 @@ const mediaMixin = {
       this.cropper.active = false;
     },
 
+    async attachSnapshot(form) {
+      try {
+        const blob = await this.getCroppedImageData();
+
+        const formData = new FormData();
+        let filename = this.snapshot.filename;
+        if (!filename.endsWith('.jpg')) filename += '.jpg';
+        formData.append('file', blob, filename);
+
+        const response = await axios.post('/admin/api/media/upload', formData, {
+          headers: { 'content-type': false },
+        });
+
+        const uploaded = response.data;
+        this.snapshot.filename = uploaded.filename;
+        this.snapshot.etag = uploaded.etag;
+        this.snapshot.ready = true;
+
+        if (this.editedItem.medias.some(m => m.etag === uploaded.etag)) {
+          this.showSnack('1 duplicate item skipped.');
+          return;
+        }
+
+        this.editedItem.medias.push({
+          title: form.title,
+          title_ar: form.title_ar,
+          fileType: this.snapshot.fileType,
+          filename: uploaded.filename,
+          etag: uploaded.etag,
+          time: this.snapshot.time,
+          category: form.category,
+        });
+
+        this.closeSnapshotDialog();
+      } catch (error) {
+        console.error(error?.response?.data || error);
+        this.showSnack(error?.response?.data || 'Upload failed.');
+      }
+    },
+
     getCroppedImageData() {
       return new Promise(resolve => {
         const { x, y, width, height } = this.cropper.tool.getValue();
         const scale = this.cropper.previewScale;
+
         const canvas = document.createElement('canvas');
         canvas.width = width / scale;
         canvas.height = height / scale;
@@ -219,24 +257,32 @@ const mediaMixin = {
       });
     },
 
+    getFileName(path) {
+      return path
+        .split('/')
+        .pop()
+        .split(/[#?]/)[0]
+        .replace(/\.[^/.]+$/, '');
+    },
+
     /* ---------- Media viewing ---------- */
     viewMedia({ media, mediaType }) {
       this.disposeMediaPlayer();
       this.media = media;
 
-      if (['video', 'audio'].includes(mediaType)) {
-        const videoElement = buildVideoElement();
-        if (mediaType === 'audio') {
-          videoElement.poster = '/static/img/waveform.png';
-        }
-
-        this.playerContainer?.prepend(videoElement);
-
-        this.mediaPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
-        this.mediaPlayer.src({ src: media.s3url, type: media.fileType });
-        this.mediaPlayer.on('loadedmetadata', this.handleMetaData);
-        this.mediaPlayer.play();
+      const videoElement = buildVideoElement();
+      if (mediaType === 'audio') {
+        videoElement.poster = '/static/img/waveform.png';
       }
+
+      this.playerContainer?.prepend(videoElement);
+
+      this.mediaPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
+      this.mediaPlayer.src({ src: media.s3url, type: media.fileType });
+      this.mediaPlayer.on('loadedmetadata', this.handleMetaData);
+      this.mediaPlayer.play();
+
+      videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
     handleMetaData() {
@@ -256,6 +302,17 @@ const mediaMixin = {
     },
 
     /* ---------- Attach / detach ---------- */
+    addMedia() {
+      this.editedMedia = getDefaultMedia();
+      this.mediaDialog = true;
+    },
+
+    removeMedia(index) {
+      if (confirm('Are you sure?')) {
+        this.editedItem.medias.splice(index, 1);
+      }
+    },
+
     attachMedia() {
       for (const file of this.editedMedia.files) {
         const response = JSON.parse(file.xhr.response);
