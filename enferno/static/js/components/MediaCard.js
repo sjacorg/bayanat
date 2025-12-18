@@ -1,14 +1,12 @@
 const thumbnailContent = `
   <div @click="handleMediaClick" class="h-100">
     <!-- Image preview -->
+    <div v-if="isHoveringPreview && (mediaType === 'video' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
+      <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
+    </div>
+
     <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :data-src="s3url">
-      <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
-        <v-expand-transition>  
-          <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
-            <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
-          </div>
-        </v-expand-transition>
-      </img>
+      <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;"></img>
     </a>
 
     <!-- Video preview -->
