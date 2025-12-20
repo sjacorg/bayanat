@@ -5,7 +5,8 @@ from flask import Flask, render_template, current_app
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security import current_user
-from enferno.utils.maintenance import disable_maintenance
+from enferno.utils.maintenance import disable_maintenance, is_maintenance_mode
+from enferno.utils.update_utils import is_update_running, is_update_scheduled
 
 from enferno.admin.constants import Constants
 import enferno.commands as commands
@@ -89,10 +90,10 @@ def create_app(config_object=Config):
     register_signals(app)
     register_maintenance_middleware(app)
 
-    # Auto-clear maintenance after successful update (all update types)
-    if rds.get("bayanat:maintenance:auto_clear"):
+    # Clear stale maintenance lock on startup
+    # If maintenance is on but no update is running or scheduled, it's stale
+    if is_maintenance_mode() and not is_update_running() and not is_update_scheduled():
         disable_maintenance()
-        rds.delete("bayanat:maintenance:auto_clear")
 
     return app
 
