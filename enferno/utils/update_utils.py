@@ -134,7 +134,7 @@ def rollback_update(
         try:
             # Signal app to auto-clear maintenance if rollback succeeded
             if rollback_success:
-                rds.set("bayanat:maintenance:auto_clear", "1", ex=60)
+                rds.set("bayanat:maintenance:auto_clear", "1", ex=300)
             restart("bayanat")
             restart("bayanat-celery")
             logger.info("Services restarted after rollback")

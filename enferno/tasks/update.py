@@ -80,7 +80,8 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
             rds.delete("bayanat:release:notes")
 
             # Signal app to auto-clear maintenance on startup (handles all update types)
-            rds.set("bayanat:maintenance:auto_clear", "1", ex=60)
+            # 300s TTL gives ample time for slow service restarts (DB issues, heavy load)
+            rds.set("bayanat:maintenance:auto_clear", "1", ex=300)
 
             # Only record history if version actually changed
             if new_version != current_version:
