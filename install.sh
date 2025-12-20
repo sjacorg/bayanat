@@ -63,9 +63,9 @@ log "Setting up application..."
     log "Cloning repository..."
     git clone "$GIT_URL" /opt/bayanat
 
-    # Get latest release tag and checkout
+    # Get latest release tag from remote (source of truth) and checkout
     log "Checking for latest release tag..."
-    LATEST_TAG=$(git -C /opt/bayanat tag --list --sort=-version:refname | head -n1)
+    LATEST_TAG=$(git ls-remote --tags --refs --sort=-version:refname "$GIT_URL" | head -n1 | sed 's/.*refs\/tags\///')
 
     if [ -n "$LATEST_TAG" ]; then
         log "Checking out release: $LATEST_TAG"
