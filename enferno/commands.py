@@ -631,7 +631,6 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
     logger.info("Starting system update")
 
     project_root = Path(current_app.root_path).parent
-    stashed = False
     backup_file = None
     git_commit_before = None
 
@@ -655,16 +654,15 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
                 raise RuntimeError("Database backup failed")
             logger.info(f"Backup created: {backup_file}")
 
-        # 2) Git: stash local changes if any
+        # 2) Check for uncommitted changes - fail fast
         status = subprocess.run(
             ["git", "status", "--porcelain"], capture_output=True, text=True, cwd=project_root
         )
         if status.stdout.strip():
-            click.echo("Stashing local changes...")
-            subprocess.run(
-                ["git", "stash", "push", "-m", "auto-update stash"], check=True, cwd=project_root
+            raise RuntimeError(
+                "Cannot update: uncommitted changes detected. "
+                "Production should not have local modifications."
             )
-            stashed = True
 
         # 3) Fetch tags and get latest release from remote
         click.echo("Fetching latest release...")
@@ -759,13 +757,6 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
         )
 
         return (False, f"Update failed and rolled back: {e}")
-    finally:
-        if stashed:
-            logger.info("Local changes were stashed before update")
-            click.echo(
-                "Note: Local changes have been stashed. Review with 'git stash list' "
-                "and apply manually if needed with 'git stash pop'."
-            )
 
 
 @click.command()
