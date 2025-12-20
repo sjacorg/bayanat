@@ -41,9 +41,7 @@ def perform_system_update_task(skip_backup: bool = False, user_id: int = None) -
         return {"success": False, "error": "Update already running"}
 
     # If we get here, we acquired the lock - finally block WILL cleanup
-    # Initialize versions early so they're available in exception handler
     current_version = None
-    target_version = Config.VERSION
 
     try:
 
