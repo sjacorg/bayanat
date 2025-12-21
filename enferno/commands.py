@@ -654,9 +654,13 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
                 raise RuntimeError("Database backup failed")
             logger.info(f"Backup created: {backup_file}")
 
-        # 2) Check for uncommitted changes - fail fast
+        # 2) Check for uncommitted changes to tracked files - fail fast
+        # (ignore untracked files like instance/, logs/, etc.)
         status = subprocess.run(
-            ["git", "status", "--porcelain"], capture_output=True, text=True, cwd=project_root
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            capture_output=True,
+            text=True,
+            cwd=project_root,
         )
         if status.stdout.strip():
             raise RuntimeError(
