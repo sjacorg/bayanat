@@ -924,29 +924,41 @@ def process_row(
 
 
 def restart_service(service_name="bayanat"):
-    """Unified restart logic: systemd → socket API → signal fallback."""
+    """Restart service via socket API (production) or SIGHUP (dev)."""
     import os
     import signal
     import shutil
     from flask import current_app
 
-    # Production mode = systemctl command exists
     is_production = shutil.which("systemctl") is not None
 
     if is_production:
         try:
             response = requests.post(
-                "http://127.0.0.1:8080/restart-service", json={"service": service_name}, timeout=2
+                "http://127.0.0.1:8080/restart-service",
+                json={"service": service_name},
+                timeout=5,
             )
             if response.status_code == 200:
+                if current_app:
+                    current_app.logger.info(f"Restart requested: {service_name}")
                 return
-        except Exception:
-            pass  # Fall through to signal
+            if current_app:
+                current_app.logger.error(f"Restart API returned {response.status_code}")
+        except Exception as e:
+            if current_app:
+                current_app.logger.error(f"Restart API failed: {e}")
+        # Production: don't fall through to SIGHUP - it won't work
+        return
 
-    # Dev mode or fallback: SIGHUP parent process
-    if current_app:
-        current_app.logger.info(f"Dev restart: {service_name} via SIGHUP")
-    os.kill(os.getppid(), signal.SIGHUP)
+    # Dev mode only: SIGHUP parent process
+    try:
+        if current_app:
+            current_app.logger.info(f"Dev restart: {service_name} via SIGHUP")
+        os.kill(os.getppid(), signal.SIGHUP)
+    except PermissionError:
+        if current_app:
+            current_app.logger.warning("SIGHUP failed (permission denied) - manual restart needed")
 
 
 def reload_app():
