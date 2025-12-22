@@ -677,14 +677,14 @@ def run_system_update(skip_backup: bool = False, restart_service: bool = True) -
             cwd=project_root,
         )
 
-        # Get latest tag from remote (not local tags)
-        repo_url = f"https://github.com/{Config.BAYANAT_REPO}.git"
+        # Get latest tag from configured origin remote
         result = subprocess.run(
-            ["git", "ls-remote", "--tags", "--refs", "--sort=-version:refname", repo_url],
+            ["git", "ls-remote", "--tags", "--refs", "--sort=-version:refname", "origin"],
             capture_output=True,
             text=True,
             check=True,
             timeout=10,
+            cwd=project_root,
         )
 
         if not result.stdout.strip():
