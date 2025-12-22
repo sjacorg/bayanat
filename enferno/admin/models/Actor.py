@@ -186,6 +186,11 @@ class Actor(db.Model, BaseMixin):
             "id_number",
             postgresql_using="gin",
         ),
+        db.Index(
+            "ix_actor_meta_gin",
+            "meta",
+            postgresql_using="gin",
+        ),
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
         db.CheckConstraint(
             "validate_actor_id_number(id_number)", name="check_actor_id_number_element_structure"
