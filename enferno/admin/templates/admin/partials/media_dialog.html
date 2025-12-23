@@ -36,7 +36,7 @@
           :mini-mode="Boolean(expandedMedia)"
           enable-delete
           :medias="editedItem.medias"
-          @media-click="handleExpandedMedia($event); Array.isArray($refs.bulletinDialogSplitViewRef) ? $refs.bulletinDialogSplitViewRef[0]?.resetToCenter() : $refs.bulletinDialogSplitViewRef?.resetToCenter();"
+          @media-click="handleExpandedMedia($event); getRef($refs.bulletinDialogSplitViewRef)?.resetToCenter()"
           @remove-media="removeMedia"
         ></media-grid>
       </v-card-text>
