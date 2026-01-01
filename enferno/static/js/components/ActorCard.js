@@ -399,7 +399,7 @@ const ActorCard = Vue.defineComponent({
                 :media="$root.expandedByRenderer['actor-card']?.media"
                 :media-type="$root.expandedByRenderer['actor-card']?.mediaType"
                 @ready="$root.onMediaRendererReady"
-                @fullscreen="$root.handleFullscreen"
+                @fullscreen="$root.handleFullscreen('actor-card')"
                 @close="$root.closeExpandedMedia('actor-card')"
               ></inline-media-renderer>
 
