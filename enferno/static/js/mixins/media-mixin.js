@@ -292,11 +292,15 @@ const mediaMixin = {
     },
 
     disposeMediaPlayer(rendererId) {
-      const player = this.mediaPlayers?.[rendererId]
-      if (!player) return
-
-      player.dispose()
-      delete this.mediaPlayers[rendererId]
+      if (rendererId) {
+        const player = this.mediaPlayers?.[rendererId]
+        if (!player) return
+  
+        player.dispose()
+        delete this.mediaPlayers[rendererId]
+      } else {
+        this.mediaPlayers = {}
+      }
     },
 
 
@@ -363,9 +367,14 @@ const mediaMixin = {
       }
     },
     closeExpandedMedia(rendererId) {
+      if (rendererId) {
+        delete this.expandedByRenderer[rendererId];
+        delete this.pendingMediaByRenderer[rendererId];
+      } else {
+        this.expandedByRenderer = {};
+        this.pendingMediaByRenderer = {};
+      }
       this.disposeMediaPlayer(rendererId)
-      delete this.expandedByRenderer[rendererId]
-      delete this.pendingMediaByRenderer[rendererId]
     },
     handleFullscreen(rendererId) {
       const expanded = this.expandedByRenderer[rendererId]
