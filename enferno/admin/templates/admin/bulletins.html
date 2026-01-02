@@ -811,6 +811,7 @@
 
                     bulletinDrawer: function (val) {
                         if (val === false) {
+                            this.closeExpandedMedia();
                             this.bulletin = {};
                             if (this.$route.path !== '/admin/bulletins/')
                                 this.$router.push('/admin/bulletins/')
@@ -1546,7 +1547,7 @@
                     close() {
                         this.dialog = false;
                         this.actorDialog = false;
-                        this.closeExpandedMedia('media-dialog');
+                        this.closeExpandedMedia();
                         this.closeMediaDialog();
                         this.closeSnapshotDialog();
                         setTimeout(() => {
