@@ -817,6 +817,9 @@
                                 this.$router.push('/admin/bulletins/')
                         }
                     },
+                    preview: function (nextVal) {
+                        if (nextVal === false) this.closeExpandedMedia('actor-card'); this.closeExpandedMedia('bulletin-card');
+                    },
 
 
                     selected: {
