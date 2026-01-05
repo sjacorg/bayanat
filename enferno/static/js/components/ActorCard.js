@@ -1,6 +1,7 @@
 const ActorCard = Vue.defineComponent({
   props: ['actor', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
+  mixins: [mediaMixin],
   mounted() {
     this.$root.fetchDynamicFields({ entityType: 'actor' });
     this.fetchData();
@@ -395,16 +396,15 @@ const ActorCard = Vue.defineComponent({
               </v-toolbar>
 
               <inline-media-renderer
-                renderer-id="actor-card"
-                :media="$root.expandedByRenderer['actor-card']?.media"
-                :media-type="$root.expandedByRenderer['actor-card']?.mediaType"
-                @ready="$root.onMediaRendererReady"
-                @fullscreen="$root.handleFullscreen('actor-card')"
-                @close="$root.closeExpandedMedia('actor-card')"
+                :media="expandedMedia"
+                :media-type="expandedMediaType"
+                ref="inlineMediaRendererRef"
+                @fullscreen="handleFullscreen"
+                @close="closeExpandedMedia"
               ></inline-media-renderer>
 
               <v-card-text>
-                <media-grid prioritize-videos :medias="actor.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'actor-card', ...$event})"></media-grid>
+                <media-grid prioritize-videos :medias="actor.medias" @media-click="handleExpandedMedia"></media-grid>
               </v-card-text>
             </v-card>
           </div>

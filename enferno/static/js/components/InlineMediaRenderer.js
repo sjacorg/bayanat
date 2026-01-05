@@ -1,8 +1,5 @@
 const InlineMediaRenderer = Vue.defineComponent({
     props: {
-      rendererId: {
-        type: String,
-      },
       media: {
         type: Object,
       },
@@ -17,7 +14,7 @@ const InlineMediaRenderer = Vue.defineComponent({
         default: 'height: 450px;'
       },
     },
-    emits: ['ready', 'fullscreen', 'close'],
+    emits: ['fullscreen', 'close'],
     data: () => ({
       translations: window.translations,
       iconMap: {
@@ -28,36 +25,8 @@ const InlineMediaRenderer = Vue.defineComponent({
         unknown: 'mdi-file-download'
       },
     }),
-    methods: {
-      emitReady() {
-        this.$nextTick(() => {
-          this.$emit('ready', {
-            rendererId: this.rendererId,
-            playerContainer:  this.$refs.playerContainer ?? null,
-            requestFullscreen: this.requestFullscreen,
-            scrollIntoView: (options) => {
-              this.$refs.inlineMediaRenderer?.scrollIntoView?.(options);
-            }
-          });
-        });
-      },
-      requestFullscreen() {
-        if (this.mediaType === 'image') {
-          this.$refs.imageViewer?.requestFullscreen?.();
-        }
-
-        if (this.mediaType === 'pdf') {
-          this.$refs.pdfViewer?.requestFullscreen?.();
-        }
-      }
-    },
-    watch: {
-      media(nextMedia) {
-        if (nextMedia) this.emitReady();
-      },
-    },
     template: `
-      <div ref="inlineMediaRenderer" v-if="media">
+      <div v-if="media">
         <v-toolbar density="compact" class="px-2">
           <div v-if="useMetadata" class="w-100 d-flex justify-space-between align-center">
             <div class="d-flex align-center">

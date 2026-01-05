@@ -10,16 +10,16 @@ const mediaMixin = {
     return {
       mediaDialog: false,
       snapshotDialog: false,
+      media: null,
       editedMedia: {
         title: '',
         files: [],
         category: '',
       },
-      renderers: {},
-      pendingMediaByRenderer: {},
-      expandedByRenderer: {},
-      dropzoneInstance: null,
-      mediaPlayers: {},
+      expandedMedia: null,
+      expandedMediaType: null,
+      mediaPlayer: null,
+      videoMeta: {},
       snapshot: null,
       cropper: {
         fullCanvas: null, // Full-resolution canvas for cropping
@@ -48,8 +48,7 @@ const mediaMixin = {
       // Log the added file for debugging or monitoring
 
       // Get the Dropzone instance
-      const dropzone = this.dropzoneInstance;
-      if (!dropzone) return;
+      const dropzone = this.$refs.dropzone.dz;
 
       // Check if there are any files in the Dropzone
       if (dropzone.files.length) {
@@ -87,7 +86,7 @@ const mediaMixin = {
       }
       if(this.editedItem.medias.some(m => m.etag === file.etag)) {
         this.showSnack(file.name + ' is already uploaded. Skipping...');
-        this.dropzoneInstance?.removeFile(file);
+        this.$refs.dropzone.dz.removeFile(file);
         return;
       }
       this.editedMedia.files.push(file);
@@ -100,18 +99,15 @@ const mediaMixin = {
       this.snapshotDialog = false;
     },
 
-    initCroppr(rendererId) {
+    initCroppr() {
       if (this.cropper.active) this.destroyCrop();
       this.openSnapshotDialog();
     
-      const player = this.mediaPlayers[rendererId]
-      if (!player) return
-
-      const videoElement = player.el().querySelector('video')
+      const videoElement = this.mediaPlayer.el().querySelector('video');
       videoElement.pause();
     
-      const originalWidth = this.renderers[rendererId].videoMeta.width;
-      const originalHeight = this.renderers[rendererId].videoMeta.height;
+      const originalWidth = this.videoMeta.width;
+      const originalHeight = this.videoMeta.height;
       const maxPreviewWidth = 600;
       const maxPreviewHeight = 600;
 
@@ -155,7 +151,7 @@ const mediaMixin = {
       });
     
       this.snapshot = {
-        ...this.renderers[rendererId].videoMeta,
+        ...this.videoMeta,
         time: Math.round(videoElement.currentTime * 10) / 10,
         fileType: 'image/jpeg',
         ready: true,
@@ -241,68 +237,42 @@ const mediaMixin = {
       });
     },
 
-    viewMedia({ rendererId, media, mediaType }) {
-      const renderer = this.renderers[rendererId]
-      if (!renderer?.playerContainer) {
-        console.warn('mediaPlayerContainer not found for', rendererId)
-        return
-      }
+    viewMedia({ media, mediaType }) {
+      // Cleanup existing player if it exists
+      this.disposeMediaPlayer();
+      this.media = media;
 
-      // ✅ dispose ONLY this renderer's player
-      this.disposeMediaPlayer(rendererId)
-
-      const videoElement = buildVideoElement()
-
+      const videoElement = buildVideoElement();
       if (mediaType === 'audio') {
-        videoElement.poster = '/static/img/waveform.png'
+        videoElement.poster = '/static/img/waveform.png';
       }
 
-      renderer.playerContainer.prepend(videoElement)
+      const playerContainer = this.$refs.inlineMediaRendererRef.$refs.playerContainer || this.$refs.playerContainer; // Ensure you have a ref="playerContainer" on the container element
+      playerContainer.prepend(videoElement);
 
-      const player = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS)
+      this.mediaPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
 
-      player.src({
-        src: media.s3url,
-        type: media?.fileType ?? 'video/mp4'
-      })
-
-      player.on('loadedmetadata', () => {
-        this.handleMetaData(rendererId, player)
-      })
-
-      player.play()
-
-      this.mediaPlayers[rendererId] = player
-
-      renderer.scrollIntoView?.({
-        behavior: 'smooth',
-        block: 'nearest'
-      })
+      this.mediaPlayer.src({ src: media.s3url, type: media?.fileType ?? 'video/mp4' });
+      this.mediaPlayer.on('loadedmetadata', this.handleMetaData);
+      this.mediaPlayer.play();
+      videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
-    handleMetaData(rendererId, player) {
-      const video = player.el().querySelector('video')
-
-      this.renderers[rendererId].videoMeta = {
-        filename: video.src.getFilename(),
-        time: video.currentTime,
-        width: video.videoWidth,
-        height: video.videoHeight,
-      }
+    handleMetaData() {
+      const videoElement = this.mediaPlayer.el().querySelector('video');
+      this.videoMeta = {
+        filename: videoElement.src.getFilename(),
+        time: videoElement.currentTime,
+        width: videoElement.videoWidth,
+        height: videoElement.videoHeight,
+      };
     },
 
-    disposeMediaPlayer(rendererId) {
-      if (rendererId) {
-        const player = this.mediaPlayers?.[rendererId]
-        if (!player) return
-  
-        player.dispose()
-        delete this.mediaPlayers[rendererId]
-      } else {
-        this.mediaPlayers = {}
-      }
+    disposeMediaPlayer() {
+      this.mediaPlayer?.dispose?.();
+      this.mediaPlayer = null;
+      this.media = null;
     },
-
 
     addMedia(media, item, index) {
       this.editedMedia = getDefaultMedia()
@@ -343,74 +313,51 @@ const mediaMixin = {
         this.editedItem.medias.push(item);
       }
 
-      this.dropzoneInstance?.removeAllFiles();
+      this.$refs.dropzone.dz.removeAllFiles();
       this.closeMediaDialog();
     },
 
-    handleExpandedMedia({ rendererId, media, mediaType }) {
-      const current = this.expandedByRenderer[rendererId]
-      // toggle same media on same renderer
-      if (current?.media?.s3url === media?.s3url) {
-        this.closeExpandedMedia(rendererId)
-        return
+    handleExpandedMedia({media, mediaType}) {
+      const isSameContent = this.expandedMedia?.s3url === media?.s3url
+      if (isSameContent) {
+        return this.closeExpandedMedia();
       }
 
-      this.expandedByRenderer[rendererId] = {
-        media,
-        mediaType,
-      }
+      this.expandedMedia = media;
+      this.expandedMediaType = mediaType;
 
-      if (['video', 'audio'].includes(mediaType)) {
-        this.pendingMediaByRenderer[rendererId] = { media, mediaType }
-      } else {
-        delete this.pendingMediaByRenderer[rendererId]
-      }
-    },
-    closeExpandedMedia(rendererId) {
-      if (rendererId) {
-        delete this.expandedByRenderer[rendererId];
-        delete this.pendingMediaByRenderer[rendererId];
-      } else {
-        this.expandedByRenderer = {};
-        this.pendingMediaByRenderer = {};
-      }
-      this.disposeMediaPlayer(rendererId)
-    },
-    handleFullscreen(rendererId) {
-      const expanded = this.expandedByRenderer[rendererId]
-      const renderer = this.renderers[rendererId]
-      if (!expanded || !renderer) return
+      if (!media || !mediaType) return
 
-      if (['video', 'audio'].includes(expanded.mediaType)) {
-        this.mediaPlayers[rendererId]?.requestFullscreen()
-      } else {
-        renderer.requestFullscreen?.()
-      }
-    },
-    onMediaRendererReady({ rendererId, playerContainer, requestFullscreen, scrollIntoView }) {
-      if (!rendererId) return
-
-      this.renderers[rendererId] = {
-        playerContainer,
-        requestFullscreen,
-        scrollIntoView,
-        videoMeta: null,
-      }
-
-      const pending = this.pendingMediaByRenderer[rendererId]
-
-      if (pending && playerContainer) {
-        delete this.pendingMediaByRenderer[rendererId]
-        this.viewMedia({ rendererId, ...pending })
-      }
-
-      this.renderers[rendererId]?.scrollIntoView?.({
-        behavior: 'smooth',
-        block: 'center',
+      this.$nextTick(() => {
+        if (['video', 'audio'].includes(mediaType)) {
+          this.viewMedia({ media, mediaType });
+        }
+        this.$refs.inlineMediaRendererRef?.$el?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+        })
       })
+
     },
-    onDropzoneReady(dz) {
-      this.dropzoneInstance = dz
+    closeExpandedMedia() {
+      this.expandedMedia = null;
+      this.expandedMediaType = null;
     },
+    handleFullscreen() {
+      switch (this.expandedMediaType) {
+        case 'audio':
+        case 'video':
+          this.mediaPlayer?.requestFullscreen()
+          break;
+        case 'image':
+          this.$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()
+          break;
+        case 'pdf':
+          this.$refs.inlineMediaRendererRef?.$refs?.pdfViewer?.requestFullscreen()
+          break;
+        default:
+          break;
+      }
+    }
   }
 };

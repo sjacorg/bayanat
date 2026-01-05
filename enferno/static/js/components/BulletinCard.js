@@ -1,6 +1,7 @@
 const BulletinCard = Vue.defineComponent({
   props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
+  mixins: [mediaMixin],
   watch: {
     bulletin: function (val, old) {
 
@@ -379,17 +380,16 @@ const BulletinCard = Vue.defineComponent({
         </v-toolbar>
 
         <inline-media-renderer
-          renderer-id="bulletin-card"
-          :media="$root.expandedByRenderer['bulletin-card']?.media"
-          :media-type="$root.expandedByRenderer['bulletin-card']?.mediaType"
-          @ready="$root.onMediaRendererReady"
-          @fullscreen="$root.handleFullscreen('bulletin-card')"
-          @close="$root.closeExpandedMedia('bulletin-card')"
+          :media="expandedMedia"
+          :media-type="expandedMediaType"
+          ref="inlineMediaRendererRef"
+          @fullscreen="handleFullscreen"
+          @close="closeExpandedMedia"
         ></inline-media-renderer>
         
         <v-card-text>
           
-          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'bulletin-card', ...$event })"></media-grid>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="handleExpandedMedia"></media-grid>
         </v-card-text>
       </v-card>
 
