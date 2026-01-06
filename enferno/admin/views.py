@@ -5456,6 +5456,7 @@ def api_user_suspend(id: int) -> Response:
 
     user.set_status(UserStatus.SUSPENDED)
     user.save()
+    user.create_revision()
 
     Activity.create(
         current_user,
@@ -5508,6 +5509,7 @@ def api_user_reactivate(id: int) -> Response:
     try:
         user.set_status(UserStatus.ACTIVE)
         user.save()
+        user.create_revision()
     except ValueError as e:
         return HTTPResponse.error(str(e))
 
@@ -5550,6 +5552,7 @@ def api_user_disable(id: int) -> Response:
 
     user.set_status(UserStatus.DISABLED)
     user.save()
+    user.create_revision()
 
     Activity.create(
         current_user,
@@ -5608,6 +5611,7 @@ def api_user_enable(id: int) -> Response:
         message = f"User {user.username} enabled. Assign roles and reactivate to restore access."
 
     user.save()
+    user.create_revision()
 
     Activity.create(
         current_user,
