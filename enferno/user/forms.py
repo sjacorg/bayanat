@@ -42,9 +42,12 @@ class ExtendedLoginForm(LoginForm):
                 logger.warning(f"User {user.username} blocked - no system role")
 
                 Activity.create(
-                    user_id=user.id,
-                    action="Login blocked - no system role",
-                    details=f"User attempted login without assigned role",
+                    user=user,
+                    action=Activity.ACTION_LOGIN,
+                    status=Activity.STATUS_DENIED,
+                    subject={"class": "user", "id": user.id},
+                    model="User",
+                    details="Login blocked - no system role assigned",
                 )
 
                 Notification.send_admin_notification_for_event(
