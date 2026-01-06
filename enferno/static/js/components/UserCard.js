@@ -265,6 +265,69 @@ const UserCard = Vue.defineComponent({
     enableAccount() {
       this.openAccountDialog("enable");
     },
+    parseUserAgent(ua) {
+      const uaLower = ua.toLowerCase();
+
+      // ---- Device ----
+      let device = 'desktop';
+      if (/mobile|iphone|android|ipad/.test(uaLower)) {
+        device = /ipad/.test(uaLower) ? 'tablet' : 'mobile';
+      }
+
+      // ---- OS ----
+      let os = 'unknown';
+      if (/mac os x/.test(uaLower)) os = 'macos';
+      else if (/windows nt/.test(uaLower)) os = 'windows';
+      else if (/android/.test(uaLower)) os = 'android';
+      else if (/iphone|ipad|ipod/.test(uaLower)) os = 'ios';
+      else if (/linux/.test(uaLower)) os = 'linux';
+
+      // ---- Browser (family, not flavor) ----
+      let browser = 'unknown';
+      if (uaLower.includes('firefox')) {
+        browser = 'firefox';
+      } else if (
+        /safari/.test(uaLower) &&
+        !uaLower.includes('chrome') &&
+        !uaLower.includes('crios') &&
+        !uaLower.includes('fxios')
+      ) {
+        browser = 'safari';
+      } else if (uaLower.includes('chrome') || uaLower.includes('chromium')) {
+        browser = 'chrome'; // Chrome, Brave, Edge, Opera
+      }
+
+      // ---- Display label ----
+      const OS_LABEL = {
+        macos: 'Mac',
+        windows: 'Windows',
+        linux: 'Linux',
+        ios: 'iPhone',
+        android: 'Android',
+        unknown: window.translations.unknownOS_
+      };
+
+      const BROWSER_LABEL = {
+        chrome: 'Chrome',
+        firefox: 'Firefox',
+        safari: 'Safari',
+        unknown: window.translations.unknownBrowser_
+      };
+
+      const DEVICE_LABEL = {
+        desktop: window.translations.desktop_,
+        mobile: window.translations.mobile_,
+        tablet: window.translations.tablet_
+      };
+
+      return {
+        deviceLabel: `${OS_LABEL[os]} (${DEVICE_LABEL[device]})`,
+        device,   // desktop | mobile | tablet
+        os,       // macos | windows | linux | ios | android
+        browser,  // chrome | firefox | safari
+        browserLabel: BROWSER_LABEL[browser]
+      };
+    }
   },
   watch: {
     user(val, old) {
@@ -608,11 +671,11 @@ const UserCard = Vue.defineComponent({
 
 
                 </td>
-                <td>
-                  {{ session.meta.os }}
+                <td class="text-caption">
+                  {{ parseUserAgent(session.meta.device)?.deviceLabel }}
                 </td>
                 <td class="text-caption">
-                  {{ session.meta.browser }}
+                  {{ parseUserAgent(session.meta.device)?.browserLabel }}
                 </td>
                 <td class="text-caption">{{ $root.formatDate(session.created_at, $root.dateFormats.standardDatetime, $root.dateOptions.local) }}</td>
                 <td>
