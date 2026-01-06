@@ -483,15 +483,6 @@ const ActorCard = Vue.defineComponent({
           </v-card-text>
         </v-card>
 
-        <!-- Meta (Import Data) -->
-        <v-expansion-panels v-if="actor.meta" class="ma-2">
-          <v-expansion-panel title="Import Metadata">
-            <v-expansion-panel-text>
-              <pre style="white-space: pre-wrap; font-size: 12px;">{{ typeof actor.meta === 'string' ? JSON.stringify(JSON.parse(actor.meta), null, 2) : JSON.stringify(actor.meta, null, 2) }}</pre>
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
-
         <!-- Log -->
         <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
           <v-card-text>
