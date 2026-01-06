@@ -843,6 +843,7 @@ class Actor(db.Model, BaseMixin):
             "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
             "roles": [role.to_dict() for role in self.roles] if self.roles else [],
             "actor_profiles": [profile.to_dict() for profile in self.actor_profiles],
+            "meta": self.meta,
         }
 
         return actor
