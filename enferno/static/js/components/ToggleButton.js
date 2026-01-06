@@ -6,6 +6,7 @@ const ToggleButton = Vue.defineComponent({
     hideLeftIcon: { type: Boolean, default: false },
     closable: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
+    rounded: { type: String, default: () => null },
   },
   emits: ['update:modelValue', 'close'],
 
@@ -52,6 +53,7 @@ const ToggleButton = Vue.defineComponent({
       :readonly="readOnly"
       :disabled="disabled"
       @click="onClick"
+      :rounded="rounded"
     >
       <template v-if="showLeftCheck">
         <v-icon start size="small">mdi-check</v-icon>

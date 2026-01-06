@@ -530,6 +530,7 @@ const UserCard = Vue.defineComponent({
                     read-only
                     hide-left-icon
                     :model-value="true"
+                    rounded="xl"
                   >
                     {{ $root.systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name }}
                   </toggle-button>
@@ -547,6 +548,7 @@ const UserCard = Vue.defineComponent({
                     read-only
                     hide-left-icon
                     :model-value="true"
+                    rounded="xl"
                   >
                     {{ role.name }}
                   </toggle-button>
