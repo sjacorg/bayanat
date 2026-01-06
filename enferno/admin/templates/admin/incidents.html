@@ -1118,7 +1118,7 @@
                 searchUsers: debounce(function (evt) {
                     this.searchLoading[evt.target.dataset.loader] = true;
 
-                    api.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
+                    api.get(`/admin/api/users/assignable?q=${evt.target.value}`).then(response => {
                         this.users = response.data.items;
                         this.searchLoading[evt.target.dataset.loader] = false;
                     });

@@ -509,7 +509,7 @@
                             </div>
     
                             <!-- No diff between this revision and previous -->
-                            <div v-if="index > 0 && !DiffTool.hasDiff(revisionState.history[index + 1]?.data, revision.data)"
+                            <div v-if="!DiffTool.hasDiff(revisionState.history[index + 1]?.data, revision.data)"
                                 class="font-italic text-medium-emphasis mt-1"
                             >
                                 {{ _('No changes in this configuration') }}
