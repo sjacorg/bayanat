@@ -484,10 +484,10 @@ const ActorCard = Vue.defineComponent({
         </v-card>
 
         <!-- Meta (Import Data) -->
-        <v-expansion-panels v-if="actor.meta && Object.keys(actor.meta).length" class="ma-2">
+        <v-expansion-panels v-if="actor.meta" class="ma-2">
           <v-expansion-panel title="Import Metadata">
             <v-expansion-panel-text>
-              <pre style="white-space: pre-wrap; font-size: 12px;">{{ JSON.stringify(actor.meta, null, 2) }}</pre>
+              <pre style="white-space: pre-wrap; font-size: 12px;">{{ typeof actor.meta === 'string' ? JSON.stringify(JSON.parse(actor.meta), null, 2) : JSON.stringify(actor.meta, null, 2) }}</pre>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
