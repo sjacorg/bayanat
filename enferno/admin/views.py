@@ -5412,7 +5412,17 @@ def api_user_force_reset(validated_data: dict) -> Response:
         message = f"Forced password reset already requested: {reset_key}"
         return HTTPResponse.error(message)
     user.set_security_reset_key()
-    message = f"User ‘{user.name}’ will reset password at next sign-in."
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_UPDATE,
+        Activity.STATUS_SUCCESS,
+        user.to_mini(),
+        "user",
+        details="force password reset requested",
+    )
+
+    message = f"User '{user.name}' will reset password at next sign-in."
     return HTTPResponse.success(message=message)
 
 
