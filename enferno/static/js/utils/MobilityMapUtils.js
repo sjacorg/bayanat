@@ -261,7 +261,9 @@ const MobilityMapUtils = {
     const nextId = this.createIdGenerator(events.map(ev => ev.location || {}));
 
     // 1. Sort events chronologically
-    const sorted = [...events].sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
+    const sorted = [...events].sort(
+      (a, b) => new Date(a.from_date) - new Date(b.from_date)
+    );
 
     const locationMap = new Map();
     const flowMap = new Map();
@@ -272,6 +274,7 @@ const MobilityMapUtils = {
       if (!loc) return;
 
       const id = Number.isFinite(Number(loc.id)) ? Number(loc.id) : nextId();
+      const eventType = event.eventtype?.title || null;
 
       if (!locationMap.has(id)) {
         locationMap.set(id, {
@@ -288,6 +291,7 @@ const MobilityMapUtils = {
           total_events: 0,
 
           markerType: 'event',
+          events_by_type: {}, // ✅ ADD
           events: [],
         });
       }
@@ -295,21 +299,19 @@ const MobilityMapUtils = {
       const entry = locationMap.get(id);
       entry.total_events += 1;
 
+      // Aggregate location event types
+      if (eventType) {
+        entry.events_by_type[eventType] =
+          (entry.events_by_type[eventType] || 0) + 1;
+      }
+
       entry.events.push({
         eventId: event.id,
-
-        // For your "#1, #2, #3…" display
         number: index + 1,
-
         title: event.title,
-
-        // ✅ Matches tooltip Expectation
-        eventType: event.eventtype?.title || null,
-
-        // ✅ Match naming used later
+        eventType,
         from_date: event.from_date,
         to_date: event.to_date,
-
         estimated: Boolean(event.estimated),
         main: Boolean(event.main),
 
@@ -320,8 +322,11 @@ const MobilityMapUtils = {
 
     // 3. Build flows
     for (let i = 0; i < sorted.length - 1; i++) {
-      const current = sorted[i].location;
-      const next = sorted[i + 1].location;
+      const currentEvent = sorted[i];
+      const nextEvent = sorted[i + 1];
+
+      const current = currentEvent.location;
+      const next = nextEvent.location;
 
       if (!current || !next) continue;
       if (current.id === next.id) continue;
@@ -333,10 +338,20 @@ const MobilityMapUtils = {
           origin: current.id,
           dest: next.id,
           count: 0,
+          events_by_type: {},
         });
       }
 
-      flowMap.get(key).count += 1;
+      const flow = flowMap.get(key);
+      flow.count += 1;
+
+      // ✅ USE NEXT EVENT TYPE (this is the fix)
+      const eventType = nextEvent.eventtype?.title || null;
+
+      if (eventType) {
+        flow.events_by_type[eventType] =
+          (flow.events_by_type[eventType] || 0) + 1;
+      }
     }
 
     return {

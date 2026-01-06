@@ -34,8 +34,8 @@ class FlowmapUtils:
 
         locations = list(locations_map.values())
         flows = [
-            {"origin": origin_id, "dest": dest_id, "count": count}
-            for (origin_id, dest_id), count in flows_map.items()
+            {"origin": origin_id, "dest": dest_id, "events_by_type": events_by_type}
+            for (origin_id, dest_id), events_by_type in flows_map.items()
         ]
 
         metadata = FlowmapUtils._build_metadata(actors, locations, flows, date_range)
@@ -70,7 +70,7 @@ class FlowmapUtils:
         Args:
             actor: Actor object with events
             locations_map: Dictionary of location_id -> location data
-            flows_map: Dictionary of (origin_id, dest_id) -> count
+            flows_map: Dictionary of (origin_id, dest_id) -> {event_type: count}
             date_range: Dictionary tracking min/max dates
         """
         events = FlowmapUtils._get_sorted_events(actor)
@@ -86,12 +86,14 @@ class FlowmapUtils:
 
             location = event.location
             location_id = location.id
+            event_type = event.eventtype.title if event.eventtype else "Unknown"
 
             # Add or update location
             if location_id not in locations_map:
                 locations_map[location_id] = FlowmapUtils._create_location_data(location)
 
-            locations_map[location_id]["total_events"] += 1
+            events_by_type = locations_map[location_id]["events_by_type"]
+            events_by_type[event_type] = events_by_type.get(event_type, 0) + 1
 
             # Track date range
             FlowmapUtils._update_date_range(event, date_range)
@@ -99,7 +101,9 @@ class FlowmapUtils:
             # Create flow from previous location to current
             if prev_location_id and prev_location_id != location_id:
                 flow_key = (prev_location_id, location_id)
-                flows_map[flow_key] = flows_map.get(flow_key, 0) + 1
+                if flow_key not in flows_map:
+                    flows_map[flow_key] = {}
+                flows_map[flow_key][event_type] = flows_map[flow_key].get(event_type, 0) + 1
 
             prev_location_id = location_id
 
@@ -131,7 +135,7 @@ class FlowmapUtils:
             location: Location object with latlng
 
         Returns:
-            dict: Location data with id, name, lat, lon, total_events
+            dict: Location data with id, name, lat, lon, events_by_type
         """
         shape = to_shape(location.latlng)
         return {
@@ -139,7 +143,7 @@ class FlowmapUtils:
             "name": location.full_location or location.title or f"Location {location.id}",
             "lat": shape.y,
             "lon": shape.x,
-            "total_events": 0,
+            "events_by_type": {},
         }
 
     @staticmethod
