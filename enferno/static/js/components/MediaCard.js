@@ -144,7 +144,6 @@ const MediaCard = Vue.defineComponent({
       pdfThumbnailUrl: null,
       translations: window.translations,
       thumbnailBrightness: 0,
-      pdfCanvas: null,
       iconMap: {
         image: 'mdi-image',
         video: 'mdi-video',
