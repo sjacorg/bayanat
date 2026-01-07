@@ -974,6 +974,7 @@
                             this.loading = true;
                             api.post('/admin/api/user/force-reset-all').then(res => {
                                 this.showSnack(res.data);
+                                window.location.reload();
                             }).catch(err => {
                                 console.error(err?.response?.data);
                             }).finally(() => {
