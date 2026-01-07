@@ -170,6 +170,10 @@ const MediaCard = Vue.defineComponent({
     this.init();
   },
   methods: {
+    async loadPdfJs() {
+      await loadScript('/static/js/pdf.js/pdf.min.js');
+      await loadScript('/static/js/pdf.js/pdf.worker.min.js');
+    },
     init() {
       api.get(`/admin/api/media/${this.media.filename}`)
         .then(response => {
@@ -211,6 +215,8 @@ const MediaCard = Vue.defineComponent({
     },
     async generatePdfThumbnail() {
       try {
+        if (typeof pdfjsLib === 'undefined') await this.loadPdfJs();
+
         if (!this.$refs.pdfThumbnailRef) return;
         if (this.pdfCanvas) {
           this.$refs.pdfThumbnailRef.classList.remove("align-center");
