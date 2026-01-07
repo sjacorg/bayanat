@@ -27,7 +27,7 @@ const GeoMap = Vue.defineComponent({
       default: () => [],
     },
   },
-  emits: ['update:modelValue', 'copied', 'copyError'],
+  emits: ['update:modelValue'],
 
   computed: {
     mapStyle() {
@@ -360,10 +360,8 @@ const GeoMap = Vue.defineComponent({
     async copyToClipboard(text) {
       try {
         await navigator.clipboard.writeText(text);
-        this.$emit('copied', text);
         this.$root?.showSnack?.(this.translations.copiedToClipboard_);
       } catch (err) {
-        this.$emit('copyError', err);
         this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_);
       }
     }
