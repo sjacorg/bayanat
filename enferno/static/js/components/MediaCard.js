@@ -21,7 +21,7 @@ const thumbnailContent = `
 
     <!-- PDF preview -->
     <div v-else-if="mediaType === 'pdf'" :class="['d-flex justify-center bg-grey-lighten-2 h-100 overflow-hidden', { 'align-center': !pdfThumbnailUrl, 'pa-4 align-start': pdfThumbnailUrl }]">
-      <img v-if="pdfThumbnailUrl" :src="pdfThumbnailUrl" class="w-100" style="border-radius: 4px" />
+      <img v-if="pdfThumbnailUrl" :src="pdfThumbnailUrl" class="w-100 rounded elevation-4" />
       <v-icon v-else size="64" color="red">mdi-file-pdf-box</v-icon>
     </div>
 
