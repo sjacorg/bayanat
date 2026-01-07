@@ -240,6 +240,7 @@ const UserCard = Vue.defineComponent({
           }
           await api.post(`/admin/api/user/${this.user.id}/${mode}`, payload);
           await this.$root.refreshUser(this.user.id);
+          await this.$root.refresh();
           this.username = '';
           this.password = '';
           this.showPassword = false;
