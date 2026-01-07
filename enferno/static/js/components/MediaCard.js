@@ -20,9 +20,9 @@ const thumbnailContent = `
     </v-img>
 
     <!-- PDF preview -->
-    <div ref="pdfThumbnailRef" v-else-if="mediaType === 'pdf'"
-            class="d-flex align-center justify-center bg-grey-lighten-2 h-100 overflow-hidden">
-      <v-icon size="64" color="red">mdi-file-pdf-box</v-icon>
+    <div v-else-if="mediaType === 'pdf'" :class="['d-flex justify-center bg-grey-lighten-2 h-100 overflow-hidden', { 'align-center': !pdfThumbnailUrl, 'pa-4 align-start': pdfThumbnailUrl }]">
+      <img v-if="pdfThumbnailUrl" :src="pdfThumbnailUrl" class="w-100" style="border-radius: 4px" />
+      <v-icon v-else size="64" color="red">mdi-file-pdf-box</v-icon>
     </div>
 
     <!-- Audio preview -->
@@ -141,6 +141,7 @@ const MediaCard = Vue.defineComponent({
       s3url: '',
       videoDuration: null,
       videoThumbnail: null,
+      pdfThumbnailUrl: null,
       translations: window.translations,
       thumbnailBrightness: 0,
       pdfCanvas: null,
@@ -217,15 +218,6 @@ const MediaCard = Vue.defineComponent({
       try {
         if (typeof pdfjsLib === 'undefined') await this.loadPdfJs();
 
-        if (!this.$refs.pdfThumbnailRef) return;
-        if (this.pdfCanvas) {
-          this.$refs.pdfThumbnailRef.classList.remove("align-center");
-          this.$refs.pdfThumbnailRef.classList.add("pa-4", "align-start");
-          this.$refs.pdfThumbnailRef.innerHTML = "";
-          this.$refs.pdfThumbnailRef.appendChild(this.pdfCanvas);
-          return;
-        }
-
         const pdf = await pdfjsLib.getDocument(this.s3url).promise;
         const page = await pdf.getPage(1);
 
@@ -257,11 +249,7 @@ const MediaCard = Vue.defineComponent({
           viewport: renderViewport
         }).promise;
 
-        this.pdfCanvas = canvas;
-        this.$refs.pdfThumbnailRef.classList.remove("align-center");
-        this.$refs.pdfThumbnailRef.classList.add("pa-4", "align-start");
-        this.$refs.pdfThumbnailRef.innerHTML = "";
-        this.$refs.pdfThumbnailRef.appendChild(this.pdfCanvas);
+        this.pdfThumbnailUrl = canvas.toDataURL('image/png');
       } catch (err) {
         console.error("PDF thumbnail error:", err);
       }
@@ -311,15 +299,6 @@ const MediaCard = Vue.defineComponent({
         .then(() => this.$root.showSnack('Copied to clipboard'))
         .catch(() => this.$root.showSnack('Failed to copy to clipboard'));
     },
-  },
-  watch: {
-    miniMode() {
-      if (this.mediaType === 'pdf') {
-        this.$nextTick(() => {
-          this.generatePdfThumbnail();
-        });
-      }
-    }
   },
   template: /*html*/`
     <!-- Mini mode card -->
