@@ -27,7 +27,7 @@ const GeoMap = Vue.defineComponent({
       default: () => [],
     },
   },
-  emits: ['update:modelValue'],
+  emits: ['update:modelValue', 'copied', 'copyError'],
 
   computed: {
     mapStyle() {
@@ -213,8 +213,6 @@ const GeoMap = Vue.defineComponent({
       if (this.lat && this.lng && this.map) {
         this.map.setView([this.lat, this.lng]);
         this.setMarker({ latlng: { lat: this.lat, lng: this.lng } });
-      } else {
-        this.clearMarker();
       }
     },
 
@@ -358,18 +356,38 @@ const GeoMap = Vue.defineComponent({
         this.map.fitBounds(bounds);
       }, 250)();
     },
+
+    async copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        this.$emit('copied', text);
+        this.$root?.showSnack?.(this.translations.copiedToClipboard_);
+      } catch (err) {
+        this.$emit('copyError', err);
+        this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_);
+      }
+    }
+
   },
   template: `
       <v-card class="pa-1" elevation="0">
         <v-card-text>
           <h3 v-if="title" class="mb-5">{{ title }}</h3>
           <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
-            <v-text-field v-bind="inputProps" type="number" min="-90" max="90" label="Latitude"
-                          :rules="[validationRules.required()]"
-                          v-model.number="lat"></v-text-field>
-            <v-text-field v-bind="inputProps" type="number" min="-180" max="180" label="Longitude"
-                          :rules="[validationRules.required()]"
-                          v-model.number="lng"></v-text-field>
+            <v-text-field
+              v-bind="inputProps" type="number" min="-90" max="90" label="Latitude"
+              :rules="[validationRules.required()]"
+              v-model.number="lat"
+              append-inner-icon="mdi-content-copy"
+              @click:append-inner="copyToClipboard(lat)"
+            ></v-text-field>
+            <v-text-field
+              v-bind="inputProps" type="number" min="-180" max="180" label="Longitude"
+              :rules="[validationRules.required()]"
+              v-model.number="lng"
+              append-inner-icon="mdi-content-copy"
+              @click:append-inner="copyToClipboard(lng)"
+            ></v-text-field>
             <v-btn icon variant="flat" v-if="lat && lng" @click="clearMarker">
               <v-icon>mdi-close</v-icon>
             </v-btn>
