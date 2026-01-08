@@ -536,48 +536,6 @@ const MobilityMap = Vue.defineComponent({
       return { outgoing: 0, incoming: 0 };
     },
 
-    // NEW: cluster-aware arrow aggregation with pair breakdown
-    getClusterArrowDetails(clusterFrom, clusterTo) {
-      const fromCluster = this.clusterDefs[clusterFrom];
-      const toCluster = this.clusterDefs[clusterTo];
-      if (!fromCluster || !toCluster) {
-        return { total: 0, pairs: [], fromMembers: [], toMembers: [] };
-      }
-
-      const fromMembers = fromCluster.memberIds;
-      const toMembers = toCluster.memberIds;
-
-      const pairsMap = new Map();
-      let total = 0;
-
-      this.currentFlows.forEach((f) => {
-        if (fromMembers.includes(f.from) && toMembers.includes(f.to)) {
-          total += f.weight;
-          const key = `${f.from}|${f.to}`;
-          if (!pairsMap.has(key)) {
-            pairsMap.set(key, {
-              fromId: f.from,
-              toId: f.to,
-              weight: 0,
-            });
-          }
-          const entry = pairsMap.get(key);
-          entry.weight += f.weight;
-        }
-      });
-
-      const pairs = Array.from(pairsMap.values()).map((p) => ({
-        ...p,
-        fromLabel: this.points[p.fromId]?.label || p.fromId,
-        toLabel: this.points[p.toId]?.label || p.toId,
-      }));
-
-      // Sort pairs by weight desc
-      pairs.sort((a, b) => b.weight - a.weight);
-
-      return { total, pairs, fromMembers, toMembers };
-    },
-
     /* =============================================
      CLICK HANDLING
     ============================================= */
