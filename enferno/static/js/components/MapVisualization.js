@@ -68,7 +68,7 @@ const MapVisualization = Vue.defineComponent({
       handler(nextValue) {
         // When an entity is selected, show all event types
         if (nextValue && Object.keys(nextValue).length === 0) {
-          this.selectedEventTypes = [...this.uniqueEventTypes].filter(t => t !== 'Residence' && t !== 'Birth');
+          this.selectedEventTypes = this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
         } else {
           this.selectedEventTypes = [...this.uniqueEventTypes];
         }
@@ -121,6 +121,9 @@ const MapVisualization = Vue.defineComponent({
   },
 
   methods: {
+    getDefaultSelectedEventTypes(eventTypes = []) {
+      return [...eventTypes].filter(this.isDefaultSelectedEventType);
+    },
     matchesSelectedEventTypes(entity) {
       // No filters selected → show everything
       if (!this.selectedEventTypes.length) return true;
@@ -182,7 +185,7 @@ const MapVisualization = Vue.defineComponent({
       this.flows = result.flows;
 
       // Preselect all event types, omit Residence and Birth by default
-      this.selectedEventTypes = [...this.uniqueEventTypes].filter(t => t !== 'Residence' && t !== 'Birth');
+      this.selectedEventTypes = this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
 
       this.loading = false;
     },
