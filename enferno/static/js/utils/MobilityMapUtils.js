@@ -303,29 +303,6 @@ const MobilityMapUtils = {
     };
   },
 
-  findClosestCluster(newCluster, oldClusters, projFn) {
-    let closest = null;
-    let minDist = Infinity;
-
-    const newPx = projFn(newCluster.centerLat, newCluster.centerLon);
-
-    oldClusters.forEach((old) => {
-      const oldPx = projFn(old.centerLat, old.centerLon);
-      const dist = Math.hypot(newPx.x - oldPx.x, newPx.y - oldPx.y);
-
-      if (dist < minDist) {
-        minDist = dist;
-        closest = old;
-      }
-    });
-
-    return { cluster: closest, dist: minDist };
-  },
-
-  lerp(a, b, t) {
-    return a + (b - a) * t;
-  },
-
   filterFlows(flows, selectedPoint = null) {
     const base = flows.map((f) => ({
       from: f.origin,
