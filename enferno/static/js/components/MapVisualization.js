@@ -66,16 +66,6 @@ const MapVisualization = Vue.defineComponent({
         this.$emit('closeEntityDetails');
       },
     },
-    entity: {
-      handler(nextEntity) {
-        // When an entity is selected, show all event types
-        if (nextEntity && Object.keys(nextEntity).length === 0) {
-          this.selectedEventTypes = this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
-        } else {
-          this.selectedEventTypes = [...this.uniqueEventTypes];
-        }
-      },
-    },
   },
 
   computed: {
@@ -123,6 +113,13 @@ const MapVisualization = Vue.defineComponent({
   },
 
   methods: {
+    applyDefaultEventTypes() {
+      this.selectedEventTypes =
+        this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
+    },
+    applyAllEventTypes() {
+      this.selectedEventTypes = [...this.uniqueEventTypes];
+    },
     getDefaultSelectedEventTypes(eventTypes = []) {
       return [...eventTypes].filter(this.isDefaultSelectedEventType);
     },
@@ -190,7 +187,7 @@ const MapVisualization = Vue.defineComponent({
       this.flows = result.flows;
 
       // Preselect all event types, omit Residence and Birth by default
-      this.selectedEventTypes = this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
+      this.applyDefaultEventTypes();
 
       this.loading = false;
     },
@@ -331,12 +328,14 @@ const MapVisualization = Vue.defineComponent({
       if (!this.entities.drawer) {
         this.$emit('closeEntityDetails');
         this.entities.selected = null;
+        this.applyDefaultEventTypes();
       }
     },
 
     onEntityClick(entity) {
       this.$emit('showEntityDetails', entity);
       this.entities.selected = entity;
+      this.applyAllEventTypes();
     },
   },
 
