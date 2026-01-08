@@ -265,21 +265,15 @@ const MobilityMap = Vue.defineComponent({
       // Map cluster → screen coords
       const clusterPixels = this.getClusterPixels();
 
-      // ============================
       // 1 Merge flows by direction
-      // ============================
       const mergedArrows = this.mergeArrows(clusterPixels);
 
-      // ============================
       // 2 Compute min/max for MERGED arrows
-      // ============================
       const weights = Object.values(mergedArrows).map(s => s.weight);
       const arrowMin = weights.length ? Math.min(...weights) : 0;
       const arrowMax = weights.length ? Math.max(...weights) : 0;
 
-      // ============================
       // 3 Compute final widths (using merged range)
-      // ============================
       Object.values(mergedArrows).forEach((seg) => {
         seg.width = MobilityMapUtils.getArrowWidth(
           seg.weight,
@@ -289,16 +283,11 @@ const MobilityMap = Vue.defineComponent({
         );
       });
 
-      // ============================
       // 4 Apply bidirectional spacing
-      // ============================
       this.applyBidirectionalSpacing(mergedArrows);
 
-      const finalSegments = Object.values(mergedArrows);
-
-      // ============================
       // 5 Draw arrows
-      // ============================
+      const finalSegments = Object.values(mergedArrows);
       finalSegments
         .sort((a, b) => a.width - b.width) // thin first, thick last
         .forEach((seg) => {
@@ -315,47 +304,8 @@ const MobilityMap = Vue.defineComponent({
           );
         });
 
-      // ============================
       // 6 Draw clusters
-      // ============================
-      this.clusterDefs.forEach((c) => {
-        const p = clusterPixels[c.id];
-        if (!p) return;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, c.radius, 0, Math.PI * 2);
-        ctx.fillStyle = MobilityMapUtils.CONFIG.colors.dot.fill;
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke;
-        ctx.stroke();
-
-        // 🟡 Draw label if cluster has more than 1 location
-        if (c.memberIds.length > 1) {
-          const label = c.memberIds.length;
-          const fontSize = Math.max(10, c.radius);
-
-          ctx.font = `${fontSize}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-
-          // Stroke first (for sharp edge)
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-          ctx.strokeText(label, p.x, p.y);
-
-          // Fill on top
-          ctx.fillStyle = '#fff';
-          ctx.fillText(label, p.x, p.y);
-        }
-
-        this.dotShapes.push({
-          center: { x: p.x, y: p.y },
-          radius: c.radius,
-          key: c.memberIds.join(','),
-          clusterId: c.id,
-        });
-      });
+      this.drawClusters(ctx, clusterPixels);
 
       this.arrowShapes.sort((a, b) => a.weight - b.weight);
     },
@@ -456,6 +406,47 @@ const MobilityMap = Vue.defineComponent({
       });
 
       return merged;
+    },
+
+    drawClusters(ctx, clusterPixels) {
+      this.clusterDefs.forEach((c) => {
+        const p = clusterPixels[c.id];
+        if (!p) return;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, c.radius, 0, Math.PI * 2);
+        ctx.fillStyle = MobilityMapUtils.CONFIG.colors.dot.fill;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = MobilityMapUtils.CONFIG.colors.dot.stroke;
+        ctx.stroke();
+
+        // 🟡 Draw label if cluster has more than 1 location
+        if (c.memberIds.length > 1) {
+          const label = c.memberIds.length;
+          const fontSize = Math.max(10, c.radius);
+
+          ctx.font = `${fontSize}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Stroke first (for sharp edge)
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+          ctx.strokeText(label, p.x, p.y);
+
+          // Fill on top
+          ctx.fillStyle = '#fff';
+          ctx.fillText(label, p.x, p.y);
+        }
+
+        this.dotShapes.push({
+          center: { x: p.x, y: p.y },
+          radius: c.radius,
+          key: c.memberIds.join(','),
+          clusterId: c.id,
+        });
+      });
     },
 
     applyBidirectionalSpacing(mergedArrows) {
