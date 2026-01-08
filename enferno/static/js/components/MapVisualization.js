@@ -490,6 +490,7 @@ const MapVisualization = Vue.defineComponent({
           location="right"
           :width="drawerWidth"
           :scrim="false"
+          temporary
         >
           <!-- Toggle button that sticks out -->
           <v-card class="position-absolute pa-1" :style="{ left: '-48px', top: '50%', transform: 'translateY(-50%)', borderRadius: '12px 0 0 12px' }">
