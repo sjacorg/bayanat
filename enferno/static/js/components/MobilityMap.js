@@ -18,12 +18,6 @@ const MobilityMap = Vue.defineComponent({
       translations: window.translations,
       zooming: false,
 
-      // Morphing state
-      morphing: false,
-      morphProgress: 1,
-      morphFrom: null,
-      morphTo: null,
-
       // Location id -> { latlng, label }
       points: {},
 
@@ -67,7 +61,6 @@ const MobilityMap = Vue.defineComponent({
   },
 
   beforeUnmount() {
-    this.morphing = false;
     window.removeEventListener('resize', this.resizeCanvas);
     if (this.map) {
       this.map.off();
@@ -162,104 +155,9 @@ const MobilityMap = Vue.defineComponent({
       this.map.on('zoom', this.scheduleFrame);
       this.map.on('zoomanim', this.scheduleFrame);
 
-      // Morph instead of hard rebuild
-      this.map.on('zoomstart', () => {
-        this.zooming = true;
-      });
-      this.map.on('zoomend', () => {
-        if (!this.zooming) return;
-        this.zooming = false;
-
-        // Allow canvas to update center points correctly
-        requestAnimationFrame(() => {
-          this.startMorph();
-        });
-      });
+      this.map.on('zoomend', () => requestAnimationFrame(() => this.rebuildShapes()));
 
       window.addEventListener('resize', this.resizeCanvas);
-    },
-
-    /* ================= MORPH CORE ================= */
-    startMorph() {
-      if (this.morphing || !this.clusterDefs.length) return;
-
-      const oldClusters = JSON.parse(JSON.stringify(this.clusterDefs));
-      const oldFlows = JSON.parse(JSON.stringify(this.flowGroups));
-
-      // Generate new target
-      this.rebuildShapes();
-      if (!this.clusterDefs.length) {
-        this.morphing = false;
-        return;
-      }
-
-      const newClusters = JSON.parse(JSON.stringify(this.clusterDefs));
-      const newFlows = JSON.parse(JSON.stringify(this.flowGroups));
-
-      const fullTarget = [...newClusters];
-      const maxDist = 150;
-
-      oldClusters.forEach((oldC) => {
-        const match = MobilityMapUtils.findClosestCluster(oldC, newClusters, (lat, lng) =>
-          this.map.latLngToContainerPoint([lat, lng]),
-        );
-        if (!match.cluster || match.dist > maxDist) {
-          fullTarget.push({
-            ...oldC,
-            radius: 0,
-            fadingOut: true,
-          });
-        }
-      });
-
-      this.morphFrom = { clusters: oldClusters, flows: oldFlows };
-      this.morphTo = { clusters: fullTarget, flows: newFlows };
-
-      this.morphProgress = 0;
-      this.morphing = true;
-
-      this.animateMorph();
-    },
-
-    animateMorph() {
-      if (!this.morphing) return;
-
-      const speed = 0.1;
-
-      this.morphProgress += speed;
-
-      if (this.morphProgress >= 1) {
-        this.morphProgress = 1;
-        this.morphing = false;
-
-        this.clusterDefs = this.morphTo.clusters.filter((c) => !c.fadingOut);
-        this.flowGroups = this.morphTo.flows;
-        this.drawFrame();
-        return;
-      }
-
-      const interpolated = this.morphTo.clusters.map((target) => {
-        const { cluster: oldC } = MobilityMapUtils.findClosestCluster(
-          target,
-          this.morphFrom.clusters,
-          (lat, lng) => this.map.latLngToContainerPoint([lat, lng]),
-        );
-
-        if (!oldC) return target;
-
-        return {
-          ...target,
-          centerLat: MobilityMapUtils.lerp(oldC.centerLat, target.centerLat, this.morphProgress),
-          centerLon: MobilityMapUtils.lerp(oldC.centerLon, target.centerLon, this.morphProgress),
-          radius: MobilityMapUtils.lerp(oldC.radius, target.radius, this.morphProgress),
-        };
-      });
-
-      this.clusterDefs = interpolated;
-      this.flowGroups = this.morphTo.flows;
-
-      this.drawFrame();
-      requestAnimationFrame(this.animateMorph.bind(this));
     },
 
     scheduleFrame() {
@@ -684,7 +582,6 @@ const MobilityMap = Vue.defineComponent({
      CLICK HANDLING
     ============================================= */
     onMapClick(e) {
-      if (this.morphing) return;
       const p = this.map.latLngToContainerPoint(e.latlng);
 
       for (const dot of this.dotShapes) {
