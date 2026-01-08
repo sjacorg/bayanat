@@ -24,6 +24,8 @@ const MapVisualization = Vue.defineComponent({
   data: () => ({
     translations: window.translations,
     selectedEventTypes: [],
+    drawerWidth: 398,
+    navHeight: 64,
 
     localSearch: '',
 
@@ -65,9 +67,9 @@ const MapVisualization = Vue.defineComponent({
       },
     },
     entity: {
-      handler(nextValue) {
+      handler(nextEntity) {
         // When an entity is selected, show all event types
-        if (nextValue && Object.keys(nextValue).length === 0) {
+        if (nextEntity && Object.keys(nextEntity).length === 0) {
           this.selectedEventTypes = this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
         } else {
           this.selectedEventTypes = [...this.uniqueEventTypes];
@@ -123,6 +125,9 @@ const MapVisualization = Vue.defineComponent({
   methods: {
     getDefaultSelectedEventTypes(eventTypes = []) {
       return [...eventTypes].filter(this.isDefaultSelectedEventType);
+    },
+    isDefaultSelectedEventType(eventType) {
+      return eventType !== 'Residence' && eventType !== 'Birth';
     },
     matchesSelectedEventTypes(entity) {
       // No filters selected → show everything
@@ -426,7 +431,7 @@ const MapVisualization = Vue.defineComponent({
           :locations="computedMapData.locations"
           :flows="computedMapData.flows"
           class="w-100 h-100"
-          :viewport-padding="{ right: entities.drawer ? 398 : 0, top: 64 }"
+          :viewport-padding="{ right: entities.drawer ? drawerWidth : 0, top: navHeight }"
           :disable-clustering="Boolean(entities.selected)"
           :mode="Boolean(entities.selected) ? 'event' : null"
         />
@@ -483,7 +488,7 @@ const MapVisualization = Vue.defineComponent({
         <v-navigation-drawer
           v-model="entities.drawer"
           location="right"
-          width="398"
+          :width="drawerWidth"
           :scrim="false"
         >
           <!-- Toggle button that sticks out -->
