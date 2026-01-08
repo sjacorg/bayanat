@@ -274,8 +274,8 @@ const MobilityMap = Vue.defineComponent({
       // 2 Compute min/max for MERGED arrows
       // ============================
       const weights = Object.values(mergedArrows).map(s => s.weight);
-      const arrowMin = Math.min(...weights, 0);
-      const arrowMax = Math.max(...weights, 0);
+      const arrowMin = weights.length ? Math.min(...weights) : 0;
+      const arrowMax = weights.length ? Math.max(...weights) : 0;
 
       // ============================
       // 3 Compute final widths (using merged range)

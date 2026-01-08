@@ -40,7 +40,7 @@ const MobilityMapUtils = {
     sizes: {
       arrowPaddingCompensation: 0.25,
       bidirectionalArrowSpacing: 1,
-      arrowWidths: [1, 2, 3, 4, 5, 6],
+      arrowWidths: [2, 3, 4, 5, 6, 7],
       dotSizes: [6, 9, 12, 15, 18, 22],
     },
 
