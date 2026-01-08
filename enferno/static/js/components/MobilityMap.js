@@ -16,7 +16,6 @@ const MobilityMap = Vue.defineComponent({
       ctx: null,
       frameRequested: false,
       translations: window.translations,
-      zooming: false,
 
       // Location id -> { latlng, label }
       points: {},

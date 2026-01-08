@@ -25,7 +25,6 @@ const MapVisualization = Vue.defineComponent({
     translations: window.translations,
     selectedEventTypes: [],
     drawerWidth: 398,
-    navHeight: 64,
 
     localSearch: '',
 
@@ -36,7 +35,6 @@ const MapVisualization = Vue.defineComponent({
     locations: [],
     flows: [],
 
-    infiniteScrollCallback: null,
     entities: {
       selected: null,
       drawer: false,
@@ -264,7 +262,6 @@ const MapVisualization = Vue.defineComponent({
       this.entities.nextCursor = null;
       this.entities.total = null;
       this.entities.loading = false;
-      this.infiniteScrollCallback = null;
 
       // Reset the v-infinite-scroll internal state
       this.$nextTick(() => {
@@ -273,10 +270,6 @@ const MapVisualization = Vue.defineComponent({
     },
 
     loadEntities(options) {
-      if (options?.done) {
-        this.infiniteScrollCallback = options.done;
-      }
-
       if (this.entities.loading) return;
 
       this.entities.loading = true;
@@ -430,7 +423,7 @@ const MapVisualization = Vue.defineComponent({
           :locations="computedMapData.locations"
           :flows="computedMapData.flows"
           class="w-100 h-100"
-          :viewport-padding="{ right: entities.drawer ? drawerWidth : 0, top: navHeight }"
+          :viewport-padding="{ right: entities.drawer ? drawerWidth : 0, top: 64 }"
           :disable-clustering="Boolean(entities.selected)"
           :mode="Boolean(entities.selected) ? 'event' : null"
         />
