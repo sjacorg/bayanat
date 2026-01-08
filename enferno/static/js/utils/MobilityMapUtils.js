@@ -502,8 +502,9 @@ const MobilityMapUtils = {
     const MAX_VISIBLE = 3;
 
     if (names.length > MAX_VISIBLE) {
-      const visible = names.slice(0, MAX_VISIBLE);
-      return `${visible.join(', ')} and ${names.length - MAX_VISIBLE} more`;
+      const visibleCityNames = names.slice(0, MAX_VISIBLE);
+      const remainingCount = names.length - MAX_VISIBLE;
+      return window.translations.cityListWithMore_(visibleCityNames, remainingCount)
     }
 
     return names.join(', ');
