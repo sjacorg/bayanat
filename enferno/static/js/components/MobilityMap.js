@@ -263,52 +263,12 @@ const MobilityMap = Vue.defineComponent({
       }
 
       // Map cluster → screen coords
-      const clusterPixels = {};
-      this.clusterDefs.forEach((c) => {
-        const latlng = L.latLng(c.centerLat, c.centerLon);
-        clusterPixels[c.id] = this.map.latLngToContainerPoint(latlng);
-      });
-
-      const baseSpacing = MobilityMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
+      const clusterPixels = this.getClusterPixels();
 
       // ============================
       // 1️⃣ Merge flows by direction
       // ============================
-      const mergedArrows = {};
-
-      Object.values(this.flowGroups).forEach((group) => {
-        const fromPx = clusterPixels[group.fromClusterId];
-        const toPx = clusterPixels[group.toClusterId];
-        if (!fromPx || !toPx) return;
-
-        const key = `${group.fromClusterId}->${group.toClusterId}`;
-
-        if (!mergedArrows[key]) {
-          mergedArrows[key] = {
-            fromCluster: group.fromClusterId,
-            toCluster: group.toClusterId,
-            start: { x: fromPx.x, y: fromPx.y },
-            end: { x: toPx.x, y: toPx.y },
-            rawPairs: [],
-            weight: 0,
-          };
-        }
-
-        group.flows.forEach((f) => {
-        // Support both normal and event flow structure
-        const fromId = f.fromKey ?? f.from ?? f.origin;
-        const toId = f.toKey ?? f.to ?? f.dest;
-        const weight = f.weight ?? f.count ?? 1;
-
-        mergedArrows[key].weight += weight;
-
-        mergedArrows[key].rawPairs.push({
-          fromId,
-          toId,
-          weight,
-        });
-      });
-      });
+      const mergedArrows = this.mergeArrows(clusterPixels);
 
       // ============================
       // 2️⃣ Compute min/max for MERGED arrows
@@ -332,25 +292,7 @@ const MobilityMap = Vue.defineComponent({
       // ============================
       // 3️⃣ Apply bidirectional spacing
       // ============================
-      Object.values(mergedArrows).forEach((seg) => {
-        const oppositeKey = `${seg.toCluster}->${seg.fromCluster}`;
-        const opposite = mergedArrows[oppositeKey];
-
-        const A = seg.start;
-        const B = seg.end;
-
-        const comp = MobilityMapUtils.CONFIG.sizes.arrowPaddingCompensation;
-
-        const thisHalf = seg.width * comp;
-        const oppositeHalf = opposite ? opposite.width * comp : 0;
-
-        const offset = thisHalf + oppositeHalf + baseSpacing;
-
-        const { offsetA1, offsetB1 } = MobilityMapUtils.computeOffsets(A, B, offset);
-
-        seg.from = offsetA1;
-        seg.to = offsetB1;
-      });
+      this.applyBidirectionalSpacing(mergedArrows);
 
       const finalSegments = Object.values(mergedArrows);
 
@@ -472,6 +414,66 @@ const MobilityMap = Vue.defineComponent({
         clusterTo,
         rawPairs,
         weight,
+      });
+    },
+
+    getClusterPixels() {
+      const pixels = {};
+      this.clusterDefs.forEach(c => {
+        pixels[c.id] = this.map.latLngToContainerPoint(
+          L.latLng(c.centerLat, c.centerLon)
+        );
+      });
+      return pixels;
+    },
+
+    mergeArrows(clusterPixels) {
+      const merged = {};
+      Object.values(this.flowGroups).forEach(group => {
+        const fromPx = clusterPixels[group.fromClusterId];
+        const toPx = clusterPixels[group.toClusterId];
+        if (!fromPx || !toPx) return;
+
+        const key = `${group.fromClusterId}->${group.toClusterId}`;
+
+        const entry = merged[key] ??= {
+          fromCluster: group.fromClusterId,
+          toCluster: group.toClusterId,
+          start: fromPx,
+          end: toPx,
+          rawPairs: [],
+          weight: 0,
+        };
+
+        group.flows.forEach(f => {
+          const fromId = f.fromKey ?? f.from ?? f.origin;
+          const toId = f.toKey ?? f.to ?? f.dest;
+          const weight = f.weight ?? f.count ?? 1;
+
+          entry.weight += weight;
+          entry.rawPairs.push({ fromId, toId, weight });
+        });
+      });
+
+      return merged;
+    },
+
+    applyBidirectionalSpacing(mergedArrows) {
+      const baseSpacing = MobilityMapUtils.CONFIG.sizes.bidirectionalArrowSpacing;
+      const comp = MobilityMapUtils.CONFIG.sizes.arrowPaddingCompensation;
+
+      Object.values(mergedArrows).forEach(seg => {
+        const opposite = mergedArrows[`${seg.toCluster}->${seg.fromCluster}`];
+
+        const thisHalf = seg.width * comp;
+        const oppositeHalf = opposite ? opposite.width * comp : 0;
+        const offset = thisHalf + oppositeHalf + baseSpacing;
+
+        const { offsetA1, offsetB1 } =
+          MobilityMapUtils.computeOffsets(seg.start, seg.end, offset);
+
+        seg.from = offsetA1;
+        seg.to = offsetB1;
       });
     },
 
