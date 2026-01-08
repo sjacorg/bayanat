@@ -266,19 +266,19 @@ const MobilityMap = Vue.defineComponent({
       const clusterPixels = this.getClusterPixels();
 
       // ============================
-      // 1️⃣ Merge flows by direction
+      // 1 Merge flows by direction
       // ============================
       const mergedArrows = this.mergeArrows(clusterPixels);
 
       // ============================
-      // 2️⃣ Compute min/max for MERGED arrows
+      // 2 Compute min/max for MERGED arrows
       // ============================
       const weights = Object.values(mergedArrows).map(s => s.weight);
       const arrowMin = Math.min(...weights, 0);
       const arrowMax = Math.max(...weights, 0);
 
       // ============================
-      // 3️⃣ Compute final widths (using merged range)
+      // 3 Compute final widths (using merged range)
       // ============================
       Object.values(mergedArrows).forEach((seg) => {
         seg.width = MobilityMapUtils.getArrowWidth(
@@ -290,14 +290,14 @@ const MobilityMap = Vue.defineComponent({
       });
 
       // ============================
-      // 3️⃣ Apply bidirectional spacing
+      // 4 Apply bidirectional spacing
       // ============================
       this.applyBidirectionalSpacing(mergedArrows);
 
       const finalSegments = Object.values(mergedArrows);
 
       // ============================
-      // 4️⃣ Draw arrows
+      // 5 Draw arrows
       // ============================
       finalSegments
         .sort((a, b) => a.width - b.width) // thin first, thick last
@@ -316,7 +316,7 @@ const MobilityMap = Vue.defineComponent({
         });
 
       // ============================
-      // 5️⃣ Draw clusters
+      // 6 Draw clusters
       // ============================
       this.clusterDefs.forEach((c) => {
         const p = clusterPixels[c.id];
