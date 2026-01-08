@@ -71,30 +71,26 @@ const MobilityMap = Vue.defineComponent({
   watch: {
     locations: {
       handler() {
-        this.selectedPoint = null;
-        this.minWeight = null;
-        this.maxWeight = null;
+        this.resetSelectionAndRebuild();
         this.initPoints();
-        this.rebuildShapes();
       },
     },
 
     flows: {
       handler() {
-        this.selectedPoint = null;
-        this.minWeight = null;
-        this.maxWeight = null;
-
-        this.rebuildShapes();
-
-        this.$nextTick(() => {
-          this.zoomToFlows();
-        });
+        this.resetSelectionAndRebuild();
+        this.$nextTick(() => this.zoomToFlows());
       },
     },
   },
 
   methods: {
+    resetSelectionAndRebuild() {
+      this.selectedPoint = null;
+      this.minWeight = null;
+      this.maxWeight = null;
+      this.rebuildShapes();
+    },
     /* ================= MAP INIT ================= */
 
     initMap() {
@@ -317,17 +313,9 @@ const MobilityMap = Vue.defineComponent({
       // ============================
       // 2️⃣ Compute min/max for MERGED arrows
       // ============================
-      let arrowMin = Infinity;
-      let arrowMax = -Infinity;
-
-      Object.values(mergedArrows).forEach((seg) => {
-        if (seg.weight < arrowMin) arrowMin = seg.weight;
-        if (seg.weight > arrowMax) arrowMax = seg.weight;
-      });
-
-      if (!Number.isFinite(arrowMin) || !Number.isFinite(arrowMax)) {
-        arrowMin = arrowMax = 0;
-      }
+      const weights = Object.values(mergedArrows).map(s => s.weight);
+      const arrowMin = Math.min(...weights, 0);
+      const arrowMax = Math.max(...weights, 0);
 
       // ============================
       // 3️⃣ Compute final widths (using merged range)
@@ -633,14 +621,7 @@ const MobilityMap = Vue.defineComponent({
             const ids = dot.key.split(',').map(Number);
             const names = ids.map((id) => this.points[id]?.label || id);
 
-            let outgoing = 0;
-            let incoming = 0;
-
-            const cluster = this.clusterDefs[dot.clusterId];
-            const traffic = this.getClusterTraffic(cluster);
-
-            outgoing = traffic.outgoing;
-            incoming = traffic.incoming;
+            const { outgoing, incoming } = this.getClusterTraffic(this.clusterDefs[dot.clusterId]);
 
             this.tooltip.type = 'dot';
             this.tooltip.data = {
