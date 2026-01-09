@@ -265,15 +265,15 @@ const MobilityMap = Vue.defineComponent({
       // Map cluster → screen coords
       const clusterPixels = this.getClusterPixels();
 
-      // 1 Merge flows by direction
+      // Merge flows by direction
       const mergedArrows = this.mergeArrows(clusterPixels);
 
-      // 2 Compute min/max for MERGED arrows
+      // Compute min/max for MERGED arrows
       const weights = Object.values(mergedArrows).map(s => s.weight);
       const arrowMin = weights.length ? Math.min(...weights) : 0;
       const arrowMax = weights.length ? Math.max(...weights) : 0;
 
-      // 3 Compute final widths (using merged range)
+      // Compute final widths (using merged range)
       Object.values(mergedArrows).forEach((seg) => {
         seg.width = MobilityMapUtils.getArrowWidth(
           seg.weight,
@@ -283,28 +283,8 @@ const MobilityMap = Vue.defineComponent({
         );
       });
 
-      // 4 Apply bidirectional spacing
       this.applyBidirectionalSpacing(mergedArrows);
-
-      // 5 Draw arrows
-      const finalSegments = Object.values(mergedArrows);
-      finalSegments
-        .sort((a, b) => a.width - b.width) // thin first, thick last
-        .forEach((seg) => {
-          this.drawArrowRect(
-            seg.from,
-            seg.to,
-            seg.width,
-            seg.fromCluster,
-            seg.toCluster,
-            seg.weight,
-            arrowMin,
-            arrowMax,
-            seg.rawPairs,
-          );
-        });
-
-      // 6 Draw clusters
+      this.drawArrows(Object.values(mergedArrows), arrowMin, arrowMax);
       this.drawClusters(ctx, clusterPixels);
 
       this.arrowShapes.sort((a, b) => a.weight - b.weight);
@@ -406,6 +386,22 @@ const MobilityMap = Vue.defineComponent({
       });
 
       return merged;
+    },
+
+    drawArrows(segments, min, max) {
+      segments
+        .sort((a, b) => a.width - b.width)
+        .forEach(seg => this.drawArrowRect(
+          seg.from,
+          seg.to,
+          seg.width,
+          seg.fromCluster,
+          seg.toCluster,
+          seg.weight,
+          min,
+          max,
+          seg.rawPairs,
+        ));
     },
 
     drawClusters(ctx, clusterPixels) {
