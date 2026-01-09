@@ -180,7 +180,7 @@
 {% endblock content %}
 
 {% block js %}
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
 
