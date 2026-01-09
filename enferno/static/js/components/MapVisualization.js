@@ -25,6 +25,7 @@ const MapVisualization = Vue.defineComponent({
     translations: window.translations,
     selectedEventTypes: [],
     drawerWidth: 398,
+    excludedDefaultEventTypes: new Set(['Residence', 'Birth']),
 
     localSearch: '',
 
@@ -122,7 +123,7 @@ const MapVisualization = Vue.defineComponent({
       return [...eventTypes].filter(this.isDefaultSelectedEventType);
     },
     isDefaultSelectedEventType(eventType) {
-      return eventType !== 'Residence' && eventType !== 'Birth';
+      return !this.excludedDefaultEventTypes.has(eventType)
     },
     matchesSelectedEventTypes(entity) {
       // No filters selected → show everything
