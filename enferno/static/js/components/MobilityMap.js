@@ -9,7 +9,6 @@ const MobilityMap = Vue.defineComponent({
     disableClustering: { type: Boolean, default: false },
     mode: { type: String, default: () => null }
   },
-
   data() {
     return {
       canvas: null,
@@ -43,7 +42,6 @@ const MobilityMap = Vue.defineComponent({
       },
     };
   },
-
   mounted() {
     this.map = null;
 
@@ -58,7 +56,6 @@ const MobilityMap = Vue.defineComponent({
       });
     });
   },
-
   beforeUnmount() {
     window.removeEventListener('resize', this.resizeCanvas);
     if (this.map) {
@@ -67,7 +64,6 @@ const MobilityMap = Vue.defineComponent({
       this.map = null;
     }
   },
-
   watch: {
     locations: {
       handler() {
@@ -83,7 +79,6 @@ const MobilityMap = Vue.defineComponent({
       },
     },
   },
-
   methods: {
     resetSelectionAndRebuild() {
       this.selectedPoint = null;
@@ -91,8 +86,6 @@ const MobilityMap = Vue.defineComponent({
       this.maxWeight = null;
       this.rebuildShapes();
     },
-    /* ================= MAP INIT ================= */
-
     initMap() {
       const el = this.$refs.mapContainer;
       if (!el) return this.$nextTick(() => this.initMap());
@@ -290,9 +283,7 @@ const MobilityMap = Vue.defineComponent({
       this.arrowShapes.sort((a, b) => a.weight - b.weight);
     },
 
-    /* =============================================
-     ARROW DRAWING (per arrow, used by drawFrame)
-    ============================================= */
+    /* ARROW DRAWING (per arrow, used by drawFrame) */
     drawArrowRect(p1, p2, width, clusterFrom, clusterTo, weight, minW, maxW, rawPairs = []) {
       const ctx = this.ctx;
 
@@ -464,10 +455,7 @@ const MobilityMap = Vue.defineComponent({
       });
     },
 
-    /* =============================================
-     CLICK HANDLING HELPERS
-    ============================================= */
-
+    /* CLICK HANDLING HELPERS */
     getClusterTraffic(targetCluster) {
       let outgoing = 0;
       let incoming = 0;
@@ -512,9 +500,7 @@ const MobilityMap = Vue.defineComponent({
       return { outgoing: 0, incoming: 0 };
     },
 
-    /* =============================================
-     CLICK HANDLING
-    ============================================= */
+    /* CLICK HANDLING */
     onMapClick(e) {
       const p = this.map.latLngToContainerPoint(e.latlng);
 
@@ -877,9 +863,6 @@ const MobilityMap = Vue.defineComponent({
           </div>
         </template>
       </v-card>
-
-
     </v-container>
-
   `,
 });
