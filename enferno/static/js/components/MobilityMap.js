@@ -258,24 +258,8 @@ const MobilityMap = Vue.defineComponent({
       // Map cluster → screen coords
       const clusterPixels = MobilityMapUtils.getClusterPixels(this.clusterDefs, this.map);
 
-      // Merge flows by direction
-      const mergedArrows = this.mergeArrows(clusterPixels);
-
-      // Compute min/max for MERGED arrows
-      const [arrowMin, arrowMax] = MobilityMapUtils.getMinMax(Object.values(mergedArrows).map(s => s.weight));
-
-      // Compute final widths (using merged range)
-      Object.values(mergedArrows).forEach((seg) => {
-        seg.width = MobilityMapUtils.getArrowWidth(
-          seg.weight,
-          arrowMin, // ✅ merged min
-          arrowMax, // ✅ merged max
-          seg.rawPairs,
-        );
-      });
-
-      this.applyBidirectionalSpacing(mergedArrows);
-      this.drawArrows(Object.values(mergedArrows), arrowMin, arrowMax);
+      const { segments, arrowMin, arrowMax } = this.prepareArrowSegments(clusterPixels);
+      this.drawArrows(segments, arrowMin, arrowMax);
       this.drawClusters(ctx, clusterPixels);
 
       this.arrowShapes.sort((a, b) => a.weight - b.weight);
@@ -334,6 +318,36 @@ const MobilityMap = Vue.defineComponent({
         rawPairs,
         weight,
       });
+    },
+
+    prepareArrowSegments(clusterPixels) {
+      // 1️⃣ Merge flows by direction
+      const mergedArrows = this.mergeArrows(clusterPixels);
+
+      const segments = Object.values(mergedArrows);
+      if (!segments.length) {
+        return { segments: [], arrowMin: 0, arrowMax: 0 };
+      }
+
+      // 2️⃣ Compute min/max for merged arrows
+      const [arrowMin, arrowMax] = MobilityMapUtils.getMinMax(
+        segments.map(s => s.weight)
+      );
+
+      // 3️⃣ Compute widths
+      segments.forEach(seg => {
+        seg.width = MobilityMapUtils.getArrowWidth(
+          seg.weight,
+          arrowMin,
+          arrowMax,
+          seg.rawPairs,
+        );
+      });
+
+      // 4️⃣ Apply bidirectional spacing
+      this.applyBidirectionalSpacing(mergedArrows);
+
+      return { segments, arrowMin, arrowMax };
     },
 
     mergeArrows(clusterPixels) {
