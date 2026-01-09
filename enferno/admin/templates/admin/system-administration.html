@@ -1078,7 +1078,7 @@
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/ShowDetails.js"></script>
     <script src="/static/js/components/DiffRenderer.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;

@@ -51,7 +51,7 @@
 {% else %}
     <div class="d-none" data-settings='{}'></div>
 {% endif %}
-<script>
+<script nonce="{{ csp_nonce() }}">
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
 </script>
 

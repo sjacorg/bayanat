@@ -75,7 +75,7 @@
                         <div id="wan-errors"></div>
                     </form>
                 </v-card-text>
-                <script type="text/javascript">
+                <script nonce="{{ csp_nonce() }}" type="text/javascript">
                     handleRegister('{{ credential_options|safe }}')
                         .then((result) => {
                             if (result.error_msg) {
