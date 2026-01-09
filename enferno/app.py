@@ -137,10 +137,10 @@ def register_talisman(app):
     # Build CSP policy
     csp = {
         "default-src": "'self'",
-        "script-src": ["'self'"],
+        "script-src": ["'self'", "'unsafe-eval'"], # Vue requires it to compile templates
         "style-src": ["'self'", "'unsafe-inline'"],  # Vuetify requires unsafe-inline for styles
         "img-src": ["'self'", "data:", "blob:"],
-        "font-src": "'self'",
+        "font-src": ["'self'", "data:"],
         "connect-src": ["'self'"],
         "media-src": ["'self'", "blob:"],
         "frame-ancestors": "'none'",
@@ -151,10 +151,14 @@ def register_talisman(app):
     # Add map tile servers to img-src and connect-src
     maps_endpoint = app.config.get("MAPS_API_ENDPOINT", "")
     if "openstreetmap" in maps_endpoint or "tile.osm.org" in maps_endpoint:
+        csp["img-src"].append("https://tile.osm.org")
+        csp["img-src"].append("https://*.tile.osm.org")
         csp["img-src"].append("https://tile.openstreetmap.org")
         csp["img-src"].append("https://*.tile.openstreetmap.org")
         csp["connect-src"].append("https://tile.openstreetmap.org")
         csp["connect-src"].append("https://*.tile.openstreetmap.org")
+        csp["connect-src"].append("https://tile.osm.org")
+        csp["connect-src"].append("https://*.tile.osm.org")
 
     # Add Google Maps if configured
     if app.config.get("GOOGLE_MAPS_API_KEY"):
