@@ -491,4 +491,17 @@ const MobilityMapUtils = {
 
     return navigator.clipboard.writeText(text)
   },
+  getClusterPixels(clusters, map) {
+    const pixels = {};
+    clusters.forEach(c => {
+      pixels[c.id] = map.latLngToContainerPoint(
+        L.latLng(c.centerLat, c.centerLon)
+      );
+    });
+    return pixels;
+  },
+  getMinMax(values = []) {
+    if (!values.length) return [0, 0];
+    return [Math.min(...values), Math.max(...values)];
+  }
 };

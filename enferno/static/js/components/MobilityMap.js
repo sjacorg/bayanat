@@ -256,15 +256,13 @@ const MobilityMap = Vue.defineComponent({
       }
 
       // Map cluster → screen coords
-      const clusterPixels = this.getClusterPixels();
+      const clusterPixels = MobilityMapUtils.getClusterPixels(this.clusterDefs, this.map);
 
       // Merge flows by direction
       const mergedArrows = this.mergeArrows(clusterPixels);
 
       // Compute min/max for MERGED arrows
-      const weights = Object.values(mergedArrows).map(s => s.weight);
-      const arrowMin = weights.length ? Math.min(...weights) : 0;
-      const arrowMax = weights.length ? Math.max(...weights) : 0;
+      const [arrowMin, arrowMax] = MobilityMapUtils.getMinMax(Object.values(mergedArrows).map(s => s.weight));
 
       // Compute final widths (using merged range)
       Object.values(mergedArrows).forEach((seg) => {
@@ -336,16 +334,6 @@ const MobilityMap = Vue.defineComponent({
         rawPairs,
         weight,
       });
-    },
-
-    getClusterPixels() {
-      const pixels = {};
-      this.clusterDefs.forEach(c => {
-        pixels[c.id] = this.map.latLngToContainerPoint(
-          L.latLng(c.centerLat, c.centerLon)
-        );
-      });
-      return pixels;
     },
 
     mergeArrows(clusterPixels) {
