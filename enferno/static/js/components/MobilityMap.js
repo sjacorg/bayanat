@@ -822,57 +822,57 @@ const MobilityMap = Vue.defineComponent({
 
         <!-- DOT TOOLTIP -->
         <template v-if="tooltip.type === 'dot'">
-          <div class="text-subtitle-2 font-weight-bold mb-1">
+          <div class="text-caption font-weight-bold mb-1">
             {{ tooltip.data.title }}
           </div>
 
-          <v-divider class="mb-2"></v-divider>
+          <v-divider class="mb-1"></v-divider>
 
-          <div class="text-subtitle-2 font-weight-bold">
+          <div class="text-caption font-weight-bold">
             {{ translations.name_ }}
           </div>
-          <div class="text-body-2 mb-2">
+          <div class="text-caption mb-1">
             {{ tooltip.data.name }}
           </div>
-          <div class="text-subtitle-2 font-weight-bold">
+          <div class="text-caption font-weight-bold">
             {{ translations.totalIn_ }}
           </div>
-          <div class="text-body-2 mb-2">
+          <div class="text-caption mb-1">
             {{ tooltip.data.totalIn }}
           </div>
-          <div class="text-subtitle-2 font-weight-bold">
+          <div class="text-caption font-weight-bold">
             {{ translations.totalOut_ }}
           </div>
-          <div class="text-body-2 mb-2">
+          <div class="text-caption">
             {{ tooltip.data.totalOut }}
           </div>
         </template>
 
         <!-- ARROW TOOLTIP -->
         <template v-if="tooltip.type === 'arrow'">
-          <div class="text-subtitle-2 font-weight-bold mb-1">
+          <div class="text-caption font-weight-bold mb-1">
             {{ tooltip.data.title }}
           </div>
 
-          <v-divider class="mb-2"></v-divider>
+          <v-divider class="mb-1"></v-divider>
 
-          <div class="text-subtitle-2 font-weight-bold">
+          <div class="text-caption font-weight-bold">
             {{ translations.origin_ }}
           </div>
-          <div class="text-body-2 mb-2">
+          <div class="text-caption mb-1">
             {{ tooltip.data.from }}
           </div>
-          <div class="text-subtitle-2 font-weight-bold">
+          <div class="text-caption font-weight-bold">
             {{ translations.destination_ }}
           </div>
-          <div class="text-body-2 mb-2">
+          <div class="text-caption mb-1">
             {{ tooltip.data.to }}
           </div>
           
-          <div class="text-subtitle-2 font-weight-bold">
+          <div class="text-caption font-weight-bold">
             {{ translations.count_ }}
           </div>
-          <div class="text-body-2 mb-2">
+          <div class="text-caption">
             {{ tooltip.data.total }}
           </div>
         </template>
