@@ -329,7 +329,6 @@ const MapVisualization = Vue.defineComponent({
     onEntityClick(entity) {
       this.$emit('showEntityDetails', entity);
       this.entities.selected = entity;
-      this.applyAllEventTypes();
     },
   },
 

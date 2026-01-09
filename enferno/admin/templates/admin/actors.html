@@ -1325,6 +1325,10 @@
                     api.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
+
+                        if (this.mapVisualizationOpen) {
+                            this.$refs.mapVisualizationRef.applyAllEventTypes()
+                        }
                     }).catch(error => {
                         this.actorDrawer = false;
                     }).finally(() => {
