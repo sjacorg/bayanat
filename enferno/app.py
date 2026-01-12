@@ -96,7 +96,9 @@ def register_extensions(app):
         app: Flask application instance
     """
     db.init_app(app)
-    debug_toolbar.init_app(app)
+    # Skip debug toolbar when CSP is enabled (they conflict)
+    if not app.config.get("CSP_ENABLED", False):
+        debug_toolbar.init_app(app)
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, webauthn_model=WebAuthn)
 
     # Initialize security options with common configurations
@@ -137,7 +139,7 @@ def register_talisman(app):
     # Build CSP policy
     csp = {
         "default-src": "'self'",
-        "script-src": ["'self'", "'unsafe-eval'"], # Vue requires it to compile templates
+        "script-src": ["'self'", "'unsafe-eval'"],  # Vue requires it to compile templates
         "style-src": ["'self'", "'unsafe-inline'"],  # Vuetify requires unsafe-inline for styles
         "img-src": ["'self'", "data:", "blob:"],
         "font-src": ["'self'", "data:"],
