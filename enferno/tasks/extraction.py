@@ -1,12 +1,12 @@
 """Background text extraction task using Google Vision OCR."""
 
+import base64
+import os
 import re
 import unicodedata
 from pathlib import Path
 
-from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable
-from google.cloud import vision
-from google.protobuf.json_format import MessageToDict
+import httpx
 from sqlalchemy.exc import SQLAlchemyError
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
 
@@ -16,8 +16,16 @@ from enferno.utils.logging_utils import get_logger
 
 logger = get_logger()
 
-# Default language hints (Arabic primary)
+VISION_API_URL = "https://vision.googleapis.com/v1/images:annotate"
 DEFAULT_LANGUAGE_HINTS = ["ar", "en"]
+
+
+def _get_api_key() -> str:
+    """Get Google Vision API key from environment."""
+    key = os.environ.get("GOOGLE_VISION_API_KEY")
+    if not key:
+        raise RuntimeError("GOOGLE_VISION_API_KEY environment variable not set")
+    return key
 
 
 def process_media_extraction_task(media_id: int, language_hints: list = None) -> dict:
@@ -102,43 +110,74 @@ def _detect_orientation(file_path: Path) -> int:
         return 0
 
 
+class VisionAPIError(Exception):
+    """Raised when Vision API returns an error or rate limit."""
+
+    pass
+
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential_jitter(initial=2, max=30),
-    retry=retry_if_exception_type((ResourceExhausted, ServiceUnavailable)),
+    retry=retry_if_exception_type(VisionAPIError),
     before_sleep=lambda retry_state: logger.warning(
-        f"Vision API rate limited, retry {retry_state.attempt_number}/3"
+        f"Vision API error, retry {retry_state.attempt_number}/3"
     ),
 )
 def _extract_text(file_path: Path, language_hints: list) -> tuple[str | None, float, dict | None]:
-    """Call Google Vision API with retry on rate limits."""
+    """Call Google Vision REST API with retry on errors."""
     try:
-        client = vision.ImageAnnotatorClient()
+        api_key = _get_api_key()
 
         with open(file_path, "rb") as f:
-            image = vision.Image(content=f.read())
+            image_content = base64.b64encode(f.read()).decode("utf-8")
 
-        # Language hints improve accuracy for Arabic
-        image_context = vision.ImageContext(language_hints=language_hints)
-        response = client.document_text_detection(image=image, image_context=image_context)
+        response = httpx.post(
+            f"{VISION_API_URL}?key={api_key}",
+            json={
+                "requests": [
+                    {
+                        "image": {"content": image_content},
+                        "features": [{"type": "DOCUMENT_TEXT_DETECTION"}],
+                        "imageContext": {"languageHints": language_hints},
+                    }
+                ]
+            },
+            timeout=60.0,
+        )
 
-        if response.error.message:
-            logger.error(f"Vision API error: {response.error.message}")
+        # Rate limit or server error - retry
+        if response.status_code in (429, 500, 503):
+            raise VisionAPIError(f"API returned {response.status_code}")
+
+        response.raise_for_status()
+        data = response.json()
+
+        # Check for API error in response
+        if "error" in data:
+            logger.error(f"Vision API error: {data['error']}")
             return None, 0.0, None
 
-        # Store raw response
-        raw = MessageToDict(response._pb)
+        # Parse response
+        result = data.get("responses", [{}])[0]
+        if "error" in result:
+            logger.error(f"Vision API error: {result['error']}")
+            return None, 0.0, None
 
-        annotation = response.full_text_annotation
-        if not annotation or not annotation.text:
-            return "", 0.0, raw
+        annotation = result.get("fullTextAnnotation", {})
+        text = annotation.get("text", "")
 
-        text = annotation.text
+        if not text:
+            return "", 0.0, data
+
         confidence = _calculate_confidence(annotation)
+        return text, confidence, data
 
-        return text, confidence, raw
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Vision API HTTP error: {e}")
+        return None, 0.0, None
 
-    except (ResourceExhausted, ServiceUnavailable):
+    except VisionAPIError:
         raise  # Let tenacity handle retry
 
     except Exception as e:
@@ -146,15 +185,16 @@ def _extract_text(file_path: Path, language_hints: list) -> tuple[str | None, fl
         return None, 0.0, None
 
 
-def _calculate_confidence(annotation) -> float:
+def _calculate_confidence(annotation: dict) -> float:
     """Calculate average word-level confidence (0-100 scale)."""
     confidences = []
-    for page in annotation.pages:
-        for block in page.blocks:
-            for paragraph in block.paragraphs:
-                for word in paragraph.words:
-                    if word.confidence:
-                        confidences.append(word.confidence)
+    for page in annotation.get("pages", []):
+        for block in page.get("blocks", []):
+            for paragraph in block.get("paragraphs", []):
+                for word in paragraph.get("words", []):
+                    conf = word.get("confidence")
+                    if conf is not None:
+                        confidences.append(conf)
 
     if not confidences:
         return 0.0
