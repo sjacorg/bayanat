@@ -1647,3 +1647,9 @@ def _start_etl_process(
         user_id=user_id,
         data_import_id=import_id,
     )
+
+
+# Import and register extraction task
+from enferno.tasks.extraction import process_media_extraction_task  # noqa: E402
+
+process_media_extraction = celery.task(process_media_extraction_task)
