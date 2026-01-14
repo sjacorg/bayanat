@@ -350,3 +350,35 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
+
+
+# OCR text extraction commands
+ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
+
+
+@ocr_cli.command()
+@click.option("--media-id", "-m", required=True, type=int, help="Media ID to extract text from")
+@click.option(
+    "--language",
+    "-l",
+    multiple=True,
+    default=["ar", "en"],
+    help="Language hints (can specify multiple)",
+)
+@with_appcontext
+def extract(media_id: int, language: tuple) -> None:
+    """Extract text from a media file using Google Vision OCR."""
+    from enferno.tasks.extraction import process_media_extraction_task
+
+    click.echo(f"Extracting text from media {media_id}...")
+    result = process_media_extraction_task(media_id, list(language))
+
+    if result.get("success"):
+        if result.get("skipped"):
+            click.echo(f"Media {media_id} already has extraction, skipped")
+        else:
+            click.echo(f"Extracted text from media {media_id}")
+            click.echo(f"  Confidence: {result.get('confidence', 0):.1f}%")
+            click.echo(f"  Status: {result.get('status')}")
+    else:
+        click.echo(f"Error: {result.get('error')}")
