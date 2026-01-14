@@ -134,8 +134,10 @@ dev = [
 ]
 
 ai = [
-    "pytesseract>=0.3.13",
+    "google-cloud-vision>=3.0.0",
     "openai-whisper>=20240930",
+    "pytesseract>=0.3.13",
+    "tenacity>=8.0.0",
     "torch>=2.8.0"
 ]
 
