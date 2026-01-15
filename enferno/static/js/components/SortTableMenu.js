@@ -14,10 +14,6 @@ const SortTableMenu = Vue.defineComponent({
       type: Object,
       default: () => ({ sortBy: 'id', sortDirection: 'desc' }),
     },
-    disableSortItems: {
-      type: Boolean,
-      default: false,
-    },
   },
   emits: ['update:modelValue', 'apply'],
   data() {
@@ -29,14 +25,18 @@ const SortTableMenu = Vue.defineComponent({
     };
   },
   computed: {
+    selectedItem() {
+      return this.items.find((i) => i.value === this.localSortBy[0]);
+    },
+    sortItem() {
+      return this.sortItems.find((i) => i.value === this.localSortDirection[0]);
+    },
     displayText() {
-      const selectedItem = this.items.find((i) => i.value === this.localSortBy[0]);
-      const sortItem = this.sortItems.find((i) => i.value === this.localSortDirection[0]);
-      const isDefault = this.localSortBy[0] === 'id' && this.localSortDirection[0] === 'desc';
+      const isDefault = this.localSortBy?.[0] === 'id' && this.localSortDirection?.[0] === 'desc';
 
-      if (!selectedItem || !sortItem) return '';
+      if (!this.selectedItem || !this.sortItem) return '';
 
-      const text = `${selectedItem.title} ${sortItem.title}`;
+      const text = `${this.selectedItem.title} ${this.sortItem.title}`;
       return isDefault ? `${text} (${this.translations.default_})` : text;
     },
   },
@@ -99,7 +99,7 @@ const SortTableMenu = Vue.defineComponent({
                         </v-list-item>
                     </v-list>
                     <v-divider class="border-opacity-25"></v-divider>
-                    <v-list :disabled="disableSortItems" mandatory v-model:selected="localSortDirection" density="compact" class="pb-0">
+                    <v-list :disabled="selectedItem?.type === 'date'" mandatory v-model:selected="localSortDirection" density="compact" class="pb-0">
                         <v-list-subheader class="text-caption font-weight-medium">{{ translations.direction_ }}</v-list-subheader>
                         <v-list-item v-for="(item, index) in sortItems" :key="index" :value="item.value" :active="false" min-height="34">
                             <v-list-item-title class="text-body-2">
@@ -107,15 +107,15 @@ const SortTableMenu = Vue.defineComponent({
                                 {{ item.title }}
                             </v-list-item-title>
 
-                            <template v-slot:append="{ isSelected }">
+                            <template v-if="selectedItem?.type !== 'date'" v-slot:append="{ isSelected }">
                                 <v-list-item-action class="flex-column align-end">
                                     <v-spacer></v-spacer>
                                     <v-icon v-if="isSelected" color="blue">mdi-check</v-icon>
                                 </v-list-item-action>
                             </template>
                         </v-list-item>
-                        <v-btn @click="applySort()" class="w-100 mt-2" tile color="blue">{{ translations.apply_ }}</v-btn>
                     </v-list>
+                    <v-btn @click="applySort()" class="w-100 mt-2" tile color="blue">{{ translations.apply_ }}</v-btn>
                 </v-card>
             </v-menu>
         </div>

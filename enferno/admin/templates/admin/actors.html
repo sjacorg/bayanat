@@ -156,8 +156,8 @@
                                         { title: `{{ _('ID') }}`, value: 'id', default: true },
                                         { title: `{{ _('Name') }}`, value: 'name' },
                                         { title: `{{ _('Status') }}`, value: 'status' },
-                                        { title: `{{ _('Creation Date') }}`, value: 'created_at' },
-                                        { title: `{{ _('Last Modification Date') }}`, value: 'updated_at' }
+                                        { title: `{{ _('Creation Date') }}`, value: 'created_at', type: 'date' },
+                                        { title: `{{ _('Last Modification Date') }}`, value: 'updated_at', type: 'date' }
                                     ]"
                                     :sort-items="[
                                         { title: `{{ _('Ascending') }}`, value: 'asc', icon: 'mdi-arrow-up' },
@@ -1087,8 +1087,8 @@
                         per_page: this.perPage,
                         cursor: this.currentCursor,
                         include_count: true,
-                        sort_by: this.sortConfig.sortBy,
-                        sort_direction: this.sortConfig.sortDirection
+                        order_by: this.sortConfig.sortBy,
+                        order_direction: this.sortConfig.sortDirection
                     };
 
                     axios.post('/admin/api/actors/', requestData)
