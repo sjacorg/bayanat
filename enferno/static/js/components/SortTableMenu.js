@@ -39,6 +39,11 @@ const SortTableMenu = Vue.defineComponent({
       const text = `${this.selectedItem.title} ${this.sortItem.title}`;
       return isDefault ? `${text} (${this.translations.default_})` : text;
     },
+    buttonWidth() {
+      const extraSpace = 2;
+
+      return `${this.displayText.length + extraSpace}ch`
+    }
   },
   watch: {
     modelValue: {
@@ -76,7 +81,7 @@ const SortTableMenu = Vue.defineComponent({
                         hide-details
                         density="compact"
                         min-width="200"
-                        width="100%"
+                        :width="buttonWidth"
                         :append-inner-icon="isActive ? 'mdi-menu-up' : 'mdi-menu-down'"
                     ></v-text-field>
                 </template>
