@@ -152,15 +152,15 @@
                             <v-toolbar class="px-3 mb-2" height="auto">
                                 <sort-table-menu
                                     :items="[
-                                        { title: 'ID', value: 'id', default: true },
-                                        { title: 'Name', value: 'name' },
-                                        { title: 'Status', value: 'status' },
-                                        { title: 'Creation Date', value: 'created_at' },
-                                        { title: 'Last Modification Date', value: 'updated_at' }
+                                        { title: `{{ _('ID') }}`, value: 'id', default: true },
+                                        { title: `{{ _('Name') }}`, value: 'name' },
+                                        { title: `{{ _('Status') }}`, value: 'status' },
+                                        { title: `{{ _('Creation Date') }}`, value: 'created_at' },
+                                        { title: `{{ _('Last Modification Date') }}`, value: 'updated_at' }
                                     ]"
                                     :sort-items="[
-                                        { title: 'Sort Ascending', value: 'asc', icon: 'mdi-arrow-up' },
-                                        { title: 'Sort Descending', value: 'desc', icon: 'mdi-arrow-down' }
+                                        { title: `{{ _('Ascending') }}`, value: 'asc', icon: 'mdi-arrow-up' },
+                                        { title: `{{ _('Descending') }}`, value: 'desc', icon: 'mdi-arrow-down' }
                                     ]"
                                 ></sort-table-menu>
                             </v-toolbar>
