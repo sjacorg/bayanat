@@ -57,7 +57,7 @@ const SortTableMenu = Vue.defineComponent({
     applySort() {
       const payload = {
         sortBy: this.localSortBy[0],
-        sortDirection: this.localSortDirection[0],
+        sortDirection: this.selectedItem?.type === 'date' ? 'desc' : this.localSortDirection[0],
       };
 
       this.$emit('update:modelValue', payload);
