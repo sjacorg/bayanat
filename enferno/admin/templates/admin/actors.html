@@ -92,7 +92,7 @@
                                 {% include 'admin/partials/review_dialog.html' %}
                             </v-sheet>
 
-                            <v-toolbar class="px-3" height="auto" v-if="bulkAllowed() || exportAllowed()">
+                            <v-toolbar class="px-3 mb-2" height="auto" v-if="bulkAllowed() || exportAllowed()">
                                 <template v-if="bulkIcons">
                                     <v-tooltip location="top" text="{{ _('Unselect all') }}">
                                         <template #activator="{props}">
@@ -149,7 +149,7 @@
                                 </v-chip>
                             </v-toolbar>
 
-                            <v-toolbar class="px-3 mb-2" height="auto">
+                            <v-toolbar class="px-5 mb-2" height="auto">
                                 <sort-table-menu
                                     v-model="sortConfig"
                                     :items="[
@@ -167,10 +167,7 @@
                                 ></sort-table-menu>
                             </v-toolbar>
 
-                            <v-divider class="border-opacity-25">
-
-                            </v-divider>
-
+                            <v-divider class="border-opacity-25"></v-divider>
                         </template>
 
                         <template #bottom>
