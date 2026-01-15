@@ -151,6 +151,7 @@
 
                             <v-toolbar class="px-3 mb-2" height="auto">
                                 <sort-table-menu
+                                    v-model="sortConfig"
                                     :items="[
                                         { title: `{{ _('ID') }}`, value: 'id', default: true },
                                         { title: `{{ _('Name') }}`, value: 'name' },
@@ -162,6 +163,7 @@
                                         { title: `{{ _('Ascending') }}`, value: 'asc', icon: 'mdi-arrow-up' },
                                         { title: `{{ _('Descending') }}`, value: 'desc', icon: 'mdi-arrow-down' }
                                     ]"
+                                    @apply="handleSortApply"
                                 ></sort-table-menu>
                             </v-toolbar>
 
@@ -651,6 +653,8 @@
                 idNumberTypes: [],
 
                 serverErrors: {},
+
+                sortConfig: { sortBy: 'id', sortDirection: 'desc' },
             }),
 
             computed: {
@@ -1083,6 +1087,8 @@
                         per_page: this.perPage,
                         cursor: this.currentCursor,
                         include_count: true,
+                        sort_by: this.sortConfig.sortBy,
+                        sort_direction: this.sortConfig.sortDirection
                     };
 
                     axios.post('/admin/api/actors/', requestData)
@@ -1668,7 +1674,12 @@
                     if (this.bulk.reviewerClear){
                         this.bulk.first_peer_reviewer_id = null;
                     }
-                }
+                },
+
+                handleSortApply(sortData) {
+                    this.sortConfig = sortData;
+                    this.goToFirstPage();
+                },
             }
         });
 
