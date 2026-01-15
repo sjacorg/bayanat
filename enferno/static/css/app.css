@@ -954,6 +954,9 @@ div.jsondiffpatch-child-node-type-array:after {
   grid-row: span 2;
 }
 
+.sort-table-menu input {
+  font-size: 14px;
+}
 .sort-table-menu .v-field--focused .v-field__outline {
   --v-field-border-width: 1px;
 }
