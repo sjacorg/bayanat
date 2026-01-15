@@ -24,32 +24,33 @@ const SortTableMenu = Vue.defineComponent({
   emits: [],
   data: () => ({
     translations: window.translations,
-    sortItem: null,
-    item: null
+    sortItem: ['desc'],
+    item: ['id']
   }),
   template: `
         <div class="d-flex align-center ga-2">
-            <div><v-icon>mdi-sort-variant</v-icon>{{ translations.dataSort_ }}</div>
+            <div class="d-flex align-center text-medium-emphasis ga-1"><v-icon>mdi-sort-variant</v-icon><div class="text-body-2 font-weight-medium">{{ translations.dataSort_ }}</div></div>
 
             <v-menu :close-on-content-click="false">
                 <template v-slot:activator="{ props, isActive }">
-                    <v-select
+                    <v-text-field
                         color="blue"
+                        :class="['sort-table-menu', { 'sort-table-menu--focused': isActive }]"
                         variant="outlined"
                         v-bind="props"
                         readonly
                         hide-details
                         density="compact"
-                        :focused="isActive"
                         :style="{ minWidth: '200px' }"
-                    ></v-select>
+                        :append-inner-icon="isActive ? 'mdi-menu-up' : 'mdi-menu-down'"
+                    ></v-text-field>
                 </template>
 
-                <v-card border="info md opacity-100" class="mt-1" elevation="1">
+                <v-card border="info sm opacity-100" class="mt-1" elevation="1">
                     <v-list v-model:selected="item" density="compact" variant="flat">
-                        <v-list-subheader>{{ translations.dataType_ }}</v-list-subheader>
-                        <v-list-item v-for="(item, index) in items" :key="index" :value="item.value" :active="false">
-                            <v-list-item-title>
+                        <v-list-subheader class="text-caption font-weight-medium">{{ translations.dataType_ }}</v-list-subheader>
+                        <v-list-item v-for="(item, index) in items" :key="index" :value="item.value" :active="false" min-height="34">
+                            <v-list-item-title class="text-body-2">
                                 {{ item.title }}
                                 <template v-if="item.default">({{ translations.default_ }})</template>
                             </v-list-item-title>
@@ -64,9 +65,9 @@ const SortTableMenu = Vue.defineComponent({
                     </v-list>
                     <v-divider class="border-opacity-25"></v-divider>
                     <v-list :disabled="disableSortItems" v-model:selected="sortItem" density="compact" class="pb-0">
-                        <v-list-subheader>{{ translations.direction_ }}</v-list-subheader>
-                        <v-list-item v-for="(item, index) in sortItems" :key="index" :value="item.value" :active="false">
-                            <v-list-item-title>
+                        <v-list-subheader class="text-caption font-weight-medium">{{ translations.direction_ }}</v-list-subheader>
+                        <v-list-item v-for="(item, index) in sortItems" :key="index" :value="item.value" :active="false" min-height="34">
+                            <v-list-item-title class="text-body-2">
                                 <v-icon left small class="me-2">{{ item.icon }}</v-icon>
                                 {{ item.title }}
                             </v-list-item-title>
