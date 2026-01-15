@@ -3,45 +3,62 @@ const SortTableMenu = Vue.defineComponent({
     items: {
       type: Array,
       required: true,
-      default: () => [],
+      validator: (items) => items.every((i) => i.value && i.title),
     },
     sortItems: {
       type: Array,
       required: true,
-      default: () => [],
+      validator: (items) => items.every((i) => i.value && i.title),
+    },
+    modelValue: {
+      type: Object,
+      default: () => ({ sortBy: 'id', sortDirection: 'desc' }),
     },
     disableSortItems: {
       type: Boolean,
       default: false,
     },
   },
-  emits: ['apply'],
-  data: () => ({
-    translations: window.translations,
-    sortItem: ['desc'],
-    item: ['id'],
-    menuOpen: false,
-  }),
+  emits: ['update:modelValue', 'apply'],
+  data() {
+    return {
+      translations: window.translations,
+      menuOpen: false,
+      localSortBy: [this.modelValue.sortBy],
+      localSortDirection: [this.modelValue.sortDirection],
+    };
+  },
   computed: {
     displayText() {
-      const selectedItem = this.items.find((i) => i.value === this.item?.[0]);
-      const sortSelectedItem = this.sortItems.find((i) => i.value === this.sortItem?.[0]);
-      const isDefaultSorting = selectedItem?.value === 'id' && sortSelectedItem?.value === 'desc';
-      const baseText = selectedItem ? `${selectedItem.title} ${sortSelectedItem.title}` : '';
+      const selectedItem = this.items.find((i) => i.value === this.localSortBy[0]);
+      const sortItem = this.sortItems.find((i) => i.value === this.localSortDirection[0]);
+      const isDefault = this.localSortBy[0] === 'id' && this.localSortDirection[0] === 'desc';
 
-      if (isDefaultSorting) return `${baseText} (${this.translations.default_})`;
+      if (!selectedItem || !sortItem) return '';
 
-      return baseText;
+      const text = `${selectedItem.title} ${sortItem.title}`;
+      return isDefault ? `${text} (${this.translations.default_})` : text;
+    },
+  },
+  watch: {
+    modelValue: {
+      handler(newVal) {
+        this.localSortBy = [newVal.sortBy];
+        this.localSortDirection = [newVal.sortDirection];
+      },
     },
   },
   methods: {
     applySort() {
-      this.$emit('apply', {
-        sortBy: this.item?.[0],
-        sortDirection: this.sortItem?.[0],
-      });
+      const payload = {
+        sortBy: this.localSortBy[0],
+        sortDirection: this.localSortDirection[0],
+      };
+
+      this.$emit('update:modelValue', payload);
+      this.$emit('apply', payload);
       this.menuOpen = false;
-    }
+    },
   },
   template: `
         <div class="d-flex align-center ga-2">
@@ -65,7 +82,7 @@ const SortTableMenu = Vue.defineComponent({
                 </template>
 
                 <v-card border="info sm opacity-100" class="mt-1" elevation="1">
-                    <v-list v-model:selected="item" mandatory density="compact" variant="flat">
+                    <v-list v-model:selected="localSortBy" mandatory density="compact" variant="flat">
                         <v-list-subheader class="text-caption font-weight-medium">{{ translations.dataType_ }}</v-list-subheader>
                         <v-list-item v-for="(item, index) in items" :key="index" :value="item.value" :active="false" min-height="34">
                             <v-list-item-title class="text-body-2">
@@ -82,7 +99,7 @@ const SortTableMenu = Vue.defineComponent({
                         </v-list-item>
                     </v-list>
                     <v-divider class="border-opacity-25"></v-divider>
-                    <v-list :disabled="disableSortItems" mandatory v-model:selected="sortItem" density="compact" class="pb-0">
+                    <v-list :disabled="disableSortItems" mandatory v-model:selected="localSortDirection" density="compact" class="pb-0">
                         <v-list-subheader class="text-caption font-weight-medium">{{ translations.direction_ }}</v-list-subheader>
                         <v-list-item v-for="(item, index) in sortItems" :key="index" :value="item.value" :active="false" min-height="34">
                             <v-list-item-title class="text-body-2">
