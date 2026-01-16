@@ -43,7 +43,7 @@
                 <!-- Data Table -->
                 <v-card-text>
                     <v-data-table-server
-                            height="calc(100vh - 360px)"
+                            :height="`calc(100vh - ${selected.length ? 405 : 360}px)`"
                             fixed-header
                             :headers="headers"
                             v-model="selected"
@@ -64,7 +64,7 @@
                                 </v-toolbar-title>
 
                                 <!-- Filters -->
-                                <div class="d-flex ga-2">
+                                <div class="d-flex align-center ga-2">
                                     <v-select
                                         v-model="filters.status"
                                         :items="statusOptions"
@@ -93,26 +93,26 @@
                                         hide-details
                                         width="320px"
                                     ></pop-date-range-field>
+                                    <v-btn variant="flat" color="primary">{{ _('Apply') }}</v-btn>
                                 </div>
 
                                 <v-spacer></v-spacer>
+                            </v-toolbar>
 
-                                <v-chip v-if="selected.length" variant="tonal">${selected.length} {{ _('selected') }}</v-chip>
-                                <v-tooltip :disabled="Boolean(selected.length)" location="bottom">
-                                    <template #activator="{ props }">
-                                        <div v-bind="props">
-                                            <v-btn
-                                                color="primary"
-                                                variant="elevated"
-                                                class="ma-2"
-                                                :disabled="!selected.length"
-                                            >
-                                                {{ _('Run OCR') }}
-                                            </v-btn>
-                                        </div>
-                                    </template>
-                                    <span>{{ _('Select an item from the table to run OCR process') }}</span>
-                                </v-tooltip>
+                            <!-- Bulk Actions Bar -->
+                            <v-toolbar v-if="selected.length > 0" height="auto" class="mb-2">
+                                <div class="d-flex align-center justify-space-between w-100 px-4">
+                                    <v-chip variant="tonal">${selected.length} {{ _('selected') }}</v-chip>
+                                    <v-btn
+                                        color="primary"
+                                        variant="elevated"
+                                        @click="runBulkOCR"
+                                        :loading="bulkLoading"
+                                    >
+                                        <v-icon left>mdi-text-recognition</v-icon>
+                                        {{ _('Run OCR') }}
+                                    </v-btn>
+                                </div>
                             </v-toolbar>
                         </template>
 
@@ -122,30 +122,23 @@
                                 size="48"
                                 rounded="lg"
                                 class="cursor-pointer"
-                                @click="openImagePreview(item)"
-                            >
-                                <v-img :src="item.thumbnail_url" cover></v-img>
+                            >   
+                                <image-viewer mode="click" :media="{ thumbnail_url: item.thumbnail_url, s3url: item.url }"></image-viewer>
                             </v-avatar>
                         </template>
 
                         <!-- Bulletin Column -->
                         <template #item.bulletin="{ item }">
-                            <div class="d-flex flex-column">
-                                <a
-                                    :href="`/admin/bulletins/${item.bulletin.id}`"
-                                    target="_blank"
-                                    class="text-decoration-none font-weight-medium"
-                                >
-                                    <v-btn
-                                        size="small"
-                                        variant="tonal"
-                                        class="mx-2"
-                                        prepend-icon="mdi-file-document-multiple"
-                                    >
-                                        {{ _('Preview bulletin') }} #${item.bulletin.id}
-                                    </v-btn>
-                                </a>
-                            </div>
+                            <v-btn
+                                size="small"
+                                variant="tonal"
+                                class="mx-2"
+                                prepend-icon="mdi-file-document-multiple"
+                                :href="`/admin/bulletins/${item.bulletin.id}`"
+                                target="_blank"
+                            >
+                                {{ _('Preview bulletin') }} #${item.bulletin.id}
+                            </v-btn>
                         </template>
 
                         <!-- OCR Status Column -->
@@ -171,28 +164,6 @@
                 </v-card-text>
             </v-card>
         </v-container>
-
-        <v-dialog v-model="imagePreview.dialog" max-width="600px">
-            <v-card>
-                <v-toolbar>
-                    <v-toolbar-title>{{ _('Media Details') }}</v-toolbar-title>
-                    <v-spacer></v-spacer>
-                    <v-btn icon="mdi-close" @click="imagePreview.dialog = false"></v-btn>
-                </v-toolbar>
-
-                <v-card-text>
-                    <inline-media-renderer
-                        :media="imagePreview.media"
-                        :media-type="imagePreview.mediaType"
-                        :use-metadata="true"
-                        ref="inlineMediaRendererRef"
-                        class="mb-4"
-                        content-style="height: calc(100vh - 300px);"
-                        hide-close
-                        @fullscreen="$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()"
-                    ></inline-media-renderer>
-                </v-card-text>
-            </v-card>
     </v-main>
 
 {% endblock %} {% block js %}
@@ -219,11 +190,6 @@
                 drawer: drawer,
                 loading: true,
                 options: {},
-                imagePreview: {
-                    dialog: false,
-                    media: null,
-                    mediaType: 'image'
-                },
 
                 headers: [
                     { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
@@ -329,11 +295,6 @@
                 getStatusIcon(status) {
                     return this.statusMap[status]?.icon || status;
                 },
-                openImagePreview(item) {
-                    this.imagePreview.media = { id: 1, filename: item.filename, s3url: item.url };
-                    this.imagePreview.mediaType = 'image';
-                    this.imagePreview.dialog = true;
-                }
             }
         });
         app.component('PdfViewer', PdfViewer);

@@ -1,5 +1,24 @@
 const ImageViewer = Vue.defineComponent({
-    props: ['media', 'mediaType'],
+    props: {
+        media: {
+            type: Object,
+            required: true
+        },
+        mediaType: {
+            type: String,
+            default: 'image'
+        },
+        mode: {
+            type: String,
+            default: 'inline', // 'inline' or 'click'
+            validator: (value) => ['inline', 'click'].includes(value)
+        },
+        // Additional options to pass to lightGallery
+        galleryOptions: {
+            type: Object,
+            default: () => ({})
+        }
+    },
     data: () => {
       return {
         translations: window.translations,
@@ -9,11 +28,23 @@ const ImageViewer = Vue.defineComponent({
         },
       };
     },
+    mounted() {
+        if (this.mode === 'inline') {
+            this.$nextTick(() => {
+                this.initInlineLightbox();
+            });
+        }
+    },
     unmounted() {
         this.destroyInlineLightbox();
         this.destroyFullscreenLightbox();
     },
     methods: {
+        handleClick() {
+            if (this.mode === 'click') {
+                this.requestFullscreen();
+            }
+        },
         requestFullscreen(nextOptions) {
             const el = this.$refs.imageViewer;
             if (!el) return;
@@ -27,7 +58,7 @@ const ImageViewer = Vue.defineComponent({
                 selector: '.media-item',
             }
 
-            const options = { ...defaultOptions, ...nextOptions }
+            const options = { ...defaultOptions, ...this.galleryOptions, ...nextOptions }
         
             this.lg.fullscreen = lightGallery(el, options);
             this.lg.fullscreen.openGallery(0); // Open the first image by default
@@ -57,7 +88,7 @@ const ImageViewer = Vue.defineComponent({
                 closable: false,
             }
 
-            const options = { ...defaultOptions, ...nextOptions }
+            const options = { ...defaultOptions, ...this.galleryOptions, ...nextOptions }
         
             this.lg.inline = lightGallery(el, options);
             this.lg.inline.openGallery(0); // Open the first image by default
@@ -69,34 +100,34 @@ const ImageViewer = Vue.defineComponent({
         },
         addRotateListener(lgInstance) {
           if (!lgInstance?.el) return;
-  
+
           ['lgRotateLeft', 'lgRotateRight'].forEach(evtName => {
             lgInstance.el.addEventListener(evtName, (evt) => {
               const rotate = evt.detail.rotate;
-  
+
               const container = lgInstance.$content.firstElement;
               const imgWrapper = container.querySelector('.lg-img-rotate');
               const img = container.querySelector('img.lg-object');
-  
+
               if (!container || !imgWrapper || !img) return;
-  
+
               const { width: containerW, height: containerH } = container.getBoundingClientRect();
               const { naturalWidth: naturalW, naturalHeight: naturalH } = img;
-  
+
               const isRotated = rotate % 180 !== 0;
               const imgW = isRotated ? naturalH : naturalW;
               const imgH = isRotated ? naturalW : naturalH;
-  
+
               const scale = Math.min(containerW / imgW, containerH / imgH);
-  
+
               // Image gets rotated, so we flip width/height
               if (isRotated) {
                 imgWrapper.style.width = `${imgH * scale}px`;
                 imgWrapper.style.height = `${imgW * scale}px`;
-  
+
                 const leftMargin = (containerW - imgWrapper.offsetWidth) / 2;
                 const topMargin = (containerH - imgWrapper.offsetHeight) / 2;
-  
+
                 imgWrapper.style.marginLeft = `${leftMargin}px`;
                 imgWrapper.style.marginTop = `${topMargin}px`;
               } else {
@@ -105,7 +136,7 @@ const ImageViewer = Vue.defineComponent({
                   imgWrapper.style[prop] = null;
                 });
               }
-  
+
               img.style.maxWidth = '';
               img.style.maxHeight = '';
             });
@@ -113,21 +144,21 @@ const ImageViewer = Vue.defineComponent({
         },
         // HACK: Flip twice to fix zoom-drag not working after zoom in via button
         forceEnableDrag(lgInstance) {
-          const flipBtn = lgInstance.$toolbar?.firstElement?.querySelector('#lg-flip-hor');
-          if (flipBtn) {
-            flipBtn.click();
-            flipBtn.click();
-          }
+            const flipBtn = lgInstance.$toolbar?.firstElement?.querySelector('#lg-flip-hor');
+            if (flipBtn) {
+                flipBtn.click();
+                flipBtn.click();
+            }
         },
         // Setup event listeners on zoom buttons to trigger drag fix
         setupZoomHack(lgInstance) {
-          const zoomInBtn = lgInstance.$toolbar?.firstElement?.querySelector('.lg-zoom-in');
-          const zoomOutBtn = lgInstance.$toolbar?.firstElement?.querySelector('.lg-zoom-out');
+            const zoomInBtn = lgInstance.$toolbar?.firstElement?.querySelector('.lg-zoom-in');
+            const zoomOutBtn = lgInstance.$toolbar?.firstElement?.querySelector('.lg-zoom-out');
 
-          const handler = () => this.forceEnableDrag(lgInstance);
+            const handler = () => this.forceEnableDrag(lgInstance);
 
-          zoomInBtn?.addEventListener('click', handler);
-          zoomOutBtn?.addEventListener('click', handler);
+            zoomInBtn?.addEventListener('click', handler);
+            zoomOutBtn?.addEventListener('click', handler);
         },
         destroyInlineLightbox() {
             this.lg.inline?.destroy();
@@ -140,22 +171,40 @@ const ImageViewer = Vue.defineComponent({
     },
     watch: {
         media: {
-          deep: true,
-          immediate: true,
-          handler() {
-            this.$nextTick(() => {
-              this.destroyInlineLightbox();
-              this.initInlineLightbox(); // re-init with latest DOM
-            });
-          }
+            deep: true,
+            immediate: false,
+            handler() {
+                if (this.mode === 'inline') {
+                    this.$nextTick(() => {
+                        this.destroyInlineLightbox();
+                        this.initInlineLightbox(); // re-init with latest DOM
+                    });
+                }
+            }
+        }
+    },
+    computed: {
+        thumbnailUrl() {
+            return this.media.thumbnail_url || this.media.s3url;
+        },
+        fullSizeUrl() {
+            return this.media.url || this.media.s3url;
         }
     },
     template: `
         <div ref="imageViewer">
-            <a class="media-item h-100 block" :data-src="media.s3url">
-                <img :src="media.s3url" class="w-100 h-100 bg-black" style="object-fit: contain;"></img>
+            <a 
+                class="media-item h-100 block" 
+                :class="{ 'cursor-pointer': mode === 'click' }"
+                :data-src="fullSizeUrl"
+                @click.prevent="handleClick"
+            >
+                <img 
+                    :src="mode === 'click' ? thumbnailUrl : fullSizeUrl" 
+                    class="w-100 h-100 bg-black" 
+                    style="object-fit: contain;"
+                />
             </a>
         </div>
-      `,
-  });
-  
+    `,
+});
