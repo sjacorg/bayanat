@@ -73,6 +73,16 @@
 
             <v-list-group>
                 <template v-slot:activator="{props}">
+                    <v-list-item v-bind="props" prepend-icon="mdi-text-recognition" title="{{ _('OCR') }}"></v-list-item>
+                </template>
+                
+                <v-list-item prepend-icon="mdi-eye-check" title="{{ _('Review Queue') }}" href="/admin/ocr/review/" key="ocr-review"></v-list-item>
+                <v-list-item prepend-icon="mdi-keyboard" title="{{ _('Transcription Queue') }}" href="/admin/ocr/transcription/" key="ocr-transcription"></v-list-item>
+                <v-list-item prepend-icon="mdi-image-multiple" title="{{ _('Media Dashboard') }}" href="/admin/media/" key="media"></v-list-item>
+            </v-list-group>
+
+            <v-list-group>
+                <template v-slot:activator="{props}">
                     <v-list-item v-bind="props" prepend-icon="mdi-account-group"
                                 title="{{ _('Users & Groups') }}"></v-list-item>
                 </template>
