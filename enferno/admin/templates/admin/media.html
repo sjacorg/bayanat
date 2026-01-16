@@ -108,8 +108,8 @@
                                         variant="elevated"
                                         @click="runBulkOCR"
                                         :loading="bulkLoading"
+                                        prepend-icon="mdi-text-recognition"
                                     >
-                                        <v-icon left>mdi-text-recognition</v-icon>
                                         {{ _('Run OCR') }}
                                     </v-btn>
                                 </div>
@@ -189,6 +189,7 @@
                 dialog: dialog,
                 drawer: drawer,
                 loading: true,
+                bulkLoading: false,
                 options: {},
 
                 headers: [
@@ -235,6 +236,24 @@
             }),
 
             methods: {
+                runBulkOCR() {
+                    if (this.selected.length === 0) return;
+
+                    this.bulkLoading = true;
+
+                    // TODO: Replace with real API call
+                    // api.post('/admin/api/ocr/bulk', { media_ids: this.selected })
+                    setTimeout(() => {
+                        this.showSnack({
+                            message: `OCR queued for ${this.selected.length} items`,
+                            type: 'success'
+                        });
+                        this.selected = [];
+                        this.bulkLoading = false;
+                        this.refresh();
+                    }, 1000);
+                },
+
                 loadPlaceholderData() {
                     // Placeholder data
                     this.stats = {
