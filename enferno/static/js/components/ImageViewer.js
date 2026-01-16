@@ -174,12 +174,15 @@ const ImageViewer = Vue.defineComponent({
             deep: true,
             immediate: false,
             handler() {
-                if (this.mode === 'inline') {
-                    this.$nextTick(() => {
-                        this.destroyInlineLightbox();
-                        this.initInlineLightbox(); // re-init with latest DOM
-                    });
-                }
+              this.$nextTick(() => {
+                this.destroyInlineLightbox();
+                this.destroyFullscreenLightbox();
+              });
+              if (this.mode === 'inline') {
+                  this.$nextTick(() => {
+                      this.initInlineLightbox(); // re-init with latest DOM
+                  });
+              }
             }
         }
     },
