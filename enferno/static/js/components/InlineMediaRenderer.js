@@ -13,6 +13,10 @@ const InlineMediaRenderer = Vue.defineComponent({
         type: String,
         default: 'height: 450px;'
       },
+      hideClose: {
+        type: Boolean,
+        default: false
+      }
     },
     emits: ['fullscreen', 'close'],
     data: () => ({
@@ -59,7 +63,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                 :arabic="media.title_ar || ''"
                 disable-spacing
               ></uni-field>
-              <div class="cursor-pointer">
+              <div v-if="media.filename" class="cursor-pointer">
                 <v-list-item class="text-caption ml-1 py-0">
                   <template v-slot:prepend>
                     <v-tooltip location="bottom">
@@ -80,7 +84,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                   </v-tooltip>
                 </v-list-item>
               </div>
-              <div class="d-flex align-center cursor-pointer">
+              <div v-if="media.etag" class="d-flex align-center cursor-pointer">
                 <v-list-item class="text-caption ml-1 py-0 text-truncate">
                   <template v-slot:prepend>
                     <v-tooltip location="bottom">
@@ -105,7 +109,7 @@ const InlineMediaRenderer = Vue.defineComponent({
           </div>
           <v-spacer></v-spacer>
           <v-btn @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
-          <v-btn icon="mdi-close" class="ml-2" size="small" @click="$emit('close')"></v-btn>
+          <v-btn v-if="hideClose === false" icon="mdi-close" class="ml-2" size="small" @click="$emit('close')"></v-btn>
         </v-toolbar>
 
         <div :style="contentStyle">
