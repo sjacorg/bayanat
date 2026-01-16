@@ -1,187 +1,208 @@
-t{% extends 'layout.html' %} {% block content %}
+{% extends 'layout.html' %} {% block content %}
     <v-main>
         <v-container fluid>
-            <v-row>
-                <v-col cols="12">
-                    <v-card>
-                        <v-card-title>
-                            <div class="flex-grow-1"></div>
-                        </v-card-title>
+            <v-card>
+                <!-- Stats Bar -->
+                <v-card-text class="pb-0">
+                    <v-row>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${stats.total.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Total Media') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${stats.processed.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Processed (Searchable)') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${stats.needs_review.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Needs Review') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${stats.pending.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Pending/Failed') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </v-card-text>
 
-                        <v-card-text>
-                            <v-data-table-server
-                                    height="calc(100vh - 260px)"
-                                    fixed-header
-                                    :headers="headers"
-                                    :items="items"
-                                    @update:options="refresh"
-                                    :page="options.page"
-                                    :loading="loading"
-                                    :items-length="itemsLength"
-                                    class="elevation-1"
-                            >
-                                <template v-slot:top>
-                                    <v-toolbar flat color="white">
-                                        <v-toolbar-title>{{ _('Event Types') }}</v-toolbar-title>
+                <!-- Data Table -->
+                <v-card-text>
+                    <v-data-table-server
+                            height="calc(100vh - 360px)"
+                            fixed-header
+                            :headers="headers"
+                            v-model="selected"
+                            :items="items"
+                            @update:options="refresh"
+                            :page="options.page"
+                            :loading="loading"
+                            :items-length="itemsLength"
+                            class="elevation-1"
+                            show-select
+                            select-strategy="page"
+                            item-selectable="selectable"
+                    >
+                        <template v-slot:top>
+                            <v-toolbar>
+                                <v-toolbar-title>
+                                    {{ _('Media Dashboard') }}
+                                </v-toolbar-title>
 
-                                        <v-spacer></v-spacer>
+                                <!-- Filters -->
+                                <div class="d-flex ga-2">
+                                    <v-select
+                                        v-model="filters.status"
+                                        :items="statusOptions"
+                                        label="{{ _('Status') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                    ></v-select>
+                                    <v-text-field
+                                        v-model="filters.bulletinSearch"
+                                        label="{{ _('Search Bulletin') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        prepend-inner-icon="mdi-magnify"
+                                        hide-details
+                                        width="250px"
+                                    ></v-text-field>
+                                    <pop-date-range-field
+                                        v-model="filters.dateRange"
+                                        label="{{ _('Date Range') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                        width="320px"
+                                    ></pop-date-range-field>
+                                </div>
 
-                                        <v-btn
+                                <v-spacer></v-spacer>
+
+                                <v-chip v-if="selected.length" variant="tonal">${selected.length} {{ _('selected') }}</v-chip>
+                                <v-tooltip :disabled="Boolean(selected.length)" location="bottom">
+                                    <template #activator="{ props }">
+                                        <div v-bind="props">
+                                            <v-btn
                                                 color="primary"
                                                 variant="elevated"
                                                 class="ma-2"
-                                                @click="newItem">
-                                            {{ _('New Item') }}
-                                        </v-btn>
+                                                :disabled="!selected.length"
+                                            >
+                                                {{ _('Run OCR') }}
+                                            </v-btn>
+                                        </div>
+                                    </template>
+                                    <span>{{ _('Select an item from the table to run OCR process') }}</span>
+                                </v-tooltip>
+                            </v-toolbar>
+                        </template>
 
-                                        <v-dialog v-model="dialog" max-width="500px">
+                        <!-- Thumbnail Column -->
+                        <template #item.thumbnail="{ item }">
+                            <v-avatar
+                                size="48"
+                                rounded="lg"
+                                class="cursor-pointer"
+                                @click="openImagePreview(item)"
+                            >
+                                <v-img :src="item.thumbnail_url" cover></v-img>
+                            </v-avatar>
+                        </template>
 
-                                            <v-card>
-                                                <v-card-title block>
-                                                    <span class="headline">${ formTitle }</span>
+                        <!-- Bulletin Column -->
+                        <template #item.bulletin="{ item }">
+                            <div class="d-flex flex-column">
+                                <a
+                                    :href="`/admin/bulletins/${item.bulletin.id}`"
+                                    target="_blank"
+                                    class="text-decoration-none font-weight-medium"
+                                >
+                                    <v-btn
+                                        size="small"
+                                        variant="tonal"
+                                        class="mx-2"
+                                        prepend-icon="mdi-file-document-multiple"
+                                    >
+                                        {{ _('Preview bulletin') }} #${item.bulletin.id}
+                                    </v-btn>
+                                </a>
+                            </div>
+                        </template>
 
+                        <!-- OCR Status Column -->
+                        <template #item.ocr_status="{ item }">
+                            <v-chip
+                                :color="getStatusColor(item.ocr_status)"
+                                size="small"
+                                :prepend-icon="getStatusIcon(item.ocr_status)"
+                            >
+                                ${getStatusText(item.ocr_status)}
+                            </v-chip>
+                            <div v-if="item.ocr_confidence" class="text-caption text-medium-emphasis">
+                                ${item.ocr_confidence}% {{ _('confidence') }}
+                            </div>
+                        </template>
 
-                                                </v-card-title>
+                        <!-- Date Column -->
+                        <template #item.created_at="{ item }">
+                            ${formatDate(item.created_at)}
+                        </template>
+                    </v-data-table-server>
 
-                                                <v-card-text>
-                                                    <v-container>
-                                                        <v-row>
-                                                            <v-col cols="12" md="6">
-                                                                <v-text-field
-                                                                        variant="solo"
-                                                                        v-model="editedItem.title"
-                                                                        label="{{ _('Title') }}"
-                                                                ></v-text-field>
-                                                            </v-col>
-                                                            <v-col cols="12" md="6">
-                                                                <v-text-field
-                                                                        variant="solo"
-                                                                        v-model="editedItem.title_ar"
-                                                                        label="{{ _('Title (AR)') }}"
-                                                                ></v-text-field>
-                                                            </v-col>
-                                                        </v-row>
-                                                        <v-row>
-                                                            <v-col cols="12" md="6">
-                                                                <v-checkbox label="{{ _('For Actors') }}"
-                                                                            v-model="editedItem.for_actor">
-                                                                </v-checkbox>
-
-                                                            </v-col>
-                                                            <v-col cols="12" md="6">
-                                                                <v-checkbox label="{{ _('For Bulletins') }}"
-                                                                            v-model="editedItem.for_bulletin">
-                                                                </v-checkbox>
-
-                                                            </v-col>
-                                                            <v-row>
-                                                                <v-col>
-                                                                    <v-textarea variant="solo"
-                                                                                v-model="editedItem.comments"
-                                                                                label="{{ _('Comments') }}">
-
-                                                                    </v-textarea>
-                                                                </v-col>
-                                                            </v-row>
-                                                        </v-row>
-                                                    </v-container>
-                                                </v-card-text>
-
-                                                <v-card-actions>
-                                                    <v-spacer></v-spacer>
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="close"
-                                                    >{{ _('Cancel') }}</v-btn
-                                                    >
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="save"
-                                                    >{{ _('Save') }}</v-btn
-                                                    >
-                                                </v-card-actions>
-                                            </v-card>
-                                        </v-dialog>
-
-                                        <v-dialog v-model="imDialog" width="500">
-
-                                            {% if current_user.roles_in(['Admin']) %}
-                                                <template v-slot:activator="{ props }">
-                                                    <v-btn
-                                                            color="secondary"
-                                                            variant="elevated"
-                                                            class="ma-2"
-                                                            v-bind="props">
-                                                        {{ _('Import CSV') }}
-                                                    </v-btn>
-                                                </template>
-                                            {% endif %}
-
-                                            <v-card>
-                                                <v-card-title>
-                                                    <span class="headline">{{ _('Import CSV') }}</span>
-                                                </v-card-title>
-
-                                                <v-card-text>
-                                                    <v-container>
-                                                        <v-row>
-                                                            <v-col cols="12" md="12">
-                                                                <v-file-input v-model="csvFile" show-size
-                                                                              accept=".csv"
-                                                                              label="{{ _('Select CSV File') }}"></v-file-input>
-
-                                                            </v-col>
-                                                        </v-row>
-                                                    </v-container>
-                                                </v-card-text>
-
-                                                <v-card-actions>
-                                                    <v-spacer></v-spacer>
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="imDialog=false"
-                                                    >{{ _('Cancel') }}</v-btn
-                                                    >
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="importCSV"
-                                                    >{{ ('Save') }}</v-btn
-                                                    >
-                                                </v-card-actions>
-                                            </v-card>
-
-                                        </v-dialog>
-
-                                    </v-toolbar>
-                                </template>
-
-                                <template #['item.comments']="{ item }">
-                                    <div class="line-clamp-1">${item.comments}</div>
-                                </template>
-
-                                <template v-slot:item.action="{ item }">
-                                    <v-icon small class="mr-2" @click="editItem(item)">
-                                        mdi-pencil
-                                    </v-icon>
-                                    <v-icon small @click="deleteItem(item)">
-                                        mdi-delete-sweep
-                                    </v-icon>
-                                </template>
-                                <template v-slot:no-data></template>
-                            </v-data-table-server>
-
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
+                </v-card-text>
+            </v-card>
         </v-container>
+
+        <v-dialog v-model="imagePreview.dialog" max-width="600px">
+            <v-card>
+                <v-toolbar>
+                    <v-toolbar-title>{{ _('Media Details') }}</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn icon="mdi-close" @click="imagePreview.dialog = false"></v-btn>
+                </v-toolbar>
+
+                <v-card-text>
+                    <inline-media-renderer
+                        :media="imagePreview.media"
+                        :media-type="imagePreview.mediaType"
+                        :use-metadata="true"
+                        ref="inlineMediaRendererRef"
+                        class="mb-4"
+                        content-style="height: calc(100vh - 300px);"
+                        hide-close
+                        @fullscreen="$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()"
+                    ></inline-media-renderer>
+                </v-card-text>
+            </v-card>
     </v-main>
 
 {% endblock %} {% block js %}
+
+    <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateRangeField.js"></script>
     <script>
 
         const {createApp} = Vue;
@@ -195,133 +216,132 @@ t{% extends 'layout.html' %} {% block content %}
 
             data: () => ({
                 dialog: dialog,
-                imDialog: false,
                 drawer: drawer,
                 loading: true,
-                csvFile: null,
                 options: {},
+                imagePreview: {
+                    dialog: false,
+                    media: null,
+                    mediaType: 'image'
+                },
 
                 headers: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (ar)')}}", value: "title_ar"},
-                    {title: "{{_('For Actors')}}", value: "for_actor"},
-                    {title: "{{_('For Bulletins')}}", value: "for_bulletin"},
-                    {title: "{{_('Comments')}}", value: "comments"},
-                    {% if current_user.roles_in(['Admin','Mod']) %}
-                        {title: "{{_('Actions')}}", value: "action", sortable: false}
-                    {% endif %}
+                    { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
+                    { title: "{{_('Filename')}}", value: "filename" },
+                    { title: "{{_('Bulletin')}}", value: "bulletin", sortable: false },
+                    { title: "{{_('OCR Status')}}", value: "ocr_status" },
+                    { title: "{{_('Date')}}", value: "created_at" }
                 ],
 
+                selected: [],
                 items: [],
                 itemsLength: 10,
-                editedIndex: -1,
-                editedItem: {
-                    title: ""
+
+                filters: {
+                    status: null,
+                    bulletinSearch: '',
+                    dateRange: null
                 },
-                defaultItem: {
-                    title: ""
+
+                stats: {
+                    total: 2_000_000,
+                    processed: 345,
+                    needs_review: 1_000_000,
+                    pending: 500_000
+                },
+                statusOptions: [
+                    { title: "{{_('All')}}", value: null },
+                    { title: "{{_('Pending')}}", value: 'pending' },
+                    { title: "{{_('Processing')}}", value: 'processing' },
+                    { title: "{{_('Processed')}}", value: 'processed' },
+                    { title: "{{_('Needs Review')}}", value: 'needs_review' },
+                    { title: "{{_('Needs Transcription')}}", value: 'needs_transcription' },
+                    { title: "{{_('Failed')}}", value: 'failed' }
+                ],
+                statusMap: {
+                    pending: { text: "{{_('Pending')}}", color: 'grey', icon: 'mdi-clock-outline' },
+                    processing: { text: "{{_('Processing')}}", color: 'blue', icon: 'mdi-cog-outline' },
+                    processed: { text: "{{_('Processed')}}", color: 'green', icon: 'mdi-check-circle-outline' },
+                    needs_review: { text: "{{_('Needs Review')}}", color: 'orange', icon: 'mdi-alert-circle-outline' },
+                    needs_transcription: { text: "{{_('Needs Transcription')}}", color: 'purple', icon: 'mdi-alphabetical' },
+                    failed: { text: "{{_('Failed')}}", color: 'red', icon: 'mdi-close-circle-outline' },
                 }
             }),
 
-            computed: {
-                formTitle() {
-                    return this.editedIndex === -1 ? "{{_('New Item')}}" : "{{_('Edit Item')}}";
-                }
-            },
-
-            watch: {
-                dialog(val) {
-                    val || this.close();
-                },
-
-
-            },
-
             methods: {
+                loadPlaceholderData() {
+                    // Placeholder data
+                    this.stats = {
+                        total: 2000000,
+                        processed: 1200000,
+                        needs_review: 50000,
+                        pending: 10000
+                    };
+
+                    const statuses = ['pending', 'processing', 'processed', 'needs_review', 'needs_transcription', 'failed'];
+                    const placeholderItems = [];
+
+                    for (let i = 1; i <= 20; i++) {
+                        const status = statuses[Math.floor(Math.random() * statuses.length)];
+                        placeholderItems.push({
+                            id: i,
+                            filename: `scan_${String(i).padStart(3, '0')}.jpg`,
+                            thumbnail_url: `https://picsum.photos/seed/${i}/100/100`,
+                            url: `https://picsum.photos/seed/${i}/800/1000`,
+                            bulletin: {
+                                id: 12340 + i,
+                                ref: `#${12340 + i}`,
+                                title: `Document about incident ${i}`
+                            },
+                            ocr_status: status,
+                            ocr_confidence: status === 'processed' ? Math.floor(Math.random() * 20) + 80 : null,
+                            created_at: new Date(2026, 0, 20 - i).toISOString()
+                        });
+                    }
+
+                    this.items = placeholderItems;
+                    this.itemsLength = 2000000;
+                    this.loading = false;
+                },
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
 
-                    api.get(`/admin/api/eventtypes/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+                    // api.get(`/admin/api/media/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+                    //     this.itemsLength = response.data.total;
+                    //     this.items = response.data.items;
+                    // }).finally(() => {
+                    //     this.loading = false;
+                    // });
 
-                        this.itemsLength = response.data.total;
-                        this.items = response.data.items;
-                    }).finally(() => {
-                        this.loading = false;
-                    });
-                },
-
-                importCSV() {
-                    const reqData = new FormData();
-                    reqData.append('csv', this.csvFile)
-                    api.post('/admin/api/eventtype/import/', reqData).then(response => {
-
-                        this.imDialog = false;
-                        this.refresh();
-                        this.showSnack(response.data);
-                    })
-
-                },
-
-                editItem(item) {
-                    this.editedIndex = this.items.indexOf(item);
-                    this.editedItem = Object.assign({}, item);
-                    this.dialog = true;
-                },
-
-                deleteItem(item) {
-                    const index = this.items.indexOf(item);
-                    const cfm = confirm("{{ _('Are you sure you want to delete this item?') }}") &&
-                        this.items.splice(index, 1);
-                    if (cfm) {
-                        api.delete(`/admin/api/eventtype/${item.id}`)
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh()
-                            })
-                    }
-                },
-
-                close() {
-                    this.dialog = false;
                     setTimeout(() => {
-                        this.editedItem = Object.assign({}, this.defaultItem);
-                        this.editedIndex = -1;
-                    }, 300);
-                },
-                newItem() {
-                    this.editedIndex = -1;
-                    this.editedItem = Object.assign({}, this.defaultItem);
-                    this.dialog = true;
+                        this.loadPlaceholderData();
+                        this.loading = false;
+                    }, 500);
                 },
 
-                save() {
-                    if (this.editedIndex > -1) {
-                        Object.assign(this.items[this.editedIndex], this.editedItem);
-                        api.put(`/admin/api/eventtype/${this.editedItem.id}`, {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh();
-                                this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        })
-
-                    } else {
-                        
-                        api.post("/admin/api/eventtype/", {item: this.editedItem})
-                        .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh();
-                                this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        })
-                    }
+                getStatusText(status) {
+                    return this.statusMap[status]?.text || status;
+                },
+                getStatusColor(status) {
+                    return this.statusMap[status]?.color || status;
+                },
+                getStatusIcon(status) {
+                    return this.statusMap[status]?.icon || status;
+                },
+                openImagePreview(item) {
+                    this.imagePreview.media = { id: 1, filename: item.filename, s3url: item.url };
+                    this.imagePreview.mediaType = 'image';
+                    this.imagePreview.dialog = true;
                 }
             }
         });
+        app.component('PdfViewer', PdfViewer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('UniField', UniField);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
+        app.component('PopDateField', PopDateField);
+        app.component('PopDateRangeField', PopDateRangeField);
         app.use(vuetify).mount("#app")
     </script>
 {% endblock %}
