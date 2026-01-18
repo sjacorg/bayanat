@@ -357,6 +357,70 @@ ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
 
 
 @ocr_cli.command()
+@click.option("--all", "process_all", is_flag=True, help="Process all pending media")
+@click.option("--bulletin-ids", "-b", help="Comma-separated bulletin IDs")
+@click.option("--limit", "-n", type=int, help="Maximum number of media to process")
+@click.option(
+    "--language",
+    "-l",
+    multiple=True,
+    default=["ar", "en"],
+    help="Language hints (can specify multiple)",
+)
+@with_appcontext
+def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple) -> None:
+    """Batch process media files for OCR extraction."""
+    from enferno.admin.models import Media, Extraction
+    from enferno.tasks.extraction import process_media_extraction_task
+
+    # Build query for media without extractions
+    query = db.session.query(Media.id).outerjoin(Extraction).filter(Extraction.id.is_(None))
+
+    # Filter by bulletin IDs if specified
+    if bulletin_ids:
+        ids = [int(x.strip()) for x in bulletin_ids.split(",")]
+        query = query.filter(Media.bulletin_id.in_(ids))
+
+    # Require --all or --bulletin-ids or --limit
+    if not process_all and not bulletin_ids and not limit:
+        click.echo("Error: Specify --all, --bulletin-ids, or --limit")
+        return
+
+    # Apply limit
+    if limit:
+        query = query.limit(limit)
+
+    media_ids = [row[0] for row in query.all()]
+
+    if not media_ids:
+        click.echo("No pending media found")
+        return
+
+    click.echo(f"Processing {len(media_ids)} media files...")
+    hints = list(language)
+
+    success = 0
+    failed = 0
+    skipped = 0
+
+    for media_id in media_ids:
+        result = process_media_extraction_task(media_id, hints)
+        if result.get("success"):
+            if result.get("skipped"):
+                skipped += 1
+            else:
+                success += 1
+                click.echo(
+                    f"  {media_id}: {result.get('status')} ({result.get('confidence', 0):.0f}%)"
+                )
+        else:
+            failed += 1
+            click.echo(f"  {media_id}: FAILED - {result.get('error')}")
+
+    click.echo(f"\nDone: {success} processed, {skipped} skipped, {failed} failed")
+
+
+@ocr_cli.command()
 @click.option("--media-id", "-m", required=True, type=int, help="Media ID to extract text from")
 @click.option(
     "--language",
