@@ -365,9 +365,11 @@ ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
     default=["ar", "en"],
     help="Language hints (can specify multiple)",
 )
+@click.option("--show-text", "-t", is_flag=True, help="Print extracted text")
 @with_appcontext
-def extract(media_id: int, language: tuple) -> None:
+def extract(media_id: int, language: tuple, show_text: bool) -> None:
     """Extract text from a media file using Google Vision OCR."""
+    from enferno.admin.models import Extraction
     from enferno.tasks.extraction import process_media_extraction_task
 
     click.echo(f"Extracting text from media {media_id}...")
@@ -380,5 +382,10 @@ def extract(media_id: int, language: tuple) -> None:
             click.echo(f"Extracted text from media {media_id}")
             click.echo(f"  Confidence: {result.get('confidence', 0):.1f}%")
             click.echo(f"  Status: {result.get('status')}")
+
+        if show_text:
+            ext = Extraction.query.filter_by(media_id=media_id).first()
+            if ext and ext.text:
+                click.echo(f"\n--- Extracted Text ---\n{ext.text}\n")
     else:
         click.echo(f"Error: {result.get('error')}")
