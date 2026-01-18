@@ -56,6 +56,7 @@ from enferno.admin.models import (
     GeoLocationType,
     WorkflowStatus,
     ActorProfile,
+    Extraction,
 )
 from enferno.data_import.models import DataImport
 
@@ -6925,6 +6926,43 @@ def api_dynamic_fields_history(entity_type):
     except Exception as e:
         logger.error(f"Error fetching history for {entity_type}: {str(e)}")
         return HTTPResponse.error("Failed to fetch history", status=500)
+
+
+# OCR Extraction endpoints
+@admin.get("/api/ocr/review")
+@auth_required("session")
+def api_ocr_review():
+    """
+    Get extractions needing human review.
+    Query params: page, per_page
+    Returns: paginated extractions with status=needs_review, oldest first.
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+
+    query = Extraction.query.filter(Extraction.status == "needs_review").order_by(
+        asc(Extraction.created_at)
+    )
+
+    paginated = query.paginate(page=page, per_page=per_page, count=True)
+
+    items = []
+    for ext in paginated.items:
+        item = ext.to_dict()
+        # Add media thumbnail URL if available
+        if ext.media and ext.media.media_file:
+            item["media_filename"] = ext.media.media_file
+        items.append(item)
+
+    return jsonify(
+        {
+            "items": items,
+            "page": page,
+            "perPage": per_page,
+            "total": paginated.total,
+            "hasMore": paginated.has_next,
+        }
+    )
 
 
 @admin.route("/api/session-check")
