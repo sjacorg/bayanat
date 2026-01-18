@@ -1,9 +1,5 @@
 """Text extraction results from OCR processing."""
 
-from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKey, func
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship
-
 from enferno.extensions import db
 
 
@@ -12,21 +8,21 @@ class Extraction(db.Model):
 
     __tablename__ = "extraction"
 
-    id = Column(Integer, primary_key=True)
-    media_id = Column(Integer, ForeignKey("media.id"), unique=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    media_id = db.Column(db.Integer, db.ForeignKey("media.id"), unique=True, nullable=False)
 
-    text = Column(Text)
-    raw = Column(JSONB)
-    confidence = Column(Float)
-    orientation = Column(Integer, default=0)
-    status = Column(String(20), default="pending", nullable=False)
+    text = db.Column(db.Text)
+    raw = db.Column(db.JSON)
+    confidence = db.Column(db.Float)
+    orientation = db.Column(db.Integer, default=0)
+    status = db.Column(db.String(20), default="pending", nullable=False)
 
-    reviewed_by = Column(Integer, ForeignKey("user.id"))
-    reviewed_at = Column(DateTime)
-    created_at = Column(DateTime, default=func.now(), nullable=False)
+    reviewed_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+    reviewed_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
-    media = relationship("Media", backref="extraction", uselist=False)
-    reviewer = relationship("User", foreign_keys=[reviewed_by])
+    media = db.relationship("Media", backref="extraction", uselist=False)
+    reviewer = db.relationship("User", foreign_keys=[reviewed_by])
 
     def to_dict(self):
         return {
