@@ -1,16 +1,16 @@
 """Background text extraction task using Google Vision OCR."""
 
 import base64
-import os
 import re
 import unicodedata
 from pathlib import Path
 
 import httpx
+from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
 
-from enferno.admin.models import Media
+from enferno.admin.models import Media, Extraction
 from enferno.extensions import db
 from enferno.utils.logging_utils import get_logger
 
@@ -21,11 +21,20 @@ DEFAULT_LANGUAGE_HINTS = ["ar", "en"]
 
 
 def _get_api_key() -> str:
-    """Get Google Vision API key from environment."""
-    key = os.environ.get("GOOGLE_VISION_API_KEY")
+    """Get Google Vision API key from config."""
+    key = current_app.config.get("GOOGLE_VISION_API_KEY")
     if not key:
-        raise RuntimeError("GOOGLE_VISION_API_KEY environment variable not set")
+        raise RuntimeError("GOOGLE_VISION_API_KEY not configured")
     return key
+
+
+def _is_ocr_supported(media: Media) -> bool:
+    """Check if media file extension is supported for OCR."""
+    if not media.media_file:
+        return False
+    ext = Path(media.media_file).suffix.lstrip(".").lower()
+    allowed = current_app.config.get("OCR_EXT", [])
+    return ext in allowed
 
 
 def process_media_extraction_task(media_id: int, language_hints: list = None) -> dict:
@@ -37,6 +46,9 @@ def process_media_extraction_task(media_id: int, language_hints: list = None) ->
 
         if media.extraction:
             return {"success": True, "media_id": media_id, "skipped": True}
+
+        if not _is_ocr_supported(media):
+            return {"success": False, "media_id": media_id, "error": "Unsupported file type"}
 
         file_path = _get_media_path(media)
         if not file_path or not file_path.exists():
@@ -55,8 +67,6 @@ def process_media_extraction_task(media_id: int, language_hints: list = None) ->
         status = _route_by_confidence(confidence)
 
         # Save
-        from enferno.admin.models import Extraction
-
         extraction = Extraction(
             media_id=media_id,
             text=_normalize(text),
