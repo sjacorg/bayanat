@@ -389,3 +389,41 @@ def extract(media_id: int, language: tuple, show_text: bool) -> None:
                 click.echo(f"\n--- Extracted Text ---\n{ext.text}\n")
     else:
         click.echo(f"Error: {result.get('error')}")
+
+
+@ocr_cli.command()
+@with_appcontext
+def status() -> None:
+    """Show OCR processing statistics."""
+    from enferno.admin.models import Extraction, Media
+    from sqlalchemy import func
+
+    total_media = db.session.query(func.count(Media.id)).scalar() or 0
+
+    stats = (
+        db.session.query(
+            Extraction.status, func.count(Extraction.id), func.avg(Extraction.confidence)
+        )
+        .group_by(Extraction.status)
+        .all()
+    )
+
+    status_map = {row[0]: {"count": row[1], "avg_conf": row[2]} for row in stats}
+    total_extracted = sum(s["count"] for s in status_map.values())
+    pending = total_media - total_extracted
+
+    click.echo(f"\nOCR Status Summary")
+    click.echo(f"{'─' * 40}")
+    click.echo(f"Total media:          {total_media:,}")
+    click.echo(f"Pending (no OCR):     {pending:,}")
+    click.echo(f"{'─' * 40}")
+
+    for status_name in ["processed", "needs_review", "needs_transcription", "failed"]:
+        data = status_map.get(status_name, {"count": 0, "avg_conf": None})
+        count = data["count"]
+        avg = data["avg_conf"]
+        conf_str = f" (avg {avg:.1f}%)" if avg else ""
+        click.echo(f"{status_name:21} {count:,}{conf_str}")
+
+    click.echo(f"{'─' * 40}")
+    click.echo(f"Total extracted:      {total_extracted:,}\n")
