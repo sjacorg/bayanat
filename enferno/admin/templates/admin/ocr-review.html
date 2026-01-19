@@ -4,7 +4,7 @@
     <v-container fluid>
         <v-card>
             <!-- Header -->
-            <v-toolbar flat>
+            <v-toolbar flat class="pr-6">
                 <v-toolbar-title>{{ _('OCR Review Queue') }}</v-toolbar-title>
                 <v-spacer></v-spacer>
                 
@@ -24,7 +24,6 @@
                     style="max-width: 200px;"
                     @update:model-value="loadQueue"
                     hide-details
-                    class="pr-6"
                 ></v-select>
             </v-toolbar>
 
