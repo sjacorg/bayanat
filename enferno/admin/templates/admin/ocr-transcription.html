@@ -1,0 +1,711 @@
+{% extends 'layout.html' %} 
+{% block content %}
+<v-main>
+    <v-container fluid>
+        <v-card>
+            <!-- Header -->
+            <v-toolbar flat class="pr-6">
+                <v-toolbar-title>{{ _('Transcription Queue') }}</v-toolbar-title>
+                <v-spacer></v-spacer>
+                
+                <!-- Progress Counter -->
+                <v-chip variant="tonal" color="primary">
+                    <span v-if="total > 0">${currentIndex + 1} {{ _('of') }} ${total}</span>
+                    <span v-else>0 {{ _('of') }} 0</span>
+                </v-chip>
+            </v-toolbar>
+
+            <v-divider></v-divider>
+
+            <!-- Main Content -->
+            <v-card-text v-if="currentItem" class="pa-6" style="height: calc(100vh - 161px); overflow: hidden;">
+                <!-- Bulletin Info Header -->
+                <div class="mb-4">
+                    <v-btn
+                        variant="tonal"
+                        prepend-icon="mdi-file-document"
+                        :href="`/admin/bulletins/${currentItem.bulletin.id}`"
+                        target="_blank"
+                    >
+                        {{ _('Bulletin') }} ${currentItem.bulletin.ref} - ${currentItem.bulletin.title}
+                    </v-btn>
+                </div>
+
+                <v-row style="height: calc(100vh - 320px);">
+                    <!-- Left Side - Large Image Viewer (60%) -->
+                    <v-col cols="12" md="7" class="d-flex flex-column" style="height: 100%;">
+                        <v-card variant="outlined" class="border-thin d-flex flex-column" style="height: 100%;">
+                            <v-card-text class="pa-2 d-flex flex-column" style="height: 100%;">
+                                <!-- Image Controls -->
+                                <div class="d-flex justify-center mb-2 ga-2">
+                                    <v-btn
+                                        size="small"
+                                        variant="tonal"
+                                        icon="mdi-magnify-plus"
+                                        @click="zoomIn"
+                                    ></v-btn>
+                                    <v-btn
+                                        size="small"
+                                        variant="tonal"
+                                        icon="mdi-magnify-minus"
+                                        @click="zoomOut"
+                                    ></v-btn>
+                                    <v-btn
+                                        size="small"
+                                        variant="tonal"
+                                        icon="mdi-rotate-right"
+                                        @click="rotate"
+                                    ></v-btn>
+                                    <v-btn
+                                        size="small"
+                                        variant="tonal"
+                                        icon="mdi-restore"
+                                        @click="resetImage"
+                                    >
+                                        <v-icon>mdi-restore</v-icon>
+                                        <v-tooltip activator="parent" location="bottom">
+                                            {{ _('Reset') }}
+                                        </v-tooltip>
+                                    </v-btn>
+                                    <!-- ADDED: Zoom percentage indicator -->
+                                    <v-chip size="small" variant="text">
+                                        ${Math.round(zoom * 100)}%
+                                    </v-chip>
+                                </div>
+
+                                <!-- Image Display - CHANGED: New approach for proper scrolling -->
+                                <div 
+                                    class="image-container flex-grow-1" 
+                                    style="overflow: auto; position: relative;"
+                                    @mousedown="startPan"
+                                    @mousemove="pan"
+                                    @mouseup="endPan"
+                                    @mouseleave="endPan"
+                                    @wheel.prevent="handleWheel"
+                                    ref="imageContainer"
+                                    :style="{ cursor: isPanning ? 'grabbing' : (zoom > 1 ? 'grab' : 'default') }"
+                                >
+                                    <!-- CHANGED: Wrapper now uses computed style for proper dimensions -->
+                                    <div 
+                                        ref="imageWrapper"
+                                        class="image-wrapper"
+                                        :style="imageWrapperStyle"
+                                    >
+                                        <img
+                                            v-if="currentItem.media_url"
+                                            ref="image"
+                                            :src="currentItem.media_url"
+                                            :style="imageStyle"
+                                            @load="onImageLoad"
+                                            draggable="false"
+                                        />
+                                    </div>
+                                    <v-skeleton-loader 
+                                        v-if="!currentItem.media_url"
+                                        type="image" 
+                                        height="100%"
+                                    ></v-skeleton-loader>
+                                </div>
+
+                                <v-card-subtitle class="text-center text-caption mt-2 pa-1">
+                                    ${currentItem.media_filename}
+                                    <br>
+                                    <span class="text-medium-emphasis">
+                                        {{ _('Use controls to zoom/rotate. Drag to pan.') }}
+                                    </span>
+                                </v-card-subtitle>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Right Side - Text Input (40%) -->
+                    <v-col cols="12" md="5" class="d-flex flex-column" style="height: 100%;">
+                        <v-card variant="outlined" class="border-thin d-flex flex-column" style="height: 100%;">
+                            <v-card-text class="d-flex flex-column" style="height: 100%;">
+                                <div class="text-subtitle-2 mb-2">{{ _('Type what you see') }}</div>
+                                
+                                <v-textarea
+                                    v-model="transcriptionText"
+                                    variant="outlined"
+                                    auto-grow
+                                    autofocus
+                                    :dir="isRTL(transcriptionText) ? 'rtl' : 'ltr'"
+                                    placeholder="{{ _('Start typing...') }}"
+                                    class="flex-grow-1"
+                                    style="height: 100%;"
+                                    hide-details
+                                ></v-textarea>
+
+                                <div class="text-caption text-medium-emphasis mt-2">
+                                    ${transcriptionText.length} {{ _('characters') }}
+                                    <span v-if="lastSaved" class="ml-2">
+                                        <v-icon size="small" color="success">mdi-content-save</v-icon>
+                                        {{ _('Draft saved') }}
+                                    </span>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
+                <!-- Action Buttons -->
+                <v-row class="mt-2">
+                    <v-col class="text-center py-2">
+                        <v-btn
+                            color="success"
+                            variant="elevated"
+                            size="large"
+                            prepend-icon="mdi-check"
+                            @click="saveTranscription"
+                            :loading="actionLoading === 'save'"
+                            :disabled="!transcriptionText.trim()"
+                            class="mx-2"
+                        >
+                            {{ _('Save') }}
+                        </v-btn>
+
+                        <v-btn
+                            color="error"
+                            variant="elevated"
+                            size="large"
+                            prepend-icon="mdi-close-circle"
+                            @click="markUnreadable"
+                            :loading="actionLoading === 'unreadable'"
+                            class="mx-2"
+                        >
+                            {{ _("Can't Read") }}
+                        </v-btn>
+
+                        <v-btn
+                            variant="text"
+                            size="large"
+                            append-icon="mdi-arrow-right"
+                            @click="skipItem"
+                            class="mx-2"
+                        >
+                            {{ _('Skip') }}
+                        </v-btn>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+
+            <!-- Empty State -->
+            <v-card-text v-else class="pa-12">
+                <v-row>
+                    <v-col class="text-center">
+                        <v-icon size="80" color="grey-lighten-1">mdi-check-all</v-icon>
+                        <div class="text-h5 mt-4 text-medium-emphasis">
+                            {{ _('No items to transcribe') }}
+                        </div>
+                        <div class="text-body-2 text-medium-emphasis mt-2">
+                            {{ _('All items in the transcription queue have been processed') }}
+                        </div>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+
+            <!-- Loading State -->
+            <v-overlay :model-value="loading" contained class="align-center justify-center">
+                <v-progress-circular indeterminate size="64"></v-progress-circular>
+            </v-overlay>
+        </v-card>
+    </v-container>
+</v-main>
+
+{% endblock %} 
+
+{% block js %}
+<script>
+const {createApp} = Vue;
+const {createVuetify} = Vuetify;
+const vuetify = createVuetify(vuetifyConfig);
+
+const app = createApp({
+    delimiters: delimiters,
+    mixins: [globalMixin],
+
+    data: () => ({
+        drawer: drawer,
+        loading: true,
+        actionLoading: null, // 'save', 'unreadable', or null
+        
+        currentIndex: 0,
+        itemsLength: 0,
+        items: [],
+        total: 0,
+        currentItem: null,
+        options: {},
+        
+        transcriptionText: '',
+        lastSaved: false,
+        autoSaveInterval: null,
+
+        // Image viewer state
+        zoom: 1,
+        rotation: 0,
+        isPanning: false,
+        panStart: { x: 0, y: 0 },
+        scrollStart: { x: 0, y: 0 },
+        maxZoom: 20,
+        zoomStep: 1,
+        
+        // ADDED: Track dimensions for proper zoom scrolling
+        naturalWidth: 0,
+        naturalHeight: 0,
+        containerWidth: 0,
+        containerHeight: 0,
+        baseScale: 1
+    }),
+
+    // ADDED: Computed properties for image sizing
+    computed: {
+        // Account for rotation when calculating dimensions
+        effectiveDimensions() {
+            const isRotated = this.rotation === 90 || this.rotation === 270;
+            return {
+                width: isRotated ? this.naturalHeight : this.naturalWidth,
+                height: isRotated ? this.naturalWidth : this.naturalHeight
+            };
+        },
+        
+        // Wrapper creates the scrollable area - grows with zoom
+        imageWrapperStyle() {
+            if (!this.containerWidth || !this.naturalWidth) {
+                return {
+                    width: '100%',
+                    height: '100%',
+                    minWidth: '100%',
+                    minHeight: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                };
+            }
+            
+            const { width: effW, height: effH } = this.effectiveDimensions;
+            const displayWidth = effW * this.baseScale * this.zoom;
+            const displayHeight = effH * this.baseScale * this.zoom;
+            
+            return {
+                width: `${Math.max(this.containerWidth, displayWidth)}px`,
+                height: `${Math.max(this.containerHeight, displayHeight)}px`,
+                minWidth: '100%',
+                minHeight: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            };
+        },
+        
+        // Image uses actual pixel dimensions instead of transform scale
+        imageStyle() {
+            if (!this.naturalWidth) {
+                return {
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    userSelect: 'none',
+                    pointerEvents: 'none'
+                };
+            }
+            
+            const { width: effW, height: effH } = this.effectiveDimensions;
+            const displayWidth = effW * this.baseScale * this.zoom;
+            const displayHeight = effH * this.baseScale * this.zoom;
+            
+            return {
+                width: `${displayWidth}px`,
+                height: `${displayHeight}px`,
+                transform: `rotate(${this.rotation}deg)`,
+                transition: this.isPanning ? 'none' : 'transform 0.2s',
+                flexShrink: 0,
+                userSelect: 'none',
+                pointerEvents: 'none'
+            };
+        }
+    },
+
+    mounted() {
+        this.refresh();
+        this.setupAutoSave();
+        
+        // ADDED: Handle window resize
+        window.addEventListener('resize', this.handleResize);
+        this.$nextTick(() => {
+            this.updateContainerSize();
+        });
+    },
+
+    beforeUnmount() {
+        this.clearAutoSave();
+        // ADDED: Cleanup resize listener
+        window.removeEventListener('resize', this.handleResize);
+    },
+
+    watch: {
+        currentItem(newItem, oldItem) {
+            if (newItem && newItem.id !== oldItem?.id) {
+                this.loadDraft();
+                // CHANGED: Reset all image state for new image
+                this.zoom = 1;
+                this.rotation = 0;
+                this.naturalWidth = 0;
+                this.naturalHeight = 0;
+            }
+        },
+
+        transcriptionText() {
+            this.lastSaved = false;
+        }
+    },
+
+    methods: {
+        refresh(options) {
+            this.options = options || { ...this.options, page: 1 };
+            this.loading = true;
+
+            api.get(`/admin/api/ocr/review?page=${this.options.page}&per_page=${this.options.itemsPerPage}&ocr_status=needs_review`).then(response => {
+                this.itemsLength = response.data.total;
+                this.items = response.data.items;
+                this.updateCurrentItem();
+            }).finally(() => {
+                this.loading = false;
+            });
+        },
+
+        updateCurrentItem() {
+            if (this.currentIndex >= 0 && this.currentIndex < this.items.length) {
+                this.currentItem = this.items[this.currentIndex];
+            } else {
+                this.currentItem = null;
+            }
+        },
+
+        // ADDED: Update container size tracking
+        updateContainerSize() {
+            const container = this.$refs.imageContainer;
+            if (container) {
+                this.containerWidth = container.clientWidth;
+                this.containerHeight = container.clientHeight;
+            }
+        },
+        
+        // ADDED: Calculate base scale for fit-to-container
+        calculateBaseScale() {
+            if (!this.naturalWidth || !this.containerWidth) return;
+            
+            const { width: effW, height: effH } = this.effectiveDimensions;
+            const scaleX = this.containerWidth / effW;
+            const scaleY = this.containerHeight / effH;
+            this.baseScale = Math.min(scaleX, scaleY, 1); // Don't upscale small images
+        },
+        
+        // ADDED: Center the scroll position
+        centerView() {
+            const container = this.$refs.imageContainer;
+            const wrapper = this.$refs.imageWrapper;
+            if (!container || !wrapper) return;
+            
+            const scrollX = (wrapper.offsetWidth - container.clientWidth) / 2;
+            const scrollY = (wrapper.offsetHeight - container.clientHeight) / 2;
+            
+            container.scrollLeft = Math.max(0, scrollX);
+            container.scrollTop = Math.max(0, scrollY);
+        },
+        
+        // ADDED: Handle window resize
+        handleResize() {
+            this.updateContainerSize();
+            this.calculateBaseScale();
+        },
+
+        // Image controls - Zoom from current viewport center
+        zoomIn() {
+            this.zoomFromCenter(this.zoom + this.zoomStep);
+        },
+
+        zoomOut() {
+            this.zoomFromCenter(this.zoom - this.zoomStep);
+        },
+        
+        // ADDED: Zoom while maintaining viewport center position
+        zoomFromCenter(newZoom) {
+            const container = this.$refs.imageContainer;
+            if (!container) return;
+            
+            const oldZoom = this.zoom;
+            newZoom = Math.max(0.5, Math.min(this.maxZoom, newZoom));
+            
+            // If zooming out to minimum, just center it
+            if (newZoom <= 1) {
+                this.zoom = newZoom;
+                this.$nextTick(() => this.centerView());
+                return;
+            }
+            
+            // Get the center point of the current viewport (what user is looking at)
+            const viewportCenterX = container.scrollLeft + container.clientWidth / 2;
+            const viewportCenterY = container.scrollTop + container.clientHeight / 2;
+            
+            this.zoom = newZoom;
+            
+            this.$nextTick(() => {
+                // Scale the center point to new zoom level
+                const scale = this.zoom / oldZoom;
+                const newCenterX = viewportCenterX * scale;
+                const newCenterY = viewportCenterY * scale;
+                
+                // Scroll so that same content point is still at viewport center
+                container.scrollLeft = newCenterX - container.clientWidth / 2;
+                container.scrollTop = newCenterY - container.clientHeight / 2;
+            });
+        },
+
+        rotate() {
+            this.rotation = (this.rotation + 90) % 360;
+            this.calculateBaseScale();
+            this.$nextTick(() => this.centerView());
+        },
+
+        resetImage() {
+            this.zoom = 1;
+            this.rotation = 0;
+            this.calculateBaseScale();
+            this.$nextTick(() => this.centerView());
+        },
+
+        // CHANGED: Now captures dimensions and calculates base scale
+        onImageLoad(e) {
+            const img = e?.target || this.$refs.image;
+            if (img) {
+                this.naturalWidth = img.naturalWidth;
+                this.naturalHeight = img.naturalHeight;
+            }
+            this.updateContainerSize();
+            this.calculateBaseScale();
+            this.$nextTick(() => this.centerView());
+        },
+
+        // Pan functionality - CHANGED: Only enable when zoomed
+        startPan(e) {
+            if (this.zoom <= 1) return; // Only pan when zoomed in
+            
+            e.preventDefault();
+            this.isPanning = true;
+            this.panStart = { x: e.clientX, y: e.clientY };
+            const container = this.$refs.imageContainer;
+            this.scrollStart = { x: container.scrollLeft, y: container.scrollTop };
+        },
+
+        pan(e) {
+            if (!this.isPanning) return;
+            
+            e.preventDefault();
+            const container = this.$refs.imageContainer;
+            const dx = this.panStart.x - e.clientX;
+            const dy = this.panStart.y - e.clientY;
+            
+            container.scrollLeft = this.scrollStart.x + dx;
+            container.scrollTop = this.scrollStart.y + dy;
+        },
+
+        endPan(e) {
+            if (this.isPanning && e) {
+                e.preventDefault();
+            }
+            this.isPanning = false;
+        },
+
+        // CHANGED: Zoom towards mouse position with Ctrl+Scroll
+        handleWheel(e) {
+            if (!e.ctrlKey) return;
+            
+            e.preventDefault();
+            
+            const container = this.$refs.imageContainer;
+            const rect = container.getBoundingClientRect();
+            
+            // Mouse position relative to container
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+            
+            // Current scroll-adjusted position
+            const contentX = container.scrollLeft + offsetX;
+            const contentY = container.scrollTop + offsetY;
+            
+            const oldZoom = this.zoom;
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            this.zoom = Math.max(0.5, Math.min(this.maxZoom, this.zoom + delta));
+            
+            // Maintain focal point after zoom
+            if (oldZoom !== this.zoom) {
+                this.$nextTick(() => {
+                    const scale = this.zoom / oldZoom;
+                    container.scrollLeft = contentX * scale - offsetX;
+                    container.scrollTop = contentY * scale - offsetY;
+                });
+            }
+        },
+
+        // Draft management (unchanged)
+        loadDraft() {
+            if (!this.currentItem) return;
+            const draftKey = `ocr-draft-${this.currentItem.id}`;
+            const draft = localStorage.getItem(draftKey);
+            this.transcriptionText = draft || '';
+        },
+
+        saveDraft() {
+            if (!this.currentItem) return;
+            const draftKey = `ocr-draft-${this.currentItem.id}`;
+            localStorage.setItem(draftKey, this.transcriptionText);
+            this.lastSaved = true;
+            setTimeout(() => { this.lastSaved = false; }, 2000);
+        },
+
+        clearDraft() {
+            if (!this.currentItem) return;
+            const draftKey = `ocr-draft-${this.currentItem.id}`;
+            localStorage.removeItem(draftKey);
+        },
+
+        setupAutoSave() {
+            this.autoSaveInterval = setInterval(() => {
+                if (this.transcriptionText && this.currentItem) {
+                    this.saveDraft();
+                }
+            }, 30000); // Auto-save every 30 seconds
+        },
+
+        clearAutoSave() {
+            if (this.autoSaveInterval) {
+                clearInterval(this.autoSaveInterval);
+            }
+        },
+
+        // Actions (unchanged)
+        async saveTranscription() {
+            if (!this.currentItem || !this.transcriptionText.trim()) return;
+            
+            this.actionLoading = 'save';
+
+            try {
+                // TODO: Replace with real API call
+                // await api.post(`/admin/api/ocr/${this.currentItem.id}/save`, {
+                //     text: this.transcriptionText
+                // });
+                
+                // Placeholder - simulate API call
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                this.showSnack({ message: 'Transcription saved', type: 'success' });
+                this.clearDraft();
+                this.transcriptionText = '';
+                this.removeCurrentAndLoadNext();
+            } catch (error) {
+                this.showSnack({ message: 'Failed to save transcription', type: 'error' });
+            } finally {
+                this.actionLoading = null;
+            }
+        },
+
+        async markUnreadable() {
+            if (!this.currentItem) return;
+            
+            this.$confirm({
+                title: "{{ _('Mark as Unreadable?') }}",
+                message: "{{ _('This will mark the document as illegible or unreadable. This action cannot be undone.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+                acceptProps: {
+                    text: "{{ _('Mark as Unreadable') }}",
+                    color: 'error',
+                },
+                dialogProps: { width: 580 },
+                onAccept: async () => {
+                    this.actionLoading = 'unreadable';
+
+                    try {
+                        // TODO: Replace with real API call
+                        // await api.post(`/admin/api/ocr/${this.currentItem.id}/fail`, {
+                        //     reason: 'illegible'
+                        // });
+                        
+                        // Placeholder - simulate API call
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        
+                        this.showSnack({ message: "{{ _('Marked as unreadable') }}", type: 'success' });
+                        this.clearDraft();
+                        this.transcriptionText = '';
+                        this.removeCurrentAndLoadNext();
+                    } catch (error) {
+                        this.showSnack({ message: "{{ _('Failed to mark as unreadable') }}", type: 'error' });
+                    } finally {
+                        this.actionLoading = null;
+                    }
+                }
+            });
+        },
+
+        skipItem() {
+            if (!this.currentItem) return;
+            
+            // Save draft before skipping
+            if (this.transcriptionText) {
+                this.saveDraft();
+            }
+            
+            // Move to next item
+            this.currentIndex++;
+            if (this.currentIndex >= this.items.length) {
+                this.currentIndex = 0; // Loop back to start
+            }
+            this.updateCurrentItem();
+        },
+
+        removeCurrentAndLoadNext() {
+            // Remove current item from array
+            this.items.splice(this.currentIndex, 1);
+            this.total--;
+            
+            // Update current item (stay at same index, next item slides in)
+            if (this.currentIndex >= this.items.length && this.currentIndex > 0) {
+                this.currentIndex--;
+            }
+            this.updateCurrentItem();
+        },
+
+        isRTL(text) {
+            if (!text) return false;
+            // Check if first character is Arabic
+            const arabicRegex = /[\u0600-\u06FF]/;
+            return arabicRegex.test(text.charAt(0));
+        }
+    }
+});
+
+app.use(vuetify).mount("#app");
+</script>
+
+<style scoped>
+.image-container {
+    background: #f5f5f5;
+}
+
+.image-container img {
+    display: block;
+}
+
+.image-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.image-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.image-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+</style>
+{% endblock %}

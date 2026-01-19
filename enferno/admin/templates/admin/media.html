@@ -1,0 +1,280 @@
+{% extends 'layout.html' %} {% block content %}
+    <v-main>
+        <v-container fluid>
+            <v-card>
+                <!-- Stats Bar -->
+                <v-card-text class="pb-0">
+                    <v-row>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${ocr.stats.total.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Total Media') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${ocr.stats.processed.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Processed (Searchable)') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${ocr.stats.needs_review.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Needs Review') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${(ocr.stats.failed + ocr.stats.pending).toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Pending/Failed') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+
+                <!-- Data Table -->
+                <v-card-text>
+                    <v-data-table-server
+                            :height="`calc(100vh - ${selected.length ? 405 : 360}px)`"
+                            fixed-header
+                            :headers="headers"
+                            v-model="selected"
+                            :items="items"
+                            @update:options="refresh"
+                            :page="options.page"
+                            :loading="loading"
+                            :items-length="itemsLength"
+                            class="elevation-1"
+                            show-select
+                            select-strategy="page"
+                            item-selectable="selectable"
+                    >
+                        <template v-slot:top>
+                            <v-toolbar>
+                                <v-toolbar-title>
+                                    {{ _('Media Dashboard') }}
+                                </v-toolbar-title>
+
+                                <!-- Filters -->
+                                <div class="d-flex align-center ga-2">
+                                    <v-select
+                                        v-model="filters.status"
+                                        :items="statusOptions"
+                                        label="{{ _('Status') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                    ></v-select>
+                                    <v-text-field
+                                        v-model="filters.bulletinSearch"
+                                        label="{{ _('Search Bulletin') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        prepend-inner-icon="mdi-magnify"
+                                        hide-details
+                                        width="250px"
+                                    ></v-text-field>
+                                    <pop-date-range-field
+                                        v-model="filters.dateRange"
+                                        label="{{ _('Date Range') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                        width="320px"
+                                    ></pop-date-range-field>
+                                    <v-btn variant="flat" color="primary">{{ _('Apply') }}</v-btn>
+                                </div>
+
+                                <v-spacer></v-spacer>
+                            </v-toolbar>
+
+                            <!-- Bulk Actions Bar -->
+                            <v-toolbar v-if="selected.length > 0" height="auto" class="mb-2">
+                                <div class="d-flex align-center justify-space-between w-100 px-4">
+                                    <v-chip variant="tonal">${selected.length} {{ _('selected') }}</v-chip>
+                                    <v-btn
+                                        color="primary"
+                                        variant="elevated"
+                                        @click="runBulkOCR"
+                                        :loading="bulkLoading"
+                                        prepend-icon="mdi-text-recognition"
+                                    >
+                                        {{ _('Run OCR') }}
+                                    </v-btn>
+                                </div>
+                            </v-toolbar>
+                        </template>
+
+                        <!-- Thumbnail Column -->
+                        <template #item.thumbnail="{ item }">
+                            <v-avatar
+                                size="48"
+                                rounded="lg"
+                                class="cursor-pointer"
+                            >   
+                                <image-viewer mode="click" :media="{ thumbnail_url: item.thumbnail_url, s3url: item.url }"></image-viewer>
+                            </v-avatar>
+                        </template>
+
+                        <!-- Bulletin Column -->
+                        <template #item.bulletin="{ item }">
+                            <v-btn
+                                size="small"
+                                variant="tonal"
+                                class="mx-2"
+                                prepend-icon="mdi-file-document-multiple"
+                                :href="`/admin/bulletins/${item.bulletin.id}`"
+                                target="_blank"
+                            >
+                                {{ _('Preview bulletin') }} #${item.bulletin.id}
+                            </v-btn>
+                        </template>
+
+                        <!-- OCR Status Column -->
+                        <template #item.ocr_status="{ item }">
+                            <v-chip
+                                :color="getStatusColor(item.ocr_status)"
+                                size="small"
+                                :prepend-icon="getStatusIcon(item.ocr_status)"
+                            >
+                                ${getStatusText(item.ocr_status)}
+                            </v-chip>
+                            <div v-if="item.ocr_confidence" class="text-caption text-medium-emphasis">
+                                ${item.ocr_confidence}% {{ _('confidence') }}
+                            </div>
+                        </template>
+
+                        <!-- Date Column -->
+                        <template #item.created_at="{ item }">
+                            ${formatDate(item.created_at)}
+                        </template>
+                    </v-data-table-server>
+
+                </v-card-text>
+            </v-card>
+        </v-container>
+    </v-main>
+
+{% endblock %} {% block js %}
+
+    <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateRangeField.js"></script>
+    <script>
+
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+
+            delimiters: delimiters,
+            mixins: [globalMixin],
+
+            data: () => ({
+                dialog: dialog,
+                drawer: drawer,
+                loading: true,
+                bulkLoading: false,
+                options: {},
+
+                headers: [
+                    { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
+                    { title: "{{_('Filename')}}", value: "filename" },
+                    { title: "{{_('Bulletin')}}", value: "bulletin", sortable: false },
+                    { title: "{{_('OCR Status')}}", value: "ocr_status" },
+                    { title: "{{_('Date')}}", value: "created_at" }
+                ],
+
+                selected: [],
+                items: [],
+                itemsLength: 10,
+
+                filters: {
+                    status: null,
+                    bulletinSearch: '',
+                    dateRange: null
+                },
+                statusOptions: [
+                    { title: "{{_('All')}}", value: null },
+                    { title: "{{_('Pending')}}", value: 'pending' },
+                    { title: "{{_('Processing')}}", value: 'processing' },
+                    { title: "{{_('Processed')}}", value: 'processed' },
+                    { title: "{{_('Needs Review')}}", value: 'needs_review' },
+                    { title: "{{_('Needs Transcription')}}", value: 'needs_transcription' },
+                    { title: "{{_('Failed')}}", value: 'failed' }
+                ],
+                statusMap: {
+                    pending: { text: "{{_('Pending')}}", color: 'grey', icon: 'mdi-clock-outline' },
+                    processing: { text: "{{_('Processing')}}", color: 'blue', icon: 'mdi-cog-outline' },
+                    processed: { text: "{{_('Processed')}}", color: 'green', icon: 'mdi-check-circle-outline' },
+                    needs_review: { text: "{{_('Needs Review')}}", color: 'orange', icon: 'mdi-alert-circle-outline' },
+                    needs_transcription: { text: "{{_('Needs Transcription')}}", color: 'purple', icon: 'mdi-alphabetical' },
+                    failed: { text: "{{_('Failed')}}", color: 'red', icon: 'mdi-close-circle-outline' },
+                }
+            }),
+
+            methods: {
+                runBulkOCR() {
+                    if (this.selected.length === 0) return;
+
+                    this.bulkLoading = true;
+
+                    // TODO: Replace with real API call
+                    // api.post('/admin/api/ocr/bulk', { media_ids: this.selected })
+                    setTimeout(() => {
+                        this.showSnack({
+                            message: `OCR queued for ${this.selected.length} items`,
+                            type: 'success'
+                        });
+                        this.selected = [];
+                        this.bulkLoading = false;
+                        this.refresh();
+                    }, 1000);
+                },
+                refresh(options) {
+                    this.options = options || { ...this.options, page: 1 };
+                    this.loading = true;
+
+                    api.get(`/admin/api/media/dashboard?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+                        this.itemsLength = response.data.total;
+                        this.items = response.data.items;
+                    }).finally(() => {
+                        this.loading = false;
+                    });
+                },
+
+                getStatusText(status) {
+                    return this.statusMap[status]?.text || status;
+                },
+                getStatusColor(status) {
+                    return this.statusMap[status]?.color || status;
+                },
+                getStatusIcon(status) {
+                    return this.statusMap[status]?.icon || status;
+                },
+            }
+        });
+        app.component('PdfViewer', PdfViewer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('UniField', UniField);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
+        app.component('PopDateField', PopDateField);
+        app.component('PopDateRangeField', PopDateRangeField);
+        app.use(vuetify).mount("#app")
+    </script>
+{% endblock %}
