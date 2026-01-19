@@ -6929,29 +6929,76 @@ def api_dynamic_fields_history(entity_type):
 
 
 # OCR Extraction endpoints
+@admin.get("/api/media/dashboard")
+@auth_required("session")
+def api_media_dashboard():
+    """
+    Media dashboard with OCR status.
+    Query params:
+      - page, per_page: pagination
+      - ocr_status: pending|needs_review|needs_transcription|processed|failed
+      - q: search in extracted text
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+    ocr_status = request.args.get("ocr_status")
+    search = request.args.get("q")
+
+    query = Media.query.outerjoin(Extraction)
+
+    # Filter by OCR status
+    if ocr_status == "pending":
+        query = query.filter(Extraction.id.is_(None))
+    elif ocr_status:
+        query = query.filter(Extraction.status == ocr_status)
+
+    # Text search in extracted text
+    if search:
+        query = query.filter(Extraction.text.ilike(f"%{search}%"))
+
+    query = query.order_by(desc(Media.id))
+    paginated = query.paginate(page=page, per_page=per_page, count=True)
+
+    items = []
+    for media in paginated.items:
+        item = media.to_dict()
+        item["extraction"] = media.extraction.to_dict() if media.extraction else None
+        item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+        items.append(item)
+
+    return jsonify(
+        {
+            "items": items,
+            "page": page,
+            "perPage": per_page,
+            "total": paginated.total,
+            "hasMore": paginated.has_next,
+        }
+    )
+
+
 @admin.get("/api/ocr/review")
 @auth_required("session")
 def api_ocr_review():
     """
-    Get extractions needing human review.
-    Query params: page, per_page
-    Returns: paginated extractions with status=needs_review, oldest first.
+    Shortcut for extractions needing review (oldest first).
+    Equivalent to /api/media/dashboard?ocr_status=needs_review
     """
     page = request.args.get("page", 1, type=int)
     per_page = min(request.args.get("per_page", 20, type=int), 100)
 
-    query = Extraction.query.filter(Extraction.status == "needs_review").order_by(
-        asc(Extraction.created_at)
+    query = (
+        Media.query.join(Extraction)
+        .filter(Extraction.status == "needs_review")
+        .order_by(asc(Extraction.created_at))
     )
 
     paginated = query.paginate(page=page, per_page=per_page, count=True)
 
     items = []
-    for ext in paginated.items:
-        item = ext.to_dict()
-        # Add media thumbnail URL if available
-        if ext.media and ext.media.media_file:
-            item["media_filename"] = ext.media.media_file
+    for media in paginated.items:
+        item = media.to_dict()
+        item["extraction"] = media.extraction.to_dict()
         items.append(item)
 
     return jsonify(
