@@ -1,0 +1,386 @@
+{% extends 'layout.html' %} 
+{% block content %}
+<v-main>
+    <v-container fluid>
+        <v-card>
+            <!-- Header -->
+            <v-toolbar flat class="pr-6">
+                <v-toolbar-title>{{ _('OCR Review Queue') }}</v-toolbar-title>
+                <v-spacer></v-spacer>
+                
+                <!-- Progress Counter -->
+                <v-chip variant="tonal" color="primary" class="mr-4">
+                    <span v-if="total > 0">${currentIndex + 1} {{ _('of') }} ${total}</span>
+                    <span v-else>0 {{ _('of') }} 0</span>
+                </v-chip>
+
+                <!-- Filter -->
+                <v-select
+                    v-model="filter"
+                    :items="filterOptions"
+                    label="{{ _('Filter') }}"
+                    variant="outlined"
+                    density="compact"
+                    style="max-width: 200px;"
+                    @update:model-value="loadQueue"
+                    hide-details
+                ></v-select>
+            </v-toolbar>
+
+            <v-divider></v-divider>
+
+            <!-- Main Content -->
+            <v-card-text v-if="currentItem" class="pa-6" style="height: calc(100vh - 161px);overflow-y: auto;">
+                <v-row>
+                    <!-- Left Side - Image Preview -->
+                    <v-col cols="12" md="6">
+                        <v-card variant="outlined" class="image-preview-card border-thin">
+                            <v-card-text class="pa-0">
+                                <div class="text-center pa-4" style="height: calc(100vh - 350px)">
+                                    <image-viewer 
+                                        v-if="currentItem.media_url"
+                                        mode="click" 
+                                        :media="{ 
+                                            thumbnail_url: currentItem.media_url, 
+                                            s3url: currentItem.media_url 
+                                        }"
+                                        class="h-100"
+                                    >
+                                    </image-viewer>
+                                    <v-skeleton-loader 
+                                        v-else 
+                                        type="image" 
+                                        height="500px"
+                                    ></v-skeleton-loader>
+                                </div>
+                                <v-card-subtitle class="text-center text-caption">
+                                    ${currentItem.media_filename}
+                                    <br>
+                                    <span class="text-medium-emphasis">{{ _('Click to zoom') }}</span>
+                                </v-card-subtitle>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Right Side - Info Panel -->
+                    <v-col cols="12" md="6">
+                        <v-card variant="outlined" class="border-thin" style="height: calc(100vh - 314px)">
+                            <v-card-text>
+                                <!-- Bulletin Info -->
+                                <div class="mb-4">
+                                    <v-btn
+                                        variant="tonal"
+                                        prepend-icon="mdi-file-document"
+                                        :href="`/admin/bulletins/${currentItem.bulletin.id}`"
+                                        target="_blank"
+                                        block
+                                    >
+                                        {{ _('Bulletin') }} ${currentItem.bulletin.ref}
+                                    </v-btn>
+                                    <div class="text-caption text-medium-emphasis mt-2">
+                                        ${currentItem.bulletin.title}
+                                    </div>
+                                </div>
+
+                                <v-divider class="my-4"></v-divider>
+
+                                <!-- Confidence -->
+                                <div class="mb-4">
+                                    <div class="text-subtitle-2 mb-2">{{ _('Confidence') }}</div>
+                                    <v-progress-linear
+                                        :model-value="currentItem.confidence"
+                                        :color="getConfidenceColor(currentItem.confidence)"
+                                        height="20"
+                                        rounded
+                                    >
+                                        <template v-slot:default>
+                                            <strong>${Math.round(currentItem.confidence)}%</strong>
+                                        </template>
+                                    </v-progress-linear>
+                                    <div class="text-caption text-medium-emphasis mt-1">
+                                        ${getConfidenceLabel(currentItem.confidence)}
+                                    </div>
+                                </div>
+
+                                <v-divider class="my-4"></v-divider>
+
+                                <!-- Extracted Text -->
+                                <div>
+                                    <div class="text-subtitle-2 mb-2">{{ _('Extracted Text') }}</div>
+                                    <v-textarea
+                                        :model-value="currentItem.text"
+                                        variant="outlined"
+                                        readonly
+                                        no-resize
+                                        rows="12"
+                                        :dir="isRTL(currentItem.text) ? 'rtl' : 'ltr'"
+                                    ></v-textarea>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
+                <!-- Action Buttons -->
+                <v-row class="mt-4">
+                    <v-col class="text-center">
+                        <v-btn
+                            color="success"
+                            variant="elevated"
+                            size="large"
+                            prepend-icon="mdi-check"
+                            @click="acceptItem"
+                            :loading="actionLoading === 'accept'"
+                            class="mx-2"
+                        >
+                            {{ _('Accept') }}
+                        </v-btn>
+
+                        <v-btn
+                            color="warning"
+                            variant="elevated"
+                            size="large"
+                            prepend-icon="mdi-pencil"
+                            @click="transcribeItem"
+                            :loading="actionLoading === 'transcribe'"
+                            class="mx-2"
+                        >
+                            {{ _('Transcribe') }}
+                        </v-btn>
+
+                        <v-btn
+                            variant="text"
+                            size="large"
+                            append-icon="mdi-arrow-right"
+                            @click="skipItem"
+                            class="mx-2"
+                        >
+                            {{ _('Skip') }}
+                        </v-btn>
+                    </v-col>
+                </v-row>
+
+                <!-- Keyboard Shortcuts Info -->
+                <v-row>
+                    <v-col class="text-center">
+                        <div class="text-caption text-medium-emphasis">
+                            {{ _('Keyboard') }}: A = {{ _('Accept') }}, T = {{ _('Transcribe') }}, → = {{ _('Skip') }}
+                        </div>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+
+            <!-- Empty State -->
+            <v-card-text v-else class="pa-12">
+                <v-row>
+                    <v-col class="text-center">
+                        <v-icon size="80" color="grey-lighten-1">mdi-check-all</v-icon>
+                        <div class="text-h5 mt-4 text-medium-emphasis">
+                            {{ _('No items to review') }}
+                        </div>
+                        <div class="text-body-2 text-medium-emphasis mt-2">
+                            {{ _('All items in the queue have been processed') }}
+                        </div>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+
+            <!-- Loading State -->
+            <v-overlay :model-value="loading" contained class="align-center justify-center">
+                <v-progress-circular indeterminate size="64"></v-progress-circular>
+            </v-overlay>
+        </v-card>
+    </v-container>
+</v-main>
+
+{% endblock %} 
+
+{% block js %}
+<script src="/static/js/components/ImageViewer.js"></script>
+
+<script>
+const {createApp} = Vue;
+const {createVuetify} = Vuetify;
+const vuetify = createVuetify(vuetifyConfig);
+
+const app = createApp({
+    delimiters: delimiters,
+    mixins: [globalMixin],
+
+    data: () => ({
+        drawer: drawer,
+        loading: true,
+        actionLoading: null, // 'accept', 'transcribe', or null
+        
+        currentIndex: 0,
+        itemsLength: 0,
+        items: [],
+        total: 0,
+        currentItem: null,
+        options: {},
+
+        filter: 'all',
+        filterOptions: [
+            { title: "{{_('All')}}", value: 'all' },
+            { title: "{{_('Medium Confidence')}}", value: 'medium' },
+            { title: "{{_('Low Confidence')}}", value: 'low' }
+        ]
+    }),
+
+    mounted() {
+        this.refresh();
+        this.setupKeyboardShortcuts();
+    },
+
+    beforeUnmount() {
+        this.removeKeyboardShortcuts();
+    },
+
+    methods: {
+        refresh(options) {
+            this.options = options || { ...this.options, page: 1 };
+            this.loading = true;
+
+            api.get(`/admin/api/ocr/review?page=${this.options.page}&per_page=${this.options.itemsPerPage}&ocr_status=needs_review`).then(response => {
+                this.itemsLength = response.data.total;
+                this.items = response.data.items;
+                this.updateCurrentItem();
+            }).finally(() => {
+                this.loading = false;
+            });
+        },
+
+
+        updateCurrentItem() {
+            if (this.currentIndex >= 0 && this.currentIndex < this.items.length) {
+                this.currentItem = this.items[this.currentIndex];
+            } else {
+                this.currentItem = null;
+            }
+        },
+
+        async acceptItem() {
+            if (!this.currentItem) return;
+            
+            this.actionLoading = 'accept';
+
+            try {
+                // TODO: Replace with real API call
+                // await api.post(`/admin/api/ocr/${this.currentItem.id}/accept`);
+                
+                // Placeholder - simulate API call
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                this.showSnack({ message: 'Item accepted', type: 'success' });
+                this.removeCurrentAndLoadNext();
+            } catch (error) {
+                this.showSnack({ message: 'Failed to accept item', type: 'error' });
+            } finally {
+                this.actionLoading = null;
+            }
+        },
+
+        async transcribeItem() {
+            if (!this.currentItem) return;
+            
+            this.actionLoading = 'transcribe';
+
+            try {
+                // TODO: Replace with real API call
+                // await api.post(`/admin/api/ocr/${this.currentItem.id}/transcribe`);
+                
+                // Placeholder - simulate API call
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                this.showSnack({ message: 'Sent to transcription queue', type: 'success' });
+                this.removeCurrentAndLoadNext();
+            } catch (error) {
+                this.showSnack({ message: 'Failed to send to transcription', type: 'error' });
+            } finally {
+                this.actionLoading = null;
+            }
+        },
+
+        skipItem() {
+            if (!this.currentItem) return;
+            
+            // Just move to next item without API call
+            this.currentIndex++;
+            if (this.currentIndex >= this.items.length) {
+                this.currentIndex = 0; // Loop back to start
+            }
+            this.updateCurrentItem();
+        },
+
+        removeCurrentAndLoadNext() {
+            // Remove current item from array
+            this.items.splice(this.currentIndex, 1);
+            this.total--;
+            
+            // Update current item (stay at same index, next item slides in)
+            if (this.currentIndex >= this.items.length && this.currentIndex > 0) {
+                this.currentIndex--;
+            }
+            this.updateCurrentItem();
+        },
+
+        setupKeyboardShortcuts() {
+            this.handleKeyPress = (e) => {
+                if (this.actionLoading || !this.currentItem) return;
+                
+                // Ignore if user is typing in an input
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                switch(e.key.toLowerCase()) {
+                    case 'a':
+                        this.acceptItem();
+                        break;
+                    case 't':
+                        this.transcribeItem();
+                        break;
+                    case 'arrowright':
+                        this.skipItem();
+                        break;
+                }
+            };
+            
+            window.addEventListener('keydown', this.handleKeyPress);
+        },
+
+        removeKeyboardShortcuts() {
+            if (this.handleKeyPress) {
+                window.removeEventListener('keydown', this.handleKeyPress);
+            }
+        },
+
+        getConfidenceColor(confidence) {
+            if (confidence >= 85) return 'success';
+            if (confidence >= 70) return 'warning';
+            return 'error';
+        },
+
+        getConfidenceLabel(confidence) {
+            if (confidence >= 85) return "{{_('High')}}";
+            if (confidence >= 70) return "{{_('Medium')}}";
+            return "{{_('Low')}}";
+        },
+
+        isRTL(text) {
+            if (!text) return false;
+            // Check if first character is Arabic
+            const arabicRegex = /[\u0600-\u06FF]/;
+            return arabicRegex.test(text.charAt(0));
+        }
+    }
+});
+
+app.component('ImageViewer', ImageViewer);
+app.use(vuetify).mount("#app");
+</script>
+
+<style scoped>
+.image-preview-card {
+    min-height: 500px;
+}
+</style>
+{% endblock %}

@@ -3134,6 +3134,21 @@ def bulletin_fields() -> str:
     """Endpoint for bulletin fields configuration."""
     return render_template("admin/bulletin-fields.html")
 
+# OCR routes
+@admin.route("/media/")
+def media() -> str:
+    """Endpoint for media management."""
+    return render_template("admin/media.html")
+
+@admin.route("/ocr/review/")
+def ocr_review() -> str:
+    """Endpoint for ocr review."""
+    return render_template("admin/ocr-review.html")
+
+@admin.route("/ocr/transcription/")
+def ocr_transcription() -> str:
+    """Endpoint for ocr transcription."""
+    return render_template("admin/ocr-transcription.html")
 
 # Bulletin routes
 @admin.route("/bulletins/", defaults={"id": None})
