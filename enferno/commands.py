@@ -350,3 +350,144 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
+
+
+# OCR text extraction commands
+ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
+
+
+@ocr_cli.command()
+@click.option("--all", "process_all", is_flag=True, help="Process all pending media")
+@click.option("--bulletin-ids", "-b", help="Comma-separated bulletin IDs")
+@click.option("--limit", "-n", type=int, help="Maximum number of media to process")
+@click.option(
+    "--language",
+    "-l",
+    multiple=True,
+    default=["ar", "en"],
+    help="Language hints (can specify multiple)",
+)
+@with_appcontext
+def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple) -> None:
+    """Batch process media files for OCR extraction."""
+    from enferno.admin.models import Media, Extraction
+    from enferno.tasks.extraction import process_media_extraction_task
+
+    # Build query for media without extractions
+    query = db.session.query(Media.id).outerjoin(Extraction).filter(Extraction.id.is_(None))
+
+    # Filter by bulletin IDs if specified
+    if bulletin_ids:
+        ids = [int(x.strip()) for x in bulletin_ids.split(",")]
+        query = query.filter(Media.bulletin_id.in_(ids))
+
+    # Require --all or --bulletin-ids or --limit
+    if not process_all and not bulletin_ids and not limit:
+        click.echo("Error: Specify --all, --bulletin-ids, or --limit")
+        return
+
+    # Apply limit
+    if limit:
+        query = query.limit(limit)
+
+    media_ids = [row[0] for row in query.all()]
+
+    if not media_ids:
+        click.echo("No pending media found")
+        return
+
+    click.echo(f"Processing {len(media_ids)} media files...")
+    hints = list(language)
+
+    success = 0
+    failed = 0
+    skipped = 0
+
+    for media_id in media_ids:
+        result = process_media_extraction_task(media_id, hints)
+        if result.get("success"):
+            if result.get("skipped"):
+                skipped += 1
+            else:
+                success += 1
+                click.echo(
+                    f"  {media_id}: {result.get('status')} ({result.get('confidence', 0):.0f}%)"
+                )
+        else:
+            failed += 1
+            click.echo(f"  {media_id}: FAILED - {result.get('error')}")
+
+    click.echo(f"\nDone: {success} processed, {skipped} skipped, {failed} failed")
+
+
+@ocr_cli.command()
+@click.option("--media-id", "-m", required=True, type=int, help="Media ID to extract text from")
+@click.option(
+    "--language",
+    "-l",
+    multiple=True,
+    default=["ar", "en"],
+    help="Language hints (can specify multiple)",
+)
+@click.option("--show-text", "-t", is_flag=True, help="Print extracted text")
+@with_appcontext
+def extract(media_id: int, language: tuple, show_text: bool) -> None:
+    """Extract text from a media file using Google Vision OCR."""
+    from enferno.admin.models import Extraction
+    from enferno.tasks.extraction import process_media_extraction_task
+
+    click.echo(f"Extracting text from media {media_id}...")
+    result = process_media_extraction_task(media_id, list(language))
+
+    if result.get("success"):
+        if result.get("skipped"):
+            click.echo(f"Media {media_id} already has extraction, skipped")
+        else:
+            click.echo(f"Extracted text from media {media_id}")
+            click.echo(f"  Confidence: {result.get('confidence', 0):.1f}%")
+            click.echo(f"  Status: {result.get('status')}")
+
+        if show_text:
+            ext = Extraction.query.filter_by(media_id=media_id).first()
+            if ext and ext.text:
+                click.echo(f"\n--- Extracted Text ---\n{ext.text}\n")
+    else:
+        click.echo(f"Error: {result.get('error')}")
+
+
+@ocr_cli.command()
+@with_appcontext
+def status() -> None:
+    """Show OCR processing statistics."""
+    from enferno.admin.models import Extraction, Media
+    from sqlalchemy import func
+
+    total_media = db.session.query(func.count(Media.id)).scalar() or 0
+
+    stats = (
+        db.session.query(
+            Extraction.status, func.count(Extraction.id), func.avg(Extraction.confidence)
+        )
+        .group_by(Extraction.status)
+        .all()
+    )
+
+    status_map = {row[0]: {"count": row[1], "avg_conf": row[2]} for row in stats}
+    total_extracted = sum(s["count"] for s in status_map.values())
+    pending = total_media - total_extracted
+
+    click.echo(f"\nOCR Status Summary")
+    click.echo(f"{'─' * 40}")
+    click.echo(f"Total media:          {total_media:,}")
+    click.echo(f"Pending (no OCR):     {pending:,}")
+    click.echo(f"{'─' * 40}")
+
+    for status_name in ["processed", "needs_review", "needs_transcription", "failed"]:
+        data = status_map.get(status_name, {"count": 0, "avg_conf": None})
+        count = data["count"]
+        avg = data["avg_conf"]
+        conf_str = f" (avg {avg:.1f}%)" if avg else ""
+        click.echo(f"{status_name:21} {count:,}{conf_str}")
+
+    click.echo(f"{'─' * 40}")
+    click.echo(f"Total extracted:      {total_extracted:,}\n")
