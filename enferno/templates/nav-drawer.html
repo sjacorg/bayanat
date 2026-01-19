@@ -1,4 +1,4 @@
-<v-navigation-drawer v-model="drawer" app rail width="310" expand-on-hover class="h-screen">
+<v-navigation-drawer v-model="drawer" app rail width="auto" expand-on-hover class="h-screen">
     <v-list dense class="scrollable-nav d-flex flex-column" height="100%">
         <v-list-item prepend-icon="mdi-file-document-multiple" title="{{ _('Bulletins') }}" href="/admin/bulletins/"
                      key="bulletins"></v-list-item>
@@ -76,8 +76,16 @@
                     <v-list-item v-bind="props" prepend-icon="mdi-text-recognition" title="{{ _('OCR') }}"></v-list-item>
                 </template>
                 
-                <v-list-item prepend-icon="mdi-eye-check" title="{{ _('Review Queue') }}" href="/admin/ocr/review/" key="ocr-review"></v-list-item>
-                <v-list-item prepend-icon="mdi-keyboard" title="{{ _('Transcription Queue') }}" href="/admin/ocr/transcription/" key="ocr-transcription"></v-list-item>
+                <v-list-item prepend-icon="mdi-eye-check" title="{{ _('Review Queue') }}" href="/admin/ocr/review/" key="ocr-review">
+                    <template v-if="ocr.reviewCount" v-slot:append>
+                        <v-chip class="ml-2" color="error">${ocr.reviewCount || 0}</v-chip>
+                    </template>
+                </v-list-item>
+                <v-list-item prepend-icon="mdi-keyboard" title="{{ _('Transcription Queue') }}" href="/admin/ocr/transcription/" key="ocr-transcription">
+                    <template v-if="ocr.transcriptionCount" v-slot:append>
+                        <v-chip class="ml-2" color="warning">${ocr.transcriptionCount || 0}</v-chip>
+                    </template>
+                </v-list-item>
                 <v-list-item prepend-icon="mdi-image-multiple" title="{{ _('Media Dashboard') }}" href="/admin/media/" key="media"></v-list-item>
             </v-list-group>
 
