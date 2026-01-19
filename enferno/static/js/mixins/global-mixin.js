@@ -7,6 +7,10 @@ const globalMixin = {
   data: () => ({
     snackbar: false,
     snackMessage: '',
+    ocr: {
+      reviewCount: 0,
+      transcriptionCount: 0,
+    },
 
     // settings drawer
     settingsDrawer: false,
@@ -56,6 +60,8 @@ const globalMixin = {
     api.get('/settings/load').then(res => {
       this.settings = res.data;
     });
+
+    this.loadOCRCounts();
   },
   beforeUnmount() {
     document.removeEventListener('global-axios-error', this.showSnack);
@@ -177,6 +183,15 @@ const globalMixin = {
         "error-messages-translation": serverErrors?.[translationKey],
         "onUpdate:translation": () => (serverErrors[translationKey] = null),
       }
+    },
+    // Load OCR counts for needs review and transcription queues (displayed in nav drawer)
+    loadOCRCounts() {
+        api.get('/ocr/count').then(res => {
+          this.ocr.reviewCount = res?.data?.review_count || 0;
+          this.ocr.transcriptionCount = res?.data?.transcription_count || 0;
+        }).catch(err => {
+          console.error('Error loading OCR counts:', err);
+        });
     },
   },
 };
