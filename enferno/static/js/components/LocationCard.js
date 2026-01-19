@@ -181,3 +181,5 @@ const LocationCard = Vue.defineComponent({
     </v-card>
   `,
 });
+
+export default LocationCard;

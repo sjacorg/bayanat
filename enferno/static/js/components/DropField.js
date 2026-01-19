@@ -74,3 +74,5 @@ const DropField = Vue.defineComponent({
 
   `,
 });
+
+export default DropField;

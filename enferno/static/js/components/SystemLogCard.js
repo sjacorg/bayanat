@@ -142,3 +142,5 @@ const SystemLogCard = Vue.defineComponent({
 
 
 })
+
+export default SystemLogCard;

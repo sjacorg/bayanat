@@ -141,3 +141,5 @@ const LocationSearchBox = Vue.defineComponent({
       </v-sheet>
     `,
 });
+
+export default LocationSearchBox;

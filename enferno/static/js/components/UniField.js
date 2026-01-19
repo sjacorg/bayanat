@@ -29,3 +29,5 @@ const UniField = Vue.defineComponent({
     </v-list>
   `,
 });
+
+export default UniField;

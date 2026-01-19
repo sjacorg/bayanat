@@ -111,3 +111,5 @@ const SelectFieldTypeDialog = Vue.defineComponent({
     </v-dialog>
   `,
 });
+
+export default SelectFieldTypeDialog;

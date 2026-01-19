@@ -350,3 +350,5 @@ const IncidentCard = Vue.defineComponent({
       </v-card>
     `,
 });
+
+export default IncidentCard;

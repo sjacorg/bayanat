@@ -45,3 +45,5 @@ const MediaGrid = Vue.defineComponent({
       </div>
   `,
 });
+
+export default MediaGrid;

@@ -229,3 +229,5 @@ const EditableTable = Vue.defineComponent({
     },
   },
 });
+
+export default EditableTable;

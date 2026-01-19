@@ -94,3 +94,5 @@ const RelatedActorsCard = Vue.defineComponent({
       </v-card>
     `,
 });
+
+export default RelatedActorsCard;

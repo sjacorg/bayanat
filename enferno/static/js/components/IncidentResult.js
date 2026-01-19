@@ -59,3 +59,5 @@ const IncidentResult = Vue.defineComponent({
       </template>
     `,
 });
+
+export default IncidentResult;

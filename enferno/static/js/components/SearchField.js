@@ -136,3 +136,5 @@ const LocationSearchField = Vue.defineComponent({
     }, 350),
   },
 });
+
+export default SearchField;

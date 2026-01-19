@@ -90,3 +90,4 @@ const RelateItemsTemplate = Vue.defineComponent({
       `,
   });
   
+  export default RelateItemsTemplate;

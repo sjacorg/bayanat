@@ -112,3 +112,5 @@ const DualField = Vue.defineComponent({
     </v-sheet>
   `,
 });
+
+export default DualField;

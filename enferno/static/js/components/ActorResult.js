@@ -74,3 +74,5 @@ const ActorResult = Vue.defineComponent({
     </template>
   `,
 });
+
+export default ActorResult;

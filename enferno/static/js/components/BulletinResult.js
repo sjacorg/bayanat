@@ -87,3 +87,5 @@ const BulletinResult = Vue.defineComponent({
     </template>
   `,
 });
+
+export default BulletinResult;

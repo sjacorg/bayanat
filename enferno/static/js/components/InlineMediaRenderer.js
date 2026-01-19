@@ -121,3 +121,4 @@ const InlineMediaRenderer = Vue.defineComponent({
     `,
   });
   
+  export default InlineMediaRenderer;

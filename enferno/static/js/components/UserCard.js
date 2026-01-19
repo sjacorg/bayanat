@@ -320,3 +320,5 @@ const UserCard = Vue.defineComponent({
       </v-card>
     `,
 });
+
+export default UserCard;
