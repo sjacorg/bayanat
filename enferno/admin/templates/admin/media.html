@@ -8,7 +8,7 @@
                         <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${stats.total.toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${ocr.stats.total.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis">{{ _('Total Media') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -16,7 +16,7 @@
                         <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${stats.processed.toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${ocr.stats.processed.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis">{{ _('Processed (Searchable)') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -24,7 +24,7 @@
                         <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${stats.needs_review.toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${ocr.stats.needs_review.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis">{{ _('Needs Review') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -32,7 +32,7 @@
                         <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${stats.pending.toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${(ocr.stats.failed + ocr.stats.pending).toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis">{{ _('Pending/Failed') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -209,13 +209,6 @@
                     bulletinSearch: '',
                     dateRange: null
                 },
-
-                stats: {
-                    total: 2_000_000,
-                    processed: 345,
-                    needs_review: 1_000_000,
-                    pending: 500_000
-                },
                 statusOptions: [
                     { title: "{{_('All')}}", value: null },
                     { title: "{{_('Pending')}}", value: 'pending' },
@@ -253,56 +246,16 @@
                         this.refresh();
                     }, 1000);
                 },
-
-                loadPlaceholderData() {
-                    // Placeholder data
-                    this.stats = {
-                        total: 2000000,
-                        processed: 1200000,
-                        needs_review: 50000,
-                        pending: 10000
-                    };
-
-                    const statuses = ['pending', 'processing', 'processed', 'needs_review', 'needs_transcription', 'failed'];
-                    const placeholderItems = [];
-
-                    for (let i = 1; i <= 20; i++) {
-                        const status = statuses[Math.floor(Math.random() * statuses.length)];
-                        placeholderItems.push({
-                            id: i,
-                            filename: `scan_${String(i).padStart(3, '0')}.jpg`,
-                            thumbnail_url: `https://picsum.photos/seed/${i}/100/100`,
-                            url: `https://picsum.photos/seed/${i}/800/1000`,
-                            bulletin: {
-                                id: 12340 + i,
-                                ref: `#${12340 + i}`,
-                                title: `Document about incident ${i}`
-                            },
-                            ocr_status: status,
-                            ocr_confidence: status === 'processed' ? Math.floor(Math.random() * 20) + 80 : null,
-                            created_at: new Date(2026, 0, 20 - i).toISOString()
-                        });
-                    }
-
-                    this.items = placeholderItems;
-                    this.itemsLength = 2000000;
-                    this.loading = false;
-                },
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
 
-                    // api.get(`/admin/api/media/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
-                    //     this.itemsLength = response.data.total;
-                    //     this.items = response.data.items;
-                    // }).finally(() => {
-                    //     this.loading = false;
-                    // });
-
-                    setTimeout(() => {
-                        this.loadPlaceholderData();
+                    api.get(`/admin/api/media/dashboard?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+                        this.itemsLength = response.data.total;
+                        this.items = response.data.items;
+                    }).finally(() => {
                         this.loading = false;
-                    }, 500);
+                    });
                 },
 
                 getStatusText(status) {
