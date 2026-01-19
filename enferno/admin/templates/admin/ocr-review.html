@@ -213,9 +213,11 @@ const app = createApp({
         actionLoading: null, // 'accept', 'transcribe', or null
         
         currentIndex: 0,
+        itemsLength: 0,
         items: [],
         total: 0,
         currentItem: null,
+        options: {},
 
         filter: 'all',
         filterOptions: [
@@ -226,7 +228,7 @@ const app = createApp({
     }),
 
     mounted() {
-        this.loadQueue();
+        this.refresh();
         this.setupKeyboardShortcuts();
     },
 
@@ -235,62 +237,19 @@ const app = createApp({
     },
 
     methods: {
-        async loadQueue() {
+        refresh(options) {
+            this.options = options || { ...this.options, page: 1 };
             this.loading = true;
-            this.currentIndex = 0;
 
-            // TODO: Replace with real API call
-            // try {
-            //     const response = await api.get('/admin/api/ocr/review', {
-            //         params: { status: 'needs_review', filter: this.filter }
-            //     });
-            //     this.items = response.data.items;
-            //     this.total = response.data.total;
-            // } catch (error) {
-            //     this.showSnack({ message: 'Failed to load queue', type: 'error' });
-            // }
-
-            // Placeholder data - remove this when API is ready
-            this.loadPlaceholderData();
-            this.updateCurrentItem();
-            this.loading = false;
+            api.get(`/admin/api/ocr/review?page=${this.options.page}&per_page=${this.options.itemsPerPage}&ocr_status=needs_review`).then(response => {
+                this.itemsLength = response.data.total;
+                this.items = response.data.items;
+                this.updateCurrentItem();
+            }).finally(() => {
+                this.loading = false;
+            });
         },
 
-        loadPlaceholderData() {
-            const sampleTexts = [
-                'هذا نص تجريبي باللغة العربية. يحتوي على معلومات حول انتهاكات حقوق الإنسان والاحتجاز التعسفي. قد يحتوي النص على أخطاء تحتاج إلى مراجعة وتصحيح.',
-                'This document contains information about detention facilities in the northern region. Multiple violations of human rights have been documented, including arbitrary detention and lack of access to legal counsel. This document contains information about detention facilities in the northern region. Multiple violations of human rights have been documented, including arbitrary detention and lack of access to legal counsel. This document contains information about detention facilities in the northern region. Multiple violations of human rights have been documented, including arbitrary detention and lack of access to legal counsel. This document contains information about detention facilities in the northern region. Multiple violations of human rights have been documented, including arbitrary detention and lack of access to legal counsel. This document contains information about detention facilities in the northern region. Multiple violations of human rights have been documented, including arbitrary detention and lack of access to legal counsel. This document contains information about detention facilities in the northern region. Multiple violations of human rights have been documented, including arbitrary detention and lack of access to legal counsel.',
-                'Report dated March 15, 2023: Witness testimony indicates systematic abuse at facility #7. Detainees report lack of medical care and inadequate food supplies. Further investigation required.',
-                'تقرير عن مركز الاحتجاز رقم ٣. تم توثيق حالات تعذيب وسوء معاملة. الشهود أفادوا بعدم وجود رعاية طبية كافية.',
-                'Internal memo regarding conditions at detention center. Staff shortages reported. Overcrowding remains a critical issue affecting detainee welfare.',
-                'شهادة المعتقل السابق: تم احتجازي لمدة ٤٥ يومًا دون تهمة. لم يُسمح لي بالاتصال بمحامٍ أو عائلتي.',
-                'Investigation findings: Evidence of systematic mistreatment documented across three facilities. Recommendations include immediate oversight and staff training.',
-                'ملاحظات ميدانية من الزيارة التفتيشية. ظروف غير صحية. نقص في الأسرة والبطانيات. يحتاج المرفق إلى تجديد عاجل.',
-                'Legal documentation: Case #2847 involves unlawful detention spanning 8 months. Subject denied access to family visits and legal representation.',
-                'تحليل الأنماط: ٧٨٪ من الحالات المسجلة تشير إلى احتجاز تعسفي. يوصى باتخاذ إجراءات فورية لمعالجة هذه الانتهاكات.'
-            ];
-
-            const placeholderItems = [];
-            for (let i = 1; i <= 10; i++) {
-                placeholderItems.push({
-                    id: 120 + i,
-                    media_id: 450 + i,
-                    media_url: `https://picsum.photos/seed/${i}/600/800`,
-                    media_filename: `scan_2023_05_${String(i).padStart(2, '0')}.jpg`,
-                    bulletin: {
-                        id: 12340 + i,
-                        title: `Document about detention facility ${i}`,
-                        ref: `#${12340 + i}`
-                    },
-                    text: sampleTexts[i - 1],
-                    confidence: 70 + (i * 1.5),
-                    created_at: new Date(2026, 0, i).toISOString()
-                });
-            }
-            
-            this.items = placeholderItems;
-            this.total = placeholderItems.length;
-        },
 
         updateCurrentItem() {
             if (this.currentIndex >= 0 && this.currentIndex < this.items.length) {

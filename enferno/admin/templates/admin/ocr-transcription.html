@@ -230,9 +230,11 @@ const app = createApp({
         actionLoading: null, // 'save', 'unreadable', or null
         
         currentIndex: 0,
+        itemsLength: 0,
         items: [],
         total: 0,
         currentItem: null,
+        options: {},
         
         transcriptionText: '',
         lastSaved: false,
@@ -324,7 +326,7 @@ const app = createApp({
     },
 
     mounted() {
-        this.loadQueue();
+        this.refresh();
         this.setupAutoSave();
         
         // ADDED: Handle window resize
@@ -358,46 +360,17 @@ const app = createApp({
     },
 
     methods: {
-        async loadQueue() {
+        refresh(options) {
+            this.options = options || { ...this.options, page: 1 };
             this.loading = true;
-            this.currentIndex = 0;
 
-            // TODO: Replace with real API call
-            // try {
-            //     const response = await api.get('/admin/api/ocr/transcription', {
-            //         params: { status: 'needs_transcription' }
-            //     });
-            //     this.items = response.data.items;
-            //     this.total = response.data.total;
-            // } catch (error) {
-            //     this.showSnack({ message: 'Failed to load queue', type: 'error' });
-            // }
-
-            // Placeholder data
-            this.loadPlaceholderData();
-            this.updateCurrentItem();
-            this.loading = false;
-        },
-
-        loadPlaceholderData() {
-            const placeholderItems = [];
-            for (let i = 1; i <= 8; i++) {
-                placeholderItems.push({
-                    id: 220 + i,
-                    media_id: 550 + i,
-                    media_url: `https://picsum.photos/seed/trans${i}/800/1000`,
-                    media_filename: `document_${String(i).padStart(3, '0')}.jpg`,
-                    bulletin: {
-                        id: 12450 + i,
-                        title: `Case file ${i} - detention documentation`,
-                        ref: `#${12450 + i}`
-                    },
-                    created_at: new Date(2026, 0, i).toISOString()
-                });
-            }
-            
-            this.items = placeholderItems;
-            this.total = placeholderItems.length;
+            api.get(`/admin/api/ocr/review?page=${this.options.page}&per_page=${this.options.itemsPerPage}&ocr_status=needs_review`).then(response => {
+                this.itemsLength = response.data.total;
+                this.items = response.data.items;
+                this.updateCurrentItem();
+            }).finally(() => {
+                this.loading = false;
+            });
         },
 
         updateCurrentItem() {
