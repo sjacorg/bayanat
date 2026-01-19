@@ -6938,13 +6938,22 @@ def api_media_dashboard():
       - page, per_page: pagination
       - ocr_status: pending|needs_review|needs_transcription|processed|failed
       - q: search in extracted text
+      - bulletin_id: filter by bulletin
+      - date_from, date_to: filter by extraction created_at
     """
     page = request.args.get("page", 1, type=int)
     per_page = min(request.args.get("per_page", 20, type=int), 100)
     ocr_status = request.args.get("ocr_status")
     search = request.args.get("q")
+    bulletin_id = request.args.get("bulletin_id", type=int)
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
 
     query = Media.query.outerjoin(Extraction)
+
+    # Filter by bulletin
+    if bulletin_id:
+        query = query.filter(Media.bulletin_id == bulletin_id)
 
     # Filter by OCR status
     if ocr_status == "pending":
@@ -6955,6 +6964,12 @@ def api_media_dashboard():
     # Text search in extracted text
     if search:
         query = query.filter(Extraction.text.ilike(f"%{search}%"))
+
+    # Date range filter on extraction created_at
+    if date_from:
+        query = query.filter(Extraction.created_at >= date_from)
+    if date_to:
+        query = query.filter(Extraction.created_at <= date_to)
 
     query = query.order_by(desc(Media.id))
     paginated = query.paginate(page=page, per_page=per_page, count=True)
@@ -7010,6 +7025,112 @@ def api_ocr_review():
             "hasMore": paginated.has_next,
         }
     )
+
+
+@admin.get("/api/ocr/transcribe")
+@auth_required("session")
+def api_ocr_transcribe():
+    """
+    Extractions needing manual transcription (oldest first).
+    Equivalent to /api/media/dashboard?ocr_status=needs_transcription
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+
+    query = (
+        Media.query.join(Extraction)
+        .filter(Extraction.status == "needs_transcription")
+        .order_by(asc(Extraction.created_at))
+    )
+
+    paginated = query.paginate(page=page, per_page=per_page, count=True)
+
+    items = []
+    for media in paginated.items:
+        item = media.to_dict()
+        item["extraction"] = media.extraction.to_dict()
+        items.append(item)
+
+    return jsonify(
+        {
+            "items": items,
+            "page": page,
+            "perPage": per_page,
+            "total": paginated.total,
+            "hasMore": paginated.has_next,
+        }
+    )
+
+
+@admin.get("/api/ocr/stats")
+@auth_required("session")
+def api_ocr_stats():
+    """OCR processing statistics for dashboard header."""
+    total_media = db.session.query(func.count(Media.id)).scalar() or 0
+
+    # Count by extraction status
+    status_counts = (
+        db.session.query(Extraction.status, func.count(Extraction.id))
+        .group_by(Extraction.status)
+        .all()
+    )
+    status_map = {row[0]: row[1] for row in status_counts}
+
+    total_extracted = sum(status_map.values())
+    pending = total_media - total_extracted
+
+    return jsonify(
+        {
+            "total": total_media,
+            "pending": pending,
+            "processed": status_map.get("processed", 0),
+            "needs_review": status_map.get("needs_review", 0),
+            "needs_transcription": status_map.get("needs_transcription", 0),
+            "failed": status_map.get("failed", 0),
+        }
+    )
+
+
+@admin.put("/api/extraction/<int:extraction_id>")
+@auth_required("session")
+def api_extraction_update(extraction_id: int):
+    """
+    Update extraction record (accept, transcribe, mark unreadable).
+    Body:
+      - action: accept|transcribe|cant_read
+      - text: (required for transcribe) corrected text
+    """
+    extraction = Extraction.query.get(extraction_id)
+    if not extraction:
+        return HTTPResponse.not_found("Extraction not found")
+
+    data = request.json or {}
+    action = data.get("action")
+
+    if action == "accept":
+        extraction.status = "processed"
+        extraction.reviewed_by = current_user.id
+        extraction.reviewed_at = datetime.utcnow()
+
+    elif action == "transcribe":
+        text = data.get("text")
+        if not text:
+            return HTTPResponse.error("Text required for transcription")
+        extraction.text = text
+        extraction.status = "processed"
+        extraction.reviewed_by = current_user.id
+        extraction.reviewed_at = datetime.utcnow()
+
+    elif action == "cant_read":
+        extraction.status = "failed"
+        extraction.reviewed_by = current_user.id
+        extraction.reviewed_at = datetime.utcnow()
+
+    else:
+        return HTTPResponse.error("Invalid action. Use: accept, transcribe, cant_read")
+
+    db.session.commit()
+    return jsonify(extraction.to_dict())
 
 
 @admin.route("/api/session-check")
