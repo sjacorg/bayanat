@@ -2,7 +2,7 @@ const thumbnailContent = `
   <div @click="handleMediaClick" class="h-100">
     <!-- Image preview -->
     <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :data-src="s3url">
-      <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
+      <img loading="lazy" :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
         <v-expand-transition>  
           <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
             <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
@@ -12,7 +12,7 @@ const thumbnailContent = `
     </a>
 
     <!-- Video preview -->
-    <v-img v-if="mediaType === 'video'" :src="videoThumbnail" cover class="bg-grey-lighten-2 h-100">
+    <v-img v-if="mediaType === 'video'" :src="videoThumbnail" loading="lazy" cover class="bg-grey-lighten-2 h-100">
       <div class="d-flex align-center justify-center fill-height">
         <v-btn icon="mdi-play-circle" variant="text" size="x-large" :class="['custom-play-icon', thumbnailBrightness > 128 ? 'dark-play-icon' : 'light-play-icon']"></v-btn>
       </div>

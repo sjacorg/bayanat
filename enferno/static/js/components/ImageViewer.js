@@ -153,7 +153,7 @@ const ImageViewer = Vue.defineComponent({
     template: `
         <div ref="imageViewer">
             <a class="media-item h-100 block" :data-src="media.s3url">
-                <img :src="media.s3url" class="w-100 h-100 bg-black" style="object-fit: contain;"></img>
+                <img :src="media.s3url" loading="lazy" class="w-100 h-100 bg-black" style="object-fit: contain;"></img>
             </a>
         </div>
       `,
