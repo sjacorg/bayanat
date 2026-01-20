@@ -1,4 +1,13 @@
 {% extends 'layout.html' %} {% block content %}
+    <media-transcription-dialog
+        v-model:open="mediaDialog.show"
+        :loading="mediaDialog.loading"
+        :media="mediaDialog.data"
+        @rejected="markAsCannotRead($event)"
+        @accepted="markAsAccepted($event)"
+        @transcribed="markAsTranscribed($event)"
+    ></media-transcription-dialog>
+
     <v-main>
         <v-container fluid>
             <v-card>
@@ -56,6 +65,7 @@
                             show-select
                             select-strategy="page"
                             item-selectable="selectable"
+                            @click:row="rowClick"
                     >
                         <template v-slot:top>
                             <v-toolbar>
@@ -168,6 +178,7 @@
 
 {% endblock %} {% block js %}
 
+    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/UniField.js"></script>
@@ -191,6 +202,11 @@
                 loading: true,
                 bulkLoading: false,
                 options: {},
+                mediaDialog: {
+                    loading: false,
+                    show: false,
+                    data: null
+                },
 
                 headers: [
                     { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
@@ -228,7 +244,38 @@
                 }
             }),
 
+            mounted() {
+                this.handleRoute();
+                this.$router.afterEach(() => {
+                    this.handleRoute();
+                });
+            },
+
             methods: {
+                handleRoute() {
+                    if (this.$route.params.id) this.showMediaDialog(this.$route.params.id);
+                },
+                showMediaDialog(id) {
+                    this.mediaDialog.loading = true;
+                    this.mediaDialog.show = true;
+                    this.mediaDialog.data = this.findMediaById(id);
+
+                    api.get(`/admin/api/media/${id}`).then(response => {
+                        this.mediaDialog.data = response.data;
+                    }).catch(error => {
+                        this.mediaDialog.show = false;
+                    }).finally(() => {
+                        this.mediaDialog.loading = false;
+                    });
+                },
+                rowClick(e, row) {
+                    const item = row.item;
+                    const path = `/admin/media/${item.id}`;
+                    if (this.$route.path !== path) this.$router.push(path);
+                },
+                findMediaById(id) {
+                    return this.items.find(item => item.id === Number(id));
+                },
                 runBulkOCR() {
                     if (this.selected.length === 0) return;
 
@@ -267,14 +314,57 @@
                 getStatusIcon(status) {
                     return this.statusMap[status]?.icon || status;
                 },
-            }
+                markAsTranscribed({ media, text }) {
+                    console.log('markAsTranscribed', media, text);
+                    api.put(`/admin/api/extraction/${media.id}`, { action: 'transcribe', text }).then(response => {
+                        this.showSnack("{{ _('Media manually transcribed') }}");
+                        this.resetMediaDialog();
+                        this.refresh();
+                    });
+                },
+                markAsAccepted(media) {
+                    api.put(`/admin/api/extraction/${media.id}`, { action: 'accept' }).then(response => {
+                        this.showSnack("{{ _('Media marked as accepted') }}");
+                        this.resetMediaDialog();
+                        this.refresh();
+                    });
+                },
+                markAsCannotRead(media) {
+                    api.put(`/admin/api/extraction/${media.id}`, { action: 'cant_read' }).then(response => {
+                        this.showSnack("{{ _('Media marked as cannot read') }}");
+                        this.resetMediaDialog();
+                        this.refresh();
+                    });
+                },
+                resetMediaDialog() {
+                    this.mediaDialog.show = false;
+                    this.mediaDialog.data = null;
+                    this.mediaDialog.loading = false;
+                }
+            },
+            watch: {
+                'mediaDialog.show'(isOpen) {
+                    if (isOpen === false) {
+                        this.mediaDialog.data = null;
+                        if (this.$route.path !== '/admin/media/')
+                            this.$router.push('/admin/media/')
+                    }
+                },
+            },
         });
+
+        app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
         app.component('PdfViewer', PdfViewer);
         app.component('ImageViewer', ImageViewer);
         app.component('UniField', UniField);
         app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('PopDateField', PopDateField);
         app.component('PopDateRangeField', PopDateRangeField);
-        app.use(vuetify).mount("#app")
+        
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}
