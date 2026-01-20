@@ -4185,6 +4185,32 @@ def api_local_serve_inline_media(filename: str) -> Response:
 # Medias routes
 
 
+@admin.get("/api/media/<int:id>")
+@auth_required("session")
+def api_media_get(id: int):
+    """Get a single media item by ID with extraction and bulletin info."""
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.not_found("Media not found")
+
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    item = media.to_dict()
+    item["extraction"] = media.extraction.to_dict() if media.extraction else None
+    item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+    if media.bulletin:
+        item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
+    else:
+        item["bulletin"] = None
+    media_url = f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+    item["media_url"] = media_url
+    item["thumbnail_url"] = media_url
+    item["url"] = media_url
+
+    return jsonify(item)
+
+
 @admin.put("/api/media/<int:id>")
 @roles_accepted("Admin", "DA")
 @validate_with(MediaRequestModel)
