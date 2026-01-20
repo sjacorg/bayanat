@@ -3134,21 +3134,25 @@ def bulletin_fields() -> str:
     """Endpoint for bulletin fields configuration."""
     return render_template("admin/bulletin-fields.html")
 
+
 # OCR routes
 @admin.route("/media/")
 def media() -> str:
     """Endpoint for media management."""
     return render_template("admin/media.html")
 
+
 @admin.route("/ocr/review/")
 def ocr_review() -> str:
     """Endpoint for ocr review."""
     return render_template("admin/ocr-review.html")
 
+
 @admin.route("/ocr/transcription/")
 def ocr_transcription() -> str:
     """Endpoint for ocr transcription."""
     return render_template("admin/ocr-transcription.html")
+
 
 # Bulletin routes
 @admin.route("/bulletins/", defaults={"id": None})
@@ -6994,6 +6998,16 @@ def api_media_dashboard():
         item = media.to_dict()
         item["extraction"] = media.extraction.to_dict() if media.extraction else None
         item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+        # Add bulletin info for FE
+        if media.bulletin:
+            item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
+        else:
+            item["bulletin"] = None
+        # Add media URLs for thumbnails (FE expects thumbnail_url and url)
+        media_url = f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+        item["media_url"] = media_url
+        item["thumbnail_url"] = media_url
+        item["url"] = media_url
         items.append(item)
 
     return jsonify(
@@ -7029,6 +7043,19 @@ def api_ocr_review():
     for media in paginated.items:
         item = media.to_dict()
         item["extraction"] = media.extraction.to_dict()
+        item["media_url"] = (
+            f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+        )
+        item["confidence"] = media.extraction.confidence
+        item["text"] = media.extraction.text
+        if media.bulletin:
+            item["bulletin"] = {
+                "id": media.bulletin.id,
+                "ref": media.bulletin.id,
+                "title": media.bulletin.title,
+            }
+        else:
+            item["bulletin"] = None
         items.append(item)
 
     return jsonify(
@@ -7064,6 +7091,19 @@ def api_ocr_transcribe():
     for media in paginated.items:
         item = media.to_dict()
         item["extraction"] = media.extraction.to_dict()
+        item["media_url"] = (
+            f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+        )
+        item["confidence"] = media.extraction.confidence
+        item["text"] = media.extraction.text
+        if media.bulletin:
+            item["bulletin"] = {
+                "id": media.bulletin.id,
+                "ref": media.bulletin.id,
+                "title": media.bulletin.title,
+            }
+        else:
+            item["bulletin"] = None
         items.append(item)
 
     return jsonify(
