@@ -3139,7 +3139,7 @@ def bulletin_fields() -> str:
 @admin.route("/media/")
 def media() -> str:
     """Endpoint for media management."""
-    return render_template("admin/media.html")
+    return render_template("admin/media-dashboard.html")
 
 
 @admin.route("/ocr/review/")
