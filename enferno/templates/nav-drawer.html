@@ -71,23 +71,7 @@
             <v-list-item prepend-icon="mdi-pulse" title="{{ _('Activity') }}" href="/admin/activity/"
                             key="activity"></v-list-item>
 
-            <v-list-group>
-                <template v-slot:activator="{props}">
-                    <v-list-item v-bind="props" prepend-icon="mdi-text-recognition" title="{{ _('OCR') }}"></v-list-item>
-                </template>
-                
-                <v-list-item prepend-icon="mdi-eye-check" title="{{ _('Review Queue') }}" href="/admin/ocr/review/" key="ocr-review">
-                    <template v-if="ocr?.stats?.needs_review" v-slot:append>
-                        <v-chip class="ml-2" color="error">${ocr.stats.needs_review || 0}</v-chip>
-                    </template>
-                </v-list-item>
-                <v-list-item prepend-icon="mdi-keyboard" title="{{ _('Transcription Queue') }}" href="/admin/ocr/transcription/" key="ocr-transcription">
-                    <template v-if="ocr?.stats?.needs_transcription" v-slot:append>
-                        <v-chip class="ml-2" color="warning">${ocr.stats.needs_transcription || 0}</v-chip>
-                    </template>
-                </v-list-item>
-                <v-list-item prepend-icon="mdi-image-multiple" title="{{ _('Media Dashboard') }}" href="/admin/media/" key="media"></v-list-item>
-            </v-list-group>
+            <v-list-item prepend-icon="mdi-image-multiple" title="{{ _('Media Dashboard') }}" href="/admin/media/" key="media"></v-list-item>
 
             <v-list-group>
                 <template v-slot:activator="{props}">
