@@ -3136,8 +3136,9 @@ def bulletin_fields() -> str:
 
 
 # OCR routes
-@admin.route("/media/")
-def media() -> str:
+@admin.route("/media/", defaults={"id": None})
+@admin.route("/media/<int:id>")
+def media_dashboard(id: Optional[t.id]) -> str:
     """Endpoint for media management."""
     return render_template("admin/media-dashboard.html")
 
