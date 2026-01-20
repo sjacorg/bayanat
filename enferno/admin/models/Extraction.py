@@ -21,7 +21,7 @@ class Extraction(db.Model):
     reviewed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
-    media = db.relationship("Media", backref="extraction", uselist=False)
+    media = db.relationship("Media", backref=db.backref("extraction", uselist=False), uselist=False)
     reviewer = db.relationship("User", foreign_keys=[reviewed_by])
 
     def to_dict(self):

@@ -185,7 +185,7 @@ const globalMixin = {
     },
     // Load OCR counts for needs review and transcription queues (displayed in nav drawer)
     loadOCRStats() {
-        api.get('/api/ocr/stats').then(res => {
+        api.get('/admin/api/ocr/stats').then(res => {
           this.ocr.stats = res?.data;
         }).catch(err => {
           console.error('Error loading OCR counts:', err);
