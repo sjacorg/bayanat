@@ -51,6 +51,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         v-if="open"
         :modelValue="open"
         fullscreen
+        persistent
+        no-click-animation
     >
       <v-toolbar color="dark-primary">
         <v-toolbar-title>OCR Transcription</v-toolbar-title>
@@ -100,19 +102,17 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                                     variant="tonal"
                                     prepend-icon="mdi-file-document"
                                     target="_blank"
+                                    :href="'/admin/bulletins/' + media.bulletin.id"
                                     block
                                 >
-                                    Bulletin {{ media.bulletin.ref }}
+                                    Bulletin #{{ media.bulletin.id }}
                                 </v-btn>
-                                <div class="text-caption text-medium-emphasis mt-2">
-                                    {{ media.bulletin.title }}
-                                </div>
                             </div>
 
                             <v-divider class="my-4"></v-divider>
 
                             <!-- Confidence -->
-                            <div class="mb-4">
+                            <div v-if="media.confidence" class="mb-4">
                                 <div class="text-subtitle-2 mb-2">Confidence</div>
                                 <v-progress-linear
                                     :model-value="media.confidence"
@@ -128,8 +128,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                                     {{ getConfidenceLabel(media.confidence) }}
                                 </div>
                             </div>
-
-                            <v-divider class="my-4"></v-divider>
+                            <v-divider v-if="media.confidence" class="my-4"></v-divider>
 
                             <!-- Extracted Text -->
                             <div>
