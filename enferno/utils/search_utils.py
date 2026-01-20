@@ -23,6 +23,8 @@ from enferno.admin.models import (
     Dialect,
     ActorProfile,
     Activity,
+    Media,
+    Extraction,
 )
 from enferno.admin.models.DynamicField import DynamicField
 from enferno.user.models import Role
@@ -362,6 +364,22 @@ class SearchUtils:
                 raw_condition = raw_condition.bindparams(**params)
 
                 conditions.append(raw_condition)
+
+        # OCR text search - search in extracted text from media
+        if ocr := q.get("ocr"):
+            words = ocr.split(" ")
+            # Find bulletins that have media with matching extraction text
+            # Include both processed and needs_review (has text but awaiting review)
+            ocr_subquery = (
+                select(Media.bulletin_id)
+                .join(Extraction, Media.id == Extraction.media_id)
+                .where(Extraction.status.in_(["processed", "needs_review"]))
+                .where(Extraction.text.isnot(None))
+            )
+            for word in words:
+                if word.strip():
+                    ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
+            conditions.append(Bulletin.id.in_(ocr_subquery))
 
         # Origin ID
         originid = (q.get("originid") or "").strip()
