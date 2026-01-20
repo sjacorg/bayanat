@@ -364,7 +364,7 @@ const app = createApp({
             this.options = options || { ...this.options, page: 1 };
             this.loading = true;
 
-            api.get(`/admin/api/ocr/review?page=${this.options.page}&per_page=${this.options.itemsPerPage}&ocr_status=needs_review`).then(response => {
+            api.get(`/admin/api/ocr/transcribe?page=${this.options.page}&per_page=${this.options.itemsPerPage}&ocr_status=needs_review`).then(response => {
                 this.itemsLength = response.data.total;
                 this.items = response.data.items;
                 this.updateCurrentItem();
