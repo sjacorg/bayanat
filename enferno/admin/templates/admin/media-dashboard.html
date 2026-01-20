@@ -261,7 +261,14 @@
                     this.mediaDialog.data = this.findMediaById(id);
 
                     api.get(`/admin/api/media/${id}`).then(response => {
-                        this.mediaDialog.data = response.data;
+                        if (response.data.extraction) {
+                            this.mediaDialog.data = response.data;
+                        } else {
+                            this.resetMediaDialog();
+                            this.$nextTick(() => {
+                                this.$router.push('/admin/media/')
+                            })
+                        }
                     }).catch(error => {
                         this.mediaDialog.show = false;
                     }).finally(() => {
@@ -270,6 +277,7 @@
                 },
                 rowClick(e, row) {
                     const item = row.item;
+                    if (!item?.extraction) return;
                     const path = `/admin/media/${item.id}`;
                     if (this.$route.path !== path) this.$router.push(path);
                 },
@@ -315,7 +323,6 @@
                     return this.statusMap[status]?.icon || status;
                 },
                 markAsTranscribed({ media, text }) {
-                    console.log('markAsTranscribed', media, text);
                     api.put(`/admin/api/extraction/${media.id}`, { action: 'transcribe', text }).then(response => {
                         this.showSnack("{{ _('Media manually transcribed') }}");
                         this.resetMediaDialog();
