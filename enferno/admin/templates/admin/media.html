@@ -156,8 +156,8 @@
                         </template>
 
                         <!-- Date Column -->
-                        <template #item.created_at="{ item }">
-                            ${formatDate(item.created_at)}
+                        <template #item.updated_at="{ item }">
+                            ${formatDate(item.updated_at)}
                         </template>
                     </v-data-table-server>
 
@@ -197,7 +197,7 @@
                     { title: "{{_('Filename')}}", value: "filename" },
                     { title: "{{_('Bulletin')}}", value: "bulletin", sortable: false },
                     { title: "{{_('OCR Status')}}", value: "ocr_status" },
-                    { title: "{{_('Date')}}", value: "created_at" }
+                    { title: "{{_('Date')}}", value: "updated_at" }
                 ],
 
                 selected: [],
