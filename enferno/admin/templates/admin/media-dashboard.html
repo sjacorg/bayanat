@@ -263,10 +263,9 @@
                 showMediaDialog(id) {
                     this.mediaDialog.loading = true;
                     this.mediaDialog.show = true;
-                    this.mediaDialog.data = this.findMediaById(id);
 
                     api.get(`/admin/api/media/${id}`).then(response => {
-                        if (response.data.extraction) {
+                        if (this.canMediaBeReviewed(response.data.ocr_status)) {
                             this.mediaDialog.data = response.data;
                         } else {
                             this.resetMediaDialog();
@@ -280,16 +279,16 @@
                         this.mediaDialog.loading = false;
                     });
                 },
+                canMediaBeReviewed(status) {
+                    return ['needs_review', 'needs_transcription'].includes(status)
+                },
                 rowClick(e, row) {
                     const item = row.item;
-                    if (!['needs_review', 'needs_transcription'].includes(item?.ocr_status)) {
+                    if (!this.canMediaBeReviewed(item?.ocr_status)) {
                         return this.showSnack("{{ _('Only media with \'Needs Review\' or \'Needs Transcription\' status can be reviewed') }}")
                     }
                     const path = `/admin/media/${item.id}`;
                     if (this.$route.path !== path) this.$router.push(path);
-                },
-                findMediaById(id) {
-                    return this.items.find(item => item.id === Number(id));
                 },
                 runBulkOCR() {
                     if (this.selected.length === 0) return;
