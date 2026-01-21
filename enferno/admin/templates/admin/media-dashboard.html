@@ -198,7 +198,6 @@
             mixins: [globalMixin],
 
             data: () => ({
-                dialog: dialog,
                 drawer: drawer,
                 loading: true,
                 bulkLoading: false,
@@ -295,17 +294,13 @@
 
                     this.bulkLoading = true;
 
-                    // TODO: Replace with real API call
-                    // api.post('/admin/api/ocr/bulk', { media_ids: this.selected })
-                    setTimeout(() => {
-                        this.showSnack({
-                            message: `OCR queued for ${this.selected.length} items`,
-                            type: 'success'
-                        });
+                    api.post('/admin/api/ocr/bulk', { media_ids: this.selected })
+                    .then(response => {
+                        this.showSnack(response.data.message);
                         this.selected = [];
                         this.bulkLoading = false;
                         this.refresh();
-                    }, 1000);
+                    });
                 },
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
