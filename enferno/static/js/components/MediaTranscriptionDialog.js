@@ -132,8 +132,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         :use-metadata="true"
                         hide-close
                         ref="inlineMediaRendererRef"
-                        class="flex-1-1"
-                        content-style="height: calc(100% - 48px);"
+                        content-style="height: calc(100vh - 174px);"
                         @fullscreen="$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()"
                     ></inline-media-renderer>
                   </v-card-text>
@@ -234,7 +233,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       {{ translations.cantRead_ }}
                     </v-btn>
                     <v-btn
-                      color="success"
+                      :color="isTranscriptionChanged ? 'info' : 'success'"
                       variant="elevated"
                       size="large"
                       prepend-icon="mdi-check"
@@ -243,7 +242,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       :loading="saving"
                       @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
                     >
-                      {{ translations.saveTranscription_ }}
+                      {{ isTranscriptionChanged ? translations.saveTranscription_ : translations.acceptTranscription_ }}
                     </v-btn>
                   </v-card-actions>
                 </v-card>
