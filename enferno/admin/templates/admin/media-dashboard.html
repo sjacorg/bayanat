@@ -160,8 +160,8 @@
                             >
                                 ${getStatusText(item.ocr_status)}
                             </v-chip>
-                            <div v-if="item.ocr_confidence" class="text-caption text-medium-emphasis">
-                                ${item.ocr_confidence}% {{ _('confidence') }}
+                            <div v-if="item?.extraction?.confidence" class="text-caption text-medium-emphasis">
+                                ${Math.round(item.extraction.confidence)}% {{ _('confidence') }}
                             </div>
                         </template>
 
@@ -206,6 +206,9 @@
                     loading: false,
                     show: false,
                     data: null
+                },
+                ocr: {
+                    stats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, failed: 0 }
                 },
 
                 headers: [
@@ -323,21 +326,36 @@
                     return this.statusMap[status]?.icon || status;
                 },
                 markAsTranscribed({ media, text }) {
-                    api.put(`/admin/api/extraction/${media.id}`, { action: 'transcribe', text }).then(response => {
+                    if (!media?.extraction) {
+                        this.showSnack("{{ _('No extraction data found for this media.') }}");
+                        return;
+                    }
+
+                    api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'transcribe', text }).then(response => {
                         this.showSnack("{{ _('Media manually transcribed') }}");
                         this.resetMediaDialog();
                         this.refresh();
                     });
                 },
                 markAsAccepted(media) {
-                    api.put(`/admin/api/extraction/${media.id}`, { action: 'accept' }).then(response => {
+                    if (!media?.extraction) {
+                        this.showSnack("{{ _('No extraction data found for this media.') }}");
+                        return;
+                    }
+
+                    api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'accept' }).then(response => {
                         this.showSnack("{{ _('Media marked as accepted') }}");
                         this.resetMediaDialog();
                         this.refresh();
                     });
                 },
                 markAsCannotRead(media) {
-                    api.put(`/admin/api/extraction/${media.id}`, { action: 'cant_read' }).then(response => {
+                    if (!media?.extraction) {
+                        this.showSnack("{{ _('No extraction data found for this media.') }}");
+                        return;
+                    }
+
+                    api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' }).then(response => {
                         this.showSnack("{{ _('Media marked as cannot read') }}");
                         this.resetMediaDialog();
                         this.refresh();
@@ -347,7 +365,14 @@
                     this.mediaDialog.show = false;
                     this.mediaDialog.data = null;
                     this.mediaDialog.loading = false;
-                }
+                },
+                loadOCRStats() {
+                    api.get('/admin/api/ocr/stats').then(res => {
+                        this.ocr.stats = res?.data;
+                    }).catch(err => {
+                        console.error('Error loading OCR counts:', err);
+                    });
+                },
             },
             watch: {
                 'mediaDialog.show'(isOpen) {
