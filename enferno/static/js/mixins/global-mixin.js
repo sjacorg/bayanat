@@ -56,8 +56,6 @@ const globalMixin = {
     api.get('/settings/load').then(res => {
       this.settings = res.data;
     });
-
-    this.loadOCRStats();
   },
   beforeUnmount() {
     document.removeEventListener('global-axios-error', this.showSnack);
