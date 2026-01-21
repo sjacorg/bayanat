@@ -64,7 +64,7 @@
                             class="elevation-1"
                             show-select
                             select-strategy="page"
-                            item-selectable="selectable"
+                            :item-selectable="canRunOCRProcess"
                             @click:row="rowClick"
                     >
                         <template v-slot:top>
@@ -339,6 +339,11 @@
                     }).catch(err => {
                         console.error('Error loading OCR counts:', err);
                     });
+                },
+                canRunOCRProcess(item) {
+                    // Only allow selection of items that can have OCR run on them
+                    // Typically you'd want to prevent selecting already processed items
+                    return ['pending', 'failed'].includes(item.ocr_status);
                 },
             },
             watch: {
