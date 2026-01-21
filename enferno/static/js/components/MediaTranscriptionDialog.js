@@ -130,7 +130,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         hide-close
                         ref="inlineMediaRendererRef"
                         class="flex-1-1"
-                        content-style="height: 100%;"
+                        content-style="height: calc(100% - 48px);"
                         @fullscreen="$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()"
                     ></inline-media-renderer>
                   </v-card-text>
