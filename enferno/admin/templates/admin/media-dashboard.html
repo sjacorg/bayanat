@@ -178,6 +178,7 @@
 
 {% endblock %} {% block js %}
 
+    <script src="/static/js/components/SplitView.js"></script>
     <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
@@ -252,6 +253,7 @@
                 this.$router.afterEach(() => {
                     this.handleRoute();
                 });
+                this.loadOCRStats();
             },
 
             methods: {
@@ -385,6 +387,7 @@
             },
         });
 
+        app.component('SplitView', SplitView);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
         app.component('PdfViewer', PdfViewer);
         app.component('ImageViewer', ImageViewer);
