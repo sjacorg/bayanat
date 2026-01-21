@@ -36,7 +36,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     isRTL(text) {
       if (!text) return false;
-      // Check if first character is Arabic
       const arabicRegex = /[\u0600-\u06FF]/;
       return arabicRegex.test(text.charAt(0));
     },
@@ -58,126 +57,125 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         persistent
         no-click-animation
     >
-      <v-toolbar color="dark-primary">
-        <v-toolbar-title>{{ translations.transcriptionReview_ }}</v-toolbar-title>
-        <v-spacer></v-spacer>
+      <v-card class="d-flex flex-column" height="100vh">
+        <v-toolbar color="dark-primary">
+          <v-toolbar-title>{{ translations.transcriptionReview_ }}</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <template #append>
+            <v-btn icon="mdi-close" @click="closeDialog()"></v-btn>
+          </template>
+        </v-toolbar>
 
-        <template #append>
-          <v-btn icon="mdi-close" @click="closeDialog()"></v-btn>
-        </template>
-      </v-toolbar>
-      <v-card v-if="media && !loading" height="calc(100vh - 64px)">
-        <v-card-text class="overflow-y-auto">
-          <v-row>
+        <v-card-text v-if="media && !loading" class="flex-1-1 pa-0 overflow-y-auto">
+          <v-row no-gutters class="fill-height">
             <!-- Left Side - Image Preview -->
-            <v-col cols="12" md="6">
-              <v-card variant="outlined" class="image-preview-card border-thin">
-                  <v-card-text class="pa-0">
-                      <div class="text-center pa-4">
-                          <inline-media-renderer
-                              :media="{ 
-                                  thumbnail_url: media.thumbnail_url, 
-                                  s3url: media.media_url,
-                                  title: media.title,
-                                  id: media.id 
-                              }"
-                              media-type="image"
-                              :use-metadata="true"
-                              hide-close
-                              ref="inlineMediaRendererRef"
-                              class="mb-4"
-                              content-style="height: calc(100vh - 450px);"
-                              @fullscreen="$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()"
-                          ></inline-media-renderer>
-                      </div>
-                  </v-card-text>
+            <v-col cols="12" md="6" class="d-flex flex-column py-4 pl-4 pr-2" style="height: 100%;">
+              <v-card variant="outlined" class="border-thin flex-1-1 d-flex flex-column">
+                <v-card-text class="pa-4 flex-1-1 d-flex flex-column">
+                  <inline-media-renderer
+                      :media="{ 
+                          thumbnail_url: media.thumbnail_url, 
+                          s3url: media.media_url,
+                          title: media.title,
+                          id: media.id 
+                      }"
+                      media-type="image"
+                      :use-metadata="true"
+                      hide-close
+                      ref="inlineMediaRendererRef"
+                      class="flex-1-1"
+                      content-style="height: 100%;"
+                      @fullscreen="$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()"
+                  ></inline-media-renderer>
+                </v-card-text>
               </v-card>
             </v-col>
 
             <!-- Right Side - Info Panel -->
-            <v-col cols="12" md="6">
-              <v-card variant="outlined" class="border-thin">
-                  <v-card-text>
-                      <!-- Bulletin Info -->
-                      <div class="mb-4">
-                          <v-btn
-                              variant="tonal"
-                              prepend-icon="mdi-file-document"
-                              target="_blank"
-                              :href="'/admin/bulletins/' + media.bulletin.id"
-                              block
-                          >
-                              {{ translations.bulletin_ }} #{{ media.bulletin.id }}
-                          </v-btn>
-                      </div>
+            <v-col cols="12" md="6" class="d-flex flex-column py-4 pl-2 pr-4" style="height: 100%;">
+              <v-card variant="outlined" class="border-thin flex-1-1 d-flex flex-column overflow-hidden">
+                <v-card-text class="flex-1-1 overflow-y-auto pa-4 d-flex flex-column">
+                  <!-- Bulletin Info -->
+                  <div class="mb-4 flex-0-0">
+                    <v-btn
+                        variant="tonal"
+                        prepend-icon="mdi-file-document"
+                        target="_blank"
+                        :href="'/admin/bulletins/' + media.bulletin.id"
+                        block
+                    >
+                        {{ translations.bulletin_ }} #{{ media.bulletin.id }}
+                    </v-btn>
+                  </div>
 
-                      <v-divider class="my-4"></v-divider>
+                  <v-divider class="my-4 flex-0-0"></v-divider>
 
-                      <!-- Confidence -->
-                      <div v-if="media?.extraction?.confidence" class="mb-4">
-                          <div class="text-subtitle-2 mb-2">Confidence</div>
-                          <v-progress-linear
-                              :model-value="media?.extraction?.confidence"
-                              :color="getConfidenceColor(media?.extraction?.confidence)"
-                              height="20"
-                              rounded
-                          >
-                              <template v-slot:default>
-                                  <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
-                              </template>
-                          </v-progress-linear>
-                          <div class="text-caption text-medium-emphasis mt-1">
-                              {{ getConfidenceLabel(media?.extraction?.confidence) }}
-                          </div>
-                      </div>
-                      <v-divider v-if="media?.extraction?.confidence" class="my-4"></v-divider>
+                  <!-- Confidence -->
+                  <div v-if="media?.extraction?.confidence" class="mb-4 flex-0-0">
+                    <div class="text-subtitle-2 mb-2">Confidence</div>
+                    <v-progress-linear
+                        :model-value="media?.extraction?.confidence"
+                        :color="getConfidenceColor(media?.extraction?.confidence)"
+                        height="20"
+                        rounded
+                    >
+                        <template v-slot:default>
+                            <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
+                        </template>
+                    </v-progress-linear>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                        {{ getConfidenceLabel(media?.extraction?.confidence) }}
+                    </div>
+                  </div>
+                  <v-divider v-if="media?.extraction?.confidence" class="my-4 flex-0-0"></v-divider>
 
-                      <!-- Extracted Text -->
-                      <div>
-                          <div class="text-subtitle-2 mb-2">Extracted Text</div>
-                          <v-textarea
-                              v-model="transcriptionText"
-                              variant="outlined"
-                              no-resize
-                              placeholder="{{ translations.typeWhatYouSeeInMediaHere_ }}"
-                              rows="12"
-                              :dir="isRTL(transcriptionText) ? 'rtl' : 'ltr'"
-                          ></v-textarea>
-                      </div>
-                  </v-card-text>
+                  <!-- Extracted Text - This takes remaining space -->
+                  <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
+                    <div class="text-subtitle-2 mb-2 flex-0-0">Extracted Text</div>
+                    <v-textarea
+                        v-model="transcriptionText"
+                        variant="outlined"
+                        no-resize
+                        :placeholder="translations.typeWhatYouSeeInMediaHere_"
+                        :dir="isRTL(transcriptionText) ? 'rtl' : 'ltr'"
+                        class="flex-1-1"
+                        hide-details
+                    ></v-textarea>
+                  </div>
+                </v-card-text>
+
+                <!-- Action Buttons - Fixed at bottom -->
+                <v-card-actions class="pa-4 pt-0">
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    color="error"
+                    variant="elevated"
+                    size="large"
+                    prepend-icon="mdi-close-circle"
+                    class="mx-2"
+                    @click="$emit('rejected', media)"
+                  >
+                    {{ translations.cantRead_ }}
+                  </v-btn>
+                  <v-btn
+                    color="success"
+                    variant="elevated"
+                    size="large"
+                    prepend-icon="mdi-check"
+                    class="mx-2"
+                    @click="isTranscriptionChanged ? $emit('transcribed', { media, text: transcriptionText }) : $emit('accepted', media)"
+                  >
+                    {{ translations.saveTranscription_ }}
+                  </v-btn>
+                </v-card-actions>
               </v-card>
             </v-col>
           </v-row>
-
-          <v-row class="mt-4">
-            <v-col class="text-center">
-              <v-btn
-                color="success"
-                variant="elevated"
-                size="large"
-                prepend-icon="mdi-check"
-                class="mx-2"
-                @click="isTranscriptionChanged ? $emit('transcribed', { media, text: transcriptionText }) : $emit('accepted', media)"
-              >
-                {{ translations.saveTranscription_ }}
-              </v-btn>
-
-              <v-btn
-                color="error"
-                variant="elevated"
-                size="large"
-                prepend-icon="mdi-close-circle"
-                class="mx-2"
-                @click="$emit('rejected', media)"
-              >
-                {{ translations.cantRead_ }}
-              </v-btn>
-            </v-col>
-          </v-row>
         </v-card-text>
-      </v-card>
-      <v-card v-else class="pa-8">
-        <v-card-text class="text-center">loading</v-card-text>
+
+        <v-card v-else class="flex-1-1 d-flex align-center justify-center">
+          <v-card-text class="text-center">loading</v-card-text>
+        </v-card>
       </v-card>
     </v-dialog>
     `,
