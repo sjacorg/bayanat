@@ -295,7 +295,7 @@
                     return `calc(100vh - ${this.selected.length ? 405 : 360}px)`;
                 },
                 reviewableStatuses() {
-                    return ['needs_review', 'needs_transcription'];
+                    return ['needs_review', 'needs_transcription', 'processed'];
                 },
                 selectableStatuses() {
                     return ['pending', 'failed'];
@@ -319,7 +319,7 @@
                     this.mediaDialog.show = true;
 
                     api.get(`/admin/api/media/${id}`).then(response => {
-                        if (this.canMediaBeReviewed(response.data.ocr_status)) {
+                        if (this.canOpenReviewDialog(response.data.ocr_status)) {
                             this.mediaDialog.data = response.data;
                         } else {
                             this.showSnack("{{ _('This media cannot be reviewed') }}");
@@ -337,13 +337,13 @@
                     });
                 },
                 
-                canMediaBeReviewed(status) {
+                canOpenReviewDialog(status) {
                     return this.reviewableStatuses.includes(status)
                 },
                 rowClick(e, row) {
                     const item = row.item;
-                    if (!this.canMediaBeReviewed(item?.ocr_status)) {
-                        return this.showSnack("{{ _('Only media with \'Needs Review\' or \'Needs Transcription\' status can be reviewed') }}")
+                    if (!this.canOpenReviewDialog(item?.ocr_status)) {
+                        return this.showSnack("{{ _('Only media with extraction data can be reviewed') }}")
                     }
                     const path = `/admin/media/${item.id}`;
                     if (this.$route.path !== path) this.$router.push(path);

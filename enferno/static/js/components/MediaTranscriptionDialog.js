@@ -29,6 +29,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         id: this.media.id 
       };
     },
+    isProcessed() {
+      return this.media?.ocr_status === 'processed'
+    }
   },
   methods: {
     closeDialog() {
@@ -206,6 +209,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           v-model="transcriptionText"
                           variant="outlined"
                           no-resize
+                          :readonly="isProcessed"
                           :placeholder="translations.typeWhatYouSeeInMediaHere_"
                           :dir="isRTL(transcriptionText) ? 'rtl' : 'ltr'"
                           class="flex-1-1"
@@ -215,7 +219,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                   </v-card-text>
 
                   <!-- Action Buttons - Fixed at bottom -->
-                  <v-card-actions class="pa-4 pt-0">
+                  <v-card-actions v-if="!isProcessed" class="pa-4 pt-0">
                     <v-spacer></v-spacer>
                     <v-btn
                       color="error"
