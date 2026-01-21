@@ -330,6 +330,7 @@
                 onTranscriptionUpdated({ media, text }) {
                     this.resetMediaDialog();
                     this.refresh();
+                    this.loadOCRStats();
                 },
                 resetMediaDialog() {
                     this.mediaDialog.show = false;
