@@ -7215,6 +7215,71 @@ def api_extraction_update(extraction_id: int):
     return jsonify(extraction.to_dict())
 
 
+@admin.post("/api/ocr/process/<int:media_id>")
+@auth_required("session")
+def api_ocr_process(media_id: int):
+    """Run OCR on a single media item (sync)."""
+    from enferno.tasks.extraction import process_media_extraction_task
+
+    media = db.session.get(Media, media_id)
+    if not media:
+        return HTTPResponse.not_found("Media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    result = process_media_extraction_task(media_id)
+    return jsonify(result)
+
+
+@admin.post("/api/ocr/bulk")
+@auth_required("session")
+def api_ocr_bulk():
+    """
+    Bulk OCR processing via Celery (async).
+
+    Body:
+      - media_ids: list of media IDs to process
+      - bulletin_id: process all pending media for a bulletin
+      - all: process all pending media
+      - limit: max items (default 1000, cap 10000)
+    """
+    from sqlalchemy import select
+
+    from enferno.tasks import bulk_ocr_process
+
+    data = request.json or {}
+    media_ids = data.get("media_ids", [])
+    bulletin_id = data.get("bulletin_id")
+    process_all = data.get("all", False)
+    limit = min(data.get("limit", 1000), 10000)
+
+    # Build media ID list
+    if process_all and not media_ids:
+        stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None)).limit(limit)
+        media_ids = list(db.session.scalars(stmt))
+    elif bulletin_id and not media_ids:
+        stmt = (
+            select(Media.id)
+            .outerjoin(Extraction)
+            .where(Media.bulletin_id == bulletin_id)
+            .where(Extraction.id.is_(None))
+            .limit(limit)
+        )
+        media_ids = list(db.session.scalars(stmt))
+
+    if not media_ids:
+        return HTTPResponse.error("No media to process")
+
+    task = bulk_ocr_process.delay(media_ids, current_user.id)
+    return jsonify(
+        {
+            "task_id": task.id,
+            "queued": len(media_ids),
+            "message": f"Queued {len(media_ids)} items. You'll be notified when complete.",
+        }
+    )
+
+
 @admin.route("/api/session-check")
 @auth_required("session")
 def api_session_check() -> Response:
