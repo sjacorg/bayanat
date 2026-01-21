@@ -74,14 +74,21 @@ const MediaTranscriptionDialog = Vue.defineComponent({
           </template>
         </v-toolbar>
 
-        <v-card-text v-if="media && !loading" class="flex-1-1 pa-0 overflow-y-auto">
+        <v-card-text class="flex-1-1 pa-0 overflow-y-auto">
           <split-view :left-width-percent="50">
             <template #left>
               <!-- Left Side - Image Preview -->
               <div class="d-flex flex-column py-4 pl-4 pr-2" style="height: 100%;">
                 <v-card variant="outlined" class="border-thin flex-1-1 d-flex flex-column">
                   <v-card-text class="pa-4 flex-1-1 d-flex flex-column">
+                    <!-- Skeleton loader for image -->
+                    <v-skeleton-loader
+                      v-if="loading"
+                      class="flex-1-1"
+                    ></v-skeleton-loader>
+                    
                     <inline-media-renderer
+                        v-else
                         :media="mediaRendererData"
                         media-type="image"
                         :use-metadata="true"
@@ -101,8 +108,15 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                 <v-card variant="outlined" class="border-thin flex-1-1 d-flex flex-column overflow-hidden">
                   <v-card-text class="flex-1-1 overflow-y-auto pa-4 d-flex flex-column">
                     <!-- Bulletin Info -->
-                    <div class="mb-4 flex-0-0">
+                    <div class="flex-0-0">
+                      <v-skeleton-loader
+                        v-if="loading"
+                        width="100%"
+                        height="36"
+                      ></v-skeleton-loader>
+                      
                       <v-btn
+                          v-else
                           variant="tonal"
                           prepend-icon="mdi-file-document"
                           target="_blank"
@@ -116,28 +130,44 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     <v-divider class="my-4 flex-0-0"></v-divider>
 
                     <!-- Confidence -->
-                    <div v-if="media?.extraction?.confidence" class="mb-4 flex-0-0">
+                    <div v-if="media?.extraction?.confidence || loading" class="flex-0-0">
                       <div class="text-subtitle-2 mb-2">Confidence</div>
-                      <v-progress-linear
-                          :model-value="media?.extraction?.confidence"
-                          :color="getConfidenceColor(media?.extraction?.confidence)"
-                          height="20"
-                          rounded
-                      >
-                          <template v-slot:default>
-                              <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
-                          </template>
-                      </v-progress-linear>
-                      <div class="text-caption text-medium-emphasis mt-1">
-                          {{ getConfidenceLabel(media?.extraction?.confidence) }}
-                      </div>
+                      
+                      <v-skeleton-loader
+                        v-if="loading"
+                        width="100%"
+                        height="44"
+                      ></v-skeleton-loader>
+                      
+                      <template v-else>
+                        <v-progress-linear
+                            :model-value="media?.extraction?.confidence"
+                            :color="getConfidenceColor(media?.extraction?.confidence)"
+                            height="20"
+                            rounded
+                        >
+                            <template v-slot:default>
+                                <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
+                            </template>
+                        </v-progress-linear>
+                        <div class="text-caption text-medium-emphasis mt-1">
+                            {{ getConfidenceLabel(media?.extraction?.confidence) }}
+                        </div>
+                      </template>
                     </div>
-                    <v-divider v-if="media?.extraction?.confidence" class="my-4 flex-0-0"></v-divider>
+                    <v-divider v-if="media?.extraction?.confidence || loading" class="my-4 flex-0-0"></v-divider>
 
                     <!-- Extracted Text - This takes remaining space -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
                       <div class="text-subtitle-2 mb-2 flex-0-0">Extracted Text</div>
+                      
+                      <v-skeleton-loader
+                        v-if="loading"
+                        class="flex-1-1"
+                      ></v-skeleton-loader>
+                      
                       <v-textarea
+                          v-else
                           v-model="transcriptionText"
                           variant="outlined"
                           no-resize
@@ -158,6 +188,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       size="large"
                       prepend-icon="mdi-close-circle"
                       class="mx-2"
+                      :disabled="loading"
                       @click="$emit('rejected', media)"
                     >
                       {{ translations.cantRead_ }}
@@ -168,6 +199,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       size="large"
                       prepend-icon="mdi-check"
                       class="mx-2"
+                      :disabled="loading"
                       @click="isTranscriptionChanged ? $emit('transcribed', { media, text: transcriptionText }) : $emit('accepted', media)"
                     >
                       {{ translations.saveTranscription_ }}
@@ -178,10 +210,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
             </template>
           </split-view>
         </v-card-text>
-
-        <v-card v-else class="flex-1-1 d-flex align-center justify-center">
-          <v-card-text class="text-center">loading</v-card-text>
-        </v-card>
       </v-card>
     </v-dialog>
     `,
