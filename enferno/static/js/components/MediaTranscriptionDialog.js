@@ -4,7 +4,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     loading: { type: Boolean, default: false },
     media: { type: Object, default: () => ({}) },
   },
-  emits: ['update:open', 'rejected', 'accepted', 'transcribed'],
+  emits: ['update:open', 'rejected', 'accepted', 'transcribed', 'processed'],
   data() {
     return {
       translations: window.translations,
@@ -31,6 +31,12 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     canEdit() {
       return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
+    },
+    isPending() {
+      return ['pending', 'failed'].includes(this.media?.ocr_status);
+    },
+    isProcessed() {
+      return this.media?.ocr_status === 'processed';
     }
   },
   methods: {
@@ -52,36 +58,76 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       const arabicRegex = /[\u0600-\u06FF]/;
       return arabicRegex.test(text.charAt(0));
     },
+    runOCRProcess() {
+      if (!this.media?.id) return;
+      
+      this.saving = true;
+      
+      api.post(`/admin/api/ocr/process/${this.media.id}`)
+        .then(response => {
+          if (response.data.success) {
+            this.$root.showSnack(this.translations.ocrProcessedSuccessfully_);
+            this.$emit('processed', this.media);
+          } else {
+            this.$root.showSnack(response.data.error);
+          }
+        })
+        .catch(error => {
+          console.error('OCR process error:', error);
+          this.$root.showSnack(this.translations.errorProcessingOCR_);
+        })
+        .finally(() => {
+          this.saving = false;
+        });
+    },
     markAsTranscribed({ media, text }) {
-        if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
-        this.saving = true;
+      if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+      this.saving = true;
 
-        api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'transcribe', text }).then(response => {
-            this.$root.showSnack(this.translations.mediaManuallyTranscribed_);
-            this.$emit('transcribed', { media, text })
-        }).finally(() => {
+      api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'transcribe', text })
+        .then(response => {
+          this.$root.showSnack(this.translations.mediaManuallyTranscribed_);
+          this.$emit('transcribed', { media, text });
+        })
+        .catch(error => {
+          console.error('Transcribe error:', error);
+          this.$root.showSnack(this.translations.errorSavingTranscription_ || 'Error saving transcription');
+        })
+        .finally(() => {
           this.saving = false;
         });
     },
     markAsAccepted(media) {
-        if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
-        this.saving = true;
+      if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+      this.saving = true;
 
-        api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'accept' }).then(response => {
-            this.$root.showSnack(this.translations.mediaMarkedAsAccepted_);
-            this.$emit('accepted', media)
-        }).finally(() => {
+      api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'accept' })
+        .then(response => {
+          this.$root.showSnack(this.translations.mediaMarkedAsAccepted_);
+          this.$emit('accepted', media);
+        })
+        .catch(error => {
+          console.error('Accept error:', error);
+          this.$root.showSnack(this.translations.errorAcceptingTranscription_ || 'Error accepting transcription');
+        })
+        .finally(() => {
           this.saving = false;
         });
     },
     markAsCannotRead(media) {
-        if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
-        this.rejecting = true;
+      if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+      this.rejecting = true;
 
-        api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' }).then(response => {
-            this.$root.showSnack(this.translations.mediaMarkedAsCannotRead_);
-            this.$emit('rejected', media)
-        }).finally(() => {
+      api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' })
+        .then(response => {
+          this.$root.showSnack(this.translations.mediaMarkedAsCannotRead_);
+          this.$emit('rejected', media);
+        })
+        .catch(error => {
+          console.error('Reject error:', error);
+          this.$root.showSnack(this.translations.errorRejectingMedia_ || 'Error rejecting media');
+        })
+        .finally(() => {
           this.rejecting = false;
         });
     },
@@ -168,7 +214,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                     <!-- Confidence -->
                     <div v-if="media?.extraction?.confidence || loading" class="flex-0-0">
-                      <div class="text-subtitle-2 mb-2">Confidence</div>
+                      <div class="text-subtitle-2 mb-2">{{ translations.confidence_ }}</div>
                       
                       <v-skeleton-loader
                         v-if="loading"
@@ -196,13 +242,24 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                     <!-- Extracted Text - This takes remaining space -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
-                      <div class="text-subtitle-2 mb-2 flex-0-0">Extracted Text</div>
+                      <div v-if="!isPending" class="text-subtitle-2 mb-2 flex-0-0">
+                        {{ translations.extractedText_ }}
+                      </div>
                       
                       <v-skeleton-loader
                         v-if="loading"
                         class="flex-1-1"
                       ></v-skeleton-loader>
                       
+                      <!-- Show message for pending items -->
+                      <v-empty-state
+                        v-else-if="isPending"
+                        icon="mdi-text-recognition"
+                        :text="translations.clickRunOCR_"
+                        :title="translations.ocrNotRunYet_"
+                      ></v-empty-state>
+                      
+                      <!-- Show textarea for items with extraction -->
                       <v-textarea
                           v-else
                           v-model="transcriptionText"
@@ -218,32 +275,51 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                   </v-card-text>
 
                   <!-- Action Buttons - Fixed at bottom -->
-                  <v-card-actions v-if="canEdit" class="pa-4 pt-0">
+                  <v-card-actions class="pa-4 pt-0">
                     <v-spacer></v-spacer>
-                    <v-btn
-                      color="error"
-                      variant="elevated"
-                      size="large"
-                      prepend-icon="mdi-close-circle"
-                      class="mx-1"
-                      :disabled="loading || saving"
-                      :loading="rejecting"
-                      @click="markAsCannotRead(media)"
-                    >
-                      {{ translations.cantRead_ }}
-                    </v-btn>
-                    <v-btn
-                      :color="isTranscriptionChanged ? 'info' : 'success'"
-                      variant="elevated"
-                      size="large"
-                      prepend-icon="mdi-check"
-                      class="mx-1"
-                      :disabled="loading || rejecting"
-                      :loading="saving"
-                      @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
-                    >
-                      {{ isTranscriptionChanged ? translations.saveTranscription_ : translations.acceptTranscription_ }}
-                    </v-btn>
+                    
+                    <!-- Pending/Failed State - Show "Run OCR" button -->
+                    <template v-if="isPending">
+                      <v-btn
+                        color="primary"
+                        variant="elevated"
+                        size="large"
+                        prepend-icon="mdi-text-recognition"
+                        :disabled="loading"
+                        :loading="saving"
+                        @click="runOCRProcess()"
+                      >
+                        {{ translations.runOCR_ }}
+                      </v-btn>
+                    </template>
+                    
+                    <!-- Needs Review/Transcription State - Show edit buttons -->
+                    <template v-else-if="canEdit">
+                      <v-btn
+                        color="error"
+                        variant="elevated"
+                        size="large"
+                        prepend-icon="mdi-close-circle"
+                        class="mx-1"
+                        :disabled="loading || saving"
+                        :loading="rejecting"
+                        @click="markAsCannotRead(media)"
+                      >
+                        {{ translations.cantRead_ }}
+                      </v-btn>
+                      <v-btn
+                        :color="isTranscriptionChanged ? 'info' : 'success'"
+                        variant="elevated"
+                        size="large"
+                        prepend-icon="mdi-check"
+                        class="mx-1"
+                        :disabled="loading || rejecting"
+                        :loading="saving"
+                        @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
+                      >
+                        {{ isTranscriptionChanged ? translations.saveTranscription_ : translations.acceptTranscription_ }}
+                      </v-btn>
+                    </template>
                   </v-card-actions>
                 </v-card>
               </div>

@@ -6,6 +6,7 @@
         @rejected="onTranscriptionUpdated($event)"
         @accepted="onTranscriptionUpdated($event)"
         @transcribed="onTranscriptionUpdated($event)"
+        @processed="onMediaProcessed($event)"
     ></media-transcription-dialog>
 
     <v-main>
@@ -95,6 +96,7 @@
                                         prepend-inner-icon="mdi-magnify"
                                         hide-details
                                         width="250px"
+                                        @keyup.enter="applyFilters"
                                     ></v-text-field>
                                     
                                     <v-text-field
@@ -107,6 +109,7 @@
                                         hide-details
                                         type="number"
                                         width="150px"
+                                        @keyup.enter="applyFilters"
                                     ></v-text-field>
                                     
                                     <pop-date-range-field
@@ -294,9 +297,6 @@
                 tableHeight() {
                     return `calc(100vh - ${this.selected.length ? 405 : 360}px)`;
                 },
-                reviewableStatuses() {
-                    return ['needs_review', 'needs_transcription', 'processed'];
-                },
                 selectableStatuses() {
                     return ['pending', 'failed'];
                 }
@@ -319,15 +319,7 @@
                     this.mediaDialog.show = true;
 
                     api.get(`/admin/api/media/${id}`).then(response => {
-                        if (this.canOpenReviewDialog(response.data.ocr_status)) {
-                            this.mediaDialog.data = response.data;
-                        } else {
-                            this.showSnack("{{ _('This media cannot be reviewed') }}");
-                            this.resetMediaDialog();
-                            this.$nextTick(() => {
-                                this.$router.push('/admin/media/')
-                            })
-                        }
+                        this.mediaDialog.data = response.data;
                     }).catch(error => {
                         console.error('Error loading media:', error);
                         this.showSnack("{{ _('Error loading media') }}");
@@ -336,15 +328,8 @@
                         this.mediaDialog.loading = false;
                     });
                 },
-                
-                canOpenReviewDialog(status) {
-                    return this.reviewableStatuses.includes(status)
-                },
                 rowClick(e, row) {
                     const item = row.item;
-                    if (!this.canOpenReviewDialog(item?.ocr_status)) {
-                        return this.showSnack("{{ _('Only media with extraction data can be reviewed') }}")
-                    }
                     const path = `/admin/media/${item.id}`;
                     if (this.$route.path !== path) this.$router.push(path);
                 },
@@ -358,6 +343,7 @@
                             this.showSnack(response.data.message);
                             this.selected = [];
                             this.refresh();
+                            this.loadOCRStats();
                         })
                         .catch(error => {
                             console.error('Bulk OCR error:', error);
@@ -372,7 +358,6 @@
                     this.applyFilters();
                 },
                 applyFilters() {
-                    // Reset to page 1 when applying filters
                     this.refresh({ ...this.options, page: 1 });
                 },
                 refresh(options) {
@@ -410,13 +395,19 @@
                     return this.statuses[status]?.text || status;
                 },
                 getStatusColor(status) {
-                    return this.statuses[status]?.color || status;
+                    return this.statuses[status]?.color || 'grey';
                 },
                 getStatusIcon(status) {
-                    return this.statuses[status]?.icon || status;
+                    return this.statuses[status]?.icon || 'mdi-help-circle-outline';
                 },
                 onTranscriptionUpdated({ media, text }) {
                     this.resetMediaDialog();
+                    this.refresh();
+                    this.loadOCRStats();
+                },
+                onMediaProcessed(media) {
+                    // Reload the media to get fresh extraction data
+                    this.showMediaDialog(media.id);
                     this.refresh();
                     this.loadOCRStats();
                 },
@@ -433,7 +424,6 @@
                     });
                 },
                 canRunOCRProcess(item) {
-                    // Only allow selection of items that can have OCR run on them
                     return this.selectableStatuses.includes(item.ocr_status);
                 },
             },
@@ -445,6 +435,14 @@
                             this.$router.push('/admin/media/')
                     }
                 },
+                'filters.ocr_status'() {
+                    this.applyFilters();
+                },
+                'filters.dateRange'() {
+                    if (this.filters.dateRange) {
+                        this.applyFilters();
+                    }
+                }
             },
         });
 
