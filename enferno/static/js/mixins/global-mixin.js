@@ -7,9 +7,6 @@ const globalMixin = {
   data: () => ({
     snackbar: false,
     snackMessage: '',
-    ocr: {
-      stats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, failed: 0 }
-    },
 
     // settings drawer
     settingsDrawer: false,
@@ -182,14 +179,6 @@ const globalMixin = {
         "error-messages-translation": serverErrors?.[translationKey],
         "onUpdate:translation": () => (serverErrors[translationKey] = null),
       }
-    },
-    // Load OCR counts for needs review and transcription queues (displayed in nav drawer)
-    loadOCRStats() {
-        api.get('/admin/api/ocr/stats').then(res => {
-          this.ocr.stats = res?.data;
-        }).catch(err => {
-          console.error('Error loading OCR counts:', err);
-        });
     },
   },
 };
