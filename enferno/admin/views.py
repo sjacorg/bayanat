@@ -3143,18 +3143,6 @@ def media_dashboard(id: Optional[t.id]) -> str:
     return render_template("admin/media-dashboard.html")
 
 
-@admin.route("/ocr/review/")
-def ocr_review() -> str:
-    """Endpoint for ocr review."""
-    return render_template("admin/ocr-review.html")
-
-
-@admin.route("/ocr/transcription/")
-def ocr_transcription() -> str:
-    """Endpoint for ocr transcription."""
-    return render_template("admin/ocr-transcription.html")
-
-
 # Bulletin routes
 @admin.route("/bulletins/", defaults={"id": None})
 @admin.route("/bulletins/<int:id>")
