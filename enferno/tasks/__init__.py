@@ -1653,3 +1653,56 @@ def _start_etl_process(
 from enferno.tasks.extraction import process_media_extraction_task  # noqa: E402
 
 process_media_extraction = celery.task(process_media_extraction_task)
+
+
+@celery.task
+def bulk_ocr_process(media_ids: list, user_id: int) -> dict:
+    """
+    Bulk OCR processing task - processes multiple media items asynchronously.
+
+    Args:
+        media_ids: List of media IDs to process
+        user_id: User ID who initiated the request
+
+    Returns:
+        dict with processing results
+    """
+    logger.info(f"Starting bulk OCR for {len(media_ids)} items. User: {user_id}")
+
+    results = {"processed": 0, "skipped": 0, "failed": 0, "errors": []}
+
+    for media_id in media_ids:
+        try:
+            result = process_media_extraction_task(media_id)
+            if result.get("success"):
+                if result.get("skipped"):
+                    results["skipped"] += 1
+                else:
+                    results["processed"] += 1
+            else:
+                results["failed"] += 1
+                results["errors"].append(
+                    {"media_id": media_id, "error": result.get("error", "Unknown error")}
+                )
+        except Exception as e:
+            results["failed"] += 1
+            results["errors"].append({"media_id": media_id, "error": str(e)})
+            logger.error(f"Bulk OCR error for media {media_id}: {e}")
+
+    logger.info(
+        f"Bulk OCR complete. Processed: {results['processed']}, "
+        f"Skipped: {results['skipped']}, Failed: {results['failed']}"
+    )
+
+    # Notify user
+    user = User.query.get(user_id)
+    if user:
+        Notification.send_notification_for_event(
+            Constants.NotificationEvent.BULK_OPERATION_STATUS,
+            user,
+            "Bulk OCR Complete",
+            f"OCR processing complete: {results['processed']} processed, "
+            f"{results['skipped']} skipped, {results['failed']} failed.",
+        )
+
+    return results

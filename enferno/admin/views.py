@@ -7215,6 +7215,69 @@ def api_extraction_update(extraction_id: int):
     return jsonify(extraction.to_dict())
 
 
+@admin.post("/api/ocr/bulk")
+@auth_required("session")
+def api_ocr_bulk():
+    """
+    Bulk OCR processing - auto-selects sync (≤50) or async (>50).
+
+    Body:
+      - media_ids: list of media IDs to process
+      - bulletin_id: process all pending media for a bulletin
+      - all: process all pending media
+      - limit: max items (default 1000, cap 10000)
+    """
+    from sqlalchemy import select
+
+    from enferno.tasks import bulk_ocr_process
+    from enferno.tasks.extraction import process_media_extraction_task
+
+    data = request.json or {}
+    media_ids = data.get("media_ids", [])
+    bulletin_id = data.get("bulletin_id")
+    process_all = data.get("all", False)
+    limit = min(data.get("limit", 1000), 10000)
+
+    # Build media ID list using SQLAlchemy 2.x syntax
+    if process_all and not media_ids:
+        stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None)).limit(limit)
+        media_ids = list(db.session.scalars(stmt))
+    elif bulletin_id and not media_ids:
+        stmt = (
+            select(Media.id)
+            .outerjoin(Extraction)
+            .where(Media.bulletin_id == bulletin_id)
+            .where(Extraction.id.is_(None))
+            .limit(limit)
+        )
+        media_ids = list(db.session.scalars(stmt))
+
+    if not media_ids:
+        return HTTPResponse.error("No media to process")
+
+    # ≤50: sync, >50: async via Celery
+    if len(media_ids) <= 50:
+        results = {"processed": 0, "skipped": 0, "failed": 0, "details": []}
+        for media_id in media_ids:
+            result = process_media_extraction_task(media_id)
+            if result.get("success"):
+                results["skipped" if result.get("skipped") else "processed"] += 1
+            else:
+                results["failed"] += 1
+            results["details"].append(result)
+        return jsonify(results)
+
+    task = bulk_ocr_process.delay(media_ids, current_user.id)
+    return jsonify(
+        {
+            "task_id": task.id,
+            "queued": len(media_ids),
+            "async": True,
+            "message": f"Queued {len(media_ids)} items. You'll be notified when complete.",
+        }
+    )
+
+
 @admin.route("/api/session-check")
 @auth_required("session")
 def api_session_check() -> Response:
