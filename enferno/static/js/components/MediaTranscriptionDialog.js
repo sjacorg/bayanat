@@ -9,6 +9,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     return {
       translations: window.translations,
       transcriptionText: this.media?.text || '',
+      saving: false,
+      rejecting: false,
       confidenceLevels: {
         high: 85,
         medium: 70,
@@ -46,6 +48,39 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       if (!text) return false;
       const arabicRegex = /[\u0600-\u06FF]/;
       return arabicRegex.test(text.charAt(0));
+    },
+    markAsTranscribed({ media, text }) {
+        if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+        this.saving = true;
+
+        api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'transcribe', text }).then(response => {
+            this.$root.showSnack(this.translations.mediaManuallyTranscribed_);
+            this.$emit('transcribed', { media, text })
+        }).finally(() => {
+          this.saving = false;
+        });
+    },
+    markAsAccepted(media) {
+        if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+        this.saving = true;
+
+        api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'accept' }).then(response => {
+            this.$root.showSnack(this.translations.mediaMarkedAsAccepted_);
+            this.$emit('accepted', media)
+        }).finally(() => {
+          this.saving = false;
+        });
+    },
+    markAsCannotRead(media) {
+        if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+        this.rejecting = true;
+
+        api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' }).then(response => {
+            this.$root.showSnack(this.translations.mediaMarkedAsCannotRead_);
+            this.$emit('rejected', media)
+        }).finally(() => {
+          this.rejecting = false;
+        });
     },
   },
   watch: {
@@ -188,8 +223,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       size="large"
                       prepend-icon="mdi-close-circle"
                       class="mx-2"
-                      :disabled="loading"
-                      @click="$emit('rejected', media)"
+                      :disabled="loading || saving"
+                      :loading="rejecting"
+                      @click="markAsCannotRead(media)"
                     >
                       {{ translations.cantRead_ }}
                     </v-btn>
@@ -199,8 +235,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       size="large"
                       prepend-icon="mdi-check"
                       class="mx-2"
-                      :disabled="loading"
-                      @click="isTranscriptionChanged ? $emit('transcribed', { media, text: transcriptionText }) : $emit('accepted', media)"
+                      :disabled="loading || rejecting"
+                      :loading="saving"
+                      @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
                     >
                       {{ translations.saveTranscription_ }}
                     </v-btn>

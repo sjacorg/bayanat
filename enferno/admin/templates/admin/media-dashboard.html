@@ -3,9 +3,9 @@
         v-model:open="mediaDialog.show"
         :loading="mediaDialog.loading"
         :media="mediaDialog.data"
-        @rejected="markAsCannotRead($event)"
-        @accepted="markAsAccepted($event)"
-        @transcribed="markAsTranscribed($event)"
+        @rejected="onTranscriptionUpdated($event)"
+        @accepted="onTranscriptionUpdated($event)"
+        @transcribed="onTranscriptionUpdated($event)"
     ></media-transcription-dialog>
 
     <v-main>
@@ -327,41 +327,9 @@
                 getStatusIcon(status) {
                     return this.statusMap[status]?.icon || status;
                 },
-                markAsTranscribed({ media, text }) {
-                    if (!media?.extraction) {
-                        this.showSnack("{{ _('No extraction data found for this media.') }}");
-                        return;
-                    }
-
-                    api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'transcribe', text }).then(response => {
-                        this.showSnack("{{ _('Media manually transcribed') }}");
-                        this.resetMediaDialog();
-                        this.refresh();
-                    });
-                },
-                markAsAccepted(media) {
-                    if (!media?.extraction) {
-                        this.showSnack("{{ _('No extraction data found for this media.') }}");
-                        return;
-                    }
-
-                    api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'accept' }).then(response => {
-                        this.showSnack("{{ _('Media marked as accepted') }}");
-                        this.resetMediaDialog();
-                        this.refresh();
-                    });
-                },
-                markAsCannotRead(media) {
-                    if (!media?.extraction) {
-                        this.showSnack("{{ _('No extraction data found for this media.') }}");
-                        return;
-                    }
-
-                    api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' }).then(response => {
-                        this.showSnack("{{ _('Media marked as cannot read') }}");
-                        this.resetMediaDialog();
-                        this.refresh();
-                    });
+                onTranscriptionUpdated({ media, text }) {
+                    this.resetMediaDialog();
+                    this.refresh();
                 },
                 resetMediaDialog() {
                     this.mediaDialog.show = false;
