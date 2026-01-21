@@ -282,7 +282,9 @@
                 },
                 rowClick(e, row) {
                     const item = row.item;
-                    if (!item?.extraction) return;
+                    if (!['needs_review', 'needs_transcription'].includes(item?.ocr_status)) {
+                        return this.showSnack("{{ _('Only media with \'Needs Review\' or \'Needs Transcription\' status can be reviewed') }}")
+                    }
                     const path = `/admin/media/${item.id}`;
                     if (this.$route.path !== path) this.$router.push(path);
                 },
