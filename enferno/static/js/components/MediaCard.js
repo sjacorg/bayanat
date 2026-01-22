@@ -54,7 +54,6 @@ const thumbnailContent = `
       <v-img 
         v-if="videoThumbnail"
         :src="videoThumbnail" 
-        loading="lazy" 
         cover 
         class="h-100 position-relative"
         :style="{ 
