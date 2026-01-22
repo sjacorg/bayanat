@@ -193,12 +193,12 @@
                         <template #item.ocr_status="{ item }">
                             <div class="d-flex flex-column align-center">
                                 <v-chip
-                                    :color="getStatusColor(item.ocr_status)"
+                                    :color="getStatusColor(getEffectiveStatus(item))"
                                     size="small"
-                                    :prepend-icon="getStatusIcon(item.ocr_status)"
+                                    :prepend-icon="getStatusIcon(getEffectiveStatus(item))"
                                     class="flex-0-0"
                                 >
-                                    ${getStatusText(item.ocr_status)}
+                                    ${getStatusText(getEffectiveStatus(item))}
                                 </v-chip>
                                 <div v-if="item?.extraction" class="text-caption text-medium-emphasis">
                                     ${Math.round(item.extraction.confidence)}% {{ _('confidence') }}
@@ -285,6 +285,7 @@
                     pending: { key: 'pending', text: "{{_('Pending')}}", color: 'grey', icon: 'mdi-clock-outline' },
                     processing: { key: 'processing', text: "{{_('Processing')}}", color: 'blue', icon: 'mdi-cog-outline' },
                     processed: { key: 'processed', text: "{{_('Processed')}}", color: 'green', icon: 'mdi-check-circle-outline' },
+                    manual: { key: 'manual', text: "{{_('Manually Transcribed')}}", color: 'teal', icon: 'mdi-account-edit-outline' },
                     needs_review: { key: 'needs_review', text: "{{_('Needs Review')}}", color: 'orange', icon: 'mdi-alert-circle-outline' },
                     needs_transcription: { key: 'needs_transcription', text: "{{_('Needs Transcription')}}", color: 'purple', icon: 'mdi-alphabetical' },
                     cant_read: { key: 'cant_read', text: "{{_('Can\\'t Read')}}", color: 'grey-darken-1', icon: 'mdi-eye-off-outline' },
@@ -417,6 +418,13 @@
                         });
                 },
 
+                getEffectiveStatus(item) {
+                    // Show 'manual' status for manually transcribed items
+                    if (item.extraction?.manual && item.ocr_status === 'processed') {
+                        return 'manual';
+                    }
+                    return item.ocr_status;
+                },
                 getStatusText(status) {
                     return this.statuses[status]?.text || status;
                 },

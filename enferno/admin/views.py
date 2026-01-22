@@ -7189,6 +7189,7 @@ def api_extraction_update(extraction_id: int):
             return HTTPResponse.error("Text required for transcription")
         extraction.text = text
         extraction.status = "processed"
+        extraction.manual = True
         extraction.reviewed_by = current_user.id
         extraction.reviewed_at = datetime.utcnow()
 

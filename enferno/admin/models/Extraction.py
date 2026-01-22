@@ -16,6 +16,7 @@ class Extraction(db.Model):
     confidence = db.Column(db.Float)
     orientation = db.Column(db.Integer, default=0)
     status = db.Column(db.String(20), default="pending", nullable=False)
+    manual = db.Column(db.Boolean, default=False, nullable=False)
 
     reviewed_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     reviewed_at = db.Column(db.DateTime)
@@ -32,6 +33,7 @@ class Extraction(db.Model):
             "confidence": self.confidence,
             "orientation": self.orientation,
             "status": self.status,
+            "manual": self.manual,
             "reviewed_by": self.reviewed_by,
             "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,

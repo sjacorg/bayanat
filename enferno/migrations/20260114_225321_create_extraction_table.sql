@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS extraction (
     confidence FLOAT,
     orientation INTEGER DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    manual BOOLEAN NOT NULL DEFAULT FALSE,
 
     -- Review tracking
     reviewed_by INTEGER,
