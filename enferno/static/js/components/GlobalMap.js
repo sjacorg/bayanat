@@ -400,5 +400,3 @@ const GlobalMap = Vue.defineComponent({
       </div>
     `,
 });
-
-export default GlobalMap;

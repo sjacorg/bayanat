@@ -100,5 +100,3 @@ const ActivitySearchBox = Vue.defineComponent({
     </v-sheet>
   `,
 });
-
-export default ActivitySearchBox;

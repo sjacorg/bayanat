@@ -249,5 +249,3 @@ const EventsSection = Vue.defineComponent({
     </div>
     `,
 });
-
-export default EventsSection;

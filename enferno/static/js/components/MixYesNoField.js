@@ -74,5 +74,3 @@ const MixYesNoField = Vue.defineComponent({
 
     `,
 });
-
-export default MixYesNoField;

@@ -80,5 +80,3 @@ const PopDateTimeField = Vue.defineComponent({
       </v-sheet>
     `,
 });
-
-export default PopDateTimeField;

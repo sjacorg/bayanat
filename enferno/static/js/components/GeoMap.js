@@ -413,5 +413,3 @@ const GeoMap = Vue.defineComponent({
 
     `,
 });
-
-export default GeoMap;

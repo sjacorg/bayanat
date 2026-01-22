@@ -90,5 +90,3 @@ const ExportDownload = Vue.defineComponent({
 
     `,
 });
-
-export default ExportDownload;

@@ -44,5 +44,3 @@ const AddressField = Vue.defineComponent({
 
     `,
 });
-
-export default AddressField;

@@ -216,5 +216,3 @@ const GeoLocations = Vue.defineComponent({
       </div>
     `,
 });
-
-export default GeoLocations;

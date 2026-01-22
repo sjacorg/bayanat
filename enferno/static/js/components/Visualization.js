@@ -347,5 +347,3 @@ drawLink(link, ctx) {
 
     `,
 });
-
-export default Visualization;

@@ -290,5 +290,3 @@ const FieldListItem = Vue.defineComponent({
     <div v-else>{{ translations.noUiComponentMappedForThisField_ }}</div>
     `,
 });
-
-export default FieldListItem;

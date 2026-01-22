@@ -589,5 +589,3 @@ const BulletinSearchBox = Vue.defineComponent({
 
   `,
 });
-
-export default BulletinSearchBox;

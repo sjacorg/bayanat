@@ -101,5 +101,3 @@ const ImportLogCard = Vue.defineComponent({
       </v-card>
     `,
 });
-
-export default ImportLogCard;

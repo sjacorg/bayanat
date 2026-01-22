@@ -31,5 +31,3 @@ const VueDropzone = Vue.defineComponent({
     <div class="dropzone" v-bind="$attrs"></div>
   `,
 });
-
-export default VueDropzone;

@@ -87,5 +87,3 @@ const MixReportersField = Vue.defineComponent({
     </v-card>
   `,
 });
-
-export default MixReportersField;

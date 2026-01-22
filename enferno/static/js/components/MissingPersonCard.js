@@ -126,5 +126,3 @@ const MissingPersonCard = Vue.defineComponent({
 
         `,
 });
-
-export default MissingPersonCard;

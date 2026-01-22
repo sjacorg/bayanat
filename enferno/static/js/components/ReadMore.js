@@ -84,5 +84,3 @@ const ReadMore = Vue.defineComponent({
     </div>
   `,
 });
-
-export default ReadMore;

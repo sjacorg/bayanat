@@ -55,5 +55,3 @@ const MissingPersonField = Vue.defineComponent({
     </v-sheet>
   `,
 });
-
-export default MissingPersonField;

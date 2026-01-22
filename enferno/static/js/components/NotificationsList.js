@@ -194,5 +194,3 @@ const NotificationsList = Vue.defineComponent({
         </div>
     `
 });
-
-// export default NotificationsList;

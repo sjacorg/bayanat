@@ -441,5 +441,3 @@ const IncidentSearchBox = Vue.defineComponent({
       </div>
     `,
 });
-
-export default IncidentSearchBox;

@@ -63,5 +63,3 @@ const Toast = Vue.defineComponent({
     </v-snackbar>
   `,
 });
-
-// export default Toast;

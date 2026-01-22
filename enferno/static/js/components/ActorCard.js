@@ -530,5 +530,3 @@ const ActorCard = Vue.defineComponent({
       </v-card>
     `,
 });
-
-export default ActorCard;

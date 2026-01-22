@@ -39,5 +39,3 @@ const ShowDetails = Vue.defineComponent({
     </div>
   `,
 });
-
-export default ShowDetails;

@@ -461,5 +461,3 @@ const BulletinCard = Vue.defineComponent({
 
   `,
 });
-
-export default BulletinCard;

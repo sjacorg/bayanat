@@ -80,5 +80,3 @@ const MixSelectField = Vue.defineComponent({
 
     `,
 });
-
-export default MixSelectField;

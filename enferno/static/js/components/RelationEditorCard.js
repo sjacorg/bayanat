@@ -83,5 +83,3 @@ const RelationEditorCard = Vue.defineComponent({
     </v-card>
   `,
 });
-
-export default RelationEditorCard;

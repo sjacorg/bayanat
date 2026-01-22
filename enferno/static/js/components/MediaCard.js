@@ -306,5 +306,3 @@ const MediaCard = Vue.defineComponent({
     </v-card>
   `
 });
-
-export default MediaCard;

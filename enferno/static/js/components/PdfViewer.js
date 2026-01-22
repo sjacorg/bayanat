@@ -37,5 +37,3 @@ const PdfViewer = Vue.defineComponent({
     </div>
     `,
 });
-
-export default PdfViewer;

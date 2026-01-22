@@ -35,5 +35,3 @@ const PreviewCard = Vue.defineComponent({
     </v-dialog>
   `,
 });
-
-export default PreviewCard;

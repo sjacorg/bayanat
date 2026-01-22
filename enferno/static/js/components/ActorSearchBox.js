@@ -822,5 +822,3 @@ const ActorSearchBox = Vue.defineComponent({
 
     `,
 });
-
-export default ActorSearchBox;

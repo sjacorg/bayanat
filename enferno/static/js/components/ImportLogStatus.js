@@ -51,5 +51,3 @@ const ImportLogStatus = Vue.defineComponent({
     </div>
   `,
 });
-
-export default ImportLogStatus;

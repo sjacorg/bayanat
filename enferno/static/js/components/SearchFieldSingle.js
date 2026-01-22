@@ -58,5 +58,3 @@ const SearchFieldSingle = Vue.defineComponent({
             ></v-autocomplete>
         `,
 });
-
-export default SearchFieldSingle;

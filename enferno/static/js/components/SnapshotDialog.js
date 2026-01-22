@@ -68,4 +68,3 @@ const SnapshotDialog = Vue.defineComponent({
       `,
   });
   
-  export default SnapshotDialog;

@@ -159,4 +159,3 @@ const ImageViewer = Vue.defineComponent({
       `,
   });
   
-export default ImageViewer;

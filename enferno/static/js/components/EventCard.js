@@ -61,5 +61,3 @@ const EventCard = Vue.defineComponent({
 
   `,
 });
-
-export default EventCard;

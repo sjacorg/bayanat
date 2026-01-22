@@ -55,5 +55,3 @@ const RelateActors = Vue.defineComponent({
     </relate-items-template>
     `,
 });
-
-export default RelateActors;
