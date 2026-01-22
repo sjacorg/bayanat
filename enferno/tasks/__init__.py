@@ -1696,6 +1696,9 @@ def bulk_ocr_process(self, media_ids: list, user_id: int) -> dict:
         f"Skipped: {results['skipped']}, Failed: {results['failed']}"
     )
 
+    # Clear processing status from Redis
+    rds.delete(f"ocr_processing:{user_id}")
+
     # Notify user
     user = User.query.get(user_id)
     if user:

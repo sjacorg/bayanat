@@ -7260,6 +7260,11 @@ def api_ocr_bulk():
     if not media_ids:
         return HTTPResponse.error("No media to process")
 
+    # Track processing items in Redis (auto-expires in 2 hours)
+    redis_key = f"ocr_processing:{current_user.id}"
+    rds.sadd(redis_key, *media_ids)
+    rds.expire(redis_key, 7200)
+
     task = bulk_ocr_process.delay(media_ids, current_user.id)
     return jsonify(
         {
@@ -7268,6 +7273,15 @@ def api_ocr_bulk():
             "message": f"Queued {len(media_ids)} items. You'll be notified when complete.",
         }
     )
+
+
+@admin.get("/api/ocr/processing")
+@auth_required("session")
+def api_ocr_processing():
+    """Get list of media IDs currently being processed by bulk OCR."""
+    redis_key = f"ocr_processing:{current_user.id}"
+    ids = rds.smembers(redis_key)
+    return jsonify([int(id) for id in ids] if ids else [])
 
 
 @admin.route("/api/session-check")
