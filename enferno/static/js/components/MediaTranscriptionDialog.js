@@ -280,7 +280,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     
                     <!-- Pending/Failed State - Show "Run OCR" button -->
                     <template v-if="isPending">
-                      <v-tooltip location="top">
+                      <v-tooltip location="top" :disabled="Boolean($root.visionApiKey)">
                         <template v-slot:activator="{ props }">
                           <div v-bind="props">
                             <v-btn
