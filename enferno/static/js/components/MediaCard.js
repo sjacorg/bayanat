@@ -190,7 +190,7 @@ const MediaCard = Vue.defineComponent({
       videoThumbnail: null,
       translations: window.translations,
       thumbnailBrightness: 0,
-      imageLoaded: false, // Add this
+      imageLoaded: false,
       randomGradient: null, // Cache it so it doesn't change on re-render
       iconMap: {
         image: 'mdi-image',
