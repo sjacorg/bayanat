@@ -42,8 +42,8 @@
                         <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${(ocr.stats.failed + ocr.stats.pending).toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis">{{ _('Pending/Failed') }}</div>
+                                    <div class="text-h4 text-primary">${(ocr.stats.failed + ocr.stats.pending + (ocr.stats.cant_read || 0)).toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis">{{ _('Pending/Unprocessed') }}</div>
                                 </v-card-text>
                             </v-card>
                         </v-col>
@@ -254,7 +254,7 @@
                     data: null
                 },
                 ocr: {
-                    stats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, failed: 0 }
+                    stats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, cant_read: 0, failed: 0 }
                 },
 
                 headers: [
@@ -287,6 +287,7 @@
                     processed: { key: 'processed', text: "{{_('Processed')}}", color: 'green', icon: 'mdi-check-circle-outline' },
                     needs_review: { key: 'needs_review', text: "{{_('Needs Review')}}", color: 'orange', icon: 'mdi-alert-circle-outline' },
                     needs_transcription: { key: 'needs_transcription', text: "{{_('Needs Transcription')}}", color: 'purple', icon: 'mdi-alphabetical' },
+                    cant_read: { key: 'cant_read', text: "{{_('Can\\'t Read')}}", color: 'grey-darken-1', icon: 'mdi-eye-off-outline' },
                     failed: { key: 'failed', text: "{{_('Failed')}}", color: 'red', icon: 'mdi-close-circle-outline' },
                 }
             }),
@@ -308,7 +309,7 @@
                     return `calc(100vh - ${this.selected.length ? 405 : 360}px)`;
                 },
                 selectableStatuses() {
-                    return ['pending', 'failed'];
+                    return ['pending', 'failed', 'cant_read'];
                 }
             },
 

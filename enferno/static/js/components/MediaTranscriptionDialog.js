@@ -33,7 +33,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
     },
     isPending() {
-      return ['pending', 'failed'].includes(this.media?.ocr_status);
+      return ['pending', 'failed', 'cant_read'].includes(this.media?.ocr_status);
     },
     isProcessed() {
       return this.media?.ocr_status === 'processed';

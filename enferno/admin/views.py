@@ -7156,6 +7156,7 @@ def api_ocr_stats():
             "processed": status_map.get("processed", 0),
             "needs_review": status_map.get("needs_review", 0),
             "needs_transcription": status_map.get("needs_transcription", 0),
+            "cant_read": status_map.get("cant_read", 0),
             "failed": status_map.get("failed", 0),
         }
     )
@@ -7192,7 +7193,7 @@ def api_extraction_update(extraction_id: int):
         extraction.reviewed_at = datetime.utcnow()
 
     elif action == "cant_read":
-        extraction.status = "failed"
+        extraction.status = "cant_read"
         extraction.reviewed_by = current_user.id
         extraction.reviewed_at = datetime.utcnow()
 
