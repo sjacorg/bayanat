@@ -190,55 +190,54 @@ const MediaTranscriptionDialog = Vue.defineComponent({
               <div class="d-flex flex-column py-4 pl-2 pr-4" style="height: 100%;">
                 <v-card variant="outlined" class="border-thin flex-1-1 d-flex flex-column overflow-hidden">
                   <v-card-text class="flex-1-1 overflow-y-auto pa-4 d-flex flex-column">
-                    <!-- Bulletin Info -->
-                    <div class="flex-0-0">
-                      <v-skeleton-loader
-                        v-if="loading"
-                        width="100%"
-                        height="36"
-                      ></v-skeleton-loader>
-                      
-                      <v-btn
+                    <div class="flex-0-0 d-flex align-center ga-6">
+                      <!-- Bulletin Info -->
+                      <div class="flex-0-0">
+                        <v-skeleton-loader
+                          v-if="loading"
+                          width="175"
+                          height="36"
+                        ></v-skeleton-loader>
+
+                        <a
                           v-else
-                          variant="tonal"
-                          prepend-icon="mdi-file-document"
-                          target="_blank"
+                          class="mx-2 text-decoration-underline"
                           :href="'/admin/bulletins/' + media.bulletin.id"
-                          block
-                      >
-                          {{ translations.bulletin_ }} #{{ media.bulletin.id }}
-                      </v-btn>
-                    </div>
-
-                    <v-divider class="my-4 flex-0-0"></v-divider>
-
-                    <!-- Confidence -->
-                    <div v-if="media?.extraction?.confidence || loading" class="flex-0-0">
-                      <div class="text-subtitle-2 mb-2">{{ translations.confidence_ }}</div>
-                      
-                      <v-skeleton-loader
-                        v-if="loading"
-                        width="100%"
-                        height="44"
-                      ></v-skeleton-loader>
-                      
-                      <template v-else>
-                        <v-progress-linear
-                            :model-value="media?.extraction?.confidence"
-                            :color="getConfidenceColor(media?.extraction?.confidence)"
-                            height="20"
-                            rounded
+                          target="_blank"
                         >
-                            <template v-slot:default>
-                                <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
-                            </template>
-                        </v-progress-linear>
-                        <div class="text-caption text-medium-emphasis mt-1">
-                            {{ getConfidenceLabel(media?.extraction?.confidence) }}
-                        </div>
-                      </template>
+                            {{ translations.previewBulletin_ }} #{{ media.bulletin.id }}
+                            <v-icon size="small" class="ml-1">mdi-open-in-new</v-icon>
+                        </a>
+                      </div>
+
+                      <!-- Confidence -->
+                      <div v-if="media?.extraction?.confidence || loading" class="flex-1-1">
+                        <div class="text-subtitle-2 mb-2">{{ translations.confidence_ }}</div>
+                        
+                        <v-skeleton-loader
+                          v-if="loading"
+                          width="100%"
+                          height="44"
+                        ></v-skeleton-loader>
+                        
+                        <template v-else>
+                          <v-progress-linear
+                              :model-value="media?.extraction?.confidence"
+                              :color="getConfidenceColor(media?.extraction?.confidence)"
+                              height="20"
+                              rounded
+                          >
+                              <template v-slot:default>
+                                  <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
+                              </template>
+                          </v-progress-linear>
+                          <div class="text-caption text-medium-emphasis mt-1">
+                              {{ getConfidenceLabel(media?.extraction?.confidence) }}
+                          </div>
+                        </template>
+                      </div>
                     </div>
-                    <v-divider v-if="media?.extraction?.confidence || loading" class="my-4 flex-0-0"></v-divider>
+                    <v-divider class="my-4 flex-0-0"></v-divider>
 
                     <!-- Extracted Text - This takes remaining space -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">

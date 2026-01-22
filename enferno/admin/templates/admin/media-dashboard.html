@@ -171,16 +171,14 @@
 
                         <!-- Bulletin Column -->
                         <template #item.bulletin="{ item }">
-                            <v-btn
-                                size="small"
-                                variant="tonal"
-                                class="mx-2"
-                                prepend-icon="mdi-file-document-multiple"
+                            <a
+                                class="mx-2 text-decoration-underline"
                                 :href="`/admin/bulletins/${item.bulletin.id}`"
                                 target="_blank"
                             >
                                 {{ _('Preview bulletin') }} #${item.bulletin.id}
-                            </v-btn>
+                                <v-icon size="small" class="ml-1">mdi-open-in-new</v-icon>
+                            </a>
                         </template>
 
                         <!-- OCR Status Column -->
