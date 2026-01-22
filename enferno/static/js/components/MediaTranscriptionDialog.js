@@ -211,7 +211,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       </div>
 
                       <!-- Confidence -->
-                      <div v-if="media?.extraction?.confidence || loading" class="flex-1-1">
+                      <div v-if="media?.extraction || loading" class="flex-1-1">
                         <div class="text-subtitle-2 mb-2">{{ translations.confidence_ }}</div>
                         
                         <v-skeleton-loader
