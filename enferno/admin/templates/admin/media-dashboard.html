@@ -183,15 +183,18 @@
 
                         <!-- OCR Status Column -->
                         <template #item.ocr_status="{ item }">
-                            <v-chip
-                                :color="getStatusColor(item.ocr_status)"
-                                size="small"
-                                :prepend-icon="getStatusIcon(item.ocr_status)"
-                            >
-                                ${getStatusText(item.ocr_status)}
-                            </v-chip>
-                            <div v-if="item?.extraction?.confidence" class="text-caption text-medium-emphasis">
-                                ${Math.round(item.extraction.confidence)}% {{ _('confidence') }}
+                            <div class="d-flex flex-column align-center">
+                                <v-chip
+                                    :color="getStatusColor(item.ocr_status)"
+                                    size="small"
+                                    :prepend-icon="getStatusIcon(item.ocr_status)"
+                                    class="flex-0-0"
+                                >
+                                    ${getStatusText(item.ocr_status)}
+                                </v-chip>
+                                <div v-if="item?.extraction?.confidence" class="text-caption text-medium-emphasis">
+                                    ${Math.round(item.extraction.confidence)}% {{ _('confidence') }}
+                                </div>
                             </div>
                         </template>
 
