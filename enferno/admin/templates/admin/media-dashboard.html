@@ -243,6 +243,7 @@
                 bulkLoading: false,
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 visionApiKey: '{{ config.GOOGLE_VISION_API_KEY }}',
+                bulkOcrStartedAt: null, // Track when we last ran bulk OCR
                 options: {
                     page: 1,
                     per_page: window.itemsPerPageOptions?.[0] ?? 10,
@@ -317,6 +318,8 @@
                     this.handleRoute();
                 });
                 this.loadOCRStats();
+
+                this.bulkOcrStartedAt = new Date().toISOString().slice(0, 16);
             },
 
             methods: {
@@ -348,20 +351,32 @@
 
                     this.bulkLoading = true;
 
+                    // Save the timestamp when we initiate bulk OCR
+                    this.bulkOcrStartedAt = new Date().toISOString().slice(0, 16);
+
                     api.post('/admin/api/ocr/bulk', { media_ids: this.selected })
                         .then(response => {
                             this.showSnack(response.data.message);
                             this.selected = [];
-                            this.refresh();
+                            this.refresh(this.options);
                             this.loadOCRStats();
                         })
                         .catch(error => {
                             console.error('Bulk OCR error:', error);
                             this.showSnack("{{ _('Error processing OCR request') }}");
+                            this.bulkOcrStartedAt = null;
                         })
                         .finally(() => {
                             this.bulkLoading = false;
                         });
+                },
+                handleBulkOcrCompleted(notification) {
+                    this.refresh(this.options);
+                    this.loadOCRStats();
+                    this.showSnack(notification?.message || "{{ _('Bulk OCR Complete') }}");
+                    
+                    // Clear the timestamp after handling
+                    this.bulkOcrStartedAt = null;
                 },
                 clearFilters() {
                     this.filters = { ...this.defaultFilters };
@@ -452,6 +467,26 @@
                     if (this.filters.dateRange) {
                         this.applyFilters();
                     }
+                },
+                'notifications.items': {
+                    handler(newItems, oldItems) {
+                        if (!newItems?.length) return;
+                        
+                        const oldIds = new Set((oldItems || []).map(n => n.id));
+                        const freshNotifications = newItems.filter(n => !oldIds.has(n.id));
+                        
+                        freshNotifications.forEach(notification => {
+                            if (notification.title === 'Bulk OCR Complete') {
+                                // Only process if we have an active bulk OCR request
+                                // AND the notification was created after we started it
+                                if (this.bulkOcrStartedAt && 
+                                    new Date(notification.created_at) >= new Date(this.bulkOcrStartedAt)) {
+                                    this.handleBulkOcrCompleted(notification);
+                                }
+                            }
+                        });
+                    },
+                    deep: true
                 }
             },
         });
