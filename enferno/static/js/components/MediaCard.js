@@ -1,25 +1,75 @@
 const thumbnailContent = `
-  <div @click="handleMediaClick" class="h-100">
-    <!-- Image preview -->
-    <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :data-src="s3url">
-      <img loading="lazy" :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
-        <v-expand-transition>  
-          <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
-            <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
-          </div>
-        </v-expand-transition>
-      </img>
-    </a>
+  <div @click="handleMediaClick" class="h-100 position-relative overflow-hidden">
+    <!-- Image preview with gradient placeholder -->
+    <template v-if="mediaType === 'image'">
+      <!-- Random gradient placeholder - ALWAYS show it first -->
+      <div 
+        class="w-100 h-100 position-absolute top-0 left-0" 
+        :style="{ 
+          background: getRandomGradient(), 
+          filter: 'blur(40px)',
+          transform: 'scale(1.2)',
+          opacity: imageLoaded ? 0 : 1,
+          transition: 'opacity 0.4s ease-in-out',
+          zIndex: 1
+        }">
+      </div>
+      
+      <!-- Actual image - only render when we have s3url -->
+      <a class="media-item h-100 d-block position-relative" v-if="s3url" :data-src="s3url" style="z-index: 2;">
+        <img 
+          loading="lazy" 
+          :src="s3url" 
+          @load="imageLoaded = true"
+          class="w-100 h-100" 
+          style="object-fit: cover;"
+          :style="{ 
+            opacity: imageLoaded ? 1 : 0, 
+            transition: 'opacity 0.4s ease-in-out' 
+          }">
+          <v-expand-transition>  
+            <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2 position-absolute top-0 left-0 w-100" style="z-index: 3;">
+              <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
+            </div>
+          </v-expand-transition>
+        </img>
+      </a>
+    </template>
 
-    <!-- Video preview -->
-    <v-img v-if="mediaType === 'video'" :src="videoThumbnail" loading="lazy" cover class="bg-grey-lighten-2 h-100">
-      <div class="d-flex align-center justify-center fill-height">
-        <v-btn icon="mdi-play-circle" variant="text" size="x-large" :class="['custom-play-icon', thumbnailBrightness > 128 ? 'dark-play-icon' : 'light-play-icon']"></v-btn>
+    <!-- Video preview with gradient placeholder -->
+    <template v-if="mediaType === 'video'">
+      <!-- Random gradient placeholder - ALWAYS show it first -->
+      <div 
+        class="w-100 h-100 position-absolute top-0 left-0" 
+        :style="{ 
+          background: getRandomGradient(), 
+          filter: 'blur(40px)',
+          transform: 'scale(1.2)',
+          opacity: videoThumbnail ? 0 : 1,
+          transition: 'opacity 0.4s ease-in-out',
+          zIndex: 1
+        }">
       </div>
-      <div v-if="mediaType === 'video' && durationFormatted" class="d-flex justify-center text-caption position-absolute bottom-0 right-0 text-white mb-2 mr-2 px-1 rounded-sm" style="background: rgba(0, 0, 0, 0.6);">
-        {{ durationFormatted }}
-      </div>
-    </v-img>
+      
+      <v-img 
+        v-if="videoThumbnail"
+        :src="videoThumbnail" 
+        loading="lazy" 
+        cover 
+        class="h-100 position-relative"
+        :style="{ 
+          opacity: videoThumbnail ? 1 : 0,
+          transition: 'opacity 0.4s ease-in-out',
+          zIndex: 2
+        }">
+        <div class="d-flex align-center justify-center fill-height">
+          <v-btn icon="mdi-play-circle" variant="text" size="x-large" :class="['custom-play-icon', thumbnailBrightness > 128 ? 'dark-play-icon' : 'light-play-icon']"></v-btn>
+        </div>
+        <div v-if="durationFormatted" class="d-flex justify-center text-caption position-absolute bottom-0 right-0 text-white mb-2 mr-2 px-1 rounded-sm" style="background: rgba(0, 0, 0, 0.6);">
+          {{ durationFormatted }}
+        </div>
+      </v-img>
+    </template>
 
     <!-- PDF preview -->
     <div v-else-if="mediaType === 'pdf'"
@@ -31,14 +81,7 @@ const thumbnailContent = `
     <div v-else-if="mediaType === 'audio'" class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
       <div class="d-flex align-center justify-center fill-height position-relative">
         <v-icon size="128" color="primary">mdi-music-box</v-icon>
-        <v-btn
-          icon="mdi-play-circle"
-          variant="text"
-          size="x-large"
-          :class="['custom-play-icon', 'dark-play-icon']"
-          class="position-absolute"
-          style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
-        ></v-btn>
+        <v-btn icon="mdi-play-circle" variant="text" size="x-large" :class="['custom-play-icon', 'dark-play-icon']" class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></v-btn>
       </div>
     </div>
 
@@ -48,6 +91,7 @@ const thumbnailContent = `
     </div>
   </div>
 `
+
 const toolbarContent = `
     <v-toolbar density="compact" class="px-2">
       <div class="w-100 d-flex justify-space-between align-center">
@@ -141,10 +185,14 @@ const MediaCard = Vue.defineComponent({
   data() {
     return {
       s3url: '',
+      isInViewport: false,
+      observer: null,
       videoDuration: null,
       videoThumbnail: null,
       translations: window.translations,
       thumbnailBrightness: 0,
+      imageLoaded: false, // Add this
+      randomGradient: null, // Cache it so it doesn't change on re-render
       iconMap: {
         image: 'mdi-image',
         video: 'mdi-video',
@@ -168,9 +216,79 @@ const MediaCard = Vue.defineComponent({
     },
   },
   mounted() {
-    this.init();
+    this.setupIntersectionObserver();
+  },
+  beforeUnmount() {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   },
   methods: {
+    getRandomGradient() {
+      if (this.randomGradient) return this.randomGradient;
+      
+      // Hash the ID to get better distribution for sequential numbers
+      const id = this.media.id || 1;
+      const hash = (id * 2654435761) % (2 ** 32); // Knuth's multiplicative hash
+      const seed = hash / (2 ** 32); // Normalize to 0-1
+      
+      // Muted, realistic color schemes for documents, buildings, evidence photos
+      const colorSchemes = [
+        // Paper/document tones
+        ['#e8e8e8', '#d4d4d4', '#c0c0c0'],
+        // Concrete/building grays
+        ['#95a5a6', '#7f8c8d', '#bdc3c7'],
+        // Warm beige (aged paper, indoor lighting)
+        ['#d7ccc8', '#bcaaa4', '#a1887f'],
+        // Cool gray (overcast, fluorescent lighting)
+        ['#b0bec5', '#90a4ae', '#78909c'],
+        // Neutral tan (manila folders, cardboard)
+        ['#d2b48c', '#c4a57b', '#b8936f'],
+        // Steel/metal tones
+        ['#9e9e9e', '#757575', '#616161'],
+        // Pale blue-gray (institutional walls)
+        ['#cfd8dc', '#b0bec5', '#90a4ae'],
+        // Olive/military green (muted)
+        ['#9e9d89', '#8d8b73', '#7c7a5e'],
+        // Dusty brown (dirt, ruins)
+        ['#a1887f', '#8d6e63', '#795548'],
+        // Off-white/cream (documents under various lighting)
+        ['#f5f5f5', '#eeeeee', '#e0e0e0'],
+      ];
+      
+      const schemeIndex = Math.floor(seed * colorSchemes.length);
+      const colors = colorSchemes[schemeIndex];
+      
+      // Angle from hash
+      const angle = Math.floor(seed * 360);
+      
+      this.randomGradient = `linear-gradient(${angle}deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`;
+      
+      return this.randomGradient;
+    },
+    setupIntersectionObserver() {
+      const element = this.$refs.rootCard.$el;
+      
+      if (!element) {
+        console.warn('Root element not found for intersection observer');
+        return;
+      }
+      
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && !this.isInViewport) {
+              this.isInViewport = true;
+              this.init();
+              this.observer.disconnect();
+            }
+          });
+        },
+        { rootMargin: '100px' }
+      );
+      
+      this.observer.observe(element);
+    },
     init() {
       api.get(`/admin/api/media/${this.media.filename}`)
         .then(response => {
@@ -256,7 +374,7 @@ const MediaCard = Vue.defineComponent({
   },
   template: /*html*/`
     <!-- Mini mode card -->
-    <v-card v-if="miniMode" style="width: min(200px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
+    <v-card v-if="miniMode" ref="rootCard" style="width: min(200px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
       <v-card-text class="text-center pa-0">
         <v-hover v-slot="{ isHovering: isHoveringPreview, props: previewHoverProps }">
           <div v-bind="previewHoverProps" class="preview-container position-relative cursor-pointer"
@@ -284,7 +402,7 @@ const MediaCard = Vue.defineComponent({
     </v-card>
 
     <!-- Normal size card -->
-    <v-card v-else style="width: min(350px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
+    <v-card v-else ref="rootCard" style="width: min(350px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
       ${toolbarContent}
 
       <v-card-text class="text-center pa-0">
