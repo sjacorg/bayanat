@@ -145,15 +145,23 @@
                             <v-toolbar v-if="selected.length > 0" height="auto" class="mb-2">
                                 <div class="d-flex align-center justify-space-between w-100 px-4">
                                     <v-chip variant="tonal">${selected.length} {{ _('selected') }}</v-chip>
-                                    <v-btn
-                                        color="primary"
-                                        variant="elevated"
-                                        @click="runBulkOCR"
-                                        :loading="bulkLoading"
-                                        prepend-icon="mdi-text-recognition"
-                                    >
-                                        {{ _('Run OCR') }}
-                                    </v-btn>
+                                    <v-tooltip location="top">
+                                        <template v-slot:activator="{ props }">
+                                            <div v-bind="props">
+                                                <v-btn
+                                                    color="primary"
+                                                    variant="elevated"
+                                                    @click="runBulkOCR"
+                                                    :loading="bulkLoading"
+                                                    :disabled="!visionApiKey"
+                                                    prepend-icon="mdi-text-recognition"
+                                                >
+                                                    {{ _('Run OCR') }}
+                                                </v-btn>
+                                            </div>
+                                        </template>
+                                        {{ _('Google Vision API is not configured. Please contact your administrator.') }}
+                                    </v-tooltip>
                                 </div>
                             </v-toolbar>
                         </template>
@@ -210,7 +218,6 @@
     </v-main>
 
 {% endblock %} {% block js %}
-
     <script src="/static/js/components/SplitView.js"></script>
     <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -235,6 +242,7 @@
                 loading: true,
                 bulkLoading: false,
                 itemsPerPageOptions: window.itemsPerPageOptions,
+                visionApiKey: '{{ config.GOOGLE_VISION_API_KEY }}',
                 options: {
                     page: 1,
                     per_page: window.itemsPerPageOptions?.[0] ?? 10,
@@ -336,6 +344,7 @@
                 },
                 runBulkOCR() {
                     if (this.selected.length === 0) return;
+                    if (!this.visionApiKey) return this.showSnack("{{ _('Google Vision API is not configured. Please contact your administrator.') }}");
 
                     this.bulkLoading = true;
 

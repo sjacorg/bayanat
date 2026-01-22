@@ -60,6 +60,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     runOCRProcess() {
       if (!this.media?.id) return;
+      if (!this.$root.visionApiKey) return this.$root.showSnack(this.translations.googleVisionApiHasNotBeenConfigured_);
       
       this.saving = true;
       
@@ -279,17 +280,24 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     
                     <!-- Pending/Failed State - Show "Run OCR" button -->
                     <template v-if="isPending">
-                      <v-btn
-                        color="primary"
-                        variant="elevated"
-                        size="large"
-                        prepend-icon="mdi-text-recognition"
-                        :disabled="loading"
-                        :loading="saving"
-                        @click="runOCRProcess()"
-                      >
-                        {{ translations.runOCR_ }}
-                      </v-btn>
+                      <v-tooltip location="top">
+                        <template v-slot:activator="{ props }">
+                          <div v-bind="props">
+                            <v-btn
+                              color="primary"
+                              variant="elevated"
+                              size="large"
+                              prepend-icon="mdi-text-recognition"
+                              :disabled="loading || !$root.visionApiKey"
+                              :loading="saving"
+                              @click="runOCRProcess()"
+                            >
+                              {{ translations.runOCR_ }}
+                            </v-btn>
+                          </div>
+                        </template>
+                          {{ translations.googleVisionApiHasNotBeenConfigured_ }}
+                      </v-tooltip>
                     </template>
                     
                     <!-- Needs Review/Transcription State - Show edit buttons -->
