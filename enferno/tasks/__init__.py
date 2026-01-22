@@ -1655,19 +1655,21 @@ from enferno.tasks.extraction import process_media_extraction_task  # noqa: E402
 process_media_extraction = celery.task(process_media_extraction_task)
 
 
-@celery.task
-def bulk_ocr_process(media_ids: list, user_id: int) -> dict:
+@celery.task(bind=True)
+def bulk_ocr_process(self, media_ids: list, user_id: int) -> dict:
     """
     Bulk OCR processing task - processes multiple media items asynchronously.
 
     Args:
+        self: Celery task instance (for accessing task_id)
         media_ids: List of media IDs to process
         user_id: User ID who initiated the request
 
     Returns:
         dict with processing results
     """
-    logger.info(f"Starting bulk OCR for {len(media_ids)} items. User: {user_id}")
+    task_id = self.request.id
+    logger.info(f"Starting bulk OCR for {len(media_ids)} items. User: {user_id}, Task: {task_id}")
 
     results = {"processed": 0, "skipped": 0, "failed": 0, "errors": []}
 
@@ -1701,7 +1703,7 @@ def bulk_ocr_process(media_ids: list, user_id: int) -> dict:
             Constants.NotificationEvent.BULK_OPERATION_STATUS,
             user,
             "Bulk OCR Complete",
-            f"OCR processing complete: {results['processed']} processed, "
+            f"Task {task_id}: {results['processed']} processed, "
             f"{results['skipped']} skipped, {results['failed']} failed.",
         )
 
