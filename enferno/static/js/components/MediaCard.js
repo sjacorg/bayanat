@@ -294,8 +294,11 @@ const MediaCard = Vue.defineComponent({
           this.s3url = response.data.url;
           this.media.s3url = response.data.url;
           if (this.mediaType === 'video') {
-            this.getVideoDuration();
-            this.generateVideoThumbnail();
+            // Check if duration exists in media object
+            if (this.media.duration) {
+              this.videoDuration = Number(this.media.duration);
+            }
+            this.generateVideoThumbnail(); // This now handles both duration and thumbnail
           }
         })
         .catch(error => console.error('Error fetching media:', error))
@@ -313,22 +316,19 @@ const MediaCard = Vue.defineComponent({
           this.downloadFile();
       }
     },
-    getVideoDuration() {
-      if (this.media.duration) {
-        this.videoDuration = Number(this.media.duration)
-      } else {
-        const video = document.createElement('video');
-        video.src = this.s3url;
-        video.crossOrigin = "anonymous";
-        video.onloadedmetadata = () => {
-          this.videoDuration = video.duration;
-        };
-      }
-    },
     generateVideoThumbnail() {
       const video = document.createElement('video');
       video.src = this.s3url;
       video.crossOrigin = "anonymous";
+      
+      // Get duration when metadata loads
+      video.onloadedmetadata = () => {
+        if (!this.media.duration) {
+          this.videoDuration = video.duration;
+        }
+      };
+      
+      // Generate thumbnail when data loads
       video.onloadeddata = () => {
         video.currentTime = 1; // Seek to 1 second
         video.onseeked = () => {
@@ -348,6 +348,9 @@ const MediaCard = Vue.defineComponent({
             brightness += (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
           }
           this.thumbnailBrightness = brightness / (imageData.data.length / 4);
+          
+          // Clean up
+          video.remove();
         };
       };
     },
