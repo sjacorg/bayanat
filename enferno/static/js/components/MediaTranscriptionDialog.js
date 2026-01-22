@@ -295,8 +295,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     <!-- Needs Review/Transcription State - Show edit buttons -->
                     <template v-else-if="canEdit">
                       <v-btn
-                        color="error"
-                        variant="elevated"
+                        variant="tonal"
                         size="large"
                         prepend-icon="mdi-close-circle"
                         class="mx-1"
@@ -307,7 +306,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         {{ translations.cantRead_ }}
                       </v-btn>
                       <v-btn
-                        :color="isTranscriptionChanged ? 'info' : 'success'"
+                        :color="isTranscriptionChanged ? 'info' : 'primary'"
                         variant="elevated"
                         size="large"
                         prepend-icon="mdi-check"
