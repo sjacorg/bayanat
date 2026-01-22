@@ -872,6 +872,11 @@ div.jsondiffpatch-child-node-type-array:after {
 .lg-outer {
     z-index: 3000 !important;
 }
+.lg-toolbar {
+    backdrop-filter: blur(10px) saturate(180%);
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 
 /* Form builder drag-n-drop */
 .drop-line {
