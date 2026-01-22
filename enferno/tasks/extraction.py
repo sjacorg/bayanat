@@ -61,6 +61,8 @@ def process_media_extraction_task(media_id: int, language_hints: list = None) ->
         hints = language_hints or DEFAULT_LANGUAGE_HINTS
         text, confidence, raw = _extract_text(file_path, hints)
         if text is None:
+            # Create failed extraction record so item doesn't stay in pending
+            _save_failed_extraction(media_id, "Vision API failed", raw)
             return {"success": False, "media_id": media_id, "error": "Vision API failed"}
 
         # Route by confidence
@@ -229,3 +231,21 @@ def _route_by_confidence(confidence: float) -> str:
     if confidence >= 70.0:
         return "needs_review"
     return "needs_transcription"
+
+
+def _save_failed_extraction(media_id: int, error: str, raw: dict = None) -> None:
+    """Save a failed extraction record so item doesn't stay in pending."""
+    try:
+        extraction = Extraction(
+            media_id=media_id,
+            text=None,
+            raw=raw or {"error": error},
+            confidence=0.0,
+            status="failed",
+        )
+        db.session.add(extraction)
+        db.session.commit()
+        logger.info(f"Extraction {media_id}: marked as failed - {error}")
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.error(f"Failed to save failed extraction for {media_id}: {e}")
