@@ -33,7 +33,10 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
     },
     isPending() {
-      return ['pending', 'failed', 'cant_read'].includes(this.media?.ocr_status);
+      return ['pending', 'failed'].includes(this.media?.ocr_status);
+    },
+    isCantRead() {
+      return this.media?.ocr_status === 'cant_read';
     },
     isProcessed() {
       return this.media?.ocr_status === 'processed';
@@ -246,6 +249,93 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       </v-card-text>
                     </v-card>
 
+                    <!-- Alert for cant_read status -->
+                    <v-alert
+                      v-if="isCantRead"
+                      color="brown"
+                      variant="tonal"
+                      density="compact"
+                      icon="mdi-eye-off-outline"
+                      class="mb-3 flex-0-0"
+                      :title="translations.cannotRead_"
+                    >
+                      <template v-slot:text>
+                        <div>{{ translations.thisMediaHasBeenMarkedAsUnreadableByAReviewer_ }}</div>
+                        <div v-if="media?.extraction?.reviewed_at || media?.extraction?.reviewed_by" class="text-caption mt-1 text-medium-emphasis">
+                          <template v-if="media?.extraction?.reviewed_by">
+                            Reviewer ID: {{ media.extraction.reviewed_by }}
+                          </template>
+                          <template v-if="media?.extraction?.reviewed_at">
+                            {{ media.extraction.reviewed_by ? ' • ' : '' }}{{ $root.formatDate(media.extraction.reviewed_at) }}
+                          </template>
+                        </div>
+                      </template>
+                    </v-alert>
+
+                    <!-- Alert for manually transcribed status -->
+                    <v-alert
+                      v-else-if="media?.extraction?.manual"
+                      color="indigo"
+                      variant="tonal"
+                      density="compact"
+                      icon="mdi-account-edit-outline"
+                      class="mb-3 flex-0-0"
+                      :title="translations.manuallyTranscribed_"
+                    >
+                      <template v-slot:text>
+                        <div>{{ translations.thisMediaWasManuallyTranscribedByAReviewer_ }}</div>
+                        <div v-if="media?.extraction?.reviewed_at || media?.extraction?.reviewed_by" class="text-caption mt-1 text-medium-emphasis">
+                          <template v-if="media?.extraction?.reviewed_by">
+                            Reviewer ID: {{ media.extraction.reviewed_by }}
+                          </template>
+                          <template v-if="media?.extraction?.reviewed_at">
+                            {{ media.extraction.reviewed_by ? ' • ' : '' }}{{ $root.formatDate(media.extraction.reviewed_at) }}
+                          </template>
+                        </div>
+                      </template>
+                    </v-alert>
+
+                    <!-- Alert for processed (accepted) status -->
+                    <v-alert
+                      v-else-if="isProcessed && !media?.extraction?.manual"
+                      color="green"
+                      variant="tonal"
+                      density="compact"
+                      icon="mdi-check-circle-outline"
+                      class="mb-3 flex-0-0"
+                      :title="translations.processed_"
+                    >
+                      <template v-slot:text>
+                        <div>{{ translations.thisMediaHasBeenReviewedAndAccepted_ }}</div>
+                        <div v-if="media?.extraction?.reviewed_at || media?.extraction?.reviewed_by" class="text-caption mt-1 text-medium-emphasis">
+                          <template v-if="media?.extraction?.reviewed_by">
+                            Reviewer ID: {{ media.extraction.reviewed_by }}
+                          </template>
+                          <template v-if="media?.extraction?.reviewed_at">
+                            {{ media.extraction.reviewed_by ? ' • ' : '' }}{{ $root.formatDate(media.extraction.reviewed_at) }}
+                          </template>
+                        </div>
+                      </template>
+                    </v-alert>
+
+                    <!-- Alert for failed status -->
+                    <v-alert
+                      v-else-if="media?.ocr_status === 'failed'"
+                      color="red"
+                      variant="tonal"
+                      density="compact"
+                      icon="mdi-alert-circle-outline"
+                      class="mb-3 flex-0-0"
+                      :title="translations.failed_"
+                    >
+                      <template v-slot:text>
+                        <div>{{ translations.ocrProcessingFailedForThisMedia_ }}</div>
+                        <div v-if="media?.extraction?.created_at" class="text-caption mt-1 text-medium-emphasis">
+                          {{ $root.formatDate(media.extraction.created_at) }}
+                        </div>
+                      </template>
+                    </v-alert>
+
                     <!-- Extracted Text Section -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
                       <div v-if="!isPending" class="text-subtitle-2 mb-2 flex-0-0">
@@ -302,34 +392,31 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                   </v-card-text>
 
                   <!-- Action Buttons - Fixed at bottom -->
-                  <v-card-actions class="pa-4 pt-0">
+                  <v-card-actions v-if="canEdit" class="pa-4 pt-0">
                     <v-spacer></v-spacer>
-                    
-                    <template v-if="canEdit">
-                      <v-btn
-                        variant="tonal"
-                        size="large"
-                        prepend-icon="mdi-close-circle"
-                        class="mx-1"
-                        :disabled="loading || saving"
-                        :loading="rejecting"
-                        @click="markAsCannotRead(media)"
-                      >
-                        {{ translations.cantRead_ }}
-                      </v-btn>
-                      <v-btn
-                        :color="isTranscriptionChanged ? 'info' : 'primary'"
-                        variant="elevated"
-                        size="large"
-                        prepend-icon="mdi-check"
-                        class="mx-1"
-                        :disabled="loading || rejecting"
-                        :loading="saving"
-                        @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
-                      >
-                        {{ isTranscriptionChanged ? translations.saveTranscription_ : translations.acceptTranscription_ }}
-                      </v-btn>
-                    </template>
+                    <v-btn
+                      variant="tonal"
+                      size="large"
+                      prepend-icon="mdi-close-circle"
+                      class="mx-1"
+                      :disabled="loading || saving"
+                      :loading="rejecting"
+                      @click="markAsCannotRead(media)"
+                    >
+                      {{ translations.cantRead_ }}
+                    </v-btn>
+                    <v-btn
+                      color="primary"
+                      variant="elevated"
+                      size="large"
+                      prepend-icon="mdi-check"
+                      class="mx-1"
+                      :disabled="loading || rejecting"
+                      :loading="saving"
+                      @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
+                    >
+                      {{ isTranscriptionChanged ? translations.saveTranscription_ : translations.acceptTranscription_ }}
+                    </v-btn>
                   </v-card-actions>
                 </v-card>
               </div>
