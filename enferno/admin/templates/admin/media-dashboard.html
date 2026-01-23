@@ -18,32 +18,40 @@
                         <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${ocr.stats.total.toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis">{{ _('Total Media') }}</div>
+                                    <div class="text-h4 text-warning">${(ocr.stats.needs_review + ocr.stats.needs_transcription).toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis text-warning font-weight-medium">{{ _('Needs Review') }}</div>
                                 </v-card-text>
                             </v-card>
                         </v-col>
                         <v-col cols="12" md="3">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-error">${(ocr.stats.failed).toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis text-error font-weight-medium">{{ _('Failed') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
                                     <div class="text-h4 text-primary">${ocr.stats.processed.toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis">{{ _('Processed (Searchable)') }}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Processed (Searchable)') }}</div>
                                 </v-card-text>
                             </v-card>
                         </v-col>
-                        <v-col cols="12" md="3">
+                        <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${ocr.stats.needs_review.toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis">{{ _('Needs Review') }}</div>
+                                    <div class="text-h4 text-primary">${(ocr.stats.pending).toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Pending') }}</div>
                                 </v-card-text>
                             </v-card>
                         </v-col>
-                        <v-col cols="12" md="3">
+                        <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${(ocr.stats.failed + ocr.stats.pending + (ocr.stats.cant_read || 0)).toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis">{{ _('Pending/Unprocessed') }}</div>
+                                    <div class="text-h4 text-primary">${ocr.stats.total.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Total Media') }}</div>
                                 </v-card-text>
                             </v-card>
                         </v-col>
