@@ -97,26 +97,13 @@
                                     
                                     <v-text-field
                                         v-model="filters.q"
-                                        label="{{ _('Search Extracted Text') }}"
+                                        label="{{ _('Search extraction text or by ID') }}"
                                         variant="outlined"
                                         density="compact"
                                         clearable
                                         prepend-inner-icon="mdi-magnify"
                                         hide-details
-                                        width="250px"
-                                        @keyup.enter="applyFilters"
-                                    ></v-text-field>
-                                    
-                                    <v-text-field
-                                        v-model="filters.bulletin_id"
-                                        label="{{ _('Bulletin ID') }}"
-                                        variant="outlined"
-                                        density="compact"
-                                        clearable
-                                        prepend-inner-icon="mdi-pound"
-                                        hide-details
-                                        type="number"
-                                        width="150px"
+                                        width="350px"
                                         @keyup.enter="applyFilters"
                                     ></v-text-field>
                                     
@@ -308,9 +295,10 @@
                     return Object.values(this.filters).some(v => v !== null && v !== '' && v !== undefined);
                 },
                 statusOptions() {
+                    // Omit processing and manual status from filter dropdown
                     return [
                         { title: "{{_('All')}}", value: null },
-                        ...Object.values(this.statuses).map(s => ({ 
+                        ...Object.values(this.statuses).filter(s => !['processing', 'manual'].includes(s.key)).map(s => ({ 
                             title: s.text, 
                             value: s.key 
                         }))
@@ -439,6 +427,20 @@
                     this.applyFilters();
                 },
                 applyFilters() {
+                    // Parse the search query
+                    const searchValue = this.filters.q?.trim();
+                    
+                    // Check if it's a number (bulletin ID)
+                    if (searchValue && /^\d+$/.test(searchValue)) {
+                        // It's a bulletin ID
+                        this.filters.bulletin_id = searchValue;
+                        this.filters.q = '';
+                    } else {
+                        // It's text search
+                        this.filters.bulletin_id = null;
+                        // q stays as is
+                    }
+                    
                     this.refresh({ ...this.options, page: 1 });
                 },
                 refresh(options) {
