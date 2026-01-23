@@ -196,9 +196,14 @@
                             <v-chip
                                 :color="getStatusColor(getEffectiveStatus(item))"
                                 size="small"
-                                :prepend-icon="getStatusIcon(getEffectiveStatus(item))"
                                 class="flex-0-0"
                             >
+                                <template v-slot:prepend>
+                                    <v-icon 
+                                        :icon="getStatusIcon(getEffectiveStatus(item))"
+                                        :class="['mr-1', { 'mdi-spin': getEffectiveStatus(item) === 'processing' }]"
+                                    ></v-icon>
+                                </template>
                                 ${getStatusText(getEffectiveStatus(item))}
                             </v-chip>
                         </template>
@@ -230,7 +235,6 @@
         const vuetify = createVuetify(vuetifyConfig);
 
         const app = createApp({
-
             delimiters: delimiters,
             mixins: [globalMixin],
 
@@ -240,7 +244,8 @@
                 bulkLoading: false,
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 visionApiKey: '{{ config.GOOGLE_VISION_API_KEY }}',
-                bulkOcrStartedAt: null, // Track when we last ran bulk OCR
+                processingIds: new Set(), // Track media IDs being processed
+                pollInterval: null, // For periodic polling
                 options: {
                     page: 1,
                     per_page: window.itemsPerPageOptions?.[0] ?? 10,
@@ -317,11 +322,63 @@
                     this.handleRoute();
                 });
                 this.loadOCRStats();
+                this.fetchProcessingIds(); // Check for active processing on mount
+            },
 
-                this.bulkOcrStartedAt = new Date().toISOString().slice(0, 16);
+            beforeUnmount() {
+                // Clean up polling interval
+                this.stopProcessingPoll();
             },
 
             methods: {
+                // Fetch currently processing media IDs
+                async fetchProcessingIds() {
+                    try {
+                        const response = await api.get('/admin/api/ocr/processing');
+                        const newProcessingIds = new Set(response.data || []);
+                        
+                        // Detect when processing completes
+                        const wasProcessing = this.processingIds.size > 0;
+                        const isNowComplete = wasProcessing && newProcessingIds.size === 0;
+                        
+                        this.processingIds = newProcessingIds;
+                        
+                        if (isNowComplete) {
+                            // All processing complete
+                            this.showSnack("{{ _('Bulk OCR Complete') }}");
+                            this.loadOCRStats();
+                        }
+                        
+                        // Manage polling
+                        if (this.processingIds.size > 0) {
+                            this.startProcessingPoll();
+                        } else {
+                            this.stopProcessingPoll();
+                        }
+                    } catch (error) {
+                        console.error('Error fetching processing IDs:', error);
+                        this.processingIds = new Set();
+                    }
+                },
+
+                // Start periodic polling for processing status
+                startProcessingPoll() {
+                    if (this.pollInterval) return; // Already polling
+                    
+                    this.pollInterval = setInterval(() => {
+                        this.fetchProcessingIds();
+                        this.refresh(this.options); // Refresh table data
+                    }, 5000); // Poll every 5 seconds
+                },
+
+                // Stop periodic polling
+                stopProcessingPoll() {
+                    if (this.pollInterval) {
+                        clearInterval(this.pollInterval);
+                        this.pollInterval = null;
+                    }
+                },
+
                 handleRoute() {
                     if (this.$route.params.id) this.showMediaDialog(this.$route.params.id);
                 },
@@ -350,32 +407,24 @@
 
                     this.bulkLoading = true;
 
-                    // Save the timestamp when we initiate bulk OCR
-                    this.bulkOcrStartedAt = new Date().toISOString().slice(0, 16);
-
                     api.post('/admin/api/ocr/bulk', { media_ids: this.selected })
                         .then(response => {
                             this.showSnack(response.data.message);
                             this.selected = [];
+                            
+                            // Immediately fetch processing IDs and start polling
+                            this.fetchProcessingIds();
+                            
                             this.refresh(this.options);
                             this.loadOCRStats();
                         })
                         .catch(error => {
                             console.error('Bulk OCR error:', error);
                             this.showSnack("{{ _('Error processing OCR request') }}");
-                            this.bulkOcrStartedAt = null;
                         })
                         .finally(() => {
                             this.bulkLoading = false;
                         });
-                },
-                handleBulkOcrCompleted(notification) {
-                    this.refresh(this.options);
-                    this.loadOCRStats();
-                    this.showSnack(notification?.message || "{{ _('Bulk OCR Complete') }}");
-                    
-                    // Clear the timestamp after handling
-                    this.bulkOcrStartedAt = null;
                 },
                 clearFilters() {
                     this.filters = { ...this.defaultFilters };
@@ -416,6 +465,11 @@
                 },
 
                 getEffectiveStatus(item) {
+                    // Check if currently being processed
+                    if (this.processingIds.has(item.id)) {
+                        return 'processing';
+                    }
+                    
                     // Show 'manual' status for manually transcribed items
                     if (item.extraction?.manual && item.ocr_status === 'processed') {
                         return 'manual';
@@ -455,7 +509,7 @@
                     });
                 },
                 canRunOCRProcess(item) {
-                    return this.selectableStatuses.includes(item.ocr_status);
+                    return this.selectableStatuses.includes(item.ocr_status) && !this.processingIds.has(item.id);
                 },
             },
             watch: {
@@ -474,26 +528,6 @@
                         this.applyFilters();
                     }
                 },
-                'notifications.items': {
-                    handler(newItems, oldItems) {
-                        if (!newItems?.length) return;
-                        
-                        const oldIds = new Set((oldItems || []).map(n => n.id));
-                        const freshNotifications = newItems.filter(n => !oldIds.has(n.id));
-                        
-                        freshNotifications.forEach(notification => {
-                            if (notification.title === 'Bulk OCR Complete') {
-                                // Only process if we have an active bulk OCR request
-                                // AND the notification was created after we started it
-                                if (this.bulkOcrStartedAt && 
-                                    new Date(notification.created_at) >= new Date(this.bulkOcrStartedAt)) {
-                                    this.handleBulkOcrCompleted(notification);
-                                }
-                            }
-                        });
-                    },
-                    deep: true
-                }
             },
         });
 
