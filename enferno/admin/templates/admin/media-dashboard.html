@@ -333,7 +333,12 @@
                         const response = await api.get('/admin/api/ocr/processing');
                         const newProcessingIds = new Set(response.data || []);
                         
-                        // Detect when processing completes
+                        // Check if the currently open media just finished processing
+                        const currentMediaId = this.mediaDialog.data?.id;
+                        const currentMediaWasProcessing = currentMediaId && this.processingIds.has(currentMediaId);
+                        const currentMediaFinished = currentMediaWasProcessing && !newProcessingIds.has(currentMediaId);
+                        
+                        // Detect when ALL processing completes
                         const wasProcessing = this.processingIds.size > 0;
                         const isNowComplete = wasProcessing && newProcessingIds.size === 0;
                         
@@ -343,16 +348,14 @@
                             // All processing complete
                             this.showSnack("{{ _('Bulk OCR Complete') }}");
                             this.loadOCRStats();
-                            
-                            // If dialog is open, reload the media to get fresh data
-                            if (this.mediaDialog.show && this.mediaDialog.data?.id) {
-                                this.showMediaDialog(this.mediaDialog.data.id);
-                            }
-                        } else {
-                            // If dialog is open and media is being processed, update its status
-                            if (this.mediaDialog.show && this.mediaDialog.data?.id) {
-                                this.mediaDialog.data.ocr_status = this.getEffectiveStatus(this.mediaDialog.data);
-                            }
+                        }
+                        
+                        // If the currently open media just finished, reload it
+                        if (this.mediaDialog.show && currentMediaFinished) {
+                            this.showMediaDialog(currentMediaId);
+                        } else if (this.mediaDialog.show && currentMediaId) {
+                            // Just update the status without reloading
+                            this.mediaDialog.data.ocr_status = this.getEffectiveStatus(this.mediaDialog.data);
                         }
                         
                         // Manage polling
