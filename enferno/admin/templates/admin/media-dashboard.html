@@ -26,7 +26,7 @@
                         <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-error">${(ocr.stats.failed).toLocaleString()}</div>
+                                    <div class="text-h4 text-error">${(ocr.stats.failed + ocr.stats.cant_read).toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis text-error font-weight-medium">{{ _('Failed') }}</div>
                                 </v-card-text>
                             </v-card>
