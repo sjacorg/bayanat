@@ -161,12 +161,11 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
         <v-card-text class="flex-1-1 pa-0 overflow-y-auto">
           <split-view :left-width-percent="50">
+            <!-- Left Side - Image Preview -->
             <template #left>
-              <!-- Left Side - Image Preview -->
               <div class="d-flex flex-column py-4 pl-4 pr-2" style="height: 100%;">
-                <v-card variant="outlined" class="border-thin flex-1-1 d-flex flex-column">
+                <v-card class="border-thin flex-1-1 d-flex flex-column">
                   <v-card-text class="pa-4 flex-1-1 d-flex flex-column">
-                    <!-- Skeleton loader for image -->
                     <v-skeleton-loader
                       v-if="loading"
                       class="flex-1-1"
@@ -186,61 +185,68 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                 </v-card>
               </div>
             </template>
+
+            <!-- Right Side - Info Panel -->
             <template #right>
-              <!-- Right Side - Info Panel -->
               <div class="d-flex flex-column py-4 pl-2 pr-4" style="height: 100%;">
-                <v-card variant="outlined" class="border-thin flex-1-1 d-flex flex-column overflow-hidden">
+                <v-card class="border-thin flex-1-1 d-flex flex-column overflow-hidden">
                   <v-card-text class="flex-1-1 overflow-y-auto pa-4 d-flex flex-column">
-                    <div class="flex-0-0 d-flex align-center ga-6">
-                      <!-- Bulletin Info -->
-                      <div class="flex-0-0">
-                        <v-skeleton-loader
-                          v-if="loading"
-                          width="175"
-                          height="36"
-                        ></v-skeleton-loader>
-
-                        <a
-                          v-else
-                          class="mx-2 text-decoration-underline"
-                          :href="'/admin/bulletins/' + media.bulletin.id"
-                          target="_blank"
-                        >
-                            {{ translations.previewBulletin_ }} #{{ media.bulletin.id }}
+                    <!-- Metadata Card -->
+                    <v-card class="flex-0-0 mb-4">
+                      <v-card-text class="d-flex ga-6">
+                        <!-- Bulletin Info -->
+                        <div class="flex-0-0">
+                          <div class="text-subtitle-2">{{ translations.bulletin_ }}</div>
+                          <v-skeleton-loader
+                            v-if="loading"
+                            width="75"
+                            height="20"
+                          ></v-skeleton-loader>
+                          <v-btn
+                            v-else
+                            density="compact"
+                            color="primary"
+                            variant="text"
+                            :href="'/admin/bulletins/' + media.bulletin.id"
+                            target="_blank"
+                            class="px-1"
+                          >
+                            #{{ media.bulletin.id }}
                             <v-icon size="small" class="ml-1">mdi-open-in-new</v-icon>
-                        </a>
-                      </div>
+                          </v-btn>
+                        </div>
 
-                      <!-- Confidence -->
-                      <div v-if="media?.extraction || loading" class="flex-1-1">
-                        <div class="text-subtitle-2 mb-2">{{ translations.confidence_ }}</div>
-                        
-                        <v-skeleton-loader
-                          v-if="loading"
-                          width="100%"
-                          height="44"
-                        ></v-skeleton-loader>
-                        
-                        <template v-else>
+                        <!-- Confidence -->
+                        <div v-if="media?.extraction || loading" class="flex-1-1">
+                          <div class="text-subtitle-2 mb-1 d-flex justify-space-between">
+                            {{ translations.confidenceLevel_ }}
+                            <span v-if="!loading" class="text-caption text-medium-emphasis">
+                              {{ getConfidenceLabel(media?.extraction?.confidence) }}
+                            </span>
+                          </div>
+                          
+                          <v-skeleton-loader
+                            v-if="loading"
+                            width="100%"
+                            height="16"
+                          ></v-skeleton-loader>
+                          
                           <v-progress-linear
+                              v-else
                               :model-value="media?.extraction?.confidence"
                               :color="getConfidenceColor(media?.extraction?.confidence)"
-                              height="20"
+                              height="16"
                               rounded
                           >
-                              <template v-slot:default>
-                                  <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
-                              </template>
+                            <template v-slot:default>
+                              <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
+                            </template>
                           </v-progress-linear>
-                          <div class="text-caption text-medium-emphasis mt-1">
-                              {{ getConfidenceLabel(media?.extraction?.confidence) }}
-                          </div>
-                        </template>
-                      </div>
-                    </div>
-                    <v-divider class="my-4 flex-0-0"></v-divider>
+                        </div>
+                      </v-card-text>
+                    </v-card>
 
-                    <!-- Extracted Text - This takes remaining space -->
+                    <!-- Extracted Text Section -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
                       <div v-if="!isPending" class="text-subtitle-2 mb-2 flex-0-0">
                         {{ translations.extractedText_ }}
@@ -257,7 +263,28 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         icon="mdi-text-recognition"
                         :text="translations.clickRunOCR_"
                         :title="translations.ocrNotRunYet_"
-                      ></v-empty-state>
+                      >
+                        <template v-slot:actions>
+                          <v-tooltip location="top" :disabled="Boolean($root.visionApiKey)">
+                            <template v-slot:activator="{ props }">
+                              <div v-bind="props">
+                                <v-btn
+                                  color="primary"
+                                  variant="elevated"
+                                  size="large"
+                                  prepend-icon="mdi-text-recognition"
+                                  :disabled="loading || !$root.visionApiKey"
+                                  :loading="saving"
+                                  @click="runOCRProcess()"
+                                >
+                                  {{ translations.runOCR_ }}
+                                </v-btn>
+                              </div>
+                            </template>
+                            {{ translations.googleVisionApiHasNotBeenConfigured_ }}
+                          </v-tooltip>
+                        </template>
+                      </v-empty-state>
                       
                       <!-- Show textarea for items with extraction -->
                       <v-textarea
@@ -278,30 +305,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                   <v-card-actions class="pa-4 pt-0">
                     <v-spacer></v-spacer>
                     
-                    <!-- Pending/Failed State - Show "Run OCR" button -->
-                    <template v-if="isPending">
-                      <v-tooltip location="top" :disabled="Boolean($root.visionApiKey)">
-                        <template v-slot:activator="{ props }">
-                          <div v-bind="props">
-                            <v-btn
-                              color="primary"
-                              variant="elevated"
-                              size="large"
-                              prepend-icon="mdi-text-recognition"
-                              :disabled="loading || !$root.visionApiKey"
-                              :loading="saving"
-                              @click="runOCRProcess()"
-                            >
-                              {{ translations.runOCR_ }}
-                            </v-btn>
-                          </div>
-                        </template>
-                          {{ translations.googleVisionApiHasNotBeenConfigured_ }}
-                      </v-tooltip>
-                    </template>
-                    
-                    <!-- Needs Review/Transcription State - Show edit buttons -->
-                    <template v-else-if="canEdit">
+                    <template v-if="canEdit">
                       <v-btn
                         variant="tonal"
                         size="large"
