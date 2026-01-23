@@ -173,7 +173,7 @@
                                 rounded="lg"
                                 class="cursor-pointer"
                             >   
-                                <image-viewer mode="click" :media="{ thumbnail_url: item.thumbnail_url, s3url: item.url }"></image-viewer>
+                                <v-img :src="item.thumbnail_url" alt="thumbnail"></v-img>
                             </v-avatar>
                         </template>
 
