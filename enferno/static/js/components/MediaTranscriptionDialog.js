@@ -344,7 +344,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                     <!-- Extracted Text Section -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
-                      <div v-if="!(isPending || isFailed)" class="text-subtitle-2 mb-2 flex-0-0">
+                      <div v-if="!(isPending || isFailed || isProcessing)" class="text-subtitle-2 mb-2 flex-0-0">
                         {{ translations.extractedText_ }}
                       </div>
                       
