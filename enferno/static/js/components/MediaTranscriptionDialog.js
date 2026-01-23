@@ -32,14 +32,20 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     canEdit() {
       return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
     },
+    isProcessing() {
+      return this.media?.ocr_status === 'processing';
+    },
     isPending() {
-      return ['pending', 'failed'].includes(this.media?.ocr_status);
+      return this.media?.ocr_status === 'pending';
+    },
+    isFailed() {
+      return this.media?.ocr_status === 'failed';
     },
     isCantRead() {
       return this.media?.ocr_status === 'cant_read';
     },
     isProcessed() {
-      return this.media?.ocr_status === 'processed';
+      return ['processed', 'manual'].includes(this.media?.ocr_status);
     }
   },
   methods: {
@@ -338,7 +344,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                     <!-- Extracted Text Section -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
-                      <div v-if="!isPending" class="text-subtitle-2 mb-2 flex-0-0">
+                      <div v-if="!(isPending || isFailed)" class="text-subtitle-2 mb-2 flex-0-0">
                         {{ translations.extractedText_ }}
                       </div>
                       
@@ -346,13 +352,29 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         v-if="loading"
                         class="flex-1-1"
                       ></v-skeleton-loader>
-                      
-                      <!-- Show message for pending items -->
+
+                      <!-- Show message for processing items -->
                       <v-empty-state
-                        v-else-if="isPending"
-                        icon="mdi-text-recognition"
-                        :text="translations.clickRunOCR_"
-                        :title="translations.ocrNotRunYet_"
+                        v-else-if="isProcessing"
+                        icon="mdi-cog-outline"
+                        :text="translations.pleaseWaitWhileWeProcessThisMedia_"
+                        :title="translations.processing_"
+                      >
+                        <template v-slot:actions>
+                          <v-progress-circular
+                            indeterminate
+                            color="primary"
+                            size="64"
+                          ></v-progress-circular>
+                        </template>
+                      </v-empty-state>
+                      
+                      <!-- Show message for pending/failed items without extraction -->
+                      <v-empty-state
+                        v-else-if="isPending || isFailed"
+                        :icon="isFailed ? 'mdi-alert-circle-outline' : 'mdi-text-recognition'"
+                        :text="isFailed ? translations.clickRetryOCR_ : translations.clickRunOCR_"
+                        :title="isFailed ? translations.ocrProcessingFailed_ : translations.ocrNotRunYet_"
                       >
                         <template v-slot:actions>
                           <v-tooltip location="top" :disabled="Boolean($root.visionApiKey)">
@@ -367,7 +389,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                                   :loading="saving"
                                   @click="runOCRProcess()"
                                 >
-                                  {{ translations.runOCR_ }}
+                                  {{ isFailed ? translations.retryOCR_ : translations.runOCR_ }}
                                 </v-btn>
                               </div>
                             </template>

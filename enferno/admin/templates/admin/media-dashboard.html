@@ -343,6 +343,16 @@
                             // All processing complete
                             this.showSnack("{{ _('Bulk OCR Complete') }}");
                             this.loadOCRStats();
+                            
+                            // If dialog is open, reload the media to get fresh data
+                            if (this.mediaDialog.show && this.mediaDialog.data?.id) {
+                                this.showMediaDialog(this.mediaDialog.data.id);
+                            }
+                        } else {
+                            // If dialog is open and media is being processed, update its status
+                            if (this.mediaDialog.show && this.mediaDialog.data?.id) {
+                                this.mediaDialog.data.ocr_status = this.getEffectiveStatus(this.mediaDialog.data);
+                            }
                         }
                         
                         // Manage polling
@@ -383,7 +393,11 @@
                     this.mediaDialog.show = true;
 
                     api.get(`/admin/api/media/${id}`).then(response => {
-                        this.mediaDialog.data = response.data;
+                        // Only update if dialog is still open
+                        if (this.mediaDialog.show) {
+                            this.mediaDialog.data = response.data;
+                            this.mediaDialog.data.ocr_status = this.getEffectiveStatus(response.data);
+                        }
                     }).catch(error => {
                         console.error('Error loading media:', error);
                         this.showSnack("{{ _('Error loading media') }}");
@@ -505,6 +519,8 @@
                     this.showMediaDialog(media.id);
                     this.refresh();
                     this.loadOCRStats();
+                    // Also fetch processing IDs in case this item just finished
+                    this.fetchProcessingIds();
                 },
                 resetMediaDialog() {
                     this.mediaDialog.show = false;
