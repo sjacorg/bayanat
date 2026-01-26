@@ -6393,7 +6393,9 @@ def api_config_write(
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
         )
-        return HTTPResponse.success(message="Configuration Saved Successfully")
+        return HTTPResponse.success(
+            message="Configuration saved. Secrets excluded from revision history."
+        )
     else:
         return HTTPResponse.error("Unable to Save Configuration", status=500)
 

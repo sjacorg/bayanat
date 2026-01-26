@@ -55,8 +55,8 @@ const SelectFieldTypeDialog = Vue.defineComponent({
   methods: {
     async create({ field_type, ui_component }) {
       try {
-        const nextNumber = this.$root.formBuilder.dynamicFields.filter(field => !field.core).length + 1
-        const sortOrders = this.$root.formBuilder.dynamicFields.map(f => f.sort_order ?? 0);
+        const nextNumber = this.$root.formBuilder.dynamicFields[this.entityType].filter(field => !field.core).length + 1
+        const sortOrders = this.$root.formBuilder.dynamicFields[this.entityType].map(f => f.sort_order ?? 0);
         const nextSort = (sortOrders.length ? Math.max(...sortOrders) : 0) + 1;
 
         const field = {

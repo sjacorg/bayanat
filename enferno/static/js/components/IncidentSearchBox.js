@@ -148,7 +148,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-            <v-col v-if="$root.isFieldActiveByName('events_section')" cols="12">
+            <v-col v-if="$root.isFieldActiveByName('events_section', { entityType: 'incident' })" cols="12">
               <v-card class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
@@ -234,7 +234,7 @@ const IncidentSearchBox = Vue.defineComponent({
                     multiple
                     v-model="q.assigned"
                 >
-                  <v-chip :value="user.id" small label v-for="user in users" filter outlined>{{ user.name }}</v-chip>
+                  <v-chip :value="user.id" small label v-for="user in users" filter outlined>{{ user.display_name }}</v-chip>
                 </v-chip-group>
               </v-col>
             </v-row>
@@ -248,7 +248,7 @@ const IncidentSearchBox = Vue.defineComponent({
                     multiple
                     v-model="q.reviewer"
                 >
-                  <v-chip label :value="user.id" small v-for="user in users" filter outlined>{{ user.name }}</v-chip>
+                  <v-chip label :value="user.id" small v-for="user in users" filter outlined>{{ user.display_name }}</v-chip>
                 </v-chip-group>
               </v-col>
             </v-row>
@@ -285,7 +285,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col v-if="$root.isFieldActiveByName('potential_violations')" cols="12">
+              <v-col v-if="$root.isFieldActiveByName('potential_violations', { entityType: 'incident' })" cols="12">
                 <span class="caption pt-2">{{ translations.potentialViolationsCategories_ }}</span>
                 <v-chip-group
                     column
@@ -306,7 +306,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col v-if="$root.isFieldActiveByName('claimed_violations')" cols="12">
+              <v-col v-if="$root.isFieldActiveByName('claimed_violations', { entityType: 'incident' })" cols="12">
                 <span class="caption pt-2">{{ translations.claimedViolationsCategories_ }}</span>
                 <v-chip-group
                     column
@@ -327,7 +327,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col v-if="$root.isFieldActiveByName('labels')">
+              <v-col v-if="$root.isFieldActiveByName('labels', { entityType: 'incident' })">
                 <div class="d-flex">
                   <search-field
                       v-model="q.labels"
@@ -358,7 +358,7 @@ const IncidentSearchBox = Vue.defineComponent({
 
 
             <v-row>
-              <v-col v-if="$root.isFieldActiveByName('locations')">
+              <v-col v-if="$root.isFieldActiveByName('locations', { entityType: 'incident' })">
                 <div class="d-flex">
                   <location-search-field
                       v-model="q.locations"
@@ -387,7 +387,7 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <div>
-              <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields" :key="index">
+              <div v-for="(field, index) in this.$root.formBuilder.searchableDynamicFields.incident" :key="index">
                 <v-text-field
                     v-if="['text', 'long_text'].includes(field.field_type)"
                     :label="field.title"
