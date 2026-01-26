@@ -32,6 +32,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         id: this.media.id 
       };
     },
+    needsReview() {
+      return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
+    },
     canEdit() {
       return ['needs_review', 'needs_transcription', 'processed', 'manual'].includes(this.media?.ocr_status);
     },
@@ -58,7 +61,25 @@ const MediaTranscriptionDialog = Vue.defineComponent({
           textShadow: `1px 1px 4px rgba(0, 0, 0, ${hasConfidence ? 1 : 0})` 
         }
       }
-    }
+    },
+    effectiveWordCount() {
+      // If user is editing, count words in their text
+      if (this.isTranscriptionChanged) {
+        return this.$root.countWords(this.transcriptionText);
+      }
+      
+      // Use API word count or fallback to counting the text
+      const apiCount = this.media?.extraction?.word_count;
+      if (apiCount > 0) {
+        return apiCount;
+      }
+      
+      // Count from text as fallback
+      return this.$root.countWords(this.media?.extraction?.text);
+    },
+    isLowWordCount() {
+      return this.effectiveWordCount > 0 && this.effectiveWordCount < this.$root.lowWordCount;
+    },
   },
   methods: {
     closeDialog() {
@@ -236,7 +257,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         </div>
 
                         <!-- Detected Language -->
-                        <div v-if="media?.extraction?.language || loading || true" class="flex-0-0">
+                        <div v-if="media?.extraction?.language || loading" class="flex-0-0">
                           <div class="text-subtitle-2">{{ translations.language_ }}</div>
                           <v-skeleton-loader
                             v-if="loading"
@@ -249,6 +270,25 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                             prepend-icon="mdi-translate"
                           >
                             {{ media?.extraction?.language?.toUpperCase() }}
+                          </v-chip>
+                        </div>
+
+                        <!-- Word Count -->
+                        <div v-if="media?.extraction || loading" class="flex-0-0">
+                          <div class="text-subtitle-2">{{ translations.wordCount_ }}</div>
+                          <v-skeleton-loader
+                            v-if="loading"
+                            width="75"
+                            height="20"
+                          ></v-skeleton-loader>
+                          <v-chip
+                            v-else
+                            density="compact"
+                            prepend-icon="mdi-format-letter-case"
+                            :color="isLowWordCount ? 'warning' : 'default'"
+                            :variant="isLowWordCount ? 'tonal' : 'flat'"
+                          >
+                            {{ effectiveWordCount }}
                           </v-chip>
                         </div>
 
@@ -275,12 +315,28 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                               rounded
                           >
                             <template v-slot:default>
-                              <strong v-bind="progressBarTextProps">{{ Math.round(media?.extraction?.confidence) }}</strong>
+                              <strong v-bind="progressBarTextProps">{{ Math.round(media?.extraction?.confidence ?? 0) }}</strong>
                             </template>
                           </v-progress-linear>
                         </div>
                       </v-card-text>
                     </v-card>
+
+                    <!-- Alert for low word count - only show when viewing, not editing -->
+                    <v-alert
+                      v-if="isLowWordCount && !isTranscriptionChanged && needsReview"
+                      color="info"
+                      variant="tonal"
+                      density="compact"
+                      icon="mdi-information-outline"
+                      class="mb-3 flex-0-0"
+                      :title="translations.reviewRecommended_"
+                    >
+                      <template v-slot:text>
+                        <div>{{ translations.thisDocumentHasOnlyXWords_.replace('{count}', effectiveWordCount) }}</div>
+                        <div>{{ translations.considerCheckingForHandwrittenContent_ }}</div>
+                      </template>
+                    </v-alert>
 
                     <!-- Alert for cant_read status -->
                     <v-alert

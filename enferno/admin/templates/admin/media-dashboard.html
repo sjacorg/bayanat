@@ -200,19 +200,35 @@
 
                         <!-- OCR Status Column -->
                         <template #item.ocr_status="{ item }">
-                            <v-chip
+                            <div class="d-flex align-center ga-1">
+                                <v-chip
                                 :color="getStatusColor(getEffectiveStatus(item))"
                                 size="small"
                                 class="flex-0-0"
-                            >
+                                >
                                 <template v-slot:prepend>
                                     <v-icon 
-                                        :icon="getStatusIcon(getEffectiveStatus(item))"
-                                        :class="['mr-1', { 'mdi-spin': getEffectiveStatus(item) === 'processing' }]"
+                                    :icon="getStatusIcon(getEffectiveStatus(item))"
+                                    :class="['mr-1', { 'mdi-spin': getEffectiveStatus(item) === 'processing' }]"
                                     ></v-icon>
                                 </template>
                                 ${getStatusText(getEffectiveStatus(item))}
-                            </v-chip>
+                                </v-chip>
+                                
+                                <!-- Low word count indicator -->
+                                <v-tooltip v-if="hasLowWordCount(item)" location="top">
+                                    <template v-slot:activator="{ props }">
+                                        <v-icon 
+                                        v-bind="props"
+                                        color="grey-darken-1" 
+                                        size="small"
+                                        >
+                                        mdi-alert-circle-outline
+                                        </v-icon>
+                                    </template>
+                                {{ _('Low Word Count') }}: ${getEffectiveWordCount(item)} {{ _('words') }}
+                                </v-tooltip>
+                            </div>
                         </template>
 
                         <!-- Date Column -->
@@ -299,7 +315,8 @@
                     needs_transcription: { key: 'needs_transcription', text: "{{_('Needs Transcription')}}", color: 'purple', icon: 'mdi-alphabetical' },
                     cant_read: { key: 'cant_read', text: "{{_('Can\'t Read')}}", color: 'brown', icon: 'mdi-eye-off-outline' },
                     failed: { key: 'failed', text: "{{_('Failed')}}", color: 'red', icon: 'mdi-close-circle-outline' },
-                }
+                },
+                lowWordCount: 20
             }),
 
             computed: {
@@ -339,6 +356,27 @@
             },
 
             methods: {
+                countWords(text) {
+                    if (!text || !text.trim()) return 0;
+                    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+                },
+                
+                getEffectiveWordCount(item) {
+                    // Use API word count if available
+                    const apiCount = item.extraction?.word_count;
+                    if (apiCount > 0) return apiCount;
+                    // Fallback: count from text
+                    return this.countWords(item.extraction?.text);
+                },
+                
+                hasLowWordCount(item) {
+                    // Only show for items that need review
+                    const needsReview = ['needs_review', 'needs_transcription'].includes(item.ocr_status);
+                    if (!needsReview) return false;
+                    
+                    const count = this.getEffectiveWordCount(item);
+                    return count > 0 && count < this.lowWordCount;
+                },
                 // Fetch currently processing media IDs
                 async fetchProcessingIds() {
                     try {
