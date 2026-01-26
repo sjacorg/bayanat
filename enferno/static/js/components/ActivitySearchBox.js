@@ -51,7 +51,7 @@ const ActivitySearchBox = Vue.defineComponent({
                                 
                         >
                             <v-chip :value="user.id" small label v-for="user in $root.users" filter
-                                    >{{user.name}}</v-chip>
+                                    >{{user.display_name}}</v-chip>
                         </v-chip-group>
         </v-card-text>
         <v-card-text>
