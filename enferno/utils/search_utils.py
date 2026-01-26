@@ -339,13 +339,32 @@ class SearchUtils:
             conditions.append(Bulletin.id.in_(ids))
 
         # Text search - PERFORMANCE OPTIMIZED
+        # Searches both bulletin fields AND OCR extracted text from attached media
         if tsv := q.get("tsv"):
-            words = tsv.split(" ")
-            # Use individual ILIKE conditions instead of ILIKE ALL() to enable GIN trigram index usage
-            # This changes execution from Sequential Scan to Bitmap Index Scan (200x faster)
-            word_conditions = [Bulletin.search.ilike(f"%{word}%") for word in words if word.strip()]
-            if word_conditions:
-                conditions.extend(word_conditions)
+            words = [w for w in tsv.split(" ") if w.strip()]
+            if words:
+                # Fast path: bulletin.search - individual ILIKEs enable GIN trigram index (200x faster)
+                bulletin_conditions = [Bulletin.search.ilike(f"%{word}%") for word in words]
+
+                # ONE subquery for OCR - all words must match in extraction text
+                # Includes trusted extractions: processed, needs_review, or manually transcribed
+                ocr_subquery = (
+                    select(Media.bulletin_id)
+                    .join(Extraction, Media.id == Extraction.media_id)
+                    .where(
+                        or_(
+                            Extraction.status.in_(["processed", "needs_review"]),
+                            Extraction.manual == True,
+                        )
+                    )
+                    .where(Extraction.text.isnot(None))
+                )
+                for word in words:
+                    ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
+
+                # Combine: (all words in bulletin) OR (all words in OCR)
+                # This preserves index usage on bulletin.search while adding OCR results
+                conditions.append(or_(and_(*bulletin_conditions), Bulletin.id.in_(ocr_subquery)))
 
         # exclude  filter - OPTIMIZED APPROACH using raw SQL
         extsv = q.get("extsv")
@@ -365,21 +384,26 @@ class SearchUtils:
 
                 conditions.append(raw_condition)
 
-        # OCR text search - search in extracted text from media
+        # OCR text search - search ONLY in extracted text from media (dedicated filter)
         if ocr := q.get("ocr"):
-            words = ocr.split(" ")
-            # Find bulletins that have media with matching extraction text
-            # Include both processed and needs_review (has text but awaiting review)
-            ocr_subquery = (
-                select(Media.bulletin_id)
-                .join(Extraction, Media.id == Extraction.media_id)
-                .where(Extraction.status.in_(["processed", "needs_review"]))
-                .where(Extraction.text.isnot(None))
-            )
-            for word in words:
-                if word.strip():
+            words = [w for w in ocr.split(" ") if w.strip()]
+            if words:
+                # Find bulletins that have media with matching extraction text
+                # Includes trusted extractions: processed, needs_review, or manually transcribed
+                ocr_subquery = (
+                    select(Media.bulletin_id)
+                    .join(Extraction, Media.id == Extraction.media_id)
+                    .where(
+                        or_(
+                            Extraction.status.in_(["processed", "needs_review"]),
+                            Extraction.manual == True,
+                        )
+                    )
+                    .where(Extraction.text.isnot(None))
+                )
+                for word in words:
                     ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
-            conditions.append(Bulletin.id.in_(ocr_subquery))
+                conditions.append(Bulletin.id.in_(ocr_subquery))
 
         # Origin ID
         originid = (q.get("originid") or "").strip()
