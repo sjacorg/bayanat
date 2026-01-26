@@ -360,6 +360,15 @@ class User(UserMixin, db.Model, BaseMixin):
             pass
         return f"user-{self.id}"
 
+    @property
+    def display_name(self):
+        """Return name with username in parentheses for disambiguation in dropdowns."""
+        name = self.secure_name
+        username = self.secure_username
+        if username and username != name:
+            return f"{name} ({username})"
+        return name
+
     def can_access(self, obj: Any) -> bool:
         """
         check if user can access a specific entity.
@@ -525,6 +534,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "name": self.secure_name,
             "username": self.secure_username,
             "status": self.status.value,
+            "display_name": self.display_name,
         }
 
     def to_dict(self) -> dict:
@@ -538,6 +548,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "email": self.secure_email,
             "username": self.secure_username,
             "status": self.status.value,
+            "display_name": self.display_name,
             "roles": [role.to_dict() for role in self.roles],
             "view_usernames": self.view_usernames,
             "view_simple_history": self.view_simple_history,
