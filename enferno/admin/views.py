@@ -3237,6 +3237,9 @@ def api_bulletins(validated_data: dict) -> Response:
 
         total_count = None
 
+    # Get OCR match info for search results (which bulletins matched via image text)
+    ocr_matched_ids = search.get_ocr_matched_ids([item.id for item in items])
+
     # Minimal serialization for list view with permission checks
     serialized_items = []
     for item in items:
@@ -3267,6 +3270,7 @@ def api_bulletins(validated_data: dict) -> Response:
                     ),
                     "_status": item.status,
                     "review_action": item.review_action,
+                    "ocr_match": item.id in ocr_matched_ids,
                 }
             )
         else:
