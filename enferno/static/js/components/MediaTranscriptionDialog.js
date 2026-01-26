@@ -46,6 +46,15 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     isProcessed() {
       return ['processed', 'manual'].includes(this.media?.ocr_status);
+    },
+    progressBarTextProps() {
+      const hasConfidence = this.media?.extraction?.confidence > 0;
+      return {
+        class: hasConfidence ? 'text-white' : '',
+        style: { 
+          textShadow: `1px 1px 4px rgba(0, 0, 0, ${hasConfidence ? 1 : 0})` 
+        }
+      }
     }
   },
   methods: {
@@ -248,7 +257,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                               rounded
                           >
                             <template v-slot:default>
-                              <strong>{{ Math.round(media?.extraction?.confidence) }}</strong>
+                              <strong v-bind="progressBarTextProps">{{ Math.round(media?.extraction?.confidence) }}</strong>
                             </template>
                           </v-progress-linear>
                         </div>
