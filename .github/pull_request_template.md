@@ -1,17 +1,8 @@
-## Jira Issue
-1. [Add links to jira issues]
-
 ## Description
-[Brief description of changes]
+[What does this PR do?]
 
-## Checklist
-- [ ] Tests added/updated
-- [ ] Documentation updated (if needed)
-- [ ] New strings prepared for translations
+## How to Test
+[How to validate these changes]
 
-## API Changes (if applicable)
-- [ ] Permissions checked
-- [ ] Endpoint tests added
-
-## Additional Notes
-[Any other relevant information]
+## Jira ID (if applicable)
+[e.g., BYNT-123]
