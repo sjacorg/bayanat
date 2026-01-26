@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS extraction (
     reviewed_by INTEGER,
     reviewed_at TIMESTAMP,
 
-    -- Timestamps
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    -- Timestamps (BaseMixin fields)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN
 );
 
 -- Indexes for query performance

@@ -1,9 +1,11 @@
 """Text extraction results from OCR processing."""
 
 from enferno.extensions import db
+from enferno.utils.base import BaseMixin
+from enferno.utils.date_helper import DateHelper
 
 
-class Extraction(db.Model):
+class Extraction(db.Model, BaseMixin):
     """OCR extraction result linked 1:1 with Media."""
 
     __tablename__ = "extraction"
@@ -20,7 +22,6 @@ class Extraction(db.Model):
 
     reviewed_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     reviewed_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
 
     media = db.relationship("Media", backref=db.backref("extraction", uselist=False), uselist=False)
     reviewer = db.relationship("User", foreign_keys=[reviewed_by])
@@ -35,6 +36,7 @@ class Extraction(db.Model):
             "status": self.status,
             "manual": self.manual,
             "reviewed_by": self.reviewed_by,
-            "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "reviewed_at": DateHelper.serialize_datetime(self.reviewed_at),
+            "created_at": DateHelper.serialize_datetime(self.created_at),
+            "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }
