@@ -194,6 +194,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         :media="mediaRendererData"
                         media-type="image"
                         :use-metadata="true"
+                        :initial-rotation="media?.extraction?.orientation || 0"
                         hide-close
                         ref="inlineMediaRendererRef"
                         content-style="height: calc(100vh - 174px);"
