@@ -21,6 +21,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     isTranscriptionChanged() {
       return this.transcriptionText !== this.media?.extraction?.text;
     },
+    isTranscriptionEmpty() {
+      return !this.transcriptionText || this.transcriptionText.trim() === '';
+    },
     mediaRendererData() {
       return {
         thumbnail_url: this.media.thumbnail_url, 
@@ -30,7 +33,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       };
     },
     canEdit() {
-      return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
+      return ['needs_review', 'needs_transcription', 'processed', 'manual'].includes(this.media?.ocr_status);
     },
     isProcessing() {
       return this.media?.ocr_status === 'processing';
@@ -110,7 +113,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         })
         .catch(error => {
           console.error('Transcribe error:', error);
-          this.$root.showSnack(this.translations.errorSavingTranscription_ || 'Error saving transcription');
         })
         .finally(() => {
           this.saving = false;
@@ -127,7 +129,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         })
         .catch(error => {
           console.error('Accept error:', error);
-          this.$root.showSnack(this.translations.errorAcceptingTranscription_ || 'Error accepting transcription');
         })
         .finally(() => {
           this.saving = false;
@@ -144,7 +145,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         })
         .catch(error => {
           console.error('Reject error:', error);
-          this.$root.showSnack(this.translations.errorRejectingMedia_ || 'Error rejecting media');
         })
         .finally(() => {
           this.rejecting = false;
@@ -354,7 +354,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     <!-- Extracted Text Section -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
                       <div v-if="!(isPending || isFailed || isProcessing)" class="text-subtitle-2 mb-2 flex-0-0">
-                        {{ translations.extractedText_ }}
+                        {{ translations.extractedText_ }} <span v-if="canEdit" class="text-error">*</span>
                       </div>
                       
                       <v-skeleton-loader
@@ -426,6 +426,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                   <v-card-actions v-if="canEdit" class="pa-4 pt-0">
                     <v-spacer></v-spacer>
                     <v-btn
+                      v-if="!isProcessed"
                       variant="tonal"
                       size="large"
                       prepend-icon="mdi-close-circle"
@@ -436,18 +437,25 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     >
                       {{ translations.cantRead_ }}
                     </v-btn>
-                    <v-btn
-                      color="primary"
-                      variant="elevated"
-                      size="large"
-                      prepend-icon="mdi-check"
-                      class="mx-1"
-                      :disabled="loading || rejecting"
-                      :loading="saving"
-                      @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
-                    >
-                      {{ isTranscriptionChanged ? translations.saveTranscription_ : translations.acceptTranscription_ }}
-                    </v-btn>
+                    <v-tooltip location="top" :disabled="!isTranscriptionEmpty">
+                      <template v-slot:activator="{ props }">
+                        <div v-bind="props">
+                          <v-btn
+                            color="primary"
+                            variant="elevated"
+                            size="large"
+                            prepend-icon="mdi-check"
+                            class="mx-1"
+                            :disabled="loading || rejecting || isTranscriptionEmpty"
+                            :loading="saving"
+                            @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
+                          >
+                            {{ isTranscriptionChanged || isProcessed ? translations.saveTranscription_ : translations.acceptTranscription_ }}
+                          </v-btn>
+                        </div>
+                      </template>
+                      {{ translations.transcriptionIsRequired_ }}
+                    </v-tooltip>
                   </v-card-actions>
                 </v-card>
               </div>
