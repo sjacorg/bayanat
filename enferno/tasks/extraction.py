@@ -59,28 +59,31 @@ def process_media_extraction_task(media_id: int, language_hints: list = None) ->
 
         # OCR via Google Vision
         hints = language_hints or DEFAULT_LANGUAGE_HINTS
-        text, confidence, raw = _extract_text(file_path, hints)
-        if text is None:
-            # Create failed extraction record so item doesn't stay in pending
-            _save_failed_extraction(media_id, "Vision API failed", raw)
+        result = _extract_text(file_path, hints)
+        if result is None:
+            _save_failed_extraction(media_id, "Vision API failed")
             return {"success": False, "media_id": media_id, "error": "Vision API failed"}
 
-        # Route by confidence
+        confidence = result["confidence"]
         status = _route_by_confidence(confidence)
 
         # Save
         extraction = Extraction(
             media_id=media_id,
-            text=_normalize(text),
-            raw=raw,
+            text=_normalize(result["text"]),
+            raw=result["raw"],
             confidence=confidence,
             orientation=orientation,
             status=status,
+            word_count=result["word_count"],
+            language=result["language"],
         )
         db.session.add(extraction)
         db.session.commit()
 
-        logger.info(f"Extraction {media_id}: {confidence:.0f}% -> {status}")
+        logger.info(
+            f"Extraction {media_id}: {confidence:.0f}% ({result['word_count']} words, {result['language']}) -> {status}"
+        )
 
         return {
             "success": True,
@@ -136,8 +139,11 @@ class VisionAPIError(Exception):
         f"Vision API error, retry {retry_state.attempt_number}/3"
     ),
 )
-def _extract_text(file_path: Path, language_hints: list) -> tuple[str | None, float, dict | None]:
-    """Call Google Vision REST API with retry on errors."""
+def _extract_text(file_path: Path, language_hints: list) -> dict | None:
+    """Call Google Vision REST API with retry on errors.
+
+    Returns dict with: text, confidence, word_count, language, raw (or None on failure).
+    """
     try:
         api_key = _get_api_key()
 
@@ -168,59 +174,69 @@ def _extract_text(file_path: Path, language_hints: list) -> tuple[str | None, fl
         # Check for API error in response
         if "error" in data:
             logger.error(f"Vision API error: {data['error']}")
-            return None, 0.0, None
+            return None
 
         # Parse response
         result = data.get("responses", [{}])[0]
         if "error" in result:
             logger.error(f"Vision API error: {result['error']}")
-            return None, 0.0, None
+            return None
 
         annotation = result.get("fullTextAnnotation", {})
         text = annotation.get("text", "")
 
         if not text:
-            return "", 0.0, data
+            return {"text": "", "confidence": 0.0, "word_count": 0, "language": None, "raw": data}
 
-        confidence = _calculate_confidence(annotation)
-        return text, confidence, data
+        # Extract metadata directly from Google's response
+        page = annotation.get("pages", [{}])[0]
+        confidence = page.get("confidence", 0.0) * 100  # Convert to 0-100 scale
+
+        # Count words
+        word_count = sum(
+            1
+            for blk in page.get("blocks", [])
+            for para in blk.get("paragraphs", [])
+            for _ in para.get("words", [])
+        )
+
+        # Get primary detected language
+        languages = page.get("property", {}).get("detectedLanguages", [])
+        language = languages[0].get("languageCode") if languages else None
+
+        return {
+            "text": text,
+            "confidence": confidence,
+            "word_count": word_count,
+            "language": language,
+            "raw": data,
+        }
 
     except httpx.HTTPStatusError as e:
         logger.error(f"Vision API HTTP error: {e}")
-        return None, 0.0, None
+        return None
 
     except VisionAPIError:
         raise  # Let tenacity handle retry
 
     except Exception as e:
         logger.error(f"Vision API failed: {e}")
-        return None, 0.0, None
-
-
-def _calculate_confidence(annotation: dict) -> float:
-    """Calculate average word-level confidence (0-100 scale)."""
-    confidences = []
-    for page in annotation.get("pages", []):
-        for block in page.get("blocks", []):
-            for paragraph in block.get("paragraphs", []):
-                for word in paragraph.get("words", []):
-                    conf = word.get("confidence")
-                    if conf is not None:
-                        confidences.append(conf)
-
-    if not confidences:
-        return 0.0
-
-    return sum(confidences) / len(confidences) * 100
+        return None
 
 
 def _normalize(text: str) -> str:
-    """Normalize text for storage and search."""
+    """Normalize text for storage and search while preserving line breaks."""
     if not text:
         return ""
     text = unicodedata.normalize("NFC", text)
-    text = re.sub(r"\s+", " ", text)
+    # Collapse horizontal whitespace (spaces, tabs) but preserve newlines
+    text = re.sub(r"[^\S\n]+", " ", text)
+    # Fix hyphenated words with spaces
     text = re.sub(r"-\s+", "-", text)
+    # Clean up trailing spaces on lines
+    text = re.sub(r" +\n", "\n", text)
+    # Collapse 3+ newlines to double newline
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
 
 
