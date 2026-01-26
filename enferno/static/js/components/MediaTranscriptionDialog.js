@@ -235,6 +235,23 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           </v-btn>
                         </div>
 
+                        <!-- Detected Language -->
+                        <div v-if="media?.extraction?.language || loading || true" class="flex-0-0">
+                          <div class="text-subtitle-2">{{ translations.language_ }}</div>
+                          <v-skeleton-loader
+                            v-if="loading"
+                            width="75"
+                            height="20"
+                          ></v-skeleton-loader>
+                          <v-chip
+                            v-else
+                            density="compact"
+                            prepend-icon="mdi-translate"
+                          >
+                            {{ media?.extraction?.language?.toUpperCase() }}
+                          </v-chip>
+                        </div>
+
                         <!-- Confidence -->
                         <div v-if="media?.extraction || loading" class="flex-1-1">
                           <div class="text-subtitle-2 mb-1 d-flex justify-space-between">
