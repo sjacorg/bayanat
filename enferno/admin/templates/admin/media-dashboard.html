@@ -176,7 +176,11 @@
                                 rounded="lg"
                                 class="cursor-pointer"
                             >   
-                                <v-img :src="item.thumbnail_url" alt="thumbnail"></v-img>
+                                <v-img 
+                                    :src="item.thumbnail_url" 
+                                    alt="thumbnail"
+                                    :style="{ transform: 'rotate(' + (item?.extraction?.orientation || 0) + 'deg)' }"
+                                ></v-img>
                             </v-avatar>
                         </template>
 
