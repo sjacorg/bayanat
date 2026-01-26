@@ -338,28 +338,14 @@ class SearchUtils:
         if ids := q.get("ids"):
             conditions.append(Bulletin.id.in_(ids))
 
-        # Text search - searches both bulletin fields AND OCR extracted text
+        # Text search - PERFORMANCE OPTIMIZED
         if tsv := q.get("tsv"):
-            words = [w for w in tsv.split(" ") if w.strip()]
-            for word in words:
-                # Subquery: bulletins with media containing matching OCR text
-                # Include trusted extractions: processed, needs_review, or manually transcribed
-                ocr_subquery = (
-                    select(Media.bulletin_id)
-                    .join(Extraction, Media.id == Extraction.media_id)
-                    .where(
-                        or_(
-                            Extraction.status.in_(["processed", "needs_review"]),
-                            Extraction.manual == True,
-                        )
-                    )
-                    .where(Extraction.text.isnot(None))
-                    .where(Extraction.text.ilike(f"%{word}%"))
-                )
-                # Match in bulletin search field OR in OCR text from attached media
-                conditions.append(
-                    or_(Bulletin.search.ilike(f"%{word}%"), Bulletin.id.in_(ocr_subquery))
-                )
+            words = tsv.split(" ")
+            # Use individual ILIKE conditions instead of ILIKE ALL() to enable GIN trigram index usage
+            # This changes execution from Sequential Scan to Bitmap Index Scan (200x faster)
+            word_conditions = [Bulletin.search.ilike(f"%{word}%") for word in words if word.strip()]
+            if word_conditions:
+                conditions.extend(word_conditions)
 
         # exclude  filter - OPTIMIZED APPROACH using raw SQL
         extsv = q.get("extsv")
@@ -379,24 +365,20 @@ class SearchUtils:
 
                 conditions.append(raw_condition)
 
-        # OCR text search - search ONLY in extracted text from media (dedicated OCR filter)
+        # OCR text search - search in extracted text from media
         if ocr := q.get("ocr"):
-            words = [w for w in ocr.split(" ") if w.strip()]
+            words = ocr.split(" ")
             # Find bulletins that have media with matching extraction text
-            # Include trusted extractions: processed, needs_review, or manually transcribed
+            # Include both processed and needs_review (has text but awaiting review)
             ocr_subquery = (
                 select(Media.bulletin_id)
                 .join(Extraction, Media.id == Extraction.media_id)
-                .where(
-                    or_(
-                        Extraction.status.in_(["processed", "needs_review"]),
-                        Extraction.manual == True,
-                    )
-                )
+                .where(Extraction.status.in_(["processed", "needs_review"]))
                 .where(Extraction.text.isnot(None))
             )
             for word in words:
-                ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
+                if word.strip():
+                    ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
             conditions.append(Bulletin.id.in_(ocr_subquery))
 
         # Origin ID
