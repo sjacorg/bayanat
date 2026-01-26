@@ -432,7 +432,7 @@ const ActorSearchBox = Vue.defineComponent({
                 v-model="q.assigned"
             >
               <v-chip :value="user.id" label v-for="user in users" filter
-                      outlined>{{ user.name }}
+                      outlined>{{ user.display_name }}
               </v-chip>
             </v-chip-group>
           </v-col>
@@ -448,7 +448,7 @@ const ActorSearchBox = Vue.defineComponent({
                 v-model="q.reviewer"
             >
               <v-chip :value="user.id" label v-for="user in users" filter
-                      outlined>{{ user.name }}
+                      outlined>{{ user.display_name }}
               </v-chip>
             </v-chip-group>
           </v-col>

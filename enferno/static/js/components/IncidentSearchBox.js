@@ -267,7 +267,7 @@ const IncidentSearchBox = Vue.defineComponent({
                     multiple
                     v-model="q.assigned"
                 >
-                  <v-chip :value="user.id" small label v-for="user in users" filter outlined>{{ user.name }}</v-chip>
+                  <v-chip :value="user.id" small label v-for="user in users" filter outlined>{{ user.display_name }}</v-chip>
                 </v-chip-group>
               </v-col>
             </v-row>
@@ -281,7 +281,7 @@ const IncidentSearchBox = Vue.defineComponent({
                     multiple
                     v-model="q.reviewer"
                 >
-                  <v-chip label :value="user.id" small v-for="user in users" filter outlined>{{ user.name }}</v-chip>
+                  <v-chip label :value="user.id" small v-for="user in users" filter outlined>{{ user.display_name }}</v-chip>
                 </v-chip-group>
               </v-col>
             </v-row>
