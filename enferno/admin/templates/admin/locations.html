@@ -159,6 +159,7 @@
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/LocationSearchBox.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
+    <script src="/static/js/components/Asterisk.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -544,6 +545,7 @@
         app.component('GeoMap', GeoMap);
         app.component('GlobalMap', GlobalMap);
         app.component('ReadMore', ReadMore);
+        app.component('Asterisk', Asterisk);
         app.use(router).use(vuetify).mount('#app');
     </script>
 {% endblock %}
