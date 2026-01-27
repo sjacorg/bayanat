@@ -29,7 +29,7 @@
                             <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                 <div v-if="tabState.child === 'administrative-levels'">
                                     <editable-table :height="`calc(100vh - ${showLalWarning ? '701px' : '628px'})`" title="{{ _('Location Administrative Levels') }}"
-                                        :item-headers="alHeaders" :editable-columns="['code', 'title']"
+                                        :item-headers="alHeaders" :editable-columns="['code', 'title']" :required-fields="['title']"
                                         :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
                                         delete-endpoint="/admin/api/location-admin-level"
                                         save-endpoint="/admin/api/location-admin-level"
@@ -90,7 +90,9 @@
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Location Types') }}"
                                         :item-headers="ltHeaders" :no-action-ids="[1,2]" delete-endpoint="/admin/api/location-type"
                                         save-endpoint="/admin/api/location-type"
-                                        load-endpoint="/admin/api/location-types/?per_page=1000">
+                                        load-endpoint="/admin/api/location-types/?per_page=1000"
+                                        :required-fields="['title']"
+                                    >
                                     </editable-table>
                                 </div>
                             </div>
@@ -110,7 +112,7 @@
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Countries') }}"
                                         :item-headers="countryHeaders" :editable-columns="['title','title_tr']"
                                         delete-endpoint="/admin/api/country" save-endpoint="/admin/api/country"
-                                        load-endpoint="/admin/api/countries/?per_page=1000">
+                                        load-endpoint="/admin/api/countries/?per_page=1000" :required-fields="['title']">
                                     </editable-table>
                                 </div>
 
@@ -118,7 +120,7 @@
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Ethnographic Information') }}"
                                         :item-headers="ethnoHeaders" :editable-columns="['title','title_tr']"
                                         delete-endpoint="/admin/api/ethnography" save-endpoint="/admin/api/ethnography"
-                                        load-endpoint="/admin/api/ethnographies/?per_page=1000">
+                                        load-endpoint="/admin/api/ethnographies/?per_page=1000" :required-fields="['title']">
                                     </editable-table>
                                 </div>
 
@@ -126,7 +128,7 @@
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Dialects') }}"
                                         :item-headers="dialectHeaders" :editable-columns="['title','title_tr']"
                                         delete-endpoint="/admin/api/dialect" save-endpoint="/admin/api/dialect"
-                                        load-endpoint="/admin/api/dialects/?per_page=1000">
+                                        load-endpoint="/admin/api/dialects/?per_page=1000" :required-fields="['title']">
                                     </editable-table>
                                 </div>
                             </div>
@@ -146,6 +148,7 @@
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Actor Relations') }}"
                                         :item-headers="revRelationHeaders"
                                         :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
+                                        :required-fields="['title', 'reverse_title']"
                                         delete-endpoint="/admin/api/atoainfo" save-endpoint="/admin/api/atoainfo"
                                         load-endpoint="/admin/api/atoainfos/?per_page=1000">
                                     </editable-table>
@@ -154,6 +157,7 @@
                                 <div v-if="tabState.child === 'actor-to-bulletin'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Bulletin Relations') }}"
                                         :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        :required-fields="['title']"
                                         delete-endpoint="/admin/api/atobinfo" save-endpoint="/admin/api/atobinfo"
                                         load-endpoint="/admin/api/atobinfos/?per_page=1000">
                                     </editable-table>
@@ -162,6 +166,7 @@
                                 <div v-if="tabState.child === 'bulletin-to-bulletin'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Bulletin to Bulletin Relations') }}"
                                         :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        :required-fields="['title']"
                                         delete-endpoint="/admin/api/btobinfo" save-endpoint="/admin/api/btobinfo"
                                         load-endpoint="/admin/api/btobinfos/?per_page=1000">
                                     </editable-table>
@@ -170,6 +175,7 @@
                                 <div v-if="tabState.child === 'incident-to-bulletin'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Bulletin Relations') }}"
                                         :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        :required-fields="['title']"
                                         delete-endpoint="/admin/api/itobinfo" save-endpoint="/admin/api/itobinfo"
                                         load-endpoint="/admin/api/itobinfos/?per_page=1000">
                                     </editable-table>
@@ -178,6 +184,7 @@
                                 <div v-if="tabState.child === 'incident-to-actor'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Actor Relations') }}"
                                         :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        :required-fields="['title']"
                                         delete-endpoint="/admin/api/itoainfo" save-endpoint="/admin/api/itoainfo"
                                         load-endpoint="/admin/api/itoainfos/?per_page=1000">
                                     </editable-table>
@@ -186,6 +193,7 @@
                                 <div v-if="tabState.child === 'incident-to-incident'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Incident Relations') }}"
                                         :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        :required-fields="['title']"
                                         delete-endpoint="/admin/api/itoiinfo" save-endpoint="/admin/api/itoiinfo"
                                         load-endpoint="/admin/api/itoiinfos/?per_page=1000">
                                     </editable-table>
@@ -196,6 +204,7 @@
                             <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
                                 <editable-table height="calc(100vh - 307px)" title="{{ _('Media Categories') }}"
                                     :item-headers="mediaHeaders" :editable-columns="['title','title_tr']"
+                                    :required-fields="['title']"
                                     delete-endpoint="/admin/api/mediacategory" save-endpoint="/admin/api/mediacategory"
                                     load-endpoint="/admin/api/mediacategories/?per_page=1000">
                                 </editable-table>
@@ -205,6 +214,7 @@
                             <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
                                 <editable-table height="calc(100vh - 307px)" title="{{ _('Geo Location Types') }}"
                                     :item-headers="geoHeaders" :editable-columns="['title','title_tr']"
+                                    :required-fields="['title']"
                                     delete-endpoint="/admin/api/geolocationtype" save-endpoint="/admin/api/geolocationtype"
                                     load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
                                 </editable-table>
@@ -222,6 +232,7 @@
                                 <div v-if="tabState.child === 'id-number-types'">
                                     <editable-table title="{{ _('ID Number Types') }}" :item-headers="idNumberTypeHeaders"
                                         :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/idnumbertype"
+                                        :required-fields="['title']"
                                         save-endpoint="/admin/api/idnumbertype" load-endpoint="/admin/api/idnumbertypes/?per_page=1000">
                                     </editable-table>
                                 </div>
@@ -242,6 +253,7 @@
                                 <div v-if="tabState.child === 'potential-violation'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Potential Violation Categories') }}"
                                         :item-headers="potentialHeaders" :editable-columns="['title','title_tr']"
+                                        :required-fields="['title']"
                                         delete-endpoint="/admin/api/potentialviolation" save-endpoint="/admin/api/potentialviolation"
                                         load-endpoint="/admin/api/potentialviolation/?per_page=1000">
                                     </editable-table>
@@ -250,6 +262,7 @@
                                 <div v-if="tabState.child === 'claimed-violation'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Claimed Violation Categories') }}"
                                         :item-headers="claimedHeaders" :editable-columns="['title','title_tr']"
+                                        :required-fields="['title']"
                                         delete-endpoint="/admin/api/claimedviolation" save-endpoint="/admin/api/claimedviolation"
                                         load-endpoint="/admin/api/claimedviolation/?per_page=1000">
                                     </editable-table>
@@ -275,6 +288,7 @@
 {% endif %}
 <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 <script src="/static/js/components/EditableTable.js"></script>
+<script src="/static/js/components/Asterisk.js"></script>
 <script src="/static/js/Sortable.min.js"></script>
 <script src="/static/js/vuedraggable.umd.js"></script>
 
@@ -290,17 +304,12 @@
         delimiters: delimiters,
         mixins: [globalMixin],
         mounted() {
-            this.setInitialTabStateKey()
+            // Initialize tabs from URL on first load
+            this.syncTabsFromHash();
 
-            this.$router.afterEach((to) => {
-                const [main, child] = to.hash.slice(1).split('/');
-
-                const mainKey = main && main in this.tabsMap ? main : Object.keys(this.tabsMap)[0];
-                const nested = this.tabsMap[mainKey]?.nestedTabsMap || {};
-                const childKey = child && child in nested ? child : Object.keys(nested)[0] || null;
-
-                this.tabState.main = mainKey;
-                this.tabState.child = Object.keys(nested).length ? childKey : null;
+            // Update tabs when user navigates (back/forward buttons)
+            this.$router.afterEach(() => {
+                this.syncTabsFromHash();
             });
         },
         data() {
@@ -385,21 +394,16 @@
                 },
                 deep: true
             },
-            'tabState.main'(mainKey) {
-                const nested = this.tabsMap?.[mainKey]?.nestedTabsMap;
-
-                this.tabState.main = mainKey;
-                this.tabState.child = nested
-                    ? nested[this.tabState.child]
-                        ? this.tabState.child
-                        : Object.keys(nested)[0]
-                    : null;
-
-                this.updateHash();
+            'tabState.main'(newVal, oldVal) {
+                // Only update hash if change came from user interaction (not from syncTabsFromHash)
+                if (oldVal !== null) {
+                    this.updateHashFromTabs();
+                }
             },
-
-            'tabState.child'() {
-                this.updateHash();
+            'tabState.child'(newVal, oldVal) {
+                if (oldVal !== null) {
+                    this.updateHashFromTabs();
+                }
             }
         },
 
@@ -421,23 +425,6 @@
                 };
 
                 return [...base, ...(fieldMaps[type] || customFields), { title: "{{ _('Actions') }}", value: 'actions', align: 'end' }];
-            },
-            updateHash() {
-                const { main, child } = this.tabState;
-                const hash = [main, child].filter(Boolean).join('/');
-                this.$router.push({ name: 'component-data', hash: `#${hash}` });
-            },
-            setInitialTabStateKey() {
-                const main = this.tabState.main || Object.keys(this.tabsMap)[0];
-                const nested = this.tabsMap[main]?.nestedTabsMap || {};
-                const child = this.tabState.child || Object.keys(nested)[0] || null;
-
-                const hash = [main, child].filter(Boolean).join('/');
-
-                this.$router.replace({
-                    name: 'component-data',
-                    hash: `#${hash}` 
-                });
             },
             onDragEnd() {
                 if (this.isOrderChanged) {
@@ -475,11 +462,38 @@
                     this.$root.showSnack(response.data);
                     this.showLalWarning = false;
                 });
-            }
+            },
+            updateHashFromTabs() {
+                const { main, child } = this.tabState;
+                const hash = [main, child].filter(Boolean).join('/');
+                
+                // Only push if hash actually changed
+                if (this.$route.hash !== `#${hash}`) {
+                    this.$router.push({ 
+                        name: 'component-data', 
+                        hash: `#${hash}` 
+                    });
+                }
+            },
+            syncTabsFromHash() {
+                const hash = this.$route.hash.slice(1); // Remove '#'
+                const [main, child] = hash ? hash.split('/') : [];
+
+                // Validate and set main tab
+                const mainKey = main && main in this.tabsMap ? main : Object.keys(this.tabsMap)[0];
+                
+                // Validate and set child tab
+                const nested = this.tabsMap[mainKey]?.nestedTabsMap || {};
+                const childKey = child && child in nested ? child : Object.keys(nested)[0] || null;
+
+                this.tabState.main = mainKey;
+                this.tabState.child = childKey;
+            },
         }
     });
     app.component('EditableTable', EditableTable);
     app.component('Draggable', draggable);
+    app.component('Asterisk', Asterisk);
     app.use(router).use(vuetify).mount('#app');
 </script>
 {% endblock %}
