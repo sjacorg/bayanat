@@ -47,71 +47,73 @@
                                                 </v-btn>
 
                                                 <v-dialog v-model="dialog" max-width="770px">
-
                                                     <v-card :title="formTitle">
+                                                        <v-form ref="form" @submit.prevent="save">
+                                                            <v-card-text>
+                                                                <v-container>
+                                                                    <v-row>
+                                                                        <v-col cols="12" md="4">
+                                                                            <v-text-field
+                                                                                    v-model="editedItem.title"
+                                                                                    :rules="[validationRules.required()]"
+                                                                            >
+                                                                                <template v-slot:label>{{ _('Title') }} <Asterisk /></template>
+                                                                            </v-text-field>
+                                                                        </v-col>
 
-                                                        <v-card-text>
-                                                            <v-container>
-                                                                <v-row>
-                                                                    <v-col cols="12" md="4">
-                                                                        <v-text-field
-                                                                                v-model="editedItem.title"
-                                                                                label="{{ _('Title') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
+                                                                        <v-col cols="12" md="6">
 
-                                                                    <v-col cols="12" md="6">
+                                                                            <search-field
+                                                                                    v-model="editedItem.parent"
+                                                                                    api="/admin/api/sources/"
+                                                                                    item-title="title"
+                                                                                    item-value="id"
+                                                                                    :multiple="false"
+                                                                                    :return-object="true"
+                                                                                    label="{{ _('Parent') }}"
+                                                                            ></search-field>
+                                                                        </v-col>
+                                                                        <v-col cols="12" md="2">
+                                                                            <v-text-field
+                                                                                    v-model="editedItem.etl_id"
+                                                                                    label="{{ _('Origin ID') }}"
+                                                                                    disabled
+                                                                            ></v-text-field>
 
-                                                                        <search-field
-                                                                                v-model="editedItem.parent"
-                                                                                api="/admin/api/sources/"
-                                                                                item-title="title"
-                                                                                item-value="id"
-                                                                                :multiple="false"
-                                                                                :return-object="true"
-                                                                                label="{{ _('Parent') }}"
-                                                                        ></search-field>
-                                                                    </v-col>
-                                                                    <v-col cols="12" md="2">
-                                                                        <v-text-field
-                                                                                v-model="editedItem.etl_id"
-                                                                                label="{{ _('Origin ID') }}"
-                                                                                disabled
-                                                                        ></v-text-field>
+                                                                        </v-col>
+                                                                    </v-row>
+                                                                    <v-row>
 
-                                                                    </v-col>
-                                                                </v-row>
-                                                                <v-row>
+                                                                        <v-col cols="12" md="12">
+                                                                            <v-textarea
+                                                                                    outlined
+                                                                                    v-model="editedItem.comments"
+                                                                                    label="{{ _('Comments') }}"
 
-                                                                    <v-col cols="12" md="12">
-                                                                        <v-textarea
-                                                                                outlined
-                                                                                v-model="editedItem.comments"
-                                                                                label="{{ _('Comments') }}"
+                                                                            ></v-textarea>
+                                                                        </v-col>
+                                                                    </v-row>
+                                                                </v-container>
+                                                            </v-card-text>
 
-                                                                        ></v-textarea>
-                                                                    </v-col>
-                                                                </v-row>
-                                                            </v-container>
-                                                        </v-card-text>
-
-                                                        <v-card-actions>
-                                                            <v-spacer></v-spacer>
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="close"
-                                                            >{{ _('Cancel') }}
-                                                            </v-btn
-                                                            >
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="save"
-                                                            >{{ _('Save') }}
-                                                            </v-btn
-                                                            >
-                                                        </v-card-actions>
+                                                            <v-card-actions>
+                                                                <v-spacer></v-spacer>
+                                                                <v-btn
+                                                                        color="blue darken-1"
+                                                                        text
+                                                                        @click="close"
+                                                                >{{ _('Cancel') }}
+                                                                </v-btn
+                                                                >
+                                                                <v-btn
+                                                                        color="blue darken-1"
+                                                                        text
+                                                                        type="submit"
+                                                                >{{ _('Save') }}
+                                                                </v-btn
+                                                                >
+                                                            </v-card-actions>
+                                                        </v-form>
                                                     </v-card>
                                                 </v-dialog>
 
@@ -193,6 +195,7 @@
 
 {% endblock %} {% block js %}
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/Asterisk.js"></script>
     <script>
 
 
@@ -206,6 +209,7 @@
             
             data: () => ({
                 dialog: dialog,
+                validationRules: validationRules,
                 imDialog: false,
                 drawer: drawer,
                 parents: [],
@@ -325,32 +329,39 @@
                 },
 
                 save() {
-                    if (this.editedIndex > -1) {
-                        Object.assign(this.items[this.editedIndex], this.editedItem);
-                        //update record
-                        api.put(`/admin/api/source/${this.editedItem.id}`, {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh()
-                                this.close();
-                            })
-                    } else {
-                        //create new record
-                        axios
-                            .post("/admin/api/source/", {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh();
-                                this.close();
+                    this.$refs.form.validate().then(({ valid }) => {
+                        if (!valid) {
+                            this.showSnack("{{ _('Please review form for errors.') }}");
+                            return;
+                        }
 
-                            })
-                    }
+                        if (this.editedIndex > -1) {
+                            Object.assign(this.items[this.editedIndex], this.editedItem);
+                            //update record
+                            api.put(`/admin/api/source/${this.editedItem.id}`, {item: this.editedItem})
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh()
+                                    this.close();
+                                })
+                        } else {
+                            //create new record
+                            axios
+                                .post("/admin/api/source/", {item: this.editedItem})
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh();
+                                    this.close();
 
+                                })
+                        }
+                    });
                 }
             }
         });
 
         app.component('SearchField', SearchField)
+        app.component('Asterisk', Asterisk)
 
         app.use(vuetify).mount("#app")
     </script>
