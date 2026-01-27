@@ -1,0 +1,9 @@
+# Bayanat Code Owners
+
+* @level09 @apodacaduron
+
+# Core configuration
+.github/ @level09
+enferno/settings.py @level09
+enferno/app.py @level09
+pyproject.toml @level09
