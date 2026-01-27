@@ -49,6 +49,10 @@ const EditableTable = Vue.defineComponent({
       type: Array,
       default: () => ['title'],
     },
+    requiredFields: {
+      type: Array,
+      default: () => [],
+    },
     columnsList: {
       type: Array,
       default: () => ['code', 'title', 'title_tr', 'reverse_title', 'reverse_title_tr'],
@@ -80,6 +84,7 @@ const EditableTable = Vue.defineComponent({
 
         <v-dialog v-model="dialogState.isOpen" max-width="900px">
           <v-card :title="dialogTitles[dialogState.mode]">
+            <v-form ref="form" @submit.prevent="itemSave">
               <v-card-text>
                   <v-container>
                       <v-row>
@@ -87,10 +92,14 @@ const EditableTable = Vue.defineComponent({
                           <v-col v-if="isEditable(dialogState.item) && editableColumns.includes(column)" cols="12" md="6">
                             <v-text-field
                               variant="outlined"
-                              :label="getHeaderTextById(column)"
                               v-model="dialogState.item[column]"
                               :autofocus="index === 0"
-                            ></v-text-field>
+                              :rules="isRequired(column) ? [validationRules.required()] : []"
+                            >
+                              <template v-slot:label>
+                                {{ getHeaderTextById(column) }} <Asterisk v-if="isRequired(column)" />
+                              </template>
+                            </v-text-field>
                           </v-col>
                         </template>
                       </v-row>
@@ -105,11 +114,12 @@ const EditableTable = Vue.defineComponent({
                   <v-btn
                     :loading="dialogState.isLoading"
                     color="primary"
-                    @click="itemSave()"
+                    type="submit"
                     variant="elevated"
                   >Save</v-btn
                   >
               </v-card-actions>
+            </v-form>
           </v-card>
       </v-dialog>
       </div>
@@ -119,6 +129,7 @@ const EditableTable = Vue.defineComponent({
       itemList: [],
       editableItem: {},
       translations: window.translations,
+      validationRules: validationRules,
       isLoadingList: false,
       dialogState: {
         isLoading: false,
@@ -168,27 +179,39 @@ const EditableTable = Vue.defineComponent({
     },
 
     itemSave() {
-      this.dialogState.isLoading = true;
-      const endpoint = this.dialogState.item?.id ? `${this.saveEndpoint}/${this.dialogState.item.id}` : this.saveEndpoint;
-      const method = this.dialogState.item?.id ? 'put' : 'post';
+      this.$refs.form.validate().then(({ valid }) => {
+        if (!valid) {
+          this.$root.showSnack(this.translations.pleaseReviewFormForErrors_);
+          return;
+        }
 
-      // fix for location admin levels
-      if(this.itemHeaders.find(header => header.value === 'code') && !this.dialogState.item?.id){
-        const maxCode = this.itemList.reduce((acc, item) => acc > item.code ? acc : item.code, 0);
-        this.dialogState.item.code = Number(maxCode) + 1;
-      }
+        this.dialogState.isLoading = true;
+        const endpoint = this.dialogState.item?.id ? `${this.saveEndpoint}/${this.dialogState.item.id}` : this.saveEndpoint;
+        const method = this.dialogState.item?.id ? 'put' : 'post';
 
-      axios[method](endpoint, { item: this.dialogState.item })
-        .then((res) => {
-          this.loadItems();
-          this.$root.showSnack(res.data);
-          this.$emit('items-updated', this.itemList);
-          this.dialogState.isOpen = false;
-        })
-        .finally(() => {
-          this.dialogState.item = {};
-          this.dialogState.isLoading = false;
-        });
+        // fix for location admin levels
+        if(this.itemHeaders.find(header => header.value === 'code') && !this.dialogState.item?.id){
+          const maxCode = this.itemList.reduce((acc, item) => acc > item.code ? acc : item.code, 0);
+          this.dialogState.item.code = Number(maxCode) + 1;
+        }
+
+        axios[method](endpoint, { item: this.dialogState.item })
+          .then((res) => {
+            this.loadItems();
+            this.$root.showSnack(res.data);
+            this.$emit('items-updated', this.itemList);
+            this.dialogState.isOpen = false;
+            // Only clear on success
+            this.dialogState.item = {};
+          })
+          .catch((err) => {
+            // Show error but keep dialog open and data intact
+            this.$root.showSnack(err.response?.data?.message || this.translations.errorOccurred_ || 'An error occurred');
+          })
+          .finally(() => {
+            this.dialogState.isLoading = false;
+          });
+      });
     },
 
     itemCancel() {
@@ -226,6 +249,9 @@ const EditableTable = Vue.defineComponent({
     },
     isEditable(item) {
       return !this.noEditActionIds.includes(item?.id);
+    },
+    isRequired(column) {
+      return this.requiredFields.includes(column);
     },
   },
 });
