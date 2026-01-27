@@ -741,3 +741,31 @@ function deepClone(value) {
         return JSON.parse(JSON.stringify(value));
     }
 }
+
+// Load external script dynamically with caching
+const loadedScripts = new Map();
+function loadScript(src) {
+  if (loadedScripts.has(src)) {
+    return loadedScripts.get(src);
+  }
+
+  const promise = new Promise((resolve, reject) => {
+    // If already in DOM, resolve immediately
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+
+    document.head.appendChild(script);
+  });
+
+  loadedScripts.set(src, promise);
+  return promise;
+}
