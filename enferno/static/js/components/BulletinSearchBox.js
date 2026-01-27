@@ -315,11 +315,11 @@ const BulletinSearchBox = Vue.defineComponent({
 
               >
                 <template v-for="user in users" :key="user.id">
-                  <v-chip :value="user.id" v-show="user.name"
+                  <v-chip :value="user.id" v-show="user.display_name"
 
 
                           filter
-                  >{{ user.name }}
+                  >{{ user.display_name }}
                   </v-chip>
                 </template>
               </v-chip-group>
@@ -340,8 +340,8 @@ const BulletinSearchBox = Vue.defineComponent({
                   v-model="q.reviewer"
               >
                 <template v-for="user in users" :key="user.id">
-                  <v-chip :value="user.id" label small v-show="user.name" filter
-                  >{{ user.name }}
+                  <v-chip :value="user.id" label small v-show="user.display_name" filter
+                  >{{ user.display_name }}
                   </v-chip>
                 </template>
               </v-chip-group>
