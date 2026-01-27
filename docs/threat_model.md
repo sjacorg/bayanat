@@ -413,7 +413,7 @@ By implementing the above Access Control Model, Bayanat system ensures that diff
 
 ![notifications.png](./assets/threat-model//notifications.png){.align-center}
 
-## Autp Updates data 
+## Auto Updates data 
 
 ### Data Characterization
 
