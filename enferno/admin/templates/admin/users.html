@@ -1046,6 +1046,7 @@
                     this.saving = true;
                     const payload = { ...this.editedItem };
                     delete payload.status; // Remove status field from payload
+                    delete payload.display_name; // Remove display_name field from payload
 
                     // edit mode
                     if (payload.id) {
@@ -1082,6 +1083,7 @@
                         const payload = { ...this.editedItem };
                         const resetFlagIsSet = this.editedItem?.force_reset != null;
                         delete payload.status; // Remove status field from payload
+                        delete payload.display_name; // Remove display_name field from payload
                         const response = await api.put(`/admin/api/user/`, { item: payload }, { suppressGlobalErrorHandler: true });
                         this.showSnack(response.data);
 
