@@ -29,6 +29,11 @@ const PopDateRangeField = {
   },
 
   template: `
-    <v-date-input :placeholder="$root.dateFormats.standardDate + ' - ' + $root.dateFormats.standardDate" :display-format="(date) => $root.formatDate(date, $root.dateFormats.standardDate)" :input-format="$root.dateFormats.standardDate" v-bind="$attrs" multiple="range" :label="label" variant="outlined" v-model="dates" @click:clear="$emit('update:modelValue', [])" clearable></v-date-input>
+    <v-date-input :placeholder="$root.dateFormats.standardDate + ' - ' + $root.dateFormats.standardDate" :display-format="(date) => $root.formatDate(date, $root.dateFormats.standardDate)" :input-format="$root.dateFormats.standardDate" v-bind="$attrs" multiple="range" variant="outlined" v-model="dates" @click:clear="$emit('update:modelValue', [])" clearable>
+      <template v-slot:label>
+        <slot v-if="$slots['label']" name="label"></slot>
+        <template v-else>{{ label }}</template>
+      </template>
+    </v-date-input>
   `
 };
