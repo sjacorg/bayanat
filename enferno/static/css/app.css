@@ -870,7 +870,7 @@ div.jsondiffpatch-child-node-type-array:after {
 /* Lightgallery.js place above all dialogs */
 .lg-backdrop,
 .lg-outer {
-    z-index: 3000 !important;
+    z-index: 3001 !important;
 }
 
 /* Form builder drag-n-drop */

@@ -8,9 +8,9 @@
         <v-spacer></v-spacer>
 
         <v-btn
-          v-if="expandedMediaType === 'video'"
+          v-if="expandedByRenderer['media-dialog']?.mediaType === 'video'"
           icon="mdi-camera"
-          @click="initCroppr();"
+          @click="initCroppr('media-dialog');"
         ></v-btn>
         <v-btn class="mx-2 white--text" icon="mdi-plus-circle" color="primary" @click="addMedia">
           <v-icon dark></v-icon>
@@ -19,24 +19,25 @@
 
       <v-card-text class="px-0 pt-0">
         <inline-media-renderer
-          :media="expandedMedia"
-          :media-type="expandedMediaType"
+          renderer-id="media-dialog"
+          :media="expandedByRenderer['media-dialog']?.media"
+          :media-type="expandedByRenderer['media-dialog']?.mediaType"
           :use-metadata="true"
-          ref="inlineMediaRendererRef"
           class="mb-4"
           content-style="height: calc(100vh - 450px);"
-          @fullscreen="handleFullscreen"
-          @close="closeExpandedMedia"
+          @ready="onMediaRendererReady"
+          @fullscreen="handleFullscreen('media-dialog')"
+          @close="closeExpandedMedia('media-dialog')"
         ></inline-media-renderer>
 
         <!--  Grid of Media Items -->
         <media-grid
-          :horizontal="Boolean(expandedMedia)"
+          :horizontal="Boolean(expandedByRenderer['media-dialog']?.media)"
           prioritize-videos
-          :mini-mode="Boolean(expandedMedia)"
+          :mini-mode="Boolean(expandedByRenderer['media-dialog']?.media)"
           enable-delete
           :medias="editedItem.medias"
-          @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
+          @media-click="handleExpandedMedia({ rendererId: 'media-dialog', ...$event }); this.$refs.bulletinDialogSplitViewRef?.resetToCenter()"
           @remove-media="removeMedia"
         ></media-grid>
       </v-card-text>
@@ -62,6 +63,7 @@
               ref="dropzone"
               id="dropzone"
               :options="dzOpts"
+              @ready="onDropzoneReady"
               @vdropzone-error="showError"
               @vdropzone-removed-file="fileRemoved"
               @vdropzone-file-added="fileAdded"
