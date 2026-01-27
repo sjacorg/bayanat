@@ -173,6 +173,7 @@ const NewGlobalMap = Vue.defineComponent({
               :min-zoom="0"
               :scroll-wheel-zoom="false"
               :click-to-zoom-cluster="true"
+              disable-clustering
             />
 
             <!-- LOADER -->

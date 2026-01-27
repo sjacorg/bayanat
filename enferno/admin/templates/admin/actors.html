@@ -23,7 +23,7 @@
             @advanced-search="advSearchExpand = true"
             @do-search="doSearch"
             @reset-search="resetSearch"
-            @show-entity-details="showActor($event.id, { width: 398, closeIcon: 'mdi-arrow-left', closePosition: 'prepend', hideMap: true, style: { zIndex: 2410 } })"
+            @show-entity-details="showActor($event.entity.id, { width: $event.drawerWidth, closeIcon: 'mdi-arrow-left', closePosition: 'prepend', hideMap: true, style: { zIndex: 2410 } })"
             @close-entity-details="closeActorDrawer()"
         ></map-visualization>
 
@@ -1326,6 +1326,10 @@
                     api.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
+
+                        if (this.mapVisualizationOpen) {
+                            this.$refs.mapVisualizationRef.applyAllEventTypes()
+                        }
                     }).catch(error => {
                         this.actorDrawer = false;
                     }).finally(() => {
@@ -1340,8 +1344,11 @@
                     this.actor = null;
                     this.actorDrawerSettings = null;
 
-                    if (this.$refs.mapVisualizationRef?.entities) {
-                        this.$refs.mapVisualizationRef.entities.selected = null;
+                    if (this.$refs.mapVisualizationRef) {
+                        this.$nextTick(() => {
+                            this.$refs.mapVisualizationRef.entities.selected = null;
+                            this.$refs.mapVisualizationRef.applyDefaultEventTypes();
+                        })
                     }
                 },
 

@@ -24,6 +24,8 @@ const MapVisualization = Vue.defineComponent({
   data: () => ({
     translations: window.translations,
     selectedEventTypes: [],
+    drawerWidth: 398,
+    excludedDefaultEventTypes: new Set(['Residence', 'Birth']),
 
     localSearch: '',
 
@@ -34,7 +36,6 @@ const MapVisualization = Vue.defineComponent({
     locations: [],
     flows: [],
 
-    infiniteScrollCallback: null,
     entities: {
       selected: null,
       drawer: false,
@@ -62,16 +63,6 @@ const MapVisualization = Vue.defineComponent({
       handler() {
         this.resetEntities();
         this.$emit('closeEntityDetails');
-      },
-    },
-    entity: {
-      handler(nextValue) {
-        // When an entity is selected, show all event types
-        if (nextValue && Object.keys(nextValue).length === 0) {
-          this.selectedEventTypes = [...this.uniqueEventTypes].filter(t => t !== 'Residence' && t !== 'Birth');
-        } else {
-          this.selectedEventTypes = [...this.uniqueEventTypes];
-        }
       },
     },
   },
@@ -121,6 +112,19 @@ const MapVisualization = Vue.defineComponent({
   },
 
   methods: {
+    applyDefaultEventTypes() {
+      this.selectedEventTypes =
+        this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
+    },
+    applyAllEventTypes() {
+      this.selectedEventTypes = [...this.uniqueEventTypes];
+    },
+    getDefaultSelectedEventTypes(eventTypes = []) {
+      return [...eventTypes].filter(this.isDefaultSelectedEventType);
+    },
+    isDefaultSelectedEventType(eventType) {
+      return !this.excludedDefaultEventTypes.has(eventType)
+    },
     matchesSelectedEventTypes(entity) {
       // No filters selected → show everything
       if (!this.selectedEventTypes.length) return true;
@@ -182,7 +186,7 @@ const MapVisualization = Vue.defineComponent({
       this.flows = result.flows;
 
       // Preselect all event types, omit Residence and Birth by default
-      this.selectedEventTypes = [...this.uniqueEventTypes].filter(t => t !== 'Residence' && t !== 'Birth');
+      this.applyDefaultEventTypes();
 
       this.loading = false;
     },
@@ -259,7 +263,6 @@ const MapVisualization = Vue.defineComponent({
       this.entities.nextCursor = null;
       this.entities.total = null;
       this.entities.loading = false;
-      this.infiniteScrollCallback = null;
 
       // Reset the v-infinite-scroll internal state
       this.$nextTick(() => {
@@ -268,10 +271,6 @@ const MapVisualization = Vue.defineComponent({
     },
 
     loadEntities(options) {
-      if (options?.done) {
-        this.infiniteScrollCallback = options.done;
-      }
-
       if (this.entities.loading) return;
 
       this.entities.loading = true;
@@ -323,11 +322,12 @@ const MapVisualization = Vue.defineComponent({
       if (!this.entities.drawer) {
         this.$emit('closeEntityDetails');
         this.entities.selected = null;
+        this.applyDefaultEventTypes();
       }
     },
 
     onEntityClick(entity) {
-      this.$emit('showEntityDetails', entity);
+      this.$emit('showEntityDetails', { entity, drawerWidth: this.drawerWidth });
       this.entities.selected = entity;
     },
   },
@@ -423,7 +423,8 @@ const MapVisualization = Vue.defineComponent({
           :locations="computedMapData.locations"
           :flows="computedMapData.flows"
           class="w-100 h-100"
-          :viewport-padding="{ right: entities.drawer ? 398 : 0, top: 64 }"
+          :viewport-padding="{ right: entities.drawer ? drawerWidth : 0, top: 64 }"
+          :disable-clustering="Boolean(entities.selected)"
           :mode="Boolean(entities.selected) ? 'event' : null"
         />
 
@@ -479,8 +480,9 @@ const MapVisualization = Vue.defineComponent({
         <v-navigation-drawer
           v-model="entities.drawer"
           location="right"
-          width="398"
+          :width="drawerWidth"
           :scrim="false"
+          temporary
         >
           <!-- Toggle button that sticks out -->
           <v-card class="position-absolute pa-1" :style="{ left: '-48px', top: '50%', transform: 'translateY(-50%)', borderRadius: '12px 0 0 12px' }">
