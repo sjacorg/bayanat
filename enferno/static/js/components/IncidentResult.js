@@ -8,7 +8,7 @@ const IncidentResult = Vue.defineComponent({
     }
   },
 
-  template: /*html*/`
+  template: `
       <template v-if="!hide">
         <v-card  hover class="ma-2" v-if="!incident.restricted">
           <v-toolbar density="compact" class="d-flex px-2">
@@ -16,8 +16,10 @@ const IncidentResult = Vue.defineComponent({
             
           </v-toolbar>
           
-          <v-card-title class="text-subtitle-2 text-wrap text-break">{{incident.title}}</v-card-title>
-            <v-divider></v-divider>
+          <v-card-title class="text-wrap text-break pt-0">
+            <uni-field class="pa-0" disable-spacing :english="incident.title" :arabic="incident.title_ar"></uni-field>
+          </v-card-title>
+          <v-divider></v-divider>
           <slot name="header"></slot>
             
             
