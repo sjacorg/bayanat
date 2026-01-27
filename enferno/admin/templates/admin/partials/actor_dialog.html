@@ -54,29 +54,31 @@
                                     <dual-field
                                         v-model:original="editedItem.name"
                                         v-model:translation="editedItem.name_ar"
-                                        label-original="{{ _('Name') }}"
-                                        label-translation="{{ _('Name (AR)') }}"
                                         :allow-unknown="true"
                                         :rules="[
                                             validationRules.required(),
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="serverErrorPropsForDualField(serverErrors, 'item.name', 'item.name_ar')"
-                                    ></dual-field>
+                                    >
+                                        <template v-slot:label-original>{{ _('Name') }} <Asterisk /></template>
+                                        <template v-slot:label-translation>{{ _('Name (AR)') }} <Asterisk /></template>
+                                    </dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'first_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
                                         v-model:original="editedItem.first_name"
                                         v-model:translation="editedItem.first_name_ar"
-                                        label-original="{{ _('First Name') }}"
-                                        label-translation="{{ _('First Name (AR)') }}"
                                         :allow-unknown="true"
                                         :rules="[
                                             validationRules.required(),
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="serverErrorPropsForDualField(serverErrors, 'item.first_name', 'item.first_name_ar')"
-                                    ></dual-field>
+                                    >
+                                        <template v-slot:label-original>{{ _('First Name') }} <Asterisk /></template>
+                                        <template v-slot:label-translation>{{ _('First Name (AR)') }} <Asterisk /></template>
+                                    </dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'middle_name') && editedItem.type === 'Person'" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
@@ -94,15 +96,16 @@
                                     <dual-field
                                         v-model:original="editedItem.last_name"
                                         v-model:translation="editedItem.last_name_ar"
-                                        label-original="{{ _('Last Name') }}"
-                                        label-translation="{{ _('Last Name (AR)') }}"
                                         :allow-unknown="true"
                                         :rules="[
                                             validationRules.required(),
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="serverErrorPropsForDualField(serverErrors, 'item.last_name', 'item.last_name_ar')"
-                                    ></dual-field>
+                                    >
+                                        <template v-slot:label-original>{{ _('Last Name') }} <Asterisk /></template>
+                                        <template v-slot:label-translation>{{ _('Last Name (AR)') }} <Asterisk /></template>
+                                    </dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'nickname')" :class="[fieldClass(field), 'px-3 py-2']">
                                     <dual-field
@@ -909,9 +912,10 @@
                             <template v-for="(field, index) in fixedDynamicFields({ entityType: 'actor' })" :key="field.id">
                                 <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
                                     <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
-                                        label="{{ _('Comments') }}"
                                         v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
-                                    ></v-textarea>
+                                    >
+                                        <template v-slot:label>{{ _('Comments') }} <Asterisk /></template>
+                                    </v-textarea>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
                                     <v-select :disabled="statusDisabled" item-title="tr" item-value="en" :items="statusItems" class="mx-2"
@@ -931,12 +935,13 @@
                                             :items="allowedRoles"
                                             multiple
                                             v-model="editedItem.roles"
-                                            label="{{ _('Restrict Actor to Access Group(s)') }}"
                                             :rules="
                                                 !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []
                                             "
                                             clearable
-                                    ></v-select>
+                                    >
+                                        <template v-slot:label>{{ _('Restrict Actor to Access Group(s)') }} <Asterisk v-if="!unrestricted" /></template>
+                                    </v-select>
                                     <v-checkbox
                                             color="error"
                                             @change="unrestricted? editedItem.roles = [] : null"
