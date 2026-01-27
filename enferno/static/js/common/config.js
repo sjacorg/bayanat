@@ -640,26 +640,6 @@ function normalizeDropzoneResponse(dzFile) {
     };
 }
 
-function getBulletinLocations(ids) {
-    return Promise.all(
-        ids.map(id =>
-            api.get(`/admin/api/bulletin/${id}?mode=3`).then(res =>
-                aggregateBulletinLocations(res.data)
-            )
-        )
-    );
-}
-
-function getActorLocations(ids) {
-    return Promise.all(
-        ids.map(id =>
-            api.get(`/admin/api/actor/${id}?mode=3`).then(res =>
-                aggregateActorLocations(res.data)
-            )
-        )
-    );
-}
-
 var aggregateIncidentLocations = function (incident) {
     let locations = [];
 

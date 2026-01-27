@@ -381,6 +381,10 @@ const ActorCard = Vue.defineComponent({
               <v-card variant="flat">
                 <global-map v-model="mapLocations"></global-map>
               </v-card>
+              <v-divider></v-divider>
+              <v-card variant="flat">
+                <new-global-map :entities="[actor]"></new-global-map>
+              </v-card>
             </div>
           </div>
 
