@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS extraction (
     orientation INTEGER DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
     manual BOOLEAN NOT NULL DEFAULT FALSE,
+    word_count INTEGER DEFAULT 0,
+    language VARCHAR(10),
 
     -- Review tracking
     reviewed_by INTEGER,

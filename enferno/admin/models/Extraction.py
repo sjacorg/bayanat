@@ -19,6 +19,8 @@ class Extraction(db.Model, BaseMixin):
     orientation = db.Column(db.Integer, default=0)
     status = db.Column(db.String(20), default="pending", nullable=False)
     manual = db.Column(db.Boolean, default=False, nullable=False)
+    word_count = db.Column(db.Integer, default=0)
+    language = db.Column(db.String(10))
 
     reviewed_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     reviewed_at = db.Column(db.DateTime)
@@ -35,6 +37,8 @@ class Extraction(db.Model, BaseMixin):
             "orientation": self.orientation,
             "status": self.status,
             "manual": self.manual,
+            "word_count": self.word_count,
+            "language": self.language,
             "reviewed_by": self.reviewed_by,
             "reviewed_at": DateHelper.serialize_datetime(self.reviewed_at),
             "created_at": DateHelper.serialize_datetime(self.created_at),
