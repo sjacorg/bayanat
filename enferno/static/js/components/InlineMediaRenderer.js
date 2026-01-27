@@ -16,7 +16,11 @@ const InlineMediaRenderer = Vue.defineComponent({
       hideClose: {
         type: Boolean,
         default: false
-      }
+      },
+      initialRotation: {
+        type: Number,
+        default: 0,
+      },
     },
     emits: ['fullscreen', 'close'],
     data: () => ({
@@ -119,7 +123,7 @@ const InlineMediaRenderer = Vue.defineComponent({
             class="h-100"
           ></div>
           <pdf-viewer ref="pdfViewer" v-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
-          <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :media="media" :media-type="mediaType" class="h-100"></image-viewer>
+          <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :initial-rotation="initialRotation" :media="media" :media-type="mediaType" class="h-100"></image-viewer>
         </div>
       </div>
     `,

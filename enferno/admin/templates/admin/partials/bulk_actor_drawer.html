@@ -23,7 +23,7 @@
                     <search-field
                         v-model="bulk.assigned_to_id"
                         api="/admin/api/users/"
-                        item-title="name"
+                        item-title="display_name"
                         item-value="id"
                         :return-object="false"
                         :multiple="false"
@@ -39,7 +39,7 @@
                     <search-field
                         v-model="bulk.first_peer_reviewer_id"
                         api="/admin/api/users/"
-                        item-title="name"
+                        item-title="display_name"
                         item-value="id"
                         :multiple="false"
                         :return-object="false"
