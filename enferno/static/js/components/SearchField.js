@@ -93,7 +93,6 @@ const SearchField = Vue.defineComponent({
       hide-no-data
       no-filter
       item-color="secondary"
-      :label="label"
       :items="items"
       :item-title="itemTitle"
       :item-value="itemValue"
@@ -108,6 +107,10 @@ const SearchField = Vue.defineComponent({
       :loading="loading"
       :rules="rules"
     >
+      <template v-slot:label>
+        <slot v-if="$slots['label']" name="label"></slot>
+        <template v-else>{{ label }}</template>
+      </template>
       <template v-if="showCopyIcon" v-slot:append>
         <v-btn icon="mdi-content-copy" variant="plain" @click="copyValue"></v-btn>
       </template>
