@@ -5,11 +5,13 @@ const VueDropzone = Vue.defineComponent({
       default: () => ({}),
     },
   },
-  emits: ['vdropzone-error', 'vdropzone-removed-file', 'vdropzone-file-added', 'vdropzone-success'],
+  emits: ['ready', 'vdropzone-error', 'vdropzone-removed-file', 'vdropzone-file-added', 'vdropzone-success'],
   mounted() {
     // Initialize Dropzone on the current element with provided options
     this.dz = new Dropzone(this.$el, { ...this.options });
 
+    this.$emit('ready', this.dz);
+  
     // Register event listeners to emit custom Vue events
     this.dz.on('error', (file, response) => {
       this.$emit('vdropzone-error', file, response);
@@ -27,6 +29,12 @@ const VueDropzone = Vue.defineComponent({
       this.$emit('vdropzone-success', file, response);
     });
   },
+
+  beforeUnmount() {
+    this.dz?.destroy();
+    this.dz = null;
+  },
+
   template: `
     <div class="dropzone" v-bind="$attrs"></div>
   `,

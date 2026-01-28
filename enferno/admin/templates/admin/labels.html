@@ -252,7 +252,7 @@
 
 {% endblock %} {% block js %}
     <script src="/static/js/components/SearchField.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;

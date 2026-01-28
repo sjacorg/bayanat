@@ -539,7 +539,7 @@
     <script src="/static/js/diff-tool.js"></script>
     <script src="/static/js/components/DiffRenderer.js"></script>
 
-   <script type="module">
+   <script nonce="{{ csp_nonce() }}" type="module">
         import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
         import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
         import '/static/js/jsondiffpatch/formatters/base.js'

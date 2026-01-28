@@ -834,7 +834,7 @@
     <script src="/static/js/components/DropField.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
 
-    <script>
+    <script nonce="{{ csp_nonce() }}">
 
         const draggable = vuedraggable;
         const allowedSheetsTypes = document.querySelector('[data-allowed-sheets-types]').dataset.allowedSheetsTypes;
