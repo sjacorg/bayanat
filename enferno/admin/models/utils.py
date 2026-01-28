@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import has_app_context, has_request_context
+from flask import has_request_context
 from flask_login import current_user
 
 #  Role based Access Control Decorator for Bulletins / Actors  / Incidents  #
@@ -51,18 +51,36 @@ def check_relation_roles(method):
 
 def check_history_access(method):
     """
-    Decorator to check if the current user has access to the fulll history. If the
+    Decorator to check if the current user has access to the full history. If the
     user does not have the correct access, the to_dict method will return a shorter
-    data histroy.
+    data history. Also masks usernames if user lacks view_usernames permission.
     """
 
-    def can_access():
-        if has_request_context() and has_app_context():
-            return True if current_user.view_full_history else False
-        return True
+    def can_view_full():
+        if not has_request_context():
+            return True  # CLI/Celery - trusted
+        return current_user.view_full_history
+
+    def can_view_usernames():
+        if not has_request_context():
+            return True  # CLI/Celery - trusted
+        return current_user.view_usernames or current_user.has_role("Admin")
+
+    def sanitize_data(data):
+        if data is None or can_view_usernames():
+            return data
+        result = data.copy()
+        for field in ("assigned_to", "first_peer_reviewer"):
+            if result.get(field) and result[field].get("id"):
+                mask = f"user-{result[field]['id']}"
+                result[field] = {**result[field], "name": mask, "username": mask}
+        return result
 
     @wraps(method)
     def _impl(self, *method_args, **method_kwargs):
-        return method(self, full=can_access(), *method_args, **method_kwargs)
+        output = method(self, full=can_view_full(), *method_args, **method_kwargs)
+        if output.get("data"):
+            output["data"] = sanitize_data(output["data"])
+        return output
 
     return _impl

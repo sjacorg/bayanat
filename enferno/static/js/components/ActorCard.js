@@ -11,7 +11,6 @@ const ActorCard = Vue.defineComponent({
     closePosition: { type: String, default: 'append', validator: v => ['append', 'prepend'].includes(v) }
   },
   emits: ['edit', 'close'],
-  mixins: [mediaMixin],
   mounted() {
     this.$root.fetchDynamicFields({ entityType: 'actor' });
     this.fetchData();
@@ -405,15 +404,16 @@ const ActorCard = Vue.defineComponent({
               </v-toolbar>
 
               <inline-media-renderer
-                :media="expandedMedia"
-                :media-type="expandedMediaType"
-                ref="inlineMediaRendererRef"
-                @fullscreen="handleFullscreen"
-                @close="closeExpandedMedia"
+                renderer-id="actor-card"
+                :media="$root.expandedByRenderer?.['actor-card']?.media"
+                :media-type="$root.expandedByRenderer?.['actor-card']?.mediaType"
+                @ready="$root.onMediaRendererReady"
+                @fullscreen="$root.handleFullscreen('actor-card')"
+                @close="$root.closeExpandedMedia('actor-card')"
               ></inline-media-renderer>
 
               <v-card-text>
-                <media-grid prioritize-videos :medias="actor.medias" @media-click="handleExpandedMedia"></media-grid>
+                <media-grid prioritize-videos :medias="actor.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'actor-card', ...$event})"></media-grid>
               </v-card-text>
             </v-card>
           </div>
