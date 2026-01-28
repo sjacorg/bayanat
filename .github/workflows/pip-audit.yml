@@ -1,6 +1,6 @@
+name: "Security: Python"
 permissions:
   contents: read
-name: security-audit
 
 on:
   pull_request: {}
@@ -13,11 +13,10 @@ on:
       - pyproject.toml
       - uv.lock
   schedule:
-    - cron: 19 20 * * *
+    - cron: "19 20 * * *"
 
 jobs:
-  security-audit:
-    name: security-audit
+  pip-audit:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -25,11 +24,11 @@ jobs:
         with:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl libxml2-dev libxslt1-dev libgeos-dev
       - name: Install dependencies
-        env:
-          UV_PYTHON: "3.12"
         run: uv sync --extra dev
-      - name: Security audit
+      - name: Run pip-audit
         run: uv run pip-audit .
