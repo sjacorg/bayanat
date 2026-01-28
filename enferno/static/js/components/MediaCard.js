@@ -1,14 +1,12 @@
 const thumbnailContent = `
   <div @click="handleMediaClick" class="h-100">
     <!-- Image preview -->
+    <div v-if="isHoveringPreview && (mediaType === 'video' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
+      <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
+    </div>
+
     <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :data-src="s3url">
-      <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
-        <v-expand-transition>  
-          <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
-            <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
-          </div>
-        </v-expand-transition>
-      </img>
+      <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;"></img>
     </a>
 
     <!-- Video preview -->
@@ -22,9 +20,9 @@ const thumbnailContent = `
     </v-img>
 
     <!-- PDF preview -->
-    <div v-else-if="mediaType === 'pdf'"
-            class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
-      <v-icon size="64" color="red">mdi-file-pdf-box</v-icon>
+    <div v-else-if="mediaType === 'pdf'" :class="['d-flex justify-center bg-grey-lighten-2 h-100 overflow-hidden', { 'align-center': !pdfThumbnailUrl, 'pa-4 align-start': pdfThumbnailUrl }]">
+      <img v-if="pdfThumbnailUrl" :src="pdfThumbnailUrl" class="w-100 rounded elevation-4" />
+      <v-icon v-else size="64" color="red">mdi-file-pdf-box</v-icon>
     </div>
 
     <!-- Audio preview -->
@@ -143,8 +141,10 @@ const MediaCard = Vue.defineComponent({
       s3url: '',
       videoDuration: null,
       videoThumbnail: null,
+      pdfThumbnailUrl: null,
       translations: window.translations,
       thumbnailBrightness: 0,
+      pdfCanvas: null,
       iconMap: {
         image: 'mdi-image',
         video: 'mdi-video',
@@ -171,6 +171,10 @@ const MediaCard = Vue.defineComponent({
     this.init();
   },
   methods: {
+    async loadPdfJs() {
+      await loadScript('/static/js/pdf.js/pdf.min.js');
+      await loadScript('/static/js/pdf.js/pdf.worker.min.js');
+    },
     init() {
       api.get(`/admin/api/media/${this.media.filename}`)
         .then(response => {
@@ -179,6 +183,8 @@ const MediaCard = Vue.defineComponent({
           if (this.mediaType === 'video') {
             this.getVideoDuration();
             this.generateVideoThumbnail();
+          } else if (this.mediaType === 'pdf') {
+            this.generatePdfThumbnail();
           }
         })
         .catch(error => console.error('Error fetching media:', error))
@@ -206,6 +212,46 @@ const MediaCard = Vue.defineComponent({
         video.onloadedmetadata = () => {
           this.videoDuration = video.duration;
         };
+      }
+    },
+    async generatePdfThumbnail() {
+      try {
+        if (typeof pdfjsLib === 'undefined') await this.loadPdfJs();
+
+        const pdf = await pdfjsLib.getDocument(this.s3url).promise;
+        const page = await pdf.getPage(1);
+
+        const THUMB_WIDTH = 240;
+        const DPR = window.devicePixelRatio || 1;
+
+        // Base viewport (CSS size)
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = THUMB_WIDTH / baseViewport.width;
+
+        // Render viewport (high DPI)
+        const renderViewport = page.getViewport({
+          scale: scale * DPR
+        });
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Internal resolution
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
+
+        // Display size
+        canvas.style.borderRadius = "4px";
+        canvas.classList.add("w-100");
+
+        await page.render({
+          canvasContext: ctx,
+          viewport: renderViewport
+        }).promise;
+
+        this.pdfThumbnailUrl = canvas.toDataURL('image/png');
+      } catch (err) {
+        console.error("PDF thumbnail error:", err);
       }
     },
     generateVideoThumbnail() {

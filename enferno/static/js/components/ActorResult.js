@@ -8,16 +8,18 @@ const ActorResult = Vue.defineComponent({
     }
   },
 
-  template: /*html*/`
+  template: `
     <template v-if="!hide">
       <v-card hover class="ma-2" v-if="!actor.restricted">
         <v-toolbar density="compact" class="d-flex px-2">
           <v-chip color="primary" variant="flat" size="small">{{ translations.id_ }} {{ actor.id }}</v-chip>
           <v-chip v-if="actor.originid" variant="text" class="ml-1"># {{ actor.originid }}</v-chip>
           <v-spacer></v-spacer>
-          <v-chip variant="text" v-if="actor.publish_date" size="small">{{ actor.publish_date }}</v-chip>
+          <v-chip variant="text" v-if="actor.publish_date" size="small">{{ $root.formatDate(actor.publish_date) }}</v-chip>
         </v-toolbar>
-        <v-card-title class="text-subtitle-2 text-wrap text-break">{{actor.name}}</v-card-title>
+        <v-card-title class="text-wrap text-break pt-0">
+          <uni-field class="pa-0" disable-spacing :english="actor.name" :arabic="actor.name_ar"></uni-field>
+        </v-card-title>
         <v-divider></v-divider>
         <slot name="header"></slot>
 
