@@ -47,16 +47,12 @@ const NotificationsList = Vue.defineComponent({
         },
         getListItemColorProps(notification) {
             if (!notification) return
-            const urgentUnreadProps = { variant: "flat", 'base-color': "error", class: 'text-white' }
-            const urgentReadProps = { variant: "tonal", 'base-color': "error" }
+            const urgentNotificationProps = { variant: "tonal", 'base-color': "error", class: 'text-white' }
             const unreadProps = { variant: "tonal", 'base-color': "primary" }
             const readProps = {}
             
             if (notification.is_urgent) {
-                if (notification.read_status) {
-                    return urgentReadProps
-                }
-                return urgentUnreadProps
+                return urgentNotificationProps
             }
 
             if (notification.read_status) {
@@ -114,55 +110,58 @@ const NotificationsList = Vue.defineComponent({
             </v-container>
 
             <v-list v-else density="default" lines="three" class="py-0">
-                <v-list-item
-                    v-for="(notification, index) in notifications"
-                    :key="index"
-                    class="py-3 mb-2 rounded-0"
-                    slim
-                    v-bind="getListItemColorProps(notification)"
-                >
-                    <template #prepend>
-                        <v-icon size="small">
-                            {{ getIconFromNotification(notification) }}
-                        </v-icon>
-                    </template>
+                <v-divider :thickness="2" class="border-opacity-25"></v-divider>
+                <v-hover v-for="(notification, index) in notifications" :key="index">
+                    <template v-slot:default="{ isHovering, props: hoverProps }">
+                        <v-list-item
+                            class="py-3 rounded-0"
+                            slim
+                            v-bind="{ ...getListItemColorProps(notification), ...hoverProps }"
+                        >
+                            <template #prepend>
+                                <v-icon size="small">
+                                    {{ getIconFromNotification(notification) }}
+                                </v-icon>
+                            </template>
 
-                    <v-list-item-title
-                        :class="{ 'font-weight-bold': !notification?.read_status }"
-                        class="text-body-1"
-                        :style="getLineClampStyles(config.maxTitleLines)"
-                        v-html="notification?.title"
-                    />
-                    <v-list-item-subtitle class="mt-1">
-                        <div
-                        class="text-caption"
-                        :style="getLineClampStyles(config.maxSubtitleLines)"
-                        v-html="notification?.message"
-                        />
-                        <div class="d-flex justify-space-between align-center mt-2">
-                            <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
-                        </div>
-                    </v-list-item-subtitle>
+                            <v-list-item-title
+                                :class="{ 'font-weight-bold': !notification?.read_status }"
+                                class="text-body-1"
+                                :style="getLineClampStyles(config.maxTitleLines)"
+                                v-html="notification?.title"
+                            />
+                            <v-list-item-subtitle class="mt-1">
+                                <div
+                                class="text-caption"
+                                :style="getLineClampStyles(config.maxSubtitleLines)"
+                                v-html="notification?.message"
+                                />
+                                <div class="d-flex justify-space-between align-center mt-2">
+                                    <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
+                                </div>
+                            </v-list-item-subtitle>
 
-                    <template v-if="!notification?.read_status && !config.hideMarkAsReadButton" #append>
-                        <div class="d-flex align-center ga-2">
-                            <v-tooltip location="bottom">
-                                <template #activator="{ props }">
-                                    <v-btn
-                                        v-bind="props"
-                                        icon
-                                        variant="text"
-                                        size="small"
-                                        @click="$emit('readNotification', notification)"
-                                    >
-                                        <v-icon size="16">mdi-email-open-outline</v-icon>
-                                    </v-btn>
-                                </template>
-                                {{ translations.markAsRead_ }}
-                            </v-tooltip>
-                        </div>
+                            <template v-if="!notification?.read_status && !config.hideMarkAsReadButton && isHovering" #append>
+                                <div class="d-flex align-center ga-2">
+                                    <v-tooltip location="bottom" :style="{ zIndex: 3002 }">
+                                        <template #activator="{ props }">
+                                            <v-btn
+                                                v-bind="props"
+                                                icon="mdi-email-open-outline"
+                                                variant="tonal"
+                                                density="comfortable"
+                                                @click="$emit('readNotification', notification)"
+                                                rounded="full"
+                                            ></v-btn>
+                                        </template>
+                                        {{ translations.markAsRead_ }}
+                                    </v-tooltip>
+                                </div>
+                            </template>
+                        </v-list-item>
+                        <v-divider :thickness="2" class="border-opacity-25"></v-divider>
                     </template>
-                </v-list-item>
+                </v-hover>
             </v-list>
 
             <v-alert
