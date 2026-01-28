@@ -27,6 +27,7 @@
         <v-btn
             @click="markAllAsRead()"
             :loading="notifications.status.markingAllAsRead"
+            :disabled="!notifications.unreadCount"
             color="primary"
             variant="text"
             class="font-weight-medium"
