@@ -119,7 +119,7 @@ const NotificationsList = Vue.defineComponent({
                             v-bind="{ ...getListItemColorProps(notification), ...hoverProps }"
                         >
                             <template #prepend>
-                                <v-icon size="small">
+                                <v-icon size="24" class="mt-n1">
                                     {{ getIconFromNotification(notification) }}
                                 </v-icon>
                             </template>
@@ -132,12 +132,12 @@ const NotificationsList = Vue.defineComponent({
                             />
                             <v-list-item-subtitle class="mt-1">
                                 <div
-                                class="text-caption"
+                                class="text-caption text-high-emphasis"
                                 :style="getLineClampStyles(config.maxSubtitleLines)"
                                 v-html="notification?.message"
                                 />
                                 <div class="d-flex justify-space-between align-center mt-2">
-                                    <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
+                                    <span class="text-caption text-high-emphasis">{{ getDateFromNotification(notification) }}</span>
                                 </div>
                             </v-list-item-subtitle>
 
