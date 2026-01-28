@@ -119,18 +119,18 @@ const NotificationsList = Vue.defineComponent({
                             v-bind="{ ...getListItemColorProps(notification), ...hoverProps }"
                         >
                             <template #prepend>
-                                <v-icon size="24" class="mt-n1">
+                                <v-icon size="24" :class="['mt-n1', { 'opacity-100': (!notification?.read_status || notification?.is_urgent) }]">
                                     {{ getIconFromNotification(notification) }}
                                 </v-icon>
                             </template>
 
                             <v-list-item-title
-                                :class="{ 'font-weight-bold': !notification?.read_status }"
+                                :class="{ 'font-weight-bold': (!notification?.read_status || notification?.is_urgent) }"
                                 class="text-body-1"
                                 :style="getLineClampStyles(config.maxTitleLines)"
                                 v-html="notification?.title"
                             />
-                            <v-list-item-subtitle class="mt-1">
+                            <v-list-item-subtitle class="mt-1" opacity="100">
                                 <div
                                 class="text-caption text-high-emphasis"
                                 :style="getLineClampStyles(config.maxSubtitleLines)"
