@@ -172,8 +172,8 @@ const MediaCard = Vue.defineComponent({
   },
   methods: {
     async loadPdfJs() {
-      await loadScript('/static/js/pdf.js/pdf.min.js');
-      await loadScript('/static/js/pdf.js/pdf.worker.min.js');
+      await loadScript('/static/js/pdf.js/pdf.min.mjs');
+      await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
     },
     init() {
       api.get(`/admin/api/media/${this.media.filename}`)

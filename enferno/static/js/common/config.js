@@ -749,22 +749,31 @@ function loadScript(src) {
     return loadedScripts.get(src);
   }
 
-  const promise = new Promise((resolve, reject) => {
-    // If already in DOM, resolve immediately
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) {
-      resolve();
-      return;
+  const isModule = src.endsWith('.mjs');
+  
+  const promise = (async () => {
+    // For ES modules, use dynamic import
+    if (isModule) {
+      return await import(src);
     }
+    
+    // For regular scripts, use the existing logic
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      if (existing) {
+        resolve();
+        return;
+      }
 
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
 
-    document.head.appendChild(script);
-  });
+      document.head.appendChild(script);
+    });
+  })();
 
   loadedScripts.set(src, promise);
   return promise;

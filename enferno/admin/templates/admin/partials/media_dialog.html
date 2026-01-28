@@ -8,7 +8,7 @@
         <v-spacer></v-spacer>
 
         <v-btn
-          v-if="expandedByRenderer['media-dialog']?.mediaType === 'video'"
+          v-if="expandedByRenderer?.['media-dialog']?.mediaType === 'video'"
           icon="mdi-camera"
           @click="initCroppr('media-dialog');"
         ></v-btn>
@@ -20,8 +20,8 @@
       <v-card-text class="px-0 pt-0">
         <inline-media-renderer
           renderer-id="media-dialog"
-          :media="expandedByRenderer['media-dialog']?.media"
-          :media-type="expandedByRenderer['media-dialog']?.mediaType"
+          :media="expandedByRenderer?.['media-dialog']?.media"
+          :media-type="expandedByRenderer?.['media-dialog']?.mediaType"
           :use-metadata="true"
           class="mb-4"
           content-style="height: calc(100vh - 450px);"
@@ -32,9 +32,9 @@
 
         <!--  Grid of Media Items -->
         <media-grid
-          :horizontal="Boolean(expandedByRenderer['media-dialog']?.media)"
+          :horizontal="Boolean(expandedByRenderer?.['media-dialog']?.media)"
           prioritize-videos
-          :mini-mode="Boolean(expandedByRenderer['media-dialog']?.media)"
+          :mini-mode="Boolean(expandedByRenderer?.['media-dialog']?.media)"
           enable-delete
           :medias="editedItem.medias"
           @media-click="handleExpandedMedia({ rendererId: 'media-dialog', ...$event }); this.$refs.bulletinDialogSplitViewRef?.resetToCenter()"
