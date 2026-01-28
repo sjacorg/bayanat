@@ -370,7 +370,7 @@
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
-    <script type="module">
+    <script nonce="{{ csp_nonce() }}" type="module">
         import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
         import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
         import '/static/js/jsondiffpatch/formatters/base.js'

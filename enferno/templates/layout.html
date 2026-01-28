@@ -94,7 +94,7 @@
 {% endif %}
 <div class="d-none" data-lang='{{ session.get('lang','en') }}'></div>
 <div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
-<script>
+<script nonce="{{ csp_nonce() }}">
     window.__username__ = document.querySelector('[data-username]').dataset.username;
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
     window.__lang__ = document.querySelector('[data-lang]').dataset.lang;
@@ -125,7 +125,7 @@
 <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 <script src="/static/js/date_fns.min.js"></script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
     {%  include 'admin/jsapi.jinja2' %}
 </script>
 <script src="/static/js/components/NotificationsList.js"></script>

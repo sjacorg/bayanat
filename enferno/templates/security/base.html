@@ -19,7 +19,7 @@
       {%- endblock navbar %}
       {% block content -%}
       {%- endblock content %}
-    <script>
+    <script nonce="{{ csp_nonce() }}">
       {% set settings = current_user.settings or {} %}
       window.__settings__ = JSON.parse('{{settings|tojson|safe }}');
 
