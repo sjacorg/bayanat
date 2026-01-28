@@ -348,7 +348,7 @@ const mediaMixin = {
     },
 
     handleExpandedMedia({ rendererId, media, mediaType }) {
-      const current = this.expandedByRenderer[rendererId]
+      const current = this.expandedByRenderer?.[rendererId]
       // toggle same media on same renderer
       if (current?.media?.s3url === media?.s3url) {
         this.closeExpandedMedia(rendererId)
@@ -377,8 +377,8 @@ const mediaMixin = {
       this.disposeMediaPlayer(rendererId)
     },
     handleFullscreen(rendererId) {
-      const expanded = this.expandedByRenderer[rendererId]
-      const renderer = this.renderers[rendererId]
+      const expanded = this.expandedByRenderer?.[rendererId]
+      const renderer = this.renderers?.[rendererId]
       if (!expanded || !renderer) return
 
       if (['video', 'audio'].includes(expanded.mediaType)) {
