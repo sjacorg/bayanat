@@ -810,9 +810,16 @@
 
                     bulletinDrawer: function (val) {
                         if (val === false) {
+                            this.closeExpandedMedia();
                             this.bulletin = {};
                             if (this.$route.path !== '/admin/bulletins/')
                                 this.$router.push('/admin/bulletins/')
+                        }
+                    },
+                    preview: function (nextVal) {
+                        if (nextVal === false) {
+                            this.closeExpandedMedia('actor-card');
+                            this.closeExpandedMedia('bulletin-card');
                         }
                     },
 

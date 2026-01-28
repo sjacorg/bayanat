@@ -220,7 +220,7 @@
 
   const app = createApp({
     delimiters: delimiters,
-    mixins: [globalMixin, formBuilderMixin],
+    mixins: [mediaMixin, globalMixin, formBuilderMixin],
     data: () => ({
       translations: window.translations,
       itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
