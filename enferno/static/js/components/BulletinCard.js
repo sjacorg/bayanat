@@ -380,8 +380,8 @@ const BulletinCard = Vue.defineComponent({
 
         <inline-media-renderer
           renderer-id="bulletin-card"
-          :media="$root.expandedByRenderer['bulletin-card']?.media"
-          :media-type="$root.expandedByRenderer['bulletin-card']?.mediaType"
+          :media="$root.expandedByRenderer?.['bulletin-card']?.media"
+          :media-type="$root.expandedByRenderer?.['bulletin-card']?.mediaType"
           @ready="$root.onMediaRendererReady"
           @fullscreen="$root.handleFullscreen('bulletin-card')"
           @close="$root.closeExpandedMedia('bulletin-card')"
