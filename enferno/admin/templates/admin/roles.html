@@ -52,31 +52,17 @@
                                                                 </v-text-field>
                                                             </v-col>
                                                             <v-col cols="12" md="6">
-                                                                <v-text-field 
-                                                                    label="{{ _('Group Color') }}"
-                                                                    v-model="editedItem.color" 
+                                                                <v-color-input
+                                                                    v-model="editedItem.color"
                                                                     persistent-hint
                                                                     hint="{{ _('Useful to easily identify groups in data tables.') }}"
+                                                                    color-pip
+                                                                    autocomplete="off"
+                                                                    mode="hex"
+                                                                    :rules="[validationRules.required(), validationRules.hexColor()]"
                                                                 >
-                                                                    <template v-slot:append>
-                                                                        <v-menu v-model="menu" top
-                                                                                nudge-bottom="105"
-                                                                                nudge-left="16"
-                                                                                :close-on-content-click="false">
-                                                                            <template v-slot:activator="{ props }">
-                                                                                <div :style="swatchStyle"
-                                                                                v-bind="props"></div>
-                                                                            </template>
-                                                                            <v-card>
-                                                                                <v-card-text class="pa-0">
-                                                                                    <v-color-picker
-                                                                                            v-model="editedItem.color"></v-color-picker>
-                                                                                </v-card-text>
-                                                                            </v-card>
-                                                                        </v-menu>
-                                                                    </template>
-                                                                </v-text-field>
-
+                                                                    <template v-slot:label>{{ _('Group Color') }} <Asterisk /></template>
+                                                                </v-color-input>
                                                             </v-col>
                                                         </v-row>
 
@@ -203,8 +189,6 @@
             mixins: [globalMixin],
 
             data: () => ({
-
-                menu: false,
                 dialog: dialog,
                 validationRules: validationRules,
                 imDialog: false,
@@ -236,18 +220,6 @@
             }),
 
             computed: {
-                swatchStyle() {
-                    return {
-                        backgroundColor: this.editedItem.color,
-                        cursor: 'pointer',
-                        height: '24px',
-                        width: '24px',
-                        margin: '2px',
-                        border: '1px dotted #ddd',
-                        borderRadius: this.menu ? '50%' : '4px',
-                        transition: 'border-radius 200ms ease-in-out'
-                    }
-                },
                 formTitle() {
                     return this.editedIndex === -1 ? "{{_('New Group')}}" : "{{_('Edit Group')}}";
                 }
