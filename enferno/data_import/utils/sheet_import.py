@@ -888,7 +888,7 @@ class SheetImport:
         # Save actor
         try:
             self.actor_profile.save(raise_exception=True)
-            self.actor.meta = self.row.to_json(orient="index")
+            self.actor.meta = self.row.to_dict()
             self.actor.create_revision()
 
             # Creating Activity

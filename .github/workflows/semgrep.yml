@@ -1,4 +1,4 @@
-name: Semgrep
+name: "Security: SAST"
 
 on:
   pull_request: {}
@@ -10,18 +10,14 @@ on:
     paths:
       - .github/workflows/semgrep.yml
   schedule:
-    - cron: '18 18 * * *'
+    - cron: "18 18 * * *"
 
 jobs:
   semgrep:
-    name: semgrep/ci
     runs-on: ubuntu-latest
-
     container:
       image: semgrep/semgrep
-
-    if: (github.actor != 'dependabot[bot]')
-
+    if: github.actor != 'dependabot[bot]'
     steps:
       - uses: actions/checkout@v4
       - run: semgrep ci
