@@ -31,7 +31,7 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import db, session, babel, rds, debug_toolbar, mail, limiter
+from enferno.extensions import db, session, babel, rds, debug_toolbar, mail, limiter, talisman
 from enferno.public.views import bp_public
 from enferno.setup.views import bp_setup
 from enferno.settings import Config
@@ -96,7 +96,9 @@ def register_extensions(app):
         app: Flask application instance
     """
     db.init_app(app)
-    debug_toolbar.init_app(app)
+    # Skip debug toolbar when CSP is enabled (they conflict)
+    if not app.config.get("CSP_ENABLED", False):
+        debug_toolbar.init_app(app)
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, webauthn_model=WebAuthn)
 
     # Initialize security options with common configurations
@@ -122,6 +124,91 @@ def register_extensions(app):
     # Configure limiter storage with the correct config
     limiter.storage_uri = app.config["REDIS_URL"]
     limiter.init_app(app)
+
+    # Initialize Talisman with security headers
+    register_talisman(app)
+
+
+def register_talisman(app):
+    """
+    Register Flask-Talisman for security headers including CSP.
+
+    Args:
+        app: Flask application instance
+    """
+    # Build CSP policy
+    csp = {
+        "default-src": "'self'",
+        "script-src": ["'self'", "'unsafe-eval'"],  # Vue requires it to compile templates
+        "style-src": ["'self'", "'unsafe-inline'"],  # Vuetify requires unsafe-inline for styles
+        "img-src": ["'self'", "data:", "blob:"],
+        "font-src": ["'self'", "data:"],
+        "connect-src": ["'self'"],
+        "media-src": ["'self'", "blob:"],
+        "frame-ancestors": "'none'",
+        "form-action": "'self'",
+        "base-uri": "'self'",
+    }
+
+    # Add map tile servers to img-src and connect-src
+    maps_endpoint = app.config.get("MAPS_API_ENDPOINT", "")
+    if "openstreetmap" in maps_endpoint or "tile.osm.org" in maps_endpoint:
+        csp["img-src"].append("https://tile.osm.org")
+        csp["img-src"].append("https://*.tile.osm.org")
+        csp["img-src"].append("https://tile.openstreetmap.org")
+        csp["img-src"].append("https://*.tile.openstreetmap.org")
+        csp["connect-src"].append("https://tile.openstreetmap.org")
+        csp["connect-src"].append("https://*.tile.openstreetmap.org")
+        csp["connect-src"].append("https://tile.osm.org")
+        csp["connect-src"].append("https://*.tile.osm.org")
+
+    # Add Google Maps if configured
+    if app.config.get("GOOGLE_MAPS_API_KEY"):
+        csp["img-src"].extend(
+            [
+                "https://*.google.com",
+                "https://*.googleapis.com",
+                "https://*.gstatic.com",
+            ]
+        )
+        csp["connect-src"].extend(
+            [
+                "https://*.google.com",
+                "https://*.googleapis.com",
+            ]
+        )
+        csp["script-src"].append("https://maps.googleapis.com")
+
+    # Add Google OAuth if enabled
+    if app.config.get("GOOGLE_OAUTH_ENABLED"):
+        csp["connect-src"].append("https://accounts.google.com")
+        csp["img-src"].append("https://accounts.google.com")
+
+    # Check if CSP should be enabled
+    csp_enabled = app.config.get("CSP_ENABLED", True)
+    csp_report_uri = app.config.get("CSP_REPORT_URI")
+    # Report-only mode requires a report URI
+    csp_report_only = app.config.get("CSP_REPORT_ONLY", False) and csp_report_uri
+
+    talisman.init_app(
+        app,
+        # CSP settings
+        content_security_policy=csp if csp_enabled else None,
+        content_security_policy_nonce_in=["script-src"],  # Add nonce to script-src
+        content_security_policy_report_only=csp_report_only,
+        content_security_policy_report_uri=csp_report_uri if csp_report_only else None,
+        # Other security headers
+        force_https=app.config.get("FORCE_HTTPS", False),  # Don't force in dev
+        force_https_permanent=False,
+        frame_options="DENY",
+        strict_transport_security=app.config.get("FORCE_HTTPS", False),
+        strict_transport_security_max_age=31536000,  # 1 year
+        strict_transport_security_include_subdomains=True,
+        strict_transport_security_preload=False,
+        referrer_policy="strict-origin-when-cross-origin",
+        session_cookie_secure=app.config.get("SESSION_COOKIE_SECURE", True),
+        session_cookie_http_only=True,
+    )
 
 
 def register_signals(app):

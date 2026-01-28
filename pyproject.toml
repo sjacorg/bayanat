@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bayanat"
-version = "2.9.0"
+version = "3.0.0"
 description = "Open source data management solution for processing human rights violations and war crimes data"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -122,6 +122,7 @@ dependencies = [
     "yt-dlp>=2025.5.0",
     "zipp>=3.22.0",
     "zxcvbn>=4.5.0",
+    "flask-talisman>=1.1.0",
 ]
 
 [project.optional-dependencies]
@@ -138,7 +139,8 @@ dev = [
 ai = [
     "openai-whisper>=20240930",
     "pytesseract>=0.3.13",
-    "torch>=2.8.0"
+    "torch>=2.8.0",
+    "numba>=0.60.0"  # Required for Python 3.12+ compatibility (whisper dependency)
 ]
 
 [project.urls]
