@@ -718,6 +718,7 @@
 
                 actorDrawer: function (val) {
                     if (val == false) {
+                        this.closeExpandedMedia();
                         this.actor = {};
                         if (this.$route.path !== '/admin/actors/')
                             this.$router.push('/admin/actors/')
@@ -1527,6 +1528,7 @@
                 close() {
 
                     this.dialog = false;
+                    this.closeExpandedMedia();
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.editedIndex = -1;
