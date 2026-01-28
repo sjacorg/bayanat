@@ -51,7 +51,7 @@
 {% else %}
     <div class="d-none" data-settings='{}'></div>
 {% endif %}
-<script>
+<script nonce="{{ csp_nonce() }}">
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
 </script>
 
@@ -65,7 +65,7 @@
 <script src="/static/js/axios.min.js"></script>
 
 <script src="/static/js/vue-router.global.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
     {%  include 'admin/jsapi.jinja2' %}
 </script>
 <script src="/static/js/common/config.js"></script>
@@ -73,7 +73,7 @@
 
 
 {% block js %}
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
 

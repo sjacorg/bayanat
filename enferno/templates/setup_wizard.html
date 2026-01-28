@@ -455,11 +455,11 @@
 {% else %}
     <script src="/static/js/vue.global.prod.js"></script>
 {% endif %}
-<script>
+<script nonce="{{ csp_nonce() }}">
     window.__settings__ = {};
     window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
     {% include 'admin/jsapi.jinja2' %}
 </script>
 
@@ -477,7 +477,7 @@
 <script src="/static/js/components/EditableTable.js"></script>
 
 {% block js %}
-    <script type="module">
+    <script nonce="{{ csp_nonce() }}" type="module">
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
