@@ -177,10 +177,11 @@ const NotificationsList = Vue.defineComponent({
                 <v-btn
                     v-if="notifications?.length && hasMore"
                     :loading="loadingMore"
-                    block
-                    rounded="0"
-                    height="48"
                     variant="text"
+                    class="font-weight-medium"
+                    block
+                    tile
+                    size="x-large"
                     @click="$emit('loadNotifications')"
                 >
                     {{ translations.loadMore_ }}
