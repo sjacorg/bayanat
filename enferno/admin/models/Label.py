@@ -20,7 +20,11 @@ class Label(db.Model, BaseMixin):
     SQL Alchemy model for labels
     """
 
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        db.CheckConstraint("id != parent_label_id", name="label_no_self_parent"),
+        db.UniqueConstraint("parent_label_id", "title", name="label_unique_sibling_title"),
+        {"extend_existing": True},
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, index=True)
@@ -64,9 +68,9 @@ class Label(db.Model, BaseMixin):
             "for_incident": self.for_incident,
             "for_offline": self.for_offline,
             "parent": {"id": self.parent.id, "title": self.parent.title} if self.parent else None,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
         }
 
     # custom compact serialization
@@ -179,6 +183,17 @@ class Label(db.Model, BaseMixin):
         Returns:
             - the label object.
         """
+        # Capture old values for cascade detection (only on update)
+        old_values = {}
+        if self.id:
+            old_values = {
+                "verified": self.verified,
+                "for_bulletin": self.for_bulletin,
+                "for_actor": self.for_actor,
+                "for_incident": self.for_incident,
+                "for_offline": self.for_offline,
+            }
+
         self.title = json["title"]
         self.title_ar = json["title_ar"] if "title_ar" in json else ""
         self.comments = json["comments"] if "comments" in json else ""
@@ -189,26 +204,46 @@ class Label(db.Model, BaseMixin):
         self.for_incident = json.get("for_incident", False)
         self.for_offline = json.get("for_offline", False)
 
-        parent_info = json.get("parent")
-        if parent_info and "id" in parent_info:
-            parent_id = parent_info["id"]
-            if parent_id != self.id:
-                p_label = Label.query.get(parent_id)
-                # Check for circular relations
-                if (
-                    p_label
-                    and p_label.id != self.id
-                    and (not p_label.parent or p_label.parent.id != self.id)
-                ):
-                    self.parent_label_id = p_label.id
-                else:
-                    self.parent_label_id = None
+        # Handle parent assignment
+        if "parent" in json:
+            parent_info = json["parent"]
+            if parent_info and "id" in parent_info:
+                parent_id = parent_info["id"]
+                if not self._is_valid_parent(parent_id):
+                    raise ValueError("Invalid parent: creates cycle or does not exist")
+                self.parent_label_id = parent_id
             else:
                 self.parent_label_id = None
-        else:
-            self.parent_label_id = None
+
+        # Validate against parent (new or existing)
+        if self.parent_label_id:
+            parent = Label.query.get(self.parent_label_id)
+            if parent:
+                if self.verified != parent.verified:
+                    raise ValueError("Label verified status must match parent")
+
+                for flag in ["for_bulletin", "for_actor", "for_incident", "for_offline"]:
+                    if getattr(self, flag) != getattr(parent, flag):
+                        raise ValueError(f"Child {flag} must match parent")
+
+        # Cascade changes to children
+        if old_values:
+            self._cascade_to_children(old_values)
 
         return self
+
+    def _cascade_to_children(self, old_values: dict) -> None:
+        """Cascade verified and for_* flag changes to all children."""
+        fields = ["verified", "for_bulletin", "for_actor", "for_incident", "for_offline"]
+        changed = {f: getattr(self, f) for f in fields if getattr(self, f) != old_values.get(f)}
+
+        if not changed:
+            return
+
+        for child in self.sub_label:
+            for field, value in changed.items():
+                setattr(child, field, value)
+            child._cascade_to_children(old_values)
 
     # import csv data into db
     @staticmethod
@@ -244,3 +279,84 @@ class Label(db.Model, BaseMixin):
         db.session.execute(text("alter sequence label_id_seq restart with :m"), {"m": max_id})
         db.session.commit()
         return ""
+
+    def _is_valid_parent(self, parent_id: int) -> bool:
+        """
+        Check if parent_id is valid (exists and won't create a cycle).
+
+        Args:
+            - parent_id: the proposed parent ID.
+
+        Returns:
+            - True if valid, False otherwise.
+        """
+        if not parent_id:
+            return True
+
+        if self.id and parent_id == self.id:
+            return False
+
+        # Check parent exists and walk up to detect cycles
+        current_id = parent_id
+        visited = {self.id} if self.id else set()
+
+        while current_id:
+            if current_id in visited:
+                return False
+            visited.add(current_id)
+            parent = Label.query.get(current_id)
+            if not parent:
+                return False
+            current_id = parent.parent_label_id
+
+        return True
+
+    @staticmethod
+    def build_tree(labels: list["Label"]) -> list[dict[str, Any]]:
+        """
+        Build a tree structure from flat list of labels for Vuetify tree component.
+
+        Args:
+            - labels: list of Label objects.
+
+        Returns:
+            - list of tree nodes with nested children.
+        """
+        nodes_by_id = {}
+        children_by_parent = {}
+
+        # First pass: create nodes and group by parent
+        for label in labels:
+            node = {
+                "id": label.id,
+                "title": label.title,
+                "title_ar": label.title_ar,
+                "comments": label.comments,
+                "comments_ar": label.comments_ar,
+                "verified": label.verified,
+                "for_bulletin": label.for_bulletin,
+                "for_actor": label.for_actor,
+                "for_incident": label.for_incident,
+                "for_offline": label.for_offline,
+                "parent": (
+                    {"id": label.parent.id, "title": label.parent.title} if label.parent else None
+                ),
+            }
+            nodes_by_id[label.id] = node
+
+            parent_key = label.parent_label_id or "root"
+            if parent_key not in children_by_parent:
+                children_by_parent[parent_key] = []
+            children_by_parent[parent_key].append(node)
+
+        # Second pass: attach children to parents
+        for label in labels:
+            if label.id in children_by_parent:
+                children = children_by_parent[label.id]
+                children.sort(key=lambda x: x["title"] or "")
+                nodes_by_id[label.id]["children"] = children
+
+        # Return sorted root nodes
+        root_nodes = children_by_parent.get("root", [])
+        root_nodes.sort(key=lambda x: x["title"] or "")
+        return root_nodes
