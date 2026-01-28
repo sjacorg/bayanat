@@ -105,8 +105,11 @@ const validationRules = {
 
 // Helper functions
 function hasValue(value) {
-    if (Array.isArray(value)) return value.length > 0;
-    return value === 0 || Boolean(value);
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return value !== null && value !== undefined && value !== '';
 }
 
 function isValidLength(value, limit, type) {
