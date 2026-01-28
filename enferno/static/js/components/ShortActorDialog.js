@@ -237,15 +237,16 @@ const ShortActorDialog = Vue.defineComponent({
                               <dual-field
                                   v-model:original="editedItem.first_name"
                                   v-model:translation="editedItem.first_name_ar"
-                                  :label-original="translations.firstName_"
-                                  :label-translation="translations.firstNameAr_"
                                   :allow-unknown="true"
                                   :rules="[
                                     validationRules.required(),
                                     validationRules.maxLength(255),
                                   ]"
                                   v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.first_name', 'item.first_name_ar')"
-                              />
+                              >
+                                <template v-slot:label-original>{{ translations.firstName_ }} <Asterisk /></template>
+                                <template v-slot:label-translation>{{ translations.firstNameAr_ }} <Asterisk /></template>
+                              </dual-field>
                           </div>
                           <div style="min-width: 0;">
                               <dual-field
@@ -261,15 +262,16 @@ const ShortActorDialog = Vue.defineComponent({
                               <dual-field
                                   v-model:original="editedItem.last_name"
                                   v-model:translation="editedItem.last_name_ar"
-                                  :label-original="translations.lastName_"
-                                  :label-translation="translations.lastNameAr_"
                                   :allow-unknown="true"
                                   :rules="[
                                       validationRules.required(),
                                       validationRules.maxLength(255),
                                   ]"
                                   v-bind="$root.serverErrorPropsForDualField(serverErrors, 'item.last_name', 'item.last_name_ar')"
-                              ></dual-field>
+                              >
+                                <template v-slot:label-original>{{ translations.lastName_ }} <Asterisk /></template>
+                                <template v-slot:label-translation>{{ translations.lastNameAr_ }} <Asterisk /></template>
+                              </dual-field>
                           </div>
                           <div style="min-width: 0;">
                             <dual-field
@@ -471,7 +473,9 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="min-width: 0;">
-                              <v-textarea outlined v-model="editedItem.comments" :rules="[validationRules.required()]" :label="translations.comments_"></v-textarea>
+                              <v-textarea outlined v-model="editedItem.comments" :rules="[validationRules.required()]">
+                                <template v-slot:label>{{ translations.comments_ }} <Asterisk /></template>
+                              </v-textarea>
                           </div>
 
                           <div style="min-width: 0;">
@@ -487,12 +491,13 @@ const ShortActorDialog = Vue.defineComponent({
                                   :items="allowedRoles"
                                   multiple
                                   v-model="editedItem.roles"
-                                  :label="translations.restrictToAccessGroups_"
                                   :rules="
                                     !unrestricted ? [validationRules.required(translations.accessGroupsRequired_)] : []
                                   "
                                   clearable
-                              ></v-select>
+                              >
+                                <template v-slot:label>{{ translations.restrictActorToAccessGroups_ }} <Asterisk v-if="!unrestricted" /></template>
+                              </v-select>
                               <v-checkbox color="error" @change="unrestricted ? editedItem.roles = [] : null" class="mx-2" :label="translations.noAccessAccessGroups_" v-model="unrestricted"> </v-checkbox>
                             </div>
                           </div>
