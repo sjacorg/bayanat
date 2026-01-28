@@ -35,7 +35,7 @@ render_field %} {% block navbar %}{% endblock %} {% block content %}
 {% endblock %}
 
 {% block js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   const { createApp } = Vue;
   const { createVuetify } = Vuetify;
 

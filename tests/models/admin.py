@@ -81,6 +81,7 @@ class ActorItemMinModel(StrictModel):
     type_: Optional[str] = Field(alias="type", default=None)
     title: str = Field(default=None, max_length=255)
     name: Optional[str] = Field(default=None, max_length=255)
+    name_ar: Optional[str] = Field(default=None, max_length=255)
     assigned_to: Optional["UserCompactModel"] = None
     first_peer_reviewer: Optional["UserCompactModel"] = None
     status: Optional[str] = Field(default=None, max_length=255)

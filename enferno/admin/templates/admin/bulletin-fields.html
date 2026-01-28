@@ -141,7 +141,7 @@
 <script src="/static/js/components/SelectFieldTypeDialog.js"></script>
 <script src="/static/js/components/ShowDetails.js"></script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
   const { createApp } = Vue;
   const { createVuetify } = Vuetify;
   const vuetify = createVuetify(vuetifyConfig);
