@@ -202,10 +202,10 @@ const FieldListItem = Vue.defineComponent({
                         <component :is="componentProps.component" v-bind="componentProps">
                             <template #append-inner>
                                 <v-chip v-if="field.core" variant="outlined" color="purple-lighten-1" class="rounded">
-                                    {{ translations.default_ }}
+                                    {{ translations.DEFAULT_ }}
                                 </v-chip>
                                 <v-chip v-else variant="outlined" class="rounded">
-                                    {{ translations.custom_ }}
+                                    {{ translations.CUSTOM_ }}
                                 </v-chip>
                             </template>
                         </component>
