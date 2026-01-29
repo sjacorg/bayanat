@@ -168,6 +168,9 @@ const vuetifyConfig = {
         VApp: {
             class: 'bg-background',
         },
+        VFileInput: {
+            variant: 'outlined',
+        },
         VColorInput: {
             variant: 'outlined',
         },

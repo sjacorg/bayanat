@@ -1,5 +1,5 @@
 <v-dialog :retain-focus="false" no-click-animation persistent v-if="dialog" v-model="dialog" fullscreen>
-    <v-form @submit.prevent="save"  ref="form" v-model="valid">
+    <v-form @submit.prevent="validateForm" ref="form">
         <v-card v-if="dialog" class="overflow-hidden card-edit">
             <v-toolbar
                 color="primary"
@@ -9,8 +9,7 @@
             </v-toolbar-title>
                 <v-spacer></v-spacer>
                 <v-btn 
-                    type="button" 
-                    @click="validateForm"
+                    type="submit" 
                     variant="elevated"
                     class="mx-2"
                     >
