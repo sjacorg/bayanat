@@ -117,64 +117,9 @@
                                                     </v-card>
                                                 </v-dialog>
 
-                                                <v-dialog v-model="imDialog" width="500">
-
-                                                    {% if current_user.roles_in(['Admin']) %}
-                                                    <template v-slot:activator="{ props }">
-                                                        <v-btn
-                                                            color="secondary"
-                                                            variant="elevated"
-                                                            class="ma-2"
-                                                            v-bind="props">
-                                                            {{ _('Import CSV') }}
-                                                        </v-btn>
-                                                    </template>
-                                                    {% endif %}
-
-                                                    <v-form ref="csvForm" @submit.prevent="validateImportCSV">
-                                                    <v-card>
-                                                        <v-card-title>
-                                                            <span class="headline">{{ _('Import CSV') }}</span>
-                                                        </v-card-title>
-
-                                                        <v-card-text>
-                                                            <v-container>
-                                                                <v-row>
-                                                                    <v-col cols="12" md="12">
-                                                                        <v-file-input v-model="csvFile" show-size
-                                                                                      accept=".csv"
-                                                                                      :rules="[validationRules.required()]"
-                                                                        >
-                                                                            <template v-slot:label>{{ _('Select CSV File') }} <Asterisk /></template>
-                                                                        </v-file-input>
-
-                                                                    </v-col>
-                                                                </v-row>
-                                                            </v-container>
-                                                        </v-card-text>
-
-                                                        <v-card-actions>
-                                                            <v-spacer></v-spacer>
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="imDialog=false"
-                                                            >{{ _('Cancel') }}
-                                                            </v-btn
-                                                            >
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    type="submit"
-                                                            >{{ _('Save') }}
-                                                            </v-btn
-                                                            >
-                                                        </v-card-actions>
-                                                    </v-card>
-                                                    </v-form>
-
-                                                </v-dialog>
-
+                                                {% if current_user.roles_in(['Admin']) %}
+                                                <import-csv-dialog endpoint="/admin/api/source/import/" @import="refresh()"></import-csv-dialog>
+                                                {% endif %}
                                             </v-toolbar>
                                         </template>
                                         <template #['item.comments']="{ item }">
@@ -201,6 +146,7 @@
 {% endblock %} {% block js %}
     <script src="/static/js/components/SearchField.js"></script>
     <script src="/static/js/components/Asterisk.js"></script>
+    <script src="/static/js/components/ImportCsvDialog.js"></script>
     <script nonce="{{ csp_nonce() }}">
 
 
@@ -215,12 +161,10 @@
             data: () => ({
                 dialog: dialog,
                 validationRules: validationRules,
-                imDialog: false,
                 drawer: drawer,
                 parents: [],
                 loading: true,
                 parentLoading: false,
-                csvFile: null,
                 options: {},
 
                 headers: [
@@ -285,18 +229,6 @@
                     this.refresh()
                 },
 
-                importCSV() {
-                    const reqData = new FormData();
-                    reqData.append('csv', this.csvFile)
-                    api.post('/admin/api/source/import/', reqData).then(response => {
-
-                        this.imDialog = false;
-                        this.refresh();
-                        this.showSnack(response.data);
-                    })
-
-                },
-
                 newItem() {
 
                     this.editedItem = Object.assign({}, this.defaultItem);
@@ -333,17 +265,6 @@
                     }, 300);
                 },
 
-                validateImportCSV() {
-                    this.$refs.csvForm.validate().then(({ valid, errors }) => {
-                        if (valid) {
-                            this.importCSV();
-                        } else {
-                            this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError()
-                        }
-                    });
-                },
-
                 save() {
                     this.$refs.form.validate().then(({ valid }) => {
                         if (!valid) {
@@ -378,6 +299,7 @@
 
         app.component('SearchField', SearchField)
         app.component('Asterisk', Asterisk)
+        app.component('ImportCsvDialog', ImportCsvDialog)
 
         app.use(vuetify).mount("#app")
     </script>
