@@ -111,6 +111,7 @@
                                         @click:append="toggleAdvSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
+                                        :bg-color="searchBg"
                                 ></v-text-field>
 
 
@@ -683,6 +684,10 @@
                 },
                 simpleIdNumberValue() {
                     return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id.toString(), number: idNumber.number.toString() }));
+                },
+
+                searchBg() {
+                    return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow-lighten-5' : '';
                 },
 
                 searchEmpty() {

@@ -154,10 +154,44 @@ const BulletinSearchBox = Vue.defineComponent({
                   :label="translations.originId_"
                   clearable
               ></v-text-field>
+
+              <!-- Search terms -->
+              <v-combobox
+                  v-model="q.searchTerms"
+                  @update:model-value="val => q.searchTerms = $root.sanitizeCombobox(val)"
+                  :label="translations.searchTerms_"
+                  multiple
+                  chips
+                  closable-chips
+                  small-chips
+                  clearable
+              ></v-combobox>
+                    
+              <div class="d-flex align-center flex-wrap">
+                <v-checkbox :label="translations.any_" v-model="q.opTerms" color="primary" class="me-4"></v-checkbox>
+                <v-checkbox :label="translations.exactMatch_" v-model="q.termsExact" color="primary" class="me-4"></v-checkbox>
+              </div>
+              
+              <v-combobox
+                  v-model="q.exTerms"
+                  @update:model-value="val => q.exTerms = $root.sanitizeCombobox(val)"
+                  :label="translations.excludeTerms_"
+                  multiple
+                  chips
+                  closable-chips
+                  clearable
+              ></v-combobox>
+                    
+              <div class="d-flex align-center">
+                <v-checkbox :label="translations.all_" v-model="q.opExTerms" color="primary" class="me-4"></v-checkbox>
+                <v-checkbox :label="translations.exactMatch_" v-model="q.exTermsExact" color="primary" class="me-4"></v-checkbox>
+              </div>
+              <!-- End terms -->
               
               <template v-if="$root.isFieldActiveByName('tags', { entityType: 'bulletin' })">
               <v-combobox
                   v-model="q.tags"
+                  @update:model-value="val => q.tags = $root.sanitizeCombobox(val)"
                   :label="translations.inTags_"
                   multiple
                   chips
@@ -169,7 +203,7 @@ const BulletinSearchBox = Vue.defineComponent({
               <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.opTags" color="primary" small
                             class="me-4"></v-checkbox>
-                <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
+                <v-checkbox :label="translations.exactMatch_" dense v-model="q.inExact" color="primary" small
                             class="me-4"></v-checkbox>
 
               </div>
@@ -177,6 +211,7 @@ const BulletinSearchBox = Vue.defineComponent({
               
               <v-combobox
                     v-model="q.exTags"
+                    @update:model-value="val => q.exTags = $root.sanitizeCombobox(val)"
                     :label="translations.exTags_"
                     multiple
                     chips
