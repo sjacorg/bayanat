@@ -146,7 +146,7 @@
 </v-main>
 
 {% endblock %} {% block js %}
-<script type="module">
+<script nonce="{{ csp_nonce() }}" type="module">
   const {createApp} = Vue;
   const {createVuetify} = Vuetify;
 

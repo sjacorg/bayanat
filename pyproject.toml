@@ -121,6 +121,7 @@ dependencies = [
     "yt-dlp>=2025.5.0",
     "zipp>=3.22.0",
     "zxcvbn>=4.5.0",
+    "flask-talisman>=1.1.0",
 ]
 
 [project.optional-dependencies]
@@ -137,7 +138,8 @@ dev = [
 ai = [
     "pytesseract>=0.3.13",
     "openai-whisper>=20240930",
-    "torch>=2.8.0"
+    "torch>=2.8.0",
+    "numba>=0.60.0"  # Required for Python 3.12+ compatibility (whisper dependency)
 ]
 
 [project.urls]

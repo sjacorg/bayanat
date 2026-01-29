@@ -278,7 +278,7 @@
 <script src="/static/js/Sortable.min.js"></script>
 <script src="/static/js/vuedraggable.umd.js"></script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
     window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
     const draggable = vuedraggable;

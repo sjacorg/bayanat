@@ -95,7 +95,7 @@
 <div class="d-none" data-lang='{{ session.get('lang','en') }}'></div>
 <div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
 <div class="d-none" data-app-version='{{ config.VERSION }}'></div>
-<script>
+<script nonce="{{ csp_nonce() }}">
     const userMetaEl = document.querySelector('[data-settings]');
     window.__settings__ = JSON.parse(userMetaEl?.dataset.settings ?? '{}');
     window.__username__ = userMetaEl?.dataset.username ?? '';
@@ -129,7 +129,7 @@
 <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 <script src="/static/js/date_fns.min.js"></script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
     {%  include 'admin/jsapi.jinja2' %}
 </script>
 <script src="/static/js/components/NotificationsList.js"></script>
