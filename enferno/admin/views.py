@@ -5615,16 +5615,17 @@ def api_user_enable(id: int) -> Response:
         return HTTPResponse.success(message="User is already enabled")
 
     # Set to ACTIVE if user has roles, otherwise SUSPENDED
-    if user.roles:
-        user.status = UserStatus.ACTIVE
-        user.active = True
+    try:
+        new_status = UserStatus.ACTIVE if user.roles else UserStatus.SUSPENDED
+        user.set_status(new_status)
+        user.save()
+    except ValueError as e:
+        return HTTPResponse.error(str(e))
+
+    if new_status == UserStatus.ACTIVE:
         message = f"User {user.username} enabled and activated."
     else:
-        user.status = UserStatus.SUSPENDED
-        user.active = False
         message = f"User {user.username} enabled. Assign roles and reactivate to restore access."
-
-    user.save()
     user.create_revision()
 
     Activity.create(
@@ -5711,7 +5712,7 @@ def api_user_delete(
     if user is None:
         return HTTPResponse.not_found("User not found")
 
-    if user.active:
+    if user.status == UserStatus.ACTIVE:
         return HTTPResponse.forbidden("User is active, make inactive before deleting")
 
     if user.delete():
