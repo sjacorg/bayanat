@@ -85,7 +85,7 @@
 
 
                                 <v-spacer></v-spacer>
-                                {% if current_user.roles_in(['Admin','DA']) %}
+                                {% if current_user.roles_in(['Admin','Analyst']) %}
                                     <v-btn @click="editItem" color="primary" variant="elevated"
                                            class="ma-2">{{ _('New Actor') }}</v-btn>
                                 {% endif %}
@@ -568,7 +568,7 @@
                     {title: "{{_('ID')}}", value: "id", width: 12, sortable: false},
                     {title: "{{_('Type')}}", value: "type", width: 20, sortable: false},
                     {title: "{{_('Name')}}", value: "name", width: 300, sortable: false},
-                    {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
+                    {% if (current_user.has_role('Admin') or current_user.has_role('Analyst')) %}
                         {title: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
                         {title: "{{_('Access Groups')}}", value: "roles", width: 130, sortable: false},
                     {% endif %}
@@ -1298,7 +1298,7 @@
                 searchUsers: debounce(function (evt) {
                     this.searchLoading[evt.target.dataset.loader] = true;
 
-                    api.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
+                    api.get(`/admin/api/users/assignable?q=${evt.target.value}`).then(response => {
                         this.users = response.data.items;
                         this.searchLoading[evt.target.dataset.loader] = false;
                     });
@@ -1347,7 +1347,7 @@
                 },
 
                 bulkAllowed() {
-                    return this.has_role(this.currentUser, 'Admin') || this.has_role(this.currentUser, 'Mod');
+                    return this.has_role(this.currentUser, 'Admin') || this.has_role(this.currentUser, 'Moderator');
                 },
 
                 exportAllowed() {
@@ -1371,7 +1371,7 @@
                     if (this.has_role(this.currentUser, 'Admin')) {
                         return true;
                     }
-                    if (!this.has_role(this.currentUser, 'DA')) {
+                    if (!this.has_role(this.currentUser, 'Analyst')) {
                         return false;
                     }
                     const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
@@ -1405,7 +1405,7 @@
                     }
 
                     if (this.currentUser.can_self_assign) {
-                        if ((!actor.assigned_to) || (actor.assigned_to && !actor.assigned_to.active)) {
+                        if ((!actor.assigned_to) || (actor.assigned_to && actor.assigned_to.status !== 'active')) {
                             return true
                         }
 

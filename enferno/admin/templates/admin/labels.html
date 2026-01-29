@@ -279,7 +279,7 @@
                     {title: "{{_('Actor')}}", value: "for_actor"},
                     {title: "{{_('Incident')}}", value: "for_incident"},
                     {title: "{{_('Offline')}}", value: "for_offline"},
-                    {% if current_user.roles_in(['Admin','Mod']) %}
+                    {% if current_user.roles_in(['Admin','Moderator']) %}
                         {title: "{{_('Actions')}}", value: "action", sortable: false}
                     {% endif %}
                 ],

@@ -1464,6 +1464,8 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 
 class UserValidationModel(StrictValidationModel):
+    """User validation model - restrict active field."""
+
     email: Optional[str] = None
     username: str = Field(min_length=4, max_length=32)
     password: Optional[str] = None  # Optional on PUT, required on POST
@@ -1476,7 +1478,6 @@ class UserValidationModel(StrictValidationModel):
     can_edit_locations: Optional[bool] = None
     can_export: Optional[bool] = None
     can_import_web: Optional[bool] = None
-    active: bool
     force_reset: Optional[str] = None
     google_id: Optional[str] = None
     id: Optional[int] = None

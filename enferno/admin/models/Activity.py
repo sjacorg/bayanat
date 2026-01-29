@@ -76,10 +76,10 @@ class Activity(db.Model, BaseMixin):
     # helper static method to create different type of activities (tags)
     @staticmethod
     def create(
-        user: t.id,
+        user: "User",
         action: str,
         status: str,
-        subject: str,
+        subject: dict,
         model: str,
         details: Optional[str] = None,
     ) -> None:
@@ -87,10 +87,10 @@ class Activity(db.Model, BaseMixin):
         Create an activity.
 
         Args:
-            - user: the user id.
+            - user: the user object.
             - action: the action.
             - status: the status.
-            - subject: the subject.
+            - subject: the subject dict (e.g. from to_mini()).
             - model: the model.
             - details: the details.
         """

@@ -210,7 +210,7 @@
                     {title: "{{_('Location Type')}}", value: "location_type.title"},
                     {title: "{{_('Admin Level')}}", value: "admin_level.title"},
 
-                    {% if current_user.roles_in(['Admin','Mod']) or current_user.can_edit_locations %}
+                    {% if current_user.roles_in(['Admin','Moderator']) or current_user.can_edit_locations %}
                         {title: "{{_('Actions')}}", value: "action", sortable: false}
                     {% endif %}
                 ],
@@ -375,7 +375,7 @@
                 editAllowed() {
                     if (this.has_role(this.currentUser, 'Admin')) {
                         return true;
-                    } else if (this.has_role(this.currentUser, 'Mod')) {
+                    } else if (this.has_role(this.currentUser, 'Moderator')) {
                         return true;
                     } else if (this.currentUser.can_edit_locations) {
                         return true
@@ -466,7 +466,7 @@
                 },
 
                 confirmClose() {
-                    if (confirm(translations.confirm_)) {
+                    if (confirm(translations.areYouSure_)) {
                         this.dialog = false;
                         setTimeout(() => {
                             this.editedItem = Object.assign({}, this.defaultItem);

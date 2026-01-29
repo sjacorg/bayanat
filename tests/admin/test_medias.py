@@ -29,7 +29,7 @@ def create_media_file(request, app):
 post_media_chunk_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
-    ("mod_client", 403),
+    ("mod_client", 200),
     ("anonymous_client", 401),
 ]
 
@@ -141,7 +141,7 @@ def test_post_media_chunk_endpoint_chunked_upload(
 post_media_upload_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
-    ("mod_client", 403),
+    ("mod_client", 200),
     ("anonymous_client", 401),
 ]
 

@@ -88,6 +88,7 @@
         class="d-none"
         data-settings='{{ current_user.settings|tojson if current_user.settings else '{}' }}'
         data-username="{{ current_user.username|escape }}"
+        data-user-id="{{ current_user.id }}"
     ></div>
 {% else %}
     <div class="d-none" data-settings='{}' data-username=""></div>
@@ -95,6 +96,7 @@
 <div class="d-none" data-lang='{{ session.get('lang','en') }}'></div>
 <div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
 <script nonce="{{ csp_nonce() }}">
+    window.__userId__ = Number(document.querySelector('[data-user-id]').dataset.userId);
     window.__username__ = document.querySelector('[data-username]').dataset.username;
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
     window.__lang__ = document.querySelector('[data-lang]').dataset.lang;

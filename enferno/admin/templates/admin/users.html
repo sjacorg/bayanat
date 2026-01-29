@@ -7,7 +7,7 @@
             <v-card>
                 <v-card-text>
                     <v-data-table-server
-                            height="calc(100vh - 260px)"
+                            height="calc(100vh - 331px)"
                             fixed-header
                             :headers="headers"
                             :items="items"
@@ -19,305 +19,446 @@
                             class="elevation-1"
                     >
                         <template v-slot:top>
-                            <v-toolbar flat color="white">
-                                <v-toolbar-title>{{ _('System Users') }}</v-toolbar-title>
+                            <div class="d-flex flex-column ga-10 w-100 py-2 px-7">
+                                <div class="d-flex align-center ga-10 w-100">
+                                    <v-toolbar-title class="flex-0-0">{{ _('System Users') }}</v-toolbar-title>
 
-                                <v-spacer></v-spacer>
+                                    <v-text-field
+                                        v-model="search"
+                                        @update:model-value="searchUsers"
+                                        class="flex-grow-1"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        hide-details
+                                        prepend-inner-icon="mdi-magnify"
+                                        placeholder="{{ _('Search for a system user') }}"
+                                        clearable
+                                    ></v-text-field>
 
-                                <v-btn @click.once="forceGlobalReset" class="ma-2" color="error" variant="elevated">
-                                    {{ _('Force Global Password Reset') }}
-                                </v-btn>
+                                    <div class="d-flex align-center ga-3">
+                                        <v-btn
+                                            @click="openForcePasswordResetAllDialog()"
+                                            color="error"
+                                            variant="elevated"
+                                            prepend-icon="mdi-lock-reset"
+                                        >
+                                            {{ _('Force Global Password Reset') }}
+                                        </v-btn>
+        
+                                        <v-btn
+                                            @click="createItem"
+                                            color="primary"
+                                            variant="elevated"
+                                            prepend-icon="mdi-plus"
+                                        >
+                                            {{ _('New User') }}
+                                        </v-btn>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-center ga-5 w-100">
+                                    <div>{{ _('Filter') }}
+                                        <v-tooltip v-if="activeCount('twoFactor') || activeCount('roles') || activeCount('status')" location="top" text="{{ _('Clear filters') }}">
+                                            <template #activator="{props}">
+                                                <v-btn v-bind="props" icon="mdi-filter-off-outline" size="small"
+                                                    @click="options = {}; refresh()"
+                                                ></v-btn>
+                                            </template>
+                                        </v-tooltip>
+                                    </div>
 
-                                <v-btn @click="createItem" class="ma-2" color="primary" variant="elevated">
-                                    {{ _('New User') }}
-                                </v-btn>
-                            </v-toolbar>
+                                    <!-- Account Status -->
+                                    <v-menu>
+                                        <template #activator="{ props }">
+                                            <v-btn
+                                                variant="outlined"
+                                                append-icon="mdi-menu-down"
+                                                v-bind="props"
+                                            >
+                                            <v-badge
+                                                v-if="activeCount('status')"
+                                                location="top right"
+                                                :offset-x="-14"
+                                                :offset-y="4"
+                                                color="primary"
+                                                dot
+                                                class="mr-4"
+                                            >
+                                                {{ _('Account Status') }}
+                                            </v-badge>
+                                            <template v-else>{{ _('Account Status') }}</template>
+                                            </v-btn>
+                                        </template>
+
+                                        <v-list>
+                                            <v-list-item
+                                                v-for="option in accountStatusOptions"
+                                                :key="option.value"
+                                                @click="options.status = option.value; refresh()"
+                                                :active="options.status === option.value"
+                                                color="primary"
+                                            >
+                                                <v-list-item-title><v-icon v-if="options.status === option.value" start>mdi-check</v-icon>${option.name}</v-list-item-title>
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-menu>
+
+                                    <!-- Roles (multi-select) -->
+                                    <v-menu>
+                                        <template #activator="{ props }">
+                                            <v-btn
+                                                variant="outlined"
+                                                append-icon="mdi-menu-down"
+                                                v-bind="props"
+                                            >
+                                            <v-badge
+                                                v-if="activeCount('roles')"
+                                                location="top right"
+                                                :offset-x="-14"
+                                                :offset-y="activeCount('roles') === 1 ? 4 : 5"
+                                                color="primary"
+                                                :content="activeCount('roles')"
+                                                :dot="activeCount('roles') === 1"
+                                                class="mr-4"
+                                            >
+                                                {{ _('Roles') }}
+                                            </v-badge>
+                                            <template v-else>{{ _('Roles') }}</template>
+                                            </v-btn>
+                                        </template>
+
+                                        <v-list>
+                                            <v-list-item
+                                                v-for="role in [...roles]"
+                                                :key="role.id"
+                                                @click="setRoleFilters(role.id); refresh()"
+                                                :active="Boolean(options?.roles?.includes(role.id))"
+                                                color="primary"
+                                            >
+                                            <v-checkbox
+                                                :model-value="Boolean(options?.roles?.includes(role.id))"
+                                                :label="role.name"
+                                                hide-details
+                                            />
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-menu>
+
+                                    <!-- Two-Factor Authentication -->
+                                    <v-menu>
+                                        <template #activator="{ props }">
+                                            <v-btn
+                                            variant="outlined"
+                                            append-icon="mdi-menu-down"
+                                            v-bind="props"
+                                            >
+                                            <v-badge
+                                                v-if="activeCount('twoFactor')"
+                                                location="top right"
+                                                :offset-x="-14"
+                                                :offset-y="4"
+                                                color="primary"
+                                                dot
+                                                class="mr-4"
+                                            >
+                                                {{ _('Two-Factor Authentication') }}
+                                            </v-badge>
+                                            <template v-else>{{ _('Two-Factor Authentication') }}</template>
+                                            </v-btn>
+                                        </template>
+
+                                        <v-list>
+                                            <v-list-item
+                                                v-for="option in twoFactorOptions"
+                                                :key="option.value"
+                                                @click="options.twoFactor = option.value; refresh()"
+                                                :active="options.twoFactor === option.value"
+                                                color="primary"
+                                            >
+                                                <v-list-item-title><v-icon v-if="options.twoFactor === option.value" start>mdi-check</v-icon>${option.name}</v-list-item-title>
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-menu>
+                                </div>
+                            </div>
                         </template>
 
 
                         <template v-slot:item.action="{ item }">
-                            <v-icon class="mr-2" @click.stop="editItem(item)">
-                                mdi-pencil
-                            </v-icon>
-                            <v-tooltip location="top"
-                                       :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset') }}'">
-                                <template #activator="{props}">
-                                    <div v-bind="props" class="d-inline-block">
-                                        <v-btn
-                                            :disabled="item.force_reset != null"
-                                            @click.stop="forcePassReset(item)"
-                                            variant="plain"
-                                            size="small"
-                                            icon="mdi-lock-reset">
-                                        </v-btn>
-                                    </div>
-                                </template>
-                            </v-tooltip>
+                            <div v-if="item?.status !== 'disabled'" class="d-flex">
+                                <v-tooltip location="top" text="{{ _('Edit User') }}">
+                                    <template #activator="{props}">
+                                        <div v-bind="props" class="d-inline-block">
+                                            <v-btn
+                                                @click.stop="editItem(item)"
+                                                variant="plain"
+                                                size="small"
+                                                icon="mdi-pencil">
+                                            </v-btn>
+                                        </div>
+                                    </template>
+                                </v-tooltip>
+                                <template v-if="userId !== item.id">
+                                    <v-tooltip
+                                        location="top"
+                                        text="{{ _('Change Password') }}"
+                                    >
+                                        <template #activator="{props}">
+                                            <div v-bind="props">
+                                            <v-btn
+                                                density="comfortable"
+                                                variant="plain"
+                                                icon="mdi-form-textbox-password"
+                                                @click.stop="openChangePasswordDialog(item)"
+                                            ></v-btn>
+                                            </div>
+                                        </template>
+                                    </v-tooltip>
+                                    <v-tooltip location="top"
+                                            :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force Password Reset') }}'">
+                                        <template #activator="{props}">
+                                            <div v-bind="props" class="d-inline-block">
+                                                <v-btn
+                                                    :disabled="item.force_reset != null"
+                                                    @click.stop="openForcePasswordResetDialog(item)"
+                                                    variant="plain"
+                                                    size="small"
+                                                    icon="mdi-lock-reset">
+                                                </v-btn>
+                                                <v-icon v-if="item.force_reset" class="ml-n3" color="error">mdi-exclamation-thick</v-icon>
+                                            </div>
+                                        </template>
+                                    </v-tooltip>
 
-                            <v-tooltip location="top"
-                                    v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
-                                    :text="'{{ _('Revoke 2FA') }}'">
-                                <template #activator="{props}">
-                                    <v-btn
-                                            @click.stop="revoke2fa(item.id)"
-                                            variant="plain"
-                                            color="warning"
-                                            v-bind="props"
-                                            size="small"
-                                            icon="mdi-lock-remove">
-                                    </v-btn>
+                                    <v-tooltip location="top"
+                                            v-if="item?.two_factor_devices?.length > 0"
+                                            :text="'{{ _('Revoke 2FA') }}'">
+                                        <template #activator="{props}">
+                                            <v-btn
+                                                    @click.stop="openRevoke2FADialog(item.id)"
+                                                    variant="plain"
+                                                    v-bind="props"
+                                                    size="small"
+                                                    icon="mdi-lock-remove">
+                                            </v-btn>
+                                            
+                                        </template>
+                                    </v-tooltip>
                                 </template>
-                            </v-tooltip>
-
-                            <v-tooltip location="top" text="{{ _('Password reset requested.') }}">
-                                <template #activator="{props}">
-                                    <v-btn icon="mdi-exclamation-thick" size="small" color="error" variant="plain"
-                                           v-bind="props" v-if="item.force_reset">
-                                    </v-btn>
-                                </template>
-                            </v-tooltip>
-
+                            </div>
                         </template>
 
                         <template v-slot:item.2fa="{ item }">
-                            <v-tooltip location="top"
-                                       :text="item.two_factor_devices && item.two_factor_devices.length > 0 ? '{{ _('2FA Active') }}' : '{{ _('2FA Inactive') }}'">
-                                <template #activator="{props}">
-                                    <v-icon
-                                            v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
-                                            color="success"
-                                            v-bind="props"
-                                            size="small"
-                                    >
-                                        mdi-lock-check
-                                    </v-icon>
-                                    <v-icon
-                                            v-else
-                                            color="error"
-                                            v-bind="props"
-                                            size="small"
-                                    >
-                                        mdi-lock-open-alert
-                                    </v-icon>
-                                </template>
-                            </v-tooltip>
+                            <v-chip v-if="item?.status !== 'disabled'" variant="text" :color="getUser2FaMeta(item)?.color" class="ma-1 font-weight-medium">
+                                <v-icon start size="large">${getUser2FaMeta(item)?.icon}</v-icon>
+                                ${getUser2FaMeta(item)?.text}
+                            </v-chip>
                         </template>
 
-                        <template v-slot:item.active_status="{ item }">
-                            <v-tooltip location="top"
-                                       :text="item.active === true ? '{{ _('Active') }}' : '{{ _('Inactive') }}'">
-                                <template #activator="{props}">
-                                    <v-icon
-                                        :color="item.active ? 'success' : 'grey'"
-                                        :icon="item.active ? 'mdi-account-check' : 'mdi-account-cancel'"
-                                        v-bind="props"
-                                        size="small"
-                                    />
-                                </template>
-                            </v-tooltip>
+                        <template v-slot:item.status="{ item }">
+                            <v-chip variant="text" :color="getUserStatusMeta(item)?.color" class="ma-1 font-weight-medium">
+                                <v-icon start size="large">${getUserStatusMeta(item)?.icon}</v-icon>
+                                ${getUserStatusMeta(item)?.text}
+                            </v-chip>
                         </template>
 
                         <template v-slot:item.roles="{ item }">
-
-                            <v-chip size="small" v-for="role in item.roles" class="ma-1">
-                                ${role.name}
+                            <v-chip v-for="role in getUserSystemRoles(item)" :key="role.id" class="ma-1">
+                                ${systemRoles.find(r => r.value === role.name.toLowerCase())?.name ?? role.name}
                             </v-chip>
-                            <v-chip class="ma-1" v-if="!item.roles.length" size="small" color="grey"
-                            >{{ _('View Only') }}
-                            </v-chip>
-
-
                         </template>
 
                         <template v-slot:no-data></template>
                     </v-data-table-server>
-                    <v-dialog v-model="dialog" max-width="1200px">
-                        <v-card>
-                        <v-form ref="form" v-model="valid">
-                            <v-toolbar :title="formTitle">
+
+                    <v-dialog v-model="dialog" fullscreen>
+                        <v-card rounded="lg">
+                            <v-toolbar :title="formTitle" color="dark-primary">
                                 <template #append>
-                                    <v-btn icon @click="close">
-                                        <v-icon>mdi-close</v-icon>
-                                    </v-btn>
+                                    <div class="d-flex align-center ga-2 mr-2">
+                                        <v-btn
+                                            @click="validateFormAndSave"
+                                            prepend-icon="mdi-check"
+                                            variant="flat"
+                                            text="{{ _('Save Changes') }}"
+                                            :loading="saving"
+                                        ></v-btn>
+                                        <v-btn icon density="comfortable" @click="close">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </div>
                                 </template>
                             </v-toolbar>
-                            <v-card-text>
-                                <v-container>
-                                    <v-row>
-
-                                        <v-col cols="12" md="4">
-                                            <v-text-field
-                                                    label="{{ _('Full Name') }}"
-                                                    v-model="editedItem.name"
+                            <v-divider></v-divider>
+                            <v-form ref="form" v-model="valid">
+                                <v-card-text>
+                                    <v-container>
+                                        <div class="mb-3 text-body-1">{{ _('User Details') }}</div>
+                                        <v-row>
+                                            <v-col cols="12" md="6">
+                                                <v-text-field
+                                                        v-model="editedItem.name"
+                                                        :rules="[
+                                                            validationRules.required(),
+                                                        ]"
+                                                        variant="filled"
+                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.name')"
+                                                >
+                                                    <template #label>{{ _('Full Name') }}<span class="text-red">*</span></template>
+                                                </v-text-field>
+                                            </v-col>
+                                            <v-col>
+                                                <v-text-field
+                                                    variant="filled"
+                                                    :class="isUsernameAvailable ? 'text-success' : undefined"
+                                                    :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
+                                                    v-model="editedItem.username"
                                                     :rules="[
                                                         validationRules.required(),
+                                                        validationRules.minLength(4),
+                                                        validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
                                                     ]"
-                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.name')"
-                                            ></v-text-field>
-
-                                        </v-col>
-                                        <v-col cols="12" md="4">
-
-                                            <div class="d-flex">
-
-                                                <v-text-field
-                                                        label="{{ _('Email') }}"
-                                                        :disabled="disableEmail"
-                                                        v-model="editedItem.email"
-                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.email')"
-                                                        type="email"
-                                                ></v-text-field>
-                                                <v-btn @click.stop="enableEmail"
-                                                       v-if="editedItem.id" class="my-auto mx-1"
-                                                       icon="mdi-pencil"
-                                                       size="small"
-                                                       variant="plain"
+                                                    @input="isUsernameAvailable = false"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
                                                 >
-
-                                                </v-btn>
-                                            </div>
-                                        </v-col>
-                                        <v-col cols="12" md="4">
-
-                                            <div class="d-flex align-center">
-
-                                                <v-text-field
-                                                        label="{{ _('Password') }}"
-                                                        :class="isStrongPassword ? 'text-success' : undefined"
-                                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
-                                                        :disabled="disablePassword"
-                                                        v-model="editedItem.password"
-                                                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                                                        :type="showPassword ? 'text' : 'password'"
-                                                        @click:append="showPassword = !showPassword"
-                                                        :rules="disablePassword ? [] : [
-                                                            validationRules.required(),
-                                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
-                                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
-                                                        ]"
-                                                        @input="isStrongPassword = false"
-                                                >
+                                                    <template #label>{{ _('Username') }}<span class="text-red">*</span></template>
                                                 </v-text-field>
-
-                                                <v-btn @click.stop="enablePassword"
-                                                       v-if="editedItem.id" class="mb-3 mx-1"
-                                                       icon="mdi-pencil"
-                                                       size="small"
-                                                       variant="plain"
-                                                >
-
-                                                </v-btn>
-
-                                            </div>
-                                        </v-col>
-                                    </v-row>
-                                    <v-row>
-                                        <v-col>
-                                            <div class="d-flex">
+                                            </v-col>
+                                            <v-col cols="12" :md="isNewUser ? 6 : 12">
                                                 <v-text-field
-                                                              label="{{ _('Username') }}"
-                                                              :class="isUsernameAvailable ? 'text-success' : undefined"
-                                                              :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
-                                                              :disabled="disableUsername"
-                                                              v-model="editedItem.username"
-                                                              :rules="disableUsername ? [] : [
-                                                                    validationRules.required(),
-                                                                    validationRules.minLength(4),
-                                                                    validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
-                                                                ]"
-                                                              @input="isUsernameAvailable = false"
-                                                              v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
+                                                    variant="filled"
+                                                    label="{{ _('Email') }}"
+                                                    v-model="editedItem.email"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.email')"
+                                                    type="email"
                                                 ></v-text-field>
-
-                                                <v-btn @click.stop="enableUsername"
-                                                       v-if="editedItem.id" class="my-auto mx-1"
-                                                       icon="mdi-pencil"
-                                                       size="small"
-                                                       variant="plain"
+                                            </v-col>
+                                            <v-col v-if="isNewUser" cols="12" md="6">
+                                                <v-text-field
+                                                    variant="filled"
+                                                    :class="isStrongPassword ? 'text-success' : undefined"
+                                                    :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
+                                                    v-model="editedItem.password"
+                                                    :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                                    :type="showPassword ? 'text' : 'password'"
+                                                    @click:append-inner="showPassword = !showPassword"
+                                                    :rules="[
+                                                        validationRules.required(),
+                                                        validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                        validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                                    ]"
+                                                    @input="isStrongPassword = false"
                                                 >
+                                                    <template #label>{{ _('Password') }}<span class="text-red">*</span></template>
+                                                </v-text-field>
+                                            </v-col>
+                                        </v-row>
 
-                                                </v-btn>
-                                            </div>
+                                        <v-row>
+                                            <v-col cols="12" lg="6">
+                                                <div class="mb-3 text-body-1">{{ _('System Role') }}<span class="text-red">*</span></div>
+                                                <div class="d-flex flex-wrap ga-3">
+                                                    <v-input :model-value="selectedRoleIndex" :messages="selectedRole?.description" :rules="[validationRules.atLeastOneRequired(selectedRoleIndex)]">
+                                                        <v-btn-toggle
+                                                            :model-value="selectedRoleIndex"
+                                                            @update:model-value="updateSystemRole($event)"
+                                                            variant="outlined"
+                                                            divided
+                                                            color="primary"
+                                                        >
+                                                            <v-btn v-for="(role) in systemRoles" :key="role?.value">${role.name}</v-btn>
+                                                        </v-btn-toggle>
+                                                    </v-input>
+                                                </div>
+                                            </v-col>
+                                            <v-col cols="12" lg="6">
+                                                <div class="mb-3 text-body-1">
+                                                    {{ _('Access Role') }}
+                                                    <span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">
+                                                        {{ _('(Admins have unrestricted access regardless of access roles)') }}
+                                                    </span>
+                                                </div>
 
+                                                <div class="d-flex flex-wrap ga-3 mb-7">
+                                                    <toggle-button
+                                                        v-for="role in accessRoles"
+                                                        :key="role.id"
+                                                        :model-value="isAccessRoleSelected(role)"
+                                                        @update:model-value="toggleAccessRole(role)"
+                                                    >
+                                                        ${role.name}
+                                                    </toggle-button>
+                                                </div>
+                                            </v-col>
+                                        </v-row>
 
-                                        </v-col>
-                                        <v-col cols="4" md="4">
-                                            <v-select
-                                                    :items="roles"
-                                                    item-title="name"
-                                                    item-value="id"
-                                                    v-model="editedItem.roles"
-                                                    label="{{ _('Groups') }}"
-                                                    return-object
-                                                    multiple
-                                                    @update:model-value="checkRoles"
-                                            ></v-select>
+                                        <div class="mb-3 text-body-1">{{ _('User Permissions') }}<span v-if="editedUserHasAdminRole" class="text-caption text-medium-emphasis font-italic ml-2">{{ _('(Admins have full permissions by default)') }}</span></div>
+                                        <div class="d-flex flex-wrap ga-3 mb-7">
+                                            <toggle-button v-model="editedItem.view_usernames" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
+                                                {{ _('Can View Usernames') }}
+                                            </toggle-button>
 
-                                        </v-col>
-                                        <v-col cols="12" md="4">
-                                            <v-switch color="primary" label="{{ _('Active') }}"
-                                                      v-model="editedItem.active"></v-switch>
-                                        </v-col>
-                                    </v-row>
-                                    <v-row>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view usernames') }}"
-                                                      v-model="editedItem.view_usernames"></v-switch>
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view simple history') }}"
-                                                      v-model="editedItem.view_simple_history"></v-switch>
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view Full History') }}"
-                                                      v-model="editedItem.view_full_history"></v-switch>
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can self assign') }}"
-                                                      v-model="editedItem.can_self_assign"></v-switch>
+                                            <toggle-button v-model="editedItem.view_full_history" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
+                                                {{ _('Can View Full History') }}
+                                            </toggle-button>
 
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can edit Locations') }}"
-                                                      v-model="editedItem.can_edit_locations"></v-switch>
+                                            <toggle-button v-model="editedItem.view_simple_history" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
+                                                {{ _('Can View Simple History') }}
+                                            </toggle-button>
 
-                                        </v-col>
+                                            <toggle-button v-model="editedItem.can_self_assign" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
+                                                {{ _('Can Self-Assign') }}
+                                            </toggle-button>
 
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Request Exports') }}"
-                                                      v-model="editedItem.can_export"></v-switch>
-                                        </v-col>
+                                            <toggle-button v-model="editedItem.can_edit_locations" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
+                                                {{ _('Can Edit Locations') }}
+                                            </toggle-button>
 
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Import from Web') }}"
-                                                      v-model="editedItem.can_import_web"></v-switch>
-                                        </v-col>
-                                    </v-row>
-                                </v-container>
-                            </v-card-text>
-                            <v-card-text class="text-center">
-                                <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
-                                    {{ _('Revoke 2FA') }}
-                                </v-btn>
+                                            <toggle-button v-model="editedItem.can_export" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
+                                                {{ _('Can Request Exports') }}
+                                            </toggle-button>
 
-                                <v-btn v-if="editedItem?.id" @click.once="logoutAllUserSessions(editedItem.id)" color="error">
-                                    <v-icon left>mdi-logout</v-icon>
-                                    {{ _('Logout All Sessions') }}
-                                </v-btn>
-                            </v-card-text>
-
-                            <v-card-actions class="pa-4">
-                                <v-spacer></v-spacer>
-                                <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="validateFormAndSave" color="primary" variant="elevated">
-                                    {{ _('Save') }}
-                                </v-btn>
-                            </v-card-actions>
-                        </v-form>
+                                            <toggle-button v-model="editedItem.can_import_web" :read-only="editedUserHasAdminRole" :hide-left-icon="editedUserHasAdminRole">
+                                                {{ _('Can Import From Web') }}
+                                            </toggle-button>
+                                        </div>
+                                    </v-container>
+                                </v-card-text>
+                            </v-form>
                         </v-card>
                     </v-dialog>
 
-
+                    <v-dialog v-model="changePasswordDialog" persistent max-width="780">
+                        <v-card rounded="lg">
+                            <v-form ref="changePasswordForm" v-model="valid">
+                                <v-card-text class="pa-7">
+                                    <div class="text-h6 mb-4">${translations.changePasswordForUser_(editedItem.name)}</div>
+                                    <div class="mb-3">{{ _('Set a temporary password for this user.') }}</div>
+                                    <v-text-field
+                                        variant="filled"
+                                        :class="isStrongPassword ? 'text-success' : undefined"
+                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
+                                        v-model="editedItem.password"
+                                        :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                        :type="showPassword ? 'text' : 'password'"
+                                        @click:append-inner="showPassword = !showPassword"
+                                        :rules="[
+                                            validationRules.required(),
+                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                        ]"
+                                        @input="isStrongPassword = false"
+                                    >
+                                        <template #label>{{ _('Temporary Password') }}<span class="text-red">*</span></template>
+                                    </v-text-field>
+                                    <v-checkbox v-if="!editedItem?.force_reset" v-model="askUserToChangePassword" color="blue" class="text-medium-emphasis text-body-2" label="{{ _('Ask user to change password when they sign in') }}"></v-checkbox>
+                                </v-card-text>
+                            </v-form>
+                            <v-card-actions class="px-7 pb-7 pt-0">
+                                <v-btn @click="closeChangePasswordDialog()" variant="outlined">{{ _('Cancel') }}</v-btn>
+                                <v-btn @click="validateChangePasswordFormAndSave()" :loading="saving" color="primary" variant="flat">{{ _('Change Password') }}</v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
                 </v-card-text>
             </v-card>
 
@@ -326,11 +467,82 @@
     </v-main>
     {% include 'admin/partials/user_drawer.html' %}
 
+    <!-- Revision history sidebar -->
+    <v-navigation-drawer v-model="historyDrawer" location="right" temporary width="630" disable-route-watcher>
+        <v-card flat>
+            <v-card-title class="pa-6">
+                {{ _('Revision history') }} - (${this.revisionState.user?.username})
+            </v-card-title>
+    
+            <!-- Loading -->
+            <div v-if="hloading" class="text-center py-6">
+                <v-progress-circular indeterminate size="32"></v-progress-circular>
+            </div>
+    
+            <!-- Empty -->
+            <div v-else-if="revisionState.history.length === 0" class="text-center py-6 text-medium-emphasis">
+                <v-icon size="40" class="mb-2">mdi-history</v-icon>
+                {{ _('No revision history available.') }}
+            </div>
+    
+            <!-- Timeline -->
+            <v-card-text v-else class="px-6">
+                <v-timeline density="compact" side="end" align="start">
+                    <v-timeline-item v-for="(revision, index) in revisionState.history" :key="revision.id || index" dot-color="primary"
+                        size="10">
+                        <div class="mt-n1">
+                            <!-- Header -->
+                            <div>
+                                <v-chip size="x-small" label class="mr-2">${revision.data.status}</v-chip>
+                                <b>${revision.user.username}</b>
+                                {{ _('updated user') }}
+    
+                                <!-- Current version label -->
+                                <b v-if="index === 0">
+                                    ({{ _('Current settings') }})
+                                </b>
+    
+                                <!-- Created at -->
+                                <span class="text-muted">
+                                    – ${formatDate(revision.created_at, dateFormats.standardDatetime, dateOptions.local)}
+                                </span>
+                            </div>
+    
+                            <!-- No diff between this revision and previous -->
+                            <div v-if="!DiffTool.hasDiff(revisionState.history[index + 1]?.data, revision.data)"
+                                class="font-italic text-medium-emphasis mt-1"
+                            >
+                                {{ _('No changes in this configuration') }}
+                            </div>
+    
+                            <!-- Diff details -->
+                            <show-details v-else-if="index !== revisionState.history.length - 1 && diffAllowed"
+                                show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}"
+                                class="mt-2"
+                            >
+                                <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionState.history[index + 1]?.data, revision.data)" />
+                            </show-details>
+                        </div>
+                    </v-timeline-item>
+                </v-timeline>
+    
+            </v-card-text>
+        </v-card>
+    </v-navigation-drawer>
+
+
 
 {% endblock %} {% block js %}
     <script src="/static/js/components/UserCard.js"></script>
+    <script src="/static/js/components/ToggleButton.js"></script>
+    <script src="/static/js/components/ShowDetails.js"></script>
+    <script src="/static/js/diff-tool.js"></script>
+    <script src="/static/js/components/DiffRenderer.js"></script>
 
-    <script nonce="{{ csp_nonce() }}">
+   <script nonce="{{ csp_nonce() }}" type="module">
+        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
+        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
+        import '/static/js/jsondiffpatch/formatters/base.js'
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
@@ -338,23 +550,33 @@
 
         const app = createApp({
             delimiters: delimiters,
+            mixins: [globalMixin],
             data: () => ({
+                userId: window.__userId__,
                 dialog: dialog,
                 loading: true,
+                saving: false,
                 showPassword: false,
                 drawer: drawer,
                 translations: window.translations,
                 validationRules: validationRules,
                 options: {},
+                search: '',
+                revisionState: {
+                    user: null,
+                    history: [],
+                },
+                hloading: false,
+                historyDrawer: false,
+                DiffTool: DiffTool,
 
                 headers: [
                     {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Username')}}", value: "username"},
-                    {title: "{{_('Email')}}", value: "email"},
                     {title: "{{_('Name')}}", value: "name"},
-                    {title: "{{_('Account Status')}}", value: "active_status"},
-                    {title: "{{_('Groups')}}", value: "roles"},
-                    {title: "{{_('Two Factor Authentication')}}", value: "2fa"},
+                    {title: "{{_('Username')}}", value: "username"},
+                    {title: "{{_('Status')}}", value: "status"},
+                    {title: "{{_('System role')}}", value: "roles"},
+                    {title: "{{_('Two-Factor Authentication')}}", value: "2fa"},
                     {title: "{{_('Actions')}}", value: "action", sortable: false}
                 ],
 
@@ -363,12 +585,6 @@
                 editedIndex: -1,
                 roles: [],
                 editedItem: {},
-                defaultItem: {
-                    active: false
-                },
-                disableUsername: true,
-                disablePassword: true,
-                disableEmail: true,
                 isAdmin: false,
                 userDrawer: false,
                 user: null,
@@ -377,15 +593,65 @@
                 initialUsername: null,
                 isUsernameAvailable: false,
                 isStrongPassword: false,
-                serverErrors: {}
+                serverErrors: {},
+                adminRoleId: 1,
+                changePasswordDialog: false,
+                askUserToChangePassword: true,
+                hadAdminRoleBefore: false,
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+
+                systemRoles: [
+                    { name: "{{ _('View') }}", value: 'view', description: "{{ _('View-only users can view and search Actors, Bulletins, and Incidents strictly defined by the system\'s access policies and assigned access roles. They cannot create new items or edit existing ones.') }}" },
+                    { name: "{{ _('Analyst') }}", value: 'analyst', description: "{{ _('Analysts can view and search Actors, Bulletins, and Incidents permitted by the system\'s access policies and assigned access roles. They can create new items, as well as edit and review items specifically assigned to them.') }}" },
+                    { name: "{{ _('Moderator') }}", value: 'moderator', description: "{{ _('Moderators assist Administrators in managing the system. They can add or edit secondary items (Labels, Locations, Component Data) and perform bulk assignments. This role includes the same creation and access privileges as Analysts, subject to access policies and assigned access roles.') }}" },
+                    { name: "{{ _('Administrator') }}", value: 'admin', description: "{{ _('Administrators have unrestricted access to all system items, settings, logs, and actions. They manage users, access controls, approve export requests and import data in bulk via Bayanat tools. Only trusted, trained and competent users should be assigned this role.') }}" },
+                ],
+                accountStatusOptions: [
+                    { name: "{{ _('Active') }}", value: 'active' },
+                    { name: "{{ _('Suspended') }}", value: 'suspended' },
+                    { name: "{{ _('Disabled') }}", value: 'disabled' },
+                ],
+                twoFactorOptions: [
+                    { name: "{{ _('Active') }}", value: 'true' },
+                    { name: "{{ _('Inactive') }}", value: 'false' },
+                ],
             }),
-
-            mixins: [globalMixin],
-
             computed: {
-                formTitle() {
-                    return this.editedItem?.id ? "{{_('Edit Item')}}" : "{{_('New Item')}}";
+                diffAllowed() {
+                    return this.currentUser.view_full_history;
                 },
+                accessRoles() {
+                    return this.roles?.filter(role => !this.systemRoles.some(systemRole => systemRole.value === role.name.toLowerCase()));
+                },
+                editedItemAccessRoles() {
+                    return this.editedItem.roles?.filter(role => this.accessRoles?.some(accessRole => accessRole.name.toLowerCase() === role.name.toLowerCase()));
+                },
+                userAccessRoles() {
+                    return this.user.roles?.filter(role => this.accessRoles?.some(accessRole => accessRole.name.toLowerCase() === role.name.toLowerCase()));
+                },
+                userSystemRoles() {
+                    return this.getUserSystemRoles(this.user);
+                },
+                editedUserHasAdminRole() {
+                    return this.editedItem?.roles?.some(role => role?.id === this.adminRoleId) ?? false;
+                },
+                isNewUser() {
+                    return !this.editedItem?.id;
+                },
+                formTitle() {
+                    return this.isNewUser ? "{{_('Add New User')}}" : "{{_('Edit User')}}";
+                },
+                selectedRoleIndex() {
+                    const idx = this.systemRoles.findIndex(role =>
+                        this.editedItem.roles?.some(r => r?.name?.toLowerCase() === role.value)
+                    );
+                    return idx >= 0 ? idx : null;
+                },
+                selectedRole() {
+                    return this.selectedRoleIndex != null
+                        ? this.systemRoles[this.selectedRoleIndex]
+                        : null
+                }
             },
 
             created() {
@@ -394,9 +660,7 @@
 
             watch: {
                 dialog(val) {
-                    if (val) {
-                        this.checkRoles();
-                    } else {
+                    if (!val) {
                         this.close();
                     }
                 },
@@ -412,7 +676,6 @@
 
             },
             mounted() {
-
                 if (this.$route.params.id) {
                     this.showUser(this.$route.params.id);
                 }
@@ -430,6 +693,60 @@
 
 
             methods: {
+                openHistoryDrawer(user) {
+                    this.userDrawer = false;
+                    this.historyDrawer = true;
+                    this.loadRevisions(user);
+                },
+                loadRevisions(user) {
+                    this.hloading = true;
+                    axios
+                        .get(`/admin/api/userhistory/${user.id}`)
+                        .then(({ data }) => {
+                            this.revisionState.history = data.items.map(item => ({
+                                ...item,
+                                data: {
+                                    ...item.data,
+                                    roles: (item.data?.roles || []).map(r => r.name)
+                                }
+                            }));
+
+                            this.revisionState.user = user;
+                        })
+                        .finally(() => {
+                            this.hloading = false;
+                        });
+                },
+                getUserSystemRoles(user) {
+                    return user.roles?.filter(role => this.systemRoles?.some(systemRole => systemRole.value.toLowerCase() === role.name.toLowerCase())) ?? [];
+                },
+                getUser2FaMeta(user) {
+                    if (user.two_factor_devices && user.two_factor_devices.length > 0) return { color: 'success', text: "{{ _('2FA Active') }}", icon: 'mdi-lock-check' }
+                    return { color: 'warning', text: "{{ _('2FA Inactive') }}", icon: 'mdi-lock-open-alert' }
+                },
+                getUserStatusMeta(user) {
+                    const statusMap = {
+                        'active': { color: 'success', text: "{{ _('Active') }}", icon: 'mdi-account-check' },
+                        'suspended': { color: 'warning', text: "{{ _('Suspended') }}", icon: 'mdi-account-clock' },
+                        'disabled': { color: 'default', text: "{{ _('Disabled') }}", icon: 'mdi-account-cancel' },
+                    };
+                    return statusMap[user.status] || statusMap['disabled'];
+                },
+                activeCount(key) {
+                    const val = this.options?.[key]
+                    if (Array.isArray(val)) return val.length
+                    return val ? 1 : 0
+                },
+                setRoleFilters(role) {
+                    if (!this.options?.roles) this.options.roles = []
+
+                    const roles = this.options.roles
+                    if (roles.includes(role)) {
+                        this.options.roles = roles.filter((r) => r !== role)
+                    } else {
+                        this.options.roles.push(role)
+                    }
+                },
                 onUsernameCheckResponse(response) {
                     if (this.editedItem.username === this.initialUsername) {
                         this.isUsernameAvailable = false
@@ -441,10 +758,20 @@
                     this.isStrongPassword = response === true
                 },
 
-                validateFormAndSave() {
+                validateFormAndSave(options) {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
-                            this.save();
+                            this.save(options);
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError()
+                        }
+                    });
+                },
+                validateChangePasswordFormAndSave(options) {
+                    this.$refs.changePasswordForm.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.changePassword(options);
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
                             scrollToFirstError()
@@ -464,26 +791,38 @@
                 refreshUser(user_id) {
                     api.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
+                        
+                        // Update existing user in the items list
+                        const index = this.items.findIndex(u => u.id === user_id);
+                        if (index !== -1) {
+                            this.items[index] = { ...this.items[index], ...response.data };
+                        }
                     })
                 },
 
-                revoke2fa(userId) {
-                    if (confirm(`{{ _('Are you sure you want to revoke 2FA for this user?') }}`)) {
-                        api.delete(`/admin/api/user/revoke_2fa`, {
-                            params: {user_id: userId}
-                        })
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh();
-                                this.dialog = false;
-
-                                if (this.userDrawer) this.refreshUser(userId);
+                openRevoke2FADialog(userId) {
+                    this.$confirm({
+                        title: "{{ _('You’re about to revoke two-factor authentication for this user') }}",
+                        message: "{{ _('After this action, the user’s registered 2FA devices will be removed. They will no longer be required to use two-factor authentication until it is reconfigured.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+                        acceptProps: { text: "{{ _('Revoke 2FA') }}", color: 'error' },
+                        dialogProps: { width: 780 },
+                        onAccept: () => {
+                            api.delete(`/admin/api/user/revoke_2fa`, {
+                                params: {user_id: userId}
                             })
-                            .catch(err => {
-                                console.error(err);
-                                this.showSnack(this.parseValidationError(err?.response?.data));
-                            });
-                    }
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh();
+                                    this.dialog = false;
+
+                                    if (this.userDrawer) this.refreshUser(userId);
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    this.showSnack(this.parseValidationError(err?.response?.data));
+                                });
+                        },
+                    });
                 },
 
 
@@ -495,68 +834,42 @@
 
                 },
 
-                forcePassReset(item) {
-                    if (confirm(`{{ _('Are you sure you want to force password reset for user ')}}${item.username}?`)) {
-                        api.post('/admin/api/user/force-reset',
-                            {item: item}
-                        ).then(res => {
-                            this.showSnack(res.data);
-                            this.refresh();
-                            this.close();
-                            if (this.userDrawer) this.refreshUser(item.id);
-                        }).catch(err => {
-                            console.error(err?.response?.data);
-                            this.showsnack(this.parseValidationError(err?.response?.data));
-                        })
-                    }
-
-                },
-
-                forceGlobalReset() {
-                    if (confirm("{{_('Are you sure you want to force a password reset for all users?')}}")) {
-                        this.loading = true;
-                        api.post('/admin/api/user/force-reset-all').then(
-                            res => {
-
-                                this.showSnack(res.data);
-                            }
-                        ).catch(
-                            err => {
-                                console.error(err?.response?.data);
-                            }
-                        ).finally(
-                            () => {
-                                this.loading = false;
-                            }
-                        )
-
-                    }
+                forcePasswordReset(item) {
+                    this.saving = true
+                    api.post('/admin/api/user/force-reset',
+                        {item: item}
+                    ).then(res => {
+                        this.showSnack(res.data);
+                        this.refresh();
+                        if (this.userDrawer) this.refreshUser(item.id);
+                    }).catch(err => {
+                        console.error(err?.response?.data);
+                    }).finally(() => {
+                        this.saving = false;
+                    })
                 },
 
                 logoutAllUserSessions(userId) {
-                    if (window.confirm(this.translations.logoutConfirmation_)) {
-                        axios
-                            .delete(`/admin/api/user/${userId}/sessions/logout`)
-                            .then((response) => {
-                                console.log('All sessions logged out successfully for user ID:', userId);
-                                this.$root.showSnack(this.translations.allSessionsLoggedOut_);
-                            })
-                            .catch((err) => {
-                                console.error('Error logging out all sessions for user ID:', userId, err);
-                            });
-                    }
+                    axios
+                        .delete(`/admin/api/user/${userId}/sessions/logout`)
+                        .then((response) => {
+                            this.showSnack(this.translations.allSessionsLoggedOut_);
+                        })
+                        .catch((err) => {
+                            console.error('Error logging out all sessions for user ID:', userId, err);
+                        });
                 },
 
-                enableUsername() {
-                    this.disableUsername = false;
-                },
-
-                enablePassword() {
-                    this.disablePassword = false;
-                },
-
-                enableEmail() {
-                    this.disableEmail = false;
+                openLogoutAllUserSessionsDialog(userId) {
+                    this.$confirm({
+                        title: "{{ _('You’re about to log out all active sessions for this user') }}",
+                        message: "{{ _('After this action, the user will be signed out from all devices and will need to log in again. This will not affect their data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+                        acceptProps: { text: "{{ _('Log Out All Sessions') }}", color: 'error' },
+                        dialogProps: { width: 780 },
+                        onAccept: () => {
+                            this.logoutAllUserSessions(userId);
+                        },
+                    });
                 },
 
                 checkUsername:
@@ -582,56 +895,109 @@
 
                     api.get(`/admin/api/roles/`).then(response => {
 
-
                         this.roles = response.data.items;
                     });
 
                 },
 
-                checkRoles() {
-                    this.isAdmin = this.editedItem.roles?.some(r => r.name === "Admin") || false;
-                    if (this.isAdmin) {
-                        this.editedItem.view_usernames = true;
-                        this.editedItem.view_simple_history = true;
-                        this.editedItem.view_full_history = true;
-                        this.editedItem.can_self_assign = true;
-                        this.editedItem.can_edit_locations = true;
-                        this.editedItem.can_export = true;
-                        this.editedItem.can_import_web = true;
-                        return true;
-                    }
-                    return false;
+                applyAllPermissions() {
+                    this.editedItem.view_usernames = true;
+                    this.editedItem.view_simple_history = true;
+                    this.editedItem.view_full_history = true;
+                    this.editedItem.can_self_assign = true;
+                    this.editedItem.can_edit_locations = true;
+                    this.editedItem.can_export = true;
+                    this.editedItem.can_import_web = true;
+                },
+                clearAllPermissions() {
+                    this.editedItem.view_usernames = false;
+                    this.editedItem.view_simple_history = false;
+                    this.editedItem.view_full_history = false;
+                    this.editedItem.can_self_assign = false;
+                    this.editedItem.can_edit_locations = false;
+                    this.editedItem.can_export = false;
+                    this.editedItem.can_import_web = false;
                 },
 
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
-                    api.get(`/admin/api/users/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
-                        this.items = res.data.items;
-                        this.itemsLength = res.data.total;
-                    }).catch(err => {
-                        console.error(err?.response?.data);
-                    }).finally(() => {
-                        this.loading = false;
+
+                    const params = new URLSearchParams({
+                        page: this.options?.page ?? 1,
+                        per_page: this.options.itemsPerPage ?? 10,
+                    });
+
+                    if (this.options?.q) params.append('q', this.options.q);
+                    if (this.options?.status) params.append('status', this.options.status);
+                    if (this.options?.roles?.length) params.append('roles', this.options.roles);
+                    if (this.options?.twoFactor) params.append('twoFactor', this.options.twoFactor);
+
+                    api.get(`/admin/api/users/?${params.toString()}`)
+                        .then(response => {
+                            this.items = response.data.items;
+                            this.itemsLength = response.data.total;
+                        })
+                        .catch(err => {
+                            console.error(err?.response?.data);
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+
+                openChangePasswordDialog(item) {
+                    this.editedItem = { ...(item || {}), password: '' };
+                    this.changePasswordDialog = true;
+                    this.askUserToChangePassword = true;
+                },
+
+                openForcePasswordResetDialog(item) {
+                    this.$confirm({
+                        title: translations.youreAboutToForceAPasswordResetForUser_(item.name),
+                        message: "{{ _('After this action, user will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+                        acceptProps: { text: "{{ _('Force Password Reset') }}", color: 'error' },
+                        dialogProps: { width: 780 },
+                        onAccept: () => {
+                            this.forcePasswordReset(item);
+                        },
+                    });
+                },
+
+                openForcePasswordResetAllDialog() {
+                    this.$confirm({
+                        title: "{{ _('You’re about to force a password reset for all users') }}",
+                        message: "{{ _('After this action, all users will be required to set a new password at their next sign-in. This will not affect any user data or settings.') }}\r\n\r\n{{ _('Do you want to continue?') }}",
+                        acceptProps: { text: "{{ _('Force All Password Resets') }}", color: 'error' },
+                        dialogProps: { width: 780 },
+                        onAccept: () => {
+                            this.loading = true;
+                            api.post('/admin/api/user/force-reset-all').then(res => {
+                                this.showSnack(res.data);
+                                window.location.reload();
+                            }).catch(err => {
+                                console.error(err?.response?.data);
+                            }).finally(() => {
+                                this.loading = false;
+                            })
+                        },
                     });
                 },
 
                 createItem() {
-                    this.editedItem = {...this.defaultItem};
-                    // enable fields
-                    this.disableUsername = this.disablePassword = this.disableEmail = false;
+                    this.editedItem = {};
                     this.dialog = true;
-
+                    this.hadAdminRoleBefore = false;
                 },
 
                 editItem(item) {
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
-                    this.editedItem = {...item};
+                    this.editedItem = { ...item };
                     this.isUsernameAvailable = false;
                     this.initialUsername = item.username;
-                    this.disableUsername = this.disablePassword = this.disableEmail = true;
                     this.dialog = true;
+                    this.hadAdminRoleBefore = this.editedUserHasAdminRole;
                 },
 
 
@@ -644,16 +1010,27 @@
                     setTimeout(() => {
                         this.serverErrors = {};
                         this.isStrongPassword = false;
-                        this.editedItem = Object.assign({}, this.defaultItem);
-                        this.disableUsername = this.disablePassword = this.disableEmail = true;
+                        this.editedItem = {};
                         this.editedIndex = -1;
+                        this.beforeAdminPermissions = null;
+                        this.hadAdminRoleBefore = false;
                     }, 300);
                 },
 
-                save() {
+                closeChangePasswordDialog() {
+                    this.changePasswordDialog = false;
+                    setTimeout(() => {
+                        this.askUserToChangePassword = true;
+                        this.serverErrors = {};
+                        this.isStrongPassword = false;
+                        this.editedItem = {};
+                    }, 300);
+                },
+
+                save(options) {
                     const handleError = (err) => {
-                        const usernameAlreadyTaken = err?.response?.status === 409
-                        const errors = err?.response?.data?.errors
+                        const usernameAlreadyTaken = err?.response?.status === 409;
+                        const errors = err?.response?.data?.errors;
                         if (errors || usernameAlreadyTaken) {
                             this.serverErrors = errors
                             // Override email message for something simpler
@@ -661,37 +1038,162 @@
                             if (this.serverErrors?.['item.username']) this.serverErrors['item.username'] = [translations.usernameInvalid_];
                             if (usernameAlreadyTaken) this.serverErrors = { ...this.serverErrors, ['item.username']: [translations.usernameAlreadyTaken_]};
 
-                            this.$nextTick(() => scrollToFirstError())
-                            this.showSnack(handleRequestError(err))
+                            this.$nextTick(() => scrollToFirstError());
+                            this.showSnack(handleRequestError(err));
                         }
                     }
 
+                    this.saving = true;
+                    const payload = { ...this.editedItem };
+                    delete payload.status; // Remove status field from payload
+                    delete payload.display_name; // Remove display_name field from payload
+
                     // edit mode
-                    if (this.editedItem.id) {
-                        api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
+                    if (payload.id) {
+                        api.put(`/admin/api/user/`, {item: payload}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(handleError);
+                                options?.callback?.()
+                            }).catch(handleError)
+                            .finally(() => {
+                                this.saving = false;
+                            });
 
                     } else {
                         // create mode
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
+                            .post("/admin/api/user/", {item: payload}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(handleError);
+                            })
+                            .catch(handleError)
+                            .finally(() => {
+                                this.saving = false;
+                            });;
                     }
 
-                }
+                },
+                async changePassword() {
+                    try {
+                        this.saving = true;
+                        const payload = { ...this.editedItem };
+                        const resetFlagIsSet = this.editedItem?.force_reset != null;
+                        delete payload.status; // Remove status field from payload
+                        delete payload.display_name; // Remove display_name field from payload
+                        const response = await api.put(`/admin/api/user/`, { item: payload }, { suppressGlobalErrorHandler: true });
+                        this.showSnack(response.data);
 
+                        if (!resetFlagIsSet && this.askUserToChangePassword) {
+                            await this.forcePasswordReset(payload);
+                        }
+
+                        await this.refresh();
+                        this.closeChangePasswordDialog();
+                    } catch (err) {
+                        this.showSnack(handleRequestError(err));
+                    } finally {
+                        this.saving = false;
+                    }
+                },
+                updateSystemRole(index) {
+                    if (index == null) return;
+
+                    const systemRole = this.systemRoles[index];
+
+                    if (systemRole.value === 'admin') {
+                        return this.becomeAdmin(systemRole);
+                    }
+
+                    if (this.hadAdminRoleBefore) {
+                        return this.leaveAdmin(systemRole);
+                    }
+
+                    this.applyNormalSystemRole(systemRole);
+                },
+                becomeAdmin(systemRole) {
+                    this.beforeAdminPermissions = {
+                        view_usernames: this.editedItem.view_usernames,
+                        view_simple_history: this.editedItem.view_simple_history,
+                        view_full_history: this.editedItem.view_full_history,
+                        can_self_assign: this.editedItem.can_self_assign,
+                        can_edit_locations: this.editedItem.can_edit_locations,
+                        can_export: this.editedItem.can_export,
+                        can_import_web: this.editedItem.can_import_web,
+                    };
+
+                    const nextRoles = this.buildNextRoles(systemRole);
+                    this.editedItem.roles = nextRoles;
+
+                    this.applyAllPermissions();
+                    this.hadAdminRoleBefore = true;
+                },
+
+                leaveAdmin(systemRole) {
+                    const nextRoles = this.buildNextRoles(systemRole);
+                    this.editedItem.roles = nextRoles;
+
+                    if (this.beforeAdminPermissions) {
+                        // User became admin during this session → restore their previous permissions
+                        Object.assign(this.editedItem, this.beforeAdminPermissions);
+                    } else {
+                        // User was already admin before opening the dialog → default restricted permissions
+                        this.clearAllPermissions();
+                    }
+
+                    this.beforeAdminPermissions = null;
+                    this.hadAdminRoleBefore = false;
+                },
+                applyNormalSystemRole(systemRole) {
+                    const selectedRole = this.getRoleFromName(systemRole.value);
+                    const accessRoles = this.getPreservedAccessRoles();
+                    this.editedItem.roles = selectedRole
+                        ? [selectedRole, ...accessRoles]
+                        : accessRoles;
+                    this.hadAdminRoleBefore = false;
+                },
+                getRoleFromName(name) {
+                    return this.roles.find(r => r.name.toLowerCase() === name?.toLowerCase());
+                },
+                getPreservedAccessRoles() {
+                    if (!Array.isArray(this.editedItem.roles)) this.editedItem.roles = [];
+                    return this.editedItem.roles.filter(r =>
+                        this.accessRoles.some(a => a.name.toLowerCase() === r.name.toLowerCase())
+                    );
+                },
+                buildNextRoles(systemRole) {
+                    const selected = this.getRoleFromName(systemRole.value);
+                    const access = this.getPreservedAccessRoles();
+                    return selected ? [selected, ...access] : access;
+                },
+                isAccessRoleSelected(role) {
+                    return this.editedItemAccessRoles?.some(r => r.name === role.name)
+                },
+                toggleAccessRole(role) {
+                    if (!Array.isArray(this.editedItem.roles)) this.editedItem.roles = [];
+                    const index = this.editedItem.roles?.findIndex(r => r.name.toLowerCase() === role.name.toLowerCase())
+                    if (index !== -1) {
+                        this.editedItem.roles.splice(index, 1) // remove
+                    } else {
+                        this.editedItem.roles.push(role) // add
+                    }
+                },
+                searchUsers: debounce(function (evt) {
+                    this.refresh({ ...this.options, q: evt })
+                }, 350),
             }
         });
 
+        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
+        app.config.globalProperties.$htmlFormatter = htmlFormatter;
+
         app.component('UserCard', UserCard);
+        app.component('ToggleButton', ToggleButton);
+        app.component('ShowDetails', ShowDetails);
+        app.component('DiffRenderer', DiffRenderer);
         app.use(router).use(vuetify).mount('#app')
     </script>
 {% endblock %}

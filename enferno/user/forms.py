@@ -4,10 +4,17 @@ from flask_security.decorators import current_user
 from flask_security.webauthn import WebAuthnRegisterForm
 from wtforms import StringField
 from wtforms.validators import ValidationError
-from enferno.admin.models import Notification
+
 from enferno.admin.constants import Constants
-from flask_wtf import RecaptchaField
+from enferno.admin.models import Notification
+from enferno.admin.models.Activity import Activity
+from enferno.extensions import db
+from enferno.user.models import User
+from enferno.utils.logging_utils import get_logger
 from enferno.utils.validation_utils import validate_password_policy, validate_webauthn_device_name
+from flask_wtf import RecaptchaField
+
+logger = get_logger()
 
 
 class ExtendedRegisterForm(RegisterForm):
@@ -22,6 +29,34 @@ class ExtendedRegisterForm(RegisterForm):
 
 class ExtendedLoginForm(LoginForm):
     recaptcha = RecaptchaField()
+
+    def validate(self, **kwargs):
+        # Log and notify admins when user without role attempts login
+        if self.username.data:
+            user = db.session.execute(
+                db.select(User).filter(User.username == self.username.data)
+            ).scalar_one_or_none()
+
+            # Active user with no roles - will be blocked by is_active property
+            if user and user.active and not user.roles:
+                logger.warning(f"User {user.username} blocked - no system role")
+
+                Activity.create(
+                    user=user,
+                    action=Activity.ACTION_LOGIN,
+                    status=Activity.STATUS_DENIED,
+                    subject={"class": "user", "id": user.id},
+                    model="User",
+                    details="Login blocked - no system role assigned",
+                )
+
+                Notification.send_admin_notification_for_event(
+                    Constants.NotificationEvent.GENERAL,
+                    "User Login Blocked - No System Role",
+                    f"{user.username} attempted login without assigned role. Please assign appropriate role.",
+                )
+
+        return super().validate(**kwargs)
 
 
 class SanitizedWebAuthnRegisterForm(WebAuthnRegisterForm):

@@ -1,3 +1,4 @@
+import enum
 import json
 from typing import Any, Dict
 from datetime import datetime
@@ -21,6 +22,14 @@ from enferno.utils.logging_utils import get_logger
 SECURITY_KEY_NAMESPACE = "security:user"
 
 logger = get_logger()
+
+
+class UserStatus(str, enum.Enum):
+    """User account status enum."""
+
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    DISABLED = "disabled"
 
 
 class MutableList(Mutable, list):
@@ -176,10 +185,26 @@ class User(UserMixin, db.Model, BaseMixin):
     email = db.Column(db.String(255), nullable=True)
     username = db.Column(db.String(255), nullable=True, unique=True)
     password = db.Column(db.String(255), nullable=False)
+
+    # User account status - single source of truth
+    status = db.Column(
+        db.Enum(UserStatus, values_callable=lambda x: [e.value for e in x]),
+        default=UserStatus.ACTIVE,
+        nullable=False,
+        index=True,
+    )
+
+    # DEPRECATED: Keep during migration, sync with status field
     active = db.Column(db.Boolean, default=False)
+
     roles = db.relationship(
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
+
+    @property
+    def is_active(self):
+        """Flask-Security requires this. User can login if status is ACTIVE and has roles."""
+        return self.status == UserStatus.ACTIVE and bool(self.roles)
 
     # email confirmation
     confirmed_at = db.Column(db.DateTime())
@@ -233,6 +258,29 @@ class User(UserMixin, db.Model, BaseMixin):
         """unSet the security reset key"""
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         rds.delete(key)
+
+    def set_status(self, new_status: UserStatus) -> None:
+        """
+        Set user status with validation and side effects.
+
+        Args:
+            new_status: The new UserStatus to set.
+
+        Raises:
+            ValueError: If trying to activate a user without roles.
+        """
+        if new_status == UserStatus.ACTIVE and not self.roles:
+            raise ValueError("Cannot activate user without roles")
+
+        old_status = self.status
+        self.status = new_status
+
+        # Sync deprecated active field
+        self.active = new_status == UserStatus.ACTIVE
+
+        # Logout active sessions on any status change
+        if old_status != new_status:
+            self.logout_other_sessions()
 
     def roles_in(self, roles: list) -> bool:
         chk = [self.has_role(r) for r in roles]
@@ -376,8 +424,42 @@ class User(UserMixin, db.Model, BaseMixin):
         self.can_edit_locations = item.get("can_edit_locations", False)
         self.can_export = item.get("can_export", False)
         self.can_import_web = item.get("can_import_web", False)
-        self.active = item.get("active")
+
+        # Status can only be set during creation (user has no id yet)
+        # For existing users, use set_status() or dedicated endpoints
+        if not self.id:
+            # Users without roles default to SUSPENDED - must assign role to activate
+            if not self.roles:
+                self.status = UserStatus.SUSPENDED
+                self.active = False
+            else:
+                status_str = item.get("status", "active")
+                try:
+                    self.status = UserStatus(status_str)
+                except ValueError:
+                    self.status = UserStatus.ACTIVE
+                # Sync deprecated active field
+                self.active = self.status == UserStatus.ACTIVE
+
         return self
+
+    def create_revision(self, user_id: int = None, created: datetime = None) -> None:
+        """
+        Create a new revision in the history table.
+
+        Args:
+            - user_id: the id of the user making the change.
+            - created: the created date.
+        """
+        from enferno.admin.models import UserHistory
+
+        if not user_id:
+            user_id = getattr(current_user, "id", 1)
+        h = UserHistory(target_user_id=self.id, data=self.to_dict(), user_id=user_id)
+        if created:
+            h.created_at = created
+            h.updated_at = created
+        h.save()
 
     @property
     def two_factor_devices(self) -> Dict[str, Any]:
@@ -425,8 +507,8 @@ class User(UserMixin, db.Model, BaseMixin):
             "id": self.id,
             "name": self.secure_name,
             "username": self.secure_username,
+            "status": self.status.value,
             "display_name": self.display_name,
-            "active": self.active,
         }
 
     def to_dict(self) -> dict:
@@ -439,8 +521,8 @@ class User(UserMixin, db.Model, BaseMixin):
             "google_id": self.google_id,
             "email": self.secure_email,
             "username": self.secure_username,
+            "status": self.status.value,
             "display_name": self.display_name,
-            "active": self.active,
             "roles": [role.to_dict() for role in self.roles],
             "view_usernames": self.view_usernames,
             "view_simple_history": self.view_simple_history,
