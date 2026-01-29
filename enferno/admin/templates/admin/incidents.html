@@ -610,7 +610,7 @@
                     return !Object.values(this.search).some(Boolean);
                 },
                 searchBg() {
-                    return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow-lighten-5' : '';
+                    return Object.values(this.search).some(Boolean) ? 'yellow-lighten-5' : '';
                 },
 
                 bulletinRelationTypes() {
