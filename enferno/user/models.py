@@ -278,19 +278,8 @@ class User(UserMixin, db.Model, BaseMixin):
         # Sync deprecated active field
         self.active = new_status == UserStatus.ACTIVE
 
-        # Side effects based on new status
-        if new_status == UserStatus.DISABLED:
-            # Note: roles are preserved for audit trail - disabled users can't login anyway
-            self.view_usernames = False
-            self.view_simple_history = False
-            self.view_full_history = False
-            self.can_self_assign = False
-            self.can_edit_locations = False
-            self.can_export = False
-            self.can_import_web = False
-            self.logout_other_sessions()
-        elif old_status != new_status:
-            # Logout on any status change (suspend or reactivate)
+        # Logout active sessions on any status change
+        if old_status != new_status:
             self.logout_other_sessions()
 
     def roles_in(self, roles: list) -> bool:
