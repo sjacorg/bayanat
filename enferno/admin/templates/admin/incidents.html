@@ -355,6 +355,7 @@
     <script src="/static/js/components/RelationEditorCard.js"></script>
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/FieldRenderer.js"></script>
+    <script src="/static/js/components/Asterisk.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
@@ -1560,6 +1561,7 @@
         app.component('RelationEditorCard', RelationEditorCard);
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
+        app.component('Asterisk', Asterisk);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

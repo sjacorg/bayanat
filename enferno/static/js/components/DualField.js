@@ -79,7 +79,6 @@ const DualField = Vue.defineComponent({
     <v-sheet class="d-flex">
       <v-text-field
           v-if="isOriginalVisible"
-          :label="labelOriginal"
           v-model="localOriginal"
           @update:modelValue="$emit('update:original', $event)"
           variant="outlined"
@@ -88,6 +87,10 @@ const DualField = Vue.defineComponent({
           :rules="[...rulesOriginal, ...rules]"
           :error-messages="errorMessagesOriginal"
       >
+        <template v-slot:label>
+          <slot v-if="$slots['label-original']" name="label-original"></slot>
+          <template v-else>{{ labelOriginal }}</template>
+        </template>
         <template v-slot:append v-if="allowUnknown">
           <v-tooltip location="top" :text="unknownTooltip">
             <template v-slot:activator="{ props }">
@@ -100,7 +103,6 @@ const DualField = Vue.defineComponent({
 
       <v-text-field
           v-else
-          :label="labelTranslation"
           v-model="localTranslation"
           @update:modelValue="$emit('update:translation', $event)"
           variant="outlined"
@@ -108,7 +110,12 @@ const DualField = Vue.defineComponent({
           @click:append-inner="toggleField"
           :rules="[...rulesTranslation, ...rules]"
           :error-messages="errorMessagesTranslation"
-      ></v-text-field>
+      >
+        <template v-slot:label>
+          <slot v-if="$slots['label-translation']" name="label-translation"></slot>
+          <template v-else>{{ labelTranslation }}</template>
+        </template>
+      </v-text-field>
     </v-sheet>
   `,
 });
