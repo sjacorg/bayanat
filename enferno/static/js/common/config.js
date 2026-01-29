@@ -432,6 +432,7 @@ const routes = [
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
     { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
     { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
+    { path: '/admin/system-update/', name: 'system-update', component: Vue.defineComponent({}) },
 
 ];
 

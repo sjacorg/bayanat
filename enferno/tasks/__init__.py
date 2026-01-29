@@ -13,9 +13,11 @@ from datetime import datetime, timedelta, date, timezone
 
 import boto3
 import pandas as pd
+import requests
 from celery import Celery, chain, chord, group
 from celery.schedules import crontab
 from celery.signals import worker_ready, worker_process_init
+from packaging import version
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -52,10 +54,9 @@ from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
 import enferno.utils.typing as t
 
-from enferno.utils.backup_utils import pg_dump, upload_to_s3
+from enferno.utils.backup_utils import pg_dump, upload_to_s3, cleanup_old_backups
 
 # Simple test detection - use TestConfig if in test environment
-import os
 
 if os.environ.get("BAYANAT_CONFIG_FILE") == "config.test.json":
     from enferno.settings import TestConfig
@@ -116,6 +117,11 @@ class ContextTask(celery.Task):
 
 
 celery.Task = ContextTask
+
+# Register tasks from separate modules (after ContextTask is set)
+from enferno.tasks.update import perform_system_update_task  # noqa: E402
+
+perform_system_update = celery.task(perform_system_update_task)
 
 # splitting db operations for performance
 BULK_CHUNK_SIZE = 250
@@ -221,9 +227,9 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
-    for group in chunks:
+    for chunk in chunks:
         # Fetch bulletins
-        bulletins = Bulletin.query.filter(Bulletin.id.in_(group))
+        bulletins = Bulletin.query.filter(Bulletin.id.in_(chunk))
         for bulletin in bulletins:
             # check user can access each bulletin
             if not user.can_access(bulletin):
@@ -288,7 +294,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             db.session.add(bulletin)
 
         revmaps = []
-        bulletins = Bulletin.query.filter(Bulletin.id.in_(group)).all()
+        bulletins = Bulletin.query.filter(Bulletin.id.in_(chunk)).all()
         for bulletin in bulletins:
             # this commits automatically
             tmp = {"bulletin_id": bulletin.id, "user_id": cur_user.id, "data": bulletin.to_dict()}
@@ -363,9 +369,9 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
-    for group in chunks:
+    for chunk in chunks:
         # Fetch bulletins
-        actors = Actor.query.filter(Actor.id.in_(group))
+        actors = Actor.query.filter(Actor.id.in_(chunk))
         for actor in actors:
             # check user can access each actor
             if not user.can_access(actor):
@@ -430,7 +436,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             db.session.add(actor)
 
         revmaps = []
-        actors = Actor.query.filter(Actor.id.in_(group)).all()
+        actors = Actor.query.filter(Actor.id.in_(chunk)).all()
         for actor in actors:
             # this commits automatically
             tmp = {"actor_id": actor.id, "user_id": cur_user.id, "data": actor.to_dict()}
@@ -511,9 +517,9 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
-    for group in chunks:
+    for chunk in chunks:
         # Fetch bulletins
-        incidents = Incident.query.filter(Incident.id.in_(group))
+        incidents = Incident.query.filter(Incident.id.in_(chunk))
         for incident in incidents:
             # check if user can access incident
             if not user.can_access(incident):
@@ -576,7 +582,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             db.session.add(incident)
 
         revmaps = []
-        incidents = Incident.query.filter(Incident.id.in_(group)).all()
+        incidents = Incident.query.filter(Incident.id.in_(chunk)).all()
         for incident in incidents:
             # this commits automatically
             tmp = {"incident_id": incident.id, "user_id": cur_user.id, "data": incident.to_dict()}
@@ -701,7 +707,7 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
         None
     """
     # Deduplication periodic task
-    if cfg.DEDUP_TOOL == True:
+    if cfg.DEDUP_TOOL is True:
         seconds = int(os.environ.get("DEDUP_INTERVAL", cfg.DEDUP_INTERVAL))
         sender.add_periodic_task(seconds, dedup_cron.s(), name="Deduplication Cron")
         logger.info("Deduplication periodic task is set up.")
@@ -728,6 +734,13 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
 
     # session cleanup task
     sender.add_periodic_task(24 * 60 * 60, session_cleanup.s(), name="Session Cleanup Cron")
+
+    # version check task (configurable interval, default 12 hours)
+    sender.add_periodic_task(
+        cfg.VERSION_CHECK_INTERVAL, check_for_updates.s(), name="Version Check"
+    )
+    hours = cfg.VERSION_CHECK_INTERVAL / 3600
+    logger.info(f"Version check periodic task is set up (runs every {hours:.1f} hours).")
 
 
 @celery.task
@@ -910,16 +923,51 @@ def process_row(
     si.import_row()
 
 
-def reload_app():
+def restart_service(service_name="bayanat"):
+    """Restart service via socket API (production) or SIGHUP (dev)."""
     import os
     import signal
+    import shutil
+    from flask import current_app
 
-    os.kill(os.getppid(), signal.SIGHUP)
+    is_production = shutil.which("systemctl") is not None
+
+    if is_production:
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8080/restart-service",
+                json={"service": service_name},
+                timeout=5,
+            )
+            if response.status_code == 200:
+                if current_app:
+                    current_app.logger.info(f"Restart requested: {service_name}")
+                return
+            if current_app:
+                current_app.logger.error(f"Restart API returned {response.status_code}")
+        except Exception as e:
+            if current_app:
+                current_app.logger.error(f"Restart API failed: {e}")
+        # Production: don't fall through to SIGHUP - it won't work
+        return
+
+    # Dev mode only: SIGHUP parent process
+    try:
+        if current_app:
+            current_app.logger.info(f"Dev restart: {service_name} via SIGHUP")
+        os.kill(os.getppid(), signal.SIGHUP)
+    except PermissionError:
+        if current_app:
+            current_app.logger.warning("SIGHUP failed (permission denied) - manual restart needed")
+
+
+def reload_app():
+    restart_service("bayanat")
 
 
 @celery.task
 def reload_celery():
-    reload_app()
+    restart_service("bayanat-celery")
 
 
 # ---- Export tasks ----
@@ -988,19 +1036,19 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     dir_id = Export.generate_export_dir()
     try:
-        for group in chunks:
+        for chunk in chunks:
             if export_request.table == "bulletin":
-                for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)):
+                for bulletin in Bulletin.query.filter(Bulletin.id.in_(chunk)):
                     pdf = PDFUtil(bulletin)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "actor":
-                for actor in Actor.query.filter(Actor.id.in_(group)):
+                for actor in Actor.query.filter(Actor.id.in_(chunk)):
                     pdf = PDFUtil(actor)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "incident":
-                for incident in Incident.query.filter(Incident.id.in_(group)):
+                for incident in Incident.query.filter(Incident.id.in_(chunk)):
                     pdf = PDFUtil(incident)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
@@ -1011,7 +1059,7 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} PDF file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing PDF file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1036,22 +1084,22 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
         with open(f"{file_path}.json", "a") as file:
             file.write("{ \n")
             file.write(f'"{export_type}s": [ \n')
-            for group in chunks:
+            for chunk in chunks:
                 if export_type == "bulletin":
                     batch = ",".join(
                         bulletin.to_json()
-                        for bulletin in Bulletin.query.filter(Bulletin.id.in_(group))
+                        for bulletin in Bulletin.query.filter(Bulletin.id.in_(chunk))
                     )
                     file.write(f"{batch}\n")
                 elif export_type == "actor":
                     batch = ",".join(
-                        actor.to_json() for actor in Actor.query.filter(Actor.id.in_(group))
+                        actor.to_json() for actor in Actor.query.filter(Actor.id.in_(chunk))
                     )
                     file.write(f"{batch}\n")
                 elif export_type == "incident":
                     batch = ",".join(
                         incident.to_json()
-                        for incident in Incident.query.filter(Incident.id.in_(group))
+                        for incident in Incident.query.filter(Incident.id.in_(chunk))
                     )
                     file.write(f"{batch}\n")
                 # less db overhead
@@ -1062,7 +1110,7 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} JSON file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing JSON file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1122,7 +1170,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} CSV file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing CSV file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -1139,7 +1187,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
     Returns:
         - export_request.id if successful, None otherwise.
     """
-    if previous_result == False:
+    if previous_result is False:
         return False
 
     export_request = Export.query.get(previous_result)
@@ -1188,7 +1236,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                 )
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
-                except Exception as e:
+                except Exception:
                     logger.error(
                         f"Error downloading Export #{export_request.id} file from S3.",
                         exc_info=True,
@@ -1212,7 +1260,7 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     Returns:
         - False if previous task failed, None otherwise.
     """
-    if previous_result == False:
+    if previous_result is False:
         return False
 
     export_request = Export.query.get(previous_result)
@@ -1270,7 +1318,7 @@ def activity_cleanup_cron() -> None:
     expired_activities = Activity.query.filter(
         datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
     )
-    logger.info(f"Cleaning up Activities...")
+    logger.info("Cleaning up Activities...")
     deleted = expired_activities.delete(synchronize_session=False)
     if deleted:
         db.session.commit()
@@ -1288,7 +1336,7 @@ def daily_backup_cron():
     filepath = f"{cfg.BACKUPS_LOCAL_PATH}/{filename}"
     try:
         pg_dump(filepath)
-    except:
+    except Exception:
         logger.error("Error during daily backups", exc_info=True)
         return
 
@@ -1298,8 +1346,14 @@ def daily_backup_cron():
                 os.remove(filepath)
             except FileNotFoundError:
                 logger.error(f"Backup file {filename} not found to delete.", exc_info=True)
-            except OSError as e:
+            except OSError:
                 logger.error(f"Unable to remove backup file {filename}.", exc_info=True)
+
+    # Cleanup old local backups (skip if using S3 - local files deleted after upload)
+    if not cfg.BACKUPS_S3_BUCKET and cfg.BACKUP_RETENTION_DAYS > 0:
+        deleted = cleanup_old_backups(cfg.BACKUPS_LOCAL_PATH, cfg.BACKUP_RETENTION_DAYS)
+        if deleted:
+            logger.info(f"Backup cleanup: {deleted} old backup(s) removed.")
 
 
 ## Query graph visualization tasks
@@ -1433,6 +1487,83 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
+
+
+def perform_version_check() -> Optional[dict]:
+    """Check git tags for new Bayanat version. Returns result dict or None on error."""
+    try:
+        import subprocess
+
+        repo_name = cfg.BAYANAT_REPO
+        repo_url = f"https://github.com/{repo_name}.git"
+
+        # Get latest release tag from git (no API rate limits)
+        result = subprocess.run(
+            ["git", "ls-remote", "--tags", "--refs", "--sort=-version:refname", repo_url],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True,
+        )
+
+        if not result.stdout.strip():
+            logger.warning("No tags found in repository")
+            return None
+
+        # Parse first line to get latest tag
+        latest_tag = result.stdout.split("\n")[0].split("/")[-1].strip()
+        if not latest_tag:
+            return None
+
+        current_version = cfg.VERSION
+        checked_at = datetime.now(timezone.utc).isoformat()
+
+        try:
+            # Strip 'v' prefix if present for comparison
+            latest_ver = latest_tag.lstrip("v")
+            current_ver = current_version.lstrip("v")
+            update_available = version.parse(latest_ver) > version.parse(current_ver)
+        except Exception:
+            update_available = False
+
+        # Always cache the checked version to prevent stale data
+        cached = rds.get("bayanat:update:latest")
+        cached_version = cached.decode().split("|")[0] if cached else None
+
+        if update_available:
+            # Only notify if version changed
+            if cached_version != latest_tag:
+                Notification.send_admin_notification_for_event(
+                    Constants.NotificationEvent.SYSTEM_UPDATE_AVAILABLE,
+                    "System update available",
+                    f"Bayanat {latest_tag} is available (current: {current_version}).",
+                    category=Constants.NotificationCategories.UPDATE.value,
+                )
+            logger.info(f"New version available: {latest_tag}")
+
+        # Update cache on every check (keeps dashboard accurate)
+        rds.set("bayanat:update:latest", f"{latest_tag}|{checked_at}")
+
+        return {
+            "latest_version": latest_tag,
+            "current_version": current_version,
+            "update_available": update_available,
+            "checked_at": checked_at,
+            "repository": repo_name,
+        }
+
+    except Exception as e:
+        logger.warning(f"Version check failed: {e}")
+        return None
+
+
+@celery.task
+def check_for_updates() -> None:
+    """
+    Periodic Celery task to check for new Bayanat versions.
+    Delegates to perform_version_check() which contains the actual logic.
+    """
+    perform_version_check()
 
 
 @celery.task
@@ -1619,7 +1750,7 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
     flag_modified(data_import, "data")
 
     data_import.add_to_log(f"Downloaded file: {filename}")
-    data_import.add_to_log(f"Format: mp4")
+    data_import.add_to_log("Format: mp4")
     data_import.add_to_log(f"Duration: {info.get('duration')}s")
     data_import.save()
 

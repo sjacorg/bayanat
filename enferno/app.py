@@ -5,6 +5,8 @@ from flask import Flask, render_template, current_app
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security import current_user
+from enferno.utils.maintenance import disable_maintenance, is_maintenance_mode
+from enferno.utils.update_utils import is_update_running, is_update_scheduled
 
 from enferno.admin.constants import Constants
 import enferno.commands as commands
@@ -47,6 +49,7 @@ from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.rate_limit_utils import ratelimit_handler
+from enferno.utils.maintenance import register_maintenance_middleware
 
 logger = get_logger()
 
@@ -85,6 +88,13 @@ def create_app(config_object=Config):
     register_shellcontext(app)
     register_commands(app)
     register_signals(app)
+    register_maintenance_middleware(app)
+
+    # Clear stale maintenance lock on startup
+    # If maintenance is on but no update is running or scheduled, it's stale
+    if is_maintenance_mode() and not is_update_running() and not is_update_scheduled():
+        disable_maintenance()
+
     return app
 
 
@@ -317,16 +327,24 @@ def register_commands(app):
     Args:
         app: Flask application instance
     """
-    app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create_db)
     app.cli.add_command(commands.import_data)
     app.cli.add_command(commands.install)
+    app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
-    app.cli.add_command(commands.check_db_alignment)
+    app.cli.add_command(commands.db_doctor_cli)
+    app.cli.add_command(commands.apply_migrations)
     app.cli.add_command(commands.generate_config)
+    app.cli.add_command(commands.backup_db)
+    app.cli.add_command(commands.restore_db)
+    app.cli.add_command(commands.enable_maintenance)
+    app.cli.add_command(commands.disable_maintenance)
+    app.cli.add_command(commands.get_version)
+    app.cli.add_command(commands.update_system)
+    app.cli.add_command(commands.check_updates)
 
 
 def register_errorhandlers(app):
@@ -360,7 +378,7 @@ def handle_uncaught_exception(e):
         error message
     """
     from werkzeug.exceptions import HTTPException
-    from flask import request, current_app
+    from flask import request
     from flask_security.decorators import current_user
 
     if isinstance(e, HTTPException) and e.code < 500:

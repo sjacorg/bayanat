@@ -1,167 +1,178 @@
-{% extends 'layout.html' %}
+{% extends 'layout.html' %} {% block content %}
 
-{% block content %}
+<v-main class="">
+  <v-container fluid>
+    <v-card class="pa-2 overflow-y-auto d-flex flex-column" height="calc(100vh - 93px)">
+      <v-card-title>
+        {{ _('Welcome') }}, {{ g.user.username }}!
 
-    <v-main class="">
-        <v-container fluid>
-            <v-card class="pa-2 overflow-y-auto d-flex flex-column" height="calc(100vh - 93px)">
+        <v-spacer></v-spacer>
+        {% include "security/_messages.html" %}
+      </v-card-title>
 
-                <v-card-title>
-                    {{ _('Welcome') }}, {{ g.user.username }}!
+      {% if g.user.last_login_at %}
+      <v-card-subtitle>
+        <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
+      </v-card-subtitle>
+      {% endif %}
+      {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
+      <v-card-text>
+        <v-icon>mdi-alert</v-icon>
+        {{ _('Warning: Media Import\'s path processing is enabled!') }}
+      </v-card-text>
+      {% endif %} {% if current_user.has_role('Admin') and current_user.id == 1 %}
+      <v-card-text>
+        <v-container fluid v-if="!this.settings?.setupCompleted">
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-list-item>
+                <v-list-item-title class="text-h6">{{ _('Manage Users') }}</v-list-item-title>
 
-                    <v-spacer></v-spacer>
-                    {% include "security/_messages.html" %}
-                </v-card-title>
+                <v-list-item-subtitle class="my-2">
+                  {{ _('Create user accounts for your team so they can access your Bayanat server.
+                  Users Dashboard allow you to manage your user accounts, their access levels and
+                  their permissions.') }}
+                </v-list-item-subtitle>
 
-                {% if g.user.last_login_at %}
-                <v-card-subtitle>
-                    <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
-                </v-card-subtitle>
-                {% endif %}
-                
-                {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
-                <v-card-text>
-                    <v-icon>mdi-alert</v-icon>
-                    {{ _('Warning: Media Import\'s path processing is enabled!') }}
-                </v-card-text>
-                {% endif %}
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-shield-account"
+                  class="my-3"
+                  href="/admin/users/"
+                >
+                  {{ _('Users Dashboard') }}
+                </v-btn>
+              </v-list-item>
+            </v-col>
 
-                {% if current_user.has_role('Admin') and current_user.id == 1 %}
-                <v-card-text>
-                    <v-container fluid  v-if="!this.settings?.setupCompleted">
-                        <v-row>
-                            <v-col cols="12" md="6">
-                                <v-list-item>
-                                    <v-list-item-title class="text-h6" >{{ _('Manage Users') }}</v-list-item-title>
+            <v-col cols="12" md="6">
+              <v-list-item>
+                <v-list-item-title class="text-h6">{{ _('Access Groups') }}</v-list-item-title>
 
-                                    <v-list-item-subtitle class="my-2">
-                                        {{ _('Create user accounts for your team so they can access your Bayanat server. Users Dashboard allow you to manage your user accounts, their access levels and their permissions.') }}
-                                    </v-list-item-subtitle>
+                <v-list-item-subtitle class="my-2">
+                  {{ _('Create access groups to manage your team\'s access to your data. You can
+                  then add your users to the appropriate access groups and assign these groups to
+                  Actor, Bulletins and Incidents that needs to be restricted. Actors and Bulletins
+                  can be restricted when imported by the Media and Sheets Import Tools. Access
+                  groups of all items can be tweaked any time using bulk updates.') }}
+                </v-list-item-subtitle>
 
-                                    <v-btn
-                                        color="primary"
-                                        prepend-icon="mdi-shield-account"
-                                        class="my-3"
-                                        href="/admin/users/">
-                                        {{ _('Users Dashboard') }}
-                                    </v-btn>
-                                </v-list-item>
-                            </v-col>
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-shield-lock"
+                  class="my-3"
+                  href="/admin/roles/"
+                >
+                  {{ _('Groups Dashboard') }}
+                </v-btn>
+              </v-list-item>
+            </v-col>
+          </v-row>
 
-                            <v-col cols="12" md="6">
-                                <v-list-item>
-                                    <v-list-item-title class="text-h6">{{ _('Access Groups') }}</v-list-item-title>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-list-item>
+                <v-list-item-title class="text-h6"
+                  >{{ _('Customize Component Data') }}</v-list-item-title
+                >
 
-                                    <v-list-item-subtitle class="my-2">
-                                        {{ _('Create access groups to manage your team\'s access to your data. You can then add your users to the appropriate access groups and assign these groups to Actor, Bulletins and Incidents that needs to be restricted. Actors and Bulletins can be restricted when imported by the Media and Sheets Import Tools. Access groups of all items can be tweaked any time using bulk updates.') }}
-                                    </v-list-item-subtitle>
+                <v-list-item-subtitle class="my-2">
+                  {{ _('If you haven\'t imported Bayanat\'s default data, you\'ll need to create
+                  items for the system lists from the Component Data dashboard. If you have, you
+                  still need to create Ethnicities and Dialects for the country(s) your team will be
+                  working on.') }}
+                </v-list-item-subtitle>
 
-                                    <v-btn
-                                        color="primary"
-                                        prepend-icon="mdi-shield-lock"
-                                        class="my-3"
-                                        href="/admin/roles/">
-                                        {{ _('Groups Dashboard') }}
-                                    </v-btn>
-                                </v-list-item>
-                            </v-col>
-                        </v-row>
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-database-cog"
+                  class="my-3"
+                  href="/admin/component-data/"
+                >
+                  {{ _('Component Data') }}
+                </v-btn>
+              </v-list-item>
+            </v-col>
 
-                        <v-row>
-                            <v-col cols="12" md="6">
-                                <v-list-item>
-                                    <v-list-item-title class="text-h6">{{ _('Customize Component Data') }}</v-list-item-title>
+            <v-col cols="12" md="6">
+              <v-list-item>
+                <v-list-item-title class="text-h6"
+                  >{{ _('More System Settings') }}</v-list-item-title
+                >
 
-                                    <v-list-item-subtitle class="my-2">
-                                        {{ _('If you haven\'t imported Bayanat\'s default data, you\'ll need to create items for the system lists from the Component Data dashboard. If you have, you still need to create Ethnicities and Dialects for the country(s) your team will be working on.') }}
-                                    </v-list-item-subtitle>
+                <v-list-item-subtitle class="my-2">
+                  {{ _('This wizard went through a few important settings. Bayanat can be customized
+                  even further from the System Settings.') }}
+                </v-list-item-subtitle>
 
-                                    <v-btn
-                                        color="primary"
-                                        prepend-icon="mdi-database-cog"
-                                        class="my-3"
-                                        href="/admin/component-data/">
-                                        {{ _('Component Data') }}
-                                    </v-btn>
-                                </v-list-item>
-                            </v-col>
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-cog"
+                  class="my-3"
+                  href="/admin/system-administration/"
+                >
+                  {{ _('System Settings') }}
+                </v-btn>
+              </v-list-item>
+            </v-col>
+          </v-row>
 
-                            <v-col cols="12" md="6">
-                                <v-list-item>
-                                    <v-list-item-title class="text-h6">{{ _('More System Settings') }}</v-list-item-title>
+          <v-row>
+            <v-spacer></v-spacer>
 
-                                    <v-list-item-subtitle class="my-2">
-                                        {{ _('This wizard went through a few important settings. Bayanat can be customized even further from the System Settings.') }}
-                                    </v-list-item-subtitle>
-
-                                    <v-btn
-                                        color="primary"
-                                        prepend-icon="mdi-cog"
-                                        class="my-3"
-                                        href="/admin/system-administration/">
-                                        {{ _('System Settings') }}
-                                    </v-btn>
-                                </v-list-item>
-                            </v-col>
-                        </v-row>
-                        
-                        <v-row>
-                            <v-spacer></v-spacer>
-
-                            <v-btn 
-                                @click="completeSetup"
-                                prepend-icon="mdi-check"
-                                class="ma-3" 
-                                color="primary">
-                                {{ _('Complete Setup') }}
-                            </v-btn>
-                        </v-row>
-
-                    </v-container>
-                </v-card-text>
-                {% endif %}
-            
-                <v-sheet class="pa-2 mt-auto text-caption">
-                    <p>&copy; 2024 <a href="https://syriaaccountability.org/" target="_blank">{{ _('Syria Justice &amp;
-                        Accountability Center (SJAC) ') }}</a> {{ _('All rights reserved.') }}</p>
-                    <p><a href="https://bayanat.org/" target="_blank">{{ _('Bayanat ') }}</a> {{ _('is an open source project by SJAC released under the GNU Affero General Public License (AGPL).') }}</p>
-                </v-sheet>
-
-            </v-card>
-
+            <v-btn @click="completeSetup" prepend-icon="mdi-check" class="ma-3" color="primary">
+              {{ _('Complete Setup') }}
+            </v-btn>
+          </v-row>
         </v-container>
+      </v-card-text>
+      {% endif %}
 
-    </v-main>
+      <v-sheet class="pa-2 mt-auto text-caption">
+        <p>
+          &copy; 2024
+          <a href="https://syriaaccountability.org/" target="_blank"
+            >{{ _('Syria Justice &amp; Accountability Center (SJAC) ') }}</a
+          >
+          {{ _('All rights reserved.') }}
+        </p>
+        <p>
+          <a href="https://bayanat.org/" target="_blank">{{ _('Bayanat ') }}</a> {{ _('is an open
+          source project by SJAC released under the GNU Affero General Public License (AGPL).') }}
+        </p>
+      </v-sheet>
+    </v-card>
+  </v-container>
+</v-main>
 
-{% endblock %}
+{% endblock %} {% block js %}
+<script nonce="{{ csp_nonce() }}" type="module">
+  const {createApp} = Vue;
+  const {createVuetify} = Vuetify;
 
-{% block js %}
-    <script nonce="{{ csp_nonce() }}" type="module">
-        const {createApp} = Vue;
-        const {createVuetify} = Vuetify;
+  const vuetify = createVuetify(vuetifyConfig);
 
-        const vuetify = createVuetify(vuetifyConfig);
+  const app = createApp({
 
-        const app = createApp({
+      delimiters: delimiters,
+      mixins: [globalMixin],
 
-            delimiters: delimiters,
-            mixins: [globalMixin],
+      data: () => ({
+          drawer: drawer,
+      }),
 
-            data: () => ({
-                drawer: drawer,
-            }),
+      methods: {
+          completeSetup() {
+              this.settings.setupCompleted = true;
+              this.saveSettings();
+              setTimeout(() => {
+                  window.location.reload();
+              }, 1000);
+          },
 
-            methods: {
-                completeSetup() {
-                    this.settings.setupCompleted = true;
-                    this.saveSettings();
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                },
-            },
-        });
-        
-        app.use(vuetify).mount('#app');
-    </script>
+      },
+  });
+
+  app.use(vuetify).mount('#app');
+</script>
 {% endblock %}

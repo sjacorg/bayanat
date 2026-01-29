@@ -94,11 +94,15 @@
 {% endif %}
 <div class="d-none" data-lang='{{ session.get('lang','en') }}'></div>
 <div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
+<div class="d-none" data-app-version='{{ config.VERSION }}'></div>
 <script nonce="{{ csp_nonce() }}">
-    window.__username__ = document.querySelector('[data-username]').dataset.username;
-    window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
+    const userMetaEl = document.querySelector('[data-settings]');
+    window.__settings__ = JSON.parse(userMetaEl?.dataset.settings ?? '{}');
+    window.__username__ = userMetaEl?.dataset.username ?? '';
+    window.__is_admin__ = {{ (current_user.is_authenticated and current_user.has_role('Admin'))|tojson }};
     window.__lang__ = document.querySelector('[data-lang]').dataset.lang;
     window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
+    window.__app_version__ = document.querySelector('[data-app-version]')?.dataset.appVersion ?? '';
 </script>
 
 

@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Any, Literal, Optional
 
 import requests
@@ -7,6 +6,7 @@ from flask import Blueprint, request, session, redirect, g, Response, current_ap
 from flask.templating import render_template
 from flask_security import auth_required, login_user, current_user
 from flask_security.forms import LoginForm
+from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -15,7 +15,10 @@ from enferno.settings import Config
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User, Session
 from enferno.admin.models.Notification import Notification
-from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
+
+# Note: check_for_updates removed - now using real-time API endpoint
+from enferno.utils.logging_utils import get_logger
+from enferno.extensions import rds
 from flask_login import user_logged_out
 
 from enferno.utils.http_response import HTTPResponse
@@ -32,6 +35,9 @@ def get_oauth_client():
     if _oauth_client is None:
         _oauth_client = WebApplicationClient(Config.get("GOOGLE_CLIENT_ID"))
     return _oauth_client
+
+
+logger = get_logger()
 
 
 @bp_user.before_app_request
@@ -171,6 +177,7 @@ def account() -> str:
     """
     Main dashboard endpoint.
     """
+    # Update info is now fetched via API call from frontend
     return render_template("dashboard.html")
 
 
@@ -264,9 +271,11 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
             "device": request.user_agent.string,  # Full user-agent string
         },
     }
+
     # Create a new Session object and add it to the database
     new_session = Session(**session_data)
     new_session.save()
+    logger.debug(f"New session created for user ID: {user.id}")
 
     # Check if logged in from a different IP address
     if current_user.current_login_ip != current_user.last_login_ip:
@@ -281,6 +290,9 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
     # Check if multiple sessions are disabled
     if current_app.config.get("DISABLE_MULTIPLE_SESSIONS", False):
         user.logout_other_sessions()
+        logger.info(f"Other sessions terminated for user ID: {user.id}")
+
+    # Note: Update checking now happens in dashboard via real-time API call
 
 
 @tf_profile_changed.connect

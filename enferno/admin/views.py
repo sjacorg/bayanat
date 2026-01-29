@@ -6,7 +6,9 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 from uuid import uuid4
+
 import boto3
+import requests
 from botocore.config import Config as BotoConfig
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
 from flask import request, jsonify, abort, session
@@ -18,6 +20,15 @@ from sqlalchemy import desc, or_, asc, select, func
 from werkzeug.utils import safe_join, secure_filename
 from flask_security.twofactor import tf_disable
 import shortuuid
+
+from enferno.tasks import perform_system_update, perform_version_check
+from enferno.tasks.update import schedule_system_update_with_grace_period
+from enferno.utils.update_utils import (
+    get_update_status,
+    is_update_running,
+    is_update_scheduled,
+    get_scheduled_update_time,
+)
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
@@ -42,6 +53,7 @@ from enferno.admin.models import (
     LocationAdminLevel,
     LocationType,
     AppConfig,
+    SystemInfo,
     AtobInfo,
     AtoaInfo,
     BtobInfo,
@@ -109,6 +121,7 @@ from enferno.admin.validation.models import (
 )
 from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
+from enferno.settings import Config
 from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
@@ -6638,6 +6651,193 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return HTTPResponse.success(data={"batch_id": data_import.batch_id}, status=202)
+
+
+@admin.route("/api/system/update", methods=["POST"])
+@auth_required("session")
+@roles_required("Admin")
+def api_trigger_system_update() -> Response:
+    """Trigger system update in the background via Celery."""
+    data = request.get_json(silent=True) or {}
+    skip_backup = bool(data.get("skip_backup", False))
+
+    try:
+        task = perform_system_update.delay(skip_backup=skip_backup, user_id=current_user.id)
+    except Exception as e:
+        current_app.logger.error(f"Failed to queue update task: {str(e)}")
+        return HTTPResponse.error("Failed to queue update task. Check logs for details.", 500)
+
+    return HTTPResponse.success(data={"task_id": task.id}, message="Update started", status=202)
+
+
+@admin.route("/api/system/update/schedule", methods=["POST"])
+@auth_required("session")
+@roles_required("Admin")
+def api_schedule_system_update() -> Response:
+    """Schedule system update with grace period - notifies all users first."""
+    data = request.get_json(silent=True) or {}
+    skip_backup = bool(data.get("skip_backup", False))
+
+    result = schedule_system_update_with_grace_period(
+        skip_backup=skip_backup, user_id=current_user.id
+    )
+
+    if result.get("success"):
+        return HTTPResponse.success(
+            data={"task_id": result["task_id"], "scheduled_at": result["scheduled_at"]},
+            message=result["message"],
+            status=202,
+        )
+    else:
+        # 409 Conflict - update already scheduled (not a server error)
+        return HTTPResponse.error(result.get("error", "Failed to schedule update"), 409)
+
+
+@admin.route("/api/system/update/status", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_get_system_update_status() -> Response:
+    """Return the current background update status and scheduled update info."""
+    status_message = get_update_status()
+    scheduled = is_update_scheduled()
+    scheduled_at = get_scheduled_update_time() if scheduled else None
+
+    return HTTPResponse.success(
+        data={
+            "status_message": status_message or "Update in progress",
+            "running": is_update_running(),
+            "scheduled": scheduled,
+            "scheduled_at": scheduled_at,
+        },
+        status=200,
+    )
+
+
+@admin.route("/api/system/status", methods=["GET"])
+@admin.route("/api/system/version/check", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_system_status() -> Response:
+    """Get system status - version info from cache or fresh GitHub check.
+
+    Query params:
+        fresh (bool): If true, checks GitHub directly instead of using cache
+    """
+
+    current_version = Config.VERSION
+
+    # Check if fresh check is requested
+    fresh_check = request.args.get("fresh", "").lower() == "true"
+
+    if fresh_check:
+        # Fresh check directly from GitHub
+        try:
+            result = perform_version_check()
+            return (
+                HTTPResponse.success(data=result)
+                if result
+                else HTTPResponse.error("Failed to check version", 503)
+            )
+        except Exception as e:
+            current_app.logger.error(f"Fresh version check failed: {str(e)}")
+            return HTTPResponse.error("Version check error. Check logs for details.", 500)
+
+    # Use cached data
+    cached_update = rds.get("bayanat:update:latest")
+
+    if cached_update:
+        latest_version, detected_at = cached_update.decode().split("|")
+
+        # Compare versions semantically (strip 'v' prefix)
+        try:
+            from packaging import version
+
+            latest_ver = latest_version.lstrip("v")
+            current_ver = current_version.lstrip("v")
+            update_available = version.parse(latest_ver) > version.parse(current_ver)
+        except Exception:
+            update_available = False
+
+        return HTTPResponse.success(
+            data={
+                "current_version": current_version,
+                "latest_version": latest_version,
+                "update_available": update_available,
+                "checked_at": detected_at,
+            }
+        )
+
+    # No cache yet - return current version
+    return HTTPResponse.success(
+        data={
+            "current_version": current_version,
+            "latest_version": current_version,
+            "update_available": False,
+        }
+    )
+
+
+@admin.route("/system-update/", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def system_update_page():
+    """System update management page."""
+    return render_template("admin/system-update.html")
+
+
+@admin.route("/api/system/update-history", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_get_system_update_history() -> Response:
+    """Get system update history."""
+    try:
+        from enferno.admin.models import UpdateHistory
+
+        # Get recent 10 updates
+        updates = UpdateHistory.query.order_by(desc(UpdateHistory.created_at)).limit(10).all()
+        history = [update.to_dict() for update in updates]
+        return HTTPResponse.success(data={"updates": history})
+    except Exception as e:
+        current_app.logger.error(f"Failed to get update history: {str(e)}")
+        return HTTPResponse.error("Failed to get update history. Check logs for details.", 500)
+
+
+@admin.route("/api/system/release-notes", methods=["GET"])
+@auth_required("session")
+@roles_required("Admin")
+def api_get_release_notes() -> Response:
+    """Get release notes from GitHub with Redis caching."""
+    cache_key = "bayanat:release:notes"
+
+    # Check cache first
+    cached = rds.get(cache_key)
+    if cached:
+        return HTTPResponse.success(data=json.loads(cached.decode()))
+
+    # Fetch from GitHub
+    try:
+        repo_name = Config.BAYANAT_REPO
+        api_url = f"https://api.github.com/repos/{repo_name}/releases/latest"
+
+        response = requests.get(api_url, timeout=5)
+        response.raise_for_status()
+
+        release_data = response.json()
+        result = {
+            "version": release_data.get("tag_name"),
+            "name": release_data.get("name"),
+            "body": release_data.get("body"),
+            "published_at": release_data.get("published_at"),
+            "html_url": release_data.get("html_url"),
+        }
+
+        # Cache for 24 hours
+        rds.setex(cache_key, 86400, json.dumps(result))
+        return HTTPResponse.success(data=result)
+
+    except Exception as e:
+        logger.error(f"Failed to fetch release notes: {e}")
+        return HTTPResponse.error("Failed to fetch release notes", 503)
 
 
 def parse_filters(args):

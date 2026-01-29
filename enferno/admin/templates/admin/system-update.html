@@ -1,0 +1,509 @@
+{% extends 'layout.html' %}
+{% block content %}
+<!-- Revision history sidebar -->
+<v-navigation-drawer
+    v-model="showHistory"
+    location="right"
+    temporary
+    width="630"
+    clipped
+>
+    <v-card flat>
+        <v-card-title class="px-5 py-4 d-flex align-center justify-space-between">
+            {{ _('Update History') }}
+            <v-btn density="comfortable" icon="mdi-close" @click="showHistory = false"></v-btn>
+        </v-card-title>
+
+        <v-divider></v-divider>
+
+        <v-card-text class="px-5">
+        <v-infinite-scroll :empty-text="emptyHistoryText" :items="updateHistory" @load="loadUpdateHistory({ ...$event })">
+            <v-timeline density="compact" side="end" align="start">
+                <v-timeline-item v-for="(item, index) in updateHistory" :key="item.id" dot-color="primary" size="10">
+                    <div class="mt-n1">
+                        <div>
+                            <div><b v-if="item?.user?.username">${item.user.username}</b><b v-else>{{ _('System') }}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Latest)') }}</b> <span class="text-muted"> - ${formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local)}</span></div>
+                            <show-details show-more-text="{{ _('See detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+                                <v-sheet border color="background" class="change-item pa-2 mt-1 mb-2 d-flex flex-column ga-2 overflow-auto w-100" max-height="471px">
+                                    <v-data-table class="bg-transparent" density="compact" hide-default-footer :items="[item]" :headers="[
+                                        { title: `{{ _('From') }}`, value: 'version_from' },
+                                        { title: `{{ _('To') }}`, value: 'version_to' },
+                                        { title: `{{ _('Status') }}`, value: 'status' },
+                                    ]"
+                                    >
+                                        <template v-slot:item.status="{ item }">
+                                            <v-chip variant="text" :prepend-icon="item.status === 'success' ? 'mdi-check-circle' : 'mdi-minus-circle'" :color="item.status === 'success' ? 'success' : 'red'">
+                                                <template v-if="item.status === 'success'">
+                                                    {{ _('Success') }}
+                                                </template>
+                                                <template v-else>
+                                                    {{ _('Failed') }}
+                                                </template>
+                                            </v-chip>
+                                        </template>
+                                    </v-data-table>
+                                    <div v-if="item.status === 'failed'" class="text-caption text-red">{{ _('The update could not be completed. Please check your network connection or try again later.') }}</div>
+                                </v-sheet>
+                            </show-details>
+                        </div>
+                    </div>
+                </v-timeline-item>
+            </v-timeline>
+        </v-infinite-scroll>
+        </v-card-text>
+    </v-card>
+</v-navigation-drawer>
+
+<v-main class="">
+    <v-container fluid>
+        <v-card class="pa-4 overflow-y-auto d-flex flex-column" height="calc(100vh - 96px)">
+            <!-- Header Section -->
+            <v-card-title class="px-5 py-5">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <h1 class="text-h5 mb-5">{{ _('System Update') }}</h1>
+                        <div class="d-flex align-center ga-2 mb-2">
+                            <span>Bayanat ${latestVersion}</span>
+                            <v-chip v-if="isUpToDate" color="success" prepend-icon="mdi-check" variant="flat">{{ _('Up to date') }}</v-chip>
+                            <v-chip v-else color="warning" prepend-icon="mdi-download" variant="flat">{{ _('Update available') }}</v-chip>
+                        </div>
+                        
+                        <template v-if="isUpToDate">
+                            <div class="text-body-2 mb-2 font-weight-medium">{{ _('Your system is on the latest version of Bayanat') }}</div>
+                            <div class="text-body-2 mb-2">{{ _('Last successful check for updates:') }}<span class="ml-1">${lastCheckTime}</span></div>
+                        </template>
+                        <template v-else>
+                            <div class="text-body-2 mb-2">{{ _('New version is available for update. Released on') }}: ${formatDate(releaseNotes?.published_at)}</div>
+                            <div class="text-body-2 mb-2">{{ _('Current version:') }}<span class="ml-2 font-weight-medium">Bayanat ${currentVersion}</span></div>
+                        </template>
+                    </div>
+                    <div class="d-flex ga-3">
+                        <v-btn prepend-icon="mdi-history" variant="outlined" @click="showHistory = true">{{ _('Update History') }}</v-btn>
+                        <v-btn v-if="isUpToDate" @click="checkForUpdates" :loading="checking" prepend-icon="mdi-cached" color="primary" variant="outlined">{{ _('Check for Updates') }}</v-btn>
+                        <v-menu v-else>
+                            <template v-slot:activator="{ props: menuProps }">
+                                <v-tooltip text="An update has already been scheduled" location="top" :disabled="!updateScheduled">
+                                    <template #activator="{ props: tooltipProps }">
+                                        <div v-bind="{ ...tooltipProps }">
+                                            <v-btn
+                                                v-bind="menuProps"
+                                                :disabled="updateScheduled || updating"
+                                                prepend-icon="mdi-download"
+                                                append-icon="mdi-menu-down"
+                                                color="primary"
+                                                variant="elevated">
+                                                {{ _('Update System') }}
+                                            </v-btn>
+                                        </div>
+                                    </template>
+                                </v-tooltip>
+                            </template>
+                            <v-list>
+                                <v-list-item @click="confirmUpdate('scheduled')">
+                                    <template v-slot:prepend>
+                                        <v-icon>mdi-clock-outline</v-icon>
+                                    </template>
+                                    <v-list-item-title>{{ _('Schedule Update') }}</v-list-item-title>
+                                    <v-list-item-subtitle>{{ _('In 15 minutes with user notification') }}</v-list-item-subtitle>
+                                </v-list-item>
+
+                                <v-list-item @click="confirmUpdate('immediate')">
+                                    <template v-slot:prepend>
+                                        <v-icon>mdi-flash</v-icon>
+                                    </template>
+                                    <v-list-item-title>{{ _('Update Now') }}</v-list-item-title>
+                                    <v-list-item-subtitle>{{ _('Immediately (no grace period)') }}</v-list-item-subtitle>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
+                    </div>
+                </div>
+            </v-card-title>
+
+            <!-- Update Progress Section -->
+            <v-expand-transition>
+                <v-sheet v-if="updating" class="pa-6 bg-blue-lighten-5">
+                    <v-row align="center">
+                        <v-col cols="12" md="8">
+                            <p class="text-subtitle-2 font-weight-bold">{{ _('System Update in Progress') }}</p>
+                            <p class="text-caption">${ updateStatus }</p>
+                            <v-progress-linear
+                                v-model="updateProgress"
+                                indeterminate
+                                color="primary"
+                                class="mt-2">
+                            </v-progress-linear>
+                            <p class="text-caption mt-2 text-disabled">
+                                {{ _('This may take a few minutes. Please do not close this page or restart the system.') }}
+                            </p>
+                        </v-col>
+                    </v-row>
+                </v-sheet>
+            </v-expand-transition>
+
+            <v-divider></v-divider>
+
+            <v-card-text class="pb-6 pt-3">
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <div>
+                        <h1 class="text-h5 mb-5">{{ _('Release Notes') }}</h1>
+                        <h2>Bayanat ${releaseNotes?.version || latestVersion}</h2>
+                    </div>
+                    <div>
+                        <v-btn href="https://github.com/sjacorg/bayanat/releases" target="_blank" variant="plain" append-icon="mdi-open-in-new">{{ _('Previous Release Notes') }}</v-btn>
+                    </div>
+                </div>
+                <div v-if="releaseNotes?.body" class="markdown-content">
+                    <div v-html="renderedReleaseNotes" class="text-body2"></div>
+                </div>
+                <div v-else class="text-center py-6">
+                    <p class="text-caption text-disabled">
+                        {{ _('Release notes not yet available') }}
+                    </p>
+                </div>
+            </v-card-text>
+
+        </v-card>
+    </v-container>
+</v-main>
+
+<!-- Update Confirmation Dialog (Immediate) -->
+<confirm-dialog ref="confirmUpdateDialog">
+    <template #title="{ data }">
+        ${actionSections[data?.mode]?.title}
+    </template>
+    <template #default="{ data }">
+        <div class="text-body-2 mb-6 mt-3">{{ _('What you should know') }}</div>
+        <div class="d-flex flex-column ga-6">
+            <div v-for="(block, index) in actionSections[data?.mode]?.blocks" :key="index" class="d-flex">
+                <v-avatar color="white">
+                    <v-icon color="primary" size="x-large">${block.icon}</v-icon>
+                </v-avatar>
+                
+                <div class="ml-3">
+                    <h4 class="text-primary">${block.title}</h4>
+                    <div v-if="block?.description" class="text-body-2">${block.description}</div>
+                    <ul v-if="block?.bullets" class="text-body-2 pl-5">
+                        <li v-for="(bullet, index) in block.bullets" :key="index">${bullet}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="text-error font-weight-bold mt-6">{{ _('Important Notice') }}</div>
+        <div class="font-weight-bold text-body-2 ">{{ _('Proceed at your own risk.') }}</div>
+        <div class="text-body-2">{{ _('We STRONGLY RECOMMEND maintaining your own independent backup system to protect against unexpected failures.') }}</div>
+    </template>
+</confirm-dialog>
+
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/components/ShowDetails.js"></script>
+<script src="/static/js/markdown-it/markdown-it.min.js"></script>
+
+<script type="module">
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+
+    const vuetify = createVuetify(vuetifyConfig);
+
+    const actionSections = {
+        immediate: {
+            title: "{{ _('You\'re about to update Bayanat to the latest version.') }} ",
+            acceptButtonText: "{{ _('Update Bayanat') }}",
+            blocks: [
+                {
+                    icon: "mdi-cloud-upload-outline",
+                    title: "{{ _('Backup Creation') }}",
+                    bullets: [
+                        "{{ _('Create a local backup of your database on the server to safeguard against potential issues during the update.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-monitor-arrow-down-variant",
+                    title: "{{ _('Download and Installation') }}",
+                    bullets: [
+                        "{{ _('Download the latest version of Bayanat from the official GitHub repository.') }}",
+                        "{{ _('Install any new dependencies required for this version.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-database-outline",
+                    title: "{{ _('Database Migrations') }}",
+                    bullets: [
+                        "{{ _('Apply database migrations necessary for compatibility with the updated version.') }}",
+                        "{{ _('Verify the database structure after migrations to ensure integrity.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-restart",
+                    title: "{{ _('System Restart') }}",
+                    bullets: [
+                        "{{ _('Restart services and bring Bayanat back online.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-sync-alert",
+                    title: "{{ _('Failure Recovery') }}",
+                    bullets: [
+                        "{{ _('If any issue occurs during the update, Bayanat will automatically restore the backup and revert to the previous version.') }}",
+                    ],
+                },
+            ],
+        },
+        scheduled: {
+            title: "{{ _('You\'re about to schedule a system update.') }}",
+            acceptButtonText: "{{ _('Schedule Update') }}",
+            blocks: [
+                {
+                    icon: "mdi-bell-alert-outline",
+                    title: "{{ _('User Notification') }}",
+                    bullets: [
+                        "{{ _('All active users will be notified that a system update is scheduled.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-clock-outline",
+                    title: "{{ _('Grace Period') }}",
+                    bullets: [
+                        "{{ _('The update will start in 15 minutes.') }}",
+                        "{{ _('Users can safely finish ongoing tasks during this time.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-cloud-upload-outline",
+                    title: "{{ _('Safe Update Process') }}",
+                    bullets: [
+                        "{{ _('A backup will be created before the update starts.') }}",
+                        "{{ _('If anything fails, the system will automatically recover.') }}",
+                    ],
+                },
+                {
+                    icon: "mdi-restart",
+                    title: "{{ _('Automatic Restart') }}",
+                    bullets: [
+                        "{{ _('Services will restart automatically once the update completes.') }}",
+                    ],
+                },
+            ],
+        },
+    };
+
+    const app = createApp({
+        delimiters: delimiters,
+        mixins: [globalMixin],
+
+        data: () => ({
+            drawer: drawer,
+            currentVersion: '',
+            latestVersion: '',
+            isUpToDate: true,
+            lastCheckTime: '',
+            checking: false,
+            updating: false,
+            scheduling: false,
+            updateScheduled: false,
+            updateProgress: 0,
+            updateStatus: "{{ _('Initializing update') }}",
+            showHistory: false,
+            releaseNotes: null,
+            updateHistory: [],
+            updateTimer: null,
+            infiniteScrollCallback: null,
+            md: null,
+        }),
+        computed: {
+            renderedReleaseNotes() {
+                return this.md.render(this.releaseNotes?.body || '');
+            },
+            emptyHistoryText() {
+                return !this.updateHistory?.length ? '{{ _("No history yet") }}' : '{{ _("No more items in history") }}';
+            },
+            actionSections() {
+                return actionSections;
+            },
+        },
+        methods: {
+            applyVersionInfo(data) {
+                this.currentVersion = data.current_version || '';
+                this.latestVersion = data.latest_version || '';
+                this.isUpToDate = !data.update_available;
+                const checkedAt = data?.checked_at ?? new Date();
+                this.lastCheckTime = dayjs(checkedAt).format(this.dateFormats.standardDatetime);
+            },
+
+            checkForScheduledUpdate() {
+                api.get('/admin/api/system/update/status')
+                    .then(response => {
+                        this.updateScheduled = Boolean(response?.data?.scheduled);
+                    })
+                    .catch(error => {
+                        this.showSnack(error.response?.data?.message || "{{ _('Failed to check status') }}", 'error');
+                    })
+                    .finally(() => {
+                        this.checking = false;
+                    });
+            },
+            checkForUpdates() {
+                this.checking = true;
+                api.get('/admin/api/system/version/check?fresh=true')
+                    .then(response => {
+                        this.applyVersionInfo(response.data);
+                        this.showSnack("{{ _('Version check completed') }}", 'success');
+                    })
+                    .catch(error => {
+                        this.showSnack(error.response?.data?.message || "{{ _('Failed to check versions') }}", 'error');
+                    })
+                    .finally(() => {
+                        this.checking = false;
+                    });
+            },
+
+            confirmUpdate(mode = 'immediate') {
+                this.$refs.confirmUpdateDialog.show({
+                    dialogProps: { width: 883 },
+                    data: { mode },
+                    acceptProps: { text: this.actionSections[mode].acceptButtonText },
+                    onAccept: async () => {
+                        console.log(mode)
+                        if (mode === 'scheduled') {
+                            await this.triggerScheduledUpdate();
+                        } else {
+                            await this.triggerUpdate();
+                        }
+                    },
+                });
+            },
+
+            triggerScheduledUpdate() {
+                this.scheduling = true;
+
+                // Call the new scheduled update endpoint
+                return api.post('/admin/api/system/update/schedule', {
+                    skip_backup: false
+                }).then(response => {
+                    this.updateScheduled = true;
+                    this.scheduling = false;
+                    this.showSnack("{{ _('Update scheduled successfully. Users have been notified.') }}", 'success');
+
+                    // Show update as in progress
+                    this.updating = true;
+                    this.updateStatus = "{{ _('Update will start in 15 minutes at {date}') }}".replace('{date}', dayjs().add(15, 'minute').format(this.dateFormats.standardDatetime));
+
+                    // Start polling for when update actually starts
+                    this.pollUpdateStatus();
+                }).catch(error => {
+                    this.scheduling = false;
+                    const errorMsg = error.response?.data?.message || "{{ _('Failed to schedule update') }}";
+                    this.showSnack(errorMsg, 'error');
+                });
+            },
+
+            triggerUpdate() {
+                this.updating = true;
+                this.updateProgress = 30;
+                this.updateStatus = "{{ _('Starting system update') }}";
+
+                // Trigger the update via existing API endpoint
+                return api.post('/admin/api/system/update', {
+                    skip_backup: false
+                }).then(response => {
+                    // Redirect to maintenance page (will auto-clear when update completes)
+                    window.location.href = '/maintenance';
+                }).catch(error => {
+                    this.showSnack(error.response?.data?.message || "{{ _('Update failed') }}", 'error');
+                    this.updating = false;
+                    if (this.updateTimer) clearInterval(this.updateTimer);
+                });
+            },
+
+            pollUpdateStatus() {
+                // Poll every 2 seconds for update progress
+                this.updateTimer = setInterval(() => {
+                    api.get('/admin/api/system/update/status')
+                        .then(response => {
+                            if (response.data.running) {
+                                this.updateProgress = 50;
+                                this.updateStatus = response.data.status_message || "{{ _('System update in progress') }}";
+                            } else {
+                                // Update complete
+                                clearInterval(this.updateTimer);
+                                this.updateProgress = 100;
+                                this.updateStatus = "{{ _('Update completed successfully!') }}";
+                                this.updating = false;
+
+                                setTimeout(() => {
+                                    this.showSnack("{{ _('System update completed. Reloading page...') }}", 'success');
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 2000);
+                                }, 1000);
+                            }
+                        })
+                        .catch(error => {
+                            clearInterval(this.updateTimer);
+                            this.updating = false;
+                            this.showSnack(error.response?.data?.message || "{{ _('Failed to get update status') }}", 'error');
+                        });
+                }, 2000);  // Poll every 2 seconds
+            },
+
+            loadUpdateHistory(options) {
+                if (options?.done) {
+                    this.infiniteScrollCallback = options.done;
+                }
+
+                api.get('/admin/api/system/update-history')
+                    .then(response => {
+                        this.updateHistory = response.data.updates || [];
+
+                        const hasMore = false;
+                        options?.done?.(hasMore ? 'ok' : 'empty');
+                    })
+                    .catch(error => {
+                        console.error('Failed to load update history', error);
+                        options?.done?.('error');
+                    });
+            },
+
+            loadReleaseNotes() {
+                api.get('/admin/api/system/release-notes')
+                    .then(response => {
+                        this.releaseNotes = response.data
+                    })
+                    .catch(error => {
+                        console.error('Failed to load release notes', error);
+                    });
+            },
+        },
+
+        mounted() {
+            this.md = markdownit({
+                html: true,
+                linkify: true,
+                typographer: true
+            });
+            this.checkForScheduledUpdate();
+            this.loadReleaseNotes();
+            // Fetch and populate update info
+            this.fetchUpdateInfo().then(() => {
+                if (this.updateInfo) {
+                    this.applyVersionInfo(this.updateInfo);
+                }
+            }).catch(error => {
+                console.error('Failed to fetch update info:', error);
+            });
+        },
+
+        beforeUnmount() {
+            if (this.updateTimer) {
+                clearInterval(this.updateTimer);
+            }
+        },
+    });
+
+    app.component('ShowDetails', ShowDetails);
+    app.use(vuetify).mount('#app');
+    window.app = app;
+</script>
+{% endblock %}

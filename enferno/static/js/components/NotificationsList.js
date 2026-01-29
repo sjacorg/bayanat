@@ -47,22 +47,28 @@ const NotificationsList = Vue.defineComponent({
         },
         getListItemColorProps(notification) {
             if (!notification) return
+
             const urgentUnreadProps = { variant: "flat", 'base-color': "error", class: 'text-white' }
             const urgentReadProps = { variant: "tonal", 'base-color': "error" }
             const unreadProps = { variant: "tonal", 'base-color': "primary" }
             const readProps = {}
-            
+
+            let props
+
             if (notification.is_urgent) {
-                if (notification.read_status) {
-                    return urgentReadProps
-                }
-                return urgentUnreadProps
+                props = notification.read_status ? urgentReadProps : urgentUnreadProps
+            } else {
+                props = notification.read_status ? readProps : unreadProps
             }
 
-            if (notification.read_status) {
-                return readProps
+            // Add redirect click handler for System Update notifications
+            if (window.__is_admin__ && notification.title?.toLowerCase()?.includes('system update')) {
+                props.onClick = () => {
+                    window.location.href = '/admin/system-update'
+                }
             }
-            return unreadProps
+
+            return props
         }
     },
     template: `

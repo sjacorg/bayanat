@@ -1,4 +1,13 @@
-from flask import request, redirect, Blueprint, send_from_directory, Response, jsonify
+from flask import (
+    request,
+    redirect,
+    Blueprint,
+    send_from_directory,
+    Response,
+    jsonify,
+    render_template,
+)
+import datetime
 from typing import Optional
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db, limiter
@@ -27,6 +36,26 @@ def get_csrf_token() -> Response:
     """Get CSRF token for form submission."""
     token = generate_csrf()
     return jsonify({"csrf_token": token})
+
+
+@bp_public.route("/maintenance")
+def maintenance():
+    """
+    Display maintenance page. Only accessible when maintenance mode is active.
+
+    Returns:
+        Rendered maintenance template with 503 status code if maintenance is active,
+        otherwise redirects to home page
+    """
+    from enferno.utils.maintenance import is_maintenance_mode, get_maintenance_details
+
+    # Only show maintenance page if maintenance mode is actually enabled
+    if not is_maintenance_mode():
+        return redirect("/dashboard")
+
+    details = get_maintenance_details()
+    current_year = datetime.datetime.now().year
+    return render_template("maintenance.html", details=details, current_year=current_year), 503
 
 
 @bp_public.teardown_app_request

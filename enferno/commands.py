@@ -1,35 +1,55 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
+import subprocess
+import sys
+from contextlib import suppress
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
 
 import click
-from flask.cli import AppGroup
-from flask.cli import with_appcontext
+import tomli
+from flask import current_app
+from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
+from sqlalchemy import event, text
 
+from enferno.admin.models import MigrationHistory, SystemInfo
+from enferno.admin.models.DynamicField import DynamicField
+from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
+from enferno.extensions import db, rds
 from enferno.settings import Config
-from enferno.extensions import db
+from enferno.tasks import restart_service as restart, perform_version_check
+from enferno.tasks.update import perform_system_update_task
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import (
-    import_default_data,
+    create_default_location_data,
     generate_user_roles,
     generate_workflow_statues,
-    create_default_location_data,
+    import_default_data,
 )
-from enferno.utils.db_alignment_helpers import DBAlignmentChecker
-from enferno.utils.logging_utils import get_logger
-from sqlalchemy import text
-from enferno.admin.models import Bulletin
-from enferno.admin.models.DynamicField import DynamicField
-from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
-from enferno.utils.date_helper import DateHelper
+from enferno.utils.db_alignment_helpers import DBAlignmentChecker, db_doctor
 from enferno.utils.form_history_utils import record_form_history
-
+from enferno.utils.logging_utils import get_logger
+from enferno.utils.update_utils import rollback_update
 from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
+
+
+def say(message: str, level: str = "info") -> None:
+    """Say a message (log and echo)."""
+    getattr(logger, level)(message)
+    click.echo(message)
+
+
+def log_table_creation(target, connection, tables=None, **kw):
+    """Function to log table creation."""
+    if tables is not None:
+        for table in tables:
+            logger.info(f"Creating table: {table.name}")
 
 
 def create_initial_snapshots():
@@ -65,30 +85,33 @@ def create_db(create_exts: bool) -> None:
         None
     """
     logger.info("Creating database structure")
+
+    # Attach the event listener for table creation
+    metadata = db.metadata
+    event.listen(metadata, "before_create", log_table_creation)
+
     # create db exts if required, needs superuser db permissions
     if create_exts:
         with db.engine.connect() as conn:
             conn.execute(text("CREATE EXTENSION if not exists pg_trgm ;"))
-            click.echo("Trigram extension installed successfully")
+            say("Trigram extension installed successfully")
             conn.execute(text("CREATE EXTENSION if not exists postgis ;"))
-            click.echo("Postgis extension installed successfully")
+            say("Postgis extension installed successfully")
             conn.commit()
 
     db.create_all()
-    click.echo("Database structure created successfully")
-    logger.info("Database structure created successfully")
+    say("Database structure created successfully")
     generate_user_roles()
-    click.echo("Generated user roles successfully.")
-    logger.info("Generated user roles successfully.")
+    say("Generated user roles successfully.")
     generate_workflow_statues()
-    click.echo("Generated system workflow statues successfully.")
-    logger.info("Generated system workflow statues successfully.")
+    say("Generated system workflow statues successfully.")
     create_default_location_data()
-    click.echo("Generated location metadata successfully.")
-    logger.info("Generated location metadata successfully.")
+    say("Generated location metadata successfully.")
     generate_core_fields()
-    click.echo("Generated core fields successfully.")
-    logger.info("Generated core fields successfully.")
+    say("Generated core fields successfully.")
+
+    # Remove the event listener after creation
+    event.remove(metadata, "before_create", log_table_creation)
 
 
 @click.command()
@@ -100,11 +123,81 @@ def import_data() -> None:
     logger.info("Importing data.")
     try:
         import_default_data()
-        click.echo("Imported data successfully.")
-        logger.info("Imported data successfully.")
+        say("Imported data successfully.")
     except:
-        click.echo("Error importing data.")
-        logger.error("Error importing data.")
+        say("Error importing data.", "error")
+
+
+def run_migrations(dry_run: bool = False) -> list[str]:
+    """Apply pending SQL migrations atomically."""
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import text
+
+    migrations_dir = Path(__file__).parent / "migrations"
+    Session = sessionmaker(bind=db.engine)
+
+    # Check pending migrations
+    with Session() as session:
+        migration_files = sorted(migrations_dir.glob("*.sql"))
+        pending = [
+            f.name for f in migration_files if not MigrationHistory.is_applied(f.name, session)
+        ]
+
+        if not pending:
+            click.echo("✓ Database is up to date.")
+            return []
+
+        if dry_run:
+            click.echo(f"Found {len(pending)} pending migrations:")
+            click.echo("\n".join(f"  - {name}" for name in pending))
+            return pending
+
+    # Apply migrations with fresh session
+    with Session() as session:
+        with session.begin():
+            applied = []
+
+            for i, migration_name in enumerate(pending, 1):
+                migration_file = migrations_dir / migration_name
+                migration_sql = migration_file.read_text(encoding="utf-8").strip()
+
+                if not migration_sql:
+                    continue
+
+                click.echo(f"[{i}/{len(pending)}] Applying {migration_name}...")
+
+                session.execute(text(migration_sql))
+                MigrationHistory.record_migration(migration_name, session)
+                applied.append(migration_name)
+
+        click.echo(f"✓ Applied {len(applied)} migrations successfully.")
+        return applied
+
+
+@click.command()
+@click.option("--dry-run", is_flag=True, help="Check for pending migrations without applying them")
+@with_appcontext
+def apply_migrations(dry_run: bool = False) -> None:
+    """Apply pending SQL migrations."""
+    try:
+        run_migrations(dry_run=dry_run)
+    except Exception as e:
+        click.echo(f"Error: {e}")
+        sys.exit(1)
+
+
+@click.command()
+@with_appcontext
+def get_version() -> None:
+    """
+    Get the current application version from pyproject.toml.
+    """
+    click.echo(f"Current version: {Config.VERSION}")
+
+    # Get last update time from database
+    last_update = SystemInfo.get_value("last_update_time")
+    if last_update:
+        click.echo(f"Last update: {last_update}")
 
 
 @click.command()
@@ -116,8 +209,7 @@ def install() -> None:
 
     # check if there's an existing admin
     if admin_role.users.all():
-        click.echo("An admin user is already installed.")
-        logger.error("An admin user is already installed.")
+        say("An admin user is already installed.", "error")
         return
 
     # to make sure username doesn't already exist
@@ -140,11 +232,9 @@ def install() -> None:
     user.roles.append(admin_role)
     check = user.save()
     if check:
-        click.echo("Admin user installed successfully.")
-        logger.info("Admin user installed successfully.")
+        say("Admin user installed successfully.")
     else:
-        click.echo("Error installing admin user.")
-        logger.error("Error installing admin user.")
+        say("Error installing admin user.", "error")
 
 
 @click.command()
@@ -168,8 +258,7 @@ def create(username: str, password: str) -> None:
         return
     user = User.query.filter(User.username == username).first()
     if user:
-        click.echo("User already exists!")
-        logger.error("User already exists!")
+        say("User already exists!", "error")
         return
     try:
         password = validate_password_policy(password)
@@ -178,11 +267,9 @@ def create(username: str, password: str) -> None:
         return
     user = User(username=username, password=hash_password(password), active=1)
     if user.save():
-        click.echo("User created successfully")
-        logger.info("User created successfully")
+        say("User created successfully")
     else:
-        click.echo("Error creating user.")
-        logger.error("Error creating user.")
+        say("Error creating user.", "error")
 
 
 @click.command()
@@ -206,8 +293,7 @@ def add_role(username: str, role: str) -> None:
     user = User.query.filter(User.username == username).first()
 
     if not user:
-        click.echo("Sorry, this user does not exist!")
-        logger.error("User does not exist.")
+        say("Sorry, this user does not exist!", "error")
     else:
         r = Role.query.filter(Role.name == role).first()
         if not role:
@@ -217,8 +303,7 @@ def add_role(username: str, role: str) -> None:
                 r = Role(name=role).save()
         # add role to user
         user.roles.append(r)
-        click.echo("Role {} added successfully to user {}".format(username, role))
-        logger.info("Role {} added successfully to user {}".format(username, role))
+        say("Role {} added successfully to user {}".format(username, role))
 
 
 @click.command()
@@ -241,8 +326,7 @@ def reset(username: str, password: str) -> None:
     logger.info("Resetting password for user: {}".format(username))
     user = User.query.filter(User.username == username).first()
     if not user:
-        click.echo("Specified user does not exist!")
-        logger.error("Specified user does not exist!")
+        say("Specified user does not exist!", "error")
     else:
         try:
             password = validate_password_policy(password)
@@ -251,11 +335,9 @@ def reset(username: str, password: str) -> None:
             return
         user.password = hash_password(password)
         user.save()
-        click.echo("User password has been reset successfully.")
-        logger.info("User password has been reset successfully.")
+        say("User password has been reset successfully.")
         if not user.active:
-            click.echo("Warning: User is not active!")
-            logger.warning("User is not active!")
+            say("Warning: User is not active!", "warning")
 
 
 @click.command()
@@ -288,7 +370,12 @@ def extract() -> None:
         None
     """
     logger.info("Extracting translatable strings.")
-    if os.system("pybabel extract -F babel.cfg -k _l -o messages.pot ."):
+    try:
+        subprocess.run(
+            ["pybabel", "extract", "-F", "babel.cfg", "-k", "_l", "-o", "messages.pot", "."],
+            check=True,
+        )
+    except subprocess.CalledProcessError:
         logger.error("Extract command failed")
         raise RuntimeError("Extract command failed")
 
@@ -305,7 +392,11 @@ def update() -> None:
         None
     """
     logger.info("Updating translations.")
-    if os.system("pybabel update -i messages.pot -d enferno/translations"):
+    try:
+        subprocess.run(
+            ["pybabel", "update", "-i", "messages.pot", "-d", "enferno/translations"], check=True
+        )
+    except subprocess.CalledProcessError:
         logger.error("Update command failed")
         raise RuntimeError("Update command failed")
 
@@ -322,20 +413,30 @@ def compile() -> None:
         None
     """
     logger.info("Compiling translations.")
-    if os.system("pybabel compile -d enferno/translations"):
+    try:
+        subprocess.run(["pybabel", "compile", "-d", "enferno/translations"], check=True)
+    except subprocess.CalledProcessError:
         logger.error("Compile command failed")
         raise RuntimeError("Compile command failed")
 
 
-# Database Schema Alignment
-@click.command()
+# Database Health Check
+@click.command(name="db-doctor")
 @with_appcontext
-def check_db_alignment() -> None:
-    """Check the alignment of the database schema with the models."""
-    logger.info("Checking database schema alignment.")
-    checker = DBAlignmentChecker()
-    checker.check_db_alignment()
-    logger.info("Database schema alignment check completed.")
+def db_doctor_cli() -> None:
+    """
+    Run database health check.
+
+    Performs a quick diagnosis that critical tables exist and columns match.
+    """
+    click.echo("Running database health check...")
+    healthy, diagnosis = db_doctor()
+
+    if healthy:
+        click.echo(f"✓ {diagnosis}")
+    else:
+        click.echo(f"✗ {diagnosis}", err=True)
+        raise SystemExit(1)
 
 
 @click.command()
@@ -350,3 +451,348 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
+
+
+def verify_backup(backup_file: str) -> None:
+    """Verify backup file integrity using pg_restore --list."""
+    backup_path = Path(backup_file)
+
+    # Check file exists and is not empty
+    if not backup_path.exists():
+        raise RuntimeError(f"Backup file not found: {backup_file}")
+
+    file_size = backup_path.stat().st_size
+    if file_size == 0:
+        raise RuntimeError("Backup file is empty")
+
+    logger.info(f"Verifying backup: {backup_file} ({file_size / 1024 / 1024:.1f}MB)")
+
+    # Verify backup structure using pg_restore --list (fast, reads TOC only)
+    try:
+        result = subprocess.run(
+            ["pg_restore", "--list", backup_file],
+            capture_output=True,
+            timeout=5,  # TOC read is very fast, 5s is generous
+            check=True,
+        )
+        # If pg_restore can read the TOC, the backup structure is valid
+        if not result.stdout:
+            raise RuntimeError("Backup file appears corrupted")
+
+        logger.info("Backup verification successful")
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Backup verification timed out (file may be corrupted)")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Backup file is not a valid PostgreSQL dump: {e.stderr.decode()}")
+    except FileNotFoundError:
+        # pg_restore not in PATH - fall back to basic checks only
+        logger.warning("pg_restore not found, skipping detailed backup verification")
+
+
+def create_backup(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    """Internal function to create a PostgreSQL database backup."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = Path(current_app.root_path).parent / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    backup_file = output or str(backup_dir / f"{timestamp}_bayanat_backup.dump")
+
+    db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not db_uri:
+        click.echo("Error: No database URI configured")
+        return None
+
+    cmd = ["pg_dump", "-Fc", "-f", backup_file, f"--dbname={db_uri}"]
+
+    try:
+        logger.info("Starting database backup operation")
+        subprocess.run(cmd, check=True, timeout=timeout)
+        click.echo(f"Backup created: {backup_file}")
+
+        # Verify backup integrity
+        verify_backup(backup_file)
+
+        return backup_file
+    except Exception as e:
+        click.echo(f"Backup failed: {e}")
+        return None
+
+
+@click.command()
+@click.option("--output", "-o", help="Custom output file path for the backup", default=None)
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the backup operation", default=300, type=int
+)
+@with_appcontext
+def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    """Create a PostgreSQL database backup (CLI command)."""
+    backup_file = create_backup(output, timeout)
+    if not backup_file:
+        raise click.ClickException("Backup creation failed")
+    return backup_file
+
+
+def restore_backup(backup_file: str, timeout: int = 3600) -> bool:
+    """
+    Internal function to restore PostgreSQL database from a backup file.
+
+    Args:
+        backup_file: Path to the backup file
+        timeout: Timeout in seconds for the restore operation (default: 3600)
+
+    Returns:
+        True if restoration was successful, False otherwise
+    """
+    logger.info(f"Restoring database from backup: {backup_file}")
+    click.echo(f"Restoring database from backup: {backup_file}")
+
+    # Get database URI from app config
+    db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not db_uri:
+        logger.error("Database URI not found in application config.")
+        click.echo("Error: Database URI not found in application config.")
+        return False
+
+    # Build the pg_restore command for custom format
+    cmd = ["pg_restore", "--clean", "--if-exists", f"--dbname={db_uri}", backup_file]
+
+    # Execute the command
+    try:
+        logger.info("Starting database restore operation")
+        click.echo("Restoring database... This may take a while.")
+
+        # Run the command with timeout
+        subprocess.run(cmd, check=True, timeout=timeout)
+
+        # If we reach here, the command succeeded
+        logger.info("Database restored successfully.")
+        click.echo("Database restored successfully.")
+        return True
+    except Exception as e:
+        logger.error(f"Database restoration failed: {str(e)}")
+        click.echo(f"Database restoration failed: {str(e)}")
+        return False
+
+
+@click.command()
+@click.argument("backup_file", type=click.Path(exists=True))
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the restore operation", default=3600, type=int
+)
+@with_appcontext
+def restore_db(backup_file: str, timeout: int = 3600) -> bool:
+    """Restore PostgreSQL database from a backup file (CLI command)."""
+    success = restore_backup(backup_file, timeout)
+    if not success:
+        raise click.ClickException("Database restoration failed")
+    return success
+
+
+@click.command(name="lock")
+@click.option("--reason", "-r", help="Reason for maintenance", default="System maintenance")
+@with_appcontext
+def enable_maintenance(reason):
+    """
+    Enable maintenance mode (lock the application).
+
+    Args:
+        reason: Reason for enabling maintenance mode
+    """
+    from enferno.utils.maintenance import enable_maintenance as em
+
+    if em(reason):
+        say("Maintenance mode enabled. System is locked.")
+    else:
+        say("Failed to enable maintenance mode.", "error")
+
+
+@click.command(name="unlock")
+@with_appcontext
+def disable_maintenance():
+    """
+    Disable maintenance mode (unlock the application).
+    """
+    from enferno.utils.maintenance import disable_maintenance as dm
+
+    if dm():
+        say("Maintenance mode disabled. System is unlocked.")
+    else:
+        say("Failed to disable maintenance mode.", "error")
+
+
+def run_system_update(skip_backup: bool = False, restart_service: bool = True) -> tuple[bool, str]:
+    """
+    Update system: fetch latest release tag, update code, dependencies, migrations, and restart services.
+    Automatically rolls back on failure.
+
+    Returns:
+        tuple[bool, str]: (success, message)
+    """
+    logger.info("Starting system update")
+
+    project_root = Path(current_app.root_path).parent
+    backup_file = None
+    git_commit_before = None
+
+    try:
+        # Record current git commit for rollback
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=project_root,
+        )
+        git_commit_before = result.stdout.strip()
+        logger.info(f"Current commit: {git_commit_before[:8]}")
+
+        # 1) Backup database
+        if not skip_backup:
+            click.echo("Creating database backup...")
+            backup_file = create_backup(timeout=300)
+            if not backup_file:
+                raise RuntimeError("Database backup failed")
+            logger.info(f"Backup created: {backup_file}")
+
+        # 2) Check for uncommitted changes to tracked files - fail fast
+        # (ignore untracked files like instance/, logs/, etc.)
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            capture_output=True,
+            text=True,
+            cwd=project_root,
+        )
+        if status.stdout.strip():
+            raise RuntimeError(
+                "Cannot update: uncommitted changes detected. "
+                "Production should not have local modifications."
+            )
+
+        # 3) Fetch tags and get latest release from remote
+        click.echo("Fetching latest release...")
+        subprocess.run(
+            ["git", "fetch", "--tags", "--prune", "--force"],
+            check=True,
+            timeout=120,
+            cwd=project_root,
+        )
+
+        # Get latest tag from configured origin remote
+        result = subprocess.run(
+            ["git", "ls-remote", "--tags", "--refs", "--sort=-version:refname", "origin"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+            cwd=project_root,
+        )
+
+        if not result.stdout.strip():
+            raise RuntimeError("No release tags found on remote")
+
+        latest_tag = result.stdout.split("\n")[0].split("/")[-1].strip()
+        click.echo(f"Latest release: {latest_tag}")
+
+        # Checkout latest release tag
+        subprocess.run(["git", "checkout", latest_tag], check=True, cwd=project_root)
+        new_commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=project_root
+        ).stdout.strip()
+        logger.info(f"Checked out tag {latest_tag} at commit: {new_commit[:8]}")
+
+        # 4) Dependencies
+        click.echo("Installing dependencies...")
+        subprocess.run(["uv", "sync", "--frozen"], check=True, timeout=600, cwd=project_root)
+        logger.info("Dependencies installed")
+
+        # 5) Migrations
+        run_migrations()
+        logger.info("Migrations completed")
+
+        # 6) Database health check after migrations
+        click.echo("Running database health check...")
+        healthy, diagnosis = db_doctor()
+        if not healthy:
+            raise RuntimeError(f"Database health check failed: {diagnosis}")
+        logger.info(f"Database health check passed: {diagnosis}")
+
+        # 7) Update last update timestamp in database
+        update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
+        if update_time_entry:
+            update_time_entry.value = datetime.now().isoformat()
+        else:
+            db.session.add(SystemInfo(key="last_update_time", value=datetime.now().isoformat()))
+
+        db.session.commit()
+
+        # Read new version from pyproject.toml (checked out from new tag)
+        pyproject_path = project_root / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            pyproject_data = tomli.load(f)
+            new_version = pyproject_data["project"]["version"]
+
+        logger.info(f"Updated to version {new_version}")
+
+        # Update cache to reflect new version (maintains accuracy)
+        # Use current timestamp so UI knows update just completed
+        checked_at = datetime.now(timezone.utc).isoformat()
+        rds.set("bayanat:update:latest", f"v{new_version}|{checked_at}")
+        logger.info(f"Updated version cache to v{new_version}")
+
+        # 8) Restart services
+        if restart_service:
+            click.echo("Restarting services...")
+            restart("bayanat")
+            restart("bayanat-celery")
+            logger.info("Services restarted")
+
+        logger.info("System update completed successfully")
+        return (True, "System updated successfully")
+
+    except Exception as e:
+        # ROLLBACK on any failure
+        logger.error(f"Update failed, rolling back: {e}")
+        click.echo(f"Update failed: {e}")
+
+        rollback_update(
+            git_commit=git_commit_before,
+            backup_file=backup_file,
+            restart_service=restart_service,
+        )
+
+        return (False, f"Update failed and rolled back: {e}")
+
+
+@click.command()
+@click.option("--skip-backup", is_flag=True, help="Skip database backup")
+@with_appcontext
+def update_system(skip_backup: bool = False) -> None:
+    """CLI command to perform system update. Blocks until completion."""
+    result = perform_system_update_task(skip_backup=skip_backup)
+    message = result.get("message") or result.get("error", "System update completed")
+    click.echo(message)
+    if not result.get("success"):
+        raise click.ClickException(message)
+
+
+@click.command()
+@with_appcontext
+def check_updates() -> None:
+    """
+    Check for new Bayanat versions from GitHub and cache result.
+    Called by: periodic task (every 12h) and CLI for manual testing.
+    """
+    click.echo(f"Current version: {Config.VERSION}")
+    click.echo("Checking for updates from GitHub...")
+
+    result = perform_version_check()
+
+    if result:
+        if result["update_available"]:
+            click.echo(f"✓ Update available: {result['latest_version']}")
+            click.echo(f"  Checked at: {result['checked_at']}")
+            click.echo(f"  Repository: {result['repository']}")
+        else:
+            click.echo(f"✓ System is up to date (latest: {result['latest_version']})")
+    else:
+        click.echo("✗ Update check failed (see logs for details)", err=True)

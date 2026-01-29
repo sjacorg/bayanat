@@ -138,6 +138,8 @@ then
     echo "" >> ./$env_file
 fi
 
+echo "" >> ./$env_file
+
 echo "Completed environment file generation"
 echo "Please inspect the environment file below"
 echo ""
