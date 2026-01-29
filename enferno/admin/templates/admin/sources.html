@@ -131,6 +131,7 @@
                                                     </template>
                                                     {% endif %}
 
+                                                    <v-form ref="csvForm" @submit.prevent="validateImportCSV">
                                                     <v-card>
                                                         <v-card-title>
                                                             <span class="headline">{{ _('Import CSV') }}</span>
@@ -142,7 +143,10 @@
                                                                     <v-col cols="12" md="12">
                                                                         <v-file-input v-model="csvFile" show-size
                                                                                       accept=".csv"
-                                                                                      label="{{ _('Select CSV File') }}"></v-file-input>
+                                                                                      :rules="[validationRules.required()]"
+                                                                        >
+                                                                            <template v-slot:label>{{ _('Select CSV File') }} <Asterisk /></template>
+                                                                        </v-file-input>
 
                                                                     </v-col>
                                                                 </v-row>
@@ -161,12 +165,13 @@
                                                             <v-btn
                                                                     color="blue darken-1"
                                                                     text
-                                                                    @click="importCSV"
+                                                                    type="submit"
                                                             >{{ _('Save') }}
                                                             </v-btn
                                                             >
                                                         </v-card-actions>
                                                     </v-card>
+                                                    </v-form>
 
                                                 </v-dialog>
 
@@ -326,6 +331,17 @@
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.editedIndex = -1;
                     }, 300);
+                },
+
+                validateImportCSV() {
+                    this.$refs.csvForm.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.importCSV();
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError()
+                        }
+                    });
                 },
 
                 save() {
