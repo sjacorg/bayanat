@@ -101,11 +101,11 @@ const validationRules = {
           });
         };
     },
-    hexColor() {
+    hexColor: (message = window.translations.invalidHexColorFormat_) => {
         return (value) => {
             if (!value) return true; // Optional field
             const hexPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
-            return hexPattern.test(value) || 'Invalid hex color format (e.g., #F53, #FF5733, or #FF5733FF)';
+            return hexPattern.test(value) || message;
         };
     }
 };
