@@ -383,7 +383,7 @@ const GeoMap = Vue.defineComponent({
               append-inner-icon="mdi-content-copy"
               @click:append-inner="copyToClipboard(lat)"
             >
-              <template v-slot:label>{{ translations.latitude_ }} <span v-if="useAsterisk" class="text-error">*</span></template>  
+              <template v-slot:label>{{ translations.latitude_ }} <Asterisk v-if="useAsterisk" /></template>  
             </v-text-field>
             <v-text-field
               v-bind="inputProps" type="number" min="-180" max="180"
@@ -392,7 +392,7 @@ const GeoMap = Vue.defineComponent({
               append-inner-icon="mdi-content-copy"
               @click:append-inner="copyToClipboard(lng)"
             >
-              <template v-slot:label>{{ translations.longitude_ }} <span v-if="useAsterisk" class="text-error">*</span></template>
+              <template v-slot:label>{{ translations.longitude_ }} <Asterisk v-if="useAsterisk" /></template>
             </v-text-field>
             <v-btn icon variant="flat" v-if="lat && lng" @click="clearMarker">
               <v-icon>mdi-close</v-icon>
