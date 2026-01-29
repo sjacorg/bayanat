@@ -1232,7 +1232,7 @@
 
 
                     if (this.currentUser.can_self_assign) {
-                        if ((!incident.assigned_to) || (incident.assigned_to && !incident.assigned_to.active)) {
+                        if ((!incident.assigned_to) || (incident.assigned_to && incident.assigned_to.status !== 'active')) {
                             return true
                         }
 

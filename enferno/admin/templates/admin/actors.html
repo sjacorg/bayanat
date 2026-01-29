@@ -1400,7 +1400,7 @@
                     }
 
                     if (this.currentUser.can_self_assign) {
-                        if ((!actor.assigned_to) || (actor.assigned_to && !actor.assigned_to.active)) {
+                        if ((!actor.assigned_to) || (actor.assigned_to && actor.assigned_to.status !== 'active')) {
                             return true
                         }
 
