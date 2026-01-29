@@ -56,6 +56,7 @@ from enferno.admin.models import (
     GeoLocationType,
     WorkflowStatus,
     ActorProfile,
+    Extraction,
 )
 from enferno.data_import.models import DataImport
 
@@ -3134,6 +3135,14 @@ def bulletin_fields() -> str:
     return render_template("admin/bulletin-fields.html")
 
 
+# OCR routes
+@admin.route("/media/", defaults={"id": None})
+@admin.route("/media/<int:id>")
+def media_dashboard(id: Optional[t.id]) -> str:
+    """Endpoint for media management."""
+    return render_template("admin/media-dashboard.html")
+
+
 # Bulletin routes
 @admin.route("/bulletins/", defaults={"id": None})
 @admin.route("/bulletins/<int:id>")
@@ -3228,6 +3237,9 @@ def api_bulletins(validated_data: dict) -> Response:
 
         total_count = None
 
+    # Get OCR match info for search results (which bulletins matched via image text)
+    ocr_matched_ids = search.get_ocr_matched_ids([item.id for item in items])
+
     # Minimal serialization for list view with permission checks
     serialized_items = []
     for item in items:
@@ -3261,6 +3273,7 @@ def api_bulletins(validated_data: dict) -> Response:
                     ),
                     "_status": item.status,
                     "review_action": item.review_action,
+                    "ocr_match": item.id in ocr_matched_ids,
                 }
             )
         else:
@@ -4166,6 +4179,32 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 
 # Medias routes
+
+
+@admin.get("/api/media/<int:id>")
+@auth_required("session")
+def api_media_get(id: int):
+    """Get a single media item by ID with extraction and bulletin info."""
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.not_found("Media not found")
+
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    item = media.to_dict()
+    item["extraction"] = media.extraction.to_dict() if media.extraction else None
+    item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+    if media.bulletin:
+        item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
+    else:
+        item["bulletin"] = None
+    media_url = f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+    item["media_url"] = media_url
+    item["thumbnail_url"] = media_url
+    item["url"] = media_url
+
+    return jsonify(item)
 
 
 @admin.put("/api/media/<int:id>")
@@ -6930,6 +6969,328 @@ def api_dynamic_fields_history(entity_type):
     except Exception as e:
         logger.error(f"Error fetching history for {entity_type}: {str(e)}")
         return HTTPResponse.error("Failed to fetch history", status=500)
+
+
+# OCR Extraction endpoints
+@admin.get("/api/media/dashboard")
+@auth_required("session")
+def api_media_dashboard():
+    """
+    Media dashboard with OCR status.
+    Query params:
+      - page, per_page: pagination
+      - ocr_status: pending|needs_review|needs_transcription|processed|failed
+      - q: search in extracted text
+      - bulletin_id: filter by bulletin
+      - date_from, date_to: filter by extraction created_at
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+    ocr_status = request.args.get("ocr_status")
+    search = request.args.get("q")
+    bulletin_id = request.args.get("bulletin_id", type=int)
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    query = Media.query.outerjoin(Extraction)
+
+    # Filter by bulletin
+    if bulletin_id:
+        query = query.filter(Media.bulletin_id == bulletin_id)
+
+    # Filter by OCR status
+    if ocr_status == "pending":
+        query = query.filter(Extraction.id.is_(None))
+    elif ocr_status:
+        query = query.filter(Extraction.status == ocr_status)
+
+    # Text search in extracted text
+    if search:
+        query = query.filter(Extraction.text.ilike(f"%{search}%"))
+
+    # Date range filter on extraction created_at
+    if date_from:
+        query = query.filter(Extraction.created_at >= date_from)
+    if date_to:
+        query = query.filter(Extraction.created_at <= date_to)
+
+    query = query.order_by(desc(Media.id))
+    paginated = query.paginate(page=page, per_page=per_page, count=True)
+
+    items = []
+    for media in paginated.items:
+        item = media.to_dict()
+        item["extraction"] = media.extraction.to_dict() if media.extraction else None
+        item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+        # Add bulletin info for FE
+        if media.bulletin:
+            item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
+        else:
+            item["bulletin"] = None
+        # Add media URLs for thumbnails (FE expects thumbnail_url and url)
+        media_url = f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+        item["media_url"] = media_url
+        item["thumbnail_url"] = media_url
+        item["url"] = media_url
+        items.append(item)
+
+    return jsonify(
+        {
+            "items": items,
+            "page": page,
+            "perPage": per_page,
+            "total": paginated.total,
+            "hasMore": paginated.has_next,
+        }
+    )
+
+
+@admin.get("/api/ocr/review")
+@auth_required("session")
+def api_ocr_review():
+    """
+    Shortcut for extractions needing review (oldest first).
+    Equivalent to /api/media/dashboard?ocr_status=needs_review
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+
+    query = (
+        Media.query.join(Extraction)
+        .filter(Extraction.status == "needs_review")
+        .order_by(asc(Extraction.created_at))
+    )
+
+    paginated = query.paginate(page=page, per_page=per_page, count=True)
+
+    items = []
+    for media in paginated.items:
+        item = media.to_dict()
+        item["extraction"] = media.extraction.to_dict()
+        item["media_url"] = (
+            f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+        )
+        item["confidence"] = media.extraction.confidence
+        item["text"] = media.extraction.text
+        if media.bulletin:
+            item["bulletin"] = {
+                "id": media.bulletin.id,
+                "ref": media.bulletin.id,
+                "title": media.bulletin.title,
+            }
+        else:
+            item["bulletin"] = None
+        items.append(item)
+
+    return jsonify(
+        {
+            "items": items,
+            "page": page,
+            "perPage": per_page,
+            "total": paginated.total,
+            "hasMore": paginated.has_next,
+        }
+    )
+
+
+@admin.get("/api/ocr/transcribe")
+@auth_required("session")
+def api_ocr_transcribe():
+    """
+    Extractions needing manual transcription (oldest first).
+    Equivalent to /api/media/dashboard?ocr_status=needs_transcription
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+
+    query = (
+        Media.query.join(Extraction)
+        .filter(Extraction.status == "needs_transcription")
+        .order_by(asc(Extraction.created_at))
+    )
+
+    paginated = query.paginate(page=page, per_page=per_page, count=True)
+
+    items = []
+    for media in paginated.items:
+        item = media.to_dict()
+        item["extraction"] = media.extraction.to_dict()
+        item["media_url"] = (
+            f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+        )
+        item["confidence"] = media.extraction.confidence
+        item["text"] = media.extraction.text
+        if media.bulletin:
+            item["bulletin"] = {
+                "id": media.bulletin.id,
+                "ref": media.bulletin.id,
+                "title": media.bulletin.title,
+            }
+        else:
+            item["bulletin"] = None
+        items.append(item)
+
+    return jsonify(
+        {
+            "items": items,
+            "page": page,
+            "perPage": per_page,
+            "total": paginated.total,
+            "hasMore": paginated.has_next,
+        }
+    )
+
+
+@admin.get("/api/ocr/stats")
+@auth_required("session")
+def api_ocr_stats():
+    """OCR processing statistics for dashboard header."""
+    total_media = db.session.query(func.count(Media.id)).scalar() or 0
+
+    # Count by extraction status
+    status_counts = (
+        db.session.query(Extraction.status, func.count(Extraction.id))
+        .group_by(Extraction.status)
+        .all()
+    )
+    status_map = {row[0]: row[1] for row in status_counts}
+
+    total_extracted = sum(status_map.values())
+    pending = total_media - total_extracted
+
+    return jsonify(
+        {
+            "total": total_media,
+            "pending": pending,
+            "processed": status_map.get("processed", 0),
+            "needs_review": status_map.get("needs_review", 0),
+            "needs_transcription": status_map.get("needs_transcription", 0),
+            "cant_read": status_map.get("cant_read", 0),
+            "failed": status_map.get("failed", 0),
+        }
+    )
+
+
+@admin.put("/api/extraction/<int:extraction_id>")
+@auth_required("session")
+def api_extraction_update(extraction_id: int):
+    """
+    Update extraction record (accept, transcribe, mark unreadable).
+    Body:
+      - action: accept|transcribe|cant_read
+      - text: (required for transcribe) corrected text
+    """
+    extraction = Extraction.query.get(extraction_id)
+    if not extraction:
+        return HTTPResponse.not_found("Extraction not found")
+
+    data = request.json or {}
+    action = data.get("action")
+
+    if action == "accept":
+        extraction.status = "processed"
+        extraction.reviewed_by = current_user.id
+        extraction.reviewed_at = datetime.utcnow()
+
+    elif action == "transcribe":
+        text = data.get("text")
+        if not text:
+            return HTTPResponse.error("Text required for transcription")
+        extraction.text = text
+        extraction.status = "processed"
+        extraction.manual = True
+        extraction.reviewed_by = current_user.id
+        extraction.reviewed_at = datetime.utcnow()
+
+    elif action == "cant_read":
+        extraction.status = "cant_read"
+        extraction.reviewed_by = current_user.id
+        extraction.reviewed_at = datetime.utcnow()
+
+    else:
+        return HTTPResponse.error("Invalid action. Use: accept, transcribe, cant_read")
+
+    db.session.commit()
+    return jsonify(extraction.to_dict())
+
+
+@admin.post("/api/ocr/process/<int:media_id>")
+@auth_required("session")
+def api_ocr_process(media_id: int):
+    """Run OCR on a single media item (sync)."""
+    from enferno.tasks.extraction import process_media_extraction_task
+
+    media = db.session.get(Media, media_id)
+    if not media:
+        return HTTPResponse.not_found("Media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    result = process_media_extraction_task(media_id)
+    return jsonify(result)
+
+
+@admin.post("/api/ocr/bulk")
+@auth_required("session")
+def api_ocr_bulk():
+    """
+    Bulk OCR processing via Celery (async).
+
+    Body:
+      - media_ids: list of media IDs to process
+      - bulletin_id: process all pending media for a bulletin
+      - all: process all pending media
+      - limit: max items (default 1000, cap 10000)
+    """
+    from sqlalchemy import select
+
+    from enferno.tasks import bulk_ocr_process
+
+    data = request.json or {}
+    media_ids = data.get("media_ids", [])
+    bulletin_id = data.get("bulletin_id")
+    process_all = data.get("all", False)
+    limit = min(data.get("limit", 1000), 10000)
+
+    # Build media ID list
+    if process_all and not media_ids:
+        stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None)).limit(limit)
+        media_ids = list(db.session.scalars(stmt))
+    elif bulletin_id and not media_ids:
+        stmt = (
+            select(Media.id)
+            .outerjoin(Extraction)
+            .where(Media.bulletin_id == bulletin_id)
+            .where(Extraction.id.is_(None))
+            .limit(limit)
+        )
+        media_ids = list(db.session.scalars(stmt))
+
+    if not media_ids:
+        return HTTPResponse.error("No media to process")
+
+    # Track processing items in Redis (auto-expires in 2 hours)
+    redis_key = f"ocr_processing:{current_user.id}"
+    rds.sadd(redis_key, *media_ids)
+    rds.expire(redis_key, 7200)
+
+    task = bulk_ocr_process.delay(media_ids, current_user.id)
+    return jsonify(
+        {
+            "task_id": task.id,
+            "queued": len(media_ids),
+            "message": f"Queued {len(media_ids)} items. You'll be notified when complete.",
+        }
+    )
+
+
+@admin.get("/api/ocr/processing")
+@auth_required("session")
+def api_ocr_processing():
+    """Get list of media IDs currently being processed by bulk OCR."""
+    redis_key = f"ocr_processing:{current_user.id}"
+    ids = rds.smembers(redis_key)
+    return jsonify([int(id) for id in ids] if ids else [])
 
 
 @admin.route("/api/session-check")

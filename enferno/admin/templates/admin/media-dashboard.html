@@ -1,0 +1,628 @@
+{% extends 'layout.html' %} {% block content %}
+    <media-transcription-dialog
+        v-model:open="mediaDialog.show"
+        :loading="mediaDialog.loading"
+        :media="mediaDialog.data"
+        @rejected="onTranscriptionUpdated($event)"
+        @accepted="onTranscriptionUpdated($event)"
+        @transcribed="onTranscriptionUpdated($event)"
+        @processed="onMediaProcessed($event)"
+    ></media-transcription-dialog>
+
+    <v-main>
+        <v-container fluid>
+            <v-card>
+                <!-- Stats Bar -->
+                <v-card-text class="pb-0">
+                    <v-row>
+                        <v-col cols="12" md="2">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-warning">${(ocr.stats.needs_review + ocr.stats.needs_transcription).toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis text-warning font-weight-medium">{{ _('Needs Review') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="2">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-error">${ocr.stats.failed.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis text-error font-weight-medium">{{ _('Failed') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="2">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${ocr.stats.cant_read.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Can\'t Read') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="2">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${ocr.stats.processed.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Processed (Searchable)') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="2">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${(ocr.stats.pending).toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Pending') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="2">
+                            <v-card>
+                                <v-card-text class="text-center">
+                                    <div class="text-h4 text-primary">${ocr.stats.total.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Total Media') }}</div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+
+                <!-- Data Table -->
+                <v-card-text>
+                    <v-data-table-server
+                            :height="tableHeight"
+                            fixed-header
+                            :headers="headers"
+                            v-model="selected"
+                            :items="items"
+                            @update:options="refresh"
+                            :page="options.page"
+                            :loading="loading"
+                            :items-length="itemsLength"
+                            class="elevation-1"
+                            show-select
+                            select-strategy="page"
+                            :item-selectable="canRunOCRProcess"
+                            :items-per-page-options="itemsPerPageOptions"
+                            @click:row="rowClick"
+                    >
+                        <template v-slot:top>
+                            <v-toolbar>
+                                <v-toolbar-title>
+                                    {{ _('Media Dashboard') }}
+                                </v-toolbar-title>
+
+                                <!-- Filters -->
+                                <div class="d-flex align-center ga-2">
+                                    <v-select
+                                        v-model="filters.ocr_status"
+                                        :items="statusOptions"
+                                        label="{{ _('Status') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                    ></v-select>
+                                    
+                                    <v-text-field
+                                        v-model="filters.q"
+                                        label="{{ _('Search extraction text or by ID') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        prepend-inner-icon="mdi-magnify"
+                                        hide-details
+                                        width="350px"
+                                        @keyup.enter="applyFilters"
+                                    ></v-text-field>
+                                    
+                                    <pop-date-range-field
+                                        v-model="filters.dateRange"
+                                        label="{{ _('Date Range') }}"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                        width="320px"
+                                    ></pop-date-range-field>
+                                    
+                                    <v-btn 
+                                        variant="flat" 
+                                        color="primary"
+                                        @click="applyFilters"
+                                    >
+                                        {{ _('Apply') }}
+                                    </v-btn>
+                                    <v-btn
+                                        v-if="hasActiveFilters"
+                                        variant="text" 
+                                        @click="clearFilters"
+                                    >
+                                        {{ _('Clear') }}
+                                    </v-btn>
+                                </div>
+
+                                <v-spacer></v-spacer>
+                            </v-toolbar>
+
+                            <!-- Bulk Actions Bar -->
+                            <v-toolbar v-if="selected.length > 0" height="auto" class="mb-2">
+                                <div class="d-flex align-center justify-space-between w-100 px-4">
+                                    <v-chip variant="tonal">${selected.length} {{ _('selected') }}</v-chip>
+                                    <v-tooltip location="top" :disabled="Boolean(visionApiKey)">
+                                        <template v-slot:activator="{ props }">
+                                            <div v-bind="props">
+                                                <v-btn
+                                                    color="primary"
+                                                    variant="elevated"
+                                                    @click="runBulkOCR"
+                                                    :loading="bulkLoading"
+                                                    :disabled="!visionApiKey"
+                                                    prepend-icon="mdi-text-recognition"
+                                                >
+                                                    {{ _('Run OCR') }}
+                                                </v-btn>
+                                            </div>
+                                        </template>
+                                        {{ _('Google Vision API is not configured. Please contact your administrator.') }}
+                                    </v-tooltip>
+                                </div>
+                            </v-toolbar>
+                        </template>
+
+                        <!-- Thumbnail Column -->
+                        <template #item.thumbnail="{ item }">
+                            <v-avatar
+                                size="48"
+                                rounded="lg"
+                                class="cursor-pointer"
+                            >   
+                                <v-img 
+                                    :src="item.thumbnail_url" 
+                                    alt="thumbnail"
+                                    :style="{ transform: 'rotate(' + (item?.extraction?.orientation || 0) + 'deg)' }"
+                                ></v-img>
+                            </v-avatar>
+                        </template>
+
+                        <!-- Bulletin Column -->
+                        <template #item.bulletin="{ item }">
+                            <v-btn
+                                color="primary"
+                                variant="text"
+                                :href="`/admin/bulletins/${item.bulletin.id}`"
+                                target="_blank"
+                                @click.stop
+                            >
+                                #${item.bulletin.id}
+                                <v-icon size="small" class="ml-1">mdi-open-in-new</v-icon>
+                            </v-btn>
+                        </template>
+
+                        <!-- OCR Status Column -->
+                        <template #item.ocr_status="{ item }">
+                            <div class="d-flex align-center ga-1">
+                                <v-chip
+                                :color="getStatusColor(getEffectiveStatus(item))"
+                                size="small"
+                                class="flex-0-0"
+                                >
+                                <template v-slot:prepend>
+                                    <v-icon 
+                                    :icon="getStatusIcon(getEffectiveStatus(item))"
+                                    :class="['mr-1', { 'mdi-spin': getEffectiveStatus(item) === 'processing' }]"
+                                    ></v-icon>
+                                </template>
+                                ${getStatusText(getEffectiveStatus(item))}
+                                </v-chip>
+                                
+                                <!-- Low word count indicator -->
+                                <v-tooltip v-if="hasLowWordCount(item)" location="top">
+                                    <template v-slot:activator="{ props }">
+                                        <v-icon 
+                                        v-bind="props"
+                                        color="grey-darken-1" 
+                                        size="small"
+                                        >
+                                        mdi-alert-circle-outline
+                                        </v-icon>
+                                    </template>
+                                {{ _('Low Word Count') }}: ${getEffectiveWordCount(item)} {{ _('words') }}
+                                </v-tooltip>
+                            </div>
+                        </template>
+
+                        <!-- Date Column -->
+                        <template #item.updated_at="{ item }">
+                            ${formatDate(item.updated_at)}
+                        </template>
+                    </v-data-table-server>
+
+                </v-card-text>
+            </v-card>
+        </v-container>
+    </v-main>
+
+{% endblock %} {% block js %}
+    <script src="/static/js/components/SplitView.js"></script>
+    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
+    <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateRangeField.js"></script>
+    <script>
+
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+            delimiters: delimiters,
+            mixins: [globalMixin],
+
+            data: () => ({
+                drawer: drawer,
+                loading: true,
+                bulkLoading: false,
+                itemsPerPageOptions: window.itemsPerPageOptions,
+                visionApiKey: '{{ config.GOOGLE_VISION_API_KEY }}',
+                processingIds: new Set(), // Track media IDs being processed
+                pollInterval: null, // For periodic polling
+                options: {
+                    page: 1,
+                    per_page: window.itemsPerPageOptions?.[0] ?? 10,
+                },
+                mediaDialog: {
+                    loading: false,
+                    show: false,
+                    data: null
+                },
+                ocr: {
+                    stats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, cant_read: 0, failed: 0 }
+                },
+
+                headers: [
+                    { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
+                    { title: "{{_('Filename')}}", value: "filename" },
+                    { title: "{{_('Bulletin')}}", value: "bulletin", sortable: false },
+                    { title: "{{_('OCR Status')}}", value: "ocr_status" },
+                    { title: "{{_('Date')}}", value: "updated_at" }
+                ],
+
+                selected: [],
+                items: [],
+                itemsLength: 10,
+
+                defaultFilters: {
+                    ocr_status: null,
+                    q: '',
+                    bulletin_id: null,
+                    dateRange: null
+                },
+                filters: {
+                    ocr_status: null,
+                    q: '',
+                    bulletin_id: null,
+                    dateRange: null
+                },
+                statuses: {
+                    pending: { key: 'pending', text: "{{_('Pending')}}", color: 'grey', icon: 'mdi-clock-outline' },
+                    processing: { key: 'processing', text: "{{_('Processing')}}", color: 'blue', icon: 'mdi-cog-outline' },
+                    processed: { key: 'processed', text: "{{_('Processed')}}", color: 'green', icon: 'mdi-check-circle-outline' },
+                    manual: { key: 'manual', text: "{{_('Manually Transcribed')}}", color: 'indigo', icon: 'mdi-account-edit-outline' },
+                    needs_review: { key: 'needs_review', text: "{{_('Needs Review')}}", color: 'orange', icon: 'mdi-alert-circle-outline' },
+                    needs_transcription: { key: 'needs_transcription', text: "{{_('Needs Transcription')}}", color: 'purple', icon: 'mdi-alphabetical' },
+                    cant_read: { key: 'cant_read', text: "{{_('Can\'t Read')}}", color: 'brown', icon: 'mdi-eye-off-outline' },
+                    failed: { key: 'failed', text: "{{_('Failed')}}", color: 'red', icon: 'mdi-close-circle-outline' },
+                },
+                lowWordCount: 20
+            }),
+
+            computed: {
+                hasActiveFilters() {
+                    return Object.values(this.filters).some(v => v !== null && v !== '' && v !== undefined);
+                },
+                statusOptions() {
+                    // Omit processing and manual status from filter dropdown
+                    return [
+                        { title: "{{_('All')}}", value: null },
+                        ...Object.values(this.statuses).filter(s => !['processing', 'manual'].includes(s.key)).map(s => ({ 
+                            title: s.text, 
+                            value: s.key 
+                        }))
+                    ];
+                },
+                tableHeight() {
+                    return `calc(100vh - ${this.selected.length ? 405 : 360}px)`;
+                },
+                selectableStatuses() {
+                    return ['pending', 'failed', 'cant_read'];
+                }
+            },
+
+            mounted() {
+                this.handleRoute();
+                this.$router.afterEach(() => {
+                    this.handleRoute();
+                });
+                this.loadOCRStats();
+                this.fetchProcessingIds(); // Check for active processing on mount
+            },
+
+            beforeUnmount() {
+                // Clean up polling interval
+                this.stopProcessingPoll();
+            },
+
+            methods: {
+                countWords(text) {
+                    if (!text || !text.trim()) return 0;
+                    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+                },
+                
+                getEffectiveWordCount(item) {
+                    // Use API word count if available
+                    const apiCount = item.extraction?.word_count;
+                    if (apiCount > 0) return apiCount;
+                    // Fallback: count from text
+                    return this.countWords(item.extraction?.text);
+                },
+                
+                hasLowWordCount(item) {
+                    // Only show for items that need review
+                    const needsReview = ['needs_review', 'needs_transcription'].includes(item.ocr_status);
+                    if (!needsReview) return false;
+                    
+                    const count = this.getEffectiveWordCount(item);
+                    return count > 0 && count < this.lowWordCount;
+                },
+                // Fetch currently processing media IDs
+                async fetchProcessingIds() {
+                    try {
+                        const response = await api.get('/admin/api/ocr/processing');
+                        const newProcessingIds = new Set(response.data || []);
+                        
+                        // Check if the currently open media just finished processing
+                        const currentMediaId = this.mediaDialog.data?.id;
+                        const currentMediaWasProcessing = currentMediaId && this.processingIds.has(currentMediaId);
+                        const currentMediaFinished = currentMediaWasProcessing && !newProcessingIds.has(currentMediaId);
+                        
+                        // Detect when ALL processing completes
+                        const wasProcessing = this.processingIds.size > 0;
+                        const isNowComplete = wasProcessing && newProcessingIds.size === 0;
+                        
+                        this.processingIds = newProcessingIds;
+                        
+                        if (isNowComplete) {
+                            // All processing complete
+                            this.showSnack("{{ _('Bulk OCR Complete') }}");
+                            this.loadOCRStats();
+                        }
+                        
+                        // If the currently open media just finished, reload it
+                        if (this.mediaDialog.show && currentMediaFinished) {
+                            this.showMediaDialog(currentMediaId);
+                        } else if (this.mediaDialog.show && currentMediaId) {
+                            // Just update the status without reloading
+                            this.mediaDialog.data.ocr_status = this.getEffectiveStatus(this.mediaDialog.data);
+                        }
+                        
+                        // Manage polling
+                        if (this.processingIds.size > 0) {
+                            this.startProcessingPoll();
+                        } else {
+                            this.stopProcessingPoll();
+                        }
+                    } catch (error) {
+                        console.error('Error fetching processing IDs:', error);
+                        this.processingIds = new Set();
+                    }
+                },
+
+                // Start periodic polling for processing status
+                startProcessingPoll() {
+                    if (this.pollInterval) return; // Already polling
+                    
+                    this.pollInterval = setInterval(() => {
+                        this.fetchProcessingIds();
+                        this.refresh(this.options); // Refresh table data
+                    }, 5000); // Poll every 5 seconds
+                },
+
+                // Stop periodic polling
+                stopProcessingPoll() {
+                    if (this.pollInterval) {
+                        clearInterval(this.pollInterval);
+                        this.pollInterval = null;
+                    }
+                },
+
+                handleRoute() {
+                    if (this.$route.params.id) this.showMediaDialog(this.$route.params.id);
+                },
+                showMediaDialog(id) {
+                    this.mediaDialog.loading = true;
+                    this.mediaDialog.show = true;
+
+                    api.get(`/admin/api/media/${id}`).then(response => {
+                        // Only update if dialog is still open
+                        if (this.mediaDialog.show) {
+                            this.mediaDialog.data = response.data;
+                            this.mediaDialog.data.ocr_status = this.getEffectiveStatus(response.data);
+                        }
+                    }).catch(error => {
+                        console.error('Error loading media:', error);
+                        this.showSnack("{{ _('Error loading media') }}");
+                        this.mediaDialog.show = false;
+                    }).finally(() => {
+                        this.mediaDialog.loading = false;
+                    });
+                },
+                rowClick(e, row) {
+                    const item = row.item;
+                    const path = `/admin/media/${item.id}`;
+                    if (this.$route.path !== path) this.$router.push(path);
+                },
+                runBulkOCR() {
+                    if (this.selected.length === 0) return;
+                    if (!this.visionApiKey) return this.showSnack("{{ _('Google Vision API is not configured. Please contact your administrator.') }}");
+
+                    this.bulkLoading = true;
+
+                    api.post('/admin/api/ocr/bulk', { media_ids: this.selected })
+                        .then(response => {
+                            this.showSnack(response.data.message);
+                            this.selected = [];
+                            
+                            // Immediately fetch processing IDs and start polling
+                            this.fetchProcessingIds();
+                            
+                            this.refresh(this.options);
+                            this.loadOCRStats();
+                        })
+                        .catch(error => {
+                            console.error('Bulk OCR error:', error);
+                            this.showSnack("{{ _('Error processing OCR request') }}");
+                        })
+                        .finally(() => {
+                            this.bulkLoading = false;
+                        });
+                },
+                clearFilters() {
+                    this.filters = { ...this.defaultFilters };
+                    this.applyFilters();
+                },
+                applyFilters() {
+                    // Parse the search query
+                    const searchValue = this.filters.q?.trim();
+                    
+                    // Check if it's a number (bulletin ID)
+                    if (searchValue && /^\d+$/.test(searchValue)) {
+                        // It's a bulletin ID
+                        this.filters.bulletin_id = searchValue;
+                        this.filters.q = '';
+                    } else {
+                        // It's text search
+                        this.filters.bulletin_id = null;
+                        // q stays as is
+                    }
+                    
+                    this.refresh({ ...this.options, page: 1 });
+                },
+                refresh(options) {
+                    this.options = options || { ...this.options, page: 1 };
+                    this.loading = true;
+
+                    const params = new URLSearchParams({
+                        page: this.options.page,
+                        per_page: this.options.itemsPerPage || this.options.per_page
+                    });
+
+                    if (this.filters.ocr_status) params.append('ocr_status', this.filters.ocr_status);
+                    if (this.filters.q) params.append('q', this.filters.q);
+                    if (this.filters.bulletin_id) params.append('bulletin_id', this.filters.bulletin_id);
+                    if (this.filters.dateRange?.[0] && this.filters.dateRange?.[1]) {
+                        params.append('date_from', this.filters.dateRange[0]);
+                        params.append('date_to', this.filters.dateRange[1]);
+                    }
+
+                    api.get(`/admin/api/media/dashboard?${params.toString()}`)
+                        .then(response => {
+                            this.itemsLength = response.data.total;
+                            this.items = response.data.items;
+                        })
+                        .catch(error => {
+                            console.error('Error loading media dashboard:', error);
+                            this.showSnack("{{ _('Error loading data') }}");
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+
+                getEffectiveStatus(item) {
+                    // Check if currently being processed
+                    if (this.processingIds.has(item.id)) {
+                        return 'processing';
+                    }
+                    
+                    // Show 'manual' status for manually transcribed items
+                    if (item.extraction?.manual && item.ocr_status === 'processed') {
+                        return 'manual';
+                    }
+                    return item.ocr_status;
+                },
+                getStatusText(status) {
+                    return this.statuses[status]?.text || status;
+                },
+                getStatusColor(status) {
+                    return this.statuses[status]?.color || 'grey';
+                },
+                getStatusIcon(status) {
+                    return this.statuses[status]?.icon || 'mdi-help-circle-outline';
+                },
+                onTranscriptionUpdated({ media, text }) {
+                    this.resetMediaDialog();
+                    this.refresh();
+                    this.loadOCRStats();
+                },
+                onMediaProcessed(media) {
+                    // Reload the media to get fresh extraction data
+                    this.showMediaDialog(media.id);
+                    this.refresh();
+                    this.loadOCRStats();
+                    // Also fetch processing IDs in case this item just finished
+                    this.fetchProcessingIds();
+                },
+                resetMediaDialog() {
+                    this.mediaDialog.show = false;
+                    this.mediaDialog.data = null;
+                    this.mediaDialog.loading = false;
+                },
+                loadOCRStats() {
+                    api.get('/admin/api/ocr/stats').then(res => {
+                        this.ocr.stats = res?.data;
+                    }).catch(err => {
+                        console.error('Error loading OCR counts:', err);
+                    });
+                },
+                canRunOCRProcess(item) {
+                    return this.selectableStatuses.includes(item.ocr_status) && !this.processingIds.has(item.id);
+                },
+            },
+            watch: {
+                'mediaDialog.show'(isOpen) {
+                    if (isOpen === false) {
+                        this.mediaDialog.data = null;
+                        if (this.$route.path !== '/admin/media/')
+                            this.$router.push('/admin/media/')
+                    }
+                },
+                'filters.ocr_status'() {
+                    this.applyFilters();
+                },
+                'filters.dateRange'() {
+                    if (this.filters.dateRange) {
+                        this.applyFilters();
+                    }
+                },
+            },
+        });
+
+        app.component('SplitView', SplitView);
+        app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
+        app.component('PdfViewer', PdfViewer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('UniField', UniField);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
+        app.component('PopDateField', PopDateField);
+        app.component('PopDateRangeField', PopDateRangeField);
+        
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
+    </script>
+{% endblock %}

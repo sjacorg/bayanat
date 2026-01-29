@@ -23,6 +23,8 @@ from enferno.admin.models import (
     Dialect,
     ActorProfile,
     Activity,
+    Media,
+    Extraction,
 )
 from enferno.admin.models.DynamicField import DynamicField
 from enferno.user.models import Role
@@ -73,10 +75,41 @@ class SearchUtils:
     def __init__(self, q=None, cls=None):
         self.search = q
         self.cls = cls
+        self.tsv_words = []  # Store search terms for OCR match detection
+
+    def get_ocr_matched_ids(self, bulletin_ids: list) -> set:
+        """
+        Return set of bulletin IDs that matched via OCR text (not bulletin.search).
+        Call this after get_query() to identify which results came from OCR.
+        """
+        if not self.tsv_words or not bulletin_ids:
+            return set()
+
+        # Query to find bulletins with OCR text matching ALL search words
+        ocr_query = (
+            select(Media.bulletin_id)
+            .join(Extraction, Media.id == Extraction.media_id)
+            .where(Media.bulletin_id.in_(bulletin_ids))
+            .where(
+                or_(
+                    Extraction.status.in_(["processed", "needs_review"]),
+                    Extraction.manual == True,
+                )
+            )
+            .where(Extraction.text.isnot(None))
+        )
+        for word in self.tsv_words:
+            ocr_query = ocr_query.where(Extraction.text.ilike(f"%{word}%"))
+
+        result = db.session.execute(ocr_query)
+        return {row[0] for row in result}
 
     def get_query(self):
         """Get the query for the given class."""
         if self.cls == "bulletin":
+            # Handle empty search - return all bulletins
+            if not self.search:
+                return select(Bulletin)
             # Get conditions from first query
             main_stmt, conditions = self.bulletin_query(self.search[0])
             final_conditions = conditions
@@ -100,6 +133,9 @@ class SearchUtils:
             return result
 
         elif self.cls == "actor":
+            # Handle empty search - return all actors
+            if not self.search:
+                return select(Actor)
             # Get conditions from first query
             main_stmt, conditions = self.actor_query(self.search[0])
             final_conditions = conditions
@@ -374,13 +410,34 @@ class SearchUtils:
             conditions.append(Bulletin.id.in_(ids))
 
         # Text search - PERFORMANCE OPTIMIZED
+        # Searches both bulletin fields AND OCR extracted text from attached media
         if tsv := q.get("tsv"):
-            words = tsv.split(" ")
-            # Use individual ILIKE conditions instead of ILIKE ALL() to enable GIN trigram index usage
-            # This changes execution from Sequential Scan to Bitmap Index Scan (200x faster)
-            word_conditions = [Bulletin.search.ilike(f"%{word}%") for word in words if word.strip()]
-            if word_conditions:
-                conditions.extend(word_conditions)
+            words = [w for w in tsv.split(" ") if w.strip()]
+            if words:
+                # Store for OCR match detection (used by get_ocr_matched_ids)
+                self.tsv_words = words
+                # Fast path: bulletin.search - individual ILIKEs enable GIN trigram index (200x faster)
+                bulletin_conditions = [Bulletin.search.ilike(f"%{word}%") for word in words]
+
+                # ONE subquery for OCR - all words must match in extraction text
+                # Includes trusted extractions: processed, needs_review, or manually transcribed
+                ocr_subquery = (
+                    select(Media.bulletin_id)
+                    .join(Extraction, Media.id == Extraction.media_id)
+                    .where(
+                        or_(
+                            Extraction.status.in_(["processed", "needs_review"]),
+                            Extraction.manual == True,
+                        )
+                    )
+                    .where(Extraction.text.isnot(None))
+                )
+                for word in words:
+                    ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
+
+                # Combine: (all words in bulletin) OR (all words in OCR)
+                # This preserves index usage on bulletin.search while adding OCR results
+                conditions.append(or_(and_(*bulletin_conditions), Bulletin.id.in_(ocr_subquery)))
 
         # exclude  filter - OPTIMIZED APPROACH using raw SQL
         extsv = q.get("extsv")
@@ -399,6 +456,27 @@ class SearchUtils:
                 raw_condition = raw_condition.bindparams(**params)
 
                 conditions.append(raw_condition)
+
+        # OCR text search - search ONLY in extracted text from media (dedicated filter)
+        if ocr := q.get("ocr"):
+            words = [w for w in ocr.split(" ") if w.strip()]
+            if words:
+                # Find bulletins that have media with matching extraction text
+                # Includes trusted extractions: processed, needs_review, or manually transcribed
+                ocr_subquery = (
+                    select(Media.bulletin_id)
+                    .join(Extraction, Media.id == Extraction.media_id)
+                    .where(
+                        or_(
+                            Extraction.status.in_(["processed", "needs_review"]),
+                            Extraction.manual == True,
+                        )
+                    )
+                    .where(Extraction.text.isnot(None))
+                )
+                for word in words:
+                    ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
+                conditions.append(Bulletin.id.in_(ocr_subquery))
 
         # Origin ID
         originid = (q.get("originid") or "").strip()

@@ -1156,6 +1156,7 @@ class PartialEventTypeModel(BaseValidationModel):
 class QueryBaseModel(StrictValidationModel):
     tsv: Optional[str] = None
     extsv: Optional[str] = None
+    ocr: Optional[str] = None  # Search in OCR extracted text from media
     labels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
     oplabels: Optional[bool] = None
     exlabels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
