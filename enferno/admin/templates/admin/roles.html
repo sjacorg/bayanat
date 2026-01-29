@@ -98,57 +98,7 @@
                                             </v-card>
                                         </v-dialog>
 
-                                        <v-dialog
-                                                v-model="imDialog"
-                                                width="500"
-                                        >
-                                            <template v-slot:activator="{ props }">
-                                                <v-btn
-                                                    color="secondary"
-                                                    variant="elevated"
-                                                    class="ma-2"
-                                                    v-bind="props">
-                                                    {{ _('Import CSV') }}
-                                                </v-btn>
-                                            </template>
-
-                                            <v-card>
-                                                <v-card-title>
-                                                    <span class="headline">{{ _('Import CSV') }}</span>
-                                                </v-card-title>
-
-                                                <v-card-text>
-                                                    <v-container>
-                                                        <v-row>
-                                                            <v-col cols="12" md="12">
-                                                                <v-file-input v-model="csvFile" show-size
-                                                                              accept=".csv"
-                                                                              label="{{ _('Select CSV File') }}"></v-file-input>
-
-                                                            </v-col>
-                                                        </v-row>
-                                                    </v-container>
-                                                </v-card-text>
-
-                                                <v-card-actions>
-                                                    <v-spacer></v-spacer>
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="imDialog=false"
-                                                    >{{ _('Cancel') }}</v-btn
-                                                    >
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="importCSV"
-                                                    >{{ _('Save') }}</v-btn
-                                                    >
-                                                </v-card-actions>
-                                            </v-card>
-
-                                        </v-dialog>
-
+                                        <import-csv-dialog endpoint="/admin/api/role/import/" @import="refresh()"></import-csv-dialog>
                                     </v-toolbar>
                                 </template>
 
@@ -178,6 +128,7 @@
 
 {% endblock %} {% block js %}
     <script src="/static/js/components/Asterisk.js"></script>
+    <script src="/static/js/components/ImportCsvDialog.js"></script>
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -191,10 +142,8 @@
             data: () => ({
                 dialog: dialog,
                 validationRules: validationRules,
-                imDialog: false,
                 drawer: drawer,
                 loading: true,
-                csvFile: null,
                 options: {},
 
                 headers: [
@@ -244,17 +193,6 @@
                     }).finally(() => {
                         this.loading = false;
                     });
-                },
-
-                importCSV() {
-                    const reqData = new FormData();
-                    reqData.append('csv', this.csvFile)
-                    api.post('/admin/api/role/import/', reqData).then(response => {
-                        this.imDialog = false;
-                        this.refresh();
-                        this.showSnack(response.data);
-                    })
-
                 },
                 newItem() {
 
@@ -321,6 +259,7 @@
             }
         });
         app.component('Asterisk', Asterisk);
+        app.component('ImportCsvDialog', ImportCsvDialog);
         app.use(vuetify).mount("#app")
     </script>
 {% endblock %}
