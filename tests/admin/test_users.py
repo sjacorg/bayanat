@@ -6,7 +6,7 @@ from flask import current_app
 from enferno.admin.models import Activity
 from enferno.admin.models.Notification import Notification
 from enferno.utils.validation_utils import convert_empty_strings_to_none
-from enferno.user.models import User, Session, WebAuthn
+from enferno.user.models import User, UserStatus, Session, WebAuthn
 
 from tests.factories import UserFactory, create_webauthn_for
 from tests.test_utils import (
@@ -89,6 +89,7 @@ def create_user(session):
 def create_inactive_user(session):
     user = UserFactory()
     user.active = False
+    user.status = UserStatus.DISABLED
     session.add(user)
     session.commit()
     yield user
