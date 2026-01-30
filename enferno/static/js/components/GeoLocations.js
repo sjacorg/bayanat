@@ -216,3 +216,5 @@ const GeoLocations = Vue.defineComponent({
       </div>
     `,
 });
+
+window.GeoLocations = GeoLocations;

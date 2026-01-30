@@ -68,3 +68,4 @@ const SnapshotDialog = Vue.defineComponent({
       `,
   });
   
+window.SnapshotDialog = SnapshotDialog;

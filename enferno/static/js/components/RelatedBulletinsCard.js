@@ -95,3 +95,5 @@ const RelatedBulletinsCard = Vue.defineComponent({
       </v-card>
     `,
 });
+
+window.RelatedBulletinsCard = RelatedBulletinsCard;

@@ -63,3 +63,5 @@ const Toast = Vue.defineComponent({
     </v-snackbar>
   `,
 });
+
+window.Toast = Toast;

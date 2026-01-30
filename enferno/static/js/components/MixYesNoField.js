@@ -74,3 +74,5 @@ const MixYesNoField = Vue.defineComponent({
 
     `,
 });
+
+window.MixYesNoField = MixYesNoField;

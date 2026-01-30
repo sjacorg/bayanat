@@ -152,3 +152,4 @@ const InlineMediaRenderer = Vue.defineComponent({
     `,
   });
   
+window.InlineMediaRenderer = InlineMediaRenderer;

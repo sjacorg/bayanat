@@ -90,3 +90,5 @@ const BulletinResult = Vue.defineComponent({
     </template>
   `,
 });
+
+window.BulletinResult = BulletinResult;

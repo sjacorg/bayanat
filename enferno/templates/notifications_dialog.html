@@ -43,6 +43,7 @@
                     <v-window v-model="notifications.ui.currentTab" style="min-height: calc(100vh - 251px);">
                         <v-window-item v-for="tab in ['all', 'unread', 'read']" :key="tab" :value="tab">
                             <notifications-list
+                                v-if="notifications.ui.dialogVisible"
                                 :config="{ hideScrollFeedback: false, maxTitleLines: false, maxSubtitleLines: false }"
                                 :notifications="notifications.items"
                                 :initial-loading="notifications.status.initialLoading"

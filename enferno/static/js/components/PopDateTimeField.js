@@ -17,9 +17,6 @@ const PopDateTimeField = Vue.defineComponent({
     },
   },
   emits: ['update:modelValue'],
-  components: {
-    PopDateField,
-  },
   data: function () {
     return {
       dt: this.modelValue ? dayjs(this.modelValue).toDate() : null,
@@ -80,3 +77,5 @@ const PopDateTimeField = Vue.defineComponent({
       </v-sheet>
     `,
 });
+
+window.PopDateTimeField = PopDateTimeField;

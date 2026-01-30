@@ -100,3 +100,5 @@ const ActivitySearchBox = Vue.defineComponent({
     </v-sheet>
   `,
 });
+
+window.ActivitySearchBox = ActivitySearchBox;

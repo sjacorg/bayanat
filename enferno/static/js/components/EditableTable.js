@@ -229,3 +229,5 @@ const EditableTable = Vue.defineComponent({
     },
   },
 });
+
+window.EditableTable = EditableTable;

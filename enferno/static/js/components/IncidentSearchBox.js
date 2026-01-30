@@ -474,3 +474,5 @@ const IncidentSearchBox = Vue.defineComponent({
       </div>
     `,
 });
+
+window.IncidentSearchBox = IncidentSearchBox;
