@@ -360,12 +360,13 @@
 {% endblock %}
 
 {% block js %}
-    <script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
-    <script src="/static/js/tinymce-vue.min.js"></script>
     <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/mixins/form-builder-mixin.js"></script>
+
+    <script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="/static/js/tinymce-vue.min.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
