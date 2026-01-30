@@ -9,8 +9,6 @@
     <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
     <link rel="stylesheet" href="/static/css/app.css"/>
     <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css"/>
-    <link rel="stylesheet" href="/static/css/leaflet.css">
-    <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css">
 
     <!-- favicon -->
 
@@ -463,17 +461,10 @@
     {% include 'admin/jsapi.jinja2' %}
 </script>
 
-<script src="/static/js/components/NotificationsList.js"></script>
 <script src="/static/js/vuetify.min.js"></script>
 <script src="/static/js/axios.min.js"></script>
 <script src="/static/js/vue-router.global.js"></script>
-<script src="/static/js/leaflet.js"></script>
 <script src="/static/js/common/config.js"></script>
-
-<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
-
-<script src="/static/js/components/GeoMap.js"></script>
-<script src="/static/js/components/EditableTable.js"></script>
 
 {% block js %}
     <script nonce="{{ csp_nonce() }}" type="module">
@@ -660,8 +651,8 @@
             },
         });
 
-        app.component('EditableTable', EditableTable);
-        app.component('GeoMap', GeoMap);
+        app.component('EditableTable', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/EditableTable.js')));
+        app.component('GeoMap', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/GeoMap.js')));
 
         app.use(vuetify).mount('#app');
 
