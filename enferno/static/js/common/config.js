@@ -759,15 +759,9 @@ function loadAsset(src) {
     return loadedAssets.get(src);
   }
 
-  const isModule = src.endsWith('.mjs');
   const isCSS = src.endsWith('.css');
   
   const promise = (async () => {
-    // For ES modules, use dynamic import
-    if (isModule) {
-      return await import(src);
-    }
-    
     // For CSS files
     if (isCSS) {
       return new Promise((resolve, reject) => {
@@ -787,22 +781,8 @@ function loadAsset(src) {
       });
     }
     
-    // For regular scripts
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src="${src}"]`);
-      if (existing) {
-        resolve();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-
-      document.head.appendChild(script);
-    });
+    // For all JavaScript files (js, mjs, esm), use dynamic import
+    return await import(src);
   })();
 
   loadedAssets.set(src, promise);

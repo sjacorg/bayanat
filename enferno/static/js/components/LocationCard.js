@@ -61,10 +61,24 @@ const LocationCard = Vue.defineComponent({
         });
     },
 
-    showDiff(e, index) {
+    async loadLibraries() {
+      const [jsondiffpatch, htmlFormatter] = await loadAsset([
+        '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js',
+        '/static/js/jsondiffpatch/formatters/html.js',
+        '/static/js/jsondiffpatch/formatters/base.js',
+        '/static/js/jsondiffpatch/formatters/styles/html.css',
+      ]);
+      
+      this.jsondiffpatch = jsondiffpatch;
+      this.htmlFormatter = htmlFormatter;
+    },
+
+    async showDiff(e, index) {
+      await this.loadLibraries();
+
       this.diffDialog = true;
       //calculate diff
-      const dp = this.$jsondiffpatch.create({
+      const dp = this.jsondiffpatch.create({
         arrays: {
           detectMove: true,
         },
@@ -77,7 +91,7 @@ const LocationCard = Vue.defineComponent({
       if (!delta) {
         this.diffResult = 'Both items are Identical :)';
       } else {
-        this.diffResult = this.$htmlFormatter.format(delta);
+        this.diffResult = this.htmlFormatter.format(delta);
       }
     },
   },

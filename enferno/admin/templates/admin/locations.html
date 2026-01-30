@@ -165,9 +165,6 @@
 
     {% endif %}
     <script nonce="{{ csp_nonce() }}" type="module">
-        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
-        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
-        import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
 
@@ -529,9 +526,6 @@
             }
         });
 
-        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
-        app.config.globalProperties.$htmlFormatter = htmlFormatter;
-        
         app.component("TinymceEditor", Editor);
         app.component('LocationCard', LocationCard);
         app.component('LocationSearchBox', LocationSearchBox);
