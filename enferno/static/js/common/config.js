@@ -749,6 +749,12 @@ function deepClone(value) {
 // Load external script dynamically with caching
 const loadedAssets = new Map();
 function loadAsset(src) {
+  // Handle array of sources
+  if (Array.isArray(src)) {
+    return Promise.all(src.map(s => loadAsset(s)));
+  }
+
+  // Handle single source (existing logic)
   if (loadedAssets.has(src)) {
     return loadedAssets.get(src);
   }

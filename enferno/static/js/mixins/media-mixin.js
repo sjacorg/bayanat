@@ -101,8 +101,10 @@ const mediaMixin = {
     },
 
     async initCroppr(rendererId) {
-      await loadAsset('/static/js/croppr/croppr.min.css')
-      await loadAsset('/static/js/croppr/croppr.min.js')
+      await loadAsset([
+        '/static/js/croppr/croppr.min.css',
+        '/static/js/croppr/croppr.min.js'
+      ])
 
       if (this.cropper.active) this.destroyCrop();
       this.openSnapshotDialog();
@@ -262,8 +264,10 @@ const mediaMixin = {
 
       renderer.playerContainer.prepend(videoElement)
 
-      await loadAsset('/static/js/videojs/video-js.min.css')
-      await loadAsset('/static/js/videojs/video.min.js')
+      await loadAsset([
+        '/static/js/videojs/video-js.min.css',
+        '/static/js/videojs/video.min.js'
+      ])
 
       const player = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS)
 
