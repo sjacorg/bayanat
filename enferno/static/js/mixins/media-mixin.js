@@ -244,7 +244,7 @@ const mediaMixin = {
       });
     },
 
-    viewMedia({ rendererId, media, mediaType }) {
+    async viewMedia({ rendererId, media, mediaType }) {
       const renderer = this.renderers[rendererId]
       if (!renderer?.playerContainer) {
         console.warn('mediaPlayerContainer not found for', rendererId)
@@ -261,6 +261,9 @@ const mediaMixin = {
       }
 
       renderer.playerContainer.prepend(videoElement)
+
+      await loadAsset('/static/js/videojs/video-js.min.css')
+      await loadAsset('/static/js/videojs/video.min.js')
 
       const player = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS)
 
@@ -390,7 +393,7 @@ const mediaMixin = {
         renderer.requestFullscreen?.()
       }
     },
-    onMediaRendererReady({ rendererId, playerContainer, requestFullscreen, scrollIntoView }) {
+    async onMediaRendererReady({ rendererId, playerContainer, requestFullscreen, scrollIntoView }) {
       if (!rendererId) return
 
       this.renderers[rendererId] = {
@@ -404,7 +407,7 @@ const mediaMixin = {
 
       if (pending && playerContainer) {
         delete this.pendingMediaByRenderer[rendererId]
-        this.viewMedia({ rendererId, ...pending })
+        await this.viewMedia({ rendererId, ...pending })
       }
 
       this.renderers[rendererId]?.scrollIntoView?.({
