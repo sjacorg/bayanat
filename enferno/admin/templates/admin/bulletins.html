@@ -1,10 +1,4 @@
 {% extends 'layout.html' %}
-
-{% block css %}
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
-
-{% endblock %}
-
 {% block content %}
 
 
@@ -436,8 +430,6 @@
     <script src="/static/js/components/MixYesNoField.js"></script>
     <script src="/static/js/components/MixSelectField.js"></script>
     <script src="/static/js/components/MixReportersField.js"></script>
-
-    <script src="/static/js/videojs/video.min.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}

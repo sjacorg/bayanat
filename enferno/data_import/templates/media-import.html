@@ -1,9 +1,4 @@
 {% extends 'layout.html' %}
-{% block css %}
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
-
-
-{% endblock %}
 {% block content %}
 
             <v-main class="align-start ma-4">
@@ -340,8 +335,6 @@
     <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.ETL_VID_EXT) }}'></div>
 {% endblock %}
 {% block js %}
-    <script src="/static/js/videojs/video.min.js"></script>
-
 
     <script src="/static/js/components/VueDropzone.js"></script>
 
