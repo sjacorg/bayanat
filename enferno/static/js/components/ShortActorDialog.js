@@ -505,3 +505,5 @@ const ShortActorDialog = Vue.defineComponent({
 
     `,
 });
+
+window.ShortActorDialog = ShortActorDialog;

@@ -389,7 +389,6 @@
     <script src="/static/js/components/BulletinSearchBox.js"></script>
     <script src="/static/js/components/ActorSearchBox.js"></script>
     <script src="/static/js/components/IncidentSearchBox.js"></script>
-    <script src="/static/js/components/ShortActorDialog.js"></script>
 
 
 
@@ -1734,7 +1733,7 @@
         app.component('MissingPersonCard', MissingPersonCard);
         app.component('TinymceEditor', Editor);
         app.component('ActorProfiles', ActorProfiles);
-        app.component('ShortActorDialog', ShortActorDialog);
+        app.component('ShortActorDialog', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ShortActorDialog.js')));
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);

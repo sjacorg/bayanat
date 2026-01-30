@@ -788,3 +788,40 @@ function loadAsset(src) {
   loadedAssets.set(src, promise);
   return promise;
 }
+
+const loadedComponents = new Map();
+function loadComponent(src) {
+  if (loadedComponents.has(src)) {
+    return loadedComponents.get(src);
+  }
+
+  const promise = (async () => {
+    const componentName = src.split('/').pop().replace('.js', '');
+    
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing && window[componentName]) {
+      return window[componentName];
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      
+      script.onload = () => {
+        if (window[componentName]) {
+          resolve(window[componentName]);
+        } else {
+          reject(new Error(`Component ${componentName} not found after loading ${src}`));
+        }
+      };
+      
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+
+      document.head.appendChild(script);
+    });
+  })();
+
+  loadedComponents.set(src, promise);
+  return promise;
+}
