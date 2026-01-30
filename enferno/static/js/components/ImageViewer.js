@@ -14,9 +14,23 @@ const ImageViewer = Vue.defineComponent({
         this.destroyFullscreenLightbox();
     },
     methods: {
-        requestFullscreen(nextOptions) {
+        async loadLibraries() {
+          await loadAsset([
+            '/static/js/lightgallery/css/lg-rotate.css',
+            '/static/js/lightgallery/css/lg-zoom.css',
+            '/static/js/lightgallery/css/lg-thumbnail.css',
+            '/static/js/lightgallery/css/lightgallery.css',
+            '/static/js/lightgallery/plugins/rotate/lg-rotate.min.js',
+            '/static/js/lightgallery/plugins/zoom/lg-zoom.min.js',
+            '/static/js/lightgallery/plugins/thumbnail/lg-thumbnail.min.js',
+            '/static/js/lightgallery/lightgallery.min.js'
+          ]);
+        },
+        async requestFullscreen(nextOptions) {
             const el = this.$refs.imageViewer;
             if (!el) return;
+
+            await this.loadLibraries()
 
             const defaultOptions = {
                 plugins: [lgZoom, lgThumbnail, lgRotate],
@@ -42,9 +56,11 @@ const ImageViewer = Vue.defineComponent({
             this.addRotateListener(this.lg.fullscreen);
             this.setupZoomHack(this.lg.fullscreen);
         },
-        initInlineLightbox(nextOptions) {
+        async initInlineLightbox(nextOptions) {
             const el = this.$refs.imageViewer;
             if (!el) return;
+            
+            await this.loadLibraries()
 
             const defaultOptions = {
                 plugins: [lgZoom, lgThumbnail, lgRotate],
@@ -58,7 +74,7 @@ const ImageViewer = Vue.defineComponent({
             }
 
             const options = { ...defaultOptions, ...nextOptions }
-        
+
             this.lg.inline = lightGallery(el, options);
             this.lg.inline.openGallery(0); // Open the first image by default
 
@@ -142,10 +158,10 @@ const ImageViewer = Vue.defineComponent({
         media: {
           deep: true,
           immediate: true,
-          handler() {
-            this.$nextTick(() => {
+          async handler() {
+            this.$nextTick(async () => {
               this.destroyInlineLightbox();
-              this.initInlineLightbox(); // re-init with latest DOM
+              await this.initInlineLightbox(); // re-init with latest DOM
             });
           }
         }
