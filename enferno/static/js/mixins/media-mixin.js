@@ -100,7 +100,10 @@ const mediaMixin = {
       this.snapshotDialog = false;
     },
 
-    initCroppr(rendererId) {
+    async initCroppr(rendererId) {
+      await loadAsset('/static/js/croppr/croppr.min.css')
+      await loadAsset('/static/js/croppr/croppr.min.js')
+
       if (this.cropper.active) this.destroyCrop();
       this.openSnapshotDialog();
     
