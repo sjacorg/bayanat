@@ -747,13 +747,14 @@ function deepClone(value) {
 }
 
 // Load external script dynamically with caching
-const loadedScripts = new Map();
-function loadScript(src) {
-  if (loadedScripts.has(src)) {
-    return loadedScripts.get(src);
+const loadedAssets = new Map();
+function loadAsset(src) {
+  if (loadedAssets.has(src)) {
+    return loadedAssets.get(src);
   }
 
   const isModule = src.endsWith('.mjs');
+  const isCSS = src.endsWith('.css');
   
   const promise = (async () => {
     // For ES modules, use dynamic import
@@ -761,7 +762,26 @@ function loadScript(src) {
       return await import(src);
     }
     
-    // For regular scripts, use the existing logic
+    // For CSS files
+    if (isCSS) {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`link[href="${src}"]`);
+        if (existing) {
+          resolve();
+          return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = src;
+        link.onload = () => resolve();
+        link.onerror = () => reject(new Error(`Failed to load CSS: ${src}`));
+
+        document.head.appendChild(link);
+      });
+    }
+    
+    // For regular scripts
     return new Promise((resolve, reject) => {
       const existing = document.querySelector(`script[src="${src}"]`);
       if (existing) {
@@ -779,6 +799,6 @@ function loadScript(src) {
     });
   })();
 
-  loadedScripts.set(src, promise);
+  loadedAssets.set(src, promise);
   return promise;
 }
