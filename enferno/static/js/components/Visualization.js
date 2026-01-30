@@ -13,7 +13,7 @@ const Visualization = Vue.defineComponent({
 
   methods: {
     async loadLibraries() {
-      await loadScript('/static/js/force-graph.min.js');
+      await loadAsset('/static/js/force-graph.min.js');
     },
     show() {
       this.dlg = true;
