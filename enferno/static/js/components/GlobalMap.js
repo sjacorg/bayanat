@@ -39,27 +39,27 @@ const GlobalMap = Vue.defineComponent({
     };
   },
 
-  mounted() {
+  async mounted() {
     this.map = null;
-    this.initMap();
+    await this.initMap();
   },
 
   watch: {
-    modelValue(val, old) {
+    async modelValue(val, old) {
 
       if (val?.length || val !== old) {
         this.locations = val;
         this.selectedLocations = [...this.uniqueEventTypes];
-        this.fitMarkers();
-        this.updateMapBounds();
+        await this.fitMarkers();
+        await this.updateMapBounds();
       }
       if (val.length === 0) {
         this.map.setView([this.lat, this.lng]);
       }
     },
-    selectedLocations(val) {
+    async selectedLocations(val) {
       this.clearAllLayers();
-      this.fitMarkers();
+      await this.fitMarkers();
     },
     locations() {
       this.$emit('update:modelValue', this.locations);
@@ -123,7 +123,25 @@ const GlobalMap = Vue.defineComponent({
       return wrapper;
     },
 
-    initMap() {
+    async loadLibraries() {
+      await loadAsset('/static/js/leaflet.js')
+      await loadAsset([
+        '/static/css/leaflet.css',
+        '/static/css/MarkerCluster.css',
+        '/static/css/MarkerCluster.Default.css',
+        '/static/css/Leaflet.PolylineMeasure.css',
+        '/static/leaflet-fullscreen/leaflet.fullscreen.css',
+        '/static/leaflet-fullscreen/leaflet.fullscreen.min.js',
+        '/static/js/leaflet.markercluster.js',
+        '/static/js/leaflet.curve.min.js',
+        '/static/js/leaflet.rotatedmarker.min.js',
+        '/static/js/Leaflet.PolylineMeasure.js',
+        '/static/js/Leaflet.GoogleMutant.js',
+      ])
+    },
+    async initMap() {
+      await this.loadLibraries();
+
       this.map = L.map(this.mapId, {
         center: [this.lat, this.lng],
         zoom: this.zoom,
@@ -161,9 +179,10 @@ const GlobalMap = Vue.defineComponent({
         }),
       );
 
-      this.fitMarkers();
+      await this.fitMarkers();
     },
-    updateMapBounds() {
+    async updateMapBounds() {
+      await this.loadLibraries();
       // Fit map of bounds of clusterLayer
       let bounds = this.markerGroup.getBounds();
       if (bounds.isValid()){
@@ -183,7 +202,8 @@ const GlobalMap = Vue.defineComponent({
       // Remove event links group
       this.eventLinks?.clearLayers?.();
     },
-    fitMarkers() {
+    async fitMarkers() {
+      await this.loadLibraries();
       // construct a list of markers to build a feature group
       if (this.markerGroup) {
         this.map.removeLayer(this.markerGroup);
