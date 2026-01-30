@@ -376,7 +376,6 @@ input[type="date"]::-webkit-input-placeholder {
 
 /* quick initial dark mode support for leaflet map */
 
-.theme--dark .vue2leaflet-map,
 .theme--dark .map-legend .caption i {
     filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
 }
