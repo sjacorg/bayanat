@@ -90,37 +90,9 @@
 {% endblock %}
 
 {% block js %}
-
 <script src="/static/js/mixins/media-mixin.js"></script>
 <script src="/static/js/mixins/relations-mixin.js"></script>
 <script src="/static/js/mixins/form-builder-mixin.js"></script>
-<script src="/static/js/components/BulletinCard.js"></script>
-<script src="/static/js/components/ActorProfiles.js"></script>
-<script src="/static/js/components/ActorCard.js"></script>
-<script src="/static/js/components/ReadMore.js"></script>
-<script src="/static/js/components/IncidentCard.js"></script>
-<script src="/static/js/components/EventCard.js"></script>
-
-<script src="/static/js/components/MediaCard.js"></script>
-<script src="/static/js/components/BulletinResult.js"></script>
-<script src="/static/js/components/ActorResult.js"></script>
-<script src="/static/js/components/IncidentResult.js"></script>
-<script src="/static/js/components/UniField.js"></script>
-
-<script src="/static/js/components/RelatedBulletinsCard.js"></script>
-<script src="/static/js/components/RelatedActorsCard.js"></script>
-<script src="/static/js/components/RelatedIncidentsCard.js"></script>
-
-<script src="/static/js/components/PdfViewer.js"></script>
-<script src="/static/js/components/ImageViewer.js"></script>
-<script src="/static/js/components/InlineMediaRenderer.js"></script>
-<script src="/static/js/components/GlobalMap.js"></script>
-<script src="/static/js/components/Visualization.js"></script>
-<script src="/static/js/components/PreviewCard.js"></script>
-<script src="/static/js/components/ImportLogStatus.js"></script>
-<script src="/static/js/components/ImportLogCard.js"></script>
-<script src="/static/js/components/MissingPersonCard.js"></script>
-<script src="/static/js/components/MediaGrid.js"></script>
 
 {% if config.GOOGLE_MAPS_API_KEY %}
     {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -286,39 +258,37 @@
     });
 
 
-        app.component('ImportLogStatus', ImportLogStatus);
-        app.component('MediaCard', MediaCard);
-        app.component('BulletinResult', BulletinResult);
-        app.component('ActorResult', ActorResult);
-        app.component('IncidentResult', IncidentResult);
-        app.component('UniField', UniField);
-        app.component('PdfViewer', PdfViewer);
-        app.component('ImageViewer', ImageViewer);
-        app.component('InlineMediaRenderer', InlineMediaRenderer);
-        app.component('GlobalMap', GlobalMap);
-        app.component('Visualization', Visualization);
-        app.component('PreviewCard', PreviewCard);
-        app.component('ImportLogCard', ImportLogCard);
-        app.component('BulletinCard', BulletinCard);
-        app.component('ActorProfiles', ActorProfiles);
-        app.component('ActorCard', ActorCard);
-        app.component('ReadMore', ReadMore);
-        app.component('IncidentCard', IncidentCard);
-        app.component('EventCard', EventCard);
-        app.component('MediaGrid', MediaGrid);
+    app.component('ImportLogStatus', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ImportLogStatus.js')));
+    app.component('MediaCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/MediaCard.js')));
+    app.component('BulletinResult', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/BulletinResult.js')));
+    app.component('ActorResult', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ActorResult.js')));
+    app.component('IncidentResult', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/IncidentResult.js')));
+    app.component('UniField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/UniField.js')));
+    app.component('PdfViewer', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/PdfViewer.js')));
+    app.component('ImageViewer', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ImageViewer.js')));
+    app.component('InlineMediaRenderer', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/InlineMediaRenderer.js')));
+    app.component('GlobalMap', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/GlobalMap.js')));
+    app.component('Visualization', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/Visualization.js')));
+    app.component('PreviewCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/PreviewCard.js')));
+    app.component('ImportLogCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ImportLogCard.js')));
+    app.component('BulletinCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/BulletinCard.js')));
+    app.component('ActorProfiles', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ActorProfiles.js')));
+    app.component('ActorCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ActorCard.js')));
+    app.component('ReadMore', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ReadMore.js')));
+    app.component('IncidentCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/IncidentCard.js')));
+    app.component('EventCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/EventCard.js')));
+    app.component('MediaGrid', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/MediaGrid.js')));
+    app.component('RelatedBulletinsCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/RelatedBulletinsCard.js')));
+    app.component('RelatedActorsCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/RelatedActorsCard.js')));
+    app.component('RelatedIncidentsCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/RelatedIncidentsCard.js')));
+    app.component('MissingPersonCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/MissingPersonCard.js')));
 
-        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
-        app.component('RelatedActorsCard', RelatedActorsCard);
-        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
-
-        app.component('MissingPersonCard', MissingPersonCard);
-
-        app.use(router).use(vuetify);
-        router.isReady().then(() => {
-            app.mount('#app');
-            window.app = app;
-        });
+    app.use(router).use(vuetify);
+    router.isReady().then(() => {
+        app.mount('#app');
+        window.app = app;
+    });
 
 
-    </script>
+</script>
 {% endblock %}

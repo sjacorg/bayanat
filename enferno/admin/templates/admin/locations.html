@@ -146,19 +146,8 @@
 
 
 {% endblock %} {% block js %}
-    <script
-           src="/static/js/tinymce/js/tinymce/tinymce.min.js"
-            referrerpolicy="origin">
-    </script>
+    <script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <script src="/static/js/tinymce-vue.min.js"></script>
-    <script src="/static/js/components/LocationCard.js"></script>
-    <script src="/static/js/components/UniField.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
-    <script src="/static/js/components/GeoMap.js"></script>
-    <script src="/static/js/components/GlobalMap.js"></script>
-    <script src="/static/js/components/DualField.js"></script>
-    <script src="/static/js/components/LocationSearchBox.js"></script>
-    <script src="/static/js/components/ReadMore.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -168,7 +157,7 @@
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
 
-         const {createApp} = Vue;
+        const {createApp} = Vue;
         const {createVuetify} = Vuetify;
         const vuetify = createVuetify(vuetifyConfig);
 
@@ -527,15 +516,15 @@
         });
 
         app.component("TinymceEditor", Editor);
-        app.component('LocationCard', LocationCard);
-        app.component('LocationSearchBox', LocationSearchBox);
-        app.component('UniField', UniField);
-        app.component('SearchField', SearchField);
-        app.component('LocationSearchField', LocationSearchField);
-        app.component('DualField', DualField);
-        app.component('GeoMap', GeoMap);
-        app.component('GlobalMap', GlobalMap);
-        app.component('ReadMore', ReadMore);
+        app.component('LocationCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/LocationCard.js')));
+        app.component('LocationSearchBox', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/LocationSearchBox.js')));
+        app.component('UniField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/UniField.js')));
+        app.component('SearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
+        app.component('LocationSearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
+        app.component('DualField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/DualField.js')));
+        app.component('GeoMap', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/GeoMap.js')));
+        app.component('GlobalMap', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/GlobalMap.js')));
+        app.component('ReadMore', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ReadMore.js')));
         app.use(router).use(vuetify);
         router.isReady().then(() => {
             app.mount('#app');

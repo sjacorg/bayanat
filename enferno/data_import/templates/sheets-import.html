@@ -819,16 +819,8 @@
     <div class="d-none" data-allowed-sheets-types='.{{ ",.".join(config.SHEETS_ALLOWED_EXTENSIONS) }}'></div>
 {% endblock %}
 {% block js %}
-
-
-    <script src="/static/js/components/VueDropzone.js"></script>
-
-
-
     <script src="/static/js/Sortable.min.js"></script>
     <script src="/static/js/vuedraggable.umd.js"></script>
-    <script src="/static/js/components/DropField.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
 
     <script nonce="{{ csp_nonce() }}">
 
@@ -1450,13 +1442,16 @@
             }
         });
 
-        app.component('VueDropzone', VueDropzone);
-        app.component('SearchField', SearchField);
-        app.component('DropField', DropField);
         app.component('Draggable', draggable);
+        app.component('VueDropzone', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/VueDropzone.js')));
+        app.component('SearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
+        app.component('DropField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/DropField.js')));
 
 
-        app.use(vuetify).mount('#app');
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}
