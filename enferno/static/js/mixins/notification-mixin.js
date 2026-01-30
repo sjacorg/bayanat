@@ -1,6 +1,6 @@
 const notificationMixin = {
   components: {
-    NotificationsList,
+    NotificationsList: Vue.defineAsyncComponent(() => loadComponent('/static/js/components/NotificationsList.js')),
   },
   computed: {
     hasUnreadNotifications() {
