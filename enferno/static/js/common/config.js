@@ -790,17 +790,18 @@ function loadAsset(src) {
 }
 
 const loadedComponents = new Map();
-function loadComponent(src) {
+function loadComponent(src, componentName) {
   if (loadedComponents.has(src)) {
     return loadedComponents.get(src);
   }
 
   const promise = (async () => {
-    const componentName = src.split('/').pop().replace('.js', '');
+    // Use provided name or extract from filename
+    const name = componentName || src.split('/').pop().replace('.js', '');
     
     const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing && window[componentName]) {
-      return window[componentName];
+    if (existing && window[name]) {
+      return window[name];
     }
 
     return new Promise((resolve, reject) => {
@@ -809,10 +810,10 @@ function loadComponent(src) {
       script.async = true;
       
       script.onload = () => {
-        if (window[componentName]) {
-          resolve(window[componentName]);
+        if (window[name]) {
+          resolve(window[name]);
         } else {
-          reject(new Error(`Component ${componentName} not found after loading ${src}`));
+          reject(new Error(`Component ${name} not found after loading ${src}`));
         }
       };
       
