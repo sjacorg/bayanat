@@ -339,8 +339,10 @@
         app.component('ImageViewer', ImageViewer);
         app.component('PdfViewer', PdfViewer);
 
-        app.use(router);
-        app.use(vuetify).mount('#app');
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}

@@ -158,8 +158,11 @@
   app.component('Draggable', vuedraggable);
   app.component('ShowDetails', ShowDetails);
 
-  app.use(router);
-  app.use(vuetify).mount('#app');
+  app.use(router).use(vuetify);
+  router.isReady().then(() => {
+      app.mount('#app');
+      window.app = app;
+  });
 
   window.app = app;
 </script>

@@ -536,6 +536,10 @@
         app.component('GeoMap', GeoMap);
         app.component('GlobalMap', GlobalMap);
         app.component('ReadMore', ReadMore);
-        app.use(router).use(vuetify).mount('#app');
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}

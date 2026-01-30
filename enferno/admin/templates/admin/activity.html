@@ -429,8 +429,11 @@
   app.component('MissingPersonCard', MissingPersonCard);
   app.component('VueDropzone', VueDropzone);
 
-  app.use(router);
-  app.use(vuetify).mount('#app');
+  app.use(router).use(vuetify);
+  router.isReady().then(() => {
+      app.mount('#app');
+      window.app = app;
+  });
 
 </script>
 {% endblock %}
