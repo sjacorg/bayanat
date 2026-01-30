@@ -48,3 +48,5 @@ const VueDropzone = Vue.defineComponent({
     <div class="dropzone" v-bind="$attrs"></div>
   `,
 });
+
+window.VueDropzone = VueDropzone;

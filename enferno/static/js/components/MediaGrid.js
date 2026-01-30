@@ -45,3 +45,4 @@ const MediaGrid = Vue.defineComponent({
       </div>
   `,
 });
+window.MediaGrid = MediaGrid;

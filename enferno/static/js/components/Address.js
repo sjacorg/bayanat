@@ -44,3 +44,5 @@ const AddressField = Vue.defineComponent({
 
     `,
 });
+
+window.Address = Address;

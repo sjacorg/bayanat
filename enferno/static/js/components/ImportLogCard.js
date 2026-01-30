@@ -101,3 +101,5 @@ const ImportLogCard = Vue.defineComponent({
       </v-card>
     `,
 });
+
+window.ImportLogCard = ImportLogCard;

@@ -420,3 +420,5 @@ const GlobalMap = Vue.defineComponent({
       </div>
     `,
 });
+
+window.GlobalMap = GlobalMap;

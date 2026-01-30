@@ -74,3 +74,5 @@ const DropField = Vue.defineComponent({
 
   `,
 });
+
+window.DropField = DropField;

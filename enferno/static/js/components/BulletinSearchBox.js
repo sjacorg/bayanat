@@ -624,3 +624,5 @@ const BulletinSearchBox = Vue.defineComponent({
 
   `,
 });
+
+window.BulletinSearchBox = BulletinSearchBox;

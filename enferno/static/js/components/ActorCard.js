@@ -544,3 +544,5 @@ const ActorCard = Vue.defineComponent({
       </v-card>
     `,
 });
+
+window.ActorCard = ActorCard;

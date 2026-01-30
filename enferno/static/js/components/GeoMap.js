@@ -447,3 +447,5 @@ const GeoMap = Vue.defineComponent({
 
     `,
 });
+
+window.GeoMap = GeoMap;

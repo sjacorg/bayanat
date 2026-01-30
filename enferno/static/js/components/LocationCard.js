@@ -195,3 +195,5 @@ const LocationCard = Vue.defineComponent({
     </v-card>
   `,
 });
+
+window.LocationCard = LocationCard;

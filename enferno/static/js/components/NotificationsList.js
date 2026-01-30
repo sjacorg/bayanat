@@ -194,3 +194,5 @@ const NotificationsList = Vue.defineComponent({
         </div>
     `
 });
+
+window.NotificationsList = NotificationsList;

@@ -37,3 +37,5 @@ const PdfViewer = Vue.defineComponent({
     </div>
     `,
 });
+
+window.PdfViewer = PdfViewer;

@@ -175,3 +175,4 @@ const ImageViewer = Vue.defineComponent({
       `,
   });
   
+window.ImageViewer = ImageViewer;

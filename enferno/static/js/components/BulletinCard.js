@@ -475,3 +475,5 @@ const BulletinCard = Vue.defineComponent({
 
   `,
 });
+
+window.BulletinCard = BulletinCard;

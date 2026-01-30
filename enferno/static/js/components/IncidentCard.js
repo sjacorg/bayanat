@@ -364,3 +364,5 @@ const IncidentCard = Vue.defineComponent({
       </v-card>
     `,
 });
+
+window.IncidentCard = IncidentCard;

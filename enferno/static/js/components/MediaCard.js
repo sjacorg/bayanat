@@ -354,3 +354,4 @@ const MediaCard = Vue.defineComponent({
     </v-card>
   `
 });
+window.MediaCard = MediaCard;

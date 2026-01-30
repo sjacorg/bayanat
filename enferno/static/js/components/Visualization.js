@@ -352,3 +352,5 @@ drawLink(link, ctx) {
 
     `,
 });
+
+window.Visualization = Visualization;

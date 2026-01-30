@@ -249,3 +249,5 @@ const EventsSection = Vue.defineComponent({
     </div>
     `,
 });
+
+window.EventsSection = EventsSection;

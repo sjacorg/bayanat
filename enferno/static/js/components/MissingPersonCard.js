@@ -126,3 +126,5 @@ const MissingPersonCard = Vue.defineComponent({
 
         `,
 });
+
+window.MissingPersonCard = MissingPersonCard;
