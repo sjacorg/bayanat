@@ -3,7 +3,6 @@ from __future__ import annotations
 from flask import Response, request, json
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
-from sqlalchemy import select, func
 
 from enferno.admin.models import (
     Activity,
@@ -17,7 +16,7 @@ from enferno.admin.models import (
     WorkflowStatus,
 )
 from enferno.admin.validation.models import ActivityQueryRequestModel, GraphVisualizeRequestModel
-from enferno.extensions import rds, db
+from enferno.extensions import rds
 from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
@@ -251,7 +250,7 @@ def api_query_delete(
 
 
 @admin.get("/api/graph/json")
-def graph_json() -> Optional[str]:
+def graph_json() -> str | None:
     """
     API Endpoint to return graph data in json format.
 

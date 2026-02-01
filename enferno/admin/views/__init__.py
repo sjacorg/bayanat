@@ -4,7 +4,7 @@ import os
 from functools import wraps
 
 from flask import Blueprint, g, request
-from flask_security.decorators import auth_required, current_user, roles_accepted
+from flask_security.decorators import auth_required, current_user
 
 from enferno.admin.models import Activity
 from enferno.user.models import User
@@ -138,7 +138,7 @@ from . import bulletins  # noqa: E402, F401
 from . import media  # noqa: E402, F401
 from . import actors  # noqa: E402, F401
 from . import history  # noqa: E402, F401
-from . import users  # noqa: E402, F401
+from . import users  # noqa: E402, F401, F811
 from . import incidents  # noqa: E402, F401
 from . import activity  # noqa: E402, F401
 from . import system  # noqa: E402, F401
