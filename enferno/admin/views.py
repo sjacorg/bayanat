@@ -126,6 +126,7 @@ from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
+from enferno.utils.text_utils import normalize_arabic
 from enferno.utils.dynamic_field_utils import create_field, update_field, delete_field
 from enferno.admin.models.DynamicField import DynamicField
 from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
@@ -7005,8 +7006,9 @@ def api_media_dashboard():
     elif ocr_status:
         query = query.filter(Extraction.status == ocr_status)
 
-    # Text search in extracted text
+    # Text search in extracted text (normalize Arabic for consistent matching)
     if search:
+        search = normalize_arabic(search)
         query = query.filter(Extraction.text.ilike(f"%{search}%"))
 
     # Date range filter on extraction created_at

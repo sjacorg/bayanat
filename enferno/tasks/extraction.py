@@ -13,6 +13,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_i
 from enferno.admin.models import Media, Extraction
 from enferno.extensions import db
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.text_utils import normalize_arabic
 
 logger = get_logger()
 
@@ -229,6 +230,7 @@ def _normalize(text: str) -> str:
     if not text:
         return ""
     text = unicodedata.normalize("NFC", text)
+    text = normalize_arabic(text)
     # Collapse horizontal whitespace (spaces, tabs) but preserve newlines
     text = re.sub(r"[^\S\n]+", " ", text)
     # Fix hyphenated words with spaces

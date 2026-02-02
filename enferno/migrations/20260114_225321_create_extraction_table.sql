@@ -29,12 +29,10 @@ CREATE INDEX IF NOT EXISTS ix_extraction_media_id ON extraction (media_id);
 CREATE INDEX IF NOT EXISTS ix_extraction_status ON extraction (status);
 CREATE INDEX IF NOT EXISTS ix_extraction_confidence ON extraction (confidence);
 
--- Full-text search index
-CREATE INDEX IF NOT EXISTS ix_extraction_text_fts
-    ON extraction USING GIN(to_tsvector('simple', text));
-
--- Trigram index for fuzzy search (requires pg_trgm extension)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+-- Trigram index for fuzzy/ILIKE search on extracted text.
+-- Prerequisite: pg_trgm extension must be installed by a superuser:
+--   CREATE EXTENSION IF NOT EXISTS pg_trgm;
+-- The database locale must be UTF-8 for proper Arabic trigram support.
 CREATE INDEX IF NOT EXISTS ix_extraction_text_trgm
     ON extraction USING GIN(text gin_trgm_ops);
 

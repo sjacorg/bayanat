@@ -29,6 +29,7 @@ from enferno.admin.models import (
 from enferno.admin.models.DynamicField import DynamicField
 from enferno.user.models import Role
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.text_utils import normalize_arabic
 
 
 logger = get_logger()
@@ -99,7 +100,7 @@ class SearchUtils:
             .where(Extraction.text.isnot(None))
         )
         for word in self.tsv_words:
-            ocr_query = ocr_query.where(Extraction.text.ilike(f"%{word}%"))
+            ocr_query = ocr_query.where(Extraction.text.ilike(f"%{normalize_arabic(word)}%"))
 
         result = db.session.execute(ocr_query)
         return {row[0] for row in result}
@@ -396,7 +397,9 @@ class SearchUtils:
                     .where(Extraction.text.isnot(None))
                 )
                 for word in words:
-                    ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
+                    ocr_subquery = ocr_subquery.where(
+                        Extraction.text.ilike(f"%{normalize_arabic(word)}%")
+                    )
 
                 # Combine: (all words in bulletin) OR (all words in OCR)
                 # This preserves index usage on bulletin.search while adding OCR results
@@ -438,7 +441,9 @@ class SearchUtils:
                     .where(Extraction.text.isnot(None))
                 )
                 for word in words:
-                    ocr_subquery = ocr_subquery.where(Extraction.text.ilike(f"%{word}%"))
+                    ocr_subquery = ocr_subquery.where(
+                        Extraction.text.ilike(f"%{normalize_arabic(word)}%")
+                    )
                 conditions.append(Bulletin.id.in_(ocr_subquery))
 
         # Origin ID
