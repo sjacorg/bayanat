@@ -46,7 +46,11 @@ def process_media_extraction_task(media_id: int, language_hints: list = None) ->
             return {"success": False, "media_id": media_id, "error": "Media not found"}
 
         if media.extraction:
-            return {"success": True, "media_id": media_id, "skipped": True}
+            if media.extraction.status == "failed":
+                db.session.delete(media.extraction)
+                db.session.commit()
+            else:
+                return {"success": True, "media_id": media_id, "skipped": True}
 
         if not _is_ocr_supported(media):
             return {"success": False, "media_id": media_id, "error": "Unsupported file type"}
