@@ -251,7 +251,7 @@
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/PopDateField.js"></script>
     <script src="/static/js/components/PopDateRangeField.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
