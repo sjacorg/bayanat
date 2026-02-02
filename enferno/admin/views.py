@@ -6974,6 +6974,7 @@ def api_dynamic_fields_history(entity_type):
 # OCR Extraction endpoints
 @admin.get("/api/media/dashboard")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_media_dashboard():
     """
     Media dashboard with OCR status.
@@ -7047,6 +7048,7 @@ def api_media_dashboard():
 
 @admin.get("/api/ocr/review")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_ocr_review():
     """
     Shortcut for extractions needing review (oldest first).
@@ -7095,6 +7097,7 @@ def api_ocr_review():
 
 @admin.get("/api/ocr/transcribe")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_ocr_transcribe():
     """
     Extractions needing manual transcription (oldest first).
@@ -7143,6 +7146,7 @@ def api_ocr_transcribe():
 
 @admin.get("/api/ocr/stats")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_ocr_stats():
     """OCR processing statistics for dashboard header."""
     total_media = db.session.query(func.count(Media.id)).scalar() or 0
@@ -7173,6 +7177,7 @@ def api_ocr_stats():
 
 @admin.put("/api/extraction/<int:extraction_id>")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_extraction_update(extraction_id: int):
     """
     Update extraction record (accept, transcribe, mark unreadable).
@@ -7216,6 +7221,7 @@ def api_extraction_update(extraction_id: int):
 
 @admin.post("/api/ocr/process/<int:media_id>")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_ocr_process(media_id: int):
     """Run OCR on a single media item (sync)."""
     from enferno.tasks.extraction import process_media_extraction_task
@@ -7232,6 +7238,7 @@ def api_ocr_process(media_id: int):
 
 @admin.post("/api/ocr/bulk")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_ocr_bulk():
     """
     Bulk OCR processing via Celery (async).
@@ -7286,6 +7293,7 @@ def api_ocr_bulk():
 
 @admin.get("/api/ocr/processing")
 @auth_required("session")
+@roles_accepted("Admin")
 def api_ocr_processing():
     """Get list of media IDs currently being processed by bulk OCR."""
     redis_key = f"ocr_processing:{current_user.id}"
