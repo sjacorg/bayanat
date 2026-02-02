@@ -77,33 +77,16 @@ class SearchUtils:
         self.search = q
         self.cls = cls
         self.tsv_words = []  # Store search terms for OCR match detection
+        self._ocr_matched_ids = None  # Cached OCR bulletin IDs from query execution
 
     def get_ocr_matched_ids(self, bulletin_ids: list) -> set:
         """
         Return set of bulletin IDs that matched via OCR text (not bulletin.search).
-        Call this after get_query() to identify which results came from OCR.
+        Uses cached results from query execution - no re-query needed.
         """
-        if not self.tsv_words or not bulletin_ids:
+        if self._ocr_matched_ids is None or not bulletin_ids:
             return set()
-
-        # Query to find bulletins with OCR text matching ALL search words
-        ocr_query = (
-            select(Media.bulletin_id)
-            .join(Extraction, Media.id == Extraction.media_id)
-            .where(Media.bulletin_id.in_(bulletin_ids))
-            .where(
-                or_(
-                    Extraction.status.in_(["processed", "needs_review"]),
-                    Extraction.manual == True,
-                )
-            )
-            .where(Extraction.text.isnot(None))
-        )
-        for word in self.tsv_words:
-            ocr_query = ocr_query.where(Extraction.text.ilike(f"%{normalize_arabic(word)}%"))
-
-        result = db.session.execute(ocr_query)
-        return {row[0] for row in result}
+        return self._ocr_matched_ids & set(bulletin_ids)
 
     def get_query(self):
         """Get the query for the given class."""
@@ -383,9 +366,9 @@ class SearchUtils:
                 # Fast path: bulletin.search - individual ILIKEs enable GIN trigram index (200x faster)
                 bulletin_conditions = [Bulletin.search.ilike(f"%{word}%") for word in words]
 
-                # ONE subquery for OCR - all words must match in extraction text
-                # Includes trusted extractions: processed, needs_review, or manually transcribed
-                ocr_subquery = (
+                # Execute OCR query once and cache matching bulletin IDs
+                # This avoids running the expensive ILIKE scan as a subquery inside OR
+                ocr_query = (
                     select(Media.bulletin_id)
                     .join(Extraction, Media.id == Extraction.media_id)
                     .where(
@@ -397,13 +380,20 @@ class SearchUtils:
                     .where(Extraction.text.isnot(None))
                 )
                 for word in words:
-                    ocr_subquery = ocr_subquery.where(
+                    ocr_query = ocr_query.where(
                         Extraction.text.ilike(f"%{normalize_arabic(word)}%")
                     )
+                result = db.session.execute(ocr_query)
+                self._ocr_matched_ids = {row[0] for row in result}
 
-                # Combine: (all words in bulletin) OR (all words in OCR)
-                # This preserves index usage on bulletin.search while adding OCR results
-                conditions.append(or_(and_(*bulletin_conditions), Bulletin.id.in_(ocr_subquery)))
+                # Combine: bulletin text match OR cached OCR ID list
+                # Using IN(list) instead of IN(subquery) lets PG use simple pk lookup
+                if self._ocr_matched_ids:
+                    conditions.append(
+                        or_(and_(*bulletin_conditions), Bulletin.id.in_(self._ocr_matched_ids))
+                    )
+                else:
+                    conditions.extend(bulletin_conditions)
 
         # exclude  filter - OPTIMIZED APPROACH using raw SQL
         extsv = q.get("extsv")
@@ -689,18 +679,7 @@ class SearchUtils:
 
             conditions.append(or_(*geo_conditions))
 
-        # Use CTE to get matching IDs first
-        matching_ids = (
-            select(Bulletin.id)
-            .where(and_(*conditions))
-            .order_by(Bulletin.id.desc())
-            .cte("matching_ids")
-        )
-
-        # Join with full bulletin data
-        stmt = select(Bulletin).join(matching_ids, Bulletin.id == matching_ids.c.id)
-
-        return stmt, conditions
+        return select(Bulletin), conditions
 
     def actor_query(self, q: dict):
         """Build a select statement for actor search"""
@@ -1199,15 +1178,7 @@ class SearchUtils:
                 ids = [a.actor_id for a in incident.actor_relations]
                 conditions.append(Actor.id.in_(ids))
 
-        # Use CTE to get matching IDs first
-        matching_ids = (
-            select(Actor.id).where(and_(*conditions)).order_by(Actor.id.desc()).cte("matching_ids")
-        )
-
-        # Join with full actor data
-        stmt = select(Actor).join(matching_ids, Actor.id == matching_ids.c.id)
-
-        return stmt, conditions
+        return select(Actor), conditions
 
     def incident_query(self, q: dict):
         """Build a select statement for incident search"""
@@ -1385,18 +1356,7 @@ class SearchUtils:
                 ids = [i.get_other_id(incident.id) for i in incident.incident_relations]
                 conditions.append(Incident.id.in_(ids))
 
-        # Use CTE to get matching IDs first
-        matching_ids = (
-            select(Incident.id)
-            .where(and_(*conditions))
-            .order_by(Incident.id.desc())
-            .cte("matching_ids")
-        )
-
-        # Join with full incident data
-        stmt = select(Incident).join(matching_ids, Incident.id == matching_ids.c.id)
-
-        return stmt, conditions
+        return select(Incident), conditions
 
     def location_query(self, q: dict) -> list:
         """

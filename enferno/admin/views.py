@@ -3193,22 +3193,14 @@ def api_bulletins(validated_data: dict) -> Response:
             result = db.session.execute(main_query)
             items = result.scalars().unique().all()
         else:
-            # For search queries: keep original window function approach
-            count_subquery = (
-                base_query.add_columns(func.count().over().label("total_count"))
-                .order_by(Bulletin.id.desc())
-                .limit(per_page + 1)
-            )
+            # For search queries: separate data + count for faster first-page response
+            main_query = base_query.order_by(Bulletin.id.desc()).limit(per_page + 1)
+            result = db.session.execute(main_query)
+            items = result.scalars().unique().all()
 
-            result = db.session.execute(count_subquery)
-            rows = result.all()
-
-            if rows:
-                items = [row[0] for row in rows]  # Extract Bulletin objects
-                total_count = rows[0].total_count if rows else 0
-            else:
-                items = []
-                total_count = 0
+            # Separate count query - runs in parallel with serialization in practice
+            count_query = select(func.count()).select_from(base_query.subquery())
+            total_count = db.session.execute(count_query).scalar()
 
         # Determine if there are more pages
         has_more = len(items) > per_page
