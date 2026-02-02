@@ -7216,6 +7216,21 @@ def api_extraction_update(extraction_id: int):
         return HTTPResponse.error("Invalid action. Use: accept, transcribe, cant_read")
 
     db.session.commit()
+
+    detail_map = {
+        "accept": "OCR text accepted",
+        "transcribe": "Manual transcription",
+        "cant_read": "Marked unreadable",
+    }
+    Activity.create(
+        current_user,
+        Activity.ACTION_REVIEW,
+        Activity.STATUS_SUCCESS,
+        extraction.to_mini(),
+        "extraction",
+        details=detail_map.get(action),
+    )
+
     return jsonify(extraction.to_dict())
 
 
@@ -7233,6 +7248,16 @@ def api_ocr_process(media_id: int):
         return HTTPResponse.forbidden("Restricted Access")
 
     result = process_media_extraction_task(media_id)
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_CREATE,
+        Activity.STATUS_SUCCESS,
+        media.to_mini(),
+        "extraction",
+        details=f"OCR processed (status: {result.get('status', 'unknown')})",
+    )
+
     return jsonify(result)
 
 
