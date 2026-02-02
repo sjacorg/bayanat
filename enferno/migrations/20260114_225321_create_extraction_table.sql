@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS ix_extraction_text_trgm
 -- Foreign key constraints
 ALTER TABLE extraction
 ADD CONSTRAINT fk_extraction_media_id
-FOREIGN KEY (media_id) REFERENCES media(id);
+FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE;
 
 ALTER TABLE extraction
 ADD CONSTRAINT fk_extraction_reviewed_by
