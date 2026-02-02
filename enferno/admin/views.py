@@ -7149,7 +7149,14 @@ def api_ocr_transcribe():
 @roles_accepted("Admin")
 def api_ocr_stats():
     """OCR processing statistics for dashboard header."""
-    total_media = db.session.query(func.count(Media.id)).scalar() or 0
+    # Only count media with OCR-eligible file extensions
+    ocr_ext = current_app.config.get("OCR_EXT", [])
+    ext_filters = [Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext]
+    total_media = (
+        db.session.query(func.count(Media.id)).filter(db.or_(*ext_filters)).scalar() or 0
+        if ext_filters
+        else 0
+    )
 
     # Count by extraction status
     status_counts = (
