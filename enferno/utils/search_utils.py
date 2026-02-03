@@ -169,6 +169,43 @@ class SearchUtils:
         """Build a query for the activity model."""
         return self.activity_query(self.search)
 
+    def _build_term_conditions(
+        self, column: ColumnElement, terms: list, exact: bool = False, negate: bool = False
+    ) -> list:
+        """
+        Build search conditions for multi-term text search.
+
+        Args:
+            column: The SQLAlchemy column to search on
+            terms: List of search terms (each treated as a phrase)
+            exact: If True, word boundary match; if False, substring match with wildcards
+            negate: If True, negate conditions (for exclude)
+
+        Returns:
+            List of SQLAlchemy conditions
+
+        Examples:
+            exact=False: "open system" -> matches "reopen systems" (substring)
+            exact=True:  "open system" -> matches "the open system" but not "reopen systems"
+        """
+        result = []
+        for term in terms:
+            if not term or not term.strip():
+                continue
+
+            term = term.strip()
+            if exact:
+                # Word boundary match - phrase as whole words (case-insensitive)
+                # \y is PostgreSQL word boundary anchor
+                escaped = re.escape(term)
+                cond = column.op("~*")(f"\\y{escaped}\\y")
+            else:
+                # Phrase search with wildcards (default)
+                cond = column.ilike(f"%{term}%")
+
+            result.append(~cond if negate else cond)
+        return result
+
     def _validate_dynamic_field_name(self, field_name: str, searchable_meta: dict) -> str:
         """
         Validate and sanitize a dynamic field name for SQL usage.
@@ -481,6 +518,26 @@ class SearchUtils:
             else:
                 conditions.append(and_(*tag_conditions))
 
+        # Search Terms - chips-based multi-term text search
+        if search_terms := q.get("searchTerms"):
+            exact = q.get("termsExact", False)
+            term_conds = self._build_term_conditions(Bulletin.search, search_terms, exact)
+            if term_conds:
+                if q.get("opTerms", False):
+                    conditions.append(or_(*term_conds))
+                else:
+                    conditions.extend(term_conds)
+
+        # Exclude Search Terms
+        if ex_terms := q.get("exTerms"):
+            exact = q.get("exTermsExact", False)
+            ex_conds = self._build_term_conditions(Bulletin.search, ex_terms, exact, negate=True)
+            if ex_conds:
+                if q.get("opExTerms", False):
+                    conditions.append(or_(*ex_conds))
+                else:
+                    conditions.extend(ex_conds)
+
         # Labels
         if labels := q.get("labels", []):
             ids = [item.get("id") for item in labels]
@@ -746,6 +803,74 @@ class SearchUtils:
                             .where(or_(*exclude_conditions))
                         )
                         conditions.append(~Actor.id.in_(subquery))
+
+        # Search Terms - chips-based multi-term text search (searches both Actor and ActorProfile)
+        if search_terms := q.get("searchTerms"):
+            exact = q.get("termsExact", False)
+            term_conds = []
+            for term in search_terms:
+                if not term or not term.strip():
+                    continue
+                term = term.strip()
+                if exact:
+                    escaped = re.escape(term)
+                    term_conds.append(
+                        or_(
+                            Actor.search.op("~*")(f"\\y{escaped}\\y"),
+                            ActorProfile.search.op("~*")(f"\\y{escaped}\\y"),
+                        )
+                    )
+                else:
+                    term_conds.append(
+                        or_(
+                            Actor.search.ilike(f"%{term}%"),
+                            ActorProfile.search.ilike(f"%{term}%"),
+                        )
+                    )
+            if term_conds:
+                if q.get("opTerms", False):
+                    # OR: match any term
+                    subquery = select(Actor.id).join(Actor.actor_profiles).where(or_(*term_conds))
+                else:
+                    # AND: match all terms (default)
+                    subquery = select(Actor.id).join(Actor.actor_profiles).where(and_(*term_conds))
+                conditions.append(Actor.id.in_(subquery))
+
+        # Exclude Search Terms (searches both Actor and ActorProfile)
+        if ex_terms := q.get("exTerms"):
+            exact = q.get("exTermsExact", False)
+            ex_conds = []
+            for term in ex_terms:
+                if not term or not term.strip():
+                    continue
+                term = term.strip()
+                if exact:
+                    escaped = re.escape(term)
+                    ex_conds.append(
+                        or_(
+                            Actor.search.op("~*")(f"\\y{escaped}\\y"),
+                            ActorProfile.search.op("~*")(f"\\y{escaped}\\y"),
+                        )
+                    )
+                else:
+                    ex_conds.append(
+                        or_(
+                            Actor.search.ilike(f"%{term}%"),
+                            ActorProfile.search.ilike(f"%{term}%"),
+                        )
+                    )
+            if ex_conds:
+                if q.get("opExTerms", False):
+                    # OR: exclude if matches any term
+                    exclude_subquery = (
+                        select(Actor.id).join(Actor.actor_profiles).where(or_(*ex_conds))
+                    )
+                else:
+                    # AND: exclude if matches all terms (default)
+                    exclude_subquery = (
+                        select(Actor.id).join(Actor.actor_profiles).where(and_(*ex_conds))
+                    )
+                conditions.append(~Actor.id.in_(exclude_subquery))
 
         # Origin ID
         originid = (q.get("originid") or "").strip()
@@ -1209,6 +1334,26 @@ class SearchUtils:
             if exclude_conditions:
                 exclude_subquery = select(Incident.id).where(or_(*exclude_conditions))
                 conditions.append(~Incident.id.in_(exclude_subquery))
+
+        # Search Terms - chips-based multi-term text search
+        if search_terms := q.get("searchTerms"):
+            exact = q.get("termsExact", False)
+            term_conds = self._build_term_conditions(Incident.search, search_terms, exact)
+            if term_conds:
+                if q.get("opTerms", False):
+                    conditions.append(or_(*term_conds))
+                else:
+                    conditions.extend(term_conds)
+
+        # Exclude Search Terms
+        if ex_terms := q.get("exTerms"):
+            exact = q.get("exTermsExact", False)
+            ex_conds = self._build_term_conditions(Incident.search, ex_terms, exact, negate=True)
+            if ex_conds:
+                if q.get("opExTerms", False):
+                    conditions.append(or_(*ex_conds))
+                else:
+                    conditions.extend(ex_conds)
 
         # Labels
         if labels := q.get("labels", []):
