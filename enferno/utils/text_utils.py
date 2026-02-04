@@ -20,6 +20,17 @@ _ARABIC_NORMALIZE = str.maketrans(
         "\u0652": None,  # sukun
         # Strip tatweel (kashida)
         "\u0640": None,
+        # Eastern Arabic numerals → Western Arabic numerals
+        "\u0660": "0",  # ٠ → 0
+        "\u0661": "1",  # ١ → 1
+        "\u0662": "2",  # ٢ → 2
+        "\u0663": "3",  # ٣ → 3
+        "\u0664": "4",  # ٤ → 4
+        "\u0665": "5",  # ٥ → 5
+        "\u0666": "6",  # ٦ → 6
+        "\u0667": "7",  # ٧ → 7
+        "\u0668": "8",  # ٨ → 8
+        "\u0669": "9",  # ٩ → 9
     }
 )
 
@@ -32,6 +43,7 @@ def normalize_arabic(text):
     - Taa marbuta (ة) → ه
     - Strips diacritics/tashkeel
     - Strips tatweel/kashida
+    - Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) → Western numerals (0123456789)
 
     Non-Arabic text passes through unchanged.
     """

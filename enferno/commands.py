@@ -259,6 +259,68 @@ def reset(username: str, password: str) -> None:
 
 
 @click.command()
+@click.option("--output", "-o", default="password_reset.txt", help="Output file for credentials")
+@click.option("--dry-run", is_flag=True, help="Preview without making changes")
+@click.option("--bcrypt-only", is_flag=True, help="Only reset users with bcrypt hashes")
+@with_appcontext
+def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool) -> None:
+    """
+    Reset all user passwords to random secure values.
+
+    Generates random passwords, updates all users, sets force-reset flag,
+    and outputs credentials to a file for admin distribution.
+    """
+    import secrets
+    import string
+
+    def generate_password(length: int = 16) -> str:
+        """Generate a secure random password."""
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+        return "".join(secrets.choice(alphabet) for _ in range(length))
+
+    users = User.query.all()
+    if not users:
+        click.echo("No users found.")
+        return
+
+    results = []
+    for user in users:
+        # Skip users with argon2 hashes if bcrypt-only flag is set
+        if bcrypt_only and user.password and user.password.startswith("$argon2"):
+            continue
+
+        new_password = generate_password()
+        results.append((user.username, user.email, new_password))
+
+        if not dry_run:
+            user.password = hash_password(new_password)
+            user.set_security_reset_key()
+            user.save()
+
+    if dry_run:
+        click.echo(f"DRY RUN - Would reset {len(results)} users:")
+        for username, email, _ in results:
+            click.echo(f"  - {username} ({email})")
+        return
+
+    # Write credentials to output file
+    with open(output, "w") as f:
+        f.write("# Password Reset Credentials\n")
+        f.write(f"# Generated: {datetime.now(timezone.utc).isoformat()}\n")
+        f.write("# DISTRIBUTE SECURELY AND DELETE THIS FILE AFTER\n\n")
+        for username, email, password in results:
+            f.write(f"Username: {username}\n")
+            f.write(f"Email: {email}\n")
+            f.write(f"Password: {password}\n")
+            f.write("-" * 40 + "\n")
+
+    click.echo(f"Reset {len(results)} user passwords.")
+    click.echo(f"Credentials saved to: {output}")
+    click.echo("IMPORTANT: Distribute credentials securely and delete the file after!")
+    logger.info(f"Reset passwords for {len(results)} users. Credentials saved to {output}")
+
+
+@click.command()
 def clean() -> None:
     """Remove *.pyc and *.pyo files recursively starting at current directory.
     Borrowed from Flask-Script, converted to use Click.
