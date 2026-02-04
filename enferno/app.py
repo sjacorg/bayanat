@@ -324,6 +324,7 @@ def register_commands(app):
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
+    app.cli.add_command(commands.reset_all_passwords)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
     app.cli.add_command(commands.generate_config)
