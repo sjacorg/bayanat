@@ -3,10 +3,19 @@ from __future__ import annotations
 import os
 import shutil
 from datetime import datetime, timedelta
+from typing import Optional
 
 import boto3
 from botocore.config import Config as BotoConfig
-from flask import Response, request, current_app, send_from_directory, abort, jsonify
+from flask import (
+    Response,
+    request,
+    current_app,
+    send_from_directory,
+    abort,
+    jsonify,
+    render_template,
+)
 from flask_security import auth_required
 from flask_security.decorators import current_user, roles_accepted
 from sqlalchemy import func, asc, desc
@@ -27,6 +36,14 @@ logger = get_logger()
 
 GRACE_PERIOD = timedelta(hours=2)
 S3_URL_EXPIRY = 3600
+
+
+# Media dashboard page route
+@admin.route("/media/", defaults={"id": None})
+@admin.route("/media/<int:id>")
+def media_dashboard(id: Optional[t.id]) -> str:
+    """Endpoint for media management."""
+    return render_template("admin/media-dashboard.html")
 
 
 @admin.post("/api/media/chunk")
@@ -379,6 +396,32 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 
 # Medias routes
+
+
+@admin.get("/api/media/<int:id>")
+@auth_required("session")
+def api_media_get(id: int):
+    """Get a single media item by ID with extraction and bulletin info."""
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.not_found("Media not found")
+
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    item = media.to_dict()
+    item["extraction"] = media.extraction.to_dict() if media.extraction else None
+    item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+    if media.bulletin:
+        item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
+    else:
+        item["bulletin"] = None
+    media_url = f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+    item["media_url"] = media_url
+    item["thumbnail_url"] = media_url
+    item["url"] = media_url
+
+    return jsonify(item)
 
 
 @admin.put("/api/media/<int:id>")
