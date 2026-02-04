@@ -4,7 +4,7 @@ from flask import Response, request, current_app, jsonify
 from flask_security.decorators import current_user, roles_accepted
 import shortuuid
 
-from enferno.admin.models import Bulletin, Activity
+from enferno.admin.models import Bulletin
 from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.models import WebImportValidationModel
 from enferno.data_import.models import DataImport

@@ -54,7 +54,7 @@ def api_labels() -> Response:
         pass
     else:
         # Include both False and NULL values for unverified labels
-        query.append(or_(Label.verified == False, Label.verified == None))
+        query.append(or_(Label.verified == False, Label.verified.is_(None)))
 
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)

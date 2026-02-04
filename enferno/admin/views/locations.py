@@ -115,6 +115,7 @@ def api_location_create(
         return HTTPResponse.created(
             message=f"Created Location #{location.id}", data={"item": location.to_dict()}
         )
+    return HTTPResponse.error("Failed to create Location")
 
 
 @admin.put("/api/location/<int:id>")

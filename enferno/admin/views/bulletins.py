@@ -8,7 +8,7 @@ from flask_security.decorators import current_user, roles_accepted, roles_requir
 from sqlalchemy import select, func
 
 from enferno.admin.constants import Constants
-from enferno.admin.models import Bulletin, Activity, WorkflowStatus, Media
+from enferno.admin.models import Bulletin, Activity, WorkflowStatus
 from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.models import (
     BulletinQueryRequestModel,

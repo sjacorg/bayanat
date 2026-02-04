@@ -20,7 +20,7 @@ from enferno.admin.validation.models import (
     UserForceResetRequestModel,
     RoleRequestModel,
 )
-from enferno.extensions import rds, db
+from enferno.extensions import db
 from enferno.user.models import User, Role, Session
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger

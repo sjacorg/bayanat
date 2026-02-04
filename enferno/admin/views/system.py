@@ -17,7 +17,6 @@ from enferno.admin.models import (
     ItobInfo,
     ItoiInfo,
     WorkflowStatus,
-    Activity,
 )
 from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.models import ConfigRequestModel
@@ -180,3 +179,5 @@ def get_data(table: str) -> list[dict[str, Any]] | list[dict[str, dict[str, Any 
     if table == "workflow_status":
         items = WorkflowStatus.query.all()
         return [{"en": item.title, "tr": item.title_tr or ""} for item in items]
+
+    return None
