@@ -60,8 +60,11 @@ const InlineMediaRenderer = Vue.defineComponent({
       }
     },
     watch: {
-      media(nextMedia) {
-        if (nextMedia) this.emitReady();
+      media: {
+        immediate: true,
+        handler(nextMedia) {
+          if (nextMedia) this.emitReady();
+        },
       },
     },
     template: `

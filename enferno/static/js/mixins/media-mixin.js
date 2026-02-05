@@ -270,7 +270,9 @@ const mediaMixin = {
         this.handleMetaData(rendererId, player)
       })
 
-      player.play()
+      player.play().catch(error => {
+        console.warn('Autoplay prevented:', error.message)
+      })
 
       this.mediaPlayers[rendererId] = player
 
@@ -388,7 +390,7 @@ const mediaMixin = {
       }
     },
     onMediaRendererReady({ rendererId, playerContainer, requestFullscreen, scrollIntoView }) {
-      if (!rendererId) return
+      if (!rendererId) return console.warn('onMediaRendererReady: rendererId is required')
 
       this.renderers[rendererId] = {
         playerContainer,

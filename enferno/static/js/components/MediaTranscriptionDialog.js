@@ -24,12 +24,20 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     isTranscriptionEmpty() {
       return !this.transcriptionText || this.transcriptionText.trim() === '';
     },
+    fileTypeFromMedia() {
+      if (this.media?.fileType?.includes('pdf')) return 'pdf';
+      if (this.media?.fileType?.includes('image')) return 'image';
+      if (this.media?.fileType?.includes('video')) return 'video';
+      if (this.media?.fileType?.includes('audio')) return 'audio';
+      
+      return 'image';
+    },
     mediaRendererData() {
       return {
-        thumbnail_url: this.media.thumbnail_url, 
-        s3url: this.media.media_url,
-        title: this.media.title,
-        id: this.media.id 
+        ...this.media,
+        s3url: this.media?.media_url,
+        title: this.media?.title,
+        id: this.media?.id,
       };
     },
     needsReview() {
@@ -83,6 +91,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
   },
   methods: {
     closeDialog() {
+      this.$root.closeExpandedMedia('ocr-dialog')
       this.$emit('update:open', false);
     },
     getConfidenceColor(confidence) {
@@ -177,6 +186,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       immediate: true,
       handler(newMedia) {
         this.transcriptionText = newMedia?.extraction?.text || '';
+        if (newMedia) {
+          this.$root.handleExpandedMedia({ rendererId: 'ocr-dialog', media: this.mediaRendererData, mediaType: this.fileTypeFromMedia });
+        }
       },
     },
   },
@@ -211,15 +223,16 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     ></v-skeleton-loader>
                     
                     <inline-media-renderer
-                        v-else
-                        :media="mediaRendererData"
-                        media-type="image"
-                        :use-metadata="true"
-                        :initial-rotation="media?.extraction?.orientation || 0"
-                        hide-close
-                        ref="inlineMediaRendererRef"
-                        content-style="height: calc(100vh - 174px);"
-                        @fullscreen="$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()"
+                      v-else
+                      renderer-id="ocr-dialog"
+                      :initial-rotation="media?.extraction?.orientation || 0"
+                      :media="$root.expandedByRenderer?.['ocr-dialog']?.media"
+                      :media-type="fileTypeFromMedia"
+                      @ready="$root.onMediaRendererReady"
+                      @fullscreen="$root.handleFullscreen('ocr-dialog')""
+                      content-style="height: calc(100vh - 174px);"
+                      hide-close
+                      :use-metadata="true"
                     ></inline-media-renderer>
                   </v-card-text>
                 </v-card>
