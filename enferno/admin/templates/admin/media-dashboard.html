@@ -179,13 +179,17 @@
                             <v-avatar
                                 size="48"
                                 rounded="lg"
-                                class="cursor-pointer"
+                                class="cursor-pointer bg-grey-lighten-2"
                             >   
-                                <v-img 
-                                    :src="item.thumbnail_url" 
-                                    alt="thumbnail"
+                                <media-thumbnail 
+                                    :media="item"
+                                    :s3url="item.media_url"
+                                    :show-hover-icon="false"
+                                    :show-play-button="false"
+                                    :show-duration="false"
+                                    :compact="true"
                                     :style="{ transform: 'rotate(' + (item?.extraction?.orientation || 0) + 'deg)' }"
-                                ></v-img>
+                                />
                             </v-avatar>
                         </template>
 
@@ -256,6 +260,7 @@
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
+    <script src="/static/js/components/MediaThumbnail.js"></script>
     <script src="/static/js/components/PopDateField.js"></script>
     <script src="/static/js/components/PopDateRangeField.js"></script>
     <script nonce="{{ csp_nonce() }}">
@@ -634,6 +639,7 @@
         app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('PopDateField', PopDateField);
         app.component('PopDateRangeField', PopDateRangeField);
+        app.component('MediaThumbnail', MediaThumbnail);
         
         app.use(router).use(vuetify);
         router.isReady().then(() => {
