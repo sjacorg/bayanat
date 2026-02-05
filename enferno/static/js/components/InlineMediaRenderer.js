@@ -110,7 +110,6 @@ const InlineMediaRenderer = Vue.defineComponent({
                       </template>
                       <div class="d-flex flex-column align-center">
                         <span><strong>{{ translations.filename_ }}</strong></span>
-                        <span>{{ translations.clickToCopy_ }}</span>
                       </div>
                     </v-tooltip>
                   </template>
@@ -118,7 +117,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                     <template v-slot:activator="{ props }">
                       <div v-bind="props" class="text-truncate">{{ media.filename }}</div>
                     </template>
-                    {{ translations.filename_ }}
+                    {{ media.filename }}
                   </v-tooltip>
                 </v-list-item>
               </div>
@@ -130,8 +129,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                         <v-icon v-bind="props" icon="mdi-fingerprint"></v-icon>
                       </template>
                       <div class="d-flex flex-column align-center">
-                        <span><strong>{{ translations.hash_ }}</strong></span>
-                        <span>{{ translations.clickToCopy_ }}</span>
+                        <span><strong>{{ translations.etag_ }}</strong></span>
                       </div>
                     </v-tooltip>
                   </template>
