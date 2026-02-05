@@ -270,7 +270,9 @@ const mediaMixin = {
         this.handleMetaData(rendererId, player)
       })
 
-      player.play()
+      player.play().catch(error => {
+        console.warn('Autoplay prevented:', error.message)
+      })
 
       this.mediaPlayers[rendererId] = player
 
@@ -388,7 +390,7 @@ const mediaMixin = {
       }
     },
     onMediaRendererReady({ rendererId, playerContainer, requestFullscreen, scrollIntoView }) {
-      if (!rendererId) return
+      if (!rendererId) return console.warn('onMediaRendererReady: rendererId is required')
 
       this.renderers[rendererId] = {
         playerContainer,
@@ -412,5 +414,15 @@ const mediaMixin = {
     onDropzoneReady(dz) {
       this.dropzoneInstance = dz
     },
+    getFileTypeFromMimeType(mimeType) {
+      if (mimeType?.includes('image/')) return 'image';
+      if (mimeType?.includes('video/')) return 'video';
+      if (mimeType?.includes('audio/')) return 'audio';
+      if (mimeType?.includes('application/pdf')) return 'pdf';
+      if (mimeType?.includes('application/msword')) return 'unknown';
+      if (mimeType?.includes('text/plain')) return 'unknown';
+      
+      return 'unknown';
+    }
   }
 };
