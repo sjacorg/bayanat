@@ -465,6 +465,14 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         </template>
                       </v-empty-state>
                       
+                      <!-- Show message for not supported file types -->
+                      <v-empty-state
+                        v-else-if="!this.$root.selectableFileTypes.includes(fileTypeFromMedia)"
+                        icon="mdi-alert-circle-outline"
+                        :title="translations.fileTypeNotSupported_"
+                        :text="translations.ocrProcessingIsOnlyAvailableForTheFollowingFileTypes_(this.$root.selectableFileTypes)"
+                      ></v-empty-state>
+
                       <!-- Show message for pending/failed items without extraction -->
                       <v-empty-state
                         v-else-if="isPending || isFailed"
