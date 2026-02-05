@@ -414,5 +414,15 @@ const mediaMixin = {
     onDropzoneReady(dz) {
       this.dropzoneInstance = dz
     },
+    getFileTypeFromMimeType(mimeType) {
+      if (mimeType?.includes('image/')) return 'image';
+      if (mimeType?.includes('video/')) return 'video';
+      if (mimeType?.includes('audio/')) return 'audio';
+      if (mimeType?.includes('application/pdf')) return 'pdf';
+      if (mimeType?.includes('application/msword')) return 'unknown';
+      if (mimeType?.includes('text/plain')) return 'unknown';
+      
+      return 'unknown';
+    }
   }
 };

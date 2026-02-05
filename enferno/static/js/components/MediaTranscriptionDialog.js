@@ -25,12 +25,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       return !this.transcriptionText || this.transcriptionText.trim() === '';
     },
     fileTypeFromMedia() {
-      if (this.media?.fileType?.includes('pdf')) return 'pdf';
-      if (this.media?.fileType?.includes('image')) return 'image';
-      if (this.media?.fileType?.includes('video')) return 'video';
-      if (this.media?.fileType?.includes('audio')) return 'audio';
-      
-      return 'image';
+      return this.$root.getFileTypeFromMimeType(this.media?.fileType);
     },
     mediaRendererData() {
       return {

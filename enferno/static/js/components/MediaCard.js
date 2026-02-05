@@ -103,12 +103,7 @@ const MediaCard = Vue.defineComponent({
   },
   computed: {
     mediaType() {
-      const fileType = this.media.fileType;
-      if (['image/jpeg', 'image/png', 'image/gif'].includes(fileType)) return 'image';
-      if (['video/webm', 'video/mp4', 'video/ogg'].includes(fileType)) return 'video';
-      if (['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'].includes(fileType)) return 'audio';
-      if (['application/pdf'].includes(fileType)) return 'pdf';
-      return 'unknown';
+      return this.$root.getFileTypeFromMimeType(this.media?.fileType);
     },
   },
   mounted() {
