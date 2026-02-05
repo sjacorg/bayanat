@@ -135,7 +135,7 @@
 {% endif %}
 <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
         const {createApp} = Vue;

@@ -214,7 +214,7 @@
 
 
 
-<script>
+<script nonce="{{ csp_nonce() }}">
   window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
   const {createApp} = Vue;
@@ -223,7 +223,7 @@
 
   const app = createApp({
     delimiters: delimiters,
-    mixins: [globalMixin, formBuilderMixin],
+    mixins: [mediaMixin, globalMixin, formBuilderMixin],
     data: () => ({
       translations: window.translations,
       itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),

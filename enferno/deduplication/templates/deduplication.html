@@ -161,7 +161,7 @@
 
 <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 
     const {createApp} = Vue;
     const {createVuetify} = Vuetify;
@@ -169,7 +169,7 @@
 
     const app = createApp({
         delimiters: delimiters,
-        mixins: [globalMixin, formBuilderMixin],
+        mixins: [mediaMixin, globalMixin, formBuilderMixin],
         
         data: () => ({
 

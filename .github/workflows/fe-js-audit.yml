@@ -1,4 +1,4 @@
-name: Static JS Libraries Scan
+name: "Security: JavaScript"
 permissions:
   contents: read
 
@@ -12,19 +12,15 @@ on:
     paths:
       - enferno/static/js/**
   schedule:
-    - cron: 29 20 * * *
+    - cron: "29 20 * * *"
 
 jobs:
-  retirejs:
+  retire-js:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Run Retire.js scan
-        run: |
-          npx retire --path ./enferno/static/ --outputformat text
+        run: npx retire --path ./enferno/static/ --outputformat text
