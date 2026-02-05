@@ -156,6 +156,23 @@ const InlineMediaRenderer = Vue.defineComponent({
           ></div>
           <pdf-viewer ref="pdfViewer" v-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
           <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :initial-rotation="initialRotation" :media="media" :media-type="mediaType" class="h-100"></image-viewer>
+
+          <!-- Fallback for unknown file types -->
+          <div v-if="mediaType === 'unknown'" class="h-100 d-flex flex-column align-center justify-center bg-grey-lighten-2">
+            <v-icon size="64" color="grey">mdi-file-download</v-icon>
+            <div class="text-h6 mt-4 text-medium-emphasis">{{ translations.previewNotAvailable_ }}</div>
+            <div class="text-caption text-medium-emphasis">{{ media.filename }}</div>
+            <v-btn 
+              color="primary" 
+              variant="elevated" 
+              class="mt-4"
+              prepend-icon="mdi-download"
+              :href="media.s3url"
+              download
+            >
+              {{ translations.downloadFile_ }}
+            </v-btn>
+          </div>
         </div>
       </div>
     `,
