@@ -187,6 +187,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       handler(newMedia) {
         this.transcriptionText = newMedia?.extraction?.text || '';
         if (newMedia) {
+          this.$root.closeExpandedMedia('ocr-dialog')
           this.$root.handleExpandedMedia({ rendererId: 'ocr-dialog', media: this.mediaRendererData, mediaType: this.fileTypeFromMedia });
         }
       },
