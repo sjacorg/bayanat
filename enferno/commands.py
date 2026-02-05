@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
+
 import os
 from datetime import datetime, timezone
 
@@ -262,8 +263,9 @@ def reset(username: str, password: str) -> None:
 @click.option("--output", "-o", default="password_reset.txt", help="Output file for credentials")
 @click.option("--dry-run", is_flag=True, help="Preview without making changes")
 @click.option("--bcrypt-only", is_flag=True, help="Only reset users with bcrypt hashes")
+@click.option("--active-only", is_flag=True, help="Only reset active users")
 @with_appcontext
-def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool) -> None:
+def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool, active_only: bool) -> None:
     """
     Reset all user passwords to random secure values.
 
@@ -278,7 +280,10 @@ def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool) -> None:
         alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
         return "".join(secrets.choice(alphabet) for _ in range(length))
 
-    users = User.query.all()
+    query = User.query
+    if active_only:
+        query = query.filter(User.active == True)
+    users = query.all()
     if not users:
         click.echo("No users found.")
         return
