@@ -1,57 +1,56 @@
 /* tajawal-regular - latin_arabic */
 @font-face {
+    font-display: swap;
     font-family: "Tajawal";
     font-style: normal;
     font-weight: 400;
     src: local("Tajawal"), local("Tajawal-Regular"),
     url("../font/tajawal-v3-latin_arabic-regular.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/tajawal-v3-latin_arabic-regular.woff") format("woff");
-    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+    url("../font/tajawal-v3-latin_arabic-regular.woff") format("woff");
 }
 
 /* tajawal-700 - latin_arabic */
 @font-face {
-    font-family: "Tajawal Bold";
+    font-display: swap;
+    font-family: "Tajawal";  /* Same family name */
     font-style: normal;
     font-weight: 700;
     src: local("Tajawal Bold"), local("Tajawal-Bold"),
     url("../font/tajawal-v3-latin_arabic-700.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/tajawal-v3-latin_arabic-700.woff") format("woff");
-    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+    url("../font/tajawal-v3-latin_arabic-700.woff") format("woff");
 }
 
 /* roboto-regular - latin */
 @font-face {
+    font-display: swap;
     font-family: "Roboto";
     font-style: normal;
     font-weight: 400;
     src: local("Roboto"), local("Roboto-Regular"),
     url("../font/roboto-v20-latin-regular.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/roboto-v20-latin-regular.woff") format("woff");
-    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+    url("../font/roboto-v20-latin-regular.woff") format("woff");
 }
 
 /* roboto-500 - latin */
 @font-face {
+    font-display: swap;
     font-family: "Roboto";
     font-style: normal;
     font-weight: 500;
     src: local("Roboto Medium"), local("Roboto-Medium"),
-        url("../font/roboto-v20-latin-500.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */
-        url("../font/roboto-v20-latin-500.woff") format("woff");
-    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+    url("../font/roboto-v20-latin-500.woff2") format("woff2"),
+    url("../font/roboto-v20-latin-500.woff") format("woff");
 }
 
 /* roboto-700 - latin */
 @font-face {
+    font-display: swap;
     font-family: "Roboto";
     font-style: normal;
     font-weight: 700;
     src: local("Roboto Bold"), local("Roboto-Bold"),
     url("../font/roboto-v20-latin-700.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/roboto-v20-latin-700.woff") format("woff");
-    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+    url("../font/roboto-v20-latin-700.woff") format("woff");
 }
 
 .v-application {
@@ -70,7 +69,8 @@
 
 .description {
     color: #323232;
-    font-family: "Tajawal Bold", sans-serif !important;
+    font-family: "Tajawal", sans-serif !important;
+    font-weight: 700 !important;  /* Use font-weight instead */
 }
 
 .v-chip {
