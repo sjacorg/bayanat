@@ -857,3 +857,5 @@ const ActorSearchBox = Vue.defineComponent({
 
     `,
 });
+
+window.ActorSearchBox = ActorSearchBox;

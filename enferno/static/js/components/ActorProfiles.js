@@ -116,3 +116,5 @@ const ActorProfiles = Vue.defineComponent({
       </v-card>
     `,
 });
+
+window.ActorProfiles = ActorProfiles;

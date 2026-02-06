@@ -115,3 +115,4 @@ const IdNumberDynamicField = Vue.defineComponent({
     `,
   });
   
+window.IdNumberDynamicField = IdNumberDynamicField;

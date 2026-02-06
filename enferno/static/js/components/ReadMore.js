@@ -84,3 +84,5 @@ const ReadMore = Vue.defineComponent({
     </div>
   `,
 });
+
+window.ReadMore = ReadMore;

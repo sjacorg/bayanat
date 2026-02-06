@@ -76,3 +76,5 @@ const ActorResult = Vue.defineComponent({
     </template>
   `,
 });
+
+window.ActorResult = ActorResult;

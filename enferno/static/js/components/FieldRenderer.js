@@ -123,3 +123,4 @@ const FieldRenderer = Vue.defineComponent({
         </div>
     `,
 });
+window.FieldRenderer = FieldRenderer;

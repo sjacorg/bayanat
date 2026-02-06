@@ -201,3 +201,5 @@ const SplitView = Vue.defineComponent({
     </div>
   `,
 });
+
+window.SplitView = SplitView;

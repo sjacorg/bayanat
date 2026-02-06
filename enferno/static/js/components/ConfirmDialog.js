@@ -119,3 +119,4 @@ const ConfirmDialog = Vue.defineComponent({
     </v-dialog>
   `,
 });
+window.ConfirmDialog = ConfirmDialog;

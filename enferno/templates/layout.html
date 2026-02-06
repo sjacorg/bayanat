@@ -9,20 +9,43 @@
 
     <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
 
-    <link rel="stylesheet" href="/static/js/jsondiffpatch/formatters/styles/html.css">
     <link rel="stylesheet" href="/static/css/app.css"/>
     <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css"/>
-    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css"/>
-    <link rel="stylesheet" href="/static/css/leaflet.css">
-    <link rel="stylesheet" href="/static/css/MarkerCluster.css">
-    <link rel="stylesheet" href="/static/css/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="/static/css/Leaflet.PolylineMeasure.css">
-    <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css">
 
-    <link rel="stylesheet" href="/static/js/lightgallery/css/lg-rotate.css"/>
-    <link rel="stylesheet" href="/static/js/lightgallery/css/lg-zoom.css"/>
-    <link rel="stylesheet" href="/static/js/lightgallery/css/lg-thumbnail.css"/>
-    <link rel="stylesheet" href="/static/js/lightgallery/css/lightgallery.css"/>
+    <style>
+        #app-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #app-loader.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #439c93;
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #app[v-cloak] {
+            display: none;
+        }
+    </style>
 
 
     <!-- favicon -->
@@ -49,8 +72,11 @@
 
 <body>
 
-<div id="app" class="justify-center full-height align-center min-vh-100">
-    <v-app v-cloak class="h-screen">
+<!-- Loading screen shown until Vue app mounts -->
+<div id="app-loader"><div class="spinner"></div></div>
+
+<div id="app" class="justify-center full-height align-center min-vh-100" v-cloak>
+    <v-app class="h-screen">
             {% block nav %}
                 {% if current_user.is_authenticated %}
                     {% include 'nav-bar.html' %}
@@ -111,26 +137,10 @@
 <script src="/static/js/vue-router.global.js"></script>
 <script src="/static/js/axios.min.js"></script>
 <script src="/static/js/dayjs-with-plugins.min.js"></script>
-<script src="/static/js/lightgallery/plugins/rotate/lg-rotate.min.js"></script>
-<script src="/static/js/lightgallery/plugins/zoom/lg-zoom.min.js"></script>
-<script src="/static/js/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script>
-<script src="/static/js/lightgallery/lightgallery.min.js"></script>
-<script src="/static/js/leaflet.js"></script>
-<script src="/static/js/vue2-leaflet.min.js"></script>
-<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
-<script src="/static/js/leaflet.markercluster.js"></script>
-<script src="/static/js/leaflet.curve.min.js"></script>
-<script src="/static/js/leaflet.rotatedmarker.min.js"></script>
-<script src="/static/js/Leaflet.PolylineMeasure.js"></script>
-<script src="/static/js/Leaflet.GoogleMutant.js"></script>
-<script src="/static/js/date_fns.min.js"></script>
 
 <script nonce="{{ csp_nonce() }}">
     {%  include 'admin/jsapi.jinja2' %}
 </script>
-<script src="/static/js/components/NotificationsList.js"></script>
-<script src="/static/js/components/ConfirmDialog.js"></script>
-<script src="/static/js/components/Toast.js"></script>
 <script src="/static/js/common/config.js"></script>
 <script src="/static/js/mixins/reauth-mixin.js"></script>
 <script src="/static/js/mixins/notification-mixin.js"></script>

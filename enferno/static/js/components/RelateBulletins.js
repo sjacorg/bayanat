@@ -55,3 +55,5 @@ const RelateBulletins = Vue.defineComponent({
     </relate-items-template>
     `,
 });
+
+window.RelateBulletins = RelateBulletins;

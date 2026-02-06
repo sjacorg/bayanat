@@ -93,3 +93,5 @@ const RelatedIncidentsCard = Vue.defineComponent({
     </v-card>
   `,
 });
+
+window.RelatedIncidentsCard = RelatedIncidentsCard;

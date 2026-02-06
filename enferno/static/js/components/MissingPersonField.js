@@ -55,3 +55,4 @@ const MissingPersonField = Vue.defineComponent({
     </v-sheet>
   `,
 });
+window.MissingPersonField = MissingPersonField;

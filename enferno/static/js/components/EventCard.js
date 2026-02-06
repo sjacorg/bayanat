@@ -61,3 +61,5 @@ const EventCard = Vue.defineComponent({
 
   `,
 });
+
+window.EventCard = EventCard;
