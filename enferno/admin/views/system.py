@@ -141,17 +141,6 @@ def api_app_reload() -> Response:
     return HTTPResponse.success(message="Configuration refreshed.")
 
 
-@admin.post("/api/restart/")
-@roles_required("Admin")
-def api_app_restart() -> Response:
-    """Full process restart for infrastructure/security config changes."""
-    from enferno.tasks import reload_app, reload_celery
-
-    reload_app()
-    reload_celery.delay()
-    return HTTPResponse.success(message="Restarting Bayanat...")
-
-
 @admin.app_template_filter("to_config")
 def to_config(items: list) -> list[dict[str, Any]]:
     """

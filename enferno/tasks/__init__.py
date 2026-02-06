@@ -910,18 +910,6 @@ def process_row(
     si.import_row()
 
 
-def reload_app():
-    import os
-    import signal
-
-    os.kill(os.getppid(), signal.SIGHUP)
-
-
-@celery.task
-def reload_celery():
-    reload_app()
-
-
 @celery.task
 def refresh_celery_config():
     """Refresh config in Celery worker without restart.

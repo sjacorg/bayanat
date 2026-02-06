@@ -1052,32 +1052,11 @@
 
     <!-- Restart required banner -->
     <v-snackbar v-model="restartRequired" :timeout="-1" color="warning" location="top">
-        {{ _('Some changes require a restart to take effect.') }}
+        {{ _('Recaptcha or OAuth changes require a manual restart of Bayanat to take effect.') }}
         <template v-slot:actions>
-            <v-btn variant="text" @click="restartApp">{{ _('Restart Now') }}</v-btn>
-            <v-btn variant="text" @click="restartRequired = false">{{ _('Later') }}</v-btn>
+            <v-btn variant="text" @click="restartRequired = false">{{ _('Dismiss') }}</v-btn>
         </template>
     </v-snackbar>
-
-    <!-- Restarting Bayanat overlay -->
-    <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
-        <v-card>
-            <v-card-text class="d-flex flex-column justify-center align-center text-center">
-                <v-progress-circular
-                        class="mb-4"
-                        color="white"
-                        indeterminate
-                        size="32"
-                ></v-progress-circular>
-                <div>
-                    {{ _('Restarting Bayanat to new settings to take effect, please wait...') }}
-                </div>
-                <div>
-                    {{ _('This can take up to a minute. If it takes longer, please restart Bayanat manually.') }}
-                </div>
-            </v-card-text>
-        </v-card>
-    </v-overlay>
 
 {% endblock %}
 
@@ -1137,7 +1116,6 @@
                 // store config defaults before confirmation of restoration
                 defaultConfig: null,
 
-                overlay: false,
                 restartRequired: false,
                 saveChangesDialog: false,
 
@@ -1351,19 +1329,6 @@
                     this.loadRevisions();
                 },
 
-                waitForReload() {
-                    setTimeout(() => {
-                        api.get('/').then(res => {
-                            this.overlay = false;
-                            this.loadConfiguration();
-                            this.resetRevisions();
-                            this.showSnack("{{_('Bayanat restarted successfully.')}}");
-                        }).catch(err => {
-                            this.waitForReload();
-                        });
-                    }, 5000)
-                },
-
                 reloadApp() {
                     this.loading = true;
                     api.post('/admin/api/reload/').then(res => {
@@ -1372,13 +1337,6 @@
                     }).catch(e => {
                         this.showSnack(e.response?.data);
                     }).finally(() => { this.loading = false; });
-                },
-
-                restartApp() {
-                    this.overlay = true;
-                    this.restartRequired = false;
-                    api.post('/admin/api/restart/');
-                    this.waitForReload();
                 },
 
                 saveConfiguration() {
