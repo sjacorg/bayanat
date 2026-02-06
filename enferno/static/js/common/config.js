@@ -105,7 +105,11 @@ const validationRules = {
 
 // Helper functions
 function hasValue(value) {
-    return Array.isArray(value) ? value.length > 0 : !!value;
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return value !== null && value !== undefined && value !== '';
 }
 
 function isValidLength(value, limit, type) {
@@ -741,4 +745,41 @@ function deepClone(value) {
     } catch (error) {
         return JSON.parse(JSON.stringify(value));
     }
+}
+
+// Load external script dynamically with caching
+const loadedScripts = new Map();
+function loadScript(src) {
+  if (loadedScripts.has(src)) {
+    return loadedScripts.get(src);
+  }
+
+  const isModule = src.endsWith('.mjs');
+  
+  const promise = (async () => {
+    // For ES modules, use dynamic import
+    if (isModule) {
+      return await import(src);
+    }
+    
+    // For regular scripts, use the existing logic
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      if (existing) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+
+      document.head.appendChild(script);
+    });
+  })();
+
+  loadedScripts.set(src, promise);
+  return promise;
 }

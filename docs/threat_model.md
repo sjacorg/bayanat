@@ -1,5 +1,5 @@
 # Version
-This threat model is up-to-date with <kbd>Bayanat v2.4</kbd>.
+This threat model is up-to-date with <kbd>Bayanat v3.0</kbd>.
 
 # Goal
 
@@ -412,6 +412,30 @@ By implementing the above Access Control Model, Bayanat system ensures that diff
 ### Data Flow Diagram
 
 ![notifications.png](./assets/threat-model//notifications.png){.align-center}
+
+## Auto Updates data 
+
+### Data Characterization
+
+-   Trust Level Access: 3, 6, 7
+-   Storage: Postgres DB, Redis DB, Disk Storage.
+-   Transmission:
+    -   Bayanat Public GitHub Repo -> Disk.
+    -   Bayanat Public GitHub Repo -> Celery.
+    -   Celery -> Redis db.
+    -   bayanat-daemon -> Disk Storage.
+    -   bayanat-daemon -> Postgres DB.
+-   Execution Environment: Memory, Disk.
+-   Input:
+    -   None.
+-   Output:
+    -   Disk Storage.
+    -   Postgres DB.
+
+### Data Flow Diagram
+
+![auto_updates.png](./assets/threat-model//auto_updates.png){.align-center}
+
 
 # Security Controls
 

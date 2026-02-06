@@ -1,5 +1,4 @@
-# test compose setup
-name: Bayanat tests
+name: Tests
 
 on:
   pull_request: {}
@@ -18,7 +17,7 @@ jobs:
         options: --privileged
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Create .env file
         run: |
           ./gen-env.sh -d -e .env.test

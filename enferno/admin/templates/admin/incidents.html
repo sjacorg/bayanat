@@ -80,6 +80,7 @@
                                         @click:append-inner="resetSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
+                                        :bg-color="searchBg"
                                 ></v-text-field>
 
 
@@ -369,7 +370,7 @@
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
-    <script type="module">
+    <script nonce="{{ csp_nonce() }}" type="module">
         import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
         import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
         import '/static/js/jsondiffpatch/formatters/base.js'
@@ -382,7 +383,7 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [globalMixin, relationsMixin, formBuilderMixin],
+            mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin],
             data: () => ({
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
@@ -607,6 +608,9 @@
                 },
                 searchEmpty() {
                     return !Object.values(this.search).some(Boolean);
+                },
+                searchBg() {
+                    return Object.values(this.search).some(Boolean) ? 'yellow-lighten-5' : '';
                 },
 
                 bulletinRelationTypes() {

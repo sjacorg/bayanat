@@ -20,7 +20,7 @@ import prop_next, render_field_with_errors, render_field %} {% block content %}
 
       <v-card-text class="px-0">
         <div class="d-flex flex-column ga-2">
-          {% for value in two_factor_select_form.which.choices %}
+          {% for value, label in two_factor_select_form.which.choices %}
           <v-btn
             :variant="selected2fa === '{{ value }}' ? 'flat' : 'outlined'"
             :color="selected2fa === '{{ value }}' ? 'primary' : 'grey'"
@@ -60,7 +60,7 @@ import prop_next, render_field_with_errors, render_field %} {% block content %}
 
 <style></style>
 {% endblock %} {% block js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   const { createApp } = Vue;
   const { createVuetify } = Vuetify;
 

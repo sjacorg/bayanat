@@ -70,7 +70,7 @@ class Config(object):
     SECURITY_CHANGEABLE = True
     SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
     SECURITY_TRACKABLE = True
-    SECURITY_PASSWORD_HASH = "bcrypt"
+    SECURITY_PASSWORD_HASH = "argon2"
     SECURITY_PASSWORD_SALT = os.environ.get("SECURITY_PASSWORD_SALT")
     SECURITY_POST_LOGIN_VIEW = "/dashboard/"
     SECURITY_POST_CONFIRM_VIEW = "/dashboard/"
@@ -254,6 +254,14 @@ class Config(object):
         "httponly": False,
         "secure": os.environ.get("SECURE_COOKIES", "True") == "True",
     }
+    # Content Security Policy
+    # Disabled by default until nonces are added to inline scripts in templates
+    CSP_ENABLED = os.environ.get("CSP_ENABLED", "False").lower() == "true"
+    # Report-only mode requires CSP_REPORT_URI to be set
+    CSP_REPORT_ONLY = os.environ.get("CSP_REPORT_ONLY", "False").lower() == "true"
+    CSP_REPORT_URI = os.environ.get("CSP_REPORT_URI", None)
+    FORCE_HTTPS = os.environ.get("FORCE_HTTPS", "False").lower() == "true"
+
     # logging
     APP_LOG_ENABLED = os.environ.get("APP_LOG_ENABLED", "True").lower() == "true"
     CELERY_LOG_ENABLED = os.environ.get("CELERY_LOG_ENABLED", "True").lower() == "true"
@@ -375,7 +383,7 @@ class TestConfig:
     SECURITY_CHANGEABLE = True
     SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
     SECURITY_TRACKABLE = True
-    SECURITY_PASSWORD_HASH = "bcrypt"
+    SECURITY_PASSWORD_HASH = "argon2"
     SECURITY_PASSWORD_SALT = os.environ.get("SECURITY_PASSWORD_SALT", "test-salt")
     SECURITY_POST_LOGIN_VIEW = "/dashboard/"
     SECURITY_POST_CONFIRM_VIEW = "/dashboard/"
@@ -595,6 +603,12 @@ class TestConfig:
         "httponly": False,
         "secure": False,  # Disabled for test HTTP
     }
+
+    # Content Security Policy (disabled for tests)
+    CSP_ENABLED = False
+    CSP_REPORT_ONLY = True
+    CSP_REPORT_URI = None
+    FORCE_HTTPS = False
 
     # Logging
     APP_LOG_ENABLED = False  # Disabled for tests

@@ -1,5 +1,10 @@
 const thumbnailContent = `
   <div @click="handleMediaClick" class="h-100 position-relative overflow-hidden">
+    <!-- Image preview -->
+    <div v-if="isHoveringPreview && (mediaType === 'video' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
+      <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
+    </div>
+
     <!-- Image preview with gradient placeholder -->
     <template v-if="mediaType === 'image'">
       <!-- Random gradient placeholder - ALWAYS show it first -->
@@ -71,9 +76,9 @@ const thumbnailContent = `
     </template>
 
     <!-- PDF preview -->
-    <div v-else-if="mediaType === 'pdf'"
-            class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
-      <v-icon size="64" color="red">mdi-file-pdf-box</v-icon>
+    <div v-else-if="mediaType === 'pdf'" :class="['d-flex justify-center bg-grey-lighten-2 h-100 overflow-hidden', { 'align-center': !pdfThumbnailUrl, 'pa-4 align-start': pdfThumbnailUrl }]">
+      <img v-if="pdfThumbnailUrl" :src="pdfThumbnailUrl" class="w-100 rounded elevation-4" />
+      <v-icon v-else size="64" color="red">mdi-file-pdf-box</v-icon>
     </div>
 
     <!-- Audio preview -->
@@ -188,10 +193,12 @@ const MediaCard = Vue.defineComponent({
       observer: null,
       videoDuration: null,
       videoThumbnail: null,
+      pdfThumbnailUrl: null,
       translations: window.translations,
       thumbnailBrightness: 0,
       imageLoaded: false,
       randomGradient: null, // Cache it so it doesn't change on re-render
+      pdfCanvas: null,
       iconMap: {
         image: 'mdi-image',
         video: 'mdi-video',
@@ -288,6 +295,10 @@ const MediaCard = Vue.defineComponent({
       
       this.observer.observe(element);
     },
+    async loadPdfJs() {
+      await loadScript('/static/js/pdf.js/pdf.min.mjs');
+      await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
+    },
     init() {
       api.get(`/admin/api/media/${this.media.filename}`)
         .then(response => {
@@ -299,6 +310,8 @@ const MediaCard = Vue.defineComponent({
               this.videoDuration = Number(this.media.duration);
             }
             this.generateVideoThumbnail(); // This now handles both duration and thumbnail
+          } else if (this.mediaType === 'pdf') {
+            this.generatePdfThumbnail();
           }
         })
         .catch(error => console.error('Error fetching media:', error))
@@ -314,6 +327,58 @@ const MediaCard = Vue.defineComponent({
           break;
         default:
           this.downloadFile();
+      }
+    },
+    getVideoDuration() {
+      if (this.media.duration) {
+        this.videoDuration = Number(this.media.duration)
+      } else {
+        const video = document.createElement('video');
+        video.src = this.s3url;
+        video.crossOrigin = "anonymous";
+        video.onloadedmetadata = () => {
+          this.videoDuration = video.duration;
+        };
+      }
+    },
+    async generatePdfThumbnail() {
+      try {
+        if (typeof pdfjsLib === 'undefined') await this.loadPdfJs();
+
+        const pdf = await pdfjsLib.getDocument(this.s3url).promise;
+        const page = await pdf.getPage(1);
+
+        const THUMB_WIDTH = 240;
+        const DPR = window.devicePixelRatio || 1;
+
+        // Base viewport (CSS size)
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = THUMB_WIDTH / baseViewport.width;
+
+        // Render viewport (high DPI)
+        const renderViewport = page.getViewport({
+          scale: scale * DPR
+        });
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Internal resolution
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
+
+        // Display size
+        canvas.style.borderRadius = "4px";
+        canvas.classList.add("w-100");
+
+        await page.render({
+          canvasContext: ctx,
+          viewport: renderViewport
+        }).promise;
+
+        this.pdfThumbnailUrl = canvas.toDataURL('image/png');
+      } catch (err) {
+        console.error("PDF thumbnail error:", err);
       }
     },
     generateVideoThumbnail() {
