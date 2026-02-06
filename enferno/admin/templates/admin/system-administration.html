@@ -495,13 +495,18 @@
                                                         hint="{{ _('Allow scanning of the import path for files in the Media Import tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
                                                         v-model="eitem.ETL_PATH_IMPORT"></v-switch>
                     
-                                                    <v-slide-y-transition>
-                                                        <v-combobox v-show="eitem.ETL_PATH_IMPORT" v-bind="inputProps" class="mt-3" multiple chips persistent-hint
-                                                            hint="{{ _('The file extensions for media, documents, and other files that are permitted for import using the Media Import Tool.') }}"
-                                                            :items="eitem.ETL_VID_EXT" label="{{ _('Allowed Media Import Extensions') }}"
-                                                            v-model="eitem.ETL_VID_EXT"></v-combobox>
-                                                    </v-slide-y-transition>
                                                 </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col cols="12" class="mt-4">
+                                                    <h4 class="subtitle-2 mb-n1">{{ _('Allowed Media Import Extensions') }}</h4>
+                                                    <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
+                                                        hint="{{ _('The file extensions for media, documents, and other files that are permitted for import using the Media Import Tool.') }}"
+                                                        :items="eitem.ETL_VID_EXT" label="{{ _('Allowed Media Import Extensions') }}"
+                                                        v-model="eitem.ETL_VID_EXT"></v-combobox>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
                                                 <v-col cols="12" lg="6">
                                                     <h4 class="subtitle-2 mb-n1">{{ _('Enable OCR') }}</h4>
                                                     <v-switch persistent-hint
