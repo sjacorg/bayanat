@@ -131,6 +131,39 @@ const IncidentSearchBox = Vue.defineComponent({
               </v-col>
             </v-row>
 
+            <!-- Search terms -->
+            <v-combobox
+                v-model="q.searchTerms"
+                @update:model-value="val => q.searchTerms = $root.sanitizeCombobox(val)"
+                :label="translations.searchTerms_"
+                multiple
+                chips
+                closable-chips
+                small-chips
+                clearable
+            ></v-combobox>
+                  
+            <div class="d-flex align-center flex-wrap">
+              <v-checkbox :label="translations.any_" v-model="q.opTerms" color="primary" class="me-4"></v-checkbox>
+              <v-checkbox :label="translations.exactMatch_" v-model="q.termsExact" color="primary" class="me-4"></v-checkbox>
+            </div>
+            
+            <v-combobox
+                v-model="q.exTerms"
+                @update:model-value="val => q.exTerms = $root.sanitizeCombobox(val)"
+                :label="translations.excludeTerms_"
+                multiple
+                chips
+                closable-chips
+                clearable
+            ></v-combobox>
+                  
+            <div class="d-flex align-center">
+              <v-checkbox :label="translations.all_" v-model="q.opExTerms" color="primary" class="me-4"></v-checkbox>
+              <v-checkbox :label="translations.exactMatch_" v-model="q.exTermsExact" color="primary" class="me-4"></v-checkbox>
+            </div>
+            <!-- End terms -->
+
             <v-row>
               <v-col  cols="12" >
                   <pop-date-range-field
