@@ -2,7 +2,7 @@ const IncidentCard = Vue.defineComponent({
   props: ['incident', 'close', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   mounted() {
-    this.$root.fetchDynamicFields({ entityType: 'incident' });
+    this.$root.fetchDynamicFields({ entityType: 'incident' })
   },
   methods: {
     async loadGeoMap() {
@@ -72,18 +72,6 @@ const IncidentCard = Vue.defineComponent({
         .finally(() => {
           this.hloading = false;
         });
-    },
-
-    getBulletinsByIdList(ids) {
-      return Promise.all(
-        ids.map((id) => api.get(`/admin/api/bulletin/${id}?mode=3`).then((res) => res.data)),
-      );
-    },
-
-    getActorsByIdList(ids) {
-      return Promise.all(
-        ids.map((id) => api.get(`/admin/api/actor/${id}?mode=3`).then((res) => res.data)),
-      );
     },
 
     showDiff(e, index) {
