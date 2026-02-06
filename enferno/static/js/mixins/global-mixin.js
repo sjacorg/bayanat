@@ -3,8 +3,6 @@ const globalMixin = {
   components: {
     'ConfirmDialog': useAsyncComponent('/static/js/components/ConfirmDialog.js'),
     'Toast': useAsyncComponent('/static/js/components/Toast.js'),
-    LoadingComponent,
-    ErrorComponent,
   },
   data: () => ({
     snackbar: false,

@@ -464,8 +464,6 @@
 <script src="/static/js/vuetify.min.js"></script>
 <script src="/static/js/axios.min.js"></script>
 <script src="/static/js/vue-router.global.js"></script>
-<script src="/static/js/components/LoadingComponent.js"></script>
-<script src="/static/js/components/ErrorComponent.js"></script>
 <script src="/static/js/common/config.js"></script>
 
 {% block js %}
@@ -653,8 +651,6 @@
             },
         });
 
-        app.component('LoadingComponent', LoadingComponent);
-        app.component('ErrorComponent', ErrorComponent);
         app.component('EditableTable', useAsyncComponent('/static/js/components/EditableTable.js'));
         app.component('GeoMap', useAsyncComponent('/static/js/components/GeoMap.js'));
 
