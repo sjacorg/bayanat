@@ -75,8 +75,8 @@ const MobilityMap = Vue.defineComponent({
   watch: {
     locations: {
       handler() {
-        this.resetSelectionAndRebuild();
         this.initPoints();
+        this.resetSelectionAndRebuild();
       },
     },
 
