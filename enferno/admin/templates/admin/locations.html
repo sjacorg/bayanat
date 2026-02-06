@@ -516,15 +516,15 @@
         });
 
         app.component("TinymceEditor", Editor);
-        app.component('LocationCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/LocationCard.js')));
-        app.component('LocationSearchBox', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/LocationSearchBox.js')));
-        app.component('UniField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/UniField.js')));
-        app.component('SearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
-        app.component('LocationSearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
-        app.component('DualField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/DualField.js')));
-        app.component('GeoMap', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/GeoMap.js')));
-        app.component('GlobalMap', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/GlobalMap.js')));
-        app.component('ReadMore', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ReadMore.js')));
+        app.component('LocationCard', useAsyncComponent('/static/js/components/LocationCard.js'));
+        app.component('LocationSearchBox', useAsyncComponent('/static/js/components/LocationSearchBox.js'));
+        app.component('UniField', useAsyncComponent('/static/js/components/UniField.js'));
+        app.component('SearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('LocationSearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('DualField', useAsyncComponent('/static/js/components/DualField.js'));
+        app.component('GeoMap', useAsyncComponent('/static/js/components/GeoMap.js'));
+        app.component('GlobalMap', useAsyncComponent('/static/js/components/GlobalMap.js'));
+        app.component('ReadMore', useAsyncComponent('/static/js/components/ReadMore.js'));
         app.use(router).use(vuetify);
         router.isReady().then(() => {
             app.mount('#app');

@@ -606,9 +606,9 @@
             }
         });
 
-        app.component('VueDropzone', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/VueDropzone.js')));
-        app.component('SearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
-        app.component('LocationSearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
+        app.component('VueDropzone', useAsyncComponent('/static/js/components/VueDropzone.js'));
+        app.component('SearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('LocationSearchField', useAsyncComponent('/static/js/components/SearchField.js'));
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

@@ -826,3 +826,13 @@ function loadComponent(src, componentName) {
   loadedComponents.set(src, promise);
   return promise;
 }
+
+function useAsyncComponent(src, componentName) {
+  return Vue.defineAsyncComponent({
+        loader: () => loadComponent(src, componentName),
+        loadingComponent: LoadingComponent,
+        errorComponent: ErrorComponent,
+        delay: 200,
+        timeout: 10000
+    });
+}

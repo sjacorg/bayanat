@@ -1443,9 +1443,9 @@
         });
 
         app.component('Draggable', draggable);
-        app.component('VueDropzone', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/VueDropzone.js')));
-        app.component('SearchField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/SearchField.js')));
-        app.component('DropField', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/DropField.js')));
+        app.component('VueDropzone', useAsyncComponent('/static/js/components/VueDropzone.js'));
+        app.component('SearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('DropField', useAsyncComponent('/static/js/components/DropField.js'));
 
 
         app.use(router).use(vuetify);

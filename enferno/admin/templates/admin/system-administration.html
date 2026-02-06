@@ -1399,9 +1399,9 @@
                 }
             }
         });
-        app.component('GeoMap', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/GeoMap.js')));
-        app.component('ShowDetails', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ShowDetails.js')));
-        app.component('DiffRenderer', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/DiffRenderer.js')));
+        app.component('GeoMap', useAsyncComponent('/static/js/components/GeoMap.js'));
+        app.component('ShowDetails', useAsyncComponent('/static/js/components/ShowDetails.js'));
+        app.component('DiffRenderer', useAsyncComponent('/static/js/components/DiffRenderer.js'));
         
         app.use(router).use(vuetify);
         router.isReady().then(() => {

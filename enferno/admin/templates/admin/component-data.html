@@ -477,7 +477,7 @@
         }
     });
     app.component('Draggable', draggable);
-    app.component('EditableTable', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/EditableTable.js')));
+    app.component('EditableTable', useAsyncComponent('/static/js/components/EditableTable.js'));
     app.use(router).use(vuetify);
     router.isReady().then(() => {
         app.mount('#app');

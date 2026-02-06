@@ -689,7 +689,7 @@
             }
         });
 
-        app.component('UserCard', Vue.defineAsyncComponent(() => loadComponent('/static/js/components/UserCard.js')));
+        app.component('UserCard', useAsyncComponent('/static/js/components/UserCard.js'));
         app.use(router).use(vuetify);
         router.isReady().then(() => {
             app.mount('#app');

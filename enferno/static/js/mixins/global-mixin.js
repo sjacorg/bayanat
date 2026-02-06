@@ -1,8 +1,10 @@
 const globalMixin = {
   mixins: [reauthMixin, notificationMixin],
   components: {
-    'ConfirmDialog': Vue.defineAsyncComponent(() => loadComponent('/static/js/components/ConfirmDialog.js')),
-    'Toast': Vue.defineAsyncComponent(() => loadComponent('/static/js/components/Toast.js')),
+    'ConfirmDialog': useAsyncComponent('/static/js/components/ConfirmDialog.js'),
+    'Toast': useAsyncComponent('/static/js/components/Toast.js'),
+    LoadingComponent,
+    ErrorComponent,
   },
   data: () => ({
     snackbar: false,
