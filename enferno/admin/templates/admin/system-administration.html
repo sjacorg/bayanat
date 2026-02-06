@@ -495,13 +495,18 @@
                                                         hint="{{ _('Allow scanning of the import path for files in the Media Import tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
                                                         v-model="eitem.ETL_PATH_IMPORT"></v-switch>
                     
-                                                    <v-slide-y-transition>
-                                                        <v-combobox v-show="eitem.ETL_PATH_IMPORT" v-bind="inputProps" class="mt-3" multiple chips persistent-hint
-                                                            hint="{{ _('The file extensions for media, documents, and other files that are permitted for import using the Media Import Tool.') }}"
-                                                            :items="eitem.ETL_VID_EXT" label="{{ _('Allowed Media Import Extensions') }}"
-                                                            v-model="eitem.ETL_VID_EXT"></v-combobox>
-                                                    </v-slide-y-transition>
                                                 </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col cols="12" class="mt-4">
+                                                    <h4 class="subtitle-2 mb-n1">{{ _('Allowed Media Import Extensions') }}</h4>
+                                                    <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
+                                                        hint="{{ _('The file extensions for media, documents, and other files that are permitted for import using the Media Import Tool.') }}"
+                                                        :items="eitem.ETL_VID_EXT" label="{{ _('Allowed Media Import Extensions') }}"
+                                                        v-model="eitem.ETL_VID_EXT"></v-combobox>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
                                                 <v-col cols="12" lg="6">
                                                     <h4 class="subtitle-2 mb-n1">{{ _('Enable OCR') }}</h4>
                                                     <v-switch persistent-hint
@@ -1050,25 +1055,13 @@
     </v-dialog>
 
 
-    <!-- Restarting Bayanat overlay -->
-    <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
-        <v-card>
-            <v-card-text class="d-flex flex-column justify-center align-center text-center">
-                <v-progress-circular
-                        class="mb-4"
-                        color="white"
-                        indeterminate
-                        size="32"
-                ></v-progress-circular>
-                <div>
-                    {{ _('Restarting Bayanat to new settings to take effect, please wait...') }}
-                </div>
-                <div>
-                    {{ _('This can take up to a minute. If it takes longer, please restart Bayanat manually.') }}
-                </div>
-            </v-card-text>
-        </v-card>
-    </v-overlay>
+    <!-- Restart required banner -->
+    <v-snackbar v-model="restartRequired" :timeout="-1" color="warning" location="top">
+        {{ _('Recaptcha or OAuth changes require a manual restart of Bayanat to take effect.') }}
+        <template v-slot:actions>
+            <v-btn variant="text" @click="restartRequired = false">{{ _('Dismiss') }}</v-btn>
+        </template>
+    </v-snackbar>
 
 {% endblock %}
 
@@ -1128,7 +1121,7 @@
                 // store config defaults before confirmation of restoration
                 defaultConfig: null,
 
-                overlay: false,
+                restartRequired: false,
                 saveChangesDialog: false,
 
                 loading: true,
@@ -1341,38 +1334,33 @@
                     this.loadRevisions();
                 },
 
-                waitForReload() {
-                    setTimeout(() => {
-                        api.get('/').then(res => {
-                            this.overlay = false;
-                            this.loadConfiguration();
-                            this.resetRevisions();
-                            this.showSnack("{{_('Bayanat reloaded successfully.')}}");
-                            // reset settings
-                        }).catch(err => {
-                            this.waitForReload();
-                        });
-                    }, 5000)
-                },
-
                 reloadApp() {
-                    this.overlay = true;
-                    api.post('/admin/api/reload/')
-                    this.waitForReload();
+                    this.loading = true;
+                    api.post('/admin/api/reload/').then(res => {
+                        this.showSnack(res.data.message);
+                        this.loadConfiguration();
+                    }).catch(e => {
+                        this.showSnack(e.response?.data);
+                    }).finally(() => { this.loading = false; });
                 },
 
                 saveConfiguration() {
-                    this.overlay = true
+                    this.loading = true;
 
                     this.preprocessConfig();
                     api.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
-                        this.reloadApp();
+                        this.showSnack(res.data.message);
+                        this.loadConfiguration();
+                        this.resetRevisions();
+                        if (res.data.data?.restart_required) {
+                            this.restartRequired = true;
+                        }
                     }).catch(e => {
                         console.error(e);
-                        this.overlay = false;
                         this.addToCallbackQueueIfReauthRequired(e, this.saveConfiguration);
                     }).finally(() => {
-                        this.closeSaveDialog()
+                        this.loading = false;
+                        this.closeSaveDialog();
                     })
                 },
 
