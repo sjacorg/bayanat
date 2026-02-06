@@ -79,6 +79,12 @@ def create_app(config_object=Config):
     app = Flask(__name__)
     register_errorhandlers(app)
     app.config.from_object(config_object)
+
+    # Replace config dict with dynamic proxy for live config reload
+    from enferno.utils.config_utils import DynamicConfig
+
+    app.config = DynamicConfig(app.config)
+
     register_constants(app)
     register_blueprints(app)
     register_extensions(app)

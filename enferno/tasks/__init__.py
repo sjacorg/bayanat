@@ -922,6 +922,36 @@ def reload_celery():
     reload_app()
 
 
+@celery.task
+def refresh_celery_config():
+    """Refresh config in Celery worker without restart.
+    Updates Config class attributes so cfg.KEY returns live values."""
+    from enferno.utils.config_utils import ConfigManager
+    from enferno.settings import Config
+
+    cm = ConfigManager()
+    for key in ConfigManager.DEFAULT_CONFIG:
+        raw = cm.get_config(key)
+        converter = ConfigManager.TYPE_CONVERSIONS.get(key)
+        value = converter(raw) if converter and raw is not None else raw
+        setattr(Config, key, value)
+
+    # Derived values
+    geo = cm.get_config("GEO_MAP_DEFAULT_CENTER")
+    if geo:
+        Config.GEO_MAP_DEFAULT_CENTER_LAT = geo.get("lat")
+        Config.GEO_MAP_DEFAULT_CENTER_LNG = geo.get("lng")
+        Config.GEO_MAP_DEFAULT_CENTER_RADIUS = geo.get("radius", 1000)
+    activities = getattr(Config, "ACTIVITIES", {})
+    Config.ACTIVITIES_LIST = [k for k, v in activities.items() if v]
+
+    # Also refresh ConfigManager singleton if it exists in this process
+    if ConfigManager._instance:
+        ConfigManager._instance.force_reload()
+
+    logger.info("Celery config refreshed from config.json")
+
+
 # ---- Export tasks ----
 def generate_export(export_id: t.id) -> None:
     """

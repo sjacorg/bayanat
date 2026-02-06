@@ -1050,6 +1050,15 @@
     </v-dialog>
 
 
+    <!-- Restart required banner -->
+    <v-snackbar v-model="restartRequired" :timeout="-1" color="warning" location="top">
+        {{ _('Some changes require a restart to take effect.') }}
+        <template v-slot:actions>
+            <v-btn variant="text" @click="restartApp">{{ _('Restart Now') }}</v-btn>
+            <v-btn variant="text" @click="restartRequired = false">{{ _('Later') }}</v-btn>
+        </template>
+    </v-snackbar>
+
     <!-- Restarting Bayanat overlay -->
     <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
         <v-card>
@@ -1129,6 +1138,7 @@
                 defaultConfig: null,
 
                 overlay: false,
+                restartRequired: false,
                 saveChangesDialog: false,
 
                 loading: true,
@@ -1347,8 +1357,7 @@
                             this.overlay = false;
                             this.loadConfiguration();
                             this.resetRevisions();
-                            this.showSnack("{{_('Bayanat reloaded successfully.')}}");
-                            // reset settings
+                            this.showSnack("{{_('Bayanat restarted successfully.')}}");
                         }).catch(err => {
                             this.waitForReload();
                         });
@@ -1356,23 +1365,39 @@
                 },
 
                 reloadApp() {
+                    this.loading = true;
+                    api.post('/admin/api/reload/').then(res => {
+                        this.showSnack(res.data.message);
+                        this.loadConfiguration();
+                    }).catch(e => {
+                        this.showSnack(e.response?.data);
+                    }).finally(() => { this.loading = false; });
+                },
+
+                restartApp() {
                     this.overlay = true;
-                    api.post('/admin/api/reload/')
+                    this.restartRequired = false;
+                    api.post('/admin/api/restart/');
                     this.waitForReload();
                 },
 
                 saveConfiguration() {
-                    this.overlay = true
+                    this.loading = true;
 
                     this.preprocessConfig();
                     api.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
-                        this.reloadApp();
+                        this.showSnack(res.data.message);
+                        this.loadConfiguration();
+                        this.resetRevisions();
+                        if (res.data.data?.restart_required) {
+                            this.restartRequired = true;
+                        }
                     }).catch(e => {
                         console.error(e);
-                        this.overlay = false;
                         this.addToCallbackQueueIfReauthRequired(e, this.saveConfiguration);
                     }).finally(() => {
-                        this.closeSaveDialog()
+                        this.loading = false;
+                        this.closeSaveDialog();
                     })
                 },
 

@@ -90,17 +90,40 @@ def api_config_write(
     Returns:
         - success/error string based on the operation result.
     """
+    from flask import current_app
+
     conf = validated_data.get("conf")
 
     if ConfigManager.write_config(conf):
+        # Force immediate reload in ConfigManager singleton
+        ConfigManager.instance().force_reload()
+
+        # Check if any static keys changed
+        static_changed = ConfigManager.detect_static_changes(current_app)
+
+        # Sync Celery worker config
+        from enferno.tasks import refresh_celery_config
+
+        refresh_celery_config.delay()
+
         # Notify admins
         Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
         )
+
+        msg = "Configuration saved and applied."
+        if static_changed:
+            labels = [ConfigManager.CONFIG_LABELS.get(k, k) for k in static_changed]
+            msg += " Restart required for: " + ", ".join(sorted(labels))
+
         return HTTPResponse.success(
-            message="Configuration saved. Secrets excluded from revision history."
+            message=msg,
+            data={
+                "restart_required": bool(static_changed),
+                "static_keys": list(static_changed),
+            },
         )
     else:
         return HTTPResponse.error("Unable to Save Configuration", status=500)
@@ -109,14 +132,24 @@ def api_config_write(
 @admin.post("/api/reload/")
 @roles_required("Admin")
 def api_app_reload() -> Response:
-    """
-    Reloads Flask and Celery.
-    """
+    """Refreshes configuration from config.json without restart."""
+    ConfigManager.instance().force_reload()
+
+    from enferno.tasks import refresh_celery_config
+
+    refresh_celery_config.delay()
+    return HTTPResponse.success(message="Configuration refreshed.")
+
+
+@admin.post("/api/restart/")
+@roles_required("Admin")
+def api_app_restart() -> Response:
+    """Full process restart for infrastructure/security config changes."""
     from enferno.tasks import reload_app, reload_celery
 
     reload_app()
     reload_celery.delay()
-    return HTTPResponse.success(message="Reloaded Bayanat")
+    return HTTPResponse.success(message="Restarting Bayanat...")
 
 
 @admin.app_template_filter("to_config")
