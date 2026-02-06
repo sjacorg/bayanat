@@ -1075,6 +1075,7 @@
 {% block js %}
 
     <script src="/static/js/diff-tool.js"></script>
+    <script src="/static/js/components/Asterisk.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/ShowDetails.js"></script>
     <script src="/static/js/components/DiffRenderer.js"></script>
@@ -1403,6 +1404,7 @@
                 }
             }
         });
+        app.component('Asterisk', Asterisk);
         app.component('GeoMap', GeoMap);
         app.component('ShowDetails', ShowDetails);
         app.component('DiffRenderer', DiffRenderer);

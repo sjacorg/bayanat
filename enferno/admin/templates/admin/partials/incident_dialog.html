@@ -33,13 +33,14 @@
                                     <dual-field
                                         v-model:original="editedItem.title"
                                         v-model:translation="editedItem.title_ar"
-                                        label-original="{{ _('Title') }}"
                                         :rules="[
-                                            validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
+                                            validationRules.atLeastOneRequired(editedItem.title, '{{ _('Title is required.') }}'),
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
-                                    ></dual-field>
+                                    >
+                                        <template v-slot:label-original>{{ _('Title') }} <Asterisk /></template>
+                                    </dual-field>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'description')" :class="[fieldClass(field), 'px-3 py-2']">
                                     <tinymce-editor :init="tinyConfig" v-model="editedItem.description"></tinymce-editor>
@@ -169,7 +170,9 @@
                             <template v-for="(field, index) in fixedDynamicFields({ entityType: 'incident' })" :key="field.id">
                                 <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
                                     <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
-                                        label="{{ _('Comments') }}" v-bind="serverErrorPropsForField(serverErrors, 'item.comments')">
+                                        v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
+                                    >
+                                        <template v-slot:label>{{ _('Comments') }} <Asterisk /></template>
                                     </v-textarea>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
@@ -182,9 +185,11 @@
                                 <v-select :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
                                     :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'" chips :disabled="unrestricted"
                                     item-title="name" return-object :items="allowedRoles" multiple v-model="editedItem.roles"
-                                    label="{{ _('Restrict Bulletin to Access Group(s)') }}" :rules="
-                                                                                                                !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []
-                                                                                                            " clearable></v-select>
+                                    :rules="!unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []"
+                                    clearable
+                                >
+                                    <template v-slot:label>{{ _('Restrict Incident to Access Group(s)') }} <Asterisk v-if="!unrestricted" /></template>
+                                </v-select>
                                 <v-checkbox color="error" @change="unrestricted? editedItem.roles = [] : null" class="mx-2"
                                     label="{{ _('No Access Groups') }}" v-model="unrestricted">
                                 </v-checkbox>

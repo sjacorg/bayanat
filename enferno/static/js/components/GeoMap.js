@@ -18,6 +18,10 @@ const GeoMap = Vue.defineComponent({
       type: Boolean,
       default: true,
     },
+    useAsterisk: {
+      type: Boolean,
+      default: false,
+    },
     radiusControls: {
       type: Boolean,
       default: false,
@@ -373,19 +377,23 @@ const GeoMap = Vue.defineComponent({
           <h3 v-if="title" class="mb-5">{{ title }}</h3>
           <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
             <v-text-field
-              v-bind="inputProps" type="number" min="-90" max="90" label="Latitude"
+              v-bind="inputProps" type="number" min="-90" max="90"
               :rules="[validationRules.required()]"
               v-model.number="lat"
               append-inner-icon="mdi-content-copy"
               @click:append-inner="copyToClipboard(lat)"
-            ></v-text-field>
+            >
+              <template v-slot:label>{{ translations.latitude_ }} <Asterisk v-if="useAsterisk" /></template>  
+            </v-text-field>
             <v-text-field
-              v-bind="inputProps" type="number" min="-180" max="180" label="Longitude"
+              v-bind="inputProps" type="number" min="-180" max="180"
               :rules="[validationRules.required()]"
               v-model.number="lng"
               append-inner-icon="mdi-content-copy"
               @click:append-inner="copyToClipboard(lng)"
-            ></v-text-field>
+            >
+              <template v-slot:label>{{ translations.longitude_ }} <Asterisk v-if="useAsterisk" /></template>
+            </v-text-field>
             <v-btn icon variant="flat" v-if="lat && lng" @click="clearMarker">
               <v-icon>mdi-close</v-icon>
             </v-btn>
