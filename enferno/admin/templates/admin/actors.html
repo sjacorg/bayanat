@@ -1353,7 +1353,7 @@
                     if (this.$refs.mapVisualizationRef) {
                         this.$nextTick(() => {
                             this.$refs.mapVisualizationRef.entities.selected = null;
-                            this.$refs.mapVisualizationRef.applyDefaultEventTypes();
+                            this.$refs.mapVisualizationRef.applyAllEventTypes();
                         })
                     }
                 },
