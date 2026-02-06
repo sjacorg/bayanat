@@ -80,6 +80,7 @@
                                         @click:append-inner="resetSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
+                                        :bg-color="searchBg"
                                 ></v-text-field>
 
 
@@ -608,6 +609,9 @@
                 },
                 searchEmpty() {
                     return !Object.values(this.search).some(Boolean);
+                },
+                searchBg() {
+                    return Object.values(this.search).some(Boolean) ? 'yellow-lighten-5' : '';
                 },
 
                 bulletinRelationTypes() {
