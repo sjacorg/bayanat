@@ -317,9 +317,6 @@ const IncidentCard = Vue.defineComponent({
                 <v-card-text v-if="geoMapOn">
                   <global-map :model-value="mapLocations"></global-map>
                 </v-card-text>
-                <v-card v-if="geoMapOn" variant="flat">
-                  <new-global-map :entities="entities"></new-global-map>
-                </v-card>
               </v-card>
             </div>
           </template>

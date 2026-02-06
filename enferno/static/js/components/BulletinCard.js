@@ -254,9 +254,6 @@ const BulletinCard = Vue.defineComponent({
             <v-card variant="flat">
               <global-map v-model="mapLocations"></global-map>
             </v-card>
-            <v-card variant="flat">
-              <new-global-map :entities="[bulletin]"></new-global-map>
-            </v-card>
           </div>
 
           <div v-else-if="$root.isFieldActiveAndHasContent(field, 'sources', bulletin.sources)" :class="$root.fieldClassDrawer(field)">

@@ -185,8 +185,7 @@ const MapVisualization = Vue.defineComponent({
       this.locations = result.locations;
       this.flows = result.flows;
 
-      // Preselect all event types, omit Residence and Birth by default
-      this.applyDefaultEventTypes();
+      this.applyAllEventTypes();
 
       this.loading = false;
     },
