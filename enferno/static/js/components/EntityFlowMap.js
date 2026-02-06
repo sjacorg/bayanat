@@ -1,4 +1,4 @@
-const NewGlobalMap = Vue.defineComponent({
+const EntityFlowMap = Vue.defineComponent({
   props: {
     entities: { type: Array, default: () => [] },
     entityLoader: { type: Boolean, default: false },
