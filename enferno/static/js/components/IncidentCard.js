@@ -11,42 +11,27 @@ const IncidentCard = Vue.defineComponent({
 
       try {
         const [bulletinsRes, actorsRes] = await Promise.all([
-          axios.get(
-            `/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`,
-          ),
-          axios.get(
-            `/admin/api/incident/relations/${this.incident.id}?class=actor&page=1&per_page=1000`,
-          ),
+          axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`),
+          axios.get(`/admin/api/incident/relations/${this.incident.id}?class=actor&page=1&per_page=1000`),
         ]);
 
         const baseLocations = aggregateIncidentLocations(this.incident);
-        const entities = [this.incident];
 
         let bulletinLocations = [];
-        let bulletins = [];
         if (bulletinsRes.data.items?.length) {
-          bulletins = await this.getBulletinsByIdList(bulletinsRes.data.items.map((x) => x.bulletin.id));
-          bulletins.forEach(b => b.showParentId = true)
-          bulletins.forEach((b) => bulletinLocations.push(aggregateBulletinLocations(b)));
-          bulletinLocations = bulletinLocations
-            ?.flat()
-            ?.map((location) => ({ ...location, show_parent_id: true }));
+          bulletinLocations = await getBulletinLocations(bulletinsRes.data.items.map(x => x.bulletin.id));
+          bulletinLocations = bulletinLocations?.flat()?.map(location => ({ ...location, show_parent_id: true }))
         }
 
         let actorLocations = [];
-        let actors = [];
         if (actorsRes.data.items?.length) {
-          actors = await this.getActorsByIdList(actorsRes.data.items.map((x) => x.actor.id));
-          actors.forEach(a => a.showParentId = true)
-          actors.forEach((a) => actorLocations.push(aggregateActorLocations(a)));
-          actorLocations = actorLocations
-            ?.flat()
-            ?.map((location) => ({ ...location, show_parent_id: true }));
+          actorLocations = await getActorLocations(actorsRes.data.items.map(x => x.actor.id));
+          actorLocations = actorLocations?.flat()?.map(location => ({ ...location, show_parent_id: true }))
         }
 
         // 🔥 Combine bulletins and actor locations
         this.mapLocations = baseLocations.concat(bulletinLocations, actorLocations);
-        this.entities = entities.concat(bulletins, actors);
+
       } catch (err) {
         console.error(err);
         this.geoMapOn = false;
@@ -133,7 +118,6 @@ const IncidentCard = Vue.defineComponent({
       hloading: false,
       //global map
       mapLocations: [],
-      entities: [],
     };
   },
 
