@@ -411,6 +411,11 @@ class Bulletin(db.Model, BaseMixin):
                 )
                 media.save()
 
+        # Collect affected entity IDs for batched revision creation
+        affected_bulletins = set()
+        affected_actors = set()
+        affected_incidents = set()
+
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json:
             # collect related bulletin ids (helps with finding removed ones)
@@ -422,7 +427,8 @@ class Bulletin(db.Model, BaseMixin):
                 if bulletin:
                     rel_ids.append(bulletin.id)
                     # this will update/create the relationship (will flush to db)
-                    self.relate_bulletin(bulletin, relation=relation)
+                    self.relate_bulletin(bulletin, relation=relation, create_revision=False)
+                    affected_bulletins.add(bulletin.id)
 
                 # Find out removed relations and remove them
             # just loop existing relations and remove if the destination bulletin no in the related ids
@@ -432,9 +438,7 @@ class Bulletin(db.Model, BaseMixin):
                 rid = r.get_other_id(self.id)
                 if not (rid in rel_ids):
                     r.delete()
-
-                    # ------- create revision on the other side of the relationship
-                    Bulletin.query.get(rid).create_revision()
+                    affected_bulletins.add(rid)
 
         # Related Actors (actors_relations)
         if "actor_relations" in json:
@@ -445,7 +449,8 @@ class Bulletin(db.Model, BaseMixin):
                 if actor:
                     rel_ids.append(actor.id)
                     # helper method to update/create the relationship (will flush to db)
-                    self.relate_actor(actor, relation=relation)
+                    self.relate_actor(actor, relation=relation, create_revision=False)
+                    affected_actors.add(actor.id)
 
             # Find out removed relations and remove them
             # just loop existing relations and remove if the destination actor no in the related ids
@@ -455,9 +460,7 @@ class Bulletin(db.Model, BaseMixin):
                 if not (r.actor_id in rel_ids):
                     rel_actor = r.actor
                     r.delete()
-
-                    # --revision relation
-                    rel_actor.create_revision()
+                    affected_actors.add(rel_actor.id)
 
         # Related Incidents (incidents_relations)
         if "incident_relations" in json:
@@ -468,7 +471,8 @@ class Bulletin(db.Model, BaseMixin):
                 if incident:
                     rel_ids.append(incident.id)
                     # helper method to update/create the relationship (will flush to db)
-                    self.relate_incident(incident, relation=relation)
+                    self.relate_incident(incident, relation=relation, create_revision=False)
+                    affected_incidents.add(incident.id)
 
             # Find out removed relations and remove them
             # just loop existing relations and remove if the destination incident no in the related ids
@@ -478,9 +482,21 @@ class Bulletin(db.Model, BaseMixin):
                 if not (r.incident_id in rel_ids):
                     rel_incident = r.incident
                     r.delete()
+                    affected_incidents.add(rel_incident.id)
 
-                    # --revision relation
-                    rel_incident.create_revision()
+        # Batch create revisions for all affected entities (deduplicated)
+        for bid in affected_bulletins:
+            b = Bulletin.query.get(bid)
+            if b:
+                b.create_revision()
+        for aid in affected_actors:
+            a = Actor.query.get(aid)
+            if a:
+                a.create_revision()
+        for iid in affected_incidents:
+            i = Incident.query.get(iid)
+            if i:
+                i.create_revision()
 
         self.publish_date = json.get("publish_date", None)
         if self.publish_date == "":

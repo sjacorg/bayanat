@@ -283,6 +283,11 @@ class Incident(db.Model, BaseMixin):
                 new_events.append(e)
             self.events = new_events
 
+        # Collect affected entity IDs for batched revision creation
+        affected_actors = set()
+        affected_bulletins = set()
+        affected_incidents = set()
+
         # Related Actors (actor_relations)
         if "actor_relations" in json and "check_ar" in json:
             # collect related actors ids (helps with finding removed ones)
@@ -295,7 +300,8 @@ class Incident(db.Model, BaseMixin):
                 if actor:
                     rel_ids.append(actor.id)
                     # this will update/create the relationship (will flush to db!)
-                    self.relate_actor(actor, relation=relation)
+                    self.relate_actor(actor, relation=relation, create_revision=False)
+                    affected_actors.add(actor.id)
 
                 # Find out removed relations and remove them
             # just loop existing relations and remove if the destination actor not in the related ids
@@ -304,9 +310,7 @@ class Incident(db.Model, BaseMixin):
                 if not (r.actor_id in rel_ids):
                     rel_actor = r.actor
                     r.delete()
-
-                    # -revision related actor
-                    rel_actor.create_revision()
+                    affected_actors.add(rel_actor.id)
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json and "check_br" in json:
@@ -319,7 +323,8 @@ class Incident(db.Model, BaseMixin):
                 if bulletin:
                     rel_ids.append(bulletin.id)
                     # this will update/create the relationship (will flush to db!)
-                    self.relate_bulletin(bulletin, relation=relation)
+                    self.relate_bulletin(bulletin, relation=relation, create_revision=False)
+                    affected_bulletins.add(bulletin.id)
 
             # Find out removed relations and remove them
             # just loop existing relations and remove if the destination bulletin not in the related ids
@@ -327,11 +332,9 @@ class Incident(db.Model, BaseMixin):
                 if not (r.bulletin_id in rel_ids):
                     rel_bulletin = r.bulletin
                     r.delete()
+                    affected_bulletins.add(rel_bulletin.id)
 
-                    # -revision related bulletin
-                    rel_bulletin.create_revision()
-
-        # Related Incidnets (incident_relations)
+        # Related Incidents (incident_relations)
         if "incident_relations" in json and "check_ir" in json:
             # collect related incident ids (helps with finding removed ones)
             rel_ids = []
@@ -342,7 +345,8 @@ class Incident(db.Model, BaseMixin):
                 if incident:
                     rel_ids.append(incident.id)
                     # this will update/create the relationship (will flush to db)
-                    self.relate_incident(incident, relation=relation)
+                    self.relate_incident(incident, relation=relation, create_revision=False)
+                    affected_incidents.add(incident.id)
 
                 # Find out removed relations and remove them
             # just loop existing relations and remove if the destination incident no in the related ids
@@ -352,9 +356,21 @@ class Incident(db.Model, BaseMixin):
                 rid = r.get_other_id(self.id)
                 if not (rid in rel_ids):
                     r.delete()
+                    affected_incidents.add(rid)
 
-                    # - revision related incident
-                    Incident.query.get(rid).create_revision()
+        # Batch create revisions for all affected entities (deduplicated)
+        for aid in affected_actors:
+            a = Actor.query.get(aid)
+            if a:
+                a.create_revision()
+        for bid in affected_bulletins:
+            b = Bulletin.query.get(bid)
+            if b:
+                b.create_revision()
+        for iid in affected_incidents:
+            i = Incident.query.get(iid)
+            if i:
+                i.create_revision()
 
         if "comments" in json:
             self.comments = json["comments"]
