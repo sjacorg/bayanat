@@ -684,10 +684,11 @@ def api_ocr_stats():
 @roles_accepted("Admin")
 def api_extraction_update(extraction_id: int):
     """
-    Update extraction record (accept, transcribe, mark unreadable).
+    Update extraction record (accept, transcribe, mark unreadable, set orientation).
     Body:
-      - action: accept|transcribe|cant_read
+      - action: accept|transcribe|cant_read|orientation
       - text: (required for transcribe) corrected text
+      - orientation: (required for orientation) one of 0, 90, 180, 270
     """
     extraction = Extraction.query.get(extraction_id)
     if not extraction:
@@ -716,8 +717,14 @@ def api_extraction_update(extraction_id: int):
         extraction.reviewed_by = current_user.id
         extraction.reviewed_at = datetime.utcnow()
 
+    elif action == "orientation":
+        orientation = data.get("orientation")
+        if orientation not in (0, 90, 180, 270):
+            return HTTPResponse.error("Invalid orientation. Use: 0, 90, 180, 270")
+        extraction.orientation = orientation
+
     else:
-        return HTTPResponse.error("Invalid action. Use: accept, transcribe, cant_read")
+        return HTTPResponse.error("Invalid action. Use: accept, transcribe, cant_read, orientation")
 
     db.session.commit()
 
@@ -725,6 +732,7 @@ def api_extraction_update(extraction_id: int):
         "accept": "OCR text accepted",
         "transcribe": "Manual transcription",
         "cant_read": "Marked unreadable",
+        "orientation": f"Orientation set to {data.get('orientation')}°",
     }
     Activity.create(
         current_user,
