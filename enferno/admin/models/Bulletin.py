@@ -427,8 +427,11 @@ class Bulletin(db.Model, BaseMixin):
                 if bulletin:
                     rel_ids.append(bulletin.id)
                     # this will update/create the relationship (will flush to db)
-                    self.relate_bulletin(bulletin, relation=relation, create_revision=False)
-                    affected_bulletins.add(bulletin.id)
+                    is_new = self.relate_bulletin(
+                        bulletin, relation=relation, create_revision=False
+                    )
+                    if is_new:
+                        affected_bulletins.add(bulletin.id)
 
                 # Find out removed relations and remove them
             # just loop existing relations and remove if the destination bulletin no in the related ids
@@ -449,8 +452,9 @@ class Bulletin(db.Model, BaseMixin):
                 if actor:
                     rel_ids.append(actor.id)
                     # helper method to update/create the relationship (will flush to db)
-                    self.relate_actor(actor, relation=relation, create_revision=False)
-                    affected_actors.add(actor.id)
+                    is_new = self.relate_actor(actor, relation=relation, create_revision=False)
+                    if is_new:
+                        affected_actors.add(actor.id)
 
             # Find out removed relations and remove them
             # just loop existing relations and remove if the destination actor no in the related ids
@@ -471,8 +475,11 @@ class Bulletin(db.Model, BaseMixin):
                 if incident:
                     rel_ids.append(incident.id)
                     # helper method to update/create the relationship (will flush to db)
-                    self.relate_incident(incident, relation=relation, create_revision=False)
-                    affected_incidents.add(incident.id)
+                    is_new = self.relate_incident(
+                        incident, relation=relation, create_revision=False
+                    )
+                    if is_new:
+                        affected_incidents.add(incident.id)
 
             # Find out removed relations and remove them
             # just loop existing relations and remove if the destination incident no in the related ids
@@ -593,7 +600,7 @@ class Bulletin(db.Model, BaseMixin):
     # Helper method to handle logic of relating bulletins  (from bulletin)
     def relate_bulletin(
         self, bulletin: "Bulletin", relation: Optional[dict] = None, create_revision: bool = True
-    ) -> None:
+    ) -> bool:
         from enferno.admin.models import Btob
 
         """
@@ -603,6 +610,9 @@ class Bulletin(db.Model, BaseMixin):
             - bulletin: the bulletin to relate to.
             - relation: the relation data.
             - create_revision: create a revision.
+
+        Returns:
+            - True if a new relation was created, False if existing was updated.
         """
         # if a new bulletin is being created, we must save it to get the id
         if not self.id:
@@ -614,13 +624,14 @@ class Bulletin(db.Model, BaseMixin):
         # reject self relation
         if self == bulletin:
             # Cant relate bulletin to itself
-            return
+            return False
 
         existing_relation = Btob.are_related(self.id, bulletin.id)
 
         if existing_relation:
             existing_relation.from_json(relation)
             existing_relation.save()
+            return False
 
         else:
             # Create new relation (possible from or to the bulletin based on the id comparison)
@@ -633,12 +644,13 @@ class Bulletin(db.Model, BaseMixin):
             # ------- create revision on the other side of the relationship
             if create_revision:
                 bulletin.create_revision()
+            return True
 
     # Helper method to handle logic of relating incidents (from a bulletin)
 
     def relate_incident(
         self, incident: "Incident", relation: Optional[dict] = None, create_revision: bool = True
-    ):
+    ) -> bool:
         """
         Relate a bulletin to an incident.
 
@@ -646,6 +658,9 @@ class Bulletin(db.Model, BaseMixin):
             - incident: the incident to relate to.
             - relation: the relation data.
             - create_revision: create a revision.
+
+        Returns:
+            - True if a new relation was created, False if existing was updated.
         """
         # if current bulletin is new, save it to get the id
         if not self.id:
@@ -658,6 +673,7 @@ class Bulletin(db.Model, BaseMixin):
             # Relationship exists :: Updating the attributes
             existing_relation.from_json(relation)
             existing_relation.save()
+            return False
 
         else:
             # Create new relation
@@ -669,11 +685,12 @@ class Bulletin(db.Model, BaseMixin):
             # --revision relation
             if create_revision:
                 incident.create_revision()
+            return True
 
     # helper method to relate actors
     def relate_actor(
         self, actor: "Actor", relation: Optional[dict] = None, create_revision: bool = True
-    ) -> None:
+    ) -> bool:
         """
         Relate a bulletin to an actor.
 
@@ -681,6 +698,9 @@ class Bulletin(db.Model, BaseMixin):
             - actor: the actor to relate to.
             - relation: the relation data.
             - create_revision: create a revision.
+
+        Returns:
+            - True if a new relation was created, False if existing was updated.
         """
         # if current bulletin is new, save it to get the id
         if not self.id:
@@ -693,6 +713,7 @@ class Bulletin(db.Model, BaseMixin):
             # Relationship exists :: Updating the attributes
             existing_relation.from_json(relation)
             existing_relation.save()
+            return False
 
         else:
             # Create new relation
@@ -704,6 +725,7 @@ class Bulletin(db.Model, BaseMixin):
             # --revision relation
             if create_revision:
                 actor.create_revision()
+            return True
 
     # custom serialization method
     @check_roles
