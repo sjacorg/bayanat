@@ -1,0 +1,10 @@
+<media-transcription-dialog
+    v-model:open="mediaDialog.show"
+    :loading="mediaDialog.loading"
+    :media="mediaDialog.data"
+    :has-vision-api-key="Boolean('{{ config.GOOGLE_VISION_API_KEY }}')"
+    @rejected="onTranscriptionUpdated($event)"
+    @accepted="onTranscriptionUpdated($event)"
+    @transcribed="onTranscriptionUpdated($event)"
+    @processed="onMediaProcessed($event)"
+></media-transcription-dialog>

@@ -11,6 +11,7 @@
 
 
     <v-main>
+        {% include 'admin/partials/media_transcription_dialog.html' %}
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
         {% include 'admin/partials/bulk_bulletin_drawer.html' %}
@@ -379,6 +380,7 @@
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/mixins/form-builder-mixin.js"></script>
+    <script src="/static/js/mixins/ocr-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -434,6 +436,7 @@
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
     <script src="/static/js/components/FieldRenderer.js"></script>
+    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
 
 
     <script src="/static/js/components/MissingPersonCard.js"></script>
@@ -464,7 +467,7 @@
         const app = createApp({
                 delimiters: delimiters,
 
-                mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin],
+                mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin, ocrMixin],
 
                 data: () => ({
                     itemsPerPageOptions: window.itemsPerPageOptions,
@@ -1759,6 +1762,7 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
+        app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {
