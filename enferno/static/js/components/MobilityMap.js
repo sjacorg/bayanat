@@ -16,7 +16,6 @@ const MobilityMap = Vue.defineComponent({
       ctx: null,
       frameRequested: false,
       translations: window.translations,
-      measureControls: null,
 
       points: {},
       selectedPoint: null,
@@ -85,12 +84,6 @@ const MobilityMap = Vue.defineComponent({
         this.resetSelectionAndRebuild();
         this.$nextTick(() => this.zoomToAll());
       },
-    },
-  },
-
-  computed: {
-    measuringActive() {
-      return this.measureControls?._measuring === true;
     },
   },
 
@@ -384,8 +377,6 @@ const MobilityMap = Vue.defineComponent({
     // =============================================
 
     onMapClick(e) {
-      if (this.measuringActive) return;
-
       const p = this.map.latLngToContainerPoint(e.latlng);
 
       // Check dots
@@ -436,7 +427,6 @@ const MobilityMap = Vue.defineComponent({
     },
 
     onMapHover(e) {
-      if (this.measuringActive) return;
       if (!this.map || !this.canvas) return;
 
       const p = this.map.latLngToContainerPoint(e.latlng);
@@ -647,7 +637,7 @@ const MobilityMap = Vue.defineComponent({
       <canvas
         ref="overlay"
         class="position-absolute top-0 left-0 w-100 h-100 pointer-events-none"
-        :style="{ zIndex: 999, opacity: measuringActive ? 0.5 : 1 }"
+        :style="{ zIndex: 999 }"
       ></canvas>
 
       <v-card
