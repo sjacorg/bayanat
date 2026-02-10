@@ -1,5 +1,5 @@
 <v-dialog :retain-focus="false" no-click-animation persistent v-if="dialog" v-model="dialog" fullscreen>
-    <v-form @submit.prevent="save"  ref="form" v-model="valid">
+    <v-form @submit.prevent="validateForm" ref="form">
         <v-card v-if="dialog" class="overflow-hidden card-edit">
             <v-toolbar
                 color="primary"
@@ -9,8 +9,7 @@
             </v-toolbar-title>
                 <v-spacer></v-spacer>
                 <v-btn 
-                    type="button" 
-                    @click="validateForm"
+                    type="submit" 
                     variant="elevated"
                     class="mx-2"
                     >
@@ -31,14 +30,15 @@
                         <v-col cols="12" md="6">
                             <dual-field v-model:original="editedItem.title"
                                         v-model:translation="editedItem.title_ar"
-                                        label-original="{{ _('Title') }}"
-                                        label-translation="{{ _('Title (Ar)') }}"
                                         :rules="[
                                             validationRules.required('{{_('Title or Title (Ar) is required')}}'),
                                             validationRules.maxLength(255),
                                         ]"
                                         v-bind="$root.serverErrorPropsForDualField($root.serverErrors, 'item.title', 'item.title_ar')"
-                            ></dual-field>
+                            >
+                                <template v-slot:label-original>{{ _('Title') }} <Asterisk /></template>
+                                <template v-slot:label-translation>{{ _('Title (AR)') }} <Asterisk /></template>
+                            </dual-field>
                         </v-col>
 
                         <v-col cols="12" md="6">
@@ -60,7 +60,8 @@
                                     item-value="id"
                                     :rules="[validationRules.required()]"
                                     :multiple="false"
-                                    label="{{ _('Location Type') }}">
+                                >
+                                    <template v-slot:label>{{ _('Location Type') }} <Asterisk /></template>
                                 </search-field>
 
 
@@ -77,7 +78,8 @@
                                     @update:model-value="restrictSearch"
                                     :multiple="false"
                                     :rules="editedItem.location_type?.title === 'Administrative Location' ? [validationRules.required()] : []"
-                                    label="{{ _('Admin Level') }}">
+                                >
+                                    <template v-slot:label>{{ _('Admin Level') }} <Asterisk v-if="editedItem.location_type?.title === 'Administrative Location'" /></template>
                                 </search-field>
 
                         </v-col>
@@ -127,7 +129,8 @@
                     <v-row>
                         <v-col cols="12" md="12">
                             <geo-map
-                                    :edit-mode="true"
+                                edit-mode
+                                use-asterisk
                                 class="flex-grow-1"
                                 v-model="editedItem.latlng"
                                 :map-height="300">

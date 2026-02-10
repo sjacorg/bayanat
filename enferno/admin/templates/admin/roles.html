@@ -39,42 +39,30 @@
                                                     <span class="headline">${ formTitle }</span>
                                                 </v-card-title>
 
+                                                <v-form ref="form" @submit.prevent="save">
                                                 <v-card-text>
                                                     <v-container>
                                                         <v-row>
                                                             <v-col cols="12" md="6">
                                                                 <v-text-field
                                                                         v-model="editedItem.name"
-                                                                        label="{{ _('Group Name') }}"
-                                                                ></v-text-field>
+                                                                        :rules="[validationRules.required()]"
+                                                                >
+                                                                    <template v-slot:label>{{ _('Group Name') }} <Asterisk /></template>
+                                                                </v-text-field>
                                                             </v-col>
                                                             <v-col cols="12" md="6">
-                                                                <v-text-field 
-                                                                    label="{{ _('Group Color') }}"
-                                                                    v-model="editedItem.color" 
+                                                                <v-color-input
+                                                                    v-model="editedItem.color"
                                                                     persistent-hint
                                                                     hint="{{ _('Useful to easily identify groups in data tables.') }}"
-                                                                    v-mask="mask"
+                                                                    color-pip
+                                                                    autocomplete="off"
+                                                                    mode="hex"
+                                                                    :rules="[validationRules.required(), validationRules.hexColor()]"
                                                                 >
-                                                                    <template v-slot:append>
-                                                                        <v-menu v-model="menu" top
-                                                                                nudge-bottom="105"
-                                                                                nudge-left="16"
-                                                                                :close-on-content-click="false">
-                                                                            <template v-slot:activator="{ props }">
-                                                                                <div :style="swatchStyle"
-                                                                                v-bind="props"></div>
-                                                                            </template>
-                                                                            <v-card>
-                                                                                <v-card-text class="pa-0">
-                                                                                    <v-color-picker
-                                                                                            v-model="editedItem.color"></v-color-picker>
-                                                                                </v-card-text>
-                                                                            </v-card>
-                                                                        </v-menu>
-                                                                    </template>
-                                                                </v-text-field>
-
+                                                                    <template v-slot:label>{{ _('Group Color') }} <Asterisk /></template>
+                                                                </v-color-input>
                                                             </v-col>
                                                         </v-row>
 
@@ -100,74 +88,22 @@
                                                     >
                                                     <v-btn
                                                             color="primary"
-
                                                             variant="elevated"
-                                                            @click="save"
+                                                            type="submit"
                                                     >{{ _('Save') }}
                                                     </v-btn
                                                     >
                                                 </v-card-actions>
+                                                </v-form>
                                             </v-card>
                                         </v-dialog>
 
-                                        <v-dialog
-                                                v-model="imDialog"
-                                                width="500"
-                                        >
-                                            <template v-slot:activator="{ props }">
-                                                <v-btn
-                                                    color="secondary"
-                                                    variant="elevated"
-                                                    class="ma-2"
-                                                    v-bind="props">
-                                                    {{ _('Import CSV') }}
-                                                </v-btn>
-                                            </template>
-
-                                            <v-card>
-                                                <v-card-title>
-                                                    <span class="headline">{{ _('Import CSV') }}</span>
-                                                </v-card-title>
-
-                                                <v-card-text>
-                                                    <v-container>
-                                                        <v-row>
-                                                            <v-col cols="12" md="12">
-                                                                <v-file-input v-model="csvFile" show-size
-                                                                              accept=".csv"
-                                                                              label="{{ _('Select CSV File') }}"></v-file-input>
-
-                                                            </v-col>
-                                                        </v-row>
-                                                    </v-container>
-                                                </v-card-text>
-
-                                                <v-card-actions>
-                                                    <v-spacer></v-spacer>
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="imDialog=false"
-                                                    >{{ _('Cancel') }}</v-btn
-                                                    >
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="importCSV"
-                                                    >{{ _('Save') }}</v-btn
-                                                    >
-                                                </v-card-actions>
-                                            </v-card>
-
-                                        </v-dialog>
-
+                                        <import-csv-dialog endpoint="/admin/api/role/import/" @import="refresh()"></import-csv-dialog>
                                     </v-toolbar>
                                 </template>
 
                                 <template v-slot:item.color="{item}">
                                     <v-avatar size="24" v-if="item.color"  :style="'background:' + item.color"></v-avatar>
-
-
                                 </template>
                                 <template v-slot:item.action="{ item }">
                                     <template v-if="!['Admin','Mod','DA'].includes(item.name)">
@@ -191,6 +127,8 @@
 
 
 {% endblock %} {% block js %}
+    <script src="/static/js/components/Asterisk.js"></script>
+    <script src="/static/js/components/ImportCsvDialog.js"></script>
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -202,14 +140,10 @@
             mixins: [globalMixin],
 
             data: () => ({
-
-                mask: '!#XXXXXXXX',
-                menu: false,
                 dialog: dialog,
-                imDialog: false,
+                validationRules: validationRules,
                 drawer: drawer,
                 loading: true,
-                csvFile: null,
                 options: {},
 
                 headers: [
@@ -226,29 +160,15 @@
                 itemsLength: 10,
                 editedIndex: -1,
                 editedItem: {
-                    title: ""
+                    name: ""
                 },
                 defaultItem: {
-                    title: "",
+                    name: "",
                     color: '#439d92',
-
                 }
             }),
 
             computed: {
-                swatchStyle() {
-                    const {color, menu} = this
-                    return {
-                        backgroundColor: this.editedItem.color,
-                        cursor: 'pointer',
-                        height: '24px',
-                        width: '24px',
-                        margin: '2px',
-                        border: '1px dotted #ddd',
-                        borderRadius: menu ? '50%' : '4px',
-                        transition: 'border-radius 200ms ease-in-out'
-                    }
-                },
                 formTitle() {
                     return this.editedIndex === -1 ? "{{_('New Group')}}" : "{{_('Edit Group')}}";
                 }
@@ -273,17 +193,6 @@
                     }).finally(() => {
                         this.loading = false;
                     });
-                },
-
-                importCSV() {
-                    const reqData = new FormData();
-                    reqData.append('csv', this.csvFile)
-                    api.post('/admin/api/role/import/', reqData).then(response => {
-                        this.imDialog = false;
-                        this.refresh();
-                        this.showSnack(response.data);
-                    })
-
                 },
                 newItem() {
 
@@ -322,26 +231,35 @@
                 },
 
                 save() {
-                    if (this.editedIndex > -1) {
-                        Object.assign(this.items[this.editedIndex], this.editedItem);
-                        api.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh()
-                                this.close();
-                            });
-                    } else {
-                        axios
-                            .post("/admin/api/role/", {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh()
-                                this.close()
-                            });
-                    }
+                    this.$refs.form.validate().then(({ valid }) => {
+                        if (!valid) {
+                            this.showSnack("{{ _('Please review form for errors.') }}");
+                            return;
+                        }
+
+                        if (this.editedIndex > -1) {
+                            Object.assign(this.items[this.editedIndex], this.editedItem);
+                            api.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh()
+                                    this.close();
+                                });
+                        } else {
+                            axios
+                                .post("/admin/api/role/", {item: this.editedItem})
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh()
+                                    this.close()
+                                });
+                        }
+                    });
                 }
             }
         });
+        app.component('Asterisk', Asterisk);
+        app.component('ImportCsvDialog', ImportCsvDialog);
         app.use(vuetify).mount("#app")
     </script>
 {% endblock %}

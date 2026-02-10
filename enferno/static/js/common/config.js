@@ -100,6 +100,13 @@ const validationRules = {
             }, 350);
           });
         };
+    },
+    hexColor: (message = window.translations.invalidHexColorFormat_) => {
+        return (value) => {
+            if (!value) return true; // Optional field
+            const hexPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
+            return hexPattern.test(value) || message;
+        };
     }
 };
 
@@ -118,8 +125,25 @@ function isValidLength(value, limit, type) {
     return type === "max" ? length <= limit : length >= limit;
 }
 
-function scrollToFirstError() {
-  const wrapper = document.querySelector(".v-input--error");
+function scrollToFirstError(containerRef = null) {
+  // If a container ref is provided, search within it; otherwise search in the topmost dialog
+  let container = containerRef;
+  
+  if (!container) {
+    // Find all open dialogs
+    const dialogs = document.querySelectorAll('.v-dialog.v-overlay--active');
+    
+    if (dialogs.length === 0) {
+      // No dialogs open, search in the main document
+      container = document;
+    } else {
+      // Get the topmost dialog (last in DOM order, highest z-index)
+      container = dialogs[dialogs.length - 1];
+    }
+  }
+
+  // Find the first error within the container
+  const wrapper = container.querySelector(".v-input--error");
   if (!wrapper) return;
 
   wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -160,6 +184,12 @@ const vuetifyConfig = {
         },
         VApp: {
             class: 'bg-background',
+        },
+        VFileInput: {
+            variant: 'outlined',
+        },
+        VColorInput: {
+            variant: 'outlined',
         },
         VTextField: {
             variant: 'outlined',

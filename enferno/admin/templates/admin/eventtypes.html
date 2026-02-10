@@ -38,126 +38,78 @@
                                         </v-btn>
 
                                         <v-dialog v-model="dialog" max-width="500px">
-
                                             <v-card>
                                                 <v-card-title block>
                                                     <span class="headline">${ formTitle }</span>
-
-
                                                 </v-card-title>
 
-                                                <v-card-text>
-                                                    <v-container>
-                                                        <v-row>
-                                                            <v-col cols="12" md="6">
-                                                                <v-text-field
-                                                                        variant="solo"
-                                                                        v-model="editedItem.title"
-                                                                        label="{{ _('Title') }}"
-                                                                ></v-text-field>
-                                                            </v-col>
-                                                            <v-col cols="12" md="6">
-                                                                <v-text-field
-                                                                        variant="solo"
-                                                                        v-model="editedItem.title_ar"
-                                                                        label="{{ _('Title (AR)') }}"
-                                                                ></v-text-field>
-                                                            </v-col>
-                                                        </v-row>
-                                                        <v-row>
-                                                            <v-col cols="12" md="6">
-                                                                <v-checkbox label="{{ _('For Actors') }}"
-                                                                            v-model="editedItem.for_actor">
-                                                                </v-checkbox>
-
-                                                            </v-col>
-                                                            <v-col cols="12" md="6">
-                                                                <v-checkbox label="{{ _('For Bulletins') }}"
-                                                                            v-model="editedItem.for_bulletin">
-                                                                </v-checkbox>
-
-                                                            </v-col>
+                                                <v-form ref="form" @submit.prevent="save">
+                                                    <v-card-text>
+                                                        <v-container>
                                                             <v-row>
-                                                                <v-col>
-                                                                    <v-textarea variant="solo"
-                                                                                v-model="editedItem.comments"
-                                                                                label="{{ _('Comments') }}">
-
-                                                                    </v-textarea>
+                                                                <v-col cols="12" md="6">
+                                                                    <v-text-field
+                                                                            v-model="editedItem.title"
+                                                                            :rules="[validationRules.required()]"
+                                                                    >
+                                                                        <template v-slot:label>{{ _('Title') }} <Asterisk /></template>
+                                                                    </v-text-field>
+                                                                </v-col>
+                                                                <v-col cols="12" md="6">
+                                                                    <v-text-field
+                                                                            v-model="editedItem.title_ar"
+                                                                            label="{{ _('Title (AR)') }}"
+                                                                    ></v-text-field>
                                                                 </v-col>
                                                             </v-row>
-                                                        </v-row>
-                                                    </v-container>
-                                                </v-card-text>
+                                                            <v-row>
+                                                                <v-col cols="12" md="6">
+                                                                    <v-checkbox label="{{ _('For Actors') }}"
+                                                                                v-model="editedItem.for_actor">
+                                                                    </v-checkbox>
 
-                                                <v-card-actions>
-                                                    <v-spacer></v-spacer>
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="close"
-                                                    >{{ _('Cancel') }}</v-btn
-                                                    >
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="save"
-                                                    >{{ _('Save') }}</v-btn
-                                                    >
-                                                </v-card-actions>
+                                                                </v-col>
+                                                                <v-col cols="12" md="6">
+                                                                    <v-checkbox label="{{ _('For Bulletins') }}"
+                                                                                v-model="editedItem.for_bulletin">
+                                                                    </v-checkbox>
+
+                                                                </v-col>
+                                                                <v-row>
+                                                                    <v-col>
+                                                                        <v-textarea
+                                                                                    v-model="editedItem.comments"
+                                                                                    label="{{ _('Comments') }}">
+
+                                                                        </v-textarea>
+                                                                    </v-col>
+                                                                </v-row>
+                                                            </v-row>
+                                                        </v-container>
+                                                    </v-card-text>
+
+                                                    <v-card-actions>
+                                                        <v-spacer></v-spacer>
+                                                        <v-btn
+                                                                color="blue darken-1"
+                                                                text
+                                                                @click="close"
+                                                        >{{ _('Cancel') }}</v-btn
+                                                        >
+                                                        <v-btn
+                                                                color="blue darken-1"
+                                                                text
+                                                                type="submit"
+                                                        >{{ _('Save') }}</v-btn
+                                                        >
+                                                    </v-card-actions>
+                                                </v-form>
                                             </v-card>
                                         </v-dialog>
 
-                                        <v-dialog v-model="imDialog" width="500">
-
-                                            {% if current_user.roles_in(['Admin']) %}
-                                                <template v-slot:activator="{ props }">
-                                                    <v-btn
-                                                            color="secondary"
-                                                            variant="elevated"
-                                                            class="ma-2"
-                                                            v-bind="props">
-                                                        {{ _('Import CSV') }}
-                                                    </v-btn>
-                                                </template>
-                                            {% endif %}
-
-                                            <v-card>
-                                                <v-card-title>
-                                                    <span class="headline">{{ _('Import CSV') }}</span>
-                                                </v-card-title>
-
-                                                <v-card-text>
-                                                    <v-container>
-                                                        <v-row>
-                                                            <v-col cols="12" md="12">
-                                                                <v-file-input v-model="csvFile" show-size
-                                                                              accept=".csv"
-                                                                              label="{{ _('Select CSV File') }}"></v-file-input>
-
-                                                            </v-col>
-                                                        </v-row>
-                                                    </v-container>
-                                                </v-card-text>
-
-                                                <v-card-actions>
-                                                    <v-spacer></v-spacer>
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="imDialog=false"
-                                                    >{{ _('Cancel') }}</v-btn
-                                                    >
-                                                    <v-btn
-                                                            color="blue darken-1"
-                                                            text
-                                                            @click="importCSV"
-                                                    >{{ ('Save') }}</v-btn
-                                                    >
-                                                </v-card-actions>
-                                            </v-card>
-
-                                        </v-dialog>
+                                        {% if current_user.roles_in(['Admin']) %}
+                                        <import-csv-dialog endpoint="/admin/api/eventtype/import/" @import="refresh()"></import-csv-dialog>
+                                        {% endif %}
 
                                     </v-toolbar>
                                 </template>
@@ -186,6 +138,8 @@
     </v-main>
 
 {% endblock %} {% block js %}
+    <script src="/static/js/components/Asterisk.js"></script>
+    <script src="/static/js/components/ImportCsvDialog.js"></script>
     <script nonce="{{ csp_nonce() }}">
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
@@ -198,6 +152,7 @@
 
             data: () => ({
                 dialog: dialog,
+                validationRules: validationRules,
                 imDialog: false,
                 drawer: drawer,
                 loading: true,
@@ -255,18 +210,6 @@
                     });
                 },
 
-                importCSV() {
-                    const reqData = new FormData();
-                    reqData.append('csv', this.csvFile)
-                    api.post('/admin/api/eventtype/import/', reqData).then(response => {
-
-                        this.imDialog = false;
-                        this.refresh();
-                        this.showSnack(response.data);
-                    })
-
-                },
-
                 editItem(item) {
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = Object.assign({}, item);
@@ -300,31 +243,40 @@
                 },
 
                 save() {
-                    if (this.editedIndex > -1) {
-                        Object.assign(this.items[this.editedIndex], this.editedItem);
-                        api.put(`/admin/api/eventtype/${this.editedItem.id}`, {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh();
-                                this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        })
+                    this.$refs.form.validate().then(({ valid }) => {
+                        if (!valid) {
+                            this.showSnack("{{ _('Please review form for errors.') }}");
+                            return;
+                        }
 
-                    } else {
-                        
-                        api.post("/admin/api/eventtype/", {item: this.editedItem})
-                        .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh();
-                                this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        })
-                    }
+                        if (this.editedIndex > -1) {
+                            Object.assign(this.items[this.editedIndex], this.editedItem);
+                            api.put(`/admin/api/eventtype/${this.editedItem.id}`, {item: this.editedItem})
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh();
+                                    this.close();
+                                }).catch(err => {
+                                this.showSnack(this.parseValidationError(err?.response?.data));
+                            })
+
+                        } else {
+                            
+                            api.post("/admin/api/eventtype/", {item: this.editedItem})
+                            .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh();
+                                    this.close();
+                                }).catch(err => {
+                                this.showSnack(this.parseValidationError(err?.response?.data));
+                            })
+                        }
+                    });
                 }
             }
         });
+        app.component('Asterisk', Asterisk);
+        app.component('ImportCsvDialog', ImportCsvDialog);
         app.use(vuetify).mount("#app")
     </script>
 {% endblock %}

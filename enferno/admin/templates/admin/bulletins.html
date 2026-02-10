@@ -433,6 +433,7 @@
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
     <script src="/static/js/components/FieldRenderer.js"></script>
+    <script src="/static/js/components/Asterisk.js"></script>
 
 
     <script src="/static/js/components/MissingPersonCard.js"></script>
@@ -1760,6 +1761,7 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
+        app.component('Asterisk', Asterisk);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {
