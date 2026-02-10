@@ -889,10 +889,10 @@
                 },
 
                 methods: {
-                    onTranscriptionUpdated(media) {
+                    onTranscriptionUpdated({ media }) {
                         this.showOcrDialog(media.id);
                     },
-                    onMediaProcessed(media) {
+                    onMediaProcessed({ media }) {
                         this.showOcrDialog(media.id);
                     },
                     handleRoute({ initialLoad = false } = {}) {

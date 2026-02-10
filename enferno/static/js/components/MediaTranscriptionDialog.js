@@ -115,7 +115,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         .then(response => {
           if (response.data.success) {
             this.$root.showSnack(this.translations.ocrProcessedSuccessfully_);
-            this.$emit('processed', this.media);
+            this.$emit('processed', { media: this.media});
           } else {
             this.$root.showSnack(response.data.error);
           }
@@ -151,7 +151,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'accept' })
         .then(response => {
           this.$root.showSnack(this.translations.mediaMarkedAsAccepted_);
-          this.$emit('accepted', media);
+          this.$emit('accepted', { media });
         })
         .catch(error => {
           console.error('Accept error:', error);
@@ -167,7 +167,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' })
         .then(response => {
           this.$root.showSnack(this.translations.mediaMarkedAsCannotRead_);
-          this.$emit('rejected', media);
+          this.$emit('rejected', { media});
         })
         .catch(error => {
           console.error('Reject error:', error);
