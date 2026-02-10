@@ -3,16 +3,7 @@
     <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
 {% endblock %}
 {% block content %}
-    <media-transcription-dialog
-        v-model:open="mediaDialog.show"
-        :loading="mediaDialog.loading"
-        :media="mediaDialog.data"
-        :has-vision-api-key="Boolean(visionApiKey)"
-        @rejected="onTranscriptionUpdated($event)"
-        @accepted="onTranscriptionUpdated($event)"
-        @transcribed="onTranscriptionUpdated($event)"
-        @processed="onMediaProcessed($event)"
-    ></media-transcription-dialog>
+    {% include 'admin/partials/media_transcription_dialog.html' %}
 
     <v-main>
         <v-container fluid>
@@ -197,6 +188,7 @@
                         <!-- Bulletin Column -->
                         <template #item.bulletin="{ item }">
                             <v-btn
+                                v-if="item.bulletin"
                                 color="primary"
                                 variant="text"
                                 :href="`/admin/bulletins/${item.bulletin.id}`"
@@ -288,7 +280,7 @@
                     per_page: window.itemsPerPageOptions?.[0] ?? 10,
                 },
                 // TODO: Remove this
-                // mediaDialog: {
+                // ocrDialog: {
                 //     loading: false,
                 //     show: false,
                 //     data: null
@@ -404,7 +396,7 @@
                         const newProcessingIds = new Set(response.data || []);
                         
                         // Check if the currently open media just finished processing
-                        const currentMediaId = this.mediaDialog.data?.id;
+                        const currentMediaId = this.ocrDialog.data?.id;
                         const currentMediaWasProcessing = currentMediaId && this.processingIds.has(currentMediaId);
                         const currentMediaFinished = currentMediaWasProcessing && !newProcessingIds.has(currentMediaId);
                         
@@ -421,11 +413,11 @@
                         }
                         
                         // If the currently open media just finished, reload it
-                        if (this.mediaDialog.show && currentMediaFinished) {
+                        if (this.ocrDialog.show && currentMediaFinished) {
                             this.showOcrDialog(currentMediaId);
-                        } else if (this.mediaDialog.show && currentMediaId) {
+                        } else if (this.ocrDialog.show && currentMediaId) {
                             // Just update the status without reloading
-                            this.mediaDialog.data.ocr_status = this.getEffectiveStatus(this.mediaDialog.data, this.processingIds);
+                            this.ocrDialog.data.ocr_status = this.getEffectiveStatus(this.ocrDialog.data, this.processingIds);
                         }
                         
                         // Manage polling
@@ -463,21 +455,21 @@
                 },
                 // TODO: Remove this
                 // showOcrDialog(id) {
-                //     this.mediaDialog.loading = true;
-                //     this.mediaDialog.show = true;
+                //     this.ocrDialog.loading = true;
+                //     this.ocrDialog.show = true;
 
                 //     api.get(`/admin/api/media/${id}`).then(response => {
                 //         // Only update if dialog is still open
-                //         if (this.mediaDialog.show) {
-                //             this.mediaDialog.data = response.data;
-                //             this.mediaDialog.data.ocr_status = this.getEffectiveStatus(response.data);
+                //         if (this.ocrDialog.show) {
+                //             this.ocrDialog.data = response.data;
+                //             this.ocrDialog.data.ocr_status = this.getEffectiveStatus(response.data);
                 //         }
                 //     }).catch(error => {
                 //         console.error('Error loading media:', error);
                 //         this.showSnack("{{ _('Error loading media') }}");
-                //         this.mediaDialog.show = false;
+                //         this.ocrDialog.show = false;
                 //     }).finally(() => {
-                //         this.mediaDialog.loading = false;
+                //         this.ocrDialog.loading = false;
                 //     });
                 // },
                 rowClick(e, row) {
@@ -585,7 +577,7 @@
                     return this.statuses[status]?.icon || 'mdi-help-circle-outline';
                 },
                 onTranscriptionUpdated({ media, text }) {
-                    this.resetMediaDialog();
+                    this.resetocrDialog();
                     this.refresh();
                     this.loadOCRStats();
                 },
@@ -598,10 +590,10 @@
                     this.fetchProcessingIds();
                 },
                 // TODO: Remove this
-                // resetMediaDialog() {
-                //     this.mediaDialog.show = false;
-                //     this.mediaDialog.data = null;
-                //     this.mediaDialog.loading = false;
+                // resetocrDialog() {
+                //     this.ocrDialog.show = false;
+                //     this.ocrDialog.data = null;
+                //     this.ocrDialog.loading = false;
                 // },
                 loadOCRStats() {
                     api.get('/admin/api/ocr/stats').then(res => {
@@ -621,9 +613,9 @@
                 },
             },
             watch: {
-                'mediaDialog.show'(isOpen) {
+                'ocrDialog.show'(isOpen) {
                     if (isOpen === false) {
-                        this.mediaDialog.data = null;
+                        this.ocrDialog.data = null;
                         if (this.$route.path !== '/admin/media/')
                             this.$router.push('/admin/media/')
                     }

@@ -1,7 +1,7 @@
 <media-transcription-dialog
-    v-model:open="mediaDialog.show"
-    :loading="mediaDialog.loading"
-    :media="mediaDialog.data"
+    v-model:open="ocrDialog.show"
+    :loading="ocrDialog.loading"
+    :media="ocrDialog.data"
     :has-vision-api-key="Boolean('{{ config.GOOGLE_VISION_API_KEY }}')"
     @rejected="onTranscriptionUpdated($event)"
     @accepted="onTranscriptionUpdated($event)"

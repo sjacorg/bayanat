@@ -253,7 +253,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                             height="20"
                           ></v-skeleton-loader>
                           <v-btn
-                            v-else
+                            v-else-if="media?.bulletin"
                             density="compact"
                             color="primary"
                             variant="text"

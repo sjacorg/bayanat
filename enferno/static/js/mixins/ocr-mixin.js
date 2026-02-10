@@ -1,7 +1,7 @@
 const ocrMixin = {
   data() {
     return {
-      mediaDialog: {
+      ocrDialog: {
         loading: false,
         show: false,
         data: null
@@ -18,27 +18,27 @@ const ocrMixin = {
   },
   methods: {
     showOcrDialog(id) {
-        this.mediaDialog.loading = true;
-        this.mediaDialog.show = true;
+        this.ocrDialog.loading = true;
+        this.ocrDialog.show = true;
 
         api.get(`/admin/api/media/${id}`).then(response => {
             // Only update if dialog is still open
-            if (this.mediaDialog.show) {
-                this.mediaDialog.data = response.data;
-                this.mediaDialog.data.ocr_status = this.$root.getEffectiveStatus(response.data);
+            if (this.ocrDialog.show) {
+                this.ocrDialog.data = response.data;
+                this.ocrDialog.data.ocr_status = this.$root.getEffectiveStatus(response.data);
             }
         }).catch(error => {
             console.error('Error loading media:', error);
             this.showSnack("{{ _('Error loading media') }}");
-            this.mediaDialog.show = false;
+            this.ocrDialog.show = false;
         }).finally(() => {
-            this.mediaDialog.loading = false;
+            this.ocrDialog.loading = false;
         });
     },
-    resetMediaDialog() {
-        this.mediaDialog.show = false;
-        this.mediaDialog.data = null;
-        this.mediaDialog.loading = false;
+    resetOcrDialog() {
+        this.ocrDialog.show = false;
+        this.ocrDialog.data = null;
+        this.ocrDialog.loading = false;
     },
     countWords(text) {
       if (!text || !text.trim()) return 0;
