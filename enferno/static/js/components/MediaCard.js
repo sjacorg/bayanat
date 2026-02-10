@@ -17,7 +17,7 @@ const toolbarContent = `
 
         <v-spacer></v-spacer>
 
-        <v-btn size="small" variant="text" icon="mdi-text-recognition" color="primary" @click="$root.showOcrDialog(media.id)"></v-btn>
+        <v-btn v-if="$root.selectableFileTypes.includes(mediaType) && isCurrentUserAdmin" size="small" variant="text" icon="mdi-text-recognition" color="primary" @click="$root.showOcrDialog(media.id)"></v-btn>
       </div>
     </div>
 
@@ -95,6 +95,7 @@ const MediaCard = Vue.defineComponent({
   data() {
     return {
       s3url: '',
+      isCurrentUserAdmin: window.__isAdmin__ || false,
       translations: window.translations,
       iconMap: {
         image: 'mdi-image',
