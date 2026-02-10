@@ -197,6 +197,7 @@
                         <!-- Bulletin Column -->
                         <template #item.bulletin="{ item }">
                             <v-btn
+                                v-if="item.bulletin"
                                 color="primary"
                                 variant="text"
                                 :href="`/admin/bulletins/${item.bulletin.id}`"
