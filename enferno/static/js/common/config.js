@@ -733,6 +733,7 @@ function buildVideoElement() {
     videoElement.setAttribute('controls', '');
     videoElement.setAttribute('width', '620');
     videoElement.setAttribute('height', '348');
+    videoElement.setAttribute('preload', 'none');
 
     return videoElement;
 }
