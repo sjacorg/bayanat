@@ -1,7 +1,7 @@
 const toolbarContent = `
   <v-toolbar density="compact" class="px-2">
     <div class="w-100 d-flex justify-space-between align-center">
-      <div class="d-flex align-center">
+      <div class="w-100 d-flex align-center">
         <v-icon :icon="iconMap[mediaType]" :color="mediaType === 'pdf' ? 'red' : 'primary'"></v-icon>
         <v-divider vertical class="mx-2"></v-divider>
         <v-chip prepend-icon="mdi-identifier" variant="text" class="font-weight-bold">{{ media.id }}</v-chip>
@@ -14,6 +14,10 @@ const toolbarContent = `
           </template>
           <span>{{ translations.category_ }}</span>
         </v-tooltip>
+
+        <v-spacer></v-spacer>
+
+        <v-btn size="small" variant="text" icon="mdi-text-recognition" color="primary" @click="$root.showOcrDialog(media.id)"></v-btn>
       </div>
     </div>
 

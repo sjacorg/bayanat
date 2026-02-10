@@ -3,6 +3,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     open: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },
     media: { type: Object, default: () => ({}) },
+    hasVisionApiKey: { type: Boolean, default: false },
   },
   emits: ['update:open', 'rejected', 'accepted', 'transcribed', 'processed'],
   data() {
@@ -106,7 +107,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     runOCRProcess() {
       if (!this.media?.id) return;
-      if (!this.$root.visionApiKey) return this.$root.showSnack(this.translations.googleVisionApiHasNotBeenConfigured_);
+      if (!this.hasVisionApiKey) return this.$root.showSnack(this.translations.googleVisionApiHasNotBeenConfigured_);
       
       this.saving = true;
       
@@ -477,7 +478,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         :title="isFailed ? translations.ocrProcessingFailed_ : translations.ocrNotRunYet_"
                       >
                         <template v-slot:actions>
-                          <v-tooltip location="top" :disabled="Boolean($root.visionApiKey)">
+                          <v-tooltip location="top" :disabled="Boolean(hasVisionApiKey)">
                             <template v-slot:activator="{ props }">
                               <div v-bind="props">
                                 <v-btn
@@ -485,7 +486,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                                   variant="elevated"
                                   size="large"
                                   prepend-icon="mdi-text-recognition"
-                                  :disabled="loading || !$root.visionApiKey"
+                                  :disabled="loading || !hasVisionApiKey"
                                   :loading="saving"
                                   @click="runOCRProcess()"
                                 >
