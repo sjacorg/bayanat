@@ -17,7 +17,7 @@ const toolbarContent = `
 
         <v-spacer></v-spacer>
 
-        <v-tooltip v-if="ocrButtonState?.visible && !ocrButtonState?.disabled" location="bottom">
+        <v-tooltip v-if="ocrButtonState?.visible" location="bottom">
           <template v-slot:activator="{ props }">
             <v-chip
               :color="$root.getStatusColor($root.getEffectiveStatus(media))"

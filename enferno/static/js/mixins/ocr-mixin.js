@@ -16,6 +16,7 @@ const ocrMixin = {
           needs_transcription: { key: 'needs_transcription', text: window.translations.needsTranscription_, color: 'purple', icon: 'mdi-alphabetical' },
           cant_read: { key: 'cant_read', text: window.translations.cantRead_, color: 'brown', icon: 'mdi-eye-off-outline' },
           failed: { key: 'failed', text: window.translations.failed_, color: 'red', icon: 'mdi-close-circle-outline' },
+          unsupported: { key: 'unsupported', text: window.translations.unsupported_, color: 'grey-darken-1', icon: 'mdi-file-cancel-outline' },
         },
       },
     };
@@ -66,16 +67,22 @@ const ocrMixin = {
       return text.trim().split(/\s+/).filter(word => word.length > 0).length;
     },
     getEffectiveStatus(item, processingIds) {
-      const ocrStatus = item.extraction?.status || 'pending';
-      // Check if currently being processed
-      if (processingIds?.has(item.id)) {
-          return 'processing';
+      // Check if file type is supported first
+      const fileType = this.$root.getFileTypeFromMimeType(item.fileType);
+      if (!this.selectableFileTypes.includes(fileType)) {
+        return 'unsupported';
       }
       
-      // Show 'manual' status for manually transcribed items
-      if (item.extraction?.manual && ocrStatus === 'processed') {
-          return 'manual';
+      const ocrStatus = item.extraction?.status || 'pending';
+      
+      if (processingIds?.has(item.id)) {
+        return 'processing';
       }
+      
+      if (item.extraction?.manual && ocrStatus === 'processed') {
+        return 'manual';
+      }
+      
       return ocrStatus;
     },
   }

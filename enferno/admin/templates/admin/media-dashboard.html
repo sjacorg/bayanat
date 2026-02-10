@@ -316,7 +316,7 @@
                     // Omit processing and manual status from filter dropdown
                     return [
                         { title: "{{_('All')}}", value: null },
-                        ...Object.values(this.ocr.statuses).filter(s => !['processing', 'manual'].includes(s.key)).map(s => ({ 
+                        ...Object.values(this.ocr.statuses).filter(s => !['processing', 'manual', 'unsupported'].includes(s.key)).map(s => ({ 
                             title: s.text, 
                             value: s.key 
                         }))
