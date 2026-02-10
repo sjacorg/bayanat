@@ -146,34 +146,18 @@
 
 
 {% endblock %} {% block js %}
-    <script
-           src="/static/js/tinymce/js/tinymce/tinymce.min.js"
-            referrerpolicy="origin">
-    </script>
+    <script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <script src="/static/js/tinymce-vue.min.js"></script>
-    <script src="/static/js/components/LocationCard.js"></script>
-    <script src="/static/js/components/UniField.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
-    <script src="/static/js/components/GeoMap.js"></script>
-    <script src="/static/js/components/GlobalMap.js"></script>
-    <script src="/static/js/components/DualField.js"></script>
-    <script src="/static/js/components/LocationSearchBox.js"></script>
-    <script src="/static/js/components/ReadMore.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
 
     {% endif %}
-    <script src="/static/js/Leaflet.GoogleMutant.js"></script>
-
     <script nonce="{{ csp_nonce() }}" type="module">
-        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
-        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
-        import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
 
-         const {createApp} = Vue;
+        const {createApp} = Vue;
         const {createVuetify} = Vuetify;
         const vuetify = createVuetify(vuetifyConfig);
 
@@ -531,19 +515,20 @@
             }
         });
 
-        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
-        app.config.globalProperties.$htmlFormatter = htmlFormatter;
-        
         app.component("TinymceEditor", Editor);
-        app.component('LocationCard', LocationCard);
-        app.component('LocationSearchBox', LocationSearchBox);
-        app.component('UniField', UniField);
-        app.component('SearchField', SearchField);
-        app.component('LocationSearchField', LocationSearchField);
-        app.component('DualField', DualField);
-        app.component('GeoMap', GeoMap);
-        app.component('GlobalMap', GlobalMap);
-        app.component('ReadMore', ReadMore);
-        app.use(router).use(vuetify).mount('#app');
+        app.component('LocationCard', useAsyncComponent('/static/js/components/LocationCard.js'));
+        app.component('LocationSearchBox', useAsyncComponent('/static/js/components/LocationSearchBox.js'));
+        app.component('UniField', useAsyncComponent('/static/js/components/UniField.js'));
+        app.component('SearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('LocationSearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('DualField', useAsyncComponent('/static/js/components/DualField.js'));
+        app.component('GeoMap', useAsyncComponent('/static/js/components/GeoMap.js'));
+        app.component('GlobalMap', useAsyncComponent('/static/js/components/GlobalMap.js'));
+        app.component('ReadMore', useAsyncComponent('/static/js/components/ReadMore.js'));
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}

@@ -1,12 +1,4 @@
 {% extends 'layout.html' %}
-
-{% block css %}
-    <link rel="stylesheet" href="/static/css/dropzone.min.css">
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
-    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
-
-{% endblock %}
-
 {% block content %}
 
 
@@ -368,90 +360,19 @@
 {% endblock %}
 
 {% block js %}
-    <script
-            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
-            referrerpolicy="origin"
-    ></script>
-
-    <script src="/static/js/tinymce-vue.min.js"></script>
-
     <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/mixins/form-builder-mixin.js"></script>
-    <script src="/static/js/components/GeoMap.js"></script>
-    <script src="/static/js/components/UniField.js"></script>
-    <script src="/static/js/components/DualField.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
-    <script src="/static/js/components/SplitView.js"></script>
 
-    <script src="/static/js/components/RelatedBulletinsCard.js"></script>
-    <script src="/static/js/components/RelatedActorsCard.js"></script>
-    <script src="/static/js/components/RelatedIncidentsCard.js"></script>
-
-    <script src="/static/js/components/BulletinCard.js"></script>
-    <script src="/static/js/components/ActorProfiles.js"></script>
-    <script src="/static/js/components/ActorCard.js"></script>
-    <script src="/static/js/components/IncidentCard.js"></script>
-
-    <script src="/static/js/components/BulletinSearchBox.js"></script>
-    <script src="/static/js/components/ActorSearchBox.js"></script>
-    <script src="/static/js/components/IncidentSearchBox.js"></script>
-    <script src="/static/js/components/ShortActorDialog.js"></script>
-
-
-
-    <script src="/static/js/components/BulletinResult.js"></script>
-    <script src="/static/js/components/ActorResult.js"></script>
-    <script src="/static/js/components/IncidentResult.js"></script>
-
-    <script src="/static/js/components/RelateBulletins.js"></script>
-    <script src="/static/js/components/RelateActors.js"></script>
-    <script src="/static/js/components/RelateIncidents.js"></script>
-    <script src="/static/js/components/RelateItemsTemplate.js"></script>
-
-    <script src="/static/js/components/EventCard.js"></script>
-    <script src="/static/js/components/GlobalMap.js"></script>
-    <script src="/static/js/components/PopDateField.js"></script>
-    <script src="/static/js/components/PopDateTimeField.js"></script>
-    <script src="/static/js/components/PopDateRangeField.js"></script>
-    <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/MediaGrid.js"></script>
-    <script src="/static/js/components/MediaCard.js"></script>
-    <script src="/static/js/components/PreviewCard.js"></script>
-    <script src="/static/js/components/RelationEditorCard.js"></script>
-    
-    <script src="/static/js/components/InlineMediaRenderer.js"></script>
-    <script src="/static/js/components/ImageViewer.js"></script>
-    <script src="/static/js/components/PdfViewer.js"></script>
-    <script src="/static/js/components/SnapshotDialog.js"></script>
-    <script src="/static/js/components/Visualization.js"></script>
-    <script src="/static/js/force-graph.min.js"></script>
-    <script src="/static/js/dropzone.min.js"></script>
-    <script src="/static/js/components/VueDropzone.js"></script>
-    <script src="/static/js/components/IdNumberDynamicField.js"></script>
-    <script src="/static/js/components/EventsSection.js"></script>
-    <script src="/static/js/components/ReadMore.js"></script>
-    <script src="/static/js/components/FieldRenderer.js"></script>
-
-
-    <script src="/static/js/components/MissingPersonCard.js"></script>
-    <script src="/static/js/components/MissingPersonField.js"></script>
-    <script src="/static/js/components/MixYesNoField.js"></script>
-    <script src="/static/js/components/MixSelectField.js"></script>
-    <script src="/static/js/components/MixReportersField.js"></script>
-
-    <script src="/static/js/videojs/video.min.js"></script>
-    <script src="/static/js/croppr/croppr.min.js"></script>
+    <script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="/static/js/tinymce-vue.min.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
     <script nonce="{{ csp_nonce() }}" type="module">
-        import * as jsondiffpatch from '/static/js/jsondiffpatch/jsondiffpatch.esm.min.js'
-        import * as htmlFormatter from '/static/js/jsondiffpatch/formatters/html.js'
-        import '/static/js/jsondiffpatch/formatters/base.js'
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
@@ -1703,63 +1624,60 @@
             })
         ;
 
-        app.config.globalProperties.$jsondiffpatch = jsondiffpatch;
-        app.config.globalProperties.$htmlFormatter = htmlFormatter;
-
-        app.component('SplitView', SplitView);
-        app.component('SearchField', SearchField);
-        app.component('UniField', UniField);
-        app.component('DualField', DualField);
-        app.component('LocationSearchField', LocationSearchField);
-        app.component('GeoMap', GeoMap);
-        app.component('RelateBulletins', RelateBulletins);
-        app.component('RelateActors', RelateActors);
-        app.component('RelateIncidents', RelateIncidents);
-        app.component('RelateItemsTemplate', RelateItemsTemplate);
-        app.component('BulletinResult', BulletinResult);
-        app.component('BulletinSearchBox', BulletinSearchBox);
-        app.component('ActorSearchBox', ActorSearchBox);
-        app.component('IncidentSearchBox', IncidentSearchBox);
-        app.component('ActorResult', ActorResult);
-        app.component('IncidentResult', IncidentResult);
-
-        app.component('VueDropzone', VueDropzone);
-
-        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
-        app.component('RelatedActorsCard', RelatedActorsCard);
-        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
-
-        app.component('BulletinCard', BulletinCard);
-        app.component('ActorCard', ActorCard);
-        app.component('IncidentCard', IncidentCard);
-        app.component('EventCard', EventCard);
-        app.component('PopDateField', PopDateField);
-        app.component('PopDateRangeField', PopDateRangeField);
-        app.component('PopDateTimeField', PopDateTimeField);
-        app.component('GeoLocations', GeoLocations);
-        app.component('GlobalMap', GlobalMap);
-        app.component('MediaGrid', MediaGrid);
-        app.component('MediaCard', MediaCard);
-        app.component('Visualization', Visualization);
-        app.component('PdfViewer', PdfViewer);
-        app.component('SnapshotDialog', SnapshotDialog);
-        app.component('PreviewCard', PreviewCard);
-        app.component('RelationEditorCard', RelationEditorCard);
-        app.component('InlineMediaRenderer', InlineMediaRenderer);
-        app.component('ImageViewer', ImageViewer);
-        app.component('ReadMore', ReadMore);
-
-        app.component('MixYesNoField', MixYesNoField);
-        app.component('MixSelectField', MixSelectField);
-        app.component('MixReportersField', MixReportersField);
-        app.component('MissingPersonField', MissingPersonField);
-        app.component('MissingPersonCard', MissingPersonCard);
         app.component('TinymceEditor', Editor);
-        app.component('ActorProfiles', ActorProfiles);
-        app.component('ShortActorDialog', ShortActorDialog);
-        app.component('IdNumberDynamicField', IdNumberDynamicField);
-        app.component('EventsSection', EventsSection);
-        app.component('FieldRenderer', FieldRenderer);
+        app.component('SplitView', useAsyncComponent('/static/js/components/SplitView.js'));
+        app.component('SearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('UniField', useAsyncComponent('/static/js/components/UniField.js'));
+        app.component('DualField', useAsyncComponent('/static/js/components/DualField.js'));
+        app.component('LocationSearchField', useAsyncComponent('/static/js/components/SearchField.js'));
+        app.component('GeoMap', useAsyncComponent('/static/js/components/GeoMap.js'));
+        app.component('RelateBulletins', useAsyncComponent('/static/js/components/RelateBulletins.js'));
+        app.component('RelateActors', useAsyncComponent('/static/js/components/RelateActors.js'));
+        app.component('RelateIncidents', useAsyncComponent('/static/js/components/RelateIncidents.js'));
+        app.component('RelateItemsTemplate', useAsyncComponent('/static/js/components/RelateItemsTemplate.js'));
+        app.component('BulletinResult', useAsyncComponent('/static/js/components/BulletinResult.js'));
+        app.component('BulletinSearchBox', useAsyncComponent('/static/js/components/BulletinSearchBox.js'));
+        app.component('ActorSearchBox', useAsyncComponent('/static/js/components/ActorSearchBox.js'));
+        app.component('IncidentSearchBox', useAsyncComponent('/static/js/components/IncidentSearchBox.js'));
+        app.component('ActorResult', useAsyncComponent('/static/js/components/ActorResult.js'));
+        app.component('IncidentResult', useAsyncComponent('/static/js/components/IncidentResult.js'));
+
+        app.component('VueDropzone', useAsyncComponent('/static/js/components/VueDropzone.js'));
+
+        app.component('RelatedBulletinsCard', useAsyncComponent('/static/js/components/RelatedBulletinsCard.js'));
+        app.component('RelatedActorsCard', useAsyncComponent('/static/js/components/RelatedActorsCard.js'));
+        app.component('RelatedIncidentsCard', useAsyncComponent('/static/js/components/RelatedIncidentsCard.js'));
+
+        app.component('BulletinCard', useAsyncComponent('/static/js/components/BulletinCard.js'));
+        app.component('ActorCard', useAsyncComponent('/static/js/components/ActorCard.js'));
+        app.component('IncidentCard', useAsyncComponent('/static/js/components/IncidentCard.js'));
+        app.component('EventCard', useAsyncComponent('/static/js/components/EventCard.js'));
+        app.component('PopDateField', useAsyncComponent('/static/js/components/PopDateField.js'));
+        app.component('PopDateRangeField', useAsyncComponent('/static/js/components/PopDateRangeField.js'));
+        app.component('PopDateTimeField', useAsyncComponent('/static/js/components/PopDateTimeField.js'));
+        app.component('GeoLocations', useAsyncComponent('/static/js/components/GeoLocations.js'));
+        app.component('GlobalMap', useAsyncComponent('/static/js/components/GlobalMap.js'));
+        app.component('MediaGrid', useAsyncComponent('/static/js/components/MediaGrid.js'));
+        app.component('MediaCard', useAsyncComponent('/static/js/components/MediaCard.js'));
+        app.component('Visualization', useAsyncComponent('/static/js/components/Visualization.js'));
+        app.component('PdfViewer', useAsyncComponent('/static/js/components/PdfViewer.js'));
+        app.component('SnapshotDialog', useAsyncComponent('/static/js/components/SnapshotDialog.js'));
+        app.component('PreviewCard', useAsyncComponent('/static/js/components/PreviewCard.js'));
+        app.component('RelationEditorCard', useAsyncComponent('/static/js/components/RelationEditorCard.js'));
+        app.component('InlineMediaRenderer', useAsyncComponent('/static/js/components/InlineMediaRenderer.js'));
+        app.component('ImageViewer', useAsyncComponent('/static/js/components/ImageViewer.js'));
+        app.component('ReadMore', useAsyncComponent('/static/js/components/ReadMore.js'));
+
+        app.component('MixYesNoField', useAsyncComponent('/static/js/components/MixYesNoField.js'));
+        app.component('MixSelectField', useAsyncComponent('/static/js/components/MixSelectField.js'));
+        app.component('MixReportersField', useAsyncComponent('/static/js/components/MixReportersField.js'));
+        app.component('MissingPersonField', useAsyncComponent('/static/js/components/MissingPersonField.js'));
+        app.component('MissingPersonCard', useAsyncComponent('/static/js/components/MissingPersonCard.js'));
+        app.component('ActorProfiles', useAsyncComponent('/static/js/components/ActorProfiles.js'));
+        app.component('ShortActorDialog', useAsyncComponent('/static/js/components/ShortActorDialog.js'));
+        app.component('IdNumberDynamicField', useAsyncComponent('/static/js/components/IdNumberDynamicField.js'));
+        app.component('EventsSection', useAsyncComponent('/static/js/components/EventsSection.js'));
+        app.component('FieldRenderer', useAsyncComponent('/static/js/components/FieldRenderer.js'));
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

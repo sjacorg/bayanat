@@ -39,3 +39,5 @@ const ShowDetails = Vue.defineComponent({
     </div>
   `,
 });
+
+window.ShowDetails = ShowDetails;

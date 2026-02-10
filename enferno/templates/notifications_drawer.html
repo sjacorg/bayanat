@@ -23,6 +23,7 @@
         </v-toolbar>
 
         <notifications-list
+            v-if="notifications.ui.drawerVisible"
             :notifications="notifications.items"
             :initial-loading="notifications.status.initialLoading"
             :has-more="notifications.hasMore"

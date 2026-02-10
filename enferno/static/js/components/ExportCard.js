@@ -248,3 +248,5 @@ const ExportCard = Vue.defineComponent({
     </v-card>
   `,
 });
+
+window.ExportCard = ExportCard;

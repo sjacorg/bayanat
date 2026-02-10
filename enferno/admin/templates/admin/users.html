@@ -328,8 +328,6 @@
 
 
 {% endblock %} {% block js %}
-    <script src="/static/js/components/UserCard.js"></script>
-
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -691,7 +689,11 @@
             }
         });
 
-        app.component('UserCard', UserCard);
-        app.use(router).use(vuetify).mount('#app')
+        app.component('UserCard', useAsyncComponent('/static/js/components/UserCard.js'));
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}

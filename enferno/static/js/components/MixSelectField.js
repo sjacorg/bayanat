@@ -80,3 +80,5 @@ const MixSelectField = Vue.defineComponent({
 
     `,
 });
+
+window.MixSelectField = MixSelectField;

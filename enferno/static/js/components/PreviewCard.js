@@ -35,3 +35,4 @@ const PreviewCard = Vue.defineComponent({
     </v-dialog>
   `,
 });
+window.PreviewCard = PreviewCard;

@@ -51,3 +51,5 @@ const ImportLogStatus = Vue.defineComponent({
     </div>
   `,
 });
+
+window.ImportLogStatus = ImportLogStatus;

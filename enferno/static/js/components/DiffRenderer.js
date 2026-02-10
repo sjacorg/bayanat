@@ -6,3 +6,5 @@ const DiffRenderer = Vue.defineComponent({
     </v-sheet>
     `,
 });
+
+window.DiffRenderer = DiffRenderer;

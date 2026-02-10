@@ -171,9 +171,11 @@ const MediaCard = Vue.defineComponent({
     this.init();
   },
   methods: {
-    async loadPdfJs() {
-      await loadScript('/static/js/pdf.js/pdf.min.mjs');
-      await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
+    async loadLibraries() {
+      await loadAsset([
+        '/static/js/pdf.js/pdf.min.mjs',
+        '/static/js/pdf.js/pdf.worker.min.mjs'
+      ]);
     },
     init() {
       api.get(`/admin/api/media/${this.media.filename}`)
@@ -216,7 +218,7 @@ const MediaCard = Vue.defineComponent({
     },
     async generatePdfThumbnail() {
       try {
-        if (typeof pdfjsLib === 'undefined') await this.loadPdfJs();
+        await this.loadLibraries();
 
         const pdf = await pdfjsLib.getDocument(this.s3url).promise;
         const page = await pdf.getPage(1);
@@ -352,3 +354,4 @@ const MediaCard = Vue.defineComponent({
     </v-card>
   `
 });
+window.MediaCard = MediaCard;

@@ -55,3 +55,5 @@ const RelateIncidents = Vue.defineComponent({
     </relate-items-template>
     `,
 });
+
+window.RelateIncidents = RelateIncidents;

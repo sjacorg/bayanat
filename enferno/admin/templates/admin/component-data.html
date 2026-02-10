@@ -273,8 +273,6 @@
 <script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>
 '|safe }}
 {% endif %}
-<script src="/static/js/Leaflet.GoogleMutant.js"></script>
-<script src="/static/js/components/EditableTable.js"></script>
 <script src="/static/js/Sortable.min.js"></script>
 <script src="/static/js/vuedraggable.umd.js"></script>
 
@@ -478,8 +476,12 @@
             }
         }
     });
-    app.component('EditableTable', EditableTable);
     app.component('Draggable', draggable);
-    app.use(router).use(vuetify).mount('#app');
+    app.component('EditableTable', useAsyncComponent('/static/js/components/EditableTable.js'));
+    app.use(router).use(vuetify);
+    router.isReady().then(() => {
+        app.mount('#app');
+        window.app = app;
+    });
 </script>
 {% endblock %}

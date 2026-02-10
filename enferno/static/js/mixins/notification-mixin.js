@@ -1,6 +1,6 @@
 const notificationMixin = {
   components: {
-    NotificationsList,
+    NotificationsList: useAsyncComponent('/static/js/components/NotificationsList.js'),
   },
   computed: {
     hasUnreadNotifications() {

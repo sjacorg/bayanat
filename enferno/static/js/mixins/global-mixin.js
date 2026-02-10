@@ -1,8 +1,8 @@
 const globalMixin = {
   mixins: [reauthMixin, notificationMixin],
   components: {
-    'ConfirmDialog': ConfirmDialog,
-    'Toast': Toast,
+    'ConfirmDialog': useAsyncComponent('/static/js/components/ConfirmDialog.js'),
+    'Toast': useAsyncComponent('/static/js/components/Toast.js'),
   },
   data: () => ({
     snackbar: false,

@@ -87,3 +87,5 @@ const MixReportersField = Vue.defineComponent({
     </v-card>
   `,
 });
+
+window.MixReportersField = MixReportersField;

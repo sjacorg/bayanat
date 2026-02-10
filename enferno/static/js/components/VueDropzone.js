@@ -6,7 +6,12 @@ const VueDropzone = Vue.defineComponent({
     },
   },
   emits: ['ready', 'vdropzone-error', 'vdropzone-removed-file', 'vdropzone-file-added', 'vdropzone-success'],
-  mounted() {
+  async mounted() {
+    await loadAsset([
+      '/static/css/dropzone.min.css',
+      '/static/js/dropzone.min.js'
+    ])
+
     // Initialize Dropzone on the current element with provided options
     this.dz = new Dropzone(this.$el, { ...this.options });
 
@@ -30,6 +35,10 @@ const VueDropzone = Vue.defineComponent({
     });
   },
 
+  methods: {
+    initDropzone() {}
+  },
+
   beforeUnmount() {
     this.dz?.destroy();
     this.dz = null;
@@ -39,3 +48,5 @@ const VueDropzone = Vue.defineComponent({
     <div class="dropzone" v-bind="$attrs"></div>
   `,
 });
+
+window.VueDropzone = VueDropzone;

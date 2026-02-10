@@ -61,3 +61,5 @@ const IncidentResult = Vue.defineComponent({
       </template>
     `,
 });
+
+window.IncidentResult = IncidentResult;
