@@ -3,16 +3,7 @@
     <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
 {% endblock %}
 {% block content %}
-    <media-transcription-dialog
-        v-model:open="ocrDialog.show"
-        :loading="ocrDialog.loading"
-        :media="ocrDialog.data"
-        :has-vision-api-key="Boolean(visionApiKey)"
-        @rejected="onTranscriptionUpdated($event)"
-        @accepted="onTranscriptionUpdated($event)"
-        @transcribed="onTranscriptionUpdated($event)"
-        @processed="onMediaProcessed($event)"
-    ></media-transcription-dialog>
+    {% include 'admin/partials/media_transcription_dialog.html' %}
 
     <v-main>
         <v-container fluid>

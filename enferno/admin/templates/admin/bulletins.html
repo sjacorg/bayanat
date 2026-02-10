@@ -886,6 +886,12 @@
                 },
 
                 methods: {
+                    onTranscriptionUpdated(media) {
+                        this.showOcrDialog(media.id);
+                    },
+                    onMediaProcessed(media) {
+                        this.showOcrDialog(media.id);
+                    },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                         if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
