@@ -14,7 +14,7 @@
                         <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-warning">${(ocr.stats.needs_review + ocr.stats.needs_transcription).toLocaleString()}</div>
+                                    <div class="text-h4 text-warning">${(ocrStats.needs_review + ocrStats.needs_transcription).toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis text-warning font-weight-medium">{{ _('Needs Review') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -22,7 +22,7 @@
                         <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-error">${ocr.stats.failed.toLocaleString()}</div>
+                                    <div class="text-h4 text-error">${ocrStats.failed.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis text-error font-weight-medium">{{ _('Failed') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -30,7 +30,7 @@
                         <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${ocr.stats.cant_read.toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${ocrStats.cant_read.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Can\'t Read') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -38,7 +38,7 @@
                         <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${ocr.stats.processed.toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${ocrStats.processed.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Processed (Searchable)') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -46,7 +46,7 @@
                         <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${(ocr.stats.pending).toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${(ocrStats.pending).toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Pending') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -54,7 +54,7 @@
                         <v-col cols="12" md="2">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${ocr.stats.total.toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${ocrStats.total.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Total Media') }}</div>
                                 </v-card-text>
                             </v-card>
@@ -204,17 +204,17 @@
                         <template #item.ocr_status="{ item }">
                             <div class="d-flex align-center ga-1">
                                 <v-chip
-                                :color="getStatusColor(getEffectiveStatus(item, processingIds))"
-                                size="small"
-                                class="flex-0-0"
+                                    :color="getStatusColor(getEffectiveStatus(item, processingIds))"
+                                    size="small"
+                                    class="flex-0-0"
                                 >
-                                <template v-slot:prepend>
-                                    <v-icon 
-                                    :icon="getStatusIcon(getEffectiveStatus(item, processingIds))"
-                                    :class="['mr-1', { 'mdi-spin': getEffectiveStatus(item, processingIds) === 'processing' }]"
-                                    ></v-icon>
-                                </template>
-                                ${getStatusText(getEffectiveStatus(item, processingIds))}
+                                    <template v-slot:prepend>
+                                        <v-icon 
+                                        :icon="getStatusIcon(getEffectiveStatus(item, processingIds))"
+                                        :class="['mr-1', { 'mdi-spin': getEffectiveStatus(item, processingIds) === 'processing' }]"
+                                        ></v-icon>
+                                    </template>
+                                    ${getStatusText(getEffectiveStatus(item, processingIds))}
                                 </v-chip>
                                 
                                 <!-- Low word count indicator -->
@@ -279,9 +279,7 @@
                     page: 1,
                     per_page: window.itemsPerPageOptions?.[0] ?? 10,
                 },
-                ocr: {
-                    stats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, cant_read: 0, failed: 0 }
-                },
+                ocrStats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, cant_read: 0, failed: 0 },
 
                 headers: [
                     { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
@@ -307,16 +305,6 @@
                     bulletin_id: null,
                     dateRange: null
                 },
-                statuses: {
-                    pending: { key: 'pending', text: "{{_('Pending')}}", color: 'grey', icon: 'mdi-clock-outline' },
-                    processing: { key: 'processing', text: "{{_('Processing')}}", color: 'blue', icon: 'mdi-cog-outline' },
-                    processed: { key: 'processed', text: "{{_('Processed')}}", color: 'green', icon: 'mdi-check-circle-outline' },
-                    manual: { key: 'manual', text: "{{_('Manually Transcribed')}}", color: 'indigo', icon: 'mdi-account-edit-outline' },
-                    needs_review: { key: 'needs_review', text: "{{_('Needs Review')}}", color: 'orange', icon: 'mdi-alert-circle-outline' },
-                    needs_transcription: { key: 'needs_transcription', text: "{{_('Needs Transcription')}}", color: 'purple', icon: 'mdi-alphabetical' },
-                    cant_read: { key: 'cant_read', text: "{{_('Can\'t Read')}}", color: 'brown', icon: 'mdi-eye-off-outline' },
-                    failed: { key: 'failed', text: "{{_('Failed')}}", color: 'red', icon: 'mdi-close-circle-outline' },
-                },
                 lowWordCount: 20
             }),
 
@@ -328,7 +316,7 @@
                     // Omit processing and manual status from filter dropdown
                     return [
                         { title: "{{_('All')}}", value: null },
-                        ...Object.values(this.statuses).filter(s => !['processing', 'manual'].includes(s.key)).map(s => ({ 
+                        ...Object.values(this.ocr.statuses).filter(s => !['processing', 'manual'].includes(s.key)).map(s => ({ 
                             title: s.text, 
                             value: s.key 
                         }))
@@ -377,7 +365,7 @@
                         const newProcessingIds = new Set(response.data || []);
                         
                         // Check if the currently open media just finished processing
-                        const currentMediaId = this.ocrDialog.data?.id;
+                        const currentMediaId = this.ocr.dialog.data?.id;
                         const currentMediaWasProcessing = currentMediaId && this.processingIds.has(currentMediaId);
                         const currentMediaFinished = currentMediaWasProcessing && !newProcessingIds.has(currentMediaId);
                         
@@ -394,11 +382,11 @@
                         }
                         
                         // If the currently open media just finished, reload it
-                        if (this.ocrDialog.show && currentMediaFinished) {
+                        if (this.ocr.dialog.show && currentMediaFinished) {
                             this.showOcrDialog(currentMediaId);
-                        } else if (this.ocrDialog.show && currentMediaId) {
+                        } else if (this.ocr.dialog.show && currentMediaId) {
                             // Just update the status without reloading
-                            this.ocrDialog.data.ocr_status = this.getEffectiveStatus(this.ocrDialog.data, this.processingIds);
+                            this.ocr.dialog.data.ocr_status = this.getEffectiveStatus(this.ocr.dialog.data, this.processingIds);
                         }
                         
                         // Manage polling
@@ -515,15 +503,6 @@
                             this.loading = false;
                         });
                 },
-                getStatusText(status) {
-                    return this.statuses[status]?.text || status;
-                },
-                getStatusColor(status) {
-                    return this.statuses[status]?.color || 'grey';
-                },
-                getStatusIcon(status) {
-                    return this.statuses[status]?.icon || 'mdi-help-circle-outline';
-                },
                 onTranscriptionUpdated({ media, text }) {
                     this.resetOcrDialog();
                     this.refresh();
@@ -539,7 +518,7 @@
                 },
                 loadOCRStats() {
                     api.get('/admin/api/ocr/stats').then(res => {
-                        this.ocr.stats = res?.data;
+                        this.ocrStats = res?.data;
                     }).catch(err => {
                         console.error('Error loading OCR counts:', err);
                     });
@@ -555,9 +534,9 @@
                 },
             },
             watch: {
-                'ocrDialog.show'(isOpen) {
+                'ocr.dialog.show'(isOpen) {
                     if (isOpen === false) {
-                        this.ocrDialog.data = null;
+                        this.ocr.dialog.data = null;
                         if (this.$route.path !== '/admin/media/')
                             this.$router.push('/admin/media/')
                     }

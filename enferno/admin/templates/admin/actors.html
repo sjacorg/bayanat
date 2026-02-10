@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 {% endblock %} {% block content %}
 
-
+    {% include 'admin/partials/media_transcription_dialog.html' %}
     {% include  'admin/partials/actor_drawer.html' %}
     {% include 'admin/partials/bulk_actor_drawer.html' %}
     {% include 'admin/partials/export_drawer.html' %}
@@ -368,6 +368,7 @@
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
     <script src="/static/js/components/FieldRenderer.js"></script>
+    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/SnapshotDialog.js"></script>
@@ -773,6 +774,14 @@
             },
 
             methods: {
+                onTranscriptionUpdated({ media }) {
+                    this.showOcrDialog(media.id);
+                    this.showActor(this.$route.params.id);
+                },
+                onMediaProcessed({ media }) {
+                    this.showOcrDialog(media.id);
+                    this.showActor(this.$route.params.id);
+                },
                 handleRoute({ initialLoad = false } = {}) {
                     if (this.$route.params.id) this.showActor(this.$route.params.id);
                     if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
@@ -1706,6 +1715,7 @@
         app.component('EventsSection', EventsSection);
         app.component('ReadMore', ReadMore);
         app.component('FieldRenderer', FieldRenderer);
+        app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);

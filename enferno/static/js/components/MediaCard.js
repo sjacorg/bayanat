@@ -17,7 +17,24 @@ const toolbarContent = `
 
         <v-spacer></v-spacer>
 
-        <v-tooltip v-if="ocrButtonState.visible" location="bottom">
+        <v-tooltip v-if="ocrButtonState?.visible && !ocrButtonState?.disabled" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-chip
+              :color="$root.getStatusColor($root.getEffectiveStatus(media))"
+              size="small"
+              class="mr-1"
+              v-bind="props"
+            >
+              <v-icon 
+                :icon="$root.getStatusIcon($root.getEffectiveStatus(media))"
+                :class="[{ 'mdi-spin': $root.getEffectiveStatus(media) === 'processing' }]"
+              ></v-icon>
+            </v-chip>
+          </template>
+          {{ translations.ocrStatus_ }}: {{ $root.getStatusText($root.getEffectiveStatus(media)) }}
+        </v-tooltip>
+
+        <v-tooltip v-if="ocrButtonState?.visible" location="bottom">
           <template v-slot:activator="{ props }">
             <div v-bind="props">
               <v-btn size="small" variant="text" icon="mdi-text-recognition" @click="$root.showOcrDialog(media.id)" :disabled="ocrButtonState.disabled"></v-btn>
@@ -118,6 +135,9 @@ const MediaCard = Vue.defineComponent({
       return this.$root.getFileTypeFromMimeType(this.media?.fileType);
     },
     ocrButtonState() {
+      // If no ocr mixin exit early
+      if (!this.$root?.ocr) return;
+
       const isMediaSaved = !!this.media?.id;
       const isSupportedType = this.$root.selectableFileTypes.includes(this.mediaType);
       const visible = this.isCurrentUserAdmin;
