@@ -279,12 +279,6 @@
                     page: 1,
                     per_page: window.itemsPerPageOptions?.[0] ?? 10,
                 },
-                // TODO: Remove this
-                // ocrDialog: {
-                //     loading: false,
-                //     show: false,
-                //     data: null
-                // },
                 ocr: {
                     stats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, cant_read: 0, failed: 0 }
                 },
@@ -343,13 +337,6 @@
                 tableHeight() {
                     return `calc(100vh - ${this.selected.length ? 405 : 360}px)`;
                 },
-                // TODO: Remove this
-                // selectableStatuses() {
-                //     return ['pending', 'failed', 'cant_read'];
-                // },
-                // selectableFileTypes() {
-                //     return ['image'];
-                // }
             },
 
             mounted() {
@@ -367,12 +354,6 @@
             },
 
             methods: {
-                // TDO: Remove this
-                // countWords(text) {
-                //     if (!text || !text.trim()) return 0;
-                //     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
-                // },
-                
                 getEffectiveWordCount(item) {
                     // Use API word count if available
                     const apiCount = item.extraction?.word_count;
@@ -453,25 +434,6 @@
                 handleRoute() {
                     if (this.$route.params.id) this.showOcrDialog(this.$route.params.id);
                 },
-                // TODO: Remove this
-                // showOcrDialog(id) {
-                //     this.ocrDialog.loading = true;
-                //     this.ocrDialog.show = true;
-
-                //     api.get(`/admin/api/media/${id}`).then(response => {
-                //         // Only update if dialog is still open
-                //         if (this.ocrDialog.show) {
-                //             this.ocrDialog.data = response.data;
-                //             this.ocrDialog.data.ocr_status = this.getEffectiveStatus(response.data);
-                //         }
-                //     }).catch(error => {
-                //         console.error('Error loading media:', error);
-                //         this.showSnack("{{ _('Error loading media') }}");
-                //         this.ocrDialog.show = false;
-                //     }).finally(() => {
-                //         this.ocrDialog.loading = false;
-                //     });
-                // },
                 rowClick(e, row) {
                     const item = row.item;
                     const path = `/admin/media/${item.id}`;
@@ -553,20 +515,6 @@
                             this.loading = false;
                         });
                 },
-
-                // TODO: Remove this
-                // getEffectiveStatus(item, processingIds) {
-                //     // Check if currently being processed
-                //     if (processingIds.has(item.id)) {
-                //         return 'processing';
-                //     }
-                    
-                //     // Show 'manual' status for manually transcribed items
-                //     if (item.extraction?.manual && item.ocr_status === 'processed') {
-                //         return 'manual';
-                //     }
-                //     return item.ocr_status;
-                // },
                 getStatusText(status) {
                     return this.statuses[status]?.text || status;
                 },
@@ -577,11 +525,11 @@
                     return this.statuses[status]?.icon || 'mdi-help-circle-outline';
                 },
                 onTranscriptionUpdated({ media, text }) {
-                    this.resetocrDialog();
+                    this.resetOcrDialog();
                     this.refresh();
                     this.loadOCRStats();
                 },
-                onMediaProcessed(media) {
+                onMediaProcessed({ media }) {
                     // Reload the media to get fresh extraction data
                     this.showOcrDialog(media.id);
                     this.refresh();
@@ -589,12 +537,6 @@
                     // Also fetch processing IDs in case this item just finished
                     this.fetchProcessingIds();
                 },
-                // TODO: Remove this
-                // resetocrDialog() {
-                //     this.ocrDialog.show = false;
-                //     this.ocrDialog.data = null;
-                //     this.ocrDialog.loading = false;
-                // },
                 loadOCRStats() {
                     api.get('/admin/api/ocr/stats').then(res => {
                         this.ocr.stats = res?.data;
