@@ -83,22 +83,24 @@
 
 {% endblock %}
 {% set messages = get_flashed_messages() %}
-{% if current_user.is_authenticated %}
-    <div
-        class="d-none"
-        data-settings='{{ current_user.settings|tojson if current_user.settings else '{}' }}'
-        data-username="{{ current_user.username|escape }}"
-    ></div>
-{% else %}
-    <div class="d-none" data-settings='{}' data-username=""></div>
-{% endif %}
-<div class="d-none" data-lang='{{ session.get('lang','en') }}'></div>
-<div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
+<div
+  id="app-bootstrap"
+  class="d-none"
+  data-username="{{ current_user.username|escape if current_user.is_authenticated else '' }}"
+  data-is-admin="{{ current_user.has_role('Admin')|tojson if current_user.is_authenticated else 'false' }}"
+  data-settings='{{ current_user.settings|tojson if current_user.is_authenticated and current_user.settings else '{}' }}'
+  data-lang="{{ session.get('lang', 'en') }}"
+  data-maps-api-endpoint="{{ config.MAPS_API_ENDPOINT }}"
+></div>
+
 <script nonce="{{ csp_nonce() }}">
-    window.__username__ = document.querySelector('[data-username]').dataset.username;
-    window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
-    window.__lang__ = document.querySelector('[data-lang]').dataset.lang;
-    window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
+    const el = document.getElementById('app-bootstrap')
+
+    window.__username__ = el.dataset.username;
+    window.__isAdmin__ = el.dataset.isAdmin === 'true';
+    window.__settings__ = JSON.parse(el.dataset.settings);
+    window.__lang__ = el.dataset.lang;
+    window.__MAPS_API_ENDPOINT__ = el.dataset.mapsApiEndpoint;
 </script>
 
 
