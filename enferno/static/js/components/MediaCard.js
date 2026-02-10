@@ -17,7 +17,14 @@ const toolbarContent = `
 
         <v-spacer></v-spacer>
 
-        <v-btn v-if="$root.selectableFileTypes.includes(mediaType) && isCurrentUserAdmin" size="small" variant="text" icon="mdi-text-recognition" color="primary" @click="$root.showOcrDialog(media.id)"></v-btn>
+        <v-tooltip v-if="ocrButtonState.visible" location="bottom">
+          <template v-slot:activator="{ props }">
+            <div v-bind="props">
+              <v-btn size="small" variant="text" icon="mdi-text-recognition" @click="$root.showOcrDialog(media.id)" :disabled="ocrButtonState.disabled"></v-btn>
+            </div>
+          </template>
+          <span>{{ ocrButtonState.text }}</span>
+        </v-tooltip>
       </div>
     </div>
 
@@ -110,6 +117,29 @@ const MediaCard = Vue.defineComponent({
     mediaType() {
       return this.$root.getFileTypeFromMimeType(this.media?.fileType);
     },
+    ocrButtonState() {
+      const isMediaSaved = !!this.media?.id;
+      const isSupportedType = this.$root.selectableFileTypes.includes(this.mediaType);
+      const visible = this.isCurrentUserAdmin;
+      const disabled = !isSupportedType || !isMediaSaved;
+      let text = '';
+
+      if (!isSupportedType) {
+        text = this.translations.ocrProcessingIsOnlyAvailableForTheFollowingFileTypes_(this.$root.selectableFileTypes);
+      } else if (!isMediaSaved) {
+        text = this.translations.transcriptionAvailableAfterSaving_;
+      } else if (this.media?.extraction?.text) {
+        text = this.translations.viewEditTranscription_;
+      } else {
+        text = this.translations.transcribe_;
+      }
+
+      return {
+        text,
+        visible,
+        disabled
+      }
+    }
   },
   mounted() {
     this.init();
