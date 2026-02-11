@@ -16,6 +16,21 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         high: 85,
         medium: 70,
       },
+      // Translation feature
+      translation: {
+        loading: false,
+        text: '',
+        sourceLanguage: '',
+        targetLanguage: this.getPreferredLanguage(),
+        show: false,
+      },
+      availableLanguages: [
+        { code: 'en', name: window.translations.english_ },
+        { code: 'fr', name: window.translations.french_ },
+        { code: 'de', name: window.translations.german_ },
+        { code: 'nl', name: window.translations.dutch_ },
+        { code: 'es', name: window.translations.spanish_ },
+      ],
     };
   },
   computed: {
@@ -83,6 +98,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     isLowWordCount() {
       return this.effectiveWordCount > 0 && this.effectiveWordCount < this.$root.lowWordCount;
+    },
+    canTranslate() {
+      return !this.isTranscriptionEmpty && this.media?.extraction?.id;
     },
   },
   methods: {
@@ -176,12 +194,59 @@ const MediaTranscriptionDialog = Vue.defineComponent({
           this.rejecting = false;
         });
     },
+    // Translation methods
+    getLanguageName(langCode) {
+      const lang = this.availableLanguages.find(l => l.code === langCode);
+      return lang ? lang.name : langCode.toUpperCase();
+    },
+    getPreferredLanguage() {
+      return localStorage.getItem('ocr_translation_target_language') || 'en';
+    },
+    savePreferredLanguage(langCode) {
+      localStorage.setItem('ocr_translation_target_language', langCode);
+    },
+    async translateText() {
+      if (!this.canTranslate) return;
+      
+      this.translation.loading = true;
+      
+      // Save user's language preference
+      this.savePreferredLanguage(this.translation.targetLanguage);
+      
+      try {
+        const response = await api.post(`/admin/api/extraction/${this.media.extraction.id}/translate`, {
+          target_language: this.translation.targetLanguage
+        });
+        
+        if (response.data) {
+          this.translation.show = true;
+          this.translation.text = response.data.translated_text;
+          this.translation.sourceLanguage = response.data.source_language;
+          this.$root.showSnack(this.translations.translationCompleted_);
+        }
+      } catch (error) {
+        console.error('Translation error:', error);
+        this.translation.show = false;
+      } finally {
+        this.translation.loading = false;
+      }
+    },
+    closeTranslation() {
+      this.translation.show = false;
+      this.translation.text = '';
+      this.translation.sourceLanguage = '';
+    },
   },
   watch: {
     media: {
       immediate: true,
       handler(newMedia) {
         this.transcriptionText = newMedia?.extraction?.original_text || newMedia?.extraction?.text || '';
+        // Reset translation when media changes
+        this.translation.show = false;
+        this.translation.text = '';
+        this.translation.sourceLanguage = '';
+        
         if (newMedia) {
           this.$root.closeExpandedMedia('ocr-dialog')
           this.$root.handleExpandedMedia({ rendererId: 'ocr-dialog', media: this.mediaRendererData, mediaType: this.fileTypeFromMedia });
@@ -500,17 +565,99 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       </v-empty-state>
                       
                       <!-- Show textarea for items with extraction -->
-                      <v-textarea
-                          v-else
-                          v-model="transcriptionText"
+                      <div v-else class="flex-1-1 d-flex flex-column" style="min-height: 0;">
+                        <div class="position-relative" :class="translation.show ? 'flex-0-0 mb-3' : 'flex-1-1'">
+                          <v-textarea
+                              v-model="transcriptionText"
+                              variant="outlined"
+                              no-resize
+                              :readonly="!canEdit"
+                              :placeholder="translations.typeWhatYouSeeInMediaHere_"
+                              dir="auto"
+                              :class="translation.show ? '' : 'h-100'"
+                              hide-details
+                          >
+                            <template v-slot:append-inner v-if="canTranslate">
+                              <v-tooltip location="top">
+                                <template v-slot:activator="{ props }">
+                                  <div v-bind="props">
+                                    <v-btn
+                                      icon="mdi-translate"
+                                      size="small"
+                                      variant="text"
+                                      :loading="translation.loading"
+                                      :disabled="loading || saving"
+                                      @click.stop="translateText"
+                                    ></v-btn>
+                                  </div>
+                                </template>
+                                {{ translations.translateToLanguage_(getLanguageName(translation.targetLanguage)) }}
+                              </v-tooltip>
+                              
+                              <v-menu location="bottom end">
+                                <template v-slot:activator="{ props: menuProps }">
+                                  <v-tooltip location="top">
+                                    <template v-slot:activator="{ props: tooltipProps }">
+                                      <div v-bind="{ ...menuProps, ...tooltipProps }">
+                                        <v-btn
+                                          icon="mdi-chevron-down"
+                                          size="small"
+                                          variant="text"
+                                          :disabled="loading || saving || translation.loading"
+                                        ></v-btn>
+                                      </div>
+                                    </template>
+                                    {{ translations.changeLanguage_ }}
+                                  </v-tooltip>
+                                </template>
+                                <v-list density="compact">
+                                  <v-list-item
+                                    v-for="lang in availableLanguages"
+                                    :key="lang.code"
+                                    :value="lang.code"
+                                    :active="translation.targetLanguage === lang.code"
+                                    @click="translation.targetLanguage = lang.code; savePreferredLanguage(lang.code)"
+                                  >
+                                    <v-list-item-title>{{ lang.name }}</v-list-item-title>
+                                  </v-list-item>
+                                </v-list>
+                              </v-menu>
+                            </template>
+                          </v-textarea>
+                        </div>
+                        
+                        <!-- Translation Result -->
+                        <v-card
+                          v-if="translation.show"
                           variant="outlined"
-                          no-resize
-                          :readonly="!canEdit"
-                          :placeholder="translations.typeWhatYouSeeInMediaHere_"
-                          dir="auto"
-                          class="flex-1-1"
-                          hide-details
-                      ></v-textarea>
+                          class="flex-1-1 d-flex flex-column"
+                          style="min-height: 0;"
+                        >
+                          <v-card-title class="d-flex align-center justify-space-between text-subtitle-2 py-2">
+                            <div class="d-flex align-center ga-2">
+                              <v-icon size="small">mdi-translate</v-icon>
+                              {{ translations.translation_ }}
+                              <v-chip
+                                v-if="translation.sourceLanguage"
+                                density="compact"
+                                size="x-small"
+                              >
+                                {{ translation.sourceLanguage?.toUpperCase() }} → {{ translation.targetLanguage?.toUpperCase() }}
+                              </v-chip>
+                            </div>
+                            <v-btn
+                              icon="mdi-close"
+                              size="x-small"
+                              variant="text"
+                              @click="closeTranslation"
+                            ></v-btn>
+                          </v-card-title>
+                          <v-divider></v-divider>
+                          <v-card-text class="flex-1-1 overflow-y-auto text-pre-wrap" dir="auto">
+                            {{ translation.text }}
+                          </v-card-text>
+                        </v-card>
+                      </div>
                     </div>
                   </v-card-text>
 
