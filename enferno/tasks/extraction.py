@@ -38,7 +38,9 @@ def _is_ocr_supported(media: Media) -> bool:
     return ext in allowed
 
 
-def process_media_extraction_task(media_id: int, language_hints: list = None) -> dict:
+def process_media_extraction_task(
+    media_id: int, language_hints: list = None, force: bool = False
+) -> dict:
     """Extract text from a media file using Google Vision OCR."""
     try:
         media = Media.query.get(media_id)
@@ -46,7 +48,7 @@ def process_media_extraction_task(media_id: int, language_hints: list = None) ->
             return {"success": False, "media_id": media_id, "error": "Media not found"}
 
         if media.extraction:
-            if media.extraction.status == "failed":
+            if force or media.extraction.status == "failed":
                 db.session.delete(media.extraction)
                 db.session.commit()
             else:

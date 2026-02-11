@@ -434,14 +434,17 @@ ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
     default=["ar", "en"],
     help="Language hints (can specify multiple)",
 )
+@click.option("--force", "-f", is_flag=True, help="Re-process media that already have extractions")
 @with_appcontext
-def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple) -> None:
+def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, force: bool) -> None:
     """Batch process media files for OCR extraction."""
     from enferno.admin.models import Media, Extraction
     from enferno.tasks.extraction import process_media_extraction_task
 
-    # Build query for media without extractions
-    query = db.session.query(Media.id).outerjoin(Extraction).filter(Extraction.id.is_(None))
+    # Build query for media — include already-extracted if force
+    query = db.session.query(Media.id)
+    if not force:
+        query = query.outerjoin(Extraction).filter(Extraction.id.is_(None))
 
     # Filter by bulletin IDs if specified
     if bulletin_ids:
@@ -471,7 +474,7 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple) -
     skipped = 0
 
     for media_id in media_ids:
-        result = process_media_extraction_task(media_id, hints)
+        result = process_media_extraction_task(media_id, hints, force=force)
         if result.get("success"):
             if result.get("skipped"):
                 skipped += 1
@@ -497,14 +500,15 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple) -
     help="Language hints (can specify multiple)",
 )
 @click.option("--show-text", "-t", is_flag=True, help="Print extracted text")
+@click.option("--force", "-f", is_flag=True, help="Re-process even if extraction exists")
 @with_appcontext
-def extract(media_id: int, language: tuple, show_text: bool) -> None:
+def extract(media_id: int, language: tuple, show_text: bool, force: bool) -> None:
     """Extract text from a media file using Google Vision OCR."""
     from enferno.admin.models import Extraction
     from enferno.tasks.extraction import process_media_extraction_task
 
     click.echo(f"Extracting text from media {media_id}...")
-    result = process_media_extraction_task(media_id, list(language))
+    result = process_media_extraction_task(media_id, list(language), force=force)
 
     if result.get("success"):
         if result.get("skipped"):
