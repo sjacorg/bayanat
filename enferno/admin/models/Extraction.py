@@ -14,6 +14,7 @@ class Extraction(db.Model, BaseMixin):
     media_id = db.Column(db.Integer, db.ForeignKey("media.id"), unique=True, nullable=False)
 
     text = db.Column(db.Text)
+    original_text = db.Column(db.Text)
     raw = db.Column(db.JSON)
     confidence = db.Column(db.Float)
     orientation = db.Column(db.Integer, default=0)
@@ -33,6 +34,7 @@ class Extraction(db.Model, BaseMixin):
             "id": self.id,
             "media_id": self.media_id,
             "text": self.text,
+            "original_text": self.original_text,
             "confidence": self.confidence,
             "orientation": self.orientation,
             "status": self.status,

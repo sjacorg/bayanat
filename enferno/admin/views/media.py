@@ -706,7 +706,7 @@ def api_extraction_update(extraction_id: int):
         text = data.get("text")
         if not text:
             return HTTPResponse.error("Text required for transcription")
-        extraction.text = text
+        extraction.text = normalize_arabic(text)
         extraction.status = "processed"
         extraction.manual = True
         extraction.reviewed_by = current_user.id

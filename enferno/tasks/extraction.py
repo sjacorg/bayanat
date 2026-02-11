@@ -73,9 +73,11 @@ def process_media_extraction_task(media_id: int, language_hints: list = None) ->
         status = _route_by_confidence(confidence)
 
         # Save
+        cleaned_text = _normalize(result["text"])
         extraction = Extraction(
             media_id=media_id,
-            text=_normalize(result["text"]),
+            text=normalize_arabic(cleaned_text),
+            original_text=cleaned_text,
             raw=result["raw"],
             confidence=confidence,
             orientation=orientation,
@@ -234,7 +236,6 @@ def _normalize(text: str) -> str:
     if not text:
         return ""
     text = unicodedata.normalize("NFC", text)
-    text = normalize_arabic(text)
     # Collapse horizontal whitespace (spaces, tabs) but preserve newlines
     text = re.sub(r"[^\S\n]+", " ", text)
     # Fix hyphenated words with spaces

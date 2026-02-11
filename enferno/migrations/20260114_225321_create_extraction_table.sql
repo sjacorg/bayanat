@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS extraction (
 
     -- Extracted content
     text TEXT,
+    original_text TEXT,
     raw JSONB,
     confidence FLOAT,
     orientation INTEGER DEFAULT 0,
