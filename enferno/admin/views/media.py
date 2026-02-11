@@ -746,6 +746,36 @@ def api_extraction_update(extraction_id: int):
     return jsonify(extraction.to_dict())
 
 
+@admin.post("/api/extraction/<int:extraction_id>/translate")
+@auth_required("session")
+@roles_accepted("Admin")
+def api_extraction_translate(extraction_id: int):
+    """Translate extraction text on demand."""
+    from enferno.utils.translate_utils import translate_text
+
+    extraction = Extraction.query.get(extraction_id)
+    if not extraction:
+        return HTTPResponse.not_found("Extraction not found")
+
+    source_text = extraction.original_text or extraction.text
+    if not source_text:
+        return HTTPResponse.error("No text to translate")
+
+    data = request.json or {}
+    target = data.get("target_language", "fr")
+
+    try:
+        result = translate_text(
+            source_text,
+            target_language=target,
+            source_language=extraction.language,
+        )
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Translation failed for extraction {extraction_id}: {e}")
+        return HTTPResponse.error("Translation failed", status=500)
+
+
 @admin.post("/api/ocr/process/<int:media_id>")
 @auth_required("session")
 @roles_accepted("Admin")
