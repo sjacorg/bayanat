@@ -236,6 +236,14 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       this.translation.text = '';
       this.translation.sourceLanguage = '';
     },
+    async copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        this.$root?.showSnack?.(this.translations.copiedToClipboard_);
+      } catch (err) {
+        this.$root?.showSnack?.(this.translations.failedToCopyCoordinates_);
+      }
+    }
   },
   watch: {
     media: {
@@ -333,7 +341,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                         <!-- Detected Language -->
                         <div v-if="media?.extraction?.language || loading" class="flex-0-0">
-                          <div class="text-subtitle-2">{{ translations.language_ }}</div>
+                          <div class="text-subtitle-2">{{ translations.sourceLanguage_ }}</div>
                           <v-skeleton-loader
                             v-if="loading"
                             width="75"
@@ -565,8 +573,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       </v-empty-state>
                       
                       <!-- Show textarea for items with extraction -->
-                      <div v-else class="flex-1-1 d-flex flex-column" style="min-height: 0;">
-                        <div class="position-relative" :class="translation.show ? 'flex-0-0 mb-3' : 'flex-1-1'">
+                      <div v-else class="flex-1-1 d-flex ga-4" style="min-height: 0;">
+                        <div class="position-relative h-100 w-100">
                           <v-textarea
                               v-model="transcriptionText"
                               variant="outlined"
@@ -574,7 +582,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                               :readonly="!canEdit"
                               :placeholder="translations.typeWhatYouSeeInMediaHere_"
                               dir="auto"
-                              :class="translation.show ? '' : 'h-100'"
+                              class="h-100"
                               hide-details
                           >
                             <template v-slot:append-inner v-if="canTranslate">
@@ -630,7 +638,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         <v-card
                           v-if="translation.show"
                           variant="outlined"
-                          class="flex-1-1 d-flex flex-column"
+                          class="flex-1-1 d-flex flex-column w-100"
                           style="min-height: 0;"
                         >
                           <v-card-title class="d-flex align-center justify-space-between text-subtitle-2 py-2">
@@ -645,12 +653,21 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                                 {{ translation.sourceLanguage?.toUpperCase() }} → {{ translation.targetLanguage?.toUpperCase() }}
                               </v-chip>
                             </div>
-                            <v-btn
-                              icon="mdi-close"
-                              size="x-small"
-                              variant="text"
-                              @click="closeTranslation"
-                            ></v-btn>
+
+                            <div class="d-flex align-center ga-1">
+                              <v-btn
+                                icon="mdi-content-copy"
+                                size="x-small"
+                                variant="text"
+                                @click="copyToClipboard(translation.text)"
+                              ></v-btn>
+                              <v-btn
+                                icon="mdi-close"
+                                size="x-small"
+                                variant="text"
+                                @click="closeTranslation"
+                              ></v-btn>
+                            </div>
                           </v-card-title>
                           <v-divider></v-divider>
                           <v-card-text class="flex-1-1 overflow-y-auto text-pre-wrap" dir="auto">
