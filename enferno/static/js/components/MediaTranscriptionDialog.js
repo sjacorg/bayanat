@@ -507,7 +507,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           no-resize
                           :readonly="!canEdit"
                           :placeholder="translations.typeWhatYouSeeInMediaHere_"
-                          :dir="isRTL(transcriptionText) ? 'rtl' : 'ltr'"
+                          dir="auto"
                           class="flex-1-1"
                           hide-details
                       ></v-textarea>
