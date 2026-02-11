@@ -40,9 +40,6 @@
                                  title="{{ _('Data Import') }}"></v-list-item>
                 </template>
 
-                <v-list-item class="grey lighten-3" prepend-icon="mdi-format-list-bulleted"
-                             title="{{ _('Import Log') }}" href="/import/log/" key="import"></v-list-item>
-
                 {% if config.ETL_TOOL %}
                     <v-list-item class="grey lighten-3" prepend-icon="mdi-multimedia" title="{{ _('Media Import') }}"
                                  href="/import/media/" key="media-import"></v-list-item>
@@ -53,6 +50,9 @@
                                  title="{{ _('Sheets Import') }}" href="/import/sheets/"
                                  key="sheet-import"></v-list-item>
                 {% endif %}
+
+                <v-list-item class="grey lighten-3" prepend-icon="mdi-format-list-bulleted"
+                             title="{{ _('Import Log') }}" href="/import/log/" key="import"></v-list-item>
             </v-list-group>
         {% endif %}
 
