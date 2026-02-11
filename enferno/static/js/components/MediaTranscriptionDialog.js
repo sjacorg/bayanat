@@ -20,7 +20,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
   },
   computed: {
     isTranscriptionChanged() {
-      return this.transcriptionText !== this.media?.extraction?.text;
+      return this.transcriptionText !== (this.media?.extraction?.original_text || this.media?.extraction?.text);
     },
     isTranscriptionEmpty() {
       return !this.transcriptionText || this.transcriptionText.trim() === '';
@@ -79,7 +79,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       }
       
       // Count from text as fallback
-      return this.$root.countWords(this.media?.extraction?.text);
+      return this.$root.countWords(this.media?.extraction?.original_text || this.media?.extraction?.text);
     },
     isLowWordCount() {
       return this.effectiveWordCount > 0 && this.effectiveWordCount < this.$root.lowWordCount;
