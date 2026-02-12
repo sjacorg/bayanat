@@ -196,7 +196,7 @@ class ConfigManager:
             "ETL_VID_EXT": "Media Import Allowed File Extensions",
             "OCR_ENABLED": "OCR Enabled",
             "OCR_EXT": "OCR Allowed File Extensions",
-            "GOOGLE_VISION_API_KEY": "Google Vision API Key",
+            "GOOGLE_VISION_API_KEY": "Google Cloud API Key",
             "SHEET_IMPORT": "Sheet Import",
             "DEDUP_TOOL": "Dedup Tool",
             "BABEL_DEFAULT_LOCALE": "Default System Language",
