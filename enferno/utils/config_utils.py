@@ -20,11 +20,7 @@ class ConfigManager:
     MASK_STRING = "**********"
     CHECK_INTERVAL = 5  # seconds between mtime checks
 
-    # Singleton state
     _instance = None
-    _config = {}
-    _mtime = 0
-    _last_check = 0
 
     # Define default core configurations here
     DEFAULT_CONFIG = MappingProxyType(
@@ -243,16 +239,23 @@ class ConfigManager:
     )
 
     # Keys that require process restart (form classes / CSP registered at init)
-    # Only these two are genuinely cached at init time.
-    # All SECURITY_* keys are read live per-request by Flask-Security via config_value().
     STATIC_KEYS = frozenset(
         {
             "RECAPTCHA_ENABLED",  # login form class chosen at Security() init
             "GOOGLE_OAUTH_ENABLED",  # CSP rules set at Talisman init
+            "MAIL_SERVER",  # Flask-Mail caches connection settings at init
+            "MAIL_PORT",
+            "MAIL_USE_TLS",
+            "MAIL_USE_SSL",
+            "MAIL_USERNAME",
+            "MAIL_PASSWORD",
+            "MAIL_DEFAULT_SENDER",
+            "DEDUP_TOOL",  # Celery beat tasks registered once at startup
+            "DEDUP_INTERVAL",
         }
     )
 
-    # Type conversions from raw JSON values to Python types
+    # Type conversions from raw JSON values to Python types expected by Flask
     TYPE_CONVERSIONS = {
         "SECURITY_FRESHNESS": lambda v: timedelta(minutes=v),
         "SECURITY_FRESHNESS_GRACE_PERIOD": lambda v: timedelta(minutes=v),
@@ -261,16 +264,6 @@ class ConfigManager:
         "MAIL_PORT": int,
     }
 
-    # All keys in DEFAULT_CONFIG minus STATIC_KEYS are dynamic
-    DYNAMIC_KEYS = frozenset(set(DEFAULT_CONFIG.keys()) - STATIC_KEYS) | frozenset(
-        {
-            "GEO_MAP_DEFAULT_CENTER_LAT",
-            "GEO_MAP_DEFAULT_CENTER_LNG",
-            "GEO_MAP_DEFAULT_CENTER_RADIUS",
-            "ACTIVITIES_LIST",
-        }
-    )
-
     @classmethod
     def instance(cls):
         if cls._instance is None:
@@ -278,53 +271,37 @@ class ConfigManager:
         return cls._instance
 
     def __init__(self):
+        self._mtime = 0
+        self._last_check = 0
         try:
             with open(self.CONFIG_FILE_PATH) as file:
-                self._config = json.loads(file.read())
+                self.config = json.loads(file.read())
             self._mtime = os.path.getmtime(self.CONFIG_FILE_PATH)
         except EnvironmentError:
             logger.error("No config file found, Loading default Bayanat configurations")
-            self._config = {}
-            self._mtime = 0
+            self.config = {}
         self._last_check = time.time()
-        # Keep instance-level config for backward compat with settings.py
-        self.config = self._config
 
-    def get(self, key, default=None):
-        """Get a config value with auto-reload, type conversion, and derived key support."""
-        self._maybe_reload()
-
-        # Derived keys
-        if key == "GEO_MAP_DEFAULT_CENTER_LAT":
-            geo = self._get_raw("GEO_MAP_DEFAULT_CENTER")
-            return geo.get("lat") if geo else default
-        if key == "GEO_MAP_DEFAULT_CENTER_LNG":
-            geo = self._get_raw("GEO_MAP_DEFAULT_CENTER")
-            return geo.get("lng") if geo else default
-        if key == "GEO_MAP_DEFAULT_CENTER_RADIUS":
-            geo = self._get_raw("GEO_MAP_DEFAULT_CENTER")
-            return geo.get("radius", 1000) if geo else default
-        if key == "ACTIVITIES_LIST":
-            activities = self._get_raw("ACTIVITIES")
-            if activities:
-                return [k for k, v in activities.items() if v]
-            return default
-
-        raw = self._get_raw(key)
-        if raw is None:
-            return default
-
-        converter = self.TYPE_CONVERSIONS.get(key)
-        return converter(raw) if converter else raw
-
-    def _get_raw(self, key):
-        """Get raw value from config with DEFAULT_CONFIG fallback."""
-        value = self._config.get(key)
+    def get_config(self, cfg):
+        """Get raw config value with DEFAULT_CONFIG fallback."""
+        value = self.config.get(cfg)
         if value is not None:
             return value
-        return self.DEFAULT_CONFIG.get(key)
+        return ConfigManager.DEFAULT_CONFIG.get(cfg)
 
-    def _maybe_reload(self):
+    def force_reload(self):
+        """Force immediate reload of config from file."""
+        try:
+            with open(self.CONFIG_FILE_PATH) as f:
+                self.config = json.loads(f.read())
+            self._mtime = os.path.getmtime(self.CONFIG_FILE_PATH)
+            self._last_check = time.time()
+            logger.info("Configuration reloaded from file.")
+        except Exception:
+            logger.error("Failed to reload config", exc_info=True)
+
+    def maybe_reload(self):
+        """Check file mtime and reload if changed. Used by Celery workers."""
         now = time.time()
         if now - self._last_check < self.CHECK_INTERVAL:
             return
@@ -332,47 +309,44 @@ class ConfigManager:
         try:
             mtime = os.path.getmtime(self.CONFIG_FILE_PATH)
             if mtime != self._mtime:
-                self._load()
+                self.force_reload()
         except OSError:
             pass
 
-    def _load(self):
-        try:
-            with open(self.CONFIG_FILE_PATH) as f:
-                new_config = json.loads(f.read())
-            # Atomic reference swap - thread-safe under GIL
-            self._config = new_config
-            self.config = new_config
-            self._mtime = os.path.getmtime(self.CONFIG_FILE_PATH)
-            logger.info("Configuration reloaded from file.")
-        except Exception:
-            logger.error("Failed to reload config", exc_info=True)
+    @staticmethod
+    def apply_to_app(app):
+        """Update app.config dict in-place from config.json values.
 
-    def force_reload(self):
-        """Force immediate reload of config from file."""
-        self._load()
-        self._last_check = time.time()
+        Applies type conversions and derived keys. Skips STATIC_KEYS
+        since those require a process restart to take effect.
+        """
+        cm = ConfigManager.instance()
+        for key in ConfigManager.DEFAULT_CONFIG:
+            if key in ConfigManager.STATIC_KEYS:
+                continue
+            raw = cm.get_config(key)
+            converter = ConfigManager.TYPE_CONVERSIONS.get(key)
+            app.config[key] = converter(raw) if converter and raw is not None else raw
 
-    # Backward-compatible method used by settings.py at import time
-    def get_config(self, cfg):
-        value = self.config.get(cfg)
-        if value is not None:
-            return value
-        else:
-            return ConfigManager.DEFAULT_CONFIG.get(cfg)
+        # Derived keys
+        geo = cm.get_config("GEO_MAP_DEFAULT_CENTER")
+        if geo:
+            app.config["GEO_MAP_DEFAULT_CENTER_LAT"] = geo.get("lat")
+            app.config["GEO_MAP_DEFAULT_CENTER_LNG"] = geo.get("lng")
+            app.config["GEO_MAP_DEFAULT_CENTER_RADIUS"] = geo.get("radius", 1000)
+
+        activities = cm.get_config("ACTIVITIES")
+        if activities:
+            app.config["ACTIVITIES_LIST"] = [k for k, v in activities.items() if v]
 
     @staticmethod
     def detect_static_changes(app):
-        """Compare current app.config static keys against what's now in config.json.
-        Returns set of static keys that changed."""
+        """Return set of STATIC_KEYS whose values differ from config.json."""
         cm = ConfigManager.instance()
         changed = set()
         for key in ConfigManager.STATIC_KEYS:
-            new_raw = cm._get_raw(key)
-            converter = ConfigManager.TYPE_CONVERSIONS.get(key)
-            new_val = converter(new_raw) if converter and new_raw is not None else new_raw
-            # Read from the underlying dict (not through DynamicConfig proxy)
-            old_val = dict.get(app.config, key)
+            new_val = cm.get_config(key)
+            old_val = app.config.get(key)
             if old_val != new_val:
                 changed.add(key)
         return changed
@@ -391,36 +365,19 @@ class ConfigManager:
     @staticmethod
     def serialize():
         """Serialize current config for the admin UI.
-        Reads from ConfigManager singleton for live values."""
-        cm = ConfigManager.instance()
-
-        # Secret fields that need masking
+        Returns raw JSON values (no type conversions) with secrets masked."""
         from enferno.admin.models import AppConfig
 
+        cm = ConfigManager.instance()
         conf = {}
         for key in ConfigManager.DEFAULT_CONFIG:
-            raw = cm._get_raw(key)
-            if raw is None:
-                raw = ConfigManager.DEFAULT_CONFIG.get(key)
-
-            # Apply type conversions for serialization (reverse them for display)
-            if key in ("SECURITY_FRESHNESS", "SECURITY_FRESHNESS_GRACE_PERIOD"):
-                # Store as minutes in JSON
-                conf[key] = raw
-            elif key == "ACTIVITIES_RETENTION":
-                # Store as days in JSON
-                conf[key] = raw
-            elif key == "EXPORT_DEFAULT_EXPIRY":
-                # Store as hours in JSON
-                conf[key] = raw
+            raw = cm.get_config(key)
+            if key in AppConfig.SECRET_FIELDS:
+                conf[key] = ConfigManager.MASK_STRING if raw else ""
             elif key == "MAIL_PORT":
                 conf[key] = int(raw) if raw is not None else 25
-            elif key in AppConfig.SECRET_FIELDS:
-                conf[key] = ConfigManager.MASK_STRING if raw else ""
             else:
                 conf[key] = raw
-
-        # GEO_MAP_DEFAULT_CENTER is stored as nested dict in config.json, serialize as-is
         return conf
 
     @staticmethod
@@ -435,7 +392,7 @@ class ConfigManager:
         cm = ConfigManager.instance()
         for secret_field in AppConfig.SECRET_FIELDS:
             if conf.get(secret_field) == ConfigManager.MASK_STRING:
-                conf[secret_field] = cm._get_raw(secret_field) or ""
+                conf[secret_field] = cm.get_config(secret_field) or ""
 
         if ConfigManager.validate(conf):
             try:
@@ -500,60 +457,3 @@ class ConfigManager:
                 os.remove(backup_path)
                 logger.info("Previous configuration restored from backup.")
             return False
-
-
-class DynamicConfig(dict):
-    """Flask config dict that reads dynamic keys live from ConfigManager.
-
-    Static keys and Flask internals are served from the underlying dict.
-    Dynamic app config keys are proxied through ConfigManager for live reload.
-
-    Supports patch.dict() in tests by tracking explicit overrides via
-    __setitem__/update that differ from what ConfigManager returns.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._overrides = set()
-        self._init_done = True
-
-    def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-        if not getattr(self, "_init_done", False):
-            return
-        if key in ConfigManager.DYNAMIC_KEYS:
-            cm_val = ConfigManager.instance().get(key)
-            if value != cm_val:
-                self._overrides.add(key)
-            else:
-                self._overrides.discard(key)
-
-    def __delitem__(self, key):
-        super().__delitem__(key)
-        self._overrides.discard(key)
-
-    def update(self, __m=None, **kwargs):
-        if __m:
-            items = __m.items() if hasattr(__m, "items") else __m
-            for k, v in items:
-                self[k] = v
-        for k, v in kwargs.items():
-            self[k] = v
-
-    def __getitem__(self, key):
-        if key in ConfigManager.DYNAMIC_KEYS and key not in self._overrides:
-            val = ConfigManager.instance().get(key)
-            if val is not None:
-                return val
-        return super().__getitem__(key)
-
-    def get(self, key, default=None):
-        if key in ConfigManager.DYNAMIC_KEYS and key not in self._overrides:
-            val = ConfigManager.instance().get(key)
-            return val if val is not None else default
-        return super().get(key, default)
-
-    def __contains__(self, key):
-        if key in ConfigManager.DYNAMIC_KEYS:
-            return True
-        return super().__contains__(key)

@@ -95,13 +95,14 @@ def api_config_write(
     conf = validated_data.get("conf")
 
     if ConfigManager.write_config(conf):
-        # Force immediate reload in ConfigManager singleton
+        # Reload from file and check for restart-required changes first
         ConfigManager.instance().force_reload()
-
-        # Check if any static keys changed
         static_changed = ConfigManager.detect_static_changes(current_app)
 
-        # Sync Celery worker config
+        # Update app.config in-place with new values
+        ConfigManager.apply_to_app(current_app)
+
+        # Tell Celery workers to pick up new config
         from enferno.tasks import refresh_celery_config
 
         refresh_celery_config.delay()
@@ -133,10 +134,11 @@ def api_config_write(
 @roles_required("Admin")
 def api_app_reload() -> Response:
     """Refreshes configuration from config.json without restart."""
-    ConfigManager.instance().force_reload()
-
+    from flask import current_app
     from enferno.tasks import refresh_celery_config
 
+    ConfigManager.instance().force_reload()
+    ConfigManager.apply_to_app(current_app)
     refresh_celery_config.delay()
     return HTTPResponse.success(message="Configuration refreshed.")
 

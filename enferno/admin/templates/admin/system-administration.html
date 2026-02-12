@@ -1057,7 +1057,7 @@
 
     <!-- Restart required banner -->
     <v-snackbar v-model="restartRequired" :timeout="-1" color="warning" location="top">
-        {{ _('Recaptcha or OAuth changes require a manual restart of Bayanat to take effect.') }}
+        {{ _('Some settings require a manual restart of Bayanat to take effect.') }}
         <template v-slot:actions>
             <v-btn variant="text" @click="restartRequired = false">{{ _('Dismiss') }}</v-btn>
         </template>
