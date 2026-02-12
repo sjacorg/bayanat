@@ -75,7 +75,7 @@
                             :loading="loading"
                             :items-length="itemsLength"
                             class="elevation-1"
-                            show-select
+                            :show-select="Boolean(visionApiKey)"
                             item-value="id"
                             select-strategy="page"
                             :item-selectable="canRunOCRProcess"

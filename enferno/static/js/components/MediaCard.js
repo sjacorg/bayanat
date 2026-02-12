@@ -119,6 +119,7 @@ const MediaCard = Vue.defineComponent({
   data() {
     return {
       s3url: '',
+      visionApiKey: window.__GOOGLE_VISION_API_KEY__,
       isCurrentUserAdmin: window.__isAdmin__ || false,
       translations: window.translations,
       iconMap: {
@@ -142,7 +143,7 @@ const MediaCard = Vue.defineComponent({
 
       const isMediaSaved = !!this.media?.id;
       const isSupportedType = this.$root.selectableFileTypes.includes(this.mediaType);
-      const visible = this.isCurrentUserAdmin;
+      const visible = this.isCurrentUserAdmin && Boolean(this.visionApiKey);
       const disabled = !isSupportedType || !isMediaSaved;
       let text = '';
 
@@ -299,7 +300,7 @@ const MediaCard = Vue.defineComponent({
               <v-progress-linear v-if="ocrLoading" indeterminate color="primary" class="mb-2"></v-progress-linear>
               <div v-else-if="ocrText" class="text-body-2" :dir="media.extraction.language === 'ar' ? 'rtl' : 'ltr'" style="max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;">{{ ocrText }}</div>
               <div class="d-flex justify-end mt-1">
-                <v-btn size="x-small" variant="text" icon="mdi-pencil" @click="$root.showOcrDialog(media.id)"></v-btn>
+                <v-btn v-if="visionApiKey" size="x-small" variant="text" icon="mdi-pencil" @click="$root.showOcrDialog(media.id)"></v-btn>
                 <v-btn size="x-small" variant="text" icon="mdi-content-copy" @click="copyToClipboard(ocrText)" :disabled="!ocrText"></v-btn>
               </div>
             </v-expansion-panel-text>

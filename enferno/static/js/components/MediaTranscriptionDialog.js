@@ -553,6 +553,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         {{ translations.extractedText_ }} <span v-if="canEdit" class="text-error">*</span>
                         <v-spacer></v-spacer>
                         <v-btn
+                          v-if="hasVisionApiKey"
                           prepend-icon="mdi-translate"
                           variant="outlined"
                           :loading="translation.loading"
@@ -567,6 +568,16 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         class="flex-1-1"
                       ></v-skeleton-loader>
 
+
+                      <!-- Show message if vision api key is not configured -->
+                      <v-empty-state
+                        v-if="!hasVisionApiKey"
+                        icon="mdi-alert-circle-outline"
+                        :title="translations.apiNotConfigured_"
+                        :text="translations.googleVisionApiHasNotBeenConfigured_"
+                      ></v-empty-state>
+
+                      <template v-else>
                       <!-- Show message for processing items -->
                       <v-empty-state
                         v-else-if="isProcessing"
@@ -619,6 +630,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           </v-tooltip>
                         </template>
                       </v-empty-state>
+                      </template>
                       
                       <!-- Show textarea for items with extraction -->
                       <div v-else class="flex-1-1 d-flex ga-4" style="min-height: 0;">
