@@ -46,3 +46,15 @@ class Extraction(db.Model, BaseMixin):
             "created_at": DateHelper.serialize_datetime(self.created_at),
             "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }
+
+    def to_compact_dict(self):
+        """Metadata only, no text fields. Use for bulk/embedded responses."""
+        return {
+            "id": self.id,
+            "media_id": self.media_id,
+            "status": self.status,
+            "word_count": self.word_count,
+            "language": self.language,
+            "confidence": self.confidence,
+            "manual": self.manual,
+        }

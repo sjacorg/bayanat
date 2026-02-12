@@ -128,6 +128,8 @@ const MediaCard = Vue.defineComponent({
         audio: 'mdi-music-box',
         unknown: 'mdi-file-download'
       },
+      ocrText: null,
+      ocrLoading: false,
     };
   },
   computed: {
@@ -148,7 +150,7 @@ const MediaCard = Vue.defineComponent({
         text = this.translations.ocrProcessingIsOnlyAvailableForTheFollowingFileTypes_(this.$root.selectableFileTypes);
       } else if (!isMediaSaved) {
         text = this.translations.transcriptionAvailableAfterSaving_;
-      } else if (this.media?.extraction?.text) {
+      } else if (this.media?.extraction?.word_count) {
         text = this.translations.viewEditTranscription_;
       } else {
         text = this.translations.transcribe_;
@@ -196,6 +198,16 @@ const MediaCard = Vue.defineComponent({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    },
+    loadOcrText(e) {
+      if (!e?.value || this.ocrText || this.ocrLoading) return;
+      this.ocrLoading = true;
+      api.get(`/admin/api/extraction/${this.media.extraction.id}`)
+        .then(response => {
+          this.ocrText = response.data.text;
+        })
+        .catch(() => this.$root.showSnack('Failed to load OCR text'))
+        .finally(() => this.ocrLoading = false);
     },
     copyToClipboard(text) {
       navigator.clipboard.writeText(text)
@@ -258,7 +270,28 @@ const MediaCard = Vue.defineComponent({
       </v-card-text>
 
       ${fileMetadata}
-      
+
+      <template v-if="media.extraction?.word_count">
+        <v-divider></v-divider>
+        <v-expansion-panels variant="accordion" flat>
+          <v-expansion-panel @group:selected="loadOcrText">
+            <v-expansion-panel-title class="py-1 text-caption" style="min-height: 36px;">
+              <v-icon icon="mdi-text-recognition" size="small" class="mr-2"></v-icon>
+              {{ translations.extractedText_ || 'Extracted Text' }}
+              <v-chip size="x-small" class="ml-2" variant="text">{{ media.extraction.word_count }} {{ translations.words_ || 'words' }}</v-chip>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <v-progress-linear v-if="ocrLoading" indeterminate color="primary" class="mb-2"></v-progress-linear>
+              <div v-else-if="ocrText" class="text-body-2" :dir="media.extraction.language === 'ar' ? 'rtl' : 'ltr'" style="max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;">{{ ocrText }}</div>
+              <div class="d-flex justify-end mt-1">
+                <v-btn size="x-small" variant="text" icon="mdi-pencil" @click="$root.showOcrDialog(media.id)"></v-btn>
+                <v-btn size="x-small" variant="text" icon="mdi-content-copy" @click="copyToClipboard(ocrText)" :disabled="!ocrText"></v-btn>
+              </div>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </template>
+
       <v-divider></v-divider>
       <v-card-actions class="justify-end d-flex py-0" style="min-height: 45px;">
         <v-spacer></v-spacer>

@@ -679,6 +679,15 @@ def api_ocr_stats():
     )
 
 
+@admin.get("/api/extraction/<int:extraction_id>")
+def api_extraction_get(extraction_id: int):
+    """Return full extraction data including text."""
+    extraction = Extraction.query.get(extraction_id)
+    if not extraction:
+        return HTTPResponse.not_found()
+    return HTTPResponse.success(data=extraction.to_dict())
+
+
 @admin.put("/api/extraction/<int:extraction_id>")
 @auth_required("session")
 @roles_accepted("Admin")
