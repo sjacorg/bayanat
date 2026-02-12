@@ -169,7 +169,12 @@ class SearchUtils:
         return self.activity_query(self.search)
 
     def _build_term_conditions(
-        self, column: ColumnElement, terms: list, exact: bool = False, negate: bool = False
+        self,
+        column: ColumnElement,
+        terms: list,
+        exact: bool = False,
+        negate: bool = False,
+        normalize: bool = False,
     ) -> list:
         """
         Build search conditions for multi-term text search.
@@ -179,13 +184,10 @@ class SearchUtils:
             terms: List of search terms (each treated as a phrase)
             exact: If True, word boundary match; if False, substring match with wildcards
             negate: If True, negate conditions (for exclude)
+            normalize: If True, apply Arabic text normalization to terms
 
         Returns:
             List of SQLAlchemy conditions
-
-        Examples:
-            exact=False: "open system" -> matches "reopen systems" (substring)
-            exact=True:  "open system" -> matches "the open system" but not "reopen systems"
         """
         result = []
         for term in terms:
@@ -193,13 +195,12 @@ class SearchUtils:
                 continue
 
             term = term.strip()
+            if normalize:
+                term = normalize_arabic(term)
             if exact:
-                # Word boundary match - phrase as whole words (case-insensitive)
-                # \y is PostgreSQL word boundary anchor
                 escaped = re.escape(term)
                 cond = column.op("~*")(f"\\y{escaped}\\y")
             else:
-                # Phrase search with wildcards (default)
                 cond = column.ilike(f"%{term}%")
 
             result.append(~cond if negate else cond)
@@ -413,11 +414,11 @@ class SearchUtils:
                             Extraction.manual == True,
                         )
                     )
-                    .where(Extraction.text.isnot(None))
+                    .where(Extraction.search_text.isnot(None))
                 )
                 for word in words:
                     ocr_query = ocr_query.where(
-                        Extraction.text.ilike(f"%{normalize_arabic(word)}%")
+                        Extraction.search_text.ilike(f"%{normalize_arabic(word)}%")
                     )
                 result = db.session.execute(ocr_query)
                 self._ocr_matched_ids = {row[0] for row in result}
@@ -453,24 +454,24 @@ class SearchUtils:
         if ocr := q.get("ocr"):
             words = [w for w in ocr.split(" ") if w.strip()]
             if words:
-                # Find bulletins that have media with matching extraction text
-                # Includes trusted extractions: processed, needs_review, or manually transcribed
-                ocr_subquery = (
-                    select(Media.bulletin_id)
-                    .join(Extraction, Media.id == Extraction.media_id)
-                    .where(
-                        or_(
-                            Extraction.status.in_(["processed", "needs_review"]),
-                            Extraction.manual == True,
-                        )
-                    )
-                    .where(Extraction.search_text.isnot(None))
+                ocr_conds = self._build_term_conditions(
+                    Extraction.search_text, words, normalize=True
                 )
-                for word in words:
-                    ocr_subquery = ocr_subquery.where(
-                        Extraction.search_text.ilike(f"%{normalize_arabic(word)}%")
+                if ocr_conds:
+                    ocr_subquery = (
+                        select(Media.bulletin_id)
+                        .join(Extraction, Media.id == Extraction.media_id)
+                        .where(
+                            or_(
+                                Extraction.status.in_(["processed", "needs_review"]),
+                                Extraction.manual == True,
+                            )
+                        )
+                        .where(Extraction.search_text.isnot(None))
                     )
-                conditions.append(Bulletin.id.in_(ocr_subquery))
+                    for cond in ocr_conds:
+                        ocr_subquery = ocr_subquery.where(cond)
+                    conditions.append(Bulletin.id.in_(ocr_subquery))
 
         # Origin ID
         originid = (q.get("originid") or "").strip()
@@ -518,14 +519,32 @@ class SearchUtils:
                 conditions.append(and_(*tag_conditions))
 
         # Search Terms - chips-based multi-term text search
+        # Searches both bulletin fields AND OCR extracted text from attached media
         if search_terms := q.get("searchTerms"):
             exact = q.get("termsExact", False)
-            term_conds = self._build_term_conditions(Bulletin.search, search_terms, exact)
-            if term_conds:
+            bulletin_conds = self._build_term_conditions(Bulletin.search, search_terms, exact)
+            ocr_conds = self._build_term_conditions(
+                Extraction.search_text, search_terms, exact, normalize=True
+            )
+            if bulletin_conds:
+                ocr_base = (
+                    select(Media.bulletin_id)
+                    .join(Extraction, Media.id == Extraction.media_id)
+                    .where(
+                        or_(
+                            Extraction.status.in_(["processed", "needs_review"]),
+                            Extraction.manual == True,
+                        )
+                    )
+                    .where(Extraction.search_text.isnot(None))
+                )
                 if q.get("opTerms", False):
-                    conditions.append(or_(*term_conds))
+                    ocr_sub = ocr_base.where(or_(*ocr_conds))
+                    conditions.append(or_(*bulletin_conds, Bulletin.id.in_(ocr_sub)))
                 else:
-                    conditions.extend(term_conds)
+                    for b_cond, o_cond in zip(bulletin_conds, ocr_conds):
+                        ocr_sub = ocr_base.where(o_cond)
+                        conditions.append(or_(b_cond, Bulletin.id.in_(ocr_sub)))
 
         # Exclude Search Terms
         if ex_terms := q.get("exTerms"):
