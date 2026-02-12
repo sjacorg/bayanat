@@ -61,9 +61,6 @@ def process_media_extraction_task(
         if not file_path or not file_path.exists():
             return {"success": False, "media_id": media_id, "error": "File not found"}
 
-        # Detect orientation (Tesseract OSD, fallback to 0)
-        orientation = _detect_orientation(file_path)
-
         # OCR via Google Vision
         hints = language_hints or DEFAULT_LANGUAGE_HINTS
         result = _extract_text(file_path, hints)
@@ -82,7 +79,7 @@ def process_media_extraction_task(
             original_text=cleaned_text,
             raw=result["raw"],
             confidence=confidence,
-            orientation=orientation,
+            orientation=result.get("orientation", 0),
             status=status,
             word_count=result["word_count"],
             language=result["language"],
@@ -118,20 +115,40 @@ def _get_media_path(media: Media) -> Path | None:
     return Media.media_dir / media.media_file
 
 
-def _detect_orientation(file_path: Path) -> int:
-    """Detect image orientation using Tesseract OSD. Returns 0 on failure."""
-    try:
-        import pytesseract
-        from PIL import Image
+def _orientation_from_vision(page: dict) -> int:
+    """Detect text orientation from Vision API block bounding box vertices.
 
-        osd = pytesseract.image_to_osd(Image.open(file_path))
-        for line in osd.split("\n"):
-            if "Orientation in degrees" in line:
-                return int(line.split(":")[1].strip())
+    Examines all TEXT blocks, computes the angle of each block's top edge
+    (vertex 0 → vertex 1), snaps to nearest 90°, and returns the most
+    common orientation. Returns degrees (0, 90, 180, 270).
+    """
+    import math
+    from collections import Counter
+
+    blocks = page.get("blocks", [])
+    if not blocks:
         return 0
-    except Exception as e:
-        logger.warning(f"Orientation detection failed: {e}")
+
+    angles = []
+    for block in blocks:
+        if block.get("blockType") not in ("TEXT", None):
+            continue
+        vertices = block.get("boundingBox", {}).get("vertices", [])
+        if len(vertices) < 2:
+            continue
+        dx = vertices[1].get("x", 0) - vertices[0].get("x", 0)
+        dy = vertices[1].get("y", 0) - vertices[0].get("y", 0)
+        angle = math.degrees(math.atan2(dy, dx))
+        snapped = round(angle / 90) * 90
+        angles.append(int(snapped % 360))
+
+    if not angles:
         return 0
+
+    # Most common text direction across all blocks
+    text_direction = Counter(angles).most_common(1)[0][0]
+    # Return the correction angle (rotate image to make text upright)
+    return (360 - text_direction) % 360
 
 
 class VisionAPIError(Exception):
@@ -213,11 +230,14 @@ def _extract_text(file_path: Path, language_hints: list) -> dict | None:
         languages = page.get("property", {}).get("detectedLanguages", [])
         language = languages[0].get("languageCode") if languages else None
 
+        orientation = _orientation_from_vision(page)
+
         return {
             "text": text,
             "confidence": confidence,
             "word_count": word_count,
             "language": language,
+            "orientation": orientation,
             "raw": data,
         }
 
