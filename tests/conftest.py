@@ -100,6 +100,10 @@ def setup_db(app):
                 # Extensions might already exist, continue
                 conn.rollback()
 
+        from enferno.utils.db_utils import ensure_sql_functions
+
+        ensure_sql_functions()
+
         _db.drop_all()
         _db.create_all()
 

@@ -31,7 +31,6 @@ from enferno.user.models import Role
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.text_utils import normalize_arabic
 
-
 logger = get_logger()
 
 
@@ -465,11 +464,11 @@ class SearchUtils:
                             Extraction.manual == True,
                         )
                     )
-                    .where(Extraction.text.isnot(None))
+                    .where(Extraction.search_text.isnot(None))
                 )
                 for word in words:
                     ocr_subquery = ocr_subquery.where(
-                        Extraction.text.ilike(f"%{normalize_arabic(word)}%")
+                        Extraction.search_text.ilike(f"%{normalize_arabic(word)}%")
                     )
                 conditions.append(Bulletin.id.in_(ocr_subquery))
 

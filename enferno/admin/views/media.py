@@ -501,10 +501,10 @@ def api_media_dashboard():
     elif ocr_status:
         query = query.filter(Extraction.status == ocr_status)
 
-    # Text search in extracted text (normalize Arabic for consistent matching)
+    # Text search in normalized extraction text
     if search:
         search = normalize_arabic(search)
-        query = query.filter(Extraction.text.ilike(f"%{search}%"))
+        query = query.filter(Extraction.search_text.ilike(f"%{search}%"))
 
     # Date range filter on extraction created_at
     if date_from:
@@ -679,6 +679,15 @@ def api_ocr_stats():
     )
 
 
+@admin.get("/api/extraction/<int:extraction_id>")
+def api_extraction_get(extraction_id: int):
+    """Return full extraction data including text."""
+    extraction = Extraction.query.get(extraction_id)
+    if not extraction:
+        return HTTPResponse.not_found()
+    return HTTPResponse.success(data=extraction.to_dict())
+
+
 @admin.put("/api/extraction/<int:extraction_id>")
 @auth_required("session")
 @roles_accepted("Admin")
@@ -706,7 +715,7 @@ def api_extraction_update(extraction_id: int):
         text = data.get("text")
         if not text:
             return HTTPResponse.error("Text required for transcription")
-        extraction.text = normalize_arabic(text)
+        extraction.text = text
         extraction.status = "processed"
         extraction.manual = True
         extraction.reviewed_by = current_user.id

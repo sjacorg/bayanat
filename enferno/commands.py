@@ -75,6 +75,11 @@ def create_db(create_exts: bool) -> None:
             click.echo("Postgis extension installed successfully")
             conn.commit()
 
+    # Load SQL functions before create_all (needed by generated columns)
+    from enferno.utils.db_utils import ensure_sql_functions
+
+    ensure_sql_functions()
+
     db.create_all()
     click.echo("Database structure created successfully")
     logger.info("Database structure created successfully")

@@ -182,7 +182,9 @@ class Config(object):
     OCR_ENABLED = manager.get_config("OCR_ENABLED")
     OCR_EXT = manager.get_config("OCR_EXT")
     TESSERACT_CMD = os.environ.get("TESSERACT_CMD", "/usr/bin/tesseract")
-    GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY")
+    GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY") or manager.get_config(
+        "GOOGLE_VISION_API_KEY"
+    )
 
     # S3 settings
     # Bucket needs to be private with public access blocked

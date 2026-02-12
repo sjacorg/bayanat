@@ -22,6 +22,10 @@ class Extraction(db.Model, BaseMixin):
     manual = db.Column(db.Boolean, default=False, nullable=False)
     word_count = db.Column(db.Integer, default=0)
     language = db.Column(db.String(10))
+    search_text = db.Column(
+        db.Text,
+        db.Computed("normalize_arabic_text(text)"),
+    )
 
     reviewed_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     reviewed_at = db.Column(db.DateTime)
@@ -45,4 +49,16 @@ class Extraction(db.Model, BaseMixin):
             "reviewed_at": DateHelper.serialize_datetime(self.reviewed_at),
             "created_at": DateHelper.serialize_datetime(self.created_at),
             "updated_at": DateHelper.serialize_datetime(self.updated_at),
+        }
+
+    def to_compact_dict(self):
+        """Metadata only, no text fields. Use for bulk/embedded responses."""
+        return {
+            "id": self.id,
+            "media_id": self.media_id,
+            "status": self.status,
+            "word_count": self.word_count,
+            "language": self.language,
+            "confidence": self.confidence,
+            "manual": self.manual,
         }
