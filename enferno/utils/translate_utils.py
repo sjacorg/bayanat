@@ -29,7 +29,7 @@ def translate_text(text: str, target_language: str = "fr", source_language: str 
         "target": target_language,
         "format": "text",
     }
-    if source_language:
+    if source_language and source_language != target_language:
         params["source"] = source_language
 
     response = httpx.post(TRANSLATE_API_URL, data=params, timeout=30.0)

@@ -766,7 +766,7 @@ def api_extraction_translate(extraction_id: int):
     if not extraction:
         return HTTPResponse.not_found("Extraction not found")
 
-    source_text = extraction.original_text or extraction.text
+    source_text = extraction.text or extraction.original_text
     if not source_text:
         return HTTPResponse.error("No text to translate")
 
