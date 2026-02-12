@@ -20,12 +20,12 @@ const InlineMediaRenderer = Vue.defineComponent({
         type: Boolean,
         default: false
       },
-      initialRotation: {
+      initialOrientation: {
         type: Number,
         default: 0,
       },
     },
-    emits: ['ready', 'fullscreen', 'close'],
+    emits: ['ready', 'fullscreen', 'close', 'orientation-changed'],
     data: () => ({
       translations: window.translations,
       iconMap: {
@@ -155,7 +155,7 @@ const InlineMediaRenderer = Vue.defineComponent({
             class="h-100"
           ></div>
           <pdf-viewer ref="pdfViewer" v-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
-          <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :initial-rotation="initialRotation" :media="media" :media-type="mediaType" class="h-100"></image-viewer>
+          <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :initial-orientation="initialOrientation" :media="media" :media-type="mediaType" class="h-100" @orientation-changed="$emit('orientation-changed', $event)"></image-viewer>
 
           <!-- Fallback for unknown file types -->
           <div v-if="mediaType === 'unknown'" class="h-100 d-flex flex-column align-center justify-center bg-grey-lighten-2">

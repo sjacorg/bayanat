@@ -5,7 +5,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     media: { type: Object, default: () => ({}) },
     hasVisionApiKey: { type: Boolean, default: false },
   },
-  emits: ['update:open', 'rejected', 'accepted', 'transcribed', 'processed'],
+  emits: ['update:open', 'rejected', 'accepted', 'transcribed', 'processed', 'orientation-saved'],
   data() {
     return {
       translations: window.translations,
@@ -23,6 +23,11 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         sourceLanguage: '',
         targetLanguage: this.getPreferredLanguage(),
         show: false,
+      },
+      orientation: {
+        saving: false,
+        orientationToSave: null,
+        showSaveButton: false,
       },
       availableLanguages: [
         { code: 'en', name: window.translations.english_ },
@@ -104,6 +109,37 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
   },
   methods: {
+    normalizeOrientation(newOrientation) {
+      // Normalize orientation to be 0, 90, 180, 270
+      let normalized = newOrientation % 360;
+      if (normalized < 0) {
+        normalized += 360;
+      }
+      const roundedTo90 = Math.round(normalized / 90) * 90;
+
+      return roundedTo90 % 360;
+    },
+    onOrientationChanged(newOrientation) {
+      this.orientation.showSaveButton = true;
+      this.orientation.orientationToSave = this.normalizeOrientation(newOrientation);
+    },
+    saveOrientation() {
+      if (!this.media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+      this.orientation.saving = true;
+
+      api.put(`/admin/api/extraction/${this.media.extraction.id}`, { action: 'orientation', orientation: this.orientation.orientationToSave })
+        .then(response => {
+          this.$root.showSnack(this.translations.orientationSaved_);
+          this.$emit('orientation-saved', { media: this.media, orientation: this.orientation.orientationToSave });
+          this.orientation.showSaveButton = false;
+        })
+        .catch(error => {
+          console.error('Orientation save error:', error);
+        })
+        .finally(() => {
+          this.orientation.saving = false;
+        });
+    },
     closeDialog() {
       this.$root.closeExpandedMedia('ocr-dialog')
       this.$emit('update:open', false);
@@ -117,11 +153,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       if (confidence >= this.confidenceLevels.high) return this.translations.high_;
       if (confidence >= this.confidenceLevels.medium) return this.translations.medium_;
       return this.translations.low_;
-    },
-    isRTL(text) {
-      if (!text) return false;
-      const arabicRegex = /[\u0600-\u06FF]/;
-      return arabicRegex.test(text.charAt(0));
     },
     runOCRProcess() {
       if (!this.media?.id) return;
@@ -254,6 +285,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         this.translation.show = false;
         this.translation.text = '';
         this.translation.sourceLanguage = '';
+
+        this.orientation.saving = false;
+        this.orientation.showSaveButton = false;
         
         if (newMedia) {
           this.$root.closeExpandedMedia('ocr-dialog')
@@ -292,18 +326,23 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       class="flex-1-1"
                     ></v-skeleton-loader>
                     
-                    <inline-media-renderer
-                      v-else
-                      renderer-id="ocr-dialog"
-                      :initial-rotation="media?.extraction?.orientation || 0"
-                      :media="$root.expandedByRenderer?.['ocr-dialog']?.media"
-                      :media-type="fileTypeFromMedia"
-                      @ready="$root.onMediaRendererReady"
-                      @fullscreen="$root.handleFullscreen('ocr-dialog')""
-                      content-style="height: calc(100vh - 174px);"
-                      hide-close
-                      :use-metadata="true"
-                    ></inline-media-renderer>
+                    <div v-else class="position-relative">
+                      <div>
+                        <inline-media-renderer
+                          renderer-id="ocr-dialog"
+                          :initial-orientation="media?.extraction?.orientation || 0"
+                          :media="$root.expandedByRenderer?.['ocr-dialog']?.media"
+                          :media-type="fileTypeFromMedia"
+                          @orientation-changed="onOrientationChanged"
+                          @ready="$root.onMediaRendererReady"
+                          @fullscreen="$root.handleFullscreen('ocr-dialog')""
+                          content-style="height: calc(100vh - 174px);"
+                          hide-close
+                          :use-metadata="true"
+                        ></inline-media-renderer>
+                      </div>
+                      <v-btn v-if="orientation.showSaveButton && media?.extraction" @click="saveOrientation" prepend-icon="mdi-check" :loading="orientation.saving" class="ma-2 position-absolute right-0 bottom-0" color="primary" style="zIndex: 3002;">{{ translations.saveOrientation_ }}</v-btn>
+                    </div>
                   </v-card-text>
                 </v-card>
               </div>

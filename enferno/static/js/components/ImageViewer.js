@@ -13,7 +13,7 @@ const ImageViewer = Vue.defineComponent({
             default: 'inline', // 'inline' or 'click'
             validator: (value) => ['inline', 'click'].includes(value)
         },
-        initialRotation: {
+        initialOrientation: {
             type: Number,
             default: 0,
         },
@@ -23,6 +23,7 @@ const ImageViewer = Vue.defineComponent({
             default: () => ({})
         }
     },
+    emits: ['orientation-changed'],
     data() {
         return {
             translations: window.translations,
@@ -67,14 +68,14 @@ const ImageViewer = Vue.defineComponent({
         },
         
         applyInitialRotation(lgInstance) {
-            if (this.initialRotation === 0) return;
+            if (this.initialOrientation === 0) return;
             
             const handler = (e) => {
                 const rotatePlugin = this.getRotatePlugin(lgInstance);
                 const index = e.detail.index;
                 
                 if (rotatePlugin?.rotateValuesList?.[index]) {
-                    rotatePlugin.rotateValuesList[index].rotate = this.initialRotation;
+                    rotatePlugin.rotateValuesList[index].rotate = this.initialOrientation;
                     rotatePlugin.applyStyles();
                 }
             };
@@ -153,6 +154,8 @@ const ImageViewer = Vue.defineComponent({
 
                 if (!container || !imgWrapper || !img) return;
 
+                this.$emit('orientation-changed', rotate);
+
                 const { width: containerW, height: containerH } = container.getBoundingClientRect();
                 const { naturalWidth: naturalW, naturalHeight: naturalH } = img;
 
@@ -167,7 +170,7 @@ const ImageViewer = Vue.defineComponent({
                     imgWrapper.style.marginLeft = `${(containerW - imgWrapper.offsetWidth) / 2}px`;
                     imgWrapper.style.marginTop = `${(containerH - imgWrapper.offsetHeight) / 2}px`;
                 } else {
-                    // Reset rotation-related dimensions
+                    // Reset orientation-related dimensions
                     ['width', 'height', 'marginLeft', 'marginTop'].forEach(prop => {
                         imgWrapper.style[prop] = null;
                     });

@@ -158,17 +158,46 @@ const MediaThumbnail = Vue.defineComponent({
       const secs = Math.floor(seconds % 60);
       return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     },
+    getImageStyle(orientation) {
+      const baseStyle = {
+        objectFit: 'cover',
+        transform: `rotate(${orientation}deg)`,
+        maxWidth: '100%',
+        maxHeight: '100%',
+      };
+      
+      // For 90 or 270 degree rotations, we need to swap dimensions
+      if (orientation === 90 || orientation === 270) {
+        return {
+          ...baseStyle,
+          width: 'auto',
+          height: '100%'
+        };
+      }
+      
+      return {
+        ...baseStyle,
+        width: '100%',
+        height: 'auto'
+      };
+    }
   },
   template: /*html*/`
-    <div @click="handleClick" :class="['h-100', { 'cursor-pointer': clickable }]">
+    <div @click="handleClick" :class="['h-100 position-relative', { 'cursor-pointer': clickable }]">
       <!-- Hover icon overlay -->
-      <div v-if="showHoverIcon && clickable && (mediaType === 'video' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
+      <div v-if="showHoverIcon && clickable && (mediaType === 'video' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2 position-absolute top-0 left-0 w-100" style="z-index: 10;">
         <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
       </div>
 
       <!-- Image preview -->
-      <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :data-src="s3url">
-        <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;"></img>
+      <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :data-src="s3url" style="position: relative; z-index: 1;">
+        <div class="w-100 h-100 overflow-hidden bg-grey-lighten-2 d-flex align-center justify-center">
+          <img 
+            :src="s3url" 
+            class="bg-grey-lighten-2" 
+            :style="getImageStyle(media?.extraction?.orientation || 0)"
+          >
+        </div>
       </a>
 
       <!-- Video preview -->
