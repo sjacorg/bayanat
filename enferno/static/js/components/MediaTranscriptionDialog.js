@@ -549,8 +549,18 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                     <!-- Extracted Text Section -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
-                      <div v-if="!(isPending || isFailed || isProcessing)" class="text-subtitle-2 mb-2 flex-0-0">
+                      <div v-if="!(isPending || isFailed || isProcessing)" class="text-subtitle-2 mb-2 d-flex align-center">
                         {{ translations.extractedText_ }} <span v-if="canEdit" class="text-error">*</span>
+                        <v-spacer></v-spacer>
+                        <v-btn
+                          v-if="canTranslate"
+                          prepend-icon="mdi-translate"
+                          variant="outlined"
+                          :loading="translation.loading"
+                          :disabled="loading || saving || translation.show"
+                          class="border-thin"
+                          @click.stop="translateText"
+                        >{{ translations.translate_ }}</v-btn>
                       </div>
                       
                       <v-skeleton-loader
@@ -623,54 +633,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                               dir="auto"
                               class="h-100"
                               hide-details
-                          >
-                            <template v-slot:append-inner v-if="canTranslate">
-                              <v-tooltip location="top">
-                                <template v-slot:activator="{ props }">
-                                  <div v-bind="props">
-                                    <v-btn
-                                      icon="mdi-translate"
-                                      size="small"
-                                      variant="text"
-                                      :loading="translation.loading"
-                                      :disabled="loading || saving"
-                                      @click.stop="translateText"
-                                    ></v-btn>
-                                  </div>
-                                </template>
-                                {{ translations.translateToLanguage_(getLanguageName(translation.targetLanguage)) }}
-                              </v-tooltip>
-                              
-                              <v-menu location="bottom end">
-                                <template v-slot:activator="{ props: menuProps }">
-                                  <v-tooltip location="top">
-                                    <template v-slot:activator="{ props: tooltipProps }">
-                                      <div v-bind="{ ...menuProps, ...tooltipProps }">
-                                        <v-btn
-                                          icon="mdi-chevron-down"
-                                          size="small"
-                                          variant="text"
-                                          :disabled="loading || saving || translation.loading"
-                                        ></v-btn>
-                                      </div>
-                                    </template>
-                                    {{ translations.changeLanguage_ }}
-                                  </v-tooltip>
-                                </template>
-                                <v-list density="compact">
-                                  <v-list-item
-                                    v-for="lang in availableLanguages"
-                                    :key="lang.code"
-                                    :value="lang.code"
-                                    :active="translation.targetLanguage === lang.code"
-                                    @click="translation.targetLanguage = lang.code; savePreferredLanguage(lang.code)"
-                                  >
-                                    <v-list-item-title>{{ lang.name }}</v-list-item-title>
-                                  </v-list-item>
-                                </v-list>
-                              </v-menu>
-                            </template>
-                          </v-textarea>
+                          ></v-textarea>
                         </div>
                         
                         <!-- Translation Result -->
@@ -681,17 +644,17 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           style="min-height: 0;"
                         >
                           <v-card-title class="d-flex align-center justify-space-between text-subtitle-2 py-2">
-                            <div class="d-flex align-center ga-2">
-                              <v-icon size="small">mdi-translate</v-icon>
-                              {{ translations.translation_ }}
-                              <v-chip
-                                v-if="translation.sourceLanguage"
-                                density="compact"
-                                size="x-small"
-                              >
-                                {{ translation.sourceLanguage?.toUpperCase() }} → {{ translation.targetLanguage?.toUpperCase() }}
-                              </v-chip>
-                            </div>
+                            <v-select
+                              v-model="translation.targetLanguage"
+                              :items="availableLanguages"
+                              item-title="name"
+                              item-value="code"
+                              density="compact"
+                              hide-details
+                              :disabled="loading || saving || translation.loading"
+                              class="mr-4"
+                              @update:model-value="translateText()"
+                            ></v-select>
 
                             <div class="d-flex align-center ga-1">
                               <v-btn
