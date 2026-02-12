@@ -910,16 +910,37 @@ def process_row(
     si.import_row()
 
 
-def reload_app():
-    import os
-    import signal
-
-    os.kill(os.getppid(), signal.SIGHUP)
-
-
 @celery.task
-def reload_celery():
-    reload_app()
+def refresh_celery_config():
+    """Refresh config in Celery worker without restart.
+
+    Celery workers run in separate processes, so we reload ConfigManager
+    from disk and update Config class attributes for code that reads them
+    outside of app context.
+    """
+    from enferno.utils.config_utils import ConfigManager
+    from enferno.settings import Config
+
+    cm = ConfigManager.instance()
+    cm.force_reload()
+
+    for key in ConfigManager.DEFAULT_CONFIG:
+        raw = cm.get_config(key)
+        converter = ConfigManager.TYPE_CONVERSIONS.get(key)
+        setattr(Config, key, converter(raw) if converter and raw is not None else raw)
+
+    # Derived values
+    geo = cm.get_config("GEO_MAP_DEFAULT_CENTER")
+    if geo:
+        Config.GEO_MAP_DEFAULT_CENTER_LAT = geo.get("lat")
+        Config.GEO_MAP_DEFAULT_CENTER_LNG = geo.get("lng")
+        Config.GEO_MAP_DEFAULT_CENTER_RADIUS = geo.get("radius", 1000)
+
+    activities = cm.get_config("ACTIVITIES")
+    if activities:
+        Config.ACTIVITIES_LIST = [k for k, v in activities.items() if v]
+
+    logger.info("Celery config refreshed from config.json")
 
 
 # ---- Export tasks ----

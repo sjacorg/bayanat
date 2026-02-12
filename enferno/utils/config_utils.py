@@ -1,4 +1,6 @@
 import json
+import time
+from datetime import timedelta
 from types import MappingProxyType
 from flask_security import current_user
 
@@ -16,7 +18,9 @@ logger = logging.getLogger("app_logger")
 class ConfigManager:
     CONFIG_FILE_PATH = os.environ.get("BAYANAT_CONFIG_FILE", "config.json")
     MASK_STRING = "**********"
-    config = {}
+    CHECK_INTERVAL = 5  # seconds between mtime checks
+
+    _instance = None
 
     # Define default core configurations here
     DEFAULT_CONFIG = MappingProxyType(
@@ -234,21 +238,118 @@ class ConfigManager:
         }
     )
 
+    # Keys that require process restart (form classes / CSP registered at init)
+    STATIC_KEYS = frozenset(
+        {
+            "RECAPTCHA_ENABLED",  # login form class chosen at Security() init
+            "GOOGLE_OAUTH_ENABLED",  # CSP rules set at Talisman init
+            "MAIL_SERVER",  # Flask-Mail caches connection settings at init
+            "MAIL_PORT",
+            "MAIL_USE_TLS",
+            "MAIL_USE_SSL",
+            "MAIL_USERNAME",
+            "MAIL_PASSWORD",
+            "MAIL_DEFAULT_SENDER",
+            "DEDUP_TOOL",  # Celery beat tasks registered once at startup
+            "DEDUP_INTERVAL",
+        }
+    )
+
+    # Type conversions from raw JSON values to Python types expected by Flask
+    TYPE_CONVERSIONS = {
+        "SECURITY_FRESHNESS": lambda v: timedelta(minutes=v),
+        "SECURITY_FRESHNESS_GRACE_PERIOD": lambda v: timedelta(minutes=v),
+        "ACTIVITIES_RETENTION": lambda v: timedelta(days=max(90, int(v))),
+        "EXPORT_DEFAULT_EXPIRY": lambda v: timedelta(hours=v),
+        "MAIL_PORT": int,
+    }
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
     def __init__(self):
+        self._mtime = 0
+        self._last_check = 0
         try:
             with open(self.CONFIG_FILE_PATH) as file:
                 self.config = json.loads(file.read())
+            self._mtime = os.path.getmtime(self.CONFIG_FILE_PATH)
         except EnvironmentError:
             logger.error("No config file found, Loading default Bayanat configurations")
+            self.config = {}
+        self._last_check = time.time()
 
     def get_config(self, cfg):
-        # custom getter with a fallback
+        """Get raw config value with DEFAULT_CONFIG fallback."""
         value = self.config.get(cfg)
-        # Also implement fallback if dict key exists but is null/false/empty
         if value is not None:
             return value
-        else:
-            return ConfigManager.DEFAULT_CONFIG.get(cfg)
+        return ConfigManager.DEFAULT_CONFIG.get(cfg)
+
+    def force_reload(self):
+        """Force immediate reload of config from file."""
+        try:
+            with open(self.CONFIG_FILE_PATH) as f:
+                self.config = json.loads(f.read())
+            self._mtime = os.path.getmtime(self.CONFIG_FILE_PATH)
+            self._last_check = time.time()
+            logger.info("Configuration reloaded from file.")
+        except Exception:
+            logger.error("Failed to reload config", exc_info=True)
+
+    def maybe_reload(self):
+        """Check file mtime and reload if changed. Used by Celery workers."""
+        now = time.time()
+        if now - self._last_check < self.CHECK_INTERVAL:
+            return
+        self._last_check = now
+        try:
+            mtime = os.path.getmtime(self.CONFIG_FILE_PATH)
+            if mtime != self._mtime:
+                self.force_reload()
+        except OSError:
+            pass
+
+    @staticmethod
+    def apply_to_app(app):
+        """Update app.config dict in-place from config.json values.
+
+        Applies type conversions and derived keys. Skips STATIC_KEYS
+        since those require a process restart to take effect.
+        """
+        cm = ConfigManager.instance()
+        for key in ConfigManager.DEFAULT_CONFIG:
+            if key in ConfigManager.STATIC_KEYS:
+                continue
+            raw = cm.get_config(key)
+            converter = ConfigManager.TYPE_CONVERSIONS.get(key)
+            app.config[key] = converter(raw) if converter and raw is not None else raw
+
+        # Derived keys
+        geo = cm.get_config("GEO_MAP_DEFAULT_CENTER")
+        if geo:
+            app.config["GEO_MAP_DEFAULT_CENTER_LAT"] = geo.get("lat")
+            app.config["GEO_MAP_DEFAULT_CENTER_LNG"] = geo.get("lng")
+            app.config["GEO_MAP_DEFAULT_CENTER_RADIUS"] = geo.get("radius", 1000)
+
+        activities = cm.get_config("ACTIVITIES")
+        if activities:
+            app.config["ACTIVITIES_LIST"] = [k for k, v in activities.items() if v]
+
+    @staticmethod
+    def detect_static_changes(app):
+        """Return set of STATIC_KEYS whose values differ from config.json."""
+        cm = ConfigManager.instance()
+        changed = set()
+        for key in ConfigManager.STATIC_KEYS:
+            new_val = cm.get_config(key)
+            old_val = app.config.get(key)
+            if old_val != new_val:
+                changed.add(key)
+        return changed
 
     @staticmethod
     def get_default_config(cfg):
@@ -263,81 +364,20 @@ class ConfigManager:
 
     @staticmethod
     def serialize():
-        from enferno.settings import Config as cfg
+        """Serialize current config for the admin UI.
+        Returns raw JSON values (no type conversions) with secrets masked."""
+        from enferno.admin.models import AppConfig
 
-        conf = {
-            # timedelta type
-            "SECURITY_FRESHNESS": int(cfg.SECURITY_FRESHNESS.total_seconds()) / 60,
-            "SECURITY_FRESHNESS_GRACE_PERIOD": int(
-                cfg.SECURITY_FRESHNESS_GRACE_PERIOD.total_seconds()
-            )
-            / 60,
-            "SECURITY_TWO_FACTOR_REQUIRED": cfg.SECURITY_TWO_FACTOR_REQUIRED,
-            "SECURITY_PASSWORD_LENGTH_MIN": cfg.SECURITY_PASSWORD_LENGTH_MIN,
-            "SECURITY_ZXCVBN_MINIMUM_SCORE": cfg.SECURITY_ZXCVBN_MINIMUM_SCORE,
-            "DISABLE_MULTIPLE_SESSIONS": cfg.DISABLE_MULTIPLE_SESSIONS,
-            "SESSION_RETENTION_PERIOD": cfg.SESSION_RETENTION_PERIOD,
-            "RECAPTCHA_ENABLED": cfg.RECAPTCHA_ENABLED,
-            "RECAPTCHA_PUBLIC_KEY": cfg.RECAPTCHA_PUBLIC_KEY,
-            "RECAPTCHA_PRIVATE_KEY": ConfigManager.MASK_STRING if cfg.RECAPTCHA_PRIVATE_KEY else "",
-            "GOOGLE_OAUTH_ENABLED": cfg.GOOGLE_OAUTH_ENABLED,
-            "GOOGLE_CLIENT_ID": cfg.GOOGLE_CLIENT_ID,
-            "GOOGLE_CLIENT_SECRET": ConfigManager.MASK_STRING if cfg.GOOGLE_CLIENT_SECRET else "",
-            "GOOGLE_DISCOVERY_URL": cfg.GOOGLE_DISCOVERY_URL,
-            "FILESYSTEM_LOCAL": cfg.FILESYSTEM_LOCAL,
-            "AWS_ACCESS_KEY_ID": cfg.AWS_ACCESS_KEY_ID,
-            "AWS_SECRET_ACCESS_KEY": ConfigManager.MASK_STRING if cfg.AWS_SECRET_ACCESS_KEY else "",
-            "S3_BUCKET": cfg.S3_BUCKET,
-            "AWS_REGION": cfg.AWS_REGION,
-            "ACCESS_CONTROL_RESTRICTIVE": cfg.ACCESS_CONTROL_RESTRICTIVE,
-            "AC_USERS_CAN_RESTRICT_NEW": cfg.AC_USERS_CAN_RESTRICT_NEW,
-            "MEDIA_ALLOWED_EXTENSIONS": cfg.MEDIA_ALLOWED_EXTENSIONS,
-            "MEDIA_UPLOAD_MAX_FILE_SIZE": cfg.MEDIA_UPLOAD_MAX_FILE_SIZE,
-            "SHEETS_ALLOWED_EXTENSIONS": cfg.SHEETS_ALLOWED_EXTENSIONS,
-            "ETL_TOOL": cfg.ETL_TOOL,
-            "ETL_PATH_IMPORT": cfg.ETL_PATH_IMPORT,
-            "ETL_VID_EXT": cfg.ETL_VID_EXT,
-            "OCR_ENABLED": cfg.OCR_ENABLED,
-            "OCR_EXT": cfg.OCR_EXT,
-            "SHEET_IMPORT": cfg.SHEET_IMPORT,
-            "DEDUP_TOOL": cfg.DEDUP_TOOL,
-            "BABEL_DEFAULT_LOCALE": cfg.BABEL_DEFAULT_LOCALE,
-            "MAPS_API_ENDPOINT": cfg.MAPS_API_ENDPOINT,
-            "GOOGLE_MAPS_API_KEY": ConfigManager.MASK_STRING if cfg.GOOGLE_MAPS_API_KEY else "",
-            "DEDUP_LOW_DISTANCE": cfg.DEDUP_LOW_DISTANCE,
-            "DEDUP_MAX_DISTANCE": cfg.DEDUP_MAX_DISTANCE,
-            "DEDUP_BATCH_SIZE": cfg.DEDUP_BATCH_SIZE,
-            "DEDUP_INTERVAL": cfg.DEDUP_INTERVAL,
-            "GEO_MAP_DEFAULT_CENTER": {
-                "lat": cfg.GEO_MAP_DEFAULT_CENTER_LAT,
-                "lng": cfg.GEO_MAP_DEFAULT_CENTER_LNG,
-                "radius": cfg.GEO_MAP_DEFAULT_CENTER_RADIUS,
-            },
-            "ITEMS_PER_PAGE_OPTIONS": cfg.ITEMS_PER_PAGE_OPTIONS,
-            "VIDEO_RATES": cfg.VIDEO_RATES,
-            "EXPORT_TOOL": cfg.EXPORT_TOOL,
-            "EXPORT_DEFAULT_EXPIRY": int(cfg.EXPORT_DEFAULT_EXPIRY.total_seconds()) / 3600,
-            "ACTIVITIES": cfg.ACTIVITIES,
-            "ACTIVITIES_RETENTION": int(cfg.ACTIVITIES_RETENTION.total_seconds()) / 86400,
-            "ADV_ANALYSIS": cfg.ADV_ANALYSIS,
-            "LOCATIONS_INCLUDE_POSTAL_CODE": cfg.LOCATIONS_INCLUDE_POSTAL_CODE,
-            "MAIL_ENABLED": cfg.MAIL_ENABLED,
-            "MAIL_ALLOWED_DOMAINS": cfg.MAIL_ALLOWED_DOMAINS,
-            "MAIL_SERVER": cfg.MAIL_SERVER,
-            "MAIL_PORT": cfg.MAIL_PORT,
-            "MAIL_USE_TLS": cfg.MAIL_USE_TLS,
-            "MAIL_USE_SSL": cfg.MAIL_USE_SSL,
-            "MAIL_USERNAME": cfg.MAIL_USERNAME,
-            "MAIL_PASSWORD": ConfigManager.MASK_STRING if cfg.MAIL_PASSWORD else "",
-            "MAIL_DEFAULT_SENDER": cfg.MAIL_DEFAULT_SENDER,
-            "TRANSCRIPTION_ENABLED": cfg.TRANSCRIPTION_ENABLED,
-            "WHISPER_MODEL": cfg.WHISPER_MODEL,
-            "WEB_IMPORT": cfg.WEB_IMPORT,
-            "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
-            "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
-            "YTDLP_COOKIES": ConfigManager.MASK_STRING if cfg.YTDLP_COOKIES else "",
-            "NOTIFICATIONS": cfg.NOTIFICATIONS,
-        }
+        cm = ConfigManager.instance()
+        conf = {}
+        for key in ConfigManager.DEFAULT_CONFIG:
+            raw = cm.get_config(key)
+            if key in AppConfig.SECRET_FIELDS:
+                conf[key] = ConfigManager.MASK_STRING if raw else ""
+            elif key == "MAIL_PORT":
+                conf[key] = int(raw) if raw is not None else 25
+            else:
+                conf[key] = raw
         return conf
 
     @staticmethod
@@ -347,12 +387,12 @@ class ConfigManager:
     @staticmethod
     def write_config(conf):
         from enferno.admin.models import AppConfig, Activity
-        from enferno.settings import Config as cfg
 
         # Handle masked secrets - restore from current config
+        cm = ConfigManager.instance()
         for secret_field in AppConfig.SECRET_FIELDS:
             if conf.get(secret_field) == ConfigManager.MASK_STRING:
-                conf[secret_field] = getattr(cfg, secret_field, "")
+                conf[secret_field] = cm.get_config(secret_field) or ""
 
         if ConfigManager.validate(conf):
             try:
