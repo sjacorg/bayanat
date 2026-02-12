@@ -168,9 +168,24 @@ const MediaCard = Vue.defineComponent({
   },
   methods: {
     init() {
+      // If s3url already exists on media, use it
+      if (this.media.s3url) {
+        this.s3url = this.media.s3url;
+        this.$emit('ready');
+        return;
+      }
+
+      // If we already have s3url in local state, don't refetch
+      if (this.s3url) {
+        this.$emit('ready');
+        return;
+      }
+
+      // Fetch the s3url
       api.get(`/admin/api/media/${this.media.filename}`)
         .then(response => {
           this.s3url = response.data.url;
+          // Store on media object for persistence across re-renders
           this.media.s3url = response.data.url;
         })
         .catch(error => console.error('Error fetching media:', error))

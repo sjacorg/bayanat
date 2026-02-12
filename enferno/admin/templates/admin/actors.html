@@ -1293,12 +1293,30 @@
 
                 showActor(id) {
                     this.actorLoader = true;
-
                     this.fetchIdNumberTypes();
+
+                    // Save current s3urls before reload
+                    const s3urlCache = {};
+                    if (this.actor?.medias) {
+                        this.actor.medias.forEach(media => {
+                            if (media.s3url) {
+                                s3urlCache[media.id] = media.s3url;
+                            }
+                        });
+                    }
 
                     api.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
+
+                        // Restore s3urls after reload
+                        if (this.actor?.medias) {
+                            this.actor.medias.forEach(media => {
+                                if (s3urlCache[media.id]) {
+                                    media.s3url = s3urlCache[media.id];
+                                }
+                            });
+                        }
                     }).catch(error => {
                         this.actorDrawer = false;
                     }).finally(() => {
