@@ -9,7 +9,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
   data() {
     return {
       translations: window.translations,
-      transcriptionText: this.media?.extraction?.original_text || this.media?.extraction?.text || '',
+      transcriptionText: this.media?.extraction?.text || '',
       saving: false,
       rejecting: false,
       confidenceLevels: {
@@ -40,7 +40,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
   },
   computed: {
     isTranscriptionChanged() {
-      return this.transcriptionText !== (this.media?.extraction?.original_text || this.media?.extraction?.text);
+      return this.transcriptionText !== this.media?.extraction?.text;
     },
     isTranscriptionEmpty() {
       return !this.transcriptionText || this.transcriptionText.trim() === '';
@@ -99,7 +99,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       }
       
       // Count from text as fallback
-      return this.$root.countWords(this.media?.extraction?.original_text || this.media?.extraction?.text);
+      return this.$root.countWords(this.media?.extraction?.text);
     },
     isLowWordCount() {
       return this.effectiveWordCount > 0 && this.effectiveWordCount < this.$root.lowWordCount;
@@ -280,7 +280,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     media: {
       immediate: true,
       handler(newMedia) {
-        this.transcriptionText = newMedia?.extraction?.original_text || newMedia?.extraction?.text || '';
+        this.transcriptionText = newMedia?.extraction?.text || '';
         // Reset translation when media changes
         this.translation.show = false;
         this.translation.text = '';
