@@ -1659,6 +1659,7 @@ class ConfigValidationModel(StrictValidationModel):
     EXPORT_DEFAULT_EXPIRY: int = Field(gt=0)
     ACTIVITIES_RETENTION: int = Field(gt=0)
     WEB_IMPORT: bool
+    GOOGLE_VISION_API_KEY: Optional[str] = None
 
     @field_validator("MAPS_API_ENDPOINT", "GOOGLE_DISCOVERY_URL", mode="before", check_fields=False)
     @classmethod
