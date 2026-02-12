@@ -553,11 +553,10 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         {{ translations.extractedText_ }} <span v-if="canEdit" class="text-error">*</span>
                         <v-spacer></v-spacer>
                         <v-btn
-                          v-if="canTranslate"
                           prepend-icon="mdi-translate"
                           variant="outlined"
                           :loading="translation.loading"
-                          :disabled="loading || saving || translation.show"
+                          :disabled="loading || saving || translation.show || !canTranslate"
                           class="border-thin"
                           @click.stop="translateText"
                         >{{ translations.translate_ }}</v-btn>
