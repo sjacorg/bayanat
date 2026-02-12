@@ -60,7 +60,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
     },
     canEdit() {
-      return ['needs_review', 'needs_transcription', 'processed', 'manual'].includes(this.media?.ocr_status);
+      return ['needs_review', 'needs_transcription', 'processed', 'manual'].includes(this.media?.ocr_status) && this.hasVisionApiKey;
     },
     isProcessing() {
       return this.media?.ocr_status === 'processing';
@@ -571,13 +571,12 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                       <!-- Show message if vision api key is not configured -->
                       <v-empty-state
-                        v-if="!hasVisionApiKey"
+                        v-if="!hasVisionApiKey && !media?.extraction?.text"
                         icon="mdi-alert-circle-outline"
                         :title="translations.apiNotConfigured_"
                         :text="translations.googleVisionApiHasNotBeenConfigured_"
                       ></v-empty-state>
 
-                      <template v-else>
                       <!-- Show message for processing items -->
                       <v-empty-state
                         v-else-if="isProcessing"
@@ -630,7 +629,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           </v-tooltip>
                         </template>
                       </v-empty-state>
-                      </template>
                       
                       <!-- Show textarea for items with extraction -->
                       <div v-else class="flex-1-1 d-flex ga-4" style="min-height: 0;">
