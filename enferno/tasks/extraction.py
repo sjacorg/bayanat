@@ -13,7 +13,6 @@ from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_i
 from enferno.admin.models import Media, Extraction
 from enferno.extensions import db
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.text_utils import normalize_arabic
 
 logger = get_logger()
 
@@ -75,7 +74,7 @@ def process_media_extraction_task(
         cleaned_text = _normalize(result["text"])
         extraction = Extraction(
             media_id=media_id,
-            text=normalize_arabic(cleaned_text),
+            text=cleaned_text,
             original_text=cleaned_text,
             raw=result["raw"],
             confidence=confidence,
