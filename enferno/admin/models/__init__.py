@@ -20,6 +20,7 @@ from .Ethnography import Ethnography
 from .IDNumberType import IDNumberType
 from .Event import Event
 from .Eventtype import Eventtype
+from .Extraction import Extraction
 from .GeoLocation import GeoLocation
 from .GeoLocationType import GeoLocationType
 from .Incident import Incident
