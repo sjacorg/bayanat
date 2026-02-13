@@ -681,7 +681,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                             </div>
                           </v-card-title>
                           <v-divider></v-divider>
-                          <v-card-text class="flex-1-1 overflow-y-auto text-pre-wrap" dir="auto">
+                          <v-card-text class="flex-1-1 overflow-y-auto text-pre-wrap text-body-1" dir="auto">
                             {{ translation.text }}
                           </v-card-text>
                         </v-card>
