@@ -162,7 +162,7 @@ const MediaCard = Vue.defineComponent({
         text,
         visible,
         disabled
-      }
+      };
     }
   },
   mounted() {

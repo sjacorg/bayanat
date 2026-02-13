@@ -5,8 +5,8 @@ import os
 from datetime import datetime, timezone
 
 import click
-from flask.cli import AppGroup
-from flask.cli import with_appcontext
+from flask import current_app
+from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
 
 from enferno.settings import Config
@@ -443,6 +443,8 @@ ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
 @with_appcontext
 def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, force: bool) -> None:
     """Batch process media files for OCR extraction via Celery."""
+    from sqlalchemy import or_
+
     from enferno.admin.models import Media, Extraction
     from enferno.tasks import bulk_ocr_process
 
@@ -450,6 +452,11 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, f
     query = db.session.query(Media.id)
     if not force:
         query = query.outerjoin(Extraction).filter(Extraction.id.is_(None))
+
+    # Only include OCR-supported file types
+    ocr_ext = current_app.config.get("OCR_EXT", [])
+    if ocr_ext:
+        query = query.filter(or_(*[Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext]))
 
     if bulletin_ids:
         ids = [int(x.strip()) for x in bulletin_ids.split(",")]

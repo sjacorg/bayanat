@@ -826,7 +826,7 @@ def api_ocr_bulk():
       - all: process all pending media
       - limit: max items (default 1000, cap 10000)
     """
-    from sqlalchemy import select
+    from sqlalchemy import or_, select
 
     from enferno.tasks import bulk_ocr_process
 
@@ -836,9 +836,16 @@ def api_ocr_bulk():
     process_all = data.get("all", False)
     limit = min(data.get("limit", 1000), 10000)
 
+    # Only queue files with OCR-supported extensions
+    ocr_ext = current_app.config.get("OCR_EXT", [])
+    ext_filters = [Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext] if ocr_ext else []
+
     # Build media ID list
     if process_all and not media_ids:
-        stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None)).limit(limit)
+        stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None))
+        if ext_filters:
+            stmt = stmt.where(or_(*ext_filters))
+        stmt = stmt.limit(limit)
         media_ids = list(db.session.scalars(stmt))
     elif bulletin_id and not media_ids:
         stmt = (
@@ -846,8 +853,10 @@ def api_ocr_bulk():
             .outerjoin(Extraction)
             .where(Media.bulletin_id == bulletin_id)
             .where(Extraction.id.is_(None))
-            .limit(limit)
         )
+        if ext_filters:
+            stmt = stmt.where(or_(*ext_filters))
+        stmt = stmt.limit(limit)
         media_ids = list(db.session.scalars(stmt))
 
     if not media_ids:
