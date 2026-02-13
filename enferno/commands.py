@@ -5,8 +5,8 @@ import os
 from datetime import datetime, timezone
 
 import click
-from flask.cli import AppGroup
-from flask.cli import with_appcontext
+from flask import current_app
+from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
 
 from enferno.settings import Config
@@ -442,13 +442,13 @@ ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
 @click.option("--force", "-f", is_flag=True, help="Re-process media that already have extractions")
 @with_appcontext
 def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, force: bool) -> None:
-    """Batch process media files for OCR extraction."""
-    from enferno.admin.models import Media, Extraction
-    from enferno.tasks.extraction import process_media_extraction_task
-
+    """Batch process media files for OCR extraction via Celery."""
     from sqlalchemy import or_
 
-    # Build query for media — include already-extracted if force
+    from enferno.admin.models import Media, Extraction
+    from enferno.tasks import bulk_ocr_process
+
+    # Build query for media
     query = db.session.query(Media.id)
     if not force:
         query = query.outerjoin(Extraction).filter(Extraction.id.is_(None))
@@ -458,17 +458,14 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, f
     if ocr_ext:
         query = query.filter(or_(*[Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext]))
 
-    # Filter by bulletin IDs if specified
     if bulletin_ids:
         ids = [int(x.strip()) for x in bulletin_ids.split(",")]
         query = query.filter(Media.bulletin_id.in_(ids))
 
-    # Require --all or --bulletin-ids or --limit
     if not process_all and not bulletin_ids and not limit:
         click.echo("Error: Specify --all, --bulletin-ids, or --limit")
         return
 
-    # Apply limit
     if limit:
         query = query.limit(limit)
 
@@ -478,28 +475,8 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, f
         click.echo("No pending media found")
         return
 
-    click.echo(f"Processing {len(media_ids)} media files...")
-    hints = list(language)
-
-    success = 0
-    failed = 0
-    skipped = 0
-
-    for media_id in media_ids:
-        result = process_media_extraction_task(media_id, hints, force=force)
-        if result.get("success"):
-            if result.get("skipped"):
-                skipped += 1
-            else:
-                success += 1
-                click.echo(
-                    f"  {media_id}: {result.get('status')} ({result.get('confidence', 0):.0f}%)"
-                )
-        else:
-            failed += 1
-            click.echo(f"  {media_id}: FAILED - {result.get('error')}")
-
-    click.echo(f"\nDone: {success} processed, {skipped} skipped, {failed} failed")
+    task = bulk_ocr_process.delay(media_ids, language_hints=list(language), force=force)
+    click.echo(f"Queued {len(media_ids)} media files for OCR processing. Task ID: {task.id}")
 
 
 @ocr_cli.command()

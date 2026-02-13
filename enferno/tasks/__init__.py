@@ -1656,18 +1656,10 @@ process_media_extraction = celery.task(process_media_extraction_task)
 
 
 @celery.task(bind=True)
-def bulk_ocr_process(self, media_ids: list, user_id: int) -> dict:
-    """
-    Bulk OCR processing task - processes multiple media items asynchronously.
-
-    Args:
-        self: Celery task instance (for accessing task_id)
-        media_ids: List of media IDs to process
-        user_id: User ID who initiated the request
-
-    Returns:
-        dict with processing results
-    """
+def bulk_ocr_process(
+    self, media_ids: list, user_id: int = None, language_hints: list = None, force: bool = False
+) -> dict:
+    """Bulk OCR processing task - processes multiple media items asynchronously."""
     task_id = self.request.id
     logger.info(f"Starting bulk OCR for {len(media_ids)} items. User: {user_id}, Task: {task_id}")
 
@@ -1675,7 +1667,9 @@ def bulk_ocr_process(self, media_ids: list, user_id: int) -> dict:
 
     for media_id in media_ids:
         try:
-            result = process_media_extraction_task(media_id)
+            result = process_media_extraction_task(
+                media_id, language_hints=language_hints, force=force
+            )
             if result.get("success"):
                 if result.get("skipped"):
                     results["skipped"] += 1
@@ -1697,17 +1691,19 @@ def bulk_ocr_process(self, media_ids: list, user_id: int) -> dict:
     )
 
     # Clear processing status from Redis
-    rds.delete(f"ocr_processing:{user_id}")
+    if user_id:
+        rds.delete(f"ocr_processing:{user_id}")
 
     # Notify user
-    user = User.query.get(user_id)
-    if user:
-        Notification.send_notification_for_event(
-            Constants.NotificationEvent.BULK_OPERATION_STATUS,
-            user,
-            "Bulk OCR Complete",
-            f"Task {task_id}: {results['processed']} processed, "
-            f"{results['skipped']} skipped, {results['failed']} failed.",
-        )
+    if user_id:
+        user = User.query.get(user_id)
+        if user:
+            Notification.send_notification_for_event(
+                Constants.NotificationEvent.BULK_OPERATION_STATUS,
+                user,
+                "Bulk OCR Complete",
+                f"Task {task_id}: {results['processed']} processed, "
+                f"{results['skipped']} skipped, {results['failed']} failed.",
+            )
 
     return results
