@@ -716,6 +716,7 @@ def api_extraction_update(extraction_id: int):
         if not text:
             return HTTPResponse.error("Text required for transcription")
         extraction.text = text
+        extraction.word_count = len(text.split())
         extraction.status = "processed"
         extraction.manual = True
         extraction.reviewed_by = current_user.id
