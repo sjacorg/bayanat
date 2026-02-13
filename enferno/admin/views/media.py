@@ -38,6 +38,26 @@ GRACE_PERIOD = timedelta(hours=2)
 S3_URL_EXPIRY = 3600
 
 
+def _media_url(media_file):
+    """Generate a URL for a media file based on storage backend."""
+    if not media_file:
+        return None
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        return safe_join("/admin/api/serve/media", media_file)
+    s3 = boto3.client(
+        "s3",
+        config=BotoConfig(signature_version="s3v4"),
+        aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+        region_name=current_app.config["AWS_REGION"],
+    )
+    return s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": current_app.config["S3_BUCKET"], "Key": media_file},
+        ExpiresIn=S3_URL_EXPIRY,
+    )
+
+
 # Media dashboard page route
 @admin.route("/media/", defaults={"id": None})
 @admin.route("/media/<int:id>")
@@ -416,7 +436,7 @@ def api_media_get(id: int):
         item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
     else:
         item["bulletin"] = None
-    media_url = f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+    media_url = _media_url(media.media_file)
     item["media_url"] = media_url
     item["thumbnail_url"] = media_url
     item["url"] = media_url
@@ -526,7 +546,7 @@ def api_media_dashboard():
         else:
             item["bulletin"] = None
         # Add media URLs for thumbnails (FE expects thumbnail_url and url)
-        media_url = f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
+        media_url = _media_url(media.media_file)
         item["media_url"] = media_url
         item["thumbnail_url"] = media_url
         item["url"] = media_url
@@ -566,9 +586,7 @@ def api_ocr_review():
     for media in paginated.items:
         item = media.to_dict()
         item["extraction"] = media.extraction.to_dict()
-        item["media_url"] = (
-            f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
-        )
+        item["media_url"] = _media_url(media.media_file)
         item["confidence"] = media.extraction.confidence
         item["text"] = media.extraction.text
         if media.bulletin:
@@ -615,9 +633,7 @@ def api_ocr_transcribe():
     for media in paginated.items:
         item = media.to_dict()
         item["extraction"] = media.extraction.to_dict()
-        item["media_url"] = (
-            f"/admin/api/serve/media/{media.media_file}" if media.media_file else None
-        )
+        item["media_url"] = _media_url(media.media_file)
         item["confidence"] = media.extraction.confidence
         item["text"] = media.extraction.text
         if media.bulletin:
