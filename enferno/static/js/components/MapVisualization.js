@@ -25,7 +25,6 @@ const MapVisualization = Vue.defineComponent({
     translations: window.translations,
     selectedEventTypes: [],
     drawerWidth: 398,
-    excludedDefaultEventTypes: new Set(['Residence', 'Birth']),
 
     localSearch: '',
 
@@ -112,18 +111,8 @@ const MapVisualization = Vue.defineComponent({
   },
 
   methods: {
-    applyDefaultEventTypes() {
-      this.selectedEventTypes =
-        this.getDefaultSelectedEventTypes(this.uniqueEventTypes);
-    },
     applyAllEventTypes() {
       this.selectedEventTypes = [...this.uniqueEventTypes];
-    },
-    getDefaultSelectedEventTypes(eventTypes = []) {
-      return [...eventTypes].filter(this.isDefaultSelectedEventType);
-    },
-    isDefaultSelectedEventType(eventType) {
-      return !this.excludedDefaultEventTypes.has(eventType)
     },
     matchesSelectedEventTypes(entity) {
       // No filters selected → show everything
@@ -185,8 +174,7 @@ const MapVisualization = Vue.defineComponent({
       this.locations = result.locations;
       this.flows = result.flows;
 
-      // Preselect all event types, omit Residence and Birth by default
-      this.applyDefaultEventTypes();
+      this.applyAllEventTypes();
 
       this.loading = false;
     },
@@ -322,7 +310,7 @@ const MapVisualization = Vue.defineComponent({
       if (!this.entities.drawer) {
         this.$emit('closeEntityDetails');
         this.entities.selected = null;
-        this.applyDefaultEventTypes();
+        this.applyAllEventTypes();
       }
     },
 

@@ -383,6 +383,7 @@
 
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/EntityFlowMap.js"></script>
     <script src="/static/js/components/PopDateField.js"></script>
     <script src="/static/js/components/PopDateRangeField.js"></script>
     <script src="/static/js/components/PopDateTimeField.js"></script>
@@ -1352,7 +1353,7 @@
                     if (this.$refs.mapVisualizationRef) {
                         this.$nextTick(() => {
                             this.$refs.mapVisualizationRef.entities.selected = null;
-                            this.$refs.mapVisualizationRef.applyDefaultEventTypes();
+                            this.$refs.mapVisualizationRef.applyAllEventTypes();
                         })
                     }
                 },
@@ -1752,6 +1753,7 @@
         app.component('PopDateRangeField', PopDateRangeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
+        app.component('EntityFlowMap', EntityFlowMap);
         app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('Visualization', Visualization);
