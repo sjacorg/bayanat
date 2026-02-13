@@ -37,7 +37,7 @@ const toolbarContent = `
         <v-tooltip v-if="ocrButtonState?.visible" location="bottom">
           <template v-slot:activator="{ props }">
             <div v-bind="props">
-              <v-btn size="small" variant="text" icon="mdi-text-recognition" @click="$root.showOcrDialog(media.id)" :disabled="ocrButtonState.disabled"></v-btn>
+              <v-btn size="small" variant="text" icon="mdi-text-recognition" @click="expansionPanel = null; $root.showOcrDialog(media.id)" :disabled="ocrButtonState.disabled"></v-btn>
             </div>
           </template>
           <span>{{ ocrButtonState.text }}</span>
@@ -129,8 +129,9 @@ const MediaCard = Vue.defineComponent({
         audio: 'mdi-music-box',
         unknown: 'mdi-file-download'
       },
-      ocrText: null,
+      ocrDetails: null,
       ocrLoading: false,
+      expansionPanel: null,
     };
   },
   computed: {
@@ -216,11 +217,11 @@ const MediaCard = Vue.defineComponent({
       document.body.removeChild(link);
     },
     loadOcrText(e) {
-      if (!e?.value || this.ocrText || this.ocrLoading) return;
+      if (!e?.value || this.ocrDetails?.word_count === this.media?.extraction?.word_count || this.ocrLoading) return;
       this.ocrLoading = true;
       api.get(`/admin/api/extraction/${this.media.extraction.id}`)
         .then(response => {
-          this.ocrText = response.data.text;
+          this.ocrDetails = response.data;
         })
         .catch(() => this.$root.showSnack('Failed to load OCR text'))
         .finally(() => this.ocrLoading = false);
@@ -289,19 +290,19 @@ const MediaCard = Vue.defineComponent({
 
       <template v-if="media.extraction?.word_count">
         <v-divider></v-divider>
-        <v-expansion-panels variant="accordion" flat>
+        <v-expansion-panels variant="accordion" flat v-model="expansionPanel">
           <v-expansion-panel @group:selected="loadOcrText">
             <v-expansion-panel-title class="py-1 text-caption" style="min-height: 36px;">
               <v-icon icon="mdi-text-recognition" size="small" class="mr-2"></v-icon>
               {{ translations.extractedText_ || 'Extracted Text' }}
-              <v-chip size="x-small" class="ml-2" variant="text">{{ media.extraction.word_count }} {{ translations.words_ || 'words' }}</v-chip>
+              <v-chip size="x-small" class="ml-2" variant="text">{{ media.extraction?.word_count }} {{ translations.words_ || 'words' }}</v-chip>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <v-progress-linear v-if="ocrLoading" indeterminate color="primary" class="mb-2"></v-progress-linear>
-              <div v-else-if="ocrText" class="text-body-2" :dir="media.extraction.language === 'ar' ? 'rtl' : 'ltr'" style="max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;">{{ ocrText }}</div>
+              <div v-else-if="ocrDetails?.text" class="text-body-2" dir="auto" style="max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;">{{ ocrDetails?.text }}</div>
               <div class="d-flex justify-end mt-1">
-                <v-btn v-if="visionApiKey" size="x-small" variant="text" icon="mdi-pencil" @click="$root.showOcrDialog(media.id)"></v-btn>
-                <v-btn size="x-small" variant="text" icon="mdi-content-copy" @click="copyToClipboard(ocrText)" :disabled="!ocrText"></v-btn>
+                <v-btn v-if="visionApiKey" size="x-small" variant="text" icon="mdi-pencil" @click="expansionPanel = null; $root.showOcrDialog(media.id)"></v-btn>
+                <v-btn size="x-small" variant="text" icon="mdi-content-copy" @click="copyToClipboard(ocrDetails?.text)" :disabled="!ocrDetails?.text"></v-btn>
               </div>
             </v-expansion-panel-text>
           </v-expansion-panel>
