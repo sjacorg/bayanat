@@ -446,10 +446,17 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, f
     from enferno.admin.models import Media, Extraction
     from enferno.tasks.extraction import process_media_extraction_task
 
+    from sqlalchemy import or_
+
     # Build query for media — include already-extracted if force
     query = db.session.query(Media.id)
     if not force:
         query = query.outerjoin(Extraction).filter(Extraction.id.is_(None))
+
+    # Only include OCR-supported file types
+    ocr_ext = current_app.config.get("OCR_EXT", [])
+    if ocr_ext:
+        query = query.filter(or_(*[Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext]))
 
     # Filter by bulletin IDs if specified
     if bulletin_ids:
