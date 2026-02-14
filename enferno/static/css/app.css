@@ -1092,6 +1092,7 @@ div.jsondiffpatch-child-node-type-array:after {
     background: transparent !important;
     border-bottom: 1px solid #eaeaea;
     box-shadow: none !important;
+    min-height: 36px !important;
 }
 
 .bulletin-drawer .bd-section > .v-card > .v-toolbar .v-toolbar-title {
@@ -1111,6 +1112,24 @@ div.jsondiffpatch-child-node-type-array:after {
     border-radius: 6px;
     box-shadow: none !important;
     margin-bottom: 8px;
+}
+
+/* Relationship info header */
+.bulletin-drawer .bd-section .v-list-item-title {
+    font-size: 11px !important;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #888;
+}
+
+/* Relationship sub-labels (Probability, Related as, Comments) */
+.bulletin-drawer .bd-section .text-caption.font-weight-bold {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .bulletin-drawer .bd-section > .v-card .v-card-actions {
