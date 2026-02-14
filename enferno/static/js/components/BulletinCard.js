@@ -196,7 +196,7 @@ const BulletinCard = Vue.defineComponent({
       </div>
 
       <!-- Titles -->
-      <div v-if="bulletin.title || bulletin.title_ar || bulletin.sjac_title || bulletin.sjac_title_ar" class="bd-section">
+      <div v-if="bulletin.title || bulletin.title_ar || bulletin.sjac_title || bulletin.sjac_title_ar" class="bd-content-block">
         <div v-if="bulletin.title || bulletin.title_ar">
           <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
         </div>
@@ -206,7 +206,7 @@ const BulletinCard = Vue.defineComponent({
       </div>
 
       <!-- Classification zone -->
-      <div v-if="bulletin.sources?.length || bulletin.labels?.length || bulletin.verLabels?.length" class="bd-section">
+      <div v-if="bulletin.sources?.length || bulletin.labels?.length || bulletin.verLabels?.length" class="bd-content-block">
         <div v-if="bulletin.sources?.length" class="mb-3">
           <div class="bd-section-label"><v-icon size="x-small">mdi-database</v-icon>{{ translations.sources_ }}</div>
           <div class="flex-chips">
@@ -228,7 +228,7 @@ const BulletinCard = Vue.defineComponent({
       </div>
 
       <!-- Media -->
-      <div v-if="bulletin.medias && bulletin.medias.length" class="bd-section">
+      <div v-if="bulletin.medias && bulletin.medias.length" class="bd-content-block">
         <div class="bd-section-label"><v-icon size="x-small">mdi-image-multiple</v-icon>{{ translations.media_ }}</div>
         <inline-media-renderer
           renderer-id="bulletin-card"
@@ -269,7 +269,7 @@ const BulletinCard = Vue.defineComponent({
       </div>
 
       <!-- Relations -->
-      <div class="bd-section" style="border-bottom: none">
+      <div class="bd-relations">
         <related-bulletins-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.btobInfo"></related-bulletins-card>
         <related-actors-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.atobInfo"></related-actors-card>
         <related-incidents-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.itobInfo"></related-incidents-card>

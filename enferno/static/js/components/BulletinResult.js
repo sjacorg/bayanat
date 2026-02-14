@@ -18,6 +18,30 @@ const BulletinResult = Vue.defineComponent({
           </v-chip>
           <v-spacer></v-spacer>
           <v-chip variant="text" v-if="bulletin.publish_date" size="small">{{ $root.formatDate(bulletin.publish_date) }}</v-chip>
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')"
+                variant="text"
+                icon="mdi-magnify-expand"
+                size="x-small"
+              ></v-btn>
+            </template>
+            {{ translations.preview_ }}
+          </v-tooltip>
+          <v-tooltip v-if="showHide" location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                @click="hide=true"
+                variant="text"
+                icon="mdi-minus"
+                size="x-small"
+              ></v-btn>
+            </template>
+            {{ translations.hideFromResults_ }}
+          </v-tooltip>
         </v-toolbar>
         <v-card-title class="text-wrap text-break pt-0">
           <uni-field class="pa-0" disable-spacing :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
@@ -25,8 +49,7 @@ const BulletinResult = Vue.defineComponent({
         </v-card-title>
         <v-divider></v-divider>
         <slot name="header"></slot>
-        
-        
+
         <v-card-text v-if="bulletin.locations?.length || bulletin.sources?.length">
               <v-list-item v-if="bulletin.locations?.length" :title="translations.locations_">
                 <v-list-item-subtitle opacity="1">
@@ -38,7 +61,6 @@ const BulletinResult = Vue.defineComponent({
                 </v-list-item-subtitle>
               </v-list-item>
 
-
               <v-list-item v-if="bulletin.sources?.length" :title="translations.sources_">
                 <v-list-item-subtitle>
                   <div class="flex-chips">
@@ -47,45 +69,14 @@ const BulletinResult = Vue.defineComponent({
                     </v-chip>
                   </div>
                 </v-list-item-subtitle>
-
               </v-list-item>
         </v-card-text>
-        
-        <v-card-actions class="justify-end">
-          <slot name="actions"></slot>
-          <v-tooltip location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-btn
-                v-bind="props"
-                @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')"
-                color="secondary"
-                variant="outlined"
-                icon="mdi-magnify-expand"
-                size="small"
-              ></v-btn>
-            </template>
-            {{ translations.preview_ }}
-          </v-tooltip>
-          <v-tooltip v-if="showHide" location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-btn
-                v-bind="props"
-                @click="hide=true"
-                color="secondary"
-                variant="outlined"
-                icon="mdi-minus"
-                size="small"
-              ></v-btn>
-            </template>
-            {{ translations.hideFromResults_ }}
-          </v-tooltip>
-        </v-card-actions>
+
+        <slot name="actions"></slot>
       </v-card>
 
       <v-card disabled elevation="0" v-else class="restricted">
-
         <v-card-text>{{ bulletin.id }} - {{ translations.restricted_ }}</v-card-text>
-
       </v-card>
     </template>
   `,
