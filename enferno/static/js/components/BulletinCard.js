@@ -109,8 +109,8 @@ const BulletinCard = Vue.defineComponent({
 
   template: `
 
-    <v-card class="rounded-0">
-      <v-card variant="flat" class=" mb-4 rounded-0">
+    <v-card class="rounded-0 bulletin-drawer">
+      <div class="bd-header">
         <v-toolbar class="d-flex px-2 ga-2">
           <v-chip size="small">
             {{ translations.id_ }} {{ bulletin.id }}
@@ -118,16 +118,15 @@ const BulletinCard = Vue.defineComponent({
 
           <v-tooltip v-if="bulletin.originid" location="bottom">
               <template v-slot:activator="{ props }">
-                  <v-chip 
+                  <v-chip
                       v-bind="props"
-                      prepend-icon="mdi-identifier" 
-                      :href="bulletin.source_link" 
-                      target="_blank" 
+                      prepend-icon="mdi-identifier"
+                      :href="bulletin.source_link"
+                      target="_blank"
                       label
                       append-icon="mdi-open-in-new"
                       class="ml-1">
                       {{ bulletin.originid }}
-
                   </v-chip>
               </template>
               {{ translations.originid_ }}
@@ -147,237 +146,90 @@ const BulletinCard = Vue.defineComponent({
             <v-btn variant="text" icon="mdi-close" v-if="close" @click="$emit('close',$event.target.value)">
           </v-btn>
           </template>
-          
         </v-toolbar>
 
-        <v-sheet v-if="bulletin.assigned_to || bulletin.status" variant="flat" class="d-flex pa-0   ga-2">
+        <div v-if="bulletin.assigned_to || bulletin.status" class="d-flex pa-0 ga-2" style="border-top: 1px solid #eaeaea">
           <div class="pa-2" v-if="bulletin.assigned_to">
             <v-tooltip location="bottom">
               <template v-slot:activator="{ props }">
-                <v-chip 
-                    
-                    variant="text"
-                  v-bind="props"
-                  prepend-icon="mdi-account-circle-outline">
+                <v-chip variant="text" v-bind="props" prepend-icon="mdi-account-circle-outline">
                   {{ bulletin.assigned_to['name'] }}
                 </v-chip>
               </template>
               {{ translations.assignedUser_ }}
             </v-tooltip>
           </div>
-
-          <v-divider v-if="bulletin.assigned_to" vertical ></v-divider>
-          
+          <v-divider v-if="bulletin.assigned_to" vertical></v-divider>
           <div class="pa-2" v-if="bulletin.status">
             <v-tooltip location="bottom">
               <template v-slot:activator="{ props }">
-                <v-chip 
-                    variant="text"
-                  v-bind="props"
-                  prepend-icon="mdi-delta" class="mx-1">
+                <v-chip variant="text" v-bind="props" prepend-icon="mdi-delta" class="mx-1">
                   {{ bulletin.status }}
                 </v-chip>
               </template>
               {{ translations.workflowStatus_ }}
             </v-tooltip>
           </div>
-        </v-sheet> 
+        </div>
+      </div>
 
-        <v-divider></v-divider>
-        <v-card v-if="bulletin.roles?.length" variant="flat" class="ma-2 d-flex align-center pa-2 flex-grow-1">
-          <v-tooltip location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-icon color="blue-darken-3" class="mx-2" size="small" v-bind="props">mdi-lock</v-icon>
-            </template>
-            {{ translations.accessRoles_ }}
-          </v-tooltip>
-          <v-chip label size="small" v-for="role in bulletin.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
-        </v-card>  
-        <v-divider v-if="bulletin.roles?.length" ></v-divider>
-        
-        <v-card v-if="bulletin.tags?.length" variant="flat" class="ma-2 pa-2 flex-grow-1">
-          <v-tooltip location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-icon color="primary" class="mx-2" size="small" v-bind="props">mdi-tag</v-icon>
-            </template>
-            {{ translations.ref_ }}
-          </v-tooltip>
-          <v-chip size="small" v-for="e in bulletin.tags" class="caption black--text mx-1 mb-1">{{ e }}</v-chip>
-        </v-card>
-        <v-divider v-if="bulletin.tags?.length" ></v-divider>
-    
-        <v-card v-if="bulletin.source_link && bulletin.source_link !='NA'" variant="flat" class=" pa-2 ma-1 d-flex align-center flex-grow-1">
-          <v-tooltip location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-chip 
-                  
-                v-bind="props"
-                prepend-icon="mdi-link-variant"
-                :href="bulletin.source_link" 
-                target="_blank" 
-                variant="text"
-                append-icon="mdi-open-in-new"
-                label
-                class="white--text ml-1">
-                {{ bulletin.source_link }}
-                
-              </v-chip>
-            </template>
-            {{ translations.sourceLink_ }}: {{ bulletin.source_link }}
-          </v-tooltip>
-        </v-card> 
-        <v-divider v-if="bulletin.source_link" ></v-divider>
-      </v-card>
+      <!-- Metadata strips -->
+      <div v-if="bulletin.roles?.length" class="bd-meta-strip">
+        <v-icon color="blue-darken-3" size="small">mdi-lock</v-icon>
+        <span class="bd-meta-label">{{ translations.accessRoles_ }}</span>
+        <v-chip label size="small" v-for="role in bulletin.roles" :color="role.color" class="bd-chip">{{ role.name }}</v-chip>
+      </div>
 
-      <div class="d-flex flex-wrap">
-        <template v-for="(field) in $root.cardDynamicFields('bulletin')">
-          <div v-if="$root.isFieldActiveAndHasContent(field, 'title', [bulletin.title, bulletin.title_ar])" :class="$root.fieldClassDrawer(field)">
-            <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
+      <div v-if="bulletin.tags?.length" class="bd-meta-strip">
+        <v-icon color="primary" size="small">mdi-tag-outline</v-icon>
+        <span class="bd-meta-label">{{ translations.ref_ }}</span>
+        <v-chip size="small" v-for="e in bulletin.tags" class="bd-chip">{{ e }}</v-chip>
+      </div>
+
+      <div v-if="bulletin.source_link && bulletin.source_link !== 'NA'" class="bd-meta-strip">
+        <v-icon size="small">mdi-link-variant</v-icon>
+        <span class="bd-meta-label">{{ translations.sourceLink_ }}</span>
+        <a :href="bulletin.source_link" target="_blank" class="text-caption" style="color: #666; text-decoration: none;">
+          {{ bulletin.source_link }}
+          <v-icon size="x-small" class="ml-1">mdi-open-in-new</v-icon>
+        </a>
+      </div>
+
+      <!-- Titles -->
+      <div v-if="bulletin.title || bulletin.title_ar || bulletin.sjac_title || bulletin.sjac_title_ar" class="bd-section">
+        <div v-if="bulletin.title || bulletin.title_ar">
+          <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
+        </div>
+        <div v-if="bulletin.sjac_title || bulletin.sjac_title_ar">
+          <uni-field :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
+        </div>
+      </div>
+
+      <!-- Classification zone -->
+      <div v-if="bulletin.sources?.length || bulletin.labels?.length || bulletin.verLabels?.length" class="bd-section">
+        <div v-if="bulletin.sources?.length" class="mb-3">
+          <div class="bd-section-label"><v-icon size="x-small">mdi-database</v-icon>{{ translations.sources_ }}</div>
+          <div class="flex-chips">
+            <v-chip size="small" class="flex-chip bd-chip" v-for="source in bulletin.sources" :key="source.id">{{ source.title }}</v-chip>
           </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'sjac_title', [bulletin.sjac_title, bulletin.sjac_title_ar])" :class="$root.fieldClassDrawer(field)">
-            <uni-field :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
+        </div>
+        <div v-if="bulletin.labels?.length" class="mb-3">
+          <div class="bd-section-label"><v-icon size="x-small">mdi-label-outline</v-icon>{{ translations.labels_ }}</div>
+          <div class="flex-chips">
+            <v-chip label size="small" class="flex-chip bd-chip" v-for="label in bulletin.labels" :key="label.id">{{ label.title }}</v-chip>
           </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'description', bulletin.description)" :class="$root.fieldClassDrawer(field)">
-            <v-card class="ma-2 mb-4">
-              <v-toolbar density="compact">
-                <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
-              </v-toolbar>
-              <v-card-text class="text-body-2 pt-0">
-                <read-more><div v-html="bulletin.description"></div></read-more>
-              </v-card-text>
-            </v-card>
+        </div>
+        <div v-if="bulletin.verLabels?.length">
+          <div class="bd-section-label"><v-icon size="x-small">mdi-check-decagram</v-icon>{{ translations.verifiedLabels_ }}</div>
+          <div class="flex-chips">
+            <v-chip label size="small" class="flex-chip bd-chip" v-for="vlabel in bulletin.verLabels" :key="vlabel.id">{{ vlabel.title }}</v-chip>
           </div>
-
-          <div v-else-if="$root.isFieldActive(field, 'global_map')" :class="$root.fieldClassDrawer(field)">
-            <v-card variant="flat">
-              <global-map v-model="mapLocations"></global-map>
-            </v-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'sources', bulletin.sources)" :class="$root.fieldClassDrawer(field)">
-            <v-card class="ma-2">
-              <v-toolbar density="compact">
-                <v-toolbar-title class="text-subtitle-1">{{ translations.sources_ }}</v-toolbar-title>
-              </v-toolbar>
-              <v-card-text class="pt-0">
-                <div class="flex-chips">
-                  <v-chip size="small" class="flex-chip" v-for="source in bulletin.sources" :key="source.id">
-                    {{ source.title }}
-                  </v-chip>
-                </div>
-              </v-card-text>
-            </v-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'events_section', bulletin.events)" :class="$root.fieldClassDrawer(field)">
-            <v-card class="ma-2">
-              <v-toolbar density="compact">
-                <v-toolbar-title class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
-              </v-toolbar>
-              <v-card-text class="pt-0 px-2 pb-2">
-                <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id" :event="event"></event-card>
-              </v-card-text>
-            </v-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'labels', bulletin.labels)" :class="$root.fieldClassDrawer(field)">
-            <v-card class="ma-2">
-              <v-toolbar density="compact">
-                <v-toolbar-title class="text-subtitle-1">{{ translations.labels_ }}</v-toolbar-title>
-              </v-toolbar>
-              <v-card-text class="pt-0">
-                <div class="flex-chips">
-                  <v-chip label size="small" class="flex-chip" v-for="label in bulletin.labels" :key="label.id">
-                    {{ label.title }}
-                  </v-chip>
-                </div>
-              </v-card-text>
-            </v-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'ver_labels', bulletin.verLabels)" :class="$root.fieldClassDrawer(field)">
-            <v-card class="ma-2">
-              <v-toolbar density="compact">
-                <v-toolbar-title class="text-subtitle-1">{{ translations.verifiedLabels_ }}</v-toolbar-title>
-              </v-toolbar>
-              <v-card-text class="pt-0">
-                <div class="flex-chips">
-                  <v-chip label size="small" class="flex-chip" v-for="vlabel in bulletin.verLabels" :key="vlabel.id">
-                    {{ vlabel.title }}
-                  </v-chip>
-                </div>
-              </v-card-text>
-            </v-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'locations', bulletin.locations)" :class="$root.fieldClassDrawer(field)">
-            <v-card class="ma-2">
-              <v-toolbar density="compact">
-                <v-toolbar-title class="text-subtitle-1">{{ translations.locations_ }}</v-toolbar-title>
-              </v-toolbar>
-              <v-card-text class="pt-0">
-                <div class="flex-chips">
-                  <v-chip label size="small" prepend-icon="mdi-map-marker" class="flex-chip" v-for="location in bulletin.locations" :key="location.id">
-                    {{ location.full_string }}
-                  </v-chip>
-                </div>
-              </v-card-text>
-            </v-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActive(field, 'related_bulletins')" :class="$root.fieldClassDrawer(field)">
-            <related-bulletins-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.btobInfo"></related-bulletins-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActive(field, 'related_actors')" :class="$root.fieldClassDrawer(field)">
-            <related-actors-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.atobInfo"></related-actors-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActive(field, 'related_incidents')" :class="$root.fieldClassDrawer(field)">
-            <related-incidents-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.itobInfo"></related-incidents-card>
-          </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'publish_date', bulletin.publish_date)" :class="$root.fieldClassDrawer(field)">
-            <uni-field :caption="translations.publishDate_" :english="$root.formatDate(bulletin.publish_date)"></uni-field>
-          </div>
-
-          <div v-else-if="$root.isFieldActiveAndHasContent(field, 'documentation_date', bulletin.documentation_date)" :class="$root.fieldClassDrawer(field)">
-            <uni-field :caption="translations.documentationDate_" :english="$root.formatDate(bulletin.documentation_date)"></uni-field>
-          </div>
-
-          <div v-else-if="$root.isFieldActive(field)" :class="$root.fieldClassDrawer(field)">
-            <div v-if="Array.isArray(bulletin?.[field.name])">
-              <v-card class="ma-2" v-if="$root.isFieldActiveAndHasContent(field, field.name, bulletin?.[field.name])">
-                <v-toolbar density="compact">
-                  <v-toolbar-title class="text-subtitle-1">{{ field.title }}</v-toolbar-title>
-                </v-toolbar>
-                <v-card-text class="pt-0">
-                  <div class="flex-chips">
-                    <v-chip label size="small" class="flex-chip" v-for="value in bulletin?.[field.name]" :key="value">
-                      {{ $root.findFieldOptionByValue(field, value)?.label ?? value }}
-                    </v-chip>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </div>
-            <div v-else-if="field.field_type === 'datetime'">
-              <uni-field v-if="$root.isFieldActiveAndHasContent(field, field.name, bulletin?.[field.name])" :caption="field.title" :english="$root.formatDate(bulletin?.[field.name])"></uni-field>
-            </div>
-            <div v-else>
-              <uni-field v-if="$root.isFieldActiveAndHasContent(field, field.name, bulletin?.[field.name])" :caption="field.title" :english="$root.findFieldOptionByValue(field, bulletin?.[field.name])?.label ?? bulletin?.[field.name]"></uni-field>
-            </div>
-          </div>
-        </template>
+        </div>
       </div>
 
       <!-- Media -->
-      <v-card class="ma-2" v-if="bulletin.medias && bulletin.medias.length">
-        <v-toolbar density="compact">
-            <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
-        </v-toolbar>
-
+      <div v-if="bulletin.medias && bulletin.medias.length" class="bd-section">
+        <div class="bd-section-label"><v-icon size="x-small">mdi-image-multiple</v-icon>{{ translations.media_ }}</div>
         <inline-media-renderer
           renderer-id="bulletin-card"
           :media="$root.expandedByRenderer?.['bulletin-card']?.media"
@@ -386,12 +238,74 @@ const BulletinCard = Vue.defineComponent({
           @fullscreen="$root.handleFullscreen('bulletin-card')"
           @close="$root.closeExpandedMedia('bulletin-card')"
         ></inline-media-renderer>
-        
-        <v-card-text>
-          
-          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'bulletin-card', ...$event })"></media-grid>
-        </v-card-text>
-      </v-card>
+        <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'bulletin-card', ...$event })"></media-grid>
+      </div>
+
+      <!-- Description -->
+      <div v-if="bulletin.description" class="bd-content-block">
+        <div class="bd-section-label"><v-icon size="x-small">mdi-text-box-outline</v-icon>{{ translations.description_ }}</div>
+        <div class="text-body-2">
+          <read-more><div v-html="bulletin.description"></div></read-more>
+        </div>
+      </div>
+
+      <!-- Spatial zone -->
+      <div class="bd-content-block">
+        <div v-if="bulletin.locations?.length" style="margin-bottom: 12px">
+          <div class="bd-section-label"><v-icon size="x-small">mdi-map-marker-multiple</v-icon>{{ translations.locations_ }}</div>
+          <div class="flex-chips">
+            <v-chip label size="small" prepend-icon="mdi-map-marker" class="flex-chip bd-chip" v-for="location in bulletin.locations" :key="location.id">{{ location.full_string }}</v-chip>
+          </div>
+        </div>
+        <div style="border-radius: 6px; overflow: hidden">
+          <global-map v-model="mapLocations"></global-map>
+        </div>
+      </div>
+
+      <!-- Events -->
+      <div v-if="bulletin.events?.length" class="bd-content-block">
+        <div class="bd-section-label"><v-icon size="x-small">mdi-calendar-alert</v-icon>{{ translations.events_ }}</div>
+        <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id" :event="event"></event-card>
+      </div>
+
+      <!-- Relations -->
+      <div class="bd-section" style="border-bottom: none">
+        <related-bulletins-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.btobInfo"></related-bulletins-card>
+        <related-actors-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.atobInfo"></related-actors-card>
+        <related-incidents-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.itobInfo"></related-incidents-card>
+      </div>
+
+      <!-- Dates -->
+      <div v-if="bulletin.publish_date || bulletin.documentation_date" class="bd-date-strip">
+        <div v-if="bulletin.publish_date">
+          <div class="bd-section-label" style="margin-bottom: 2px"><v-icon size="x-small">mdi-calendar-check</v-icon>{{ translations.publishDate_ }}</div>
+          <div class="bd-date-value">{{ $root.formatDate(bulletin.publish_date) }}</div>
+        </div>
+        <div v-if="bulletin.documentation_date">
+          <div class="bd-section-label" style="margin-bottom: 2px"><v-icon size="x-small">mdi-file-document-edit-outline</v-icon>{{ translations.documentationDate_ }}</div>
+          <div class="bd-date-value">{{ $root.formatDate(bulletin.documentation_date) }}</div>
+        </div>
+      </div>
+
+      <!-- Dynamic fields -->
+      <template v-for="field in $root.cardDynamicFields('bulletin')">
+        <template v-if="$root.isFieldActive(field) && !['title','sjac_title','description','global_map','sources','events_section','labels','ver_labels','locations','related_bulletins','related_actors','related_incidents','publish_date','documentation_date'].includes(field.name)">
+          <div v-if="Array.isArray(bulletin?.[field.name]) && $root.isFieldActiveAndHasContent(field, field.name, bulletin?.[field.name])" class="bd-section">
+            <div class="bd-section-label">{{ field.title }}</div>
+            <div class="flex-chips">
+              <v-chip label size="small" class="flex-chip bd-chip" v-for="value in bulletin?.[field.name]" :key="value">
+                {{ $root.findFieldOptionByValue(field, value)?.label ?? value }}
+              </v-chip>
+            </div>
+          </div>
+          <div v-else-if="field.field_type === 'datetime' && $root.isFieldActiveAndHasContent(field, field.name, bulletin?.[field.name])" class="bd-section">
+            <uni-field :caption="field.title" :english="$root.formatDate(bulletin?.[field.name])"></uni-field>
+          </div>
+          <div v-else-if="$root.isFieldActiveAndHasContent(field, field.name, bulletin?.[field.name])" class="bd-section">
+            <uni-field :caption="field.title" :english="$root.findFieldOptionByValue(field, bulletin?.[field.name])?.label ?? bulletin?.[field.name]"></uni-field>
+          </div>
+        </template>
+      </template>
 
       <!-- Review -->
       <v-card v-if="showReview(bulletin)" variant="outlined" elevation="0" class="ma-3" color="teal-lighten-2">
@@ -412,12 +326,12 @@ const BulletinCard = Vue.defineComponent({
           <v-btn variant="plain" class="text-subtitle-2" append-icon="mdi-history" :loading="hloading"
                  @click="loadRevisions">
             {{ translations.logHistory_ }}
-            
+
           </v-btn>
             </v-toolbar-title>
         </v-toolbar>
-        
-        <v-card-text> 
+
+        <v-card-text>
 
 
           <template v-for="(revision,index) in revisions">
