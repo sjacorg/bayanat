@@ -1078,3 +1078,41 @@ div.jsondiffpatch-child-node-type-array:after {
 .bulletin-drawer .bd-content-block .leaflet-container {
     border-radius: 6px;
 }
+
+/* Related items cards inside bulletin drawer */
+.bulletin-drawer .bd-section > .v-card {
+    background: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    box-shadow: none !important;
+    margin: 0 0 10px 0;
+}
+
+.bulletin-drawer .bd-section > .v-card > .v-toolbar {
+    background: transparent !important;
+    border-bottom: 1px solid #eaeaea;
+    box-shadow: none !important;
+}
+
+.bulletin-drawer .bd-section > .v-card > .v-toolbar .v-toolbar-title {
+    font-size: 11px !important;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text {
+    padding: 8px 12px;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card {
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    box-shadow: none !important;
+    margin-bottom: 8px;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-actions {
+    padding: 4px 12px 8px;
+}
