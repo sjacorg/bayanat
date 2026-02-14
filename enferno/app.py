@@ -184,6 +184,19 @@ def register_talisman(app):
         csp["connect-src"].append("https://accounts.google.com")
         csp["img-src"].append("https://accounts.google.com")
 
+    # Add S3 bucket to CSP when using S3 storage
+    if not app.config.get("FILESYSTEM_LOCAL"):
+        s3_region = app.config.get("AWS_REGION", "us-east-1")
+        s3_bucket = app.config.get("S3_BUCKET", "")
+        s3_origins = [
+            f"https://{s3_bucket}.s3.amazonaws.com",
+            f"https://{s3_bucket}.s3.{s3_region}.amazonaws.com",
+        ]
+        for origin in s3_origins:
+            csp["img-src"].append(origin)
+            csp["media-src"].append(origin)
+            csp["connect-src"].append(origin)
+
     # Check if CSP should be enabled
     csp_enabled = app.config.get("CSP_ENABLED", True)
     csp_report_uri = app.config.get("CSP_REPORT_URI")
