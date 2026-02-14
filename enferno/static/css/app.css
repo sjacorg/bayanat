@@ -1079,6 +1079,69 @@ div.jsondiffpatch-child-node-type-array:after {
     border-radius: 6px;
 }
 
+/* UniField component */
+.uni-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.uni-field--spaced {
+    padding: 4px 0;
+}
+
+.uni-field__caption {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.uni-field__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.uni-field__text {
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+    transition: opacity 0.12s ease;
+    flex: 1;
+}
+
+.uni-field__text--fade {
+    opacity: 0;
+}
+
+.uni-field__text--rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.uni-field__toggle {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #999;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 3px;
+    padding: 2px 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.uni-field__toggle:hover {
+    color: #555;
+    background: #e4e4e4;
+}
+
 /* Related items cards inside bulletin drawer */
 .bulletin-drawer .bd-section > .v-card {
     background: #fff;
@@ -1114,24 +1177,81 @@ div.jsondiffpatch-child-node-type-array:after {
     margin-bottom: 8px;
 }
 
-/* Relationship info header */
-.bulletin-drawer .bd-section .v-list-item-title {
-    font-size: 11px !important;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #888;
+/* Compact relation metadata strip */
+.bulletin-drawer .bd-relation-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 7px 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f0f1f3 100%);
+    border-top: 1px solid #eaeaea;
 }
 
-/* Relationship sub-labels (Probability, Related as, Comments) */
-.bulletin-drawer .bd-section .text-caption.font-weight-bold {
+.bulletin-drawer .bd-relation-meta .v-chip {
     font-size: 11px !important;
-    font-weight: 500 !important;
+    font-weight: 500;
+}
+
+.bulletin-drawer .bd-relation-comment {
+    font-size: 11px;
     color: #999;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
 }
 
-.bulletin-drawer .bd-section > .v-card .v-card-actions {
+/* Result cards inside drawer - typography and spacing */
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card {
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    box-shadow: none !important;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card:hover {
+    border-color: #ccc;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card > .v-toolbar {
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: 34px !important;
+    padding: 0 8px !important;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card > .v-toolbar .v-chip--variant-flat {
+    font-size: 11px !important;
+    height: 20px !important;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card > .v-card-title {
+    font-size: 13px !important;
+    padding: 2px 12px 8px !important;
+    line-height: 1.4;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card > .v-card-title .uni-field {
+    font-size: 13px;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card > .v-card-text {
+    padding: 4px 12px 6px !important;
+    font-size: 12px;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card > .v-card-actions {
+    padding: 0 8px 4px;
+    min-height: 28px;
+}
+
+.bulletin-drawer .bd-section > .v-card .v-card-text > .v-card > .v-card-actions .v-btn {
+    width: 26px !important;
+    height: 26px !important;
+}
+
+.bulletin-drawer .bd-section > .v-card > .v-card-actions {
     padding: 4px 12px 8px;
 }

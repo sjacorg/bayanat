@@ -3,29 +3,32 @@ const UniField = Vue.defineComponent({
     caption: String,
     english: String | Number,
     arabic: String | Number,
-    disableSpacing: Boolean
+    disableSpacing: Boolean,
   },
   data() {
     return {
-      sw: this.english ? true : false,
+      sw: !!this.english,
+      fading: false,
     };
   },
+  methods: {
+    toggle() {
+      this.fading = true;
+      setTimeout(() => {
+        this.sw = !this.sw;
+        this.fading = false;
+      }, 120);
+    },
+  },
   template: `
-    <v-list v-if="english || arabic"  variant="plain" :class="['d-flex align-center flex-grow-1', { 'mx-2 my-1 pa-2': !disableSpacing }]">
-      <template v-if="english && arabic">
-        <v-list-item :title="caption" density="compact" :class="{ 'px-0': disableSpacing }">
-          <v-sheet class="text-body-2">{{ sw ? english : arabic }}</v-sheet>
-          <template #append>
-              <v-btn variant="text" size="x-small" icon="mdi-web" @click="sw= !sw"></v-btn>
-          </template>
-        </v-list-item>
-      </template>
-
-      <template v-else>
-        <v-list-item :title="caption" density="compact" :class="{ 'px-0': disableSpacing }">
-          <v-sheet class="text-body-2">{{ english || arabic }}</v-sheet>
-        </v-list-item>
-      </template>
-    </v-list>
+    <div v-if="english || arabic" class="uni-field" :class="{ 'uni-field--spaced': !disableSpacing }">
+      <div v-if="caption" class="uni-field__caption">{{ caption }}</div>
+      <div class="uni-field__body">
+        <div class="uni-field__text" :class="{ 'uni-field__text--fade': fading, 'uni-field__text--rtl': !sw && arabic }">{{ sw ? english : (arabic || english) }}</div>
+        <button v-if="english && arabic" class="uni-field__toggle" @click="toggle" :title="sw ? 'عربي' : 'English'">
+          {{ sw ? 'ع' : 'EN' }}
+        </button>
+      </div>
+    </div>
   `,
 });

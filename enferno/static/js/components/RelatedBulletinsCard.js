@@ -69,27 +69,18 @@ const RelatedBulletinsCard = Vue.defineComponent({
           <bulletin-result v-for="(item,index) in entity.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
-              <v-sheet class="pa-2 border-b d-flex flex-column ga-1">
-                <v-list-item-title variant="flat"  class="text-caption mt-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
-                <div class="mb-2">
-                  <div class="text-caption font-weight-bold mt-2">{{ translations.probability_ }}</div>
-                  <v-chip v-if="item.probability !== null" size="small" label class="flex-chip">{{ probability(item) }}</v-chip>
-                  <div class="text-caption font-weight-bold mt-2">Related as</div>
-                  <div class="flex-chips">
-                    <v-chip v-if="item?.related_as" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')" class="flex-chip" size="small" label>{{ r }}</v-chip>
-                  </div>
-                  <div class="text-caption font-weight-bold mt-2">Comments</div>
-                  <div v-if="item.comment" class="text-caption"><read-more>{{ item.comment }}</read-more></div>
-                </div>
-              </v-sheet>
+              <div class="bd-relation-meta">
+                <v-chip v-if="item.probability !== null" size="x-small" label variant="flat" color="blue-grey-lighten-5" prepend-icon="mdi-signal-cellular-3">{{ probability(item) }}</v-chip>
+                <v-chip v-if="item?.related_as" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')" size="x-small" label variant="flat" color="grey-lighten-4" prepend-icon="mdi-link-variant">{{ r }}</v-chip>
+                <span v-if="item.comment" class="bd-relation-comment"><v-icon size="x-small">mdi-comment-text-outline</v-icon> {{ item.comment }}</span>
+              </div>
             </template>
           </bulletin-result>
         </v-card-text>
         <v-card-actions>
-          <v-btn class="ma-auto" append-icon="mdi-chevron-down" size="small" variant="tonal" color="grey" 
+          <v-btn class="ma-auto" append-icon="mdi-chevron-down" size="small" variant="tonal" color="grey"
                  @click="loadBulletinRelations(bulletinPage)"
                  v-if="bulletinLM">{{ translations.loadMore_ }}
-            
           </v-btn>
         </v-card-actions>
       </v-card>
