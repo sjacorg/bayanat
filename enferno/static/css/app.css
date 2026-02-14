@@ -984,11 +984,142 @@ div.jsondiffpatch-child-node-type-array:after {
 /* Bulletin Drawer */
 .bulletin-drawer {
     background: #fafafa !important;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
+/* Sticky header */
 .bulletin-drawer .bd-header {
     background: #fff !important;
     border-bottom: 1px solid #eaeaea;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+/* Scrollable body */
+.bulletin-drawer .bd-body {
+    flex: 1;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+/* Section nav dots */
+.bulletin-drawer .bd-nav {
+    position: fixed;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 11;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px 4px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    border: 1px solid #eaeaea;
+}
+
+.bulletin-drawer .bd-nav-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    color: #bbb;
+}
+
+.bulletin-drawer .bd-nav-dot:hover {
+    background: #edf6f4;
+    color: #439d92;
+}
+
+.bulletin-drawer .bd-nav-dot--active {
+    background: #439d92;
+    color: #fff;
+}
+
+.bulletin-drawer .bd-nav-dot--active:hover {
+    background: #35857c;
+    color: #fff;
+}
+
+/* Collapsible sections */
+.bulletin-drawer .bd-collapsible {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.1s ease;
+}
+
+.bulletin-drawer .bd-collapsible:hover {
+    color: #439d92;
+}
+
+.bulletin-drawer .bd-collapse-icon {
+    margin-left: auto;
+    opacity: 0.4;
+    transition: opacity 0.1s ease;
+}
+
+.bulletin-drawer .bd-collapsible:hover .bd-collapse-icon {
+    opacity: 0.8;
+}
+
+/* Sub-labels inside classification */
+.bulletin-drawer .bd-section-sublabel {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+/* Copy to clipboard */
+.bulletin-drawer .bd-copyable {
+    cursor: pointer;
+    position: relative;
+}
+
+.bulletin-drawer .bd-copy-icon {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.bulletin-drawer .bd-copyable:hover .bd-copy-icon {
+    opacity: 0.6;
+}
+
+/* Toast notification */
+.bulletin-drawer .bd-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #439d92;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 20px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.bd-toast-enter-active { transition: all 0.2s ease; }
+.bd-toast-leave-active { transition: all 0.3s ease; }
+.bd-toast-enter-from, .bd-toast-leave-to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
 }
 
 .bulletin-drawer .bd-meta-strip {

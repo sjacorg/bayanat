@@ -3,11 +3,15 @@ const BulletinCard = Vue.defineComponent({
   emits: ['edit', 'close'],
   watch: {
     bulletin: function (val, old) {
-
       this.$nextTick(() => {
         requestAnimationFrame(() => {
           this.mapLocations = aggregateBulletinLocations(this.bulletin);
         });
+      });
+      // Reset scroll for new bulletin
+      this.$nextTick(() => {
+        const el = this.$el?.querySelector('.bd-body');
+        if (el) el.scrollTop = 0;
       });
     },
   },
@@ -22,6 +26,12 @@ const BulletinCard = Vue.defineComponent({
         });
       });
     }
+
+    // Load collapsed sections from localStorage
+    try {
+      const saved = localStorage.getItem('bd-collapsed');
+      if (saved) this.collapsed = JSON.parse(saved);
+    } catch (e) {}
   },
 
   methods: {
@@ -46,7 +56,6 @@ const BulletinCard = Vue.defineComponent({
         return this.$root.editAllowed(this.bulletin) && this.showEdit;
       }
       return false;
-
     },
 
     loadRevisions() {
@@ -72,22 +81,75 @@ const BulletinCard = Vue.defineComponent({
 
     showDiff(e, index) {
       this.diffDialog = true;
-      //calculate diff
       const dp = this.$jsondiffpatch.create({
-        arrays: {
-          detectMove: true,
-        },
+        arrays: { detectMove: true },
         objectHash: function (obj, index) {
           return obj.name || obj.id || obj._id || '$$index:' + index;
         },
       });
-
       const delta = dp.diff(this.revisions[index + 1].data, this.revisions[index].data);
       if (!delta) {
         this.diffResult = 'Both items are Identical :)';
       } else {
         this.diffResult = this.$htmlFormatter.format(delta);
       }
+    },
+
+    onBodyScroll(e) {
+      this.updateActiveSection(e.target);
+    },
+
+    updateActiveSection(container) {
+      const sections = container.querySelectorAll('[data-section]');
+      let active = '';
+      for (const section of sections) {
+        if (section.offsetTop - container.scrollTop < 120) {
+          active = section.dataset.section;
+        }
+      }
+      this.activeSection = active;
+    },
+
+    scrollToSection(key) {
+      const el = this.$el.querySelector(`[data-section="${key}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+
+    // Collapsible sections
+    toggleSection(key) {
+      this.collapsed[key] = !this.collapsed[key];
+      try {
+        localStorage.setItem('bd-collapsed', JSON.stringify(this.collapsed));
+      } catch (e) {}
+    },
+
+    isSectionCollapsed(key) {
+      return !!this.collapsed[key];
+    },
+
+    // Copy to clipboard
+    copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.copyFeedback = true;
+        setTimeout(() => { this.copyFeedback = false; }, 1500);
+      });
+    },
+
+    // Section nav items (computed dynamically based on what's visible)
+    navSections() {
+      const b = this.bulletin;
+      const sections = [];
+      if (b.title || b.title_ar || b.sjac_title || b.sjac_title_ar) sections.push({ key: 'titles', icon: 'mdi-format-title', label: this.translations.title_ || 'Titles' });
+      if (b.sources?.length || b.labels?.length || b.verLabels?.length) sections.push({ key: 'classification', icon: 'mdi-tag-multiple', label: this.translations.sources_ || 'Classification' });
+      if (b.medias?.length) sections.push({ key: 'media', icon: 'mdi-image-multiple', label: this.translations.media_ || 'Media' });
+      if (b.description) sections.push({ key: 'description', icon: 'mdi-text-box-outline', label: this.translations.description_ || 'Description' });
+      sections.push({ key: 'spatial', icon: 'mdi-map-marker', label: this.translations.locations_ || 'Map' });
+      if (b.events?.length) sections.push({ key: 'events', icon: 'mdi-calendar-alert', label: this.translations.events_ || 'Events' });
+      if (b.bulletin_relations?.length || b.actor_relations?.length || b.incident_relations?.length) sections.push({ key: 'relations', icon: 'mdi-link-variant', label: 'Relations' });
+      if (b.publish_date || b.documentation_date) sections.push({ key: 'dates', icon: 'mdi-calendar', label: 'Dates' });
+      return sections;
     },
   },
 
@@ -100,20 +162,24 @@ const BulletinCard = Vue.defineComponent({
       show: false,
       hloading: false,
       mapLocations: [],
-
-      // image viewer
       lightbox: null,
       mediasReady: 0,
+      // UX enhancements
+      collapsed: {},
+      activeSection: '',
+      copyFeedback: false,
     };
   },
 
   template: `
 
     <v-card class="rounded-0 bulletin-drawer">
-      <div class="bd-header">
+      <!-- Sticky header -->
+      <div class="bd-header" >
         <v-toolbar class="d-flex px-2 ga-2">
-          <v-chip size="small">
+          <v-chip size="small" class="bd-copyable" @click="copyToClipboard(String(bulletin.id))">
             {{ translations.id_ }} {{ bulletin.id }}
+            <v-icon size="x-small" class="ml-1 bd-copy-icon">mdi-content-copy</v-icon>
           </v-chip>
 
           <v-tooltip v-if="bulletin.originid" location="bottom">
@@ -173,6 +239,26 @@ const BulletinCard = Vue.defineComponent({
         </div>
       </div>
 
+      <!-- Copy feedback toast -->
+      <transition name="bd-toast">
+        <div v-if="copyFeedback" class="bd-toast">Copied!</div>
+      </transition>
+
+      <!-- Section nav dots -->
+      <div class="bd-nav" v-if="navSections().length > 2">
+        <v-tooltip v-for="s in navSections()" :key="s.key" location="left">
+          <template v-slot:activator="{ props }">
+            <button v-bind="props" class="bd-nav-dot" :class="{ 'bd-nav-dot--active': activeSection === s.key }" @click="scrollToSection(s.key)">
+              <v-icon size="x-small">{{ s.icon }}</v-icon>
+            </button>
+          </template>
+          {{ s.label }}
+        </v-tooltip>
+      </div>
+
+      <!-- Scrollable body -->
+      <div class="bd-body" @scroll="onBodyScroll">
+
       <!-- Metadata strips -->
       <div v-if="bulletin.roles?.length" class="bd-meta-strip">
         <v-icon color="blue-darken-3" size="small">mdi-lock</v-icon>
@@ -196,87 +282,121 @@ const BulletinCard = Vue.defineComponent({
       </div>
 
       <!-- Titles -->
-      <div v-if="bulletin.title || bulletin.title_ar || bulletin.sjac_title || bulletin.sjac_title_ar" class="bd-content-block">
-        <div v-if="bulletin.title || bulletin.title_ar">
-          <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
+      <div v-if="bulletin.title || bulletin.title_ar || bulletin.sjac_title || bulletin.sjac_title_ar" data-section="titles" class="bd-content-block">
+        <div class="bd-section-label bd-collapsible" @click="toggleSection('titles')">
+          <v-icon size="x-small">mdi-format-title</v-icon>{{ translations.title_ || 'Titles' }}
+          <v-icon size="x-small" class="bd-collapse-icon">{{ isSectionCollapsed('titles') ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
         </div>
-        <div v-if="bulletin.sjac_title || bulletin.sjac_title_ar">
-          <uni-field :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
+        <div v-show="!isSectionCollapsed('titles')">
+          <div v-if="bulletin.title || bulletin.title_ar">
+            <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
+          </div>
+          <div v-if="bulletin.sjac_title || bulletin.sjac_title_ar">
+            <uni-field :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
+          </div>
         </div>
       </div>
 
       <!-- Classification zone -->
-      <div v-if="bulletin.sources?.length || bulletin.labels?.length || bulletin.verLabels?.length" class="bd-content-block">
-        <div v-if="bulletin.sources?.length" class="mb-3">
-          <div class="bd-section-label"><v-icon size="x-small">mdi-database</v-icon>{{ translations.sources_ }}</div>
-          <div class="flex-chips">
-            <v-chip size="small" class="flex-chip bd-chip" v-for="source in bulletin.sources" :key="source.id">{{ source.title }}</v-chip>
-          </div>
+      <div v-if="bulletin.sources?.length || bulletin.labels?.length || bulletin.verLabels?.length" data-section="classification" class="bd-content-block">
+        <div class="bd-section-label bd-collapsible" @click="toggleSection('classification')">
+          <v-icon size="x-small">mdi-tag-multiple</v-icon>{{ translations.sources_ }}
+
+          <v-icon size="x-small" class="bd-collapse-icon">{{ isSectionCollapsed('classification') ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
         </div>
-        <div v-if="bulletin.labels?.length" class="mb-3">
-          <div class="bd-section-label"><v-icon size="x-small">mdi-label-outline</v-icon>{{ translations.labels_ }}</div>
-          <div class="flex-chips">
-            <v-chip label size="small" class="flex-chip bd-chip" v-for="label in bulletin.labels" :key="label.id">{{ label.title }}</v-chip>
+        <div v-show="!isSectionCollapsed('classification')">
+          <div v-if="bulletin.sources?.length" class="mb-3">
+            <div class="bd-section-sublabel">{{ translations.sources_ }}</div>
+            <div class="flex-chips">
+              <v-chip size="small" class="flex-chip bd-chip" v-for="source in bulletin.sources" :key="source.id">{{ source.title }}</v-chip>
+            </div>
           </div>
-        </div>
-        <div v-if="bulletin.verLabels?.length">
-          <div class="bd-section-label"><v-icon size="x-small">mdi-check-decagram</v-icon>{{ translations.verifiedLabels_ }}</div>
-          <div class="flex-chips">
-            <v-chip label size="small" class="flex-chip bd-chip" v-for="vlabel in bulletin.verLabels" :key="vlabel.id">{{ vlabel.title }}</v-chip>
+          <div v-if="bulletin.labels?.length" class="mb-3">
+            <div class="bd-section-sublabel">{{ translations.labels_ }}</div>
+            <div class="flex-chips">
+              <v-chip label size="small" class="flex-chip bd-chip" v-for="label in bulletin.labels" :key="label.id">{{ label.title }}</v-chip>
+            </div>
+          </div>
+          <div v-if="bulletin.verLabels?.length">
+            <div class="bd-section-sublabel">{{ translations.verifiedLabels_ }}</div>
+            <div class="flex-chips">
+              <v-chip label size="small" class="flex-chip bd-chip" v-for="vlabel in bulletin.verLabels" :key="vlabel.id">{{ vlabel.title }}</v-chip>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Media -->
-      <div v-if="bulletin.medias && bulletin.medias.length" class="bd-content-block">
-        <div class="bd-section-label"><v-icon size="x-small">mdi-image-multiple</v-icon>{{ translations.media_ }}</div>
-        <inline-media-renderer
-          renderer-id="bulletin-card"
-          :media="$root.expandedByRenderer?.['bulletin-card']?.media"
-          :media-type="$root.expandedByRenderer?.['bulletin-card']?.mediaType"
-          @ready="$root.onMediaRendererReady"
-          @fullscreen="$root.handleFullscreen('bulletin-card')"
-          @close="$root.closeExpandedMedia('bulletin-card')"
-        ></inline-media-renderer>
-        <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'bulletin-card', ...$event })"></media-grid>
+      <div v-if="bulletin.medias && bulletin.medias.length" data-section="media" class="bd-content-block">
+        <div class="bd-section-label bd-collapsible" @click="toggleSection('media')">
+          <v-icon size="x-small">mdi-image-multiple</v-icon>{{ translations.media_ }}
+
+          <v-icon size="x-small" class="bd-collapse-icon">{{ isSectionCollapsed('media') ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
+        </div>
+        <div v-show="!isSectionCollapsed('media')">
+          <inline-media-renderer
+            renderer-id="bulletin-card"
+            :media="$root.expandedByRenderer?.['bulletin-card']?.media"
+            :media-type="$root.expandedByRenderer?.['bulletin-card']?.mediaType"
+            @ready="$root.onMediaRendererReady"
+            @fullscreen="$root.handleFullscreen('bulletin-card')"
+            @close="$root.closeExpandedMedia('bulletin-card')"
+          ></inline-media-renderer>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'bulletin-card', ...$event })"></media-grid>
+        </div>
       </div>
 
       <!-- Description -->
-      <div v-if="bulletin.description" class="bd-content-block">
-        <div class="bd-section-label"><v-icon size="x-small">mdi-text-box-outline</v-icon>{{ translations.description_ }}</div>
-        <div class="text-body-2">
+      <div v-if="bulletin.description" data-section="description" class="bd-content-block">
+        <div class="bd-section-label bd-collapsible" @click="toggleSection('description')">
+          <v-icon size="x-small">mdi-text-box-outline</v-icon>{{ translations.description_ }}
+          <v-icon size="x-small" class="bd-collapse-icon">{{ isSectionCollapsed('description') ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
+        </div>
+        <div v-show="!isSectionCollapsed('description')" class="text-body-2">
           <read-more><div v-html="bulletin.description"></div></read-more>
         </div>
       </div>
 
       <!-- Spatial zone -->
-      <div class="bd-content-block">
-        <div v-if="bulletin.locations?.length" style="margin-bottom: 12px">
-          <div class="bd-section-label"><v-icon size="x-small">mdi-map-marker-multiple</v-icon>{{ translations.locations_ }}</div>
-          <div class="flex-chips">
-            <v-chip label size="small" prepend-icon="mdi-map-marker" class="flex-chip bd-chip" v-for="location in bulletin.locations" :key="location.id">{{ location.full_string }}</v-chip>
-          </div>
+      <div data-section="spatial" class="bd-content-block">
+        <div class="bd-section-label bd-collapsible" @click="toggleSection('spatial')">
+          <v-icon size="x-small">mdi-map-marker-multiple</v-icon>{{ translations.locations_ }}
+
+          <v-icon size="x-small" class="bd-collapse-icon">{{ isSectionCollapsed('spatial') ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
         </div>
-        <div style="border-radius: 6px; overflow: hidden">
-          <global-map v-model="mapLocations"></global-map>
+        <div v-show="!isSectionCollapsed('spatial')">
+          <div v-if="bulletin.locations?.length" style="margin-bottom: 12px">
+            <div class="flex-chips">
+              <v-chip label size="small" prepend-icon="mdi-map-marker" class="flex-chip bd-chip" v-for="location in bulletin.locations" :key="location.id">{{ location.full_string }}</v-chip>
+            </div>
+          </div>
+          <div style="border-radius: 6px; overflow: hidden">
+            <global-map v-model="mapLocations"></global-map>
+          </div>
         </div>
       </div>
 
       <!-- Events -->
-      <div v-if="bulletin.events?.length" class="bd-content-block">
-        <div class="bd-section-label"><v-icon size="x-small">mdi-calendar-alert</v-icon>{{ translations.events_ }}</div>
-        <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id" :event="event"></event-card>
+      <div v-if="bulletin.events?.length" data-section="events" class="bd-content-block">
+        <div class="bd-section-label bd-collapsible" @click="toggleSection('events')">
+          <v-icon size="x-small">mdi-calendar-alert</v-icon>{{ translations.events_ }}
+
+          <v-icon size="x-small" class="bd-collapse-icon">{{ isSectionCollapsed('events') ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
+        </div>
+        <div v-show="!isSectionCollapsed('events')">
+          <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id" :event="event"></event-card>
+        </div>
       </div>
 
       <!-- Relations -->
-      <div class="bd-relations">
+      <div data-section="relations" class="bd-relations">
         <related-bulletins-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.btobInfo"></related-bulletins-card>
         <related-actors-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.atobInfo"></related-actors-card>
         <related-incidents-card v-if="bulletin" :entity="bulletin" :relationInfo="$root.itobInfo"></related-incidents-card>
       </div>
 
       <!-- Dates -->
-      <div v-if="bulletin.publish_date || bulletin.documentation_date" class="bd-date-strip">
+      <div v-if="bulletin.publish_date || bulletin.documentation_date" data-section="dates" class="bd-date-strip">
         <div v-if="bulletin.publish_date">
           <div class="bd-section-label" style="margin-bottom: 2px"><v-icon size="x-small">mdi-calendar-check</v-icon>{{ translations.publishDate_ }}</div>
           <div class="bd-date-value">{{ $root.formatDate(bulletin.publish_date) }}</div>
@@ -332,8 +452,6 @@ const BulletinCard = Vue.defineComponent({
         </v-toolbar>
 
         <v-card-text>
-
-
           <template v-for="(revision,index) in revisions">
             <v-sheet class="my-1 pa-3  align-center d-flex">
               <span class="caption"><read-more class="mb-2">{{ revision.data['comments'] }}</read-more>
@@ -357,6 +475,9 @@ const BulletinCard = Vue.defineComponent({
         </v-card-text>
 
       </v-card>
+
+      </div><!-- end bd-body -->
+
       <v-dialog
           v-model="diffDialog"
           max-width="770px"
@@ -369,7 +490,6 @@ const BulletinCard = Vue.defineComponent({
         </v-card>
 
       </v-dialog>
-      <!-- Root card -->
     </v-card>
 
 
