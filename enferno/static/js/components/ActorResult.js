@@ -1,6 +1,6 @@
 const ActorResult = Vue.defineComponent({
   props: ['actor', 'hidden', 'showHide'],
-  
+
   data: () => {
     return {
       translations: window.translations,
@@ -16,6 +16,30 @@ const ActorResult = Vue.defineComponent({
           <v-chip v-if="actor.originid" variant="text" class="ml-1"># {{ actor.originid }}</v-chip>
           <v-spacer></v-spacer>
           <v-chip variant="text" v-if="actor.publish_date" size="small">{{ $root.formatDate(actor.publish_date) }}</v-chip>
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                @click.capture="$root.previewItem('/admin/api/actor/'+actor.id+'?mode=3')"
+                variant="text"
+                icon="mdi-magnify-expand"
+                size="x-small"
+              ></v-btn>
+            </template>
+            {{ translations.preview_ }}
+          </v-tooltip>
+          <v-tooltip v-if="showHide" location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                @click="hide=true"
+                variant="text"
+                icon="mdi-minus"
+                size="x-small"
+              ></v-btn>
+            </template>
+            {{ translations.hideFromResults_ }}
+          </v-tooltip>
         </v-toolbar>
         <v-card-title class="text-wrap text-break pt-0">
           <uni-field class="pa-0" disable-spacing :english="actor.name" :arabic="actor.name_ar"></uni-field>
@@ -32,47 +56,15 @@ const ActorResult = Vue.defineComponent({
                 </v-chip>
               </div>
             </v-list-item-subtitle>
-
           </v-list-item>
         </v-card-text>
 
-
-        <v-card-actions class="justify-end">
-          <slot name="actions"></slot>
-          <v-tooltip location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-btn
-                v-bind="props"
-                @click.capture="$root.previewItem('/admin/api/actor/'+actor.id+'?mode=3')"
-                color="secondary"
-                variant="outlined"
-                icon="mdi-magnify-expand"
-                size="small"
-              ></v-btn>
-            </template>
-            {{ translations.preview_ }}
-          </v-tooltip>
-          <v-tooltip v-if="showHide" location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-btn
-                v-bind="props"
-                @click="hide=true"
-                color="secondary"
-                variant="outlined"
-                icon="mdi-minus"
-                size="small"
-              ></v-btn>
-            </template>
-            {{ translations.hideFromResults_ }}
-          </v-tooltip>
-        </v-card-actions>
+        <slot name="actions"></slot>
       </v-card>
 
       <v-card disabled elevation="0" v-else class="restricted">
         <v-card-text>{{ actor.id }} - {{ translations.restricted_ }}</v-card-text>
       </v-card>
-
-
     </template>
   `,
 });

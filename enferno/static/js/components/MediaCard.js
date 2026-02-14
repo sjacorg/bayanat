@@ -54,54 +54,26 @@ const toolbarContent = `
 `
 
 const fileMetadata = `
-  <v-card-text class="px-2 py-1">
-    <div class=" cursor-pointer" @click="copyToClipboard(media.filename)">
-      <v-list-item class="text-caption ml-1 py-0">
-        <template v-slot:prepend>
-          <v-tooltip location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-icon v-bind="props" icon="mdi-file-outline"></v-icon>
-            </template>
-            <div class="d-flex flex-column align-center">
-              <span><strong>{{ translations.filename_ }}</strong></span>
-              <span>{{ translations.click_to_copy_ }}</span>
-            </div>
-          </v-tooltip>
-        </template>
-        <v-tooltip location="bottom">
-          <template v-slot:activator="{ props }">
-            <div v-bind="props" class="text-truncate">
-              {{ media.filename }}
-            </div>
-          </template>
-            {{ media.filename }}
-        </v-tooltip>
-      </v-list-item>
-    </div>
-    <div class="d-flex align-center  cursor-pointer" @click="copyToClipboard(media.etag)">
-      <v-list-item class="text-caption ml-1 py-0 text-truncate">
-        <template v-slot:prepend>
-          <v-tooltip location="bottom">
-            <template v-slot:activator="{ props }">
-              <v-icon v-bind="props" icon="mdi-fingerprint"></v-icon>
-              </template>
-            <div class="d-flex flex-column align-center">
-              <span><strong>{{ translations.etag_ }}</strong></span>
-              <span>{{ translations.click_to_copy_ }}</span>
-            </div>
-          </v-tooltip>
-        </template>
-        <v-tooltip location="bottom">
-          <template v-slot:activator="{ props }">
-            <div v-bind="props" class="text-truncate">
-              {{ media.etag }}
-            </div>
-          </template>
-            {{ media.etag }}
-        </v-tooltip>
-      </v-list-item>
-    </div>
-  </v-card-text>
+  <div class="media-file-meta">
+    <v-tooltip location="bottom">
+      <template v-slot:activator="{ props }">
+        <div v-bind="props" class="media-file-row" @click="copyToClipboard(media.filename)">
+          <v-icon size="small" color="grey">mdi-file-outline</v-icon>
+          <span class="media-file-text">{{ media.filename }}</span>
+        </div>
+      </template>
+      {{ translations.filename_ }} &middot; {{ translations.click_to_copy_ }}
+    </v-tooltip>
+    <v-tooltip location="bottom">
+      <template v-slot:activator="{ props }">
+        <div v-bind="props" class="media-file-row" @click="copyToClipboard(media.etag)">
+          <v-icon size="small" color="grey">mdi-fingerprint</v-icon>
+          <span class="media-file-text">{{ media.etag }}</span>
+        </div>
+      </template>
+      {{ translations.etag_ }} &middot; {{ translations.click_to_copy_ }}
+    </v-tooltip>
+  </div>
 `
 
 const MediaCard = Vue.defineComponent({
