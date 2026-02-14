@@ -5,7 +5,9 @@ import re
 import unicodedata
 from pathlib import Path
 
+import boto3
 import httpx
+from botocore.config import Config as BotoConfig
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
@@ -56,13 +58,13 @@ def process_media_extraction_task(
         if not _is_ocr_supported(media):
             return {"success": False, "media_id": media_id, "error": "Unsupported file type"}
 
-        file_path = _get_media_path(media)
-        if not file_path or not file_path.exists():
+        file_bytes = _read_media_bytes(media)
+        if not file_bytes:
             return {"success": False, "media_id": media_id, "error": "File not found"}
 
         # OCR via Google Vision
         hints = language_hints or DEFAULT_LANGUAGE_HINTS
-        result = _extract_text(file_path, hints)
+        result = _extract_text(file_bytes, hints)
         if result is None:
             _save_failed_extraction(media_id, "Vision API failed")
             return {"success": False, "media_id": media_id, "error": "Vision API failed"}
@@ -107,11 +109,31 @@ def process_media_extraction_task(
         return {"success": False, "media_id": media_id, "error": str(e)}
 
 
-def _get_media_path(media: Media) -> Path | None:
-    """Get file path for media object."""
+def _read_media_bytes(media: Media) -> bytes | None:
+    """Read media file bytes from local filesystem or S3."""
     if not media.media_file:
         return None
-    return Media.media_dir / media.media_file
+
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        path = Media.media_dir / media.media_file
+        if not path.exists():
+            return None
+        return path.read_bytes()
+
+    # S3: read directly into memory
+    try:
+        s3 = boto3.client(
+            "s3",
+            config=BotoConfig(signature_version="s3v4"),
+            aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+            region_name=current_app.config["AWS_REGION"],
+        )
+        response = s3.get_object(Bucket=current_app.config["S3_BUCKET"], Key=media.media_file)
+        return response["Body"].read()
+    except Exception as e:
+        logger.error(f"S3 read failed for {media.media_file}: {e}")
+        return None
 
 
 def _orientation_from_vision(page: dict) -> int:
@@ -164,16 +186,14 @@ class VisionAPIError(Exception):
         f"Vision API error, retry {retry_state.attempt_number}/3"
     ),
 )
-def _extract_text(file_path: Path, language_hints: list) -> dict | None:
+def _extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
     """Call Google Vision REST API with retry on errors.
 
     Returns dict with: text, confidence, word_count, language, raw (or None on failure).
     """
     try:
         api_key = _get_api_key()
-
-        with open(file_path, "rb") as f:
-            image_content = base64.b64encode(f.read()).decode("utf-8")
+        image_content = base64.b64encode(file_bytes).decode("utf-8")
 
         response = httpx.post(
             f"{VISION_API_URL}?key={api_key}",
