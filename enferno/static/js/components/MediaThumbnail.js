@@ -301,7 +301,7 @@ const MediaThumbnail = Vue.defineComponent({
     },
   },
   template: /*html*/`
-    <div @click="handleClick" :class="['h-100 position-relative overflow-hidden', { 'cursor-pointer': clickable }]">
+    <div @click="handleClick" :class="['h-100 w-100 position-relative overflow-hidden', { 'cursor-pointer': clickable }]">
       <!-- Hover icon overlay -->
       <div v-if="showHoverIcon && clickable && (mediaType === 'pdf' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2 position-absolute top-0 left-0 w-100" style="z-index: 10;">
         <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
