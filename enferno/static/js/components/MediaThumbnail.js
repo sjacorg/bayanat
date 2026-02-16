@@ -36,7 +36,9 @@ const MediaThumbnail = Vue.defineComponent({
       randomGradient: null, // Cache it so it doesn't change on re-render
       isInViewport: false,
       observer: null,
-      s3url: ''
+      s3url: '',
+      isGeneratingThumbnail: false,
+      isGeneratingPdfThumbnail: false,
     };
   },
   mounted() {
@@ -59,7 +61,12 @@ const MediaThumbnail = Vue.defineComponent({
     s3url: {
       immediate: true,
       handler(newUrl) {
-        if (newUrl) {
+        if (!newUrl) return;
+        
+        const hasExistingThumbnail = this.videoThumbnail || this.pdfThumbnailUrl || this.imageLoaded;
+        const isGenerating = this.isGeneratingThumbnail || this.isGeneratingPdfThumbnail;
+        
+        if (!hasExistingThumbnail && !isGenerating) {
           this.initThumbnail();
         }
       }
@@ -119,8 +126,19 @@ const MediaThumbnail = Vue.defineComponent({
       }
     },
     async generatePdfThumbnail() {
+      // Prevent multiple simultaneous generations
+      if (this.isGeneratingPdfThumbnail) {
+        console.log('Already generating PDF thumbnail, skipping...');
+        return;
+      }
+      
+      this.isGeneratingPdfThumbnail = true;
+      
       try {
-        if (typeof pdfjsLib === 'undefined') await this.loadPdfJs();
+        if (typeof pdfjsLib === 'undefined') {
+            await loadScript('/static/js/pdf.js/pdf.min.mjs');
+            await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
+        }
 
         const pdf = await pdfjsLib.getDocument(this.s3url).promise;
         const page = await pdf.getPage(1);
@@ -154,17 +172,43 @@ const MediaThumbnail = Vue.defineComponent({
         }).promise;
 
         this.pdfThumbnailUrl = canvas.toDataURL('image/png');
+        
+        // Cleanup PDF resources
+        await page.cleanup();
+        pdf.destroy();
+        
       } catch (err) {
         console.error("PDF thumbnail error:", err);
+      } finally {
+        this.isGeneratingPdfThumbnail = false;
       }
     },
     generateVideoThumbnail() {
+      // Prevent multiple simultaneous generations
+      if (this.isGeneratingThumbnail) {
+        console.log('Already generating thumbnail, skipping...');
+        return;
+      }
+      
+      this.isGeneratingThumbnail = true;
+      
       const video = document.createElement('video');
-      video.src = this.s3url;
       video.crossOrigin = "anonymous";
+      video.preload = "metadata";
+      video.src = this.s3url;
+      
+      video.onerror = (e) => {
+        console.error('Video thumbnail generation failed:', e);
+        this.isGeneratingThumbnail = false;
+        video.src = '';
+        video.load();
+        video.remove();
+      };
+      
       video.onloadeddata = () => {
         this.videoDuration = Number(video.duration);
-        video.currentTime = 1; // Seek to 1 second
+        video.currentTime = 0.1;
+        
         video.onseeked = () => {
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
@@ -173,7 +217,7 @@ const MediaThumbnail = Vue.defineComponent({
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           this.videoThumbnail = canvas.toDataURL();
           
-          // Calculate brightness of center pixels
+          // Calculate brightness
           const centerX = Math.floor(canvas.width / 2);
           const centerY = Math.floor(canvas.height / 2);
           const imageData = ctx.getImageData(centerX - 5, centerY - 5, 10, 10);
@@ -183,9 +227,11 @@ const MediaThumbnail = Vue.defineComponent({
           }
           this.thumbnailBrightness = brightness / (imageData.data.length / 4);
 
-          video.src = ''; // Release video source
-          video.load(); // Force unload
-          video.remove(); // Remove element
+          // Cleanup
+          this.isGeneratingThumbnail = false;
+          video.src = '';
+          video.load();
+          video.remove();
         };
       };
     },
