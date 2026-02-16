@@ -388,9 +388,8 @@ const MediaThumbnail = Vue.defineComponent({
         </a>
 
         <div 
-          v-else
+          v-else-if="hasError"
           class="position-absolute top-0 left-0 w-100 h-100 d-flex align-center justify-center bg-grey-lighten-2"
-          style="z-index: 3;"
         >
           <v-icon :size="compact ? '32' : '64'" color="primary">mdi-image</v-icon>
         </div>
