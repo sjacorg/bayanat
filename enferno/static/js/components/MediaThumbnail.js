@@ -77,7 +77,7 @@ const MediaThumbnail = Vue.defineComponent({
             }
           });
         },
-        { rootMargin: '100px' }
+        { rootMargin: '0px' }
       );
       
       this.observer.observe(this.$el);
