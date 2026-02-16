@@ -309,7 +309,6 @@ const MediaThumbnail = Vue.defineComponent({
           :style="{ 
             background: getRandomGradient(), 
             filter: 'blur(40px)',
-            transform: 'scale(1.2)',
             opacity: imageLoaded ? 0 : 1,
             transition: 'opacity 0.4s ease-in-out',
             zIndex: 1
@@ -339,7 +338,6 @@ const MediaThumbnail = Vue.defineComponent({
           :style="{ 
             background: getRandomGradient(), 
             filter: 'blur(40px)',
-            transform: 'scale(1.2)',
             opacity: videoThumbnail ? 0 : 1,
             transition: 'opacity 0.4s ease-in-out',
             zIndex: 1

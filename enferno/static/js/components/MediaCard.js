@@ -207,7 +207,7 @@ const MediaCard = Vue.defineComponent({
   },
   template: /*html*/`
     <!-- Mini mode card -->
-    <v-card v-if="miniMode" style="width: min(200px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
+    <v-card v-if="miniMode" style="width: min(200px,100%); height: fit-content;" class="border border-1 mx-2">
       <v-card-text class="text-center pa-0">
         <v-hover v-slot="{ isHovering: isHoveringPreview, props: previewHoverProps }">
           <div v-bind="previewHoverProps" class="preview-container position-relative"
@@ -241,7 +241,7 @@ const MediaCard = Vue.defineComponent({
     </v-card>
 
     <!-- Normal size card -->
-    <v-card v-else style="width: min(350px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
+    <v-card v-else style="width: min(350px,100%); height: fit-content;" class="border border-1 mx-2">
       ${toolbarContent}
 
       <v-card-text class="text-center pa-0">
