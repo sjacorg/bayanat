@@ -61,14 +61,6 @@ const MediaThumbnail = Vue.defineComponent({
       }
     }
   },
-  mounted() {
-    this.setupIntersectionObserver();
-  },
-  beforeUnmount() {
-    if (this.observer) {
-      this.observer.disconnect();
-    }
-  },
   methods: {
     async loadPdfJs() {
       await loadScript('/static/js/pdf.js/pdf.min.mjs');
@@ -237,32 +229,9 @@ const MediaThumbnail = Vue.defineComponent({
       
       return this.randomGradient;
     },
-    setupIntersectionObserver() {
-      const element = this.$refs.rootCard.$el;
-      
-      if (!element) {
-        console.warn('Root element not found for intersection observer');
-        return;
-      }
-      
-      this.observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting && !this.isInViewport) {
-              this.isInViewport = true;
-              this.init();
-              this.observer.disconnect();
-            }
-          });
-        },
-        { rootMargin: '100px' }
-      );
-      
-      this.observer.observe(element);
-    },
   },
   template: /*html*/`
-    <div @click="handleClick" :class="['h-100 position-relative', { 'cursor-pointer': clickable }]">
+    <div @click="handleClick" :class="['h-100 position-relative overflow-hidden', { 'cursor-pointer': clickable }]">
       <!-- Hover icon overlay -->
       <div v-if="showHoverIcon && clickable && (mediaType === 'video' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2 position-absolute top-0 left-0 w-100" style="z-index: 10;">
         <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
@@ -291,7 +260,7 @@ const MediaThumbnail = Vue.defineComponent({
             @load="imageLoaded = true"
             class="w-100 h-100" 
             :style="{
-              ...getImageStyle(media?.extraction?.orientation || 0)
+              ...getImageStyle(media?.extraction?.orientation || 0),
               opacity: imageLoaded ? 1 : 0, 
             }"
           ></img>

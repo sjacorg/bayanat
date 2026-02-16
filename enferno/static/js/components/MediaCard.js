@@ -134,6 +134,14 @@ const MediaCard = Vue.defineComponent({
       expansionPanel: null,
     };
   },
+  mounted() {
+    this.setupIntersectionObserver();
+  },
+  beforeUnmount() {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  },
   computed: {
     mediaType() {
       return this.$root.getFileTypeFromMimeType(this.media?.fileType);
@@ -166,6 +174,29 @@ const MediaCard = Vue.defineComponent({
     }
   },
   methods: {
+    setupIntersectionObserver() {
+      const element = this.$refs.rootCard.$el;
+      
+      if (!element) {
+        console.warn('Root element not found for intersection observer');
+        return;
+      }
+      
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && !this.isInViewport) {
+              this.isInViewport = true;
+              this.init();
+              this.observer.disconnect();
+            }
+          });
+        },
+        { rootMargin: '100px' }
+      );
+      
+      this.observer.observe(element);
+    },
     init() {
       // If s3url already exists on media, use it
       if (this.media.s3url) {
