@@ -197,8 +197,8 @@ const BulletinSearchBox = Vue.defineComponent({
         <v-sheet v-if="showOp" class="mb-4 pa-3 rounded-lg" color="blue-grey-lighten-5">
           <div class="d-flex align-center justify-space-between">
             <div>
-              <div class="text-subtitle-2 font-weight-medium">Search Logic</div>
-              <div class="text-caption text-medium-emphasis">How to combine filters</div>
+              <div class="text-subtitle-2 font-weight-medium">{{ translations.searchLogic_ }}</div>
+              <div class="text-caption text-medium-emphasis">{{ translations.howToCombineFilters_ }}</div>
             </div>
             <v-btn-toggle mandatory v-model="q.op" density="comfortable" color="primary" variant="outlined" divided>
               <v-btn value="and">
@@ -216,7 +216,7 @@ const BulletinSearchBox = Vue.defineComponent({
         <!-- Active filters summary -->
         <v-sheet v-if="totalActiveFilters > 0" class="mb-4 pa-3 rounded-lg d-flex align-center" color="primary" variant="tonal">
           <v-icon size="small" class="me-2">mdi-filter-check</v-icon>
-          <span class="text-body-2 font-weight-medium">{{ totalActiveFilters }} active filter{{ totalActiveFilters > 1 ? 's' : '' }}</span>
+          <span class="text-body-2 font-weight-medium">{{ translations.activeFiltersCount_(totalActiveFilters) }}</span>
         </v-sheet>
 
         <!-- Collapsible search sections -->
@@ -227,7 +227,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2 w-100">
                 <v-icon size="small" color="primary">mdi-text-search</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">Text Search</span>
+                <span class="text-subtitle-2 font-weight-medium">{{ translations.textSearch_ }}</span>
                 <v-badge v-if="textSearchCount > 0" :content="textSearchCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
@@ -250,7 +250,7 @@ const BulletinSearchBox = Vue.defineComponent({
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-minus-circle-outline"
-                  hint="Separate words with space, use quotes for exact match"
+                  :hint="translations.separateWordsWithSpaceUseQuotesForExactMatch_"
                   persistent-hint
                   class="mb-1"
               ></v-text-field>
@@ -305,7 +305,7 @@ const BulletinSearchBox = Vue.defineComponent({
 
               <template v-if="$root.isFieldActiveByName('tags', { entityType: 'bulletin' })">
                 <v-divider class="my-3"></v-divider>
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">TAGS</div>
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.TAGS_ }}</div>
 
                 <v-combobox
                     v-model="q.tags"
@@ -324,7 +324,7 @@ const BulletinSearchBox = Vue.defineComponent({
                 <div class="d-flex align-center flex-wrap mt-n2 mb-2">
                   <v-checkbox :label="translations.any_" density="compact" v-model="q.opTags" color="primary"
                               class="me-4" hide-details></v-checkbox>
-                  <v-checkbox label="Exact Match" density="compact" v-model="q.inExact" color="primary"
+                  <v-checkbox :label="translations.exactMatch_" density="compact" v-model="q.inExact" color="primary"
                               class="me-4" hide-details></v-checkbox>
                 </div>
 
@@ -356,7 +356,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2 w-100">
                 <v-icon size="small" color="primary">mdi-calendar-range</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">Dates</span>
+                <span class="text-subtitle-2 font-weight-medium">{{ translations.dates_ }}</span>
                 <v-badge v-if="dateCount > 0" :content="dateCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
@@ -442,7 +442,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2 w-100">
                 <v-icon size="small" color="primary">mdi-tag-multiple</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">Classification</span>
+                <span class="text-subtitle-2 font-weight-medium">{{ translations.classification_ }}</span>
                 <v-badge v-if="classificationCount > 0" :content="classificationCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
@@ -450,8 +450,8 @@ const BulletinSearchBox = Vue.defineComponent({
 
               <!-- Sources -->
               <template v-if="$root.isFieldActiveByName('sources', { entityType: 'bulletin' })">
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">SOURCES</div>
-                <v-card variant="outlined" class="mb-3 pa-3">
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.SOURCES_ }}</div>
+                <v-card variant="outlined" class="mb-3 pa-3 border-thin">
                   <search-field
                         v-model="q.sources"
                         api="/admin/api/sources/"
@@ -478,8 +478,8 @@ const BulletinSearchBox = Vue.defineComponent({
 
               <!-- Labels -->
               <template v-if="$root.isFieldActiveByName('labels', { entityType: 'bulletin' })">
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">LABELS</div>
-                <v-card variant="outlined" class="mb-3 pa-3">
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.LABELS_ }}</div>
+                <v-card variant="outlined" class="mb-3 pa-3 border-thin">
                   <search-field
                       v-model="q.labels"
                       api="/admin/api/labels/"
@@ -508,8 +508,8 @@ const BulletinSearchBox = Vue.defineComponent({
 
               <!-- Verified Labels -->
               <template v-if="$root.isFieldActiveByName('ver_labels', { entityType: 'bulletin' })">
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">VERIFIED LABELS</div>
-                <v-card variant="outlined" class="mb-3 pa-3">
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.VERIFIEDLABELS_ }}</div>
+                <v-card variant="outlined" class="mb-3 pa-3 border-thin">
                   <search-field
                       v-model="q.vlabels"
                       api="/admin/api/labels/"
@@ -544,7 +544,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2 w-100">
                 <v-icon size="small" color="primary">mdi-shield-account</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">Workflow & Access</span>
+                <span class="text-subtitle-2 font-weight-medium">{{ translations.workflowAndAccess_ }}</span>
                 <v-badge v-if="workflowCount > 0" :content="workflowCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
@@ -617,7 +617,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2 w-100">
                 <v-icon size="small" color="primary">mdi-shield-account</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">Access & Review</span>
+                <span class="text-subtitle-2 font-weight-medium">{{ translations.accessAndReview_ }}</span>
                 <v-badge v-if="workflowCount > 0" :content="workflowCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
@@ -651,7 +651,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2 w-100">
                 <v-icon size="small" color="primary">mdi-map-marker-multiple</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">Locations</span>
+                <span class="text-subtitle-2 font-weight-medium">{{ translations.locations_ }}</span>
                 <v-badge v-if="locationCount > 0" :content="locationCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
@@ -709,7 +709,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2 w-100">
                 <v-icon size="small" color="primary">mdi-form-textbox</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">Custom Fields</span>
+                <span class="text-subtitle-2 font-weight-medium">{{ translations.customFields_ }}</span>
                 <v-badge v-if="dynamicFieldCount > 0" :content="dynamicFieldCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
