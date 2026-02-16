@@ -358,7 +358,7 @@ const MediaThumbnail = Vue.defineComponent({
         </div>
         
         <!-- Fallback icon if error -->
-        <a
+        <a v-if="s3url"
           class="media-item h-100 d-block position-relative"
           :data-src="s3url"
           style="z-index: 2;">
@@ -379,14 +379,21 @@ const MediaThumbnail = Vue.defineComponent({
 
           <!-- Error overlay instead of replacing node -->
           <div 
-            v-show="hasError"
+            v-if="hasError"
             class="position-absolute top-0 left-0 w-100 h-100 d-flex align-center justify-center bg-grey-lighten-2"
             style="z-index: 3;"
           >
             <v-icon :size="compact ? '32' : '64'" color="primary">mdi-image</v-icon>
           </div>
-
         </a>
+
+        <div 
+          v-else
+          class="position-absolute top-0 left-0 w-100 h-100 d-flex align-center justify-center bg-grey-lighten-2"
+          style="z-index: 3;"
+        >
+          <v-icon :size="compact ? '32' : '64'" color="primary">mdi-image</v-icon>
+        </div>
       </template>
 
       <!-- Video preview -->
