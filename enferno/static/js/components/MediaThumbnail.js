@@ -197,14 +197,6 @@ const MediaThumbnail = Vue.defineComponent({
       video.preload = "metadata";
       video.src = this.s3url;
       
-      video.onerror = (e) => {
-        console.error('Video thumbnail generation failed:', e);
-        this.isGeneratingThumbnail = false;
-        video.src = '';
-        video.load();
-        video.remove();
-      };
-      
       video.onloadeddata = () => {
         this.videoDuration = Number(video.duration);
         video.currentTime = 0.1;
