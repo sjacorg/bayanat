@@ -63,7 +63,7 @@ const MediaThumbnail = Vue.defineComponent({
       handler(newUrl) {
         if (!newUrl) return;
         
-        const hasExistingThumbnail = this.thumbnailUrl || this.thumbnailUrl || this.imageLoaded;
+        const hasExistingThumbnail = this.thumbnailUrl || this.imageLoaded;
         const isGenerating = this.isGeneratingThumbnail;
         
         if (!hasExistingThumbnail && !isGenerating) {
@@ -87,7 +87,7 @@ const MediaThumbnail = Vue.defineComponent({
         { rootMargin: '0px' }
       );
       
-      this.observer.observe(this.$el);
+      this.$nextTick(() => this.observer.observe(this.$el));
     },
     async init() {
       if (this.media.s3url) {
@@ -117,7 +117,7 @@ const MediaThumbnail = Vue.defineComponent({
     },
     initThumbnail() {
       if (this.mediaType === 'video') {
-        this.generatethumbnailUrl();
+        this.generateVideoThumbnailUrl();
       } else if (this.mediaType === 'pdf') {
         this.generatePdfThumbnail();
       }
@@ -197,7 +197,7 @@ const MediaThumbnail = Vue.defineComponent({
       }
     },
     
-    generatethumbnailUrl() {
+    generateVideoThumbnailUrl() {
       if (this.isGeneratingThumbnail) return;
       
       this.isGeneratingThumbnail = true;
