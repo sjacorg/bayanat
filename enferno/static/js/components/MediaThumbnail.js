@@ -4,10 +4,6 @@ const MediaThumbnail = Vue.defineComponent({
       type: Object,
       required: true
     },
-    s3url: {
-      type: String,
-      default: ''
-    },
     clickable: {
       type: Boolean,
       default: false
@@ -29,19 +25,27 @@ const MediaThumbnail = Vue.defineComponent({
       default: false
     }
   },
-  emits: ['click'],
+  emits: ['click', 'ready'],
   data() {
     return {
       videoDuration: null,
       videoThumbnail: null,
       pdfThumbnailUrl: null,
       thumbnailBrightness: 0,
-      isInViewport: false,
-      observer: null,
-      translations: window.translations,
       imageLoaded: false,
       randomGradient: null, // Cache it so it doesn't change on re-render
+      isInViewport: false,
+      observer: null,
+      s3url: ''
     };
+  },
+  mounted() {
+    this.setupIntersectionObserver();
+  },
+  beforeUnmount() {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   },
   computed: {
     mediaType() {
@@ -62,6 +66,42 @@ const MediaThumbnail = Vue.defineComponent({
     }
   },
   methods: {
+    setupIntersectionObserver() {
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && !this.isInViewport) {
+              this.isInViewport = true;
+              this.init();
+              this.observer.disconnect();
+            }
+          });
+        },
+        { rootMargin: '100px' }
+      );
+      
+      this.observer.observe(this.$el);
+    },
+    init() {
+      // If s3url already exists on media, use it
+      if (this.media.s3url) {
+        this.s3url = this.media.s3url;
+        this.initThumbnail();
+        this.$emit('ready', this.media);
+        return;
+      }
+
+      // Fetch the s3url
+      api.get(`/admin/api/media/${this.media.filename}`)
+        .then(response => {
+          this.s3url = response.data.url;
+          // Store on media object for persistence across re-renders
+          this.media.s3url = response.data.url;
+          this.initThumbnail();
+        })
+        .catch(error => console.error('Error fetching media:', error))
+        .finally(() => this.$emit('ready', this.media));
+    },
     async loadPdfJs() {
       await loadScript('/static/js/pdf.js/pdf.min.mjs');
       await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
@@ -233,7 +273,7 @@ const MediaThumbnail = Vue.defineComponent({
   template: /*html*/`
     <div @click="handleClick" :class="['h-100 position-relative overflow-hidden', { 'cursor-pointer': clickable }]">
       <!-- Hover icon overlay -->
-      <div v-if="showHoverIcon && clickable && (mediaType === 'video' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2 position-absolute top-0 left-0 w-100" style="z-index: 10;">
+      <div v-if="showHoverIcon && clickable && (mediaType === 'pdf' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2 position-absolute top-0 left-0 w-100" style="z-index: 10;">
         <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
       </div>
 

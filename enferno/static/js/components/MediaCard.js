@@ -115,7 +115,7 @@ const MediaCard = Vue.defineComponent({
       default: false,
     }
   },
-  emits: ['media-click', 'ready'],
+  emits: ['media-click'],
   data() {
     return {
       s3url: '',
@@ -133,14 +133,6 @@ const MediaCard = Vue.defineComponent({
       ocrLoading: false,
       expansionPanel: null,
     };
-  },
-  mounted() {
-    this.setupIntersectionObserver();
-  },
-  beforeUnmount() {
-    if (this.observer) {
-      this.observer.disconnect();
-    }
   },
   computed: {
     mediaType() {
@@ -174,53 +166,6 @@ const MediaCard = Vue.defineComponent({
     }
   },
   methods: {
-    setupIntersectionObserver() {
-      const element = this.$refs.rootCard.$el;
-      
-      if (!element) {
-        console.warn('Root element not found for intersection observer');
-        return;
-      }
-      
-      this.observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting && !this.isInViewport) {
-              this.isInViewport = true;
-              this.init();
-              this.observer.disconnect();
-            }
-          });
-        },
-        { rootMargin: '100px' }
-      );
-      
-      this.observer.observe(element);
-    },
-    init() {
-      // If s3url already exists on media, use it
-      if (this.media.s3url) {
-        this.s3url = this.media.s3url;
-        this.$emit('ready');
-        return;
-      }
-
-      // If we already have s3url in local state, don't refetch
-      if (this.s3url) {
-        this.$emit('ready');
-        return;
-      }
-
-      // Fetch the s3url
-      api.get(`/admin/api/media/${this.media.filename}`)
-        .then(response => {
-          this.s3url = response.data.url;
-          // Store on media object for persistence across re-renders
-          this.media.s3url = response.data.url;
-        })
-        .catch(error => console.error('Error fetching media:', error))
-        .finally(() => this.$emit('ready'));
-    },
     handleMediaClick(payload) {
       // If media-thumbnail passes payload, use it; otherwise create it
       const clickPayload = payload || { media: this.media, mediaType: this.mediaType };
@@ -269,10 +214,10 @@ const MediaCard = Vue.defineComponent({
               style="height: 120px;">
             <media-thumbnail
               :media="media"
-              :s3url="s3url"
               :show-hover-icon="isHoveringPreview"
               clickable
               @click="handleMediaClick"
+              @ready="s3url = $event.s3url"
             />
           </div>
         </v-hover>
@@ -305,10 +250,10 @@ const MediaCard = Vue.defineComponent({
               style="height: 160px;">
             <media-thumbnail
               :media="media"
-              :s3url="s3url"
               :show-hover-icon="isHoveringPreview"
               clickable
               @click="handleMediaClick"
+              @ready="s3url = $event.s3url"
             />
           </div>
         </v-hover>
