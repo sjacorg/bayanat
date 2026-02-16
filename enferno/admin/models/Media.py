@@ -91,9 +91,10 @@ class Media(db.Model, BaseMixin):
             "time": getattr(self, "time", None),
             "duration": self.duration,
             "main": self.main,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
+            "extraction": self.extraction.to_compact_dict() if self.extraction else None,
         }
 
     def to_json(self) -> str:

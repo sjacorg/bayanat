@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 {% endblock %} {% block content %}
 
-
+    {% include 'admin/partials/media_transcription_dialog.html' %}
     {% include  'admin/partials/actor_drawer.html' %}
     {% include 'admin/partials/bulk_actor_drawer.html' %}
     {% include 'admin/partials/export_drawer.html' %}
@@ -318,6 +318,7 @@
 
     <script src="/static/js/mixins/related-search-mixin.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/ocr-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/mixins/form-builder-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
@@ -358,6 +359,7 @@
     <script src="/static/js/components/GeoLocations.js"></script>
     <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/MediaThumbnail.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
@@ -366,6 +368,7 @@
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
     <script src="/static/js/components/FieldRenderer.js"></script>
+    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/SnapshotDialog.js"></script>
@@ -399,7 +402,7 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin],
+            mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin, ocrMixin],
 
             data: () => ({
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
@@ -771,6 +774,14 @@
             },
 
             methods: {
+                onTranscriptionUpdated({ media }) {
+                    this.showOcrDialog(media.id);
+                    this.showActor(this.$route.params.id);
+                },
+                onMediaProcessed({ media }) {
+                    this.showOcrDialog(media.id);
+                    this.showActor(this.$route.params.id);
+                },
                 handleRoute({ initialLoad = false } = {}) {
                     if (this.$route.params.id) this.showActor(this.$route.params.id);
                     if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
@@ -1282,12 +1293,30 @@
 
                 showActor(id) {
                     this.actorLoader = true;
-
                     this.fetchIdNumberTypes();
+
+                    // Save current s3urls before reload
+                    const s3urlCache = {};
+                    if (this.actor?.medias) {
+                        this.actor.medias.forEach(media => {
+                            if (media.s3url) {
+                                s3urlCache[media.id] = media.s3url;
+                            }
+                        });
+                    }
 
                     api.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
+
+                        // Restore s3urls after reload
+                        if (this.actor?.medias) {
+                            this.actor.medias.forEach(media => {
+                                if (s3urlCache[media.id]) {
+                                    media.s3url = s3urlCache[media.id];
+                                }
+                            });
+                        }
                     }).catch(error => {
                         this.actorDrawer = false;
                     }).finally(() => {
@@ -1692,6 +1721,7 @@
         app.component('GlobalMap', GlobalMap);
         app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
+        app.component('MediaThumbnail', MediaThumbnail);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
         app.component('SnapshotDialog', SnapshotDialog);
@@ -1703,6 +1733,7 @@
         app.component('EventsSection', EventsSection);
         app.component('ReadMore', ReadMore);
         app.component('FieldRenderer', FieldRenderer);
+        app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);
