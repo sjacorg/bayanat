@@ -127,10 +127,7 @@ const MediaThumbnail = Vue.defineComponent({
     },
     async generatePdfThumbnail() {
       // Prevent multiple simultaneous generations
-      if (this.isGeneratingPdfThumbnail) {
-        console.log('Already generating PDF thumbnail, skipping...');
-        return;
-      }
+      if (this.isGeneratingPdfThumbnail) return;
       
       this.isGeneratingPdfThumbnail = true;
       
@@ -185,10 +182,7 @@ const MediaThumbnail = Vue.defineComponent({
     },
     generateVideoThumbnail() {
       // Prevent multiple simultaneous generations
-      if (this.isGeneratingThumbnail) {
-        console.log('Already generating thumbnail, skipping...');
-        return;
-      }
+      if (this.isGeneratingThumbnail) return;
       
       this.isGeneratingThumbnail = true;
       
