@@ -108,7 +108,6 @@ const MediaThumbnail = Vue.defineComponent({
     },
     initThumbnail() {
       if (this.mediaType === 'video') {
-        this.getVideoDuration();
         this.generateVideoThumbnail();
       } else if (this.mediaType === 'pdf') {
         this.generatePdfThumbnail();
@@ -117,18 +116,6 @@ const MediaThumbnail = Vue.defineComponent({
     handleClick() {
       if (this.clickable) {
         this.$emit('click', { media: this.media, mediaType: this.mediaType });
-      }
-    },
-    getVideoDuration() {
-      if (this.media.duration) {
-        this.videoDuration = Number(this.media.duration);
-      } else {
-        const video = document.createElement('video');
-        video.src = this.s3url;
-        video.crossOrigin = "anonymous";
-        video.onloadedmetadata = () => {
-          this.videoDuration = video.duration;
-        };
       }
     },
     async generatePdfThumbnail() {
@@ -176,6 +163,7 @@ const MediaThumbnail = Vue.defineComponent({
       video.src = this.s3url;
       video.crossOrigin = "anonymous";
       video.onloadeddata = () => {
+        this.videoDuration = Number(video.duration);
         video.currentTime = 1; // Seek to 1 second
         video.onseeked = () => {
           const canvas = document.createElement('canvas');
@@ -194,6 +182,10 @@ const MediaThumbnail = Vue.defineComponent({
             brightness += (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
           }
           this.thumbnailBrightness = brightness / (imageData.data.length / 4);
+
+          video.src = ''; // Release video source
+          video.load(); // Force unload
+          video.remove(); // Remove element
         };
       };
     },
