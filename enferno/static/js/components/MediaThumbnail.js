@@ -29,8 +29,7 @@ const MediaThumbnail = Vue.defineComponent({
   data() {
     return {
       videoDuration: null,
-      videoThumbnail: null,
-      pdfThumbnailUrl: null,
+      thumbnailUrl: null,
       thumbnailBrightness: 0,
       imageLoaded: false,
       randomGradient: null, // Cache it so it doesn't change on re-render
@@ -38,7 +37,7 @@ const MediaThumbnail = Vue.defineComponent({
       observer: null,
       s3url: '',
       isGeneratingThumbnail: false,
-      isGeneratingPdfThumbnail: false,
+      hasError: false,
     };
   },
   mounted() {
@@ -63,8 +62,8 @@ const MediaThumbnail = Vue.defineComponent({
       handler(newUrl) {
         if (!newUrl) return;
         
-        const hasExistingThumbnail = this.videoThumbnail || this.pdfThumbnailUrl || this.imageLoaded;
-        const isGenerating = this.isGeneratingThumbnail || this.isGeneratingPdfThumbnail;
+        const hasExistingThumbnail = this.thumbnailUrl || this.thumbnailUrl || this.imageLoaded;
+        const isGenerating = this.isGeneratingThumbnail;
         
         if (!hasExistingThumbnail && !isGenerating) {
           this.initThumbnail();
@@ -106,7 +105,11 @@ const MediaThumbnail = Vue.defineComponent({
           this.media.s3url = response.data.url;
           this.initThumbnail();
         })
-        .catch(error => console.error('Error fetching media:', error))
+        .catch(error => {
+          console.error('Error fetching media:', error);
+          this.hasError = true;
+          this.imageLoaded = true; // Hide gradient for images
+        })
         .finally(() => this.$emit('ready', this.media));
     },
     async loadPdfJs() {
@@ -115,7 +118,7 @@ const MediaThumbnail = Vue.defineComponent({
     },
     initThumbnail() {
       if (this.mediaType === 'video') {
-        this.generateVideoThumbnail();
+        this.generatethumbnailUrl();
       } else if (this.mediaType === 'pdf') {
         this.generatePdfThumbnail();
       }
@@ -126,15 +129,15 @@ const MediaThumbnail = Vue.defineComponent({
       }
     },
     async generatePdfThumbnail() {
-      // Prevent multiple simultaneous generations
-      if (this.isGeneratingPdfThumbnail) return;
+      if (this.isGeneratingThumbnail) return;
       
-      this.isGeneratingPdfThumbnail = true;
+      this.isGeneratingThumbnail = true;
+      this.hasError = false; // Reset error state
       
       try {
         if (typeof pdfjsLib === 'undefined') {
-            await loadScript('/static/js/pdf.js/pdf.min.mjs');
-            await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
+          await loadScript('/static/js/pdf.js/pdf.min.mjs');
+          await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
         }
 
         const pdf = await pdfjsLib.getDocument(this.s3url).promise;
@@ -143,11 +146,9 @@ const MediaThumbnail = Vue.defineComponent({
         const THUMB_WIDTH = 240;
         const DPR = window.devicePixelRatio || 1;
 
-        // Base viewport (CSS size)
         const baseViewport = page.getViewport({ scale: 1 });
         const scale = THUMB_WIDTH / baseViewport.width;
 
-        // Render viewport (high DPI)
         const renderViewport = page.getViewport({
           scale: scale * DPR
         });
@@ -155,11 +156,8 @@ const MediaThumbnail = Vue.defineComponent({
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
-        // Internal resolution
         canvas.width = Math.floor(renderViewport.width);
         canvas.height = Math.floor(renderViewport.height);
-
-        // Display size
         canvas.style.borderRadius = "4px";
         canvas.classList.add("w-100");
 
@@ -168,53 +166,76 @@ const MediaThumbnail = Vue.defineComponent({
           viewport: renderViewport
         }).promise;
 
-        this.pdfThumbnailUrl = canvas.toDataURL('image/png');
+        this.thumbnailUrl = canvas.toDataURL('image/png');
         
-        // Cleanup PDF resources
         await page.cleanup();
         pdf.destroy();
         
       } catch (err) {
         console.error("PDF thumbnail error:", err);
+        this.hasError = true;
       } finally {
-        this.isGeneratingPdfThumbnail = false;
+        this.isGeneratingThumbnail = false;
       }
     },
-    generateVideoThumbnail() {
-      // Prevent multiple simultaneous generations
+    
+    generatethumbnailUrl() {
       if (this.isGeneratingThumbnail) return;
       
       this.isGeneratingThumbnail = true;
+      this.hasError = false; // Reset error state
       
       const video = document.createElement('video');
       video.crossOrigin = "anonymous";
       video.preload = "metadata";
       video.src = this.s3url;
       
+      video.onerror = (e) => {
+        console.error('Video thumbnail generation failed:', e);
+        this.hasError = true; // Set error state
+        this.isGeneratingThumbnail = false;
+        
+        // Cleanup
+        video.onerror = null;
+        video.onloadeddata = null;
+        video.onseeked = null;
+        video.src = '';
+        video.load();
+        video.remove();
+      };
+      
       video.onloadeddata = () => {
         this.videoDuration = Number(video.duration);
         video.currentTime = 0.1;
         
         video.onseeked = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          this.videoThumbnail = canvas.toDataURL();
-          
-          // Calculate brightness
-          const centerX = Math.floor(canvas.width / 2);
-          const centerY = Math.floor(canvas.height / 2);
-          const imageData = ctx.getImageData(centerX - 5, centerY - 5, 10, 10);
-          let brightness = 0;
-          for (let i = 0; i < imageData.data.length; i += 4) {
-            brightness += (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            this.thumbnailUrl = canvas.toDataURL();
+            
+            // Calculate brightness
+            const centerX = Math.floor(canvas.width / 2);
+            const centerY = Math.floor(canvas.height / 2);
+            const imageData = ctx.getImageData(centerX - 5, centerY - 5, 10, 10);
+            let brightness = 0;
+            for (let i = 0; i < imageData.data.length; i += 4) {
+              brightness += (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+            }
+            this.thumbnailBrightness = brightness / (imageData.data.length / 4);
+          } catch (err) {
+            console.error('Error generating video thumbnail:', err);
+            this.hasError = true;
           }
-          this.thumbnailBrightness = brightness / (imageData.data.length / 4);
 
           // Cleanup
           this.isGeneratingThumbnail = false;
+          video.onerror = null;
+          video.onloadeddata = null;
+          video.onseeked = null;
           video.src = '';
           video.load();
           video.remove();
@@ -293,6 +314,10 @@ const MediaThumbnail = Vue.defineComponent({
       
       return this.randomGradient;
     },
+    handleImageError() {
+      this.hasError = true;
+      this.imageLoaded = true;
+    },
   },
   template: /*html*/`
     <div @click="handleClick" :class="['h-100 w-100 position-relative overflow-hidden', { 'cursor-pointer': clickable }]">
@@ -301,9 +326,8 @@ const MediaThumbnail = Vue.defineComponent({
         <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
       </div>
 
-      <!-- Image preview with gradient placeholder -->
+      <!-- Image preview -->
       <template v-if="mediaType === 'image'">
-        <!-- Random gradient placeholder - ALWAYS show it first -->
         <div 
           class="w-100 h-100 position-absolute top-0 left-0" 
           :style="{ 
@@ -315,12 +339,18 @@ const MediaThumbnail = Vue.defineComponent({
           }">
         </div>
         
-        <!-- Actual image - only render when we have s3url -->
-        <a class="media-item h-100 d-block position-relative" v-if="s3url" :data-src="s3url" style="z-index: 2;">
+        <!-- Fallback icon if error -->
+        <div v-if="hasError" class="w-100 h-100 d-flex align-center justify-center bg-grey-lighten-2" style="z-index: 2;">
+          <v-icon :size="compact ? '32' : '64'" color="primary">mdi-image</v-icon>
+        </div>
+        
+        <!-- Actual image -->
+        <a v-else-if="s3url" class="media-item h-100 d-block position-relative" :data-src="s3url" style="z-index: 2;">
           <img 
             loading="lazy" 
             :src="s3url" 
             @load="imageLoaded = true"
+            @error="handleImageError"
             class="w-100 h-100" 
             :style="{
               ...getImageStyle(media?.extraction?.orientation || 0),
@@ -330,27 +360,32 @@ const MediaThumbnail = Vue.defineComponent({
         </a>
       </template>
 
-      <!-- Video preview with gradient placeholder -->
-      <template v-if="mediaType === 'video'">
-        <!-- Random gradient placeholder - ALWAYS show it first -->
+      <!-- Video preview -->
+      <template v-else-if="mediaType === 'video'">
         <div 
           class="w-100 h-100 position-absolute top-0 left-0" 
           :style="{ 
             background: getRandomGradient(), 
             filter: 'blur(40px)',
-            opacity: videoThumbnail ? 0 : 1,
+            opacity: (thumbnailUrl || hasError) ? 0 : 1,
             transition: 'opacity 0.4s ease-in-out',
             zIndex: 1
           }">
         </div>
         
+        <!-- Fallback icon if error -->
+        <div v-if="hasError" class="w-100 h-100 d-flex align-center justify-center bg-grey-lighten-2" style="z-index: 2;">
+          <v-icon :size="compact ? '64' : '128'" color="primary">mdi-video</v-icon>
+        </div>
+        
+        <!-- Video thumbnail -->
         <v-img 
-          v-if="videoThumbnail"
-          :src="videoThumbnail" 
+          v-else-if="thumbnailUrl"
+          :src="thumbnailUrl" 
           cover 
           class="h-100 position-relative"
           :style="{ 
-            opacity: videoThumbnail ? 1 : 0,
+            opacity: thumbnailUrl ? 1 : 0,
             transition: 'opacity 0.4s ease-in-out',
             zIndex: 2
           }">
@@ -364,8 +399,9 @@ const MediaThumbnail = Vue.defineComponent({
       </template>
 
       <!-- PDF preview -->
-      <div v-else-if="mediaType === 'pdf'" :class="['d-flex justify-center bg-grey-lighten-2 h-100 overflow-hidden', { 'align-center': !pdfThumbnailUrl, 'pa-1 align-start': pdfThumbnailUrl && compact, 'pa-4 align-start': pdfThumbnailUrl && !compact }]">
-        <img v-if="pdfThumbnailUrl" :src="pdfThumbnailUrl" :class="['w-100', compact ? 'rounded-sm' : 'rounded elevation-4']" />
+      <div v-else-if="mediaType === 'pdf'" :class="['d-flex justify-center bg-grey-lighten-2 h-100 overflow-hidden', { 'align-center': !thumbnailUrl, 'pa-1 align-start': thumbnailUrl && compact, 'pa-4 align-start': thumbnailUrl && !compact }]">
+        <!-- PDF thumbnail or fallback icon -->
+        <img v-if="thumbnailUrl" :src="thumbnailUrl" :class="['w-100', compact ? 'rounded-sm' : 'rounded elevation-4']" />
         <v-icon v-else :size="compact ? '32' : '64'" color="red">mdi-file-pdf-box</v-icon>
       </div>
 
