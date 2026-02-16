@@ -38,6 +38,7 @@ const MediaThumbnail = Vue.defineComponent({
       s3url: '',
       isGeneratingThumbnail: false,
       hasError: false,
+      clickLoading: false,
     };
   },
   mounted() {
@@ -88,8 +89,7 @@ const MediaThumbnail = Vue.defineComponent({
       
       this.observer.observe(this.$el);
     },
-    init() {
-      // If s3url already exists on media, use it
+    async init() {
       if (this.media.s3url) {
         this.s3url = this.media.s3url;
         this.initThumbnail();
@@ -97,20 +97,19 @@ const MediaThumbnail = Vue.defineComponent({
         return;
       }
 
-      // Fetch the s3url
-      api.get(`/admin/api/media/${this.media.filename}`)
-        .then(response => {
-          this.s3url = response.data.url;
-          // Store on media object for persistence across re-renders
-          this.media.s3url = response.data.url;
-          this.initThumbnail();
-        })
-        .catch(error => {
-          console.error('Error fetching media:', error);
-          this.hasError = true;
-          this.imageLoaded = true; // Hide gradient for images
-        })
-        .finally(() => this.$emit('ready', this.media));
+      try {
+        const response = await api.get(`/admin/api/media/${this.media.filename}`);
+        this.s3url = response.data.url;
+        this.media.s3url = response.data.url;
+        this.initThumbnail();
+      } catch (error) {
+        console.error('Error fetching media:', error);
+        this.hasError = true;
+        this.imageLoaded = true;
+        throw error;
+      } finally {
+        this.$emit('ready', this.media);
+      }
     },
     async loadPdfJs() {
       await loadScript('/static/js/pdf.js/pdf.min.mjs');
@@ -123,9 +122,28 @@ const MediaThumbnail = Vue.defineComponent({
         this.generatePdfThumbnail();
       }
     },
-    handleClick() {
-      if (this.clickable) {
+    async handleClick() {
+      if (!this.clickable) return;
+
+      // If already ready → emit immediately
+      if (this.media?.s3url) {
         this.$emit('click', { media: this.media, mediaType: this.mediaType });
+        return;
+      }
+
+      // Prevent parallel inits
+      if (this.clickLoading) return;
+      this.clickLoading = true;
+
+      try {
+        await this.init();   // wait for s3url
+        if (this.media?.s3url) {
+          this.$emit('click', { media: this.media, mediaType: this.mediaType });
+        }
+      } catch (e) {
+        console.error('Click init failed:', e);
+      } finally {
+        this.clickLoading = false;
       }
     },
     async generatePdfThumbnail() {
@@ -340,12 +358,12 @@ const MediaThumbnail = Vue.defineComponent({
         </div>
         
         <!-- Fallback icon if error -->
-        <div v-if="hasError" class="w-100 h-100 d-flex align-center justify-center bg-grey-lighten-2" style="z-index: 2;">
-          <v-icon :size="compact ? '32' : '64'" color="primary">mdi-image</v-icon>
-        </div>
-        
-        <!-- Actual image -->
-        <a v-else-if="s3url" class="media-item h-100 d-block position-relative" :data-src="s3url" style="z-index: 2;">
+        <a
+          class="media-item h-100 d-block position-relative"
+          :data-src="s3url"
+          style="z-index: 2;">
+
+          <!-- Actual image (always exists) -->
           <img 
             loading="lazy" 
             :src="s3url" 
@@ -354,9 +372,20 @@ const MediaThumbnail = Vue.defineComponent({
             class="w-100 h-100" 
             :style="{
               ...getImageStyle(media?.extraction?.orientation || 0),
-              opacity: imageLoaded ? 1 : 0, 
+              opacity: hasError ? 0 : (imageLoaded ? 1 : 0),
+              pointerEvents: hasError ? 'none' : 'auto'
             }"
-          ></img>
+          >
+
+          <!-- Error overlay instead of replacing node -->
+          <div 
+            v-show="hasError"
+            class="position-absolute top-0 left-0 w-100 h-100 d-flex align-center justify-center bg-grey-lighten-2"
+            style="z-index: 3;"
+          >
+            <v-icon :size="compact ? '32' : '64'" color="primary">mdi-image</v-icon>
+          </div>
+
         </a>
       </template>
 
