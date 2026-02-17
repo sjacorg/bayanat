@@ -719,7 +719,7 @@ const ActorSearchBox = Vue.defineComponent({
 
               <!-- ID Number -->
               <div v-if="$root.isFieldActiveByName('id_number', { entityType: 'actor' })">
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.idNumber_ }}</div>
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.IDNUMBER_ }}</div>
                 <v-card variant="outlined" class="pa-3 border-thin">
                   <v-row dense>
                     <v-col cols="12" sm="6">
@@ -872,7 +872,7 @@ const ActorSearchBox = Vue.defineComponent({
             <v-expansion-panel-text eager>
 
               <!-- Access Roles -->
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.accessRoles_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.ACCESSROLES_ }}</div>
               <v-row dense>
                 <v-col cols="12" md="9">
                   <v-chip-group column multiple v-model="q.roles" selected-class="text-primary">
@@ -887,7 +887,7 @@ const ActorSearchBox = Vue.defineComponent({
               <v-divider class="my-3"></v-divider>
 
               <!-- Assigned User -->
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.assignedUser_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.ASSIGNEDUSER_ }}</div>
               <v-row dense>
                 <v-col cols="12" md="9">
                   <v-chip-group column multiple v-model="q.assigned" selected-class="text-primary">
@@ -904,7 +904,7 @@ const ActorSearchBox = Vue.defineComponent({
               <v-divider class="my-3"></v-divider>
 
               <!-- Reviewer -->
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.reviewer_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.REVIEWER_ }}</div>
               <v-chip-group column multiple v-model="q.reviewer" selected-class="text-primary">
                 <template v-for="user in users" :key="user.id">
                   <v-chip :value="user.id" size="small" v-show="user.display_name" filter variant="outlined">{{ user.display_name }}</v-chip>
@@ -914,7 +914,7 @@ const ActorSearchBox = Vue.defineComponent({
               <v-divider class="my-3"></v-divider>
 
               <!-- Workflow Status -->
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.workflowStatus_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.WORKFLOWSTATUS_ }}</div>
               <v-chip-group column multiple v-model="q.statuses" selected-class="text-primary">
                 <v-chip :value="status.en" size="small" v-for="status in translations.statuses"
                         filter variant="outlined" :key="status.en">{{ status.tr }}
@@ -924,7 +924,7 @@ const ActorSearchBox = Vue.defineComponent({
               <v-divider class="my-3"></v-divider>
 
               <!-- Review Action -->
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.reviewAction_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.REVIEWACTION_ }}</div>
               <v-chip-group column v-model="q.reviewAction" selected-class="text-primary">
                 <v-chip :value="translations.noReviewNeeded_" size="small" filter variant="outlined">{{ translations.noReviewNeeded_ }}</v-chip>
                 <v-chip :value="translations.needsReview_" size="small" filter variant="outlined">{{ translations.needsReview_ }}</v-chip>
@@ -944,7 +944,7 @@ const ActorSearchBox = Vue.defineComponent({
             </v-expansion-panel-title>
             <v-expansion-panel-text eager>
               <!-- Access Roles -->
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.accessRoles_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.ACCESSROLES_ }}</div>
               <v-row dense>
                 <v-col cols="12" md="9">
                   <v-chip-group column multiple v-model="q.roles" selected-class="text-primary">
@@ -959,7 +959,7 @@ const ActorSearchBox = Vue.defineComponent({
               <v-divider class="my-3"></v-divider>
 
               <!-- Review Action -->
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.reviewAction_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.REVIEWACTION_ }}</div>
               <v-chip-group column v-model="q.reviewAction" selected-class="text-primary">
                 <v-chip :value="translations.noReviewNeeded_" size="small" filter variant="outlined">{{ translations.noReviewNeeded_ }}</v-chip>
                 <v-chip :value="translations.needsReview_" size="small" filter variant="outlined">{{ translations.needsReview_ }}</v-chip>
@@ -1001,7 +1001,7 @@ const ActorSearchBox = Vue.defineComponent({
 
               <v-divider v-if="$root.isFieldActiveByName('origin_place', { entityType: 'actor' })" class="my-4"></v-divider>
 
-              <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.geospatial_ }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.GEOSPATIAL_ }}</div>
               <v-chip-group multiple column mandatory v-model="q.locTypes" selected-class="text-primary">
                 <v-chip
                     v-for="type in translations.actorLocTypes_"

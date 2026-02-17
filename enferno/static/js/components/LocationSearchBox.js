@@ -161,7 +161,7 @@ const LocationSearchBox = Vue.defineComponent({
 
                 <v-divider class="mb-4"></v-divider>
 
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.geospatial_ }}</div>
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.GEOSPATIAL_ }}</div>
                 <geo-map
                     class="flex-grow-1"
                     v-model="q.latlng"
