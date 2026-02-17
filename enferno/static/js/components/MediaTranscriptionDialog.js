@@ -56,11 +56,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         id: this.media?.id,
       };
     },
-    needsReview() {
-      return ['needs_review', 'needs_transcription'].includes(this.media?.ocr_status);
-    },
     canEdit() {
-      return ['needs_review', 'needs_transcription', 'processed', 'manual'].includes(this.media?.ocr_status) && this.hasVisionApiKey;
+      return ['processed', 'manual'].includes(this.media?.ocr_status);
     },
     isProcessing() {
       return this.media?.ocr_status === 'processing';
@@ -124,10 +121,10 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       this.orientation.orientationToSave = this.normalizeOrientation(newOrientation);
     },
     saveOrientation() {
-      if (!this.media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+      if (!this.media?.id) return;
       this.orientation.saving = true;
 
-      api.put(`/admin/api/extraction/${this.media.extraction.id}`, { action: 'orientation', orientation: this.orientation.orientationToSave })
+      api.put(`/admin/api/media/${this.media.id}/orientation`, { orientation: this.orientation.orientationToSave })
         .then(response => {
           this.$root.showSnack(this.translations.orientationSaved_);
           this.$emit('orientation-saved', { media: this.media, orientation: this.orientation.orientationToSave });
@@ -330,18 +327,18 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       <div>
                         <inline-media-renderer
                           renderer-id="ocr-dialog"
-                          :initial-orientation="media?.extraction?.orientation || 0"
+                          :initial-orientation="media?.orientation || 0"
                           :media="$root.expandedByRenderer?.['ocr-dialog']?.media"
                           :media-type="fileTypeFromMedia"
                           @orientation-changed="onOrientationChanged"
                           @ready="$root.onMediaRendererReady"
-                          @fullscreen="$root.handleFullscreen('ocr-dialog')""
+                          @fullscreen="$root.handleFullscreen('ocr-dialog')"
                           content-style="height: calc(100vh - 174px);"
                           hide-close
                           :use-metadata="true"
                         ></inline-media-renderer>
                       </div>
-                      <v-btn v-if="orientation.showSaveButton && media?.extraction" @click="saveOrientation" prepend-icon="mdi-check" :loading="orientation.saving" class="ma-2 position-absolute right-0 bottom-0" color="primary" style="zIndex: 3002;">{{ translations.saveOrientation_ }}</v-btn>
+                      <v-btn v-if="orientation.showSaveButton" @click="saveOrientation" prepend-icon="mdi-check" :loading="orientation.saving" class="ma-2 position-absolute right-0 bottom-0" color="primary" style="zIndex: 3002;">{{ translations.saveOrientation_ }}</v-btn>
                     </div>
                   </v-card-text>
                 </v-card>
@@ -446,7 +443,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
                     <!-- Alert for low word count - only show when viewing, not editing -->
                     <v-alert
-                      v-if="isLowWordCount && !isTranscriptionChanged && needsReview"
+                      v-if="isLowWordCount && !isTranscriptionChanged"
                       color="info"
                       variant="tonal"
                       density="compact"
@@ -688,6 +685,25 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       </div>
                     </div>
                   </v-card-text>
+
+                  <!-- Edit History -->
+                  <v-expansion-panels v-if="media?.extraction?.history?.length" flat class="flex-0-0 mx-4 mb-2">
+                    <v-expansion-panel>
+                      <v-expansion-panel-title class="text-caption py-1" style="min-height: 36px;">
+                        <v-icon icon="mdi-history" size="small" class="mr-2"></v-icon>
+                        {{ translations.editHistory_ || 'Edit History' }} ({{ media.extraction.history.length }})
+                      </v-expansion-panel-title>
+                      <v-expansion-panel-text>
+                        <div v-for="(entry, idx) in [...media.extraction.history].reverse()" :key="idx" class="mb-2 text-caption">
+                          <div class="d-flex align-center ga-2 text-medium-emphasis">
+                            <v-icon icon="mdi-account" size="x-small"></v-icon>
+                            <span>User #{{ entry.user_id }}</span>
+                            <span>{{ $root.formatDate(entry.timestamp) }}</span>
+                          </div>
+                        </div>
+                      </v-expansion-panel-text>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
 
                   <!-- Action Buttons - Fixed at bottom -->
                   <v-card-actions v-if="canEdit" class="pa-4 pt-0">

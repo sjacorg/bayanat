@@ -121,6 +121,7 @@ const MediaCard = Vue.defineComponent({
       s3url: '',
       visionApiKey: window.__GOOGLE_VISION_API_KEY__,
       isCurrentUserAdmin: window.__isAdmin__ || false,
+      isCurrentUserDA: window.__isDA__ || false,
       translations: window.translations,
       iconMap: {
         image: 'mdi-image',
@@ -144,7 +145,7 @@ const MediaCard = Vue.defineComponent({
 
       const isMediaSaved = !!this.media?.id;
       const isSupportedType = this.$root.selectableFileTypes.includes(this.mediaType);
-      const visible = this.isCurrentUserAdmin && Boolean(this.visionApiKey);
+      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && Boolean(this.visionApiKey);
       const disabled = !isSupportedType || !isMediaSaved;
       let text = '';
 
