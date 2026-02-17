@@ -613,9 +613,9 @@ def api_extraction_get(extraction_id: int):
 @roles_accepted("Admin", "DA")
 def api_extraction_update(extraction_id: int):
     """
-    Update extraction record (accept, transcribe, mark unreadable).
+    Update extraction record (transcribe or mark unreadable).
     Body:
-      - action: accept|transcribe|cant_read
+      - action: transcribe|cant_read
       - text: (required for transcribe) corrected text
     """
     extraction = Extraction.query.get(extraction_id)
@@ -625,12 +625,7 @@ def api_extraction_update(extraction_id: int):
     data = request.json or {}
     action = data.get("action")
 
-    if action == "accept":
-        extraction.status = "processed"
-        extraction.reviewed_by = current_user.id
-        extraction.reviewed_at = datetime.utcnow()
-
-    elif action == "transcribe":
+    if action == "transcribe":
         text = data.get("text")
         if not text:
             return HTTPResponse.error("Text required for transcription")
@@ -658,12 +653,11 @@ def api_extraction_update(extraction_id: int):
         extraction.reviewed_at = datetime.utcnow()
 
     else:
-        return HTTPResponse.error("Invalid action. Use: accept, transcribe, cant_read")
+        return HTTPResponse.error("Invalid action. Use: transcribe, cant_read")
 
     db.session.commit()
 
     detail_map = {
-        "accept": "OCR text accepted",
         "transcribe": "Manual transcription",
         "cant_read": "Marked unreadable",
     }

@@ -4,7 +4,6 @@
     :media="ocr.dialog.data"
     :has-vision-api-key="Boolean('{{ config.GOOGLE_VISION_API_KEY }}')"
     @rejected="onTranscriptionUpdated($event)"
-    @accepted="onTranscriptionUpdated($event)"
     @transcribed="onTranscriptionUpdated($event)"
     @processed="onMediaProcessed($event)"
     @orientation-saved="onMediaProcessed($event)"

@@ -5,18 +5,15 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     media: { type: Object, default: () => ({}) },
     hasVisionApiKey: { type: Boolean, default: false },
   },
-  emits: ['update:open', 'rejected', 'accepted', 'transcribed', 'processed', 'orientation-saved'],
+  emits: ['update:open', 'rejected', 'transcribed', 'processed', 'orientation-saved'],
   data() {
     return {
       translations: window.translations,
-      transcriptionText: this.media?.extraction?.text || '',
+      transcriptionText: '',
+      editing: false,
       saving: false,
       rejecting: false,
-      confidenceLevels: {
-        high: 85,
-        medium: 70,
-      },
-      // Translation feature
+      confidenceLevels: { high: 85, medium: 70 },
       translation: {
         loading: false,
         text: '',
@@ -39,22 +36,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     };
   },
   computed: {
-    isTranscriptionChanged() {
-      return this.transcriptionText !== this.media?.extraction?.text;
-    },
-    isTranscriptionEmpty() {
-      return !this.transcriptionText || this.transcriptionText.trim() === '';
-    },
-    fileTypeFromMedia() {
-      return this.$root.getFileTypeFromMimeType(this.media?.fileType);
-    },
-    mediaRendererData() {
-      return {
-        ...this.media,
-        s3url: this.media?.media_url,
-        title: this.media?.title,
-        id: this.media?.id,
-      };
+    hasText() {
+      return !!this.media?.extraction?.text?.trim();
     },
     canEdit() {
       return ['processed', 'manual'].includes(this.media?.ocr_status);
@@ -71,50 +54,87 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     isCantRead() {
       return this.media?.ocr_status === 'cant_read';
     },
-    isProcessed() {
-      return ['processed', 'manual'].includes(this.media?.ocr_status);
+    fileTypeFromMedia() {
+      return this.$root.getFileTypeFromMimeType(this.media?.fileType);
+    },
+    mediaRendererData() {
+      return {
+        ...this.media,
+        s3url: this.media?.media_url,
+        title: this.media?.title,
+        id: this.media?.id,
+      };
     },
     progressBarTextProps() {
       const hasConfidence = this.media?.extraction?.confidence > 0;
       return {
         class: hasConfidence ? 'text-white' : '',
-        style: { 
-          textShadow: `1px 1px 4px rgba(0, 0, 0, ${hasConfidence ? 1 : 0})` 
-        }
+        style: { textShadow: `1px 1px 4px rgba(0, 0, 0, ${hasConfidence ? 1 : 0})` }
       }
     },
     effectiveWordCount() {
-      // If user is editing, count words in their text
-      if (this.isTranscriptionChanged) {
-        return this.$root.countWords(this.transcriptionText);
-      }
-      
-      // Use API word count or fallback to counting the text
+      if (this.editing) return this.$root.countWords(this.transcriptionText);
       const apiCount = this.media?.extraction?.word_count;
-      if (apiCount > 0) {
-        return apiCount;
-      }
-      
-      // Count from text as fallback
+      if (apiCount > 0) return apiCount;
       return this.$root.countWords(this.media?.extraction?.text);
     },
     isLowWordCount() {
       return this.effectiveWordCount > 0 && this.effectiveWordCount < this.$root.lowWordCount;
     },
     canTranslate() {
-      return !this.isTranscriptionEmpty && this.media?.extraction?.id;
+      return this.hasText && this.media?.extraction?.id;
+    },
+    revisionCount() {
+      return this.media?.extraction?.history?.length || 0;
     },
   },
   methods: {
-    normalizeOrientation(newOrientation) {
-      // Normalize orientation to be 0, 90, 180, 270
-      let normalized = newOrientation % 360;
-      if (normalized < 0) {
-        normalized += 360;
-      }
-      const roundedTo90 = Math.round(normalized / 90) * 90;
+    enterEditMode() {
+      this.transcriptionText = this.media?.extraction?.text || '';
+      this.editing = true;
+    },
+    cancelEdit() {
+      this.editing = false;
+      this.transcriptionText = '';
+    },
+    saveRevision() {
+      if (!this.media?.extraction) return;
+      if (!this.transcriptionText?.trim()) return;
+      this.saving = true;
 
-      return roundedTo90 % 360;
+      api.put(`/admin/api/extraction/${this.media.extraction.id}`, { action: 'transcribe', text: this.transcriptionText })
+        .then(() => {
+          this.$root.showSnack(this.translations.revisionSaved_ || 'Revision saved');
+          this.editing = false;
+          this.$emit('transcribed', { media: this.media, text: this.transcriptionText });
+        })
+        .catch(error => {
+          console.error('Save revision error:', error);
+        })
+        .finally(() => {
+          this.saving = false;
+        });
+    },
+    markAsCannotRead(media) {
+      if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
+      this.rejecting = true;
+
+      api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' })
+        .then(() => {
+          this.$root.showSnack(this.translations.mediaMarkedAsCannotRead_);
+          this.$emit('rejected', { media });
+        })
+        .catch(error => {
+          console.error('Reject error:', error);
+        })
+        .finally(() => {
+          this.rejecting = false;
+        });
+    },
+    normalizeOrientation(newOrientation) {
+      let normalized = newOrientation % 360;
+      if (normalized < 0) normalized += 360;
+      return Math.round(normalized / 90) * 90 % 360;
     },
     onOrientationChanged(newOrientation) {
       this.orientation.showSaveButton = true;
@@ -125,7 +145,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       this.orientation.saving = true;
 
       api.put(`/admin/api/media/${this.media.id}/orientation`, { orientation: this.orientation.orientationToSave })
-        .then(response => {
+        .then(() => {
           this.$root.showSnack(this.translations.orientationSaved_);
           this.$emit('orientation-saved', { media: this.media, orientation: this.orientation.orientationToSave });
           this.orientation.showSaveButton = false;
@@ -138,7 +158,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
         });
     },
     closeDialog() {
-      this.$root.closeExpandedMedia('ocr-dialog')
+      this.editing = false;
+      this.$root.closeExpandedMedia('ocr-dialog');
       this.$emit('update:open', false);
     },
     getConfidenceColor(confidence) {
@@ -154,14 +175,14 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     runOCRProcess() {
       if (!this.media?.id) return;
       if (!this.hasVisionApiKey) return this.$root.showSnack(this.translations.googleVisionApiHasNotBeenConfigured_);
-      
+
       this.saving = true;
-      
+
       api.post(`/admin/api/ocr/process/${this.media.id}`)
         .then(response => {
           if (response.data.success) {
             this.$root.showSnack(this.translations.ocrProcessedSuccessfully_);
-            this.$emit('processed', { media: this.media});
+            this.$emit('processed', { media: this.media });
           } else {
             this.$root.showSnack(response.data.error);
           }
@@ -174,59 +195,6 @@ const MediaTranscriptionDialog = Vue.defineComponent({
           this.saving = false;
         });
     },
-    markAsTranscribed({ media, text }) {
-      if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
-      this.saving = true;
-
-      api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'transcribe', text })
-        .then(response => {
-          this.$root.showSnack(this.translations.mediaManuallyTranscribed_);
-          this.$emit('transcribed', { media, text });
-        })
-        .catch(error => {
-          console.error('Transcribe error:', error);
-        })
-        .finally(() => {
-          this.saving = false;
-        });
-    },
-    markAsAccepted(media) {
-      if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
-      this.saving = true;
-
-      api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'accept' })
-        .then(response => {
-          this.$root.showSnack(this.translations.mediaMarkedAsAccepted_);
-          this.$emit('accepted', { media });
-        })
-        .catch(error => {
-          console.error('Accept error:', error);
-        })
-        .finally(() => {
-          this.saving = false;
-        });
-    },
-    markAsCannotRead(media) {
-      if (!media?.extraction) return this.$root.showSnack(this.translations.noExtractionDataFoundForThisMedia_);
-      this.rejecting = true;
-
-      api.put(`/admin/api/extraction/${media.extraction.id}`, { action: 'cant_read' })
-        .then(response => {
-          this.$root.showSnack(this.translations.mediaMarkedAsCannotRead_);
-          this.$emit('rejected', { media});
-        })
-        .catch(error => {
-          console.error('Reject error:', error);
-        })
-        .finally(() => {
-          this.rejecting = false;
-        });
-    },
-    // Translation methods
-    getLanguageName(langCode) {
-      const lang = this.availableLanguages.find(l => l.code === langCode);
-      return lang ? lang.name : langCode.toUpperCase();
-    },
     getPreferredLanguage() {
       return localStorage.getItem('ocr_translation_target_language') || 'en';
     },
@@ -235,17 +203,13 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     async translateText() {
       if (!this.canTranslate) return;
-      
       this.translation.loading = true;
-      
-      // Save user's language preference
       this.savePreferredLanguage(this.translation.targetLanguage);
-      
+
       try {
         const response = await api.post(`/admin/api/extraction/${this.media.extraction.id}/translate`, {
           target_language: this.translation.targetLanguage
         });
-        
         if (response.data) {
           this.translation.show = true;
           this.translation.text = response.data.translated_text;
@@ -277,17 +241,16 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     media: {
       immediate: true,
       handler(newMedia) {
-        this.transcriptionText = newMedia?.extraction?.text || '';
-        // Reset translation when media changes
+        this.editing = false;
+        this.transcriptionText = '';
         this.translation.show = false;
         this.translation.text = '';
         this.translation.sourceLanguage = '';
-
         this.orientation.saving = false;
         this.orientation.showSaveButton = false;
-        
+
         if (newMedia) {
-          this.$root.closeExpandedMedia('ocr-dialog')
+          this.$root.closeExpandedMedia('ocr-dialog');
           this.$root.handleExpandedMedia({ rendererId: 'ocr-dialog', media: this.mediaRendererData, mediaType: this.fileTypeFromMedia });
         }
       },
@@ -322,7 +285,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       v-if="loading"
                       class="flex-1-1"
                     ></v-skeleton-loader>
-                    
+
                     <div v-else class="position-relative">
                       <div>
                         <inline-media-renderer
@@ -356,11 +319,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         <!-- Bulletin Info -->
                         <div class="flex-0-0">
                           <div class="text-subtitle-2">{{ translations.bulletin_ }}</div>
-                          <v-skeleton-loader
-                            v-if="loading"
-                            width="75"
-                            height="20"
-                          ></v-skeleton-loader>
+                          <v-skeleton-loader v-if="loading" width="75" height="20"></v-skeleton-loader>
                           <v-btn
                             v-else-if="media?.bulletin"
                             density="compact"
@@ -378,16 +337,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         <!-- Detected Language -->
                         <div v-if="media?.extraction?.language || loading" class="flex-0-0">
                           <div class="text-subtitle-2">{{ translations.sourceLanguage_ }}</div>
-                          <v-skeleton-loader
-                            v-if="loading"
-                            width="75"
-                            height="20"
-                          ></v-skeleton-loader>
-                          <v-chip
-                            v-else
-                            density="compact"
-                            prepend-icon="mdi-translate"
-                          >
+                          <v-skeleton-loader v-if="loading" width="75" height="20"></v-skeleton-loader>
+                          <v-chip v-else density="compact" prepend-icon="mdi-translate">
                             {{ media?.extraction?.language?.toUpperCase() }}
                           </v-chip>
                         </div>
@@ -395,11 +346,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         <!-- Word Count -->
                         <div v-if="media?.extraction || loading" class="flex-0-0">
                           <div class="text-subtitle-2">{{ translations.wordCount_ }}</div>
-                          <v-skeleton-loader
-                            v-if="loading"
-                            width="75"
-                            height="20"
-                          ></v-skeleton-loader>
+                          <v-skeleton-loader v-if="loading" width="75" height="20"></v-skeleton-loader>
                           <v-chip
                             v-else
                             density="compact"
@@ -419,13 +366,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                               {{ getConfidenceLabel(media?.extraction?.confidence) }}
                             </span>
                           </div>
-                          
-                          <v-skeleton-loader
-                            v-if="loading"
-                            width="100%"
-                            height="16"
-                          ></v-skeleton-loader>
-                          
+                          <v-skeleton-loader v-if="loading" width="100%" height="16"></v-skeleton-loader>
                           <v-progress-linear
                               v-else
                               :model-value="media?.extraction?.confidence"
@@ -441,9 +382,9 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       </v-card-text>
                     </v-card>
 
-                    <!-- Alert for low word count - only show when viewing, not editing -->
+                    <!-- Alert for low word count -->
                     <v-alert
-                      v-if="isLowWordCount && !isTranscriptionChanged"
+                      v-if="isLowWordCount && !editing"
                       color="info"
                       variant="tonal"
                       density="compact"
@@ -469,66 +410,12 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     >
                       <template v-slot:text>
                         <div>{{ translations.thisMediaHasBeenMarkedAsUnreadableByAReviewer_ }}</div>
-                        <div v-if="media?.extraction?.reviewed_at || media?.extraction?.reviewed_by" class="text-caption mt-1 text-medium-emphasis">
-                          <template v-if="media?.extraction?.reviewed_by">
-                            Reviewer ID: {{ media.extraction.reviewed_by }}
-                          </template>
-                          <template v-if="media?.extraction?.reviewed_at">
-                            {{ media.extraction.reviewed_by ? ' • ' : '' }}{{ $root.formatDate(media.extraction.reviewed_at) }}
-                          </template>
-                        </div>
-                      </template>
-                    </v-alert>
-
-                    <!-- Alert for manually transcribed status -->
-                    <v-alert
-                      v-else-if="media?.extraction?.manual"
-                      color="indigo"
-                      variant="tonal"
-                      density="compact"
-                      icon="mdi-account-edit-outline"
-                      class="mb-3 flex-0-0"
-                      :title="translations.manuallyTranscribed_"
-                    >
-                      <template v-slot:text>
-                        <div>{{ translations.thisMediaWasManuallyTranscribedByAReviewer_ }}</div>
-                        <div v-if="media?.extraction?.reviewed_at || media?.extraction?.reviewed_by" class="text-caption mt-1 text-medium-emphasis">
-                          <template v-if="media?.extraction?.reviewed_by">
-                            Reviewer ID: {{ media.extraction.reviewed_by }}
-                          </template>
-                          <template v-if="media?.extraction?.reviewed_at">
-                            {{ media.extraction.reviewed_by ? ' • ' : '' }}{{ $root.formatDate(media.extraction.reviewed_at) }}
-                          </template>
-                        </div>
-                      </template>
-                    </v-alert>
-
-                    <!-- Alert for processed (accepted) status -->
-                    <v-alert
-                      v-else-if="isProcessed && !media?.extraction?.manual"
-                      color="green"
-                      variant="tonal"
-                      density="compact"
-                      icon="mdi-check-circle-outline"
-                      class="mb-3 flex-0-0"
-                      :title="translations.processed_"
-                    >
-                      <template v-slot:text>
-                        <div>{{ translations.thisMediaHasBeenReviewedAndAccepted_ }}</div>
-                        <div v-if="media?.extraction?.reviewed_at || media?.extraction?.reviewed_by" class="text-caption mt-1 text-medium-emphasis">
-                          <template v-if="media?.extraction?.reviewed_by">
-                            Reviewer ID: {{ media.extraction.reviewed_by }}
-                          </template>
-                          <template v-if="media?.extraction?.reviewed_at">
-                            {{ media.extraction.reviewed_by ? ' • ' : '' }}{{ $root.formatDate(media.extraction.reviewed_at) }}
-                          </template>
-                        </div>
                       </template>
                     </v-alert>
 
                     <!-- Alert for failed status -->
                     <v-alert
-                      v-else-if="media?.ocr_status === 'failed'"
+                      v-else-if="isFailed"
                       color="red"
                       variant="tonal"
                       density="compact"
@@ -538,19 +425,34 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     >
                       <template v-slot:text>
                         <div>{{ translations.ocrProcessingFailedForThisMedia_ }}</div>
-                        <div v-if="media?.extraction?.created_at" class="text-caption mt-1 text-medium-emphasis">
-                          {{ $root.formatDate(media.extraction.created_at) }}
-                        </div>
                       </template>
                     </v-alert>
 
                     <!-- Extracted Text Section -->
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
-                      <div v-if="!(isPending || isFailed || isProcessing)" class="text-subtitle-2 mb-2 d-flex align-center">
-                        {{ translations.extractedText_ }} <span v-if="canEdit" class="text-error">*</span>
+                      <div v-if="hasText || editing" class="text-subtitle-2 mb-2 d-flex align-center">
+                        {{ translations.extractedText_ }}
+                        <v-chip v-if="editing" color="warning" size="x-small" variant="tonal" class="ml-2">{{ translations.editing_ || 'Editing' }}</v-chip>
                         <v-spacer></v-spacer>
+
+                        <!-- Edit / Cancel button -->
                         <v-btn
-                          v-if="hasVisionApiKey"
+                          v-if="canEdit && !editing"
+                          prepend-icon="mdi-pencil"
+                          variant="outlined"
+                          class="border-thin mr-2"
+                          @click="enterEditMode"
+                        >{{ translations.edit_ || 'Edit' }}</v-btn>
+
+                        <v-btn
+                          v-if="editing"
+                          variant="text"
+                          class="mr-2"
+                          @click="cancelEdit"
+                        >{{ translations.cancel_ || 'Cancel' }}</v-btn>
+
+                        <v-btn
+                          v-if="hasVisionApiKey && !editing"
                           prepend-icon="mdi-translate"
                           variant="outlined"
                           :loading="translation.loading"
@@ -559,22 +461,18 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           @click.stop="translateText"
                         >{{ translations.translate_ }}</v-btn>
                       </div>
-                      
-                      <v-skeleton-loader
-                        v-if="loading"
-                        class="flex-1-1"
-                      ></v-skeleton-loader>
 
+                      <v-skeleton-loader v-if="loading" class="flex-1-1"></v-skeleton-loader>
 
-                      <!-- Show message if vision api key is not configured -->
+                      <!-- No API key configured -->
                       <v-empty-state
-                        v-if="!hasVisionApiKey && !media?.extraction?.text"
+                        v-if="!hasVisionApiKey && !hasText"
                         icon="mdi-alert-circle-outline"
                         :title="translations.apiNotConfigured_"
                         :text="translations.googleVisionApiHasNotBeenConfigured_"
                       ></v-empty-state>
 
-                      <!-- Show message for processing items -->
+                      <!-- Processing -->
                       <v-empty-state
                         v-else-if="isProcessing"
                         icon="mdi-cog-outline"
@@ -582,15 +480,11 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         :title="translations.processing_"
                       >
                         <template v-slot:actions>
-                          <v-progress-circular
-                            indeterminate
-                            color="primary"
-                            size="64"
-                          ></v-progress-circular>
+                          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
                         </template>
                       </v-empty-state>
-                      
-                      <!-- Show message for not supported file types -->
+
+                      <!-- Unsupported file type -->
                       <v-empty-state
                         v-else-if="!this.$root.selectableFileTypes.includes(fileTypeFromMedia)"
                         icon="mdi-alert-circle-outline"
@@ -598,7 +492,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         :text="translations.ocrProcessingIsOnlyAvailableForTheFollowingFileTypes_(this.$root.selectableFileTypes)"
                       ></v-empty-state>
 
-                      <!-- Show message for pending/failed items without extraction -->
+                      <!-- Pending / Failed - run OCR -->
                       <v-empty-state
                         v-else-if="isPending || isFailed"
                         :icon="isFailed ? 'mdi-alert-circle-outline' : 'mdi-text-recognition'"
@@ -626,25 +520,35 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           </v-tooltip>
                         </template>
                       </v-empty-state>
-                      
-                      <!-- Show textarea for items with extraction -->
-                      <div v-else class="flex-1-1 d-flex ga-4" style="min-height: 0;">
+
+                      <!-- Text content area -->
+                      <div v-else-if="hasText || editing" class="flex-1-1 d-flex ga-4" style="min-height: 0;">
                         <div class="position-relative h-100 w-100">
+                          <!-- Edit mode: textarea -->
                           <v-textarea
+                              v-if="editing"
                               v-model="transcriptionText"
                               variant="outlined"
                               no-resize
-                              :readonly="!canEdit"
                               :placeholder="translations.typeWhatYouSeeInMediaHere_"
                               dir="auto"
                               class="h-100"
                               hide-details
+                              autofocus
                           ></v-textarea>
+
+                          <!-- View mode: read-only text -->
+                          <div
+                            v-else
+                            class="h-100 overflow-y-auto text-body-1 pa-4 rounded border-thin"
+                            dir="auto"
+                            style="white-space: pre-wrap; line-height: 1.8;"
+                          >{{ media?.extraction?.text }}</div>
                         </div>
-                        
+
                         <!-- Translation Result -->
                         <v-card
-                          v-if="translation.show"
+                          v-if="translation.show && !editing"
                           variant="outlined"
                           class="flex-1-1 d-flex flex-column w-100"
                           style="min-height: 0;"
@@ -663,18 +567,8 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                             ></v-select>
 
                             <div class="d-flex align-center ga-1">
-                              <v-btn
-                                icon="mdi-content-copy"
-                                size="x-small"
-                                variant="text"
-                                @click="copyToClipboard(translation.text)"
-                              ></v-btn>
-                              <v-btn
-                                icon="mdi-close"
-                                size="x-small"
-                                variant="text"
-                                @click="closeTranslation"
-                              ></v-btn>
+                              <v-btn icon="mdi-content-copy" size="x-small" variant="text" @click="copyToClipboard(translation.text)"></v-btn>
+                              <v-btn icon="mdi-close" size="x-small" variant="text" @click="closeTranslation"></v-btn>
                             </div>
                           </v-card-title>
                           <v-divider></v-divider>
@@ -686,12 +580,12 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     </div>
                   </v-card-text>
 
-                  <!-- Edit History -->
-                  <v-expansion-panels v-if="media?.extraction?.history?.length" flat class="flex-0-0 mx-4 mb-2">
+                  <!-- Revisions -->
+                  <v-expansion-panels v-if="revisionCount > 0" flat class="flex-0-0 mx-4 mb-2">
                     <v-expansion-panel>
                       <v-expansion-panel-title class="text-caption py-1" style="min-height: 36px;">
                         <v-icon icon="mdi-history" size="small" class="mr-2"></v-icon>
-                        {{ translations.editHistory_ || 'Edit History' }} ({{ media.extraction.history.length }})
+                        {{ translations.revisions_ || 'Revisions' }} ({{ revisionCount }})
                       </v-expansion-panel-title>
                       <v-expansion-panel-text>
                         <div v-for="(entry, idx) in [...media.extraction.history].reverse()" :key="idx" class="mb-2 text-caption">
@@ -705,40 +599,37 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     </v-expansion-panel>
                   </v-expansion-panels>
 
-                  <!-- Action Buttons - Fixed at bottom -->
-                  <v-card-actions v-if="canEdit" class="pa-4 pt-0">
-                    <v-spacer></v-spacer>
+                  <!-- Action Buttons -->
+                  <v-card-actions v-if="editing" class="pa-4 pt-0">
                     <v-btn
-                      v-if="!isProcessed"
                       variant="tonal"
                       size="large"
-                      prepend-icon="mdi-close-circle"
-                      class="mx-1"
-                      :disabled="loading || saving"
+                      prepend-icon="mdi-eye-off"
+                      :disabled="saving"
                       :loading="rejecting"
                       @click="markAsCannotRead(media)"
                     >
                       {{ translations.cantRead_ }}
                     </v-btn>
-                    <v-tooltip location="top" :disabled="!isTranscriptionEmpty">
-                      <template v-slot:activator="{ props }">
-                        <div v-bind="props">
-                          <v-btn
-                            color="primary"
-                            variant="elevated"
-                            size="large"
-                            prepend-icon="mdi-check"
-                            class="mx-1"
-                            :disabled="loading || rejecting || isTranscriptionEmpty"
-                            :loading="saving"
-                            @click="isTranscriptionChanged ? markAsTranscribed({ media, text: transcriptionText }) : markAsAccepted(media)"
-                          >
-                            {{ isTranscriptionChanged || isProcessed ? translations.saveTranscription_ : translations.acceptTranscription_ }}
-                          </v-btn>
-                        </div>
-                      </template>
-                      {{ translations.transcriptionIsRequired_ }}
-                    </v-tooltip>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      variant="text"
+                      size="large"
+                      @click="cancelEdit"
+                    >
+                      {{ translations.cancel_ || 'Cancel' }}
+                    </v-btn>
+                    <v-btn
+                      color="primary"
+                      variant="elevated"
+                      size="large"
+                      prepend-icon="mdi-content-save"
+                      :disabled="!transcriptionText?.trim() || rejecting"
+                      :loading="saving"
+                      @click="saveRevision"
+                    >
+                      {{ translations.saveRevision_ || 'Save Revision' }}
+                    </v-btn>
                   </v-card-actions>
                 </v-card>
               </div>
