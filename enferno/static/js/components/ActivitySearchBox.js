@@ -85,21 +85,21 @@ const ActivitySearchBox = Vue.defineComponent({
               </v-expansion-panel-title>
               <v-expansion-panel-text eager>
 
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.user_ }}</div>
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.USER_ }}</div>
                 <v-chip-group column v-model="q.user" selected-class="text-primary" class="mb-3">
                   <v-chip :value="user.id" size="small" v-for="user in $root.users" filter variant="outlined" :key="user.id">{{ user.display_name }}</v-chip>
                 </v-chip-group>
 
                 <v-divider class="my-3"></v-divider>
 
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.selType_ }}</div>
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.SELECTTYPE_ }}</div>
                 <v-chip-group column v-model="q.model" selected-class="text-primary" class="mb-3">
                   <v-chip size="small" v-for="item in $root.models" :value="item" filter variant="outlined" :key="item">{{ item }}</v-chip>
                 </v-chip-group>
 
                 <v-divider class="my-3"></v-divider>
 
-                <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.selAction_ }}</div>
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-1">{{ translations.SELECTACTION_ }}</div>
                 <v-chip-group column v-model="q.action" selected-class="text-primary">
                   <v-chip size="small" v-for="action in $root.actionTypes" :value="action" filter variant="outlined" :key="action">{{ action }}</v-chip>
                 </v-chip-group>
