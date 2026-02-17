@@ -976,7 +976,7 @@ const ActorSearchBox = Vue.defineComponent({
                 <v-badge v-if="locationCount > 0" :content="locationCount" color="primary" inline></v-badge>
               </div>
             </v-expansion-panel-title>
-            <v-expansion-panel-text eager>
+            <v-expansion-panel-text>
 
               <template v-if="$root.isFieldActiveByName('origin_place', { entityType: 'actor' })">
                 <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.ORIGINLOCATIONS_ }}</div>
