@@ -79,7 +79,7 @@ const MediaThumbnail = Vue.defineComponent({
           entries.forEach(entry => {
             if (entry.isIntersecting && !this.isInViewport) {
               this.isInViewport = true;
-              this.init();
+              this.init().catch(() => {});
               this.observer.disconnect();
             }
           });
