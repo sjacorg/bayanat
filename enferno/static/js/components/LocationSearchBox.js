@@ -114,7 +114,7 @@ const LocationSearchBox = Vue.defineComponent({
                   <v-badge v-if="detailsCount > 0" :content="detailsCount" color="primary" inline></v-badge>
                 </div>
               </v-expansion-panel-title>
-              <v-expansion-panel-text eager>
+              <v-expansion-panel-text>
                 <search-field
                     v-model="q.location_type"
                     api="/admin/api/location-types/"
