@@ -44,6 +44,7 @@ class Media(db.Model, BaseMixin):
     category = db.Column(db.Integer)
     etag = db.Column(db.String, index=True)
     duration = db.Column(db.String)
+    orientation = db.Column(db.Integer, default=0)
 
     title = db.Column(db.String)
     title_ar = db.Column(db.String)
@@ -91,6 +92,7 @@ class Media(db.Model, BaseMixin):
             "time": getattr(self, "time", None),
             "duration": self.duration,
             "main": self.main,
+            "orientation": self.orientation or 0,
             "updated_at": (
                 DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
             ),

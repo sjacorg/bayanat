@@ -27,6 +27,8 @@ class Extraction(db.Model, BaseMixin):
         db.Computed("normalize_arabic_text(text)"),
     )
 
+    history = db.Column(db.JSON, default=list, nullable=False)
+
     reviewed_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     reviewed_at = db.Column(db.DateTime)
 
@@ -40,11 +42,11 @@ class Extraction(db.Model, BaseMixin):
             "text": self.text,
             "original_text": self.original_text,
             "confidence": self.confidence,
-            "orientation": self.orientation,
             "status": self.status,
             "manual": self.manual,
             "word_count": self.word_count,
             "language": self.language,
+            "history": self.history or [],
             "reviewed_by": self.reviewed_by,
             "reviewed_at": DateHelper.serialize_datetime(self.reviewed_at),
             "created_at": DateHelper.serialize_datetime(self.created_at),
