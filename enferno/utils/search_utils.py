@@ -408,12 +408,6 @@ class SearchUtils:
                 ocr_query = (
                     select(Media.bulletin_id)
                     .join(Extraction, Media.id == Extraction.media_id)
-                    .where(
-                        or_(
-                            Extraction.status.in_(["processed", "needs_review"]),
-                            Extraction.manual == True,
-                        )
-                    )
                     .where(Extraction.search_text.isnot(None))
                 )
                 for word in words:
@@ -461,12 +455,6 @@ class SearchUtils:
                     ocr_subquery = (
                         select(Media.bulletin_id)
                         .join(Extraction, Media.id == Extraction.media_id)
-                        .where(
-                            or_(
-                                Extraction.status.in_(["processed", "needs_review"]),
-                                Extraction.manual == True,
-                            )
-                        )
                         .where(Extraction.search_text.isnot(None))
                     )
                     for cond in ocr_conds:
@@ -530,12 +518,6 @@ class SearchUtils:
                 ocr_base = (
                     select(Media.bulletin_id)
                     .join(Extraction, Media.id == Extraction.media_id)
-                    .where(
-                        or_(
-                            Extraction.status.in_(["processed", "needs_review"]),
-                            Extraction.manual == True,
-                        )
-                    )
                     .where(Extraction.search_text.isnot(None))
                 )
                 if q.get("opTerms", False):

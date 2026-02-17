@@ -542,7 +542,7 @@ def status() -> None:
     click.echo(f"Pending (no OCR):     {pending:,}")
     click.echo(f"{'─' * 40}")
 
-    for status_name in ["processed", "needs_review", "needs_transcription", "failed"]:
+    for status_name in ["processed", "failed", "cant_read"]:
         data = status_map.get(status_name, {"count": 0, "avg_conf": None})
         count = data["count"]
         avg = data["avg_conf"]
