@@ -46,17 +46,12 @@ const LocationSearchBox = Vue.defineComponent({
       if (this.q.admin_level) count++;
       if (this.q.country) count++;
       if (this.q.tags?.length) count++;
-      return count;
-    },
-
-    geoCount() {
-      let count = 0;
       if (this.q.latlng) count++;
       return count;
     },
 
     totalActiveFilters() {
-      return this.textSearchCount + this.detailsCount + this.geoCount;
+      return this.textSearchCount + this.detailsCount;
     },
   },
 
@@ -76,7 +71,6 @@ const LocationSearchBox = Vue.defineComponent({
             <span class="text-body-2 font-weight-medium">{{ translations.activeFiltersCount_(totalActiveFilters) }}</span>
           </v-sheet>
 
-          <!-- Collapsible search sections -->
           <v-expansion-panels v-model="openPanels" multiple variant="accordion" class="search-panels mt-3 px-4 pb-4">
 
             <!-- 1. TEXT SEARCH -->
@@ -115,8 +109,8 @@ const LocationSearchBox = Vue.defineComponent({
             <v-expansion-panel value="1">
               <v-expansion-panel-title>
                 <div class="d-flex align-center ga-2 w-100">
-                  <v-icon size="small" color="primary">mdi-details</v-icon>
-                  <span class="text-subtitle-2 font-weight-medium">{{ translations.details_ }}</span>
+                  <v-icon size="small" color="primary">mdi-map-marker-multiple</v-icon>
+                  <span class="text-subtitle-2 font-weight-medium">{{ translations.locations_ }}</span>
                   <v-badge v-if="detailsCount > 0" :content="detailsCount" color="primary" inline></v-badge>
                 </div>
               </v-expansion-panel-title>
@@ -161,22 +155,13 @@ const LocationSearchBox = Vue.defineComponent({
                     density="comfortable"
                     prepend-inner-icon="mdi-tag-multiple"
                 ></v-combobox>
-                <div class="d-flex align-center mt-n2">
+                <div class="d-flex align-center mt-n2 mb-4">
                   <v-checkbox :label="translations.any_" density="compact" v-model="q.optags" color="primary" class="me-4" hide-details></v-checkbox>
                 </div>
-              </v-expansion-panel-text>
-            </v-expansion-panel>
 
-            <!-- 3. GEOSPATIAL -->
-            <v-expansion-panel value="2">
-              <v-expansion-panel-title>
-                <div class="d-flex align-center ga-2 w-100">
-                  <v-icon size="small" color="primary">mdi-map-marker-radius</v-icon>
-                  <span class="text-subtitle-2 font-weight-medium">{{ translations.geospatial_ }}</span>
-                  <v-badge v-if="geoCount > 0" :content="geoCount" color="primary" inline></v-badge>
-                </div>
-              </v-expansion-panel-title>
-              <v-expansion-panel-text>
+                <v-divider class="mb-4"></v-divider>
+
+                <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.geospatial_ }}</div>
                 <geo-map
                     class="flex-grow-1"
                     v-model="q.latlng"
