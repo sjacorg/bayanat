@@ -757,6 +757,7 @@ const ActorSearchBox = Vue.defineComponent({
 
           <!-- 5. CLASSIFICATION (Sources, Labels, Verified Labels) -->
           <v-expansion-panel
+            v-if="$root.isFieldActiveByName('sources', { entityType: 'actor' }) || $root.isFieldActiveByName('labels', { entityType: 'actor' }) || $root.isFieldActiveByName('ver_labels', { entityType: 'actor' })"
             value="4"
           >
             <v-expansion-panel-title>
@@ -769,6 +770,7 @@ const ActorSearchBox = Vue.defineComponent({
             <v-expansion-panel-text eager>
 
               <!-- Sources -->
+            <template v-if="$root.isFieldActiveByName('sources', { entityType: 'actor' })">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.SOURCES_ }}</div>
               <v-card variant="outlined" class="mb-3 pa-3 border-thin">
                 <search-field
@@ -793,8 +795,10 @@ const ActorSearchBox = Vue.defineComponent({
                 ></search-field>
                 <v-switch density="compact" color="primary" v-model="q.childsources" :label="translations.includeChildSources_" hide-details></v-switch>
               </v-card>
+            </template>
 
               <!-- Labels -->
+            <template v-if="$root.isFieldActiveByName('labels', { entityType: 'actor' })">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.LABELS_ }}</div>
               <v-card variant="outlined" class="mb-3 pa-3 border-thin">
                 <search-field
@@ -821,8 +825,10 @@ const ActorSearchBox = Vue.defineComponent({
                 ></search-field>
                 <v-switch density="compact" color="primary" v-model="q.childlabels" :label="translations.includeChildLabels_" hide-details></v-switch>
               </v-card>
+            </template>
 
               <!-- Verified Labels -->
+            <template v-if="$root.isFieldActiveByName('ver_labels', { entityType: 'actor' })">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.VERIFIEDLABELS_ }}</div>
               <v-card variant="outlined" class="mb-3 pa-3 border-thin">
                 <search-field
@@ -849,6 +855,7 @@ const ActorSearchBox = Vue.defineComponent({
                 ></search-field>
                 <v-switch density="compact" color="primary" v-model="q.childverlabels" :label="translations.includeChildVerLabels_" hide-details></v-switch>
               </v-card>
+            </template>
 
             </v-expansion-panel-text>
           </v-expansion-panel>
