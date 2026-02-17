@@ -1612,6 +1612,10 @@ class FlowmapVisualizeRequestModel(BaseValidationModel):
     q: list[dict[str, Any]]
 
 
+class FlowmapActorsForLocationsModel(BaseValidationModel):
+    location_ids: list[int] = Field(min_length=1)
+
+
 class DefaultMapCenterModel(BaseValidationModel):
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)

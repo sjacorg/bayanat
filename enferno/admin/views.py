@@ -27,6 +27,7 @@ from enferno.admin.models import (
     Label,
     Source,
     Location,
+    Event,
     Eventtype,
     Media,
     Actor,
@@ -57,6 +58,7 @@ from enferno.admin.models import (
     WorkflowStatus,
     ActorProfile,
 )
+from enferno.admin.models.tables import actor_events
 from enferno.data_import.models import DataImport
 
 from enferno.admin.validation.models import (
@@ -81,6 +83,7 @@ from enferno.admin.validation.models import (
     EventtypeRequestModel,
     GeoLocationTypeRequestModel,
     GraphVisualizeRequestModel,
+    FlowmapActorsForLocationsModel,
     FlowmapVisualizeRequestModel,
     IncidentBulkUpdateRequestModel,
     IncidentQueryRequestModel,
@@ -6359,6 +6362,29 @@ def check_flowmap_status() -> Response:
             response_data["error"] = error_msg.decode("utf-8")
 
     return HTTPResponse.success(data=response_data)
+
+
+@admin.post("/api/flowmap/actors-for-locations")
+@validate_with(FlowmapActorsForLocationsModel)
+def flowmap_actors_for_locations(validated_data: dict) -> Response:
+    """Return actors who have events at any of the provided location IDs."""
+    location_ids = validated_data["location_ids"]
+
+    actors = (
+        db.session.query(Actor)
+        .join(actor_events, actor_events.c.actor_id == Actor.id)
+        .join(Event, actor_events.c.event_id == Event.id)
+        .filter(Event.location_id.in_(location_ids))
+        .distinct()
+        .all()
+    )
+
+    return HTTPResponse.success(
+        data={
+            "items": [actor.to_compact() for actor in actors],
+            "total": len(actors),
+        }
+    )
 
 
 @admin.get("/system-administration/")

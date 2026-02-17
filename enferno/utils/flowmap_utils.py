@@ -32,6 +32,10 @@ class FlowmapUtils:
         for actor in actors:
             FlowmapUtils._process_actor_events(actor, locations_map, flows_map, date_range)
 
+        # Convert actor ID sets to counts and remove internal field
+        for loc_data in locations_map.values():
+            loc_data["unique_actors"] = len(loc_data.pop("_actor_ids"))
+
         locations = list(locations_map.values())
         flows = [
             {"origin": origin_id, "dest": dest_id, "events_by_type": events_by_type}
@@ -92,8 +96,11 @@ class FlowmapUtils:
             if location_id not in locations_map:
                 locations_map[location_id] = FlowmapUtils._create_location_data(location)
 
-            events_by_type = locations_map[location_id]["events_by_type"]
-            events_by_type[event_type] = events_by_type.get(event_type, 0) + 1
+            loc_data = locations_map[location_id]
+            loc_data["events_by_type"][event_type] = (
+                loc_data["events_by_type"].get(event_type, 0) + 1
+            )
+            loc_data["_actor_ids"].add(actor.id)
 
             # Track date range
             FlowmapUtils._update_date_range(event, date_range)
@@ -144,6 +151,7 @@ class FlowmapUtils:
             "lat": shape.y,
             "lon": shape.x,
             "events_by_type": {},
+            "_actor_ids": set(),
         }
 
     @staticmethod
