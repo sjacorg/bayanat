@@ -783,7 +783,7 @@ def api_ocr_bulk():
     media_ids = data.get("media_ids", [])
     bulletin_id = data.get("bulletin_id")
     process_all = data.get("all", False)
-    limit = min(data.get("limit", 1000), 10000)
+    limit = min(data.get("limit", 10000), 100000)
 
     # Only queue files with OCR-supported extensions
     ocr_ext = current_app.config.get("OCR_EXT", [])
@@ -811,15 +811,14 @@ def api_ocr_bulk():
     if not media_ids:
         return HTTPResponse.error("No media to process")
 
-    # Track processing items in Redis (auto-expires in 2 hours)
+    # Track processing items in Redis (auto-expires in 24 hours for large batches)
     redis_key = f"ocr_processing:{current_user.id}"
     rds.sadd(redis_key, *media_ids)
-    rds.expire(redis_key, 7200)
+    rds.expire(redis_key, 86400)
 
-    task = bulk_ocr_process.delay(media_ids, current_user.id)
+    bulk_ocr_process(media_ids, current_user.id)
     return jsonify(
         {
-            "task_id": task.id,
             "queued": len(media_ids),
             "message": f"Queued {len(media_ids)} items. You'll be notified when complete.",
         }
