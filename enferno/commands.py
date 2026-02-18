@@ -475,8 +475,8 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, f
         click.echo("No pending media found")
         return
 
-    task = bulk_ocr_process.delay(media_ids, language_hints=list(language), force=force)
-    click.echo(f"Queued {len(media_ids)} media files for OCR processing. Task ID: {task.id}")
+    bulk_ocr_process(media_ids, language_hints=list(language), force=force)
+    click.echo(f"Queued {len(media_ids)} media files for OCR processing.")
 
 
 @ocr_cli.command()
