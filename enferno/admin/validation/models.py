@@ -1613,7 +1613,11 @@ class FlowmapVisualizeRequestModel(BaseValidationModel):
 
 
 class FlowmapActorsForLocationsModel(BaseValidationModel):
-    location_ids: list[int] = Field(min_length=1)
+    location_ids: Optional[list[int]] = None
+    origin_ids: Optional[list[int]] = None
+    dest_ids: Optional[list[int]] = None
+    q: list[dict[str, Any]]
+    event_types: Optional[list[str]] = None
 
 
 class DefaultMapCenterModel(BaseValidationModel):

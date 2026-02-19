@@ -10,6 +10,8 @@ const MobilityMap = Vue.defineComponent({
     mode: { type: String, default: () => null },
   },
 
+  emits: ['node-clicked', 'flow-clicked'],
+
   data() {
     return {
       canvas: null,
@@ -80,9 +82,11 @@ const MobilityMap = Vue.defineComponent({
     },
 
     flows: {
-      handler() {
+      handler(newFlows, oldFlows) {
         this.resetSelectionAndRebuild();
-        this.$nextTick(() => this.zoomToAll());
+        if (!oldFlows?.length && newFlows?.length) {
+          this.$nextTick(() => this.zoomToAll());
+        }
       },
     },
   },
@@ -175,6 +179,7 @@ const MobilityMap = Vue.defineComponent({
           label: loc.name ?? loc.full_string,
           markerType: loc.markerType || null,
           main: loc.main ?? false,
+          _uniqueActors: loc.unique_actors || 0,
         };
       });
     },
@@ -270,7 +275,6 @@ const MobilityMap = Vue.defineComponent({
 
       const clusterPixels = MobilityMapUtils.getClusterPixels(this.clusterDefs, this.map);
 
-      // Draw arrows
       const { segments, arrowMin, arrowMax } = MobilityMapUtils.prepareArrowSegments(
         this.flowGroups,
         clusterPixels
@@ -280,7 +284,6 @@ const MobilityMap = Vue.defineComponent({
         .sort((a, b) => a.width - b.width)
         .forEach((seg) => this.drawArrow(seg, arrowMin, arrowMax));
 
-      // Draw clusters
       this.clusterDefs.forEach((c) => {
         const p = clusterPixels[c.id];
         if (!p) return;
@@ -292,6 +295,26 @@ const MobilityMap = Vue.defineComponent({
           this.clickToZoomCluster
         );
 
+        const isCluster = c.memberIds.length > 1;
+
+        // Draw outer ring for clusters
+        if (isCluster) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, dotSize + 4, 0, Math.PI * 2);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, dotSize + 6, 0, Math.PI * 2);
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = strokeStyle;
+          ctx.setLineDash([4, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Draw main dot
         ctx.beginPath();
         ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);
         ctx.fillStyle = fillColor;
@@ -300,17 +323,22 @@ const MobilityMap = Vue.defineComponent({
         ctx.strokeStyle = strokeStyle;
         ctx.stroke();
 
-        // Draw count label for multi-member clusters
-        if (c.memberIds.length > 1) {
+        // Show unique actor count from location data
+        const totalActors = c.memberIds.reduce((sum, id) => {
+          return sum + (this.points[id]?._uniqueActors || 0);
+        }, 0);
+
+        if (totalActors > 0) {
+          const label = totalActors.toString();
           const fontSize = Math.max(10, c.radius);
-          ctx.font = `${fontSize}px sans-serif`;
+          ctx.font = `bold ${fontSize}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.lineWidth = 2;
           ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-          ctx.strokeText(c.memberIds.length, p.x, p.y);
+          ctx.strokeText(label, p.x, p.y);
           ctx.fillStyle = '#fff';
-          ctx.fillText(c.memberIds.length, p.x, p.y);
+          ctx.fillText(label, p.x, p.y);
         }
 
         this.dotShapes.push({
@@ -385,13 +413,11 @@ const MobilityMap = Vue.defineComponent({
           const cluster = this.clusterDefs[dot.clusterId];
           if (!cluster) return;
 
-          // Multi-member cluster: zoom in
           if (cluster.memberIds.length > 1 && this.clickToZoomCluster) {
             this.zoomToCluster(cluster.memberIds);
             return;
           }
 
-          // Event mode: copy coordinates
           if (this.mode === 'event') {
             const { lat, lon } = this.tooltip.data;
             MobilityMapUtils.copyCoordinates({ lat, lon })
@@ -400,29 +426,79 @@ const MobilityMap = Vue.defineComponent({
             return;
           }
 
-          // Select cluster
-          this.selectedPoint = {
-            type: 'cluster',
-            clusterId: dot.clusterId,
-            memberIds: [...cluster.memberIds],
-          };
+          // Compute traffic for this node from the full (unfiltered) flows
+          const memberIds = [...cluster.memberIds];
+          const memberSet = new Set(memberIds);
+          const allFlows = MobilityMapUtils.filterFlows(this.flows, null);
 
-          this.rebuildShapes();
-          this.$nextTick(() => this.onMapHover(e));
+          let totalIn = 0;
+          let totalOut = 0;
+          const incomingLocationIds = new Set();
+          const outgoingLocationIds = new Set();
+
+          allFlows.forEach((f) => {
+            if (memberSet.has(f.to)) {
+              totalIn += f.weight;
+              incomingLocationIds.add(f.from);
+            }
+            if (memberSet.has(f.from)) {
+              totalOut += f.weight;
+              outgoingLocationIds.add(f.to);
+            }
+          });
+
+          const names = memberIds.map((id) => this.points[id]?.label || id);
+
+          this.$emit('node-clicked', {
+            locationIds: memberIds,
+            label: MobilityMapUtils.tooltipCityNames(names),
+            totalIn,
+            totalOut,
+            // For directional actor queries
+            incomingOriginIds: [...incomingLocationIds],
+            outgoingDestIds: [...outgoingLocationIds],
+          });
+
+          this.tooltip.visible = false;
+
+          const latlng = this.points[memberIds[0]]?.latlng;
+          if (latlng) this.panToVisible(latlng);
+
           return;
         }
       }
 
-      // Check arrows
-      for (const arrow of this.arrowShapes) {
+      // Check arrows (back-to-front to match hover order)
+      for (let i = this.arrowShapes.length - 1; i >= 0; i--) {
+        const arrow = this.arrowShapes[i];
         if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow, this.ctx)) {
+          if (this.mode === 'event') return;
+
+          const pairs = arrow.rawPairs || [];
+
+          const originIds = [...new Set(pairs.map((p) => p.fromId))];
+          const destIds = [...new Set(pairs.map((p) => p.toId))];
+
+          const fromNames = [...new Set(pairs.map((p) => this.points[p.fromId]?.label))].filter(Boolean);
+          const toNames = [...new Set(pairs.map((p) => this.points[p.toId]?.label))].filter(Boolean);
+
+          this.$emit('flow-clicked', {
+            originIds,
+            destIds,
+            label: `${MobilityMapUtils.tooltipCityNames(fromNames)} → ${MobilityMapUtils.tooltipCityNames(toNames)}`,
+            count: pairs.reduce((sum, p) => sum + p.weight, 0),
+          });
+
+          this.tooltip.visible = false;
+          this.panToVisible(e.latlng);
           return;
         }
       }
 
-      // Nothing hit: clear selection
+      // Nothing hit
       if (this.selectedPoint !== null) {
-        this.clearFilter();
+        this.selectedPoint = null;
+        this.rebuildShapes();
       }
     },
 
@@ -432,13 +508,11 @@ const MobilityMap = Vue.defineComponent({
       const p = this.map.latLngToContainerPoint(e.latlng);
       let hovering = false;
 
-      // Check dots
       for (const dot of this.dotShapes) {
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           hovering = true;
           const cluster = this.clusterDefs[dot.clusterId];
 
-          // Event mode: no tooltip for multi-member clusters
           if (this.mode === 'event' && cluster.memberIds.length > 1) {
             this.$refs.mapContainer.style.cursor = 'pointer';
             this.tooltip.visible = false;
@@ -486,12 +560,12 @@ const MobilityMap = Vue.defineComponent({
         }
       }
 
-      // Check arrows
       if (!hovering) {
         for (let i = this.arrowShapes.length - 1; i >= 0; i--) {
           const arrow = this.arrowShapes[i];
 
           if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow, this.ctx)) {
+            if (this.mode === 'event') return;
             hovering = true;
             const pairs = arrow.rawPairs || [];
 
@@ -592,14 +666,34 @@ const MobilityMap = Vue.defineComponent({
       return { outgoing: 0, incoming: 0 };
     },
 
-    clearFilter() {
-      this.selectedPoint = null;
-      this.rebuildShapes();
-    },
+    // =============================================
+    // ZOOMING / PANNING
+    // =============================================
 
-    // =============================================
-    // ZOOMING
-    // =============================================
+    /**
+     * Nudge the map left if the clicked point would be hidden behind the drawer.
+     * Only moves right-to-left, never vertically, never left-to-right.
+     */
+    panToVisible(latlng) {
+      if (!this.map) return;
+
+      const drawerWidth = this.viewportPadding?.right || 0;
+      if (!drawerWidth) return;
+
+      const container = this.$refs.mapContainer;
+      if (!container) return;
+
+      const mapWidth = container.clientWidth;
+      const px = this.map.latLngToContainerPoint(latlng);
+      const margin = 40;
+
+      const visibleRight = mapWidth - drawerWidth - margin;
+
+      if (px.x > visibleRight) {
+        const nudge = px.x - visibleRight;
+        this.map.panBy([nudge, 0], { animate: true, duration: 0.3 });
+      }
+    },
 
     zoomToCluster(memberIds, { padding = 60, maxZoom = 12 } = {}) {
       if (!this.map) return;
@@ -640,15 +734,15 @@ const MobilityMap = Vue.defineComponent({
         :style="{ zIndex: 999 }"
       ></canvas>
 
+      <!-- HOVER TOOLTIP (read-only) -->
       <v-card
         v-if="tooltip.visible && tooltip.data"
         ref="tooltipCard"
         class="position-absolute pa-3"
-        style="zIndex: 9999; border-radius: 10px;"
+        style="zIndex: 9999; border-radius: 10px; pointer-events: none;"
         :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         elevation="4"
       >
-        <!-- EVENT TOOLTIP -->
         <template v-if="tooltip.type === 'event'">
           <div class="d-flex flex-column ga-1 text-caption">
             <div class="d-flex ga-2 align-center">
@@ -664,33 +758,21 @@ const MobilityMap = Vue.defineComponent({
                 {{ tooltip.data.eventType }}
               </div>
             </div>
-
             <h4>{{ tooltip.data.title || '' }}</h4>
-
             <div class="d-flex align-center">
               <v-icon size="18" class="mr-1">mdi-map-marker-outline</v-icon>
               {{ tooltip.data.displayName || '' }}
             </div>
-
             <div v-if="tooltip.data.main">{{ translations.mainIncident_ }}</div>
-
             <div v-if="tooltip.data.fromDate || tooltip.data.toDate" class="d-flex align-center">
-              <v-icon
-                size="16"
-                class="mr-1"
-                :title="tooltip.data.estimated ? translations.timingForThisEventIsEstimated_ : ''"
-              >
+              <v-icon size="16" class="mr-1"
+                :title="tooltip.data.estimated ? translations.timingForThisEventIsEstimated_ : ''">
                 {{ tooltip.data.estimated ? 'mdi-calendar-question' : 'mdi-calendar-clock' }}
               </v-icon>
-
               <span v-if="tooltip.data.fromDate" class="chip mr-1">
                 {{ $root.formatDate(tooltip.data.fromDate, tooltip.data.fromDate.includes('T00:00') ? $root.dateFormats.standardDate : $root.dateFormats.standardDatetime) }}
               </span>
-
-              <v-icon v-if="tooltip.data.fromDate && tooltip.data.toDate" size="14" class="mr-1">
-                mdi-arrow-right
-              </v-icon>
-
+              <v-icon v-if="tooltip.data.fromDate && tooltip.data.toDate" size="14" class="mr-1">mdi-arrow-right</v-icon>
               <span v-if="tooltip.data.toDate" class="chip">
                 {{ $root.formatDate(tooltip.data.toDate, tooltip.data.toDate.includes('T00:00') ? $root.dateFormats.standardDate : $root.dateFormats.standardDatetime) }}
               </span>
@@ -698,7 +780,6 @@ const MobilityMap = Vue.defineComponent({
           </div>
         </template>
 
-        <!-- DOT TOOLTIP -->
         <template v-if="tooltip.type === 'dot'">
           <div class="text-caption font-weight-bold mb-1">{{ tooltip.data.title }}</div>
           <v-divider class="mb-1"></v-divider>
@@ -710,7 +791,6 @@ const MobilityMap = Vue.defineComponent({
           <div class="text-caption">{{ tooltip.data.totalOut }}</div>
         </template>
 
-        <!-- ARROW TOOLTIP -->
         <template v-if="tooltip.type === 'arrow'">
           <div class="text-caption font-weight-bold mb-1">{{ tooltip.data.title }}</div>
           <v-divider class="mb-1"></v-divider>
