@@ -9,6 +9,7 @@ const OcrTextLayer = Vue.defineComponent({
       naturalW: 0,
       naturalH: 0,
       renderW: 0,
+      renderH: 0,
       loaded: false,
       showOverlay: true,
       revealed: false,
@@ -17,9 +18,13 @@ const OcrTextLayer = Vue.defineComponent({
     };
   },
   computed: {
-    scale() {
+    scaleX() {
       if (!this.naturalW) return 1;
       return this.renderW / this.naturalW;
+    },
+    scaleY() {
+      if (!this.naturalH) return 1;
+      return this.renderH / this.naturalH;
     },
     paragraphs() {
       if (!this.raw || !this.naturalW) return [];
@@ -44,6 +49,26 @@ const OcrTextLayer = Vue.defineComponent({
           const height = (Math.max(...ys) - Math.min(...ys)) / ph * 100;
           const heightPx = Math.max(...ys) - Math.min(...ys);
 
+          // Estimate line count by looking at word bounding boxes vertical spread
+          let singleLineH = heightPx;
+          if (para.words && para.words.length > 0) {
+            // Collect per-word heights and use median as single-line height estimate
+            const wordHeights = para.words.map(w => {
+              const wv = w.boundingBox?.vertices;
+              if (!wv || wv.length < 4) return null;
+              const wys = wv.map(p => p.y || 0);
+              return Math.max(...wys) - Math.min(...wys);
+            }).filter(h => h !== null && h > 0);
+
+            if (wordHeights.length > 0) {
+              wordHeights.sort((a, b) => a - b);
+              const mid = Math.floor(wordHeights.length / 2);
+              singleLineH = wordHeights.length % 2 !== 0
+                ? wordHeights[mid]
+                : (wordHeights[mid - 1] + wordHeights[mid]) / 2;
+            }
+          }
+
           const words = (para.words || []).map(w =>
             (w.symbols || []).map(s => s.text).join('')
           );
@@ -51,7 +76,7 @@ const OcrTextLayer = Vue.defineComponent({
           const lang = para.property?.detectedLanguages?.[0]?.languageCode || '';
           const isRtl = ['ar', 'he', 'fa', 'ur'].includes(lang);
 
-          result.push({ left, top, width, height, heightPx, text: words.join(' '), isRtl });
+          result.push({ left, top, width, height, heightPx, singleLineH, text: words.join(' '), isRtl });
         }
       }
       // Sort top-to-bottom for scan reveal
@@ -61,14 +86,18 @@ const OcrTextLayer = Vue.defineComponent({
   },
   methods: {
     onImageLoad(e) {
+      const rect = e.target.getBoundingClientRect();
       this.naturalW = e.target.naturalWidth;
       this.naturalH = e.target.naturalHeight;
-      this.renderW = e.target.clientWidth;
+      this.renderW = rect.width;
+      this.renderH = rect.height;
       this.loaded = true;
 
-      this.resizeObserver = new ResizeObserver(entries => {
-        for (const entry of entries) {
-          this.renderW = entry.contentRect.width;
+      this.resizeObserver = new ResizeObserver(() => {
+        const r = this.$refs.img?.getBoundingClientRect();
+        if (r) {
+          this.renderW = r.width;
+          this.renderH = r.height;
         }
       });
       this.resizeObserver.observe(e.target);
@@ -97,6 +126,12 @@ const OcrTextLayer = Vue.defineComponent({
       if (this.revealed) return true;
       // Paragraph reveals when scan line passes its top edge
       return this.scanProgress * 100 >= p.top;
+    },
+    paraFontSize(p) {
+      const scale = Math.min(this.scaleX, this.scaleY);
+      const wordCount = p.text.split(' ').length;
+      const multiplier = wordCount > 10 ? 1.0 : 0.85;
+      return Math.max(6, p.singleLineH * scale * multiplier);
     },
   },
   beforeUnmount() {
@@ -129,6 +164,8 @@ const OcrTextLayer = Vue.defineComponent({
             :style="{
               maxWidth: '100%',
               maxHeight: 'calc(100vh - 220px)',
+              pointerEvents: 'none',
+              userSelect: 'none'
             }"
           >
 
@@ -177,14 +214,13 @@ const OcrTextLayer = Vue.defineComponent({
               >
                 <span
                   :style="{
-                    fontSize: Math.max(6, p.heightPx * scale * 0.5) + 'px',
-                    lineHeight: '1',
+                    fontSize: paraFontSize(p) + 'px',
+                    lineHeight: '1.2',
                     color: 'transparent',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
                     display: 'block',
                     width: '100%',
-                    height: '100%',
                   }"
                 >{{ p.text }}</span>
               </div>
