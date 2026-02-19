@@ -431,6 +431,8 @@ ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
 @ocr_cli.command()
 @click.option("--all", "process_all", is_flag=True, help="Process all pending media")
 @click.option("--bulletin-ids", "-b", help="Comma-separated bulletin IDs")
+@click.option("--label", help="Filter by bulletin label ID or title")
+@click.option("--role", help="Filter by bulletin access role ID or name")
 @click.option("--limit", "-n", type=int, help="Maximum number of media to process")
 @click.option(
     "--language",
@@ -441,11 +443,20 @@ ocr_cli = AppGroup("ocr", short_help="OCR text extraction commands")
 )
 @click.option("--force", "-f", is_flag=True, help="Re-process media that already have extractions")
 @with_appcontext
-def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, force: bool) -> None:
+def process(
+    process_all: bool,
+    bulletin_ids: str,
+    label: str,
+    role: str,
+    limit: int,
+    language: tuple,
+    force: bool,
+) -> None:
     """Batch process media files for OCR extraction via Celery."""
     from sqlalchemy import or_
 
-    from enferno.admin.models import Media, Extraction
+    from enferno.admin.models import Media, Extraction, Bulletin
+    from enferno.admin.models.tables import bulletin_labels, bulletin_roles
     from enferno.tasks import bulk_ocr_process
 
     # Build query for media
@@ -462,8 +473,40 @@ def process(process_all: bool, bulletin_ids: str, limit: int, language: tuple, f
         ids = [int(x.strip()) for x in bulletin_ids.split(",")]
         query = query.filter(Media.bulletin_id.in_(ids))
 
-    if not process_all and not bulletin_ids and not limit:
-        click.echo("Error: Specify --all, --bulletin-ids, or --limit")
+    # Join Bulletin once if filtering by label or role
+    if label or role:
+        query = query.join(Bulletin, Media.bulletin_id == Bulletin.id)
+
+    if label:
+        from enferno.admin.models import Label
+
+        label_obj = Label.query.filter(
+            (Label.id == int(label)) if label.isdigit() else (Label.title == label)
+        ).first()
+        if not label_obj:
+            click.echo(f"Label not found: {label}")
+            return
+        query = query.join(bulletin_labels, Bulletin.id == bulletin_labels.c.bulletin_id).filter(
+            bulletin_labels.c.label_id == label_obj.id
+        )
+        click.echo(f"Filtering by label: {label_obj.title} (id={label_obj.id})")
+
+    if role:
+        from enferno.user.models import Role
+
+        role_obj = Role.query.filter(
+            (Role.id == int(role)) if role.isdigit() else (Role.name == role)
+        ).first()
+        if not role_obj:
+            click.echo(f"Role not found: {role}")
+            return
+        query = query.join(bulletin_roles, Bulletin.id == bulletin_roles.c.bulletin_id).filter(
+            bulletin_roles.c.role_id == role_obj.id
+        )
+        click.echo(f"Filtering by role: {role_obj.name} (id={role_obj.id})")
+
+    if not process_all and not bulletin_ids and not label and not role and not limit:
+        click.echo("Error: Specify --all, --bulletin-ids, --label, --role, or --limit")
         return
 
     if limit:
