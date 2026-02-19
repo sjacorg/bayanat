@@ -775,12 +775,23 @@
             },
 
             methods: {
+                refreshEditedMedia(mediaId) {
+                    if (!this.editedItem?.medias) return;
+                    api.get(`/admin/api/media/${mediaId}`).then(response => {
+                        const idx = this.editedItem.medias.findIndex(m => m.id === mediaId);
+                        if (idx !== -1) {
+                            Object.assign(this.editedItem.medias[idx], response.data);
+                        }
+                    });
+                },
                 onTranscriptionUpdated({ media }) {
                     this.showOcrDialog(media.id);
+                    this.refreshEditedMedia(media.id);
                     this.showActor(this.$route.params.id);
                 },
                 onMediaProcessed({ media }) {
                     this.showOcrDialog(media.id);
+                    this.refreshEditedMedia(media.id);
                     this.showActor(this.$route.params.id);
                 },
                 handleRoute({ initialLoad = false } = {}) {
