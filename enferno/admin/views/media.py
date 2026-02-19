@@ -430,8 +430,12 @@ def api_media_get(id: int):
         return HTTPResponse.forbidden("Restricted Access")
 
     item = media.to_dict()
-    item["extraction"] = media.extraction.to_dict() if media.extraction else None
-    item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+    ext = media.extraction
+    ext_dict = ext.to_dict() if ext else None
+    if ext_dict and ext:
+        ext_dict["raw"] = ext.raw
+    item["extraction"] = ext_dict
+    item["ocr_status"] = ext.status if ext else "pending"
     if media.bulletin:
         item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
     else:
