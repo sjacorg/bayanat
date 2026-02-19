@@ -68,10 +68,12 @@
                                     <search-field
                                         v-model="editedItem.labels"
                                         api="/admin/api/labels/"
-                                        :query-params="{ typ: 'for_incident' }"
+                                        :query-params="{ typ: 'for_incident', mode: 2 }"
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
+                                        item-subtitle="path"
+                                        :retain-search="true"
                                         label="{{ _('Labels') }}"
                                     ></search-field>
                                 </div>
