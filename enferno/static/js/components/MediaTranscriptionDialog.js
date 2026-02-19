@@ -11,6 +11,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       translations: window.translations,
       transcriptionText: '',
       editing: false,
+      textMapActive: false,
       saving: false,
       rejecting: false,
       confidenceLevels: { high: 85, medium: 70 },
@@ -83,6 +84,10 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     canTranslate() {
       return this.hasText && this.media?.extraction?.id;
+    },
+    hasTextMap() {
+      return !!this.media?.extraction?.raw?.responses?.[0]?.fullTextAnnotation?.pages?.[0]
+        && this.fileTypeFromMedia === 'image';
     },
     revisionCount() {
       return this.media?.extraction?.history?.length || 0;
@@ -242,6 +247,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       immediate: true,
       handler(newMedia) {
         this.editing = false;
+        this.textMapActive = false;
         this.transcriptionText = '';
         this.translation.show = false;
         this.translation.text = '';
@@ -435,9 +441,18 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         <v-chip v-if="editing" color="warning" size="x-small" variant="tonal" class="ml-2">{{ translations.editing_ || 'Editing' }}</v-chip>
                         <v-spacer></v-spacer>
 
+                        <!-- Text Map toggle -->
+                        <v-btn
+                          v-if="hasTextMap && !editing"
+                          :prepend-icon="textMapActive ? 'mdi-text-long' : 'mdi-map-search-outline'"
+                          variant="outlined"
+                          class="border-thin mr-2"
+                          @click="textMapActive = !textMapActive"
+                        >{{ textMapActive ? (translations.text_ || 'Text') : (translations.textMap_ || 'Text Map') }}</v-btn>
+
                         <!-- Edit / Cancel button -->
                         <v-btn
-                          v-if="canEdit && !editing"
+                          v-if="canEdit && !editing && !textMapActive"
                           prepend-icon="mdi-pencil"
                           variant="outlined"
                           class="border-thin mr-2"
@@ -452,7 +467,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                         >{{ translations.cancel_ || 'Cancel' }}</v-btn>
 
                         <v-btn
-                          v-if="hasVisionApiKey && !editing"
+                          v-if="hasVisionApiKey && !editing && !textMapActive"
                           prepend-icon="mdi-translate"
                           variant="outlined"
                           :loading="translation.loading"
@@ -537,7 +552,15 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                               autofocus
                           ></v-textarea>
 
-                          <!-- View mode: read-only text -->
+                          <!-- View mode: text map -->
+                          <ocr-text-layer
+                            v-else-if="textMapActive"
+                            :image-url="media?.media_url"
+                            :raw="media?.extraction?.raw"
+                            :orientation="media?.orientation || 0"
+                          ></ocr-text-layer>
+
+                          <!-- View mode: plain text -->
                           <div
                             v-else
                             class="h-100 overflow-y-auto text-body-1 pa-4 rounded border-thin"
