@@ -902,12 +902,12 @@
                     onTranscriptionUpdated({ media }) {
                         this.showOcrDialog(media.id);
                         this.refreshEditedMedia(media.id);
-                        this.showBulletin(this.$route.params.id);
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                     },
                     onMediaProcessed({ media }) {
                         this.showOcrDialog(media.id);
                         this.refreshEditedMedia(media.id);
-                        this.showBulletin(this.$route.params.id);
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                     },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);

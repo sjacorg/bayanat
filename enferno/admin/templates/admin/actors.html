@@ -787,12 +787,12 @@
                 onTranscriptionUpdated({ media }) {
                     this.showOcrDialog(media.id);
                     this.refreshEditedMedia(media.id);
-                    this.showActor(this.$route.params.id);
+                    if (this.$route.params.id) this.showActor(this.$route.params.id);
                 },
                 onMediaProcessed({ media }) {
                     this.showOcrDialog(media.id);
                     this.refreshEditedMedia(media.id);
-                    this.showActor(this.$route.params.id);
+                    if (this.$route.params.id) this.showActor(this.$route.params.id);
                 },
                 handleRoute({ initialLoad = false } = {}) {
                     if (this.$route.params.id) this.showActor(this.$route.params.id);
