@@ -70,22 +70,26 @@ def process_media_extraction_task(
             return {"success": False, "media_id": media_id, "error": "Vision API failed"}
 
         confidence = result["confidence"]
-        status = _route_by_confidence(confidence)
+        status = "processed"
 
         # Save
         cleaned_text = _normalize(result["text"])
+        detected_orientation = result.get("orientation", 0)
         extraction = Extraction(
             media_id=media_id,
             text=cleaned_text,
             original_text=cleaned_text,
             raw=result["raw"],
             confidence=confidence,
-            orientation=result.get("orientation", 0),
+            orientation=detected_orientation,
             status=status,
             word_count=result["word_count"],
             language=result["language"],
         )
         db.session.add(extraction)
+        # Store orientation on media (canonical location)
+        if detected_orientation:
+            media.orientation = detected_orientation
         db.session.commit()
 
         logger.info(
@@ -286,15 +290,6 @@ def _normalize(text: str) -> str:
     # Collapse 3+ newlines to double newline
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
-
-
-def _route_by_confidence(confidence: float) -> str:
-    """Route extraction by confidence: >=85 processed, 70-84 review, <70 transcribe."""
-    if confidence >= 85.0:
-        return "processed"
-    if confidence >= 70.0:
-        return "needs_review"
-    return "needs_transcription"
 
 
 def _save_failed_extraction(media_id: int, error: str, raw: dict = None) -> None:

@@ -111,10 +111,6 @@ const MediaThumbnail = Vue.defineComponent({
         this.$emit('ready', this.media);
       }
     },
-    async loadPdfJs() {
-      await loadScript('/static/js/pdf.js/pdf.min.mjs');
-      await loadScript('/static/js/pdf.js/pdf.worker.min.mjs');
-    },
     initThumbnail() {
       if (this.mediaType === 'video') {
         this.generateVideoThumbnailUrl();
@@ -371,7 +367,7 @@ const MediaThumbnail = Vue.defineComponent({
             @error="handleImageError"
             class="w-100 h-100" 
             :style="{
-              ...getImageStyle(media?.extraction?.orientation || 0),
+              ...getImageStyle(media?.orientation || 0),
               opacity: hasError ? 0 : (imageLoaded ? 1 : 0),
               pointerEvents: hasError ? 'none' : 'auto'
             }"
