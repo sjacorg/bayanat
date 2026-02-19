@@ -80,11 +80,6 @@ const MapVisualization = Vue.defineComponent({
         this.$emit('closeEntityDetails');
       },
     },
-
-    selectedEventTypes() {
-      this.clearLocationActors();
-      this.entities.drawer = false;
-    },
   },
 
   computed: {
