@@ -145,7 +145,7 @@ def register_talisman(app):
         "font-src": ["'self'", "data:"],
         "connect-src": ["'self'"],
         "media-src": ["'self'", "blob:"],
-        "frame-ancestors": "'none'",
+        "frame-ancestors": "'self'",
         "form-action": "'self'",
         "base-uri": "'self'",
     }
