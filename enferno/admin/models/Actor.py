@@ -456,6 +456,11 @@ class Actor(db.Model, BaseMixin):
                 )
                 media.save()
 
+        # Collect affected entity IDs for batched revision creation
+        affected_actors = set()
+        affected_bulletins = set()
+        affected_incidents = set()
+
         # Related Actors (actor_relations)
         if "actor_relations" in json:
             # collect related actors ids (helps with finding removed ones)
@@ -468,7 +473,9 @@ class Actor(db.Model, BaseMixin):
                 if actor:
                     rel_ids.append(actor.id)
                     # this will update/create the relationship (will flush to db!)
-                    self.relate_actor(actor, relation=relation)
+                    is_new = self.relate_actor(actor, relation=relation, create_revision=False)
+                    if is_new:
+                        affected_actors.add(actor.id)
 
                 # Find out removed relations and remove them
             # just loop existing relations and remove if the destination actor not in the related ids
@@ -478,9 +485,7 @@ class Actor(db.Model, BaseMixin):
                 rid = r.get_other_id(self.id)
                 if not (rid in rel_ids):
                     r.delete()
-
-                    # -revision related
-                    Actor.query.get(rid).create_revision()
+                    affected_actors.add(rid)
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json:
@@ -493,7 +498,11 @@ class Actor(db.Model, BaseMixin):
                 if bulletin:
                     rel_ids.append(bulletin.id)
                     # this will update/create the relationship (will flush to db!)
-                    self.relate_bulletin(bulletin, relation=relation)
+                    is_new = self.relate_bulletin(
+                        bulletin, relation=relation, create_revision=False
+                    )
+                    if is_new:
+                        affected_bulletins.add(bulletin.id)
 
             # Find out removed relations and remove them
             # just loop existing relations and remove if the destination bulletin not in the related ids
@@ -501,9 +510,7 @@ class Actor(db.Model, BaseMixin):
                 if not (r.bulletin_id in rel_ids):
                     rel_bulletin = r.bulletin
                     r.delete()
-
-                    # -revision related
-                    rel_bulletin.create_revision()
+                    affected_bulletins.add(rel_bulletin.id)
 
         # Related Incidents (incidents_relations)
         if "incident_relations" in json:
@@ -514,7 +521,11 @@ class Actor(db.Model, BaseMixin):
                 if incident:
                     rel_ids.append(incident.id)
                     # helper method to update/create the relationship (will flush to db)
-                    self.relate_incident(incident, relation=relation)
+                    is_new = self.relate_incident(
+                        incident, relation=relation, create_revision=False
+                    )
+                    if is_new:
+                        affected_incidents.add(incident.id)
 
             # Find out removed relations and remove them
             # just loop existing relations and remove if the destination incident no in the related ids
@@ -524,9 +535,21 @@ class Actor(db.Model, BaseMixin):
                 if not (r.incident_id in rel_ids):
                     rel_incident = r.incident
                     r.delete()
+                    affected_incidents.add(rel_incident.id)
 
-                    # -revision related incident
-                    rel_incident.create_revision()
+        # Batch create revisions for all affected entities (deduplicated)
+        for aid in affected_actors:
+            a = Actor.query.get(aid)
+            if a:
+                a.create_revision()
+        for bid in affected_bulletins:
+            b = Bulletin.query.get(bid)
+            if b:
+                b.create_revision()
+        for iid in affected_incidents:
+            i = Incident.query.get(iid)
+            if i:
+                i.create_revision()
 
         if "comments" in json:
             self.comments = json["comments"]
@@ -631,7 +654,7 @@ class Actor(db.Model, BaseMixin):
         actor: "Actor",
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
-    ) -> None:
+    ) -> bool:
         """
         Relate the actor to another actor.
 
@@ -639,6 +662,9 @@ class Actor(db.Model, BaseMixin):
             - actor: the actor to relate to.
             - relation: the relation dictionary.
             - create_revision: whether to create a revision.
+
+        Returns:
+            - True if a new relation was created, False if existing was updated.
         """
         from enferno.admin.models import Atoa
 
@@ -652,12 +678,13 @@ class Actor(db.Model, BaseMixin):
         # reject self relation
         if self == actor:
             # Cant relate bulletin to itself
-            return
+            return False
 
         existing_relation = Atoa.are_related(self.id, actor.id)
         if existing_relation:
             existing_relation.from_json(relation)
             existing_relation.save()
+            return False
 
         else:
             # Create new relation (possible from or to the actor based on the id comparison)
@@ -669,6 +696,7 @@ class Actor(db.Model, BaseMixin):
             # revision for related actor
             if create_revision:
                 actor.create_revision()
+            return True
 
     # Helper method to handle logic of relating bulletin (from am actor)
     def relate_bulletin(
@@ -676,7 +704,7 @@ class Actor(db.Model, BaseMixin):
         bulletin: "Bulletin",
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
-    ) -> None:
+    ) -> bool:
         """
         Relate the actor to a bulletin.
 
@@ -684,6 +712,9 @@ class Actor(db.Model, BaseMixin):
             - bulletin: the bulletin to relate to.
             - relation: the relation dictionary.
             - create_revision: whether to create a revision.
+
+        Returns:
+            - True if a new relation was created, False if existing was updated.
         """
         # if current actor is new, save it to get the id
         if not self.id:
@@ -696,6 +727,7 @@ class Actor(db.Model, BaseMixin):
             # Relationship exists :: Updating the attributes
             existing_relation.from_json(relation)
             existing_relation.save()
+            return False
 
         else:
             # Create new relation
@@ -707,6 +739,7 @@ class Actor(db.Model, BaseMixin):
             # revision for related bulletin
             if create_revision:
                 bulletin.create_revision()
+            return True
 
     # Helper method to handle logic of relating incidents (from an actor)
     def relate_incident(
@@ -714,7 +747,7 @@ class Actor(db.Model, BaseMixin):
         incident: "Incident",
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
-    ) -> None:
+    ) -> bool:
         """
         Relate the actor to an incident.
 
@@ -722,6 +755,9 @@ class Actor(db.Model, BaseMixin):
             - incident: the incident to relate to.
             - relation: the relation dictionary.
             - create_revision: whether to create a revision.
+
+        Returns:
+            - True if a new relation was created, False if existing was updated.
         """
         # if current bulletin is new, save it to get the id
         if not self.id:
@@ -734,6 +770,7 @@ class Actor(db.Model, BaseMixin):
             # Relationship exists :: Updating the attributes
             existing_relation.from_json(relation)
             existing_relation.save()
+            return False
 
         else:
             # Create new relation
@@ -745,6 +782,7 @@ class Actor(db.Model, BaseMixin):
             # revision for related incident
             if create_revision:
                 incident.create_revision()
+            return True
 
     @check_roles
     def to_dict(self, mode: Optional[str] = None) -> dict[str, Any]:
