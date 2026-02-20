@@ -1,6 +1,5 @@
 const MobilityMap = Vue.defineComponent({
   props: {
-    clickToZoomCluster: { type: Boolean, default: false },
     minZoom: { type: Number, default: () => MobilityMapUtils.CONFIG.map.minZoom },
     scrollWheelZoom: { type: Boolean, default: () => MobilityMapUtils.CONFIG.map.scrollWheelZoom },
     locations: { type: Array, required: true },
@@ -18,6 +17,8 @@ const MobilityMap = Vue.defineComponent({
       ctx: null,
       frameRequested: false,
       translations: window.translations,
+      clusterMin: null,
+      clusterMax: null,
 
       points: {},
       selectedPoint: null,
@@ -248,6 +249,8 @@ const MobilityMap = Vue.defineComponent({
       this.flowGroups = result.flowGroups;
       this.minWeight = result.minWeight;
       this.maxWeight = result.maxWeight;
+      this.clusterMin = result.clusterMin;
+      this.clusterMax = result.clusterMax;
 
       this.drawFrame();
     },
@@ -288,11 +291,13 @@ const MobilityMap = Vue.defineComponent({
         const p = clusterPixels[c.id];
         if (!p) return;
 
+        const tier = MobilityMapUtils.getTier(c.traffic, this.clusterMin, this.clusterMax);
+        console.log(c.traffic, this.clusterMin, this.clusterMax)
         const markerTypes = new Set(c.memberIds.map((id) => this.points[id]?.markerType));
         const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(
           c,
           markerTypes,
-          this.clickToZoomCluster
+          tier
         );
 
         const isCluster = c.memberIds.length > 1;
@@ -412,11 +417,6 @@ const MobilityMap = Vue.defineComponent({
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
           const cluster = this.clusterDefs[dot.clusterId];
           if (!cluster) return;
-
-          if (cluster.memberIds.length > 1 && this.clickToZoomCluster) {
-            this.zoomToCluster(cluster.memberIds);
-            return;
-          }
 
           if (this.mode === 'event') {
             const { lat, lon } = this.tooltip.data;

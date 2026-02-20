@@ -2,13 +2,15 @@ const MobilityMapUtils = {
   CONFIG: {
     colors: {
       arrow: {
-        hue: 173,
-        saturation: [55, 80],
-        lightness: [60, 10],
-        noRange: 'hsl(173, 55%, 32%)',
+        low:  '#78babf',
+        mid:  '#4e9aaa',
+        high: '#1f5570',
+        noRange: '#78babf',
       },
       dot: {
-        fill: '#28726c',
+        low:  '#78babf',
+        mid:  '#4e9aaa',
+        high: '#1f5570',
         stroke: '#fff',
       },
       location: '#00a1f1',
@@ -42,9 +44,10 @@ const MobilityMapUtils = {
     sizes: {
       arrowPaddingCompensation: 0.25,
       bidirectionalArrowSpacing: 1,
-      arrowWidths: [2, 3, 4, 5, 6, 7],
-      dotSizes: [6, 9, 12, 15, 18, 22],
+      arrow: { low: 2, mid: 4, high: 6 },
+      dot:   { low: 7, mid: 12, high: 18 },
     },
+
 
     clustering: {
       threshold: 50,
@@ -169,7 +172,7 @@ const MobilityMapUtils = {
 
     clusterDefs.forEach((c) => {
       c.radius = this.getClusterRadius(c.traffic, clusterMin, clusterMax);
-      delete c.traffic;
+      // delete c.traffic;
     });
 
     flows.forEach((f) => {
@@ -192,19 +195,12 @@ const MobilityMapUtils = {
       });
     });
 
-    return { clusters: clusterDefs, clusterByLocationId, flowGroups, minWeight, maxWeight };
+    return { clusters: clusterDefs, clusterByLocationId, flowGroups, minWeight, maxWeight, clusterMin, clusterMax };
   },
 
   getClusterRadius(clusterTotal, minWeight, maxWeight) {
-    const dotSizes = this.CONFIG.sizes.dotSizes;
-
-    if (minWeight === maxWeight) return dotSizes[0];
-
-    let t = (clusterTotal - minWeight) / (maxWeight - minWeight);
-    const compression = Math.min(1, (maxWeight - minWeight) / 5);
-    t = Math.min(1, t * compression);
-
-    return dotSizes[0] + t * (dotSizes[dotSizes.length - 1] - dotSizes[0]);
+    const sizes = this.CONFIG.sizes.dot;
+    return sizes[this.getTier(clusterTotal, minWeight, maxWeight)];
   },
 
   getClusterPixels(clusters, map) {
@@ -215,8 +211,8 @@ const MobilityMapUtils = {
     return pixels;
   },
 
-  getClusterVisualStyle(cluster, markerTypes, clickToZoomCluster) {
-    let fillColor = this.CONFIG.colors.dot.fill;
+  getClusterVisualStyle(cluster, markerTypes, tier = 'low') {
+    let fillColor = this.CONFIG.colors.dot[tier];
     let strokeStyle = this.CONFIG.colors.dot.stroke;
     let strokeWidth = 2;
     let dotSize = cluster.radius;
@@ -224,16 +220,9 @@ const MobilityMapUtils = {
     if (markerTypes.size === 1) {
       const type = [...markerTypes][0];
       if (type === 'location') fillColor = this.CONFIG.colors.location;
-      if (type === 'event') fillColor = this.CONFIG.colors.event;
-      if (type === 'geo') fillColor = this.CONFIG.colors.geo;
+      if (type === 'event')    fillColor = this.CONFIG.colors.event;
+      if (type === 'geo')      fillColor = this.CONFIG.colors.geo;
       if (type === 'geo-main') fillColor = this.CONFIG.colors.geoMain;
-    }
-
-    if (cluster.memberIds.length > 1 && clickToZoomCluster) {
-      fillColor = this.CONFIG.colors.cluster;
-      strokeStyle = this.CONFIG.colors.clusterStroke;
-      strokeWidth = cluster.radius * 1.25;
-      dotSize = cluster.radius * 1.2;
     }
 
     return { fillColor, strokeStyle, strokeWidth, dotSize };
@@ -296,36 +285,31 @@ const MobilityMapUtils = {
     return { segments, arrowMin, arrowMax };
   },
 
-  getArrowColor(weight, minW, maxW) {
-    const cfg = this.CONFIG.colors.arrow;
-    if (minW === maxW) return cfg.noRange;
+  getTier(weight, minW, maxW) {
+    if (minW === maxW) return 'mid';
+    
+    const range = maxW - minW;
+    const t = (weight - minW) / range;
 
-    let t = (weight - minW) / (maxW - minW);
-    const compression = Math.min(1, (maxW - minW) / 5);
-    t = Math.min(1, t * compression);
+    if (range <= 2) {
+      // Tight range — only use low and mid
+      return t < 0.5 ? 'low' : 'mid';
+    }
 
-    const sat = cfg.saturation[0] + t * (cfg.saturation[1] - cfg.saturation[0]);
-    const light = cfg.lightness[0] + t * (cfg.lightness[1] - cfg.lightness[0]);
-
-    return `hsl(${cfg.hue}, ${sat}%, ${light}%)`;
+    if (t < 0.33) return 'low';
+    if (t < 0.66) return 'mid';
+    return 'high';
   },
 
-  getArrowWidth(weight, minWeight, maxWeight, rawPairs = []) {
-    const widths = this.CONFIG.sizes.arrowWidths;
-    if (minWeight === maxWeight) return widths[2];
+  getArrowColor(weight, minW, maxW) {
+    const { noRange, ...tiers } = this.CONFIG.colors.arrow;
+    if (minW === maxW) return noRange;
+    return tiers[this.getTier(weight, minW, maxW)];
+  },
 
-    let t = (weight - minWeight) / (maxWeight - minWeight);
-    t = Math.min(1, Math.max(0, t));
-
-    const baseWidth = widths[0] + t * (widths[widths.length - 1] - widths[0]);
-
-    // Aggregation boost for heavy flows
-    const count = rawPairs.length;
-    const aggFactor = count <= 1 ? 0 : 1 - Math.exp(-count / 6);
-    const weightGate = Math.pow(t, 1.8);
-    const boost = 1 + aggFactor * weightGate * 1.2;
-
-    return baseWidth * boost;
+  getArrowWidth(weight, minWeight, maxWeight) {
+    const sizes = this.CONFIG.sizes.arrow;
+    return sizes[this.getTier(weight, minWeight, maxWeight)];
   },
 
   computeOffsets(p1, p2, offset) {
