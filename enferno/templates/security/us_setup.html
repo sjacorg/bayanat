@@ -26,7 +26,7 @@
         {% endif %}
         {% if chosen_method == "authenticator" %}
           <p>{{ _("Open your authenticator app on your device and scan the following qrcode to start receiving codes:") }}</p>
-          <p><img alt="{{ _("Passwordless QRCode") }}" id="qrcode" src="{{ url_for_security("us_qrcode", token=state) }}"></p>
+          <p><img loading="lazy" alt="{{ _("Passwordless QRCode") }}" id="qrcode" src="{{ url_for_security("us_qrcode", token=state) }}"></p>
         {% endif %}
         {% if code_sent %}
           <p>{{ _("Code has been sent") }}

@@ -11,15 +11,15 @@
                 <!-- Stats Bar -->
                 <v-card-text class="pb-0">
                     <v-row>
-                        <v-col cols="12" md="2">
+                        <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-warning">${(ocrStats.needs_review + ocrStats.needs_transcription).toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis text-warning font-weight-medium">{{ _('Needs Review') }}</div>
+                                    <div class="text-h4 text-success">${ocrStats.processed.toLocaleString()}</div>
+                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Processed') }}</div>
                                 </v-card-text>
                             </v-card>
                         </v-col>
-                        <v-col cols="12" md="2">
+                        <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
                                     <div class="text-h4 text-error">${ocrStats.failed.toLocaleString()}</div>
@@ -27,31 +27,15 @@
                                 </v-card-text>
                             </v-card>
                         </v-col>
-                        <v-col cols="12" md="2">
+                        <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${ocrStats.cant_read.toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Can\'t Read') }}</div>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="12" md="2">
-                            <v-card>
-                                <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${ocrStats.processed.toLocaleString()}</div>
-                                    <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Processed (Searchable)') }}</div>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="12" md="2">
-                            <v-card>
-                                <v-card-text class="text-center">
-                                    <div class="text-h4 text-primary">${(ocrStats.pending).toLocaleString()}</div>
+                                    <div class="text-h4 text-primary">${ocrStats.pending.toLocaleString()}</div>
                                     <div class="text-caption text-medium-emphasis font-weight-medium">{{ _('Pending') }}</div>
                                 </v-card-text>
                             </v-card>
                         </v-col>
-                        <v-col cols="12" md="2">
+                        <v-col cols="12" md="3">
                             <v-card>
                                 <v-card-text class="text-center">
                                     <div class="text-h4 text-primary">${ocrStats.total.toLocaleString()}</div>
@@ -175,7 +159,6 @@
                             >   
                                 <media-thumbnail 
                                     :media="item"
-                                    :s3url="item.media_url"
                                     :show-hover-icon="false"
                                     :show-play-button="false"
                                     :show-duration="false"
@@ -248,6 +231,7 @@
     <script src="/static/js/mixins/ocr-mixin.js"></script>
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/components/SplitView.js"></script>
+    <script src="/static/js/components/OcrTextLayer.js"></script>
     <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
@@ -278,7 +262,7 @@
                     page: 1,
                     per_page: window.itemsPerPageOptions?.[0] ?? 10,
                 },
-                ocrStats: { total: 0, pending: 0, processed: 0, needs_review: 0, needs_transcription: 0, cant_read: 0, failed: 0 },
+                ocrStats: { total: 0, pending: 0, processed: 0, cant_read: 0, failed: 0 },
 
                 headers: [
                     { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
@@ -350,10 +334,7 @@
                 },
                 
                 hasLowWordCount(item) {
-                    // Only show for items that need review
-                    const needsReview = ['needs_review', 'needs_transcription'].includes(item.ocr_status);
-                    if (!needsReview) return false;
-                    
+                    if (!['processed', 'manual'].includes(item.ocr_status)) return false;
                     const count = this.getEffectiveWordCount(item);
                     return count > 0 && count < this.lowWordCount;
                 },
@@ -552,6 +533,7 @@
         });
 
         app.component('SplitView', SplitView);
+        app.component('OcrTextLayer', OcrTextLayer);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
         app.component('PdfViewer', PdfViewer);
         app.component('ImageViewer', ImageViewer);

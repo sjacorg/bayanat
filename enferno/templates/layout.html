@@ -88,6 +88,7 @@
   class="d-none"
   data-username="{{ current_user.username|escape if current_user.is_authenticated else '' }}"
   data-is-admin="{{ current_user.has_role('Admin')|tojson if current_user.is_authenticated else 'false' }}"
+  data-is-da="{{ current_user.has_role('DA')|tojson if current_user.is_authenticated else 'false' }}"
   data-settings='{{ current_user.settings|tojson if current_user.is_authenticated and current_user.settings else '{}' }}'
   data-lang="{{ session.get('lang', 'en') }}"
   data-maps-api-endpoint="{{ config.MAPS_API_ENDPOINT }}"
@@ -99,6 +100,7 @@
 
     window.__username__ = el.dataset.username;
     window.__isAdmin__ = el.dataset.isAdmin === 'true';
+    window.__isDA__ = el.dataset.isDa === 'true';
     window.__settings__ = JSON.parse(el.dataset.settings);
     window.__lang__ = el.dataset.lang;
     window.__MAPS_API_ENDPOINT__ = el.dataset.mapsApiEndpoint;

@@ -115,12 +115,13 @@ const MediaCard = Vue.defineComponent({
       default: false,
     }
   },
-  emits: ['media-click', 'ready'],
+  emits: ['media-click'],
   data() {
     return {
       s3url: '',
       visionApiKey: window.__GOOGLE_VISION_API_KEY__,
       isCurrentUserAdmin: window.__isAdmin__ || false,
+      isCurrentUserDA: window.__isDA__ || false,
       translations: window.translations,
       iconMap: {
         image: 'mdi-image',
@@ -144,7 +145,7 @@ const MediaCard = Vue.defineComponent({
 
       const isMediaSaved = !!this.media?.id;
       const isSupportedType = this.$root.selectableFileTypes.includes(this.mediaType);
-      const visible = this.isCurrentUserAdmin && Boolean(this.visionApiKey);
+      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && Boolean(this.visionApiKey);
       const disabled = !isSupportedType || !isMediaSaved;
       let text = '';
 
@@ -165,34 +166,7 @@ const MediaCard = Vue.defineComponent({
       };
     }
   },
-  mounted() {
-    this.init();
-  },
   methods: {
-    init() {
-      // If s3url already exists on media, use it
-      if (this.media.s3url) {
-        this.s3url = this.media.s3url;
-        this.$emit('ready');
-        return;
-      }
-
-      // If we already have s3url in local state, don't refetch
-      if (this.s3url) {
-        this.$emit('ready');
-        return;
-      }
-
-      // Fetch the s3url
-      api.get(`/admin/api/media/${this.media.filename}`)
-        .then(response => {
-          this.s3url = response.data.url;
-          // Store on media object for persistence across re-renders
-          this.media.s3url = response.data.url;
-        })
-        .catch(error => console.error('Error fetching media:', error))
-        .finally(() => this.$emit('ready'));
-    },
     handleMediaClick(payload) {
       // If media-thumbnail passes payload, use it; otherwise create it
       const clickPayload = payload || { media: this.media, mediaType: this.mediaType };
@@ -234,17 +208,17 @@ const MediaCard = Vue.defineComponent({
   },
   template: /*html*/`
     <!-- Mini mode card -->
-    <v-card v-if="miniMode" style="width: min(200px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
+    <v-card v-if="miniMode" style="width: min(200px,100%); height: fit-content;" class="border border-1 mx-2">
       <v-card-text class="text-center pa-0">
         <v-hover v-slot="{ isHovering: isHoveringPreview, props: previewHoverProps }">
           <div v-bind="previewHoverProps" class="preview-container position-relative"
               style="height: 120px;">
             <media-thumbnail
               :media="media"
-              :s3url="s3url"
               :show-hover-icon="isHoveringPreview"
               clickable
               @click="handleMediaClick"
+              @ready="s3url = $event.s3url"
             />
           </div>
         </v-hover>
@@ -268,7 +242,7 @@ const MediaCard = Vue.defineComponent({
     </v-card>
 
     <!-- Normal size card -->
-    <v-card v-else style="width: min(350px,100%); height: fit-content;" class="border border-1 mx-2" :disabled="!s3url">
+    <v-card v-else style="width: min(350px,100%); height: fit-content;" class="border border-1 mx-2">
       ${toolbarContent}
 
       <v-card-text class="text-center pa-0">
@@ -277,10 +251,10 @@ const MediaCard = Vue.defineComponent({
               style="height: 160px;">
             <media-thumbnail
               :media="media"
-              :s3url="s3url"
               :show-hover-icon="isHoveringPreview"
               clickable
               @click="handleMediaClick"
+              @ready="s3url = $event.s3url"
             />
           </div>
         </v-hover>
