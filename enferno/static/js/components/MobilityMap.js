@@ -292,7 +292,6 @@ const MobilityMap = Vue.defineComponent({
         if (!p) return;
 
         const tier = MobilityMapUtils.getTier(c.traffic, this.clusterMin, this.clusterMax);
-        console.log(c.traffic, this.clusterMin, this.clusterMax)
         const markerTypes = new Set(c.memberIds.map((id) => this.points[id]?.markerType));
         const { fillColor, strokeStyle, strokeWidth, dotSize } = MobilityMapUtils.getClusterVisualStyle(
           c,
