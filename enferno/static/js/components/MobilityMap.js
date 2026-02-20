@@ -19,6 +19,8 @@ const MobilityMap = Vue.defineComponent({
       translations: window.translations,
       clusterMin: null,
       clusterMax: null,
+      hoveredDot: null,
+      hoveredArrow: null,
 
       points: {},
       selectedPoint: null,
@@ -285,7 +287,7 @@ const MobilityMap = Vue.defineComponent({
 
       segments
         .sort((a, b) => a.width - b.width)
-        .forEach((seg) => this.drawArrow(seg, arrowMin, arrowMax));
+        .forEach((seg, i) => this.drawArrow(seg, arrowMin, arrowMax, i === this.hoveredArrow));
 
       this.clusterDefs.forEach((c) => {
         const p = clusterPixels[c.id];
@@ -305,14 +307,8 @@ const MobilityMap = Vue.defineComponent({
         if (isCluster) {
           ctx.beginPath();
           ctx.arc(p.x, p.y, dotSize + 4, 0, Math.PI * 2);
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, dotSize + 6, 0, Math.PI * 2);
           ctx.lineWidth = 1.5;
-          ctx.strokeStyle = strokeStyle;
+          ctx.strokeStyle = (c.id === this.hoveredDot) ? '#FFD700' : strokeStyle;
           ctx.setLineDash([4, 3]);
           ctx.stroke();
           ctx.setLineDash([]);
@@ -325,6 +321,7 @@ const MobilityMap = Vue.defineComponent({
         ctx.fill();
         ctx.lineWidth = strokeWidth;
         ctx.strokeStyle = strokeStyle;
+        ctx.strokeStyle = (c.id === this.hoveredDot) ? '#FFD700' : strokeStyle;
         ctx.stroke();
 
         // Show unique actor count from location data
@@ -356,7 +353,7 @@ const MobilityMap = Vue.defineComponent({
       this.arrowShapes.sort((a, b) => a.weight - b.weight);
     },
 
-    drawArrow(seg, minW, maxW) {
+    drawArrow(seg, minW, maxW, isHovered = false) {
       const ctx = this.ctx;
       const { from: p1, to: p2, width, fromCluster, toCluster, weight, rawPairs } = seg;
 
@@ -385,6 +382,7 @@ const MobilityMap = Vue.defineComponent({
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.strokeStyle = 'rgba(255,255,255,1)';
+      ctx.strokeStyle = isHovered ? '#FFD700' : 'rgba(255,255,255,1)';
       ctx.lineWidth = 2;
       ctx.stroke(path);
 
@@ -506,9 +504,12 @@ const MobilityMap = Vue.defineComponent({
 
       const p = this.map.latLngToContainerPoint(e.latlng);
       let hovering = false;
+      this.hoveredDot = null;
+      this.hoveredArrow = null;
 
       for (const dot of this.dotShapes) {
         if (MobilityMapUtils.pointInCircle(p.x, p.y, dot)) {
+          this.hoveredDot = dot.clusterId;
           hovering = true;
           const cluster = this.clusterDefs[dot.clusterId];
 
@@ -565,6 +566,7 @@ const MobilityMap = Vue.defineComponent({
 
           if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow, this.ctx)) {
             if (this.mode === 'event') return;
+            this.hoveredArrow = i;
             hovering = true;
             const pairs = arrow.rawPairs || [];
 
@@ -595,6 +597,8 @@ const MobilityMap = Vue.defineComponent({
           }
         }
       }
+
+      this.scheduleFrame();
 
       this.$refs.mapContainer.style.cursor = hovering ? 'pointer' : 'grab';
 
