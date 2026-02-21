@@ -68,12 +68,12 @@ const SearchField = Vue.defineComponent({
       if (!this.multiple || !Array.isArray(this.modelValue) || !this.modelValue.length) {
         return fetchedItems;
       }
-      const selectedIds = new Set(this.modelValue.map(v => this.returnObject ? v[this.itemValue] : v));
-      const filtered = fetchedItems.filter(i => {
-        const key = this.returnObject ? i[this.itemValue] : i;
-        return !selectedIds.has(key);
+      const fetchedIds = new Set(fetchedItems.map(i => this.returnObject ? i[this.itemValue] : i));
+      const missing = this.modelValue.filter(v => {
+        const key = this.returnObject ? v[this.itemValue] : v;
+        return !fetchedIds.has(key);
       });
-      return [...this.modelValue, ...filtered];
+      return [...missing, ...fetchedItems];
     },
     onSelect(val) {
       if (this.retainSearch) {
@@ -119,12 +119,13 @@ const SearchField = Vue.defineComponent({
     <v-autocomplete
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
-      :auto-select-first="false"
+      :auto-select-first="true"
       :model-value="modelValue"
       @update:model-value="onSelect"
       v-model:search="searchQuery"
       @update:focused="onFocused"
       hide-no-data
+      hide-selected
       no-filter
       item-color="secondary"
       :label="label"
