@@ -69,6 +69,19 @@
                                             ${ item.parent ? item.parent.title : '' }
                                         </template>
 
+                                        <template v-slot:item.for_bulletin="{ item }">
+                                            <v-icon v-if="item.for_bulletin" color="primary" size="small">mdi-check</v-icon>
+                                        </template>
+                                        <template v-slot:item.for_actor="{ item }">
+                                            <v-icon v-if="item.for_actor" color="primary" size="small">mdi-check</v-icon>
+                                        </template>
+                                        <template v-slot:item.for_incident="{ item }">
+                                            <v-icon v-if="item.for_incident" color="primary" size="small">mdi-check</v-icon>
+                                        </template>
+                                        <template v-slot:item.for_offline="{ item }">
+                                            <v-icon v-if="item.for_offline" color="primary" size="small">mdi-check</v-icon>
+                                        </template>
+
                                         <template v-slot:item.action="{ item }">
                                             <v-icon size="small" class="mr-2" @click="editItem(item)">mdi-pencil</v-icon>
                                             <v-icon size="small" @click="deleteItem(item)">mdi-delete-sweep</v-icon>
