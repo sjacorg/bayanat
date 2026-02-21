@@ -167,13 +167,6 @@
                                 <v-row>
                                     <v-col cols="12" md="2">
                                         <v-checkbox
-                                            v-model="editedItem.verified"
-                                            :disabled="parentDisables('verified')"
-                                            label="{{ _('Verified') }}"
-                                        ></v-checkbox>
-                                    </v-col>
-                                    <v-col cols="12" md="2">
-                                        <v-checkbox
                                             v-model="editedItem.for_bulletin"
                                             :disabled="parentDisables('for_bulletin')"
                                             label="{{ _('Bulletin') }}"
@@ -301,7 +294,7 @@
                     return this.tab === 'verified' ? 'verified' : 'all';
                 },
                 parentQueryParams() {
-                    const params = { fltr: 'all', mode: 2 };
+                    const params = { fltr: this.tab === 'verified' ? 'verified' : '', mode: 2 };
                     if (this.editedItem.id) {
                         params.exclude = this.editedItem.id;
                     }
@@ -311,7 +304,6 @@
                     const p = this.editedItem.parent;
                     if (!p) return null;
                     const disabled = [];
-                    if (p.verified) disabled.push('Verified is enforced by parent');
                     for (const flag of ['for_bulletin', 'for_actor', 'for_incident', 'for_offline']) {
                         if (p[flag] === false) disabled.push(`${flag.replace('for_', '')} disabled by parent`);
                     }
@@ -340,7 +332,6 @@
                 'editedItem.parent'(val) {
                     if (val && typeof val === 'object') {
                         // Enforce parent restrictions on flag checkboxes
-                        if (val.verified) this.editedItem.verified = true;
                         for (const flag of ['for_bulletin', 'for_actor', 'for_incident', 'for_offline']) {
                             if (val[flag] === false) this.editedItem[flag] = false;
                         }
@@ -352,7 +343,6 @@
                 parentDisables(flag) {
                     const p = this.editedItem.parent;
                     if (!p || typeof p !== 'object') return false;
-                    if (flag === 'verified') return p.verified === true;
                     return p[flag] === false;
                 },
 
