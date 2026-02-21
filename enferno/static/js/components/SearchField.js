@@ -119,7 +119,7 @@ const SearchField = Vue.defineComponent({
     <v-autocomplete
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
-      :auto-select-first="true"
+      :auto-select-first="false"
       :model-value="modelValue"
       @update:model-value="onSelect"
       v-model:search="searchQuery"
