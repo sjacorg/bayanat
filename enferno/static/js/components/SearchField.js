@@ -68,12 +68,12 @@ const SearchField = Vue.defineComponent({
       if (!this.multiple || !Array.isArray(this.modelValue) || !this.modelValue.length) {
         return fetchedItems;
       }
-      const fetchedIds = new Set(fetchedItems.map(i => this.returnObject ? i[this.itemValue] : i));
-      const missing = this.modelValue.filter(v => {
-        const key = this.returnObject ? v[this.itemValue] : v;
-        return !fetchedIds.has(key);
+      const selectedIds = new Set(this.modelValue.map(v => this.returnObject ? v[this.itemValue] : v));
+      const filtered = fetchedItems.filter(i => {
+        const key = this.returnObject ? i[this.itemValue] : i;
+        return !selectedIds.has(key);
       });
-      return [...missing, ...fetchedItems];
+      return [...this.modelValue, ...filtered];
     },
     onSelect(val) {
       if (this.retainSearch) {
