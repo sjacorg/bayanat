@@ -5,7 +5,8 @@ from celery.signals import worker_ready
 
 from enferno.utils.logging_utils import get_logger
 
-import enferno.tasks as tasks_pkg
+from flask import current_app
+
 from enferno.tasks import celery, cfg
 
 logger = get_logger("celery.tasks.ml")
@@ -13,7 +14,7 @@ logger = get_logger("celery.tasks.ml")
 
 @celery.task
 def load_whisper_model():
-    if not tasks_pkg._flask_app.config["HAS_WHISPER"]:
+    if not current_app.config.get("HAS_WHISPER"):
         logger.warning("Whisper not available, skipping model load.")
         return
     try:

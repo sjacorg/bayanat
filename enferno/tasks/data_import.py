@@ -2,11 +2,10 @@
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from celery import chain, chord, group
+from celery import chord, group
 from werkzeug.utils import safe_join
 
 from enferno.admin.constants import Constants
-from enferno.admin.models import Media
 from enferno.admin.models.Notification import Notification
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport

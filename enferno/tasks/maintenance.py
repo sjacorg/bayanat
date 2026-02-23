@@ -62,7 +62,7 @@ def daily_backup_cron():
     filepath = f"{cfg.BACKUPS_LOCAL_PATH}/{filename}"
     try:
         pg_dump(filepath)
-    except:
+    except Exception:
         logger.error("Error during daily backups", exc_info=True)
         return
 
