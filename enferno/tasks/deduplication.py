@@ -40,14 +40,14 @@ def start_dedup(user_id) -> None:
     """
     Initiates the Deduplication process and queue unprocessed items.
     """
-    print("Queuing unprocessed matches for deduplication...")
+    logger.info("Queuing unprocessed matches for deduplication...")
     items = DedupRelation.query.filter_by(status=0).order_by(func.random())
     for item in items:
         # add all item ids to redis with current user id
         rds.sadd("dedq", f"{item.id}|{user_id}")
     # activate redis flag to process data
     rds.set("dedup", 1)
-    print("Starting Deduplication process...")
+    logger.info("Starting Deduplication process...")
 
 
 @celery.task

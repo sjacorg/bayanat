@@ -178,7 +178,6 @@ from enferno.tasks.maintenance import (
 from enferno.tasks.media_download import download_media_from_web  # noqa: E402, F401
 from enferno.tasks.ml import load_whisper_model, load_whisper_model_on_startup  # noqa: E402, F401
 from enferno.tasks.ocr import (
-    process_media_extraction,
     ocr_single,
     bulk_ocr_finalize,
     bulk_ocr_process,

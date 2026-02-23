@@ -52,9 +52,6 @@ def generate_export(export_id: t.id) -> None:
             generate_csv_file.s([export_id]), generate_export_media.s(), generate_export_zip.s()
         )()
 
-    elif export_request.file_format == "csv":
-        raise NotImplementedError
-
 
 def clear_failed_export(export_request: Export) -> None:
     """

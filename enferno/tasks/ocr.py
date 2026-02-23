@@ -11,8 +11,6 @@ from enferno.utils.logging_utils import get_logger
 
 logger = get_logger("celery.tasks.ocr")
 
-process_media_extraction = celery.task(process_media_extraction_task)
-
 
 @celery.task(rate_limit="1200/m")
 def ocr_single(
