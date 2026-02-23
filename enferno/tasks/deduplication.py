@@ -3,9 +3,8 @@ from sqlalchemy.sql.expression import func
 
 from enferno.deduplication.models import DedupRelation
 from enferno.extensions import rds
-from enferno.utils.logging_utils import get_logger
-
 from enferno.tasks import celery, cfg
+from enferno.utils.logging_utils import get_logger
 
 logger = get_logger("celery.tasks.deduplication")
 

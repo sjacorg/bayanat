@@ -5,18 +5,16 @@ from typing import Any, Literal, Optional
 from celery import chord, group
 from werkzeug.utils import safe_join
 
+import enferno.utils.typing as t
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
-from enferno.extensions import db
+from enferno.tasks import celery, cfg
 from enferno.user.models import User
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.logging_utils import get_logger
-import enferno.utils.typing as t
-
-from enferno.tasks import celery, cfg
 
 logger = get_logger("celery.tasks.data_import")
 
