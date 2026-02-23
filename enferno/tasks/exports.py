@@ -3,7 +3,7 @@ import os
 import shutil
 import time
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import boto3
 import pandas as pd
@@ -21,7 +21,7 @@ from enferno.utils.pdf_utils import PDFUtil
 logger = get_logger("celery.tasks.exports")
 
 
-def generate_export(export_id: t.id) -> None:
+def generate_export(export_id: t.id) -> Any:
     """
     Main Export generator task.
 
@@ -49,6 +49,8 @@ def generate_export(export_id: t.id) -> None:
         return chain(
             generate_csv_file.s([export_id]), generate_export_media.s(), generate_export_zip.s()
         )()
+    else:
+        raise NotImplementedError(f"Unsupported export file format: {export_request.file_format!r}")
 
 
 def clear_failed_export(export_request: Export) -> None:
@@ -224,7 +226,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
 
 
 @celery.task
-def generate_export_media(previous_result: int) -> Optional[t.id]:
+def generate_export_media(previous_result: int) -> t.id | Literal[False]:
     """
     Task to attach media files to export.
 
@@ -232,7 +234,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
         - previous_result: Previous result.
 
     Returns:
-        - export_request.id if successful, None otherwise.
+        - export_request.id if successful, False otherwise.
     """
     if previous_result is False:
         return False
@@ -256,7 +258,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
     elif export_type == "incident":
         # incidents has no media
         # UI switch disabled, but just in case...
-        return
+        return False
 
     for item in items:
         if item.medias:
@@ -326,6 +328,7 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     # update request state
     export_request.status = "Ready"
     export_request.save()
+    return None
 
 
 @celery.task
