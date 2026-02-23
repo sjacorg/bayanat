@@ -50,13 +50,6 @@
     </v-tooltip>
 
     <profile-dropdown name="{{ current_user.name }}" username="{{ current_user.username }}" email="{{ current_user.email }}"></profile-dropdown>
-  
-    <v-tooltip location="bottom">
-      <template v-slot:activator="{ props }">
-        <v-btn v-bind="props" icon="mdi-logout" href="/logout"></v-btn>
-      </template>
-      {{ _('Logout') }}
-    </v-tooltip>
   </template>
 
 

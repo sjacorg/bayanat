@@ -19,15 +19,22 @@ const ProfileDropdown = Vue.defineComponent({
     };
   },
   computed: {
+    normalizedEmail() {
+      const e = (this.email || '').trim()
+      return e === 'None' ? '' : e
+    },
+    displayName() {
+      return this.name || this.username || this.normalizedEmail || 'User'
+    },
     userInitials() {
       const safeName = (this.name || '').trim()
-      const safeEmail = (this.email || '').trim()
+      const safeEmail = this.normalizedEmail
       const safeUsername = (this.username || '').trim()
 
       // 1) Name-based initials
       if (safeName) {
         return safeName
-          .split(/\s+/)
+          .split(/[\s-]+/)
           .filter(Boolean)
           .map(p => p[0])
           .join('')
@@ -41,7 +48,7 @@ const ProfileDropdown = Vue.defineComponent({
       }
 
       // 3) Email fallback
-      if (safeEmail && safeEmail !== 'None') {
+      if (safeEmail) {
         return safeEmail.charAt(0).toUpperCase()
       }
 
@@ -49,9 +56,9 @@ const ProfileDropdown = Vue.defineComponent({
       return '?'
     },
     tooltipText() {
-      const safeEmail = (this.email || '').trim()
+      const safeEmail = this.normalizedEmail
       const username = (this.username || '').trim()
-      if (!safeEmail || safeEmail === 'None') return username;
+      if (!safeEmail) return username;
       return safeEmail;
     }
   },
@@ -75,25 +82,25 @@ const ProfileDropdown = Vue.defineComponent({
           <v-avatar color="primary" variant="teal" class="border">
             <span class="text-h5 text-primary">{{ userInitials }}</span>
           </v-avatar>
-          <span class="text-subtitle-2 text-truncate">{{ name || username }}</span>
+          <span class="text-subtitle-2 text-truncate">{{ displayName }}</span>
         </v-container>
 
         <v-divider></v-divider>
 
         <v-list density="compact" nav>
-            <v-list-subheader>Theme</v-list-subheader>
+            <v-list-subheader>{{ translations.theme_ }}</v-list-subheader>
 
             <v-radio-group class="ml-5" hide-details v-model="$root.settings.dark" @update:model-value="$root.saveSettings" row>
                 <v-radio :value="0" true-icon="mdi-check-circle">
                     <template #label>
                         <v-icon size="small" class="mr-2">mdi-weather-sunny</v-icon>
-                        <span class="text-body-2">Light</span>
+                        <span class="text-body-2">{{ translations.light_ }}</span>
                     </template>
                 </v-radio>
                 <v-radio :value="1" true-icon="mdi-check-circle">
                     <template #label>
                         <v-icon size="small" class="mr-2">mdi-weather-night</v-icon>
-                        <span class="text-body-2">Dark</span>
+                        <span class="text-body-2">{{ translations.dark_ }}</span>
                     </template>
                 </v-radio>
             </v-radio-group>
@@ -102,19 +109,25 @@ const ProfileDropdown = Vue.defineComponent({
         <v-divider></v-divider>
         
         <v-list density="compact" nav class="text-body-2">
-            <v-list-subheader>My Security</v-list-subheader>
-            <v-list-item class="ml-5" href="/change">Change Password</v-list-item>
-            <v-list-item class="ml-5" href="/tf-setup">2FA Authentication</v-list-item>
-            <v-list-item class="ml-5" href="/mf-recovery-codes">Recovery Codes</v-list-item>
-            <v-list-item class="ml-5" href="/wan-register">Security Keys</v-list-item>
+            <v-list-subheader>{{ translations.mySecurity_ }}</v-list-subheader>
+            <v-list-item class="ml-5" href="/change">{{ translations.changePassword_ }}</v-list-item>
+            <v-list-item class="ml-5" href="/tf-setup">{{ translations.tfaAuthentication_ }}</v-list-item>
+            <v-list-item class="ml-5" href="/mf-recovery-codes">{{ translations.recoveryCodes_ }}</v-list-item>
+            <v-list-item class="ml-5" href="/wan-register">{{ translations.securityKeys_ }}</v-list-item>
         </v-list>
         
         <v-divider></v-divider>
 
         <v-list density="compact" nav class="text-body-2">
-          <v-list-item href="https://docs.bayanat.org/" target="_blank">User Guides <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
-          <v-list-item href="https://community.bayanat.org/" target="_blank">Support <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
-          <v-list-item href="https://github.com/sjacorg/bayanat/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=" target="_blank">Report a Bug <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
+          <v-list-item href="https://docs.bayanat.org/" target="_blank">{{ translations.userGuides_ }} <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
+          <v-list-item href="https://community.bayanat.org/" target="_blank">{{ translations.support_ }} <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
+          <v-list-item href="https://github.com/sjacorg/bayanat/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=" target="_blank">{{ translations.reportABug_ }} <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
+        </v-list>
+
+        <v-divider></v-divider>
+
+        <v-list density="compact" nav class="text-body-2">
+          <v-list-item href="/logout">{{ translations.logout_ }}</v-list-item>
         </v-list>
       </v-card>
     </v-menu>
