@@ -182,6 +182,9 @@ class Config(object):
     OCR_ENABLED = manager.get_config("OCR_ENABLED")
     OCR_EXT = manager.get_config("OCR_EXT")
     TESSERACT_CMD = os.environ.get("TESSERACT_CMD", "/usr/bin/tesseract")
+    GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY") or manager.get_config(
+        "GOOGLE_VISION_API_KEY"
+    )
 
     # S3 settings
     # Bucket needs to be private with public access blocked
@@ -529,6 +532,7 @@ class TestConfig:
     OCR_ENABLED = False
     OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"]
     TESSERACT_CMD = "/usr/bin/tesseract"
+    GOOGLE_VISION_API_KEY = "dummy_vision_api_key_for_testing"
 
     # Geo & Maps
     GEO_MAP_DEFAULT_CENTER_LAT = 33.510414
