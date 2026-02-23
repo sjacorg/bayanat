@@ -11,11 +11,10 @@ from enferno.admin.constants import Constants
 from enferno.admin.models import Media
 from enferno.admin.models.Notification import Notification
 from enferno.data_import.models import DataImport
+from enferno.tasks import celery, cfg
 from enferno.user.models import User
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.logging_utils import get_logger
-
-from enferno.tasks import celery, cfg
 
 logger = get_logger("celery.tasks.media_download")
 
@@ -162,7 +161,7 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
     flag_modified(data_import, "data")
 
     data_import.add_to_log(f"Downloaded file: {filename}")
-    data_import.add_to_log(f"Format: mp4")
+    data_import.add_to_log("Format: mp4")
     data_import.add_to_log(f"Duration: {info.get('duration')}s")
     data_import.save()
 

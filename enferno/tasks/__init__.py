@@ -104,12 +104,9 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
     Returns:
         None
     """
-    from enferno.tasks.deduplication import dedup_cron
-    from enferno.tasks.exports import export_cleanup_cron
-    from enferno.tasks.maintenance import activity_cleanup_cron, daily_backup_cron, session_cleanup
 
     # Deduplication periodic task
-    if cfg.DEDUP_TOOL == True:
+    if cfg.DEDUP_TOOL:
         seconds = int(os.environ.get("DEDUP_INTERVAL", cfg.DEDUP_INTERVAL))
         sender.add_periodic_task(seconds, dedup_cron.s(), name="Deduplication Cron")
         logger.info("Deduplication periodic task is set up.")
@@ -139,46 +136,98 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
 
 
 # --- Import submodules so Celery discovers all tasks ---
-from enferno.tasks.bulk_ops import (
-    bulk_update_bulletins,
+from enferno.tasks.bulk_ops import (  # noqa: E402
     bulk_update_actors,
+    bulk_update_bulletins,
     bulk_update_incidents,
-)  # noqa: E402, F401
-from enferno.tasks.notifications import send_email_notification  # noqa: E402, F401
-from enferno.tasks.data_import import (
-    etl_process_file,
+)
+from enferno.tasks.data_import import (  # noqa: E402
     batch_complete_notification,
+    etl_process_file,
     process_files,
     process_row,
-)  # noqa: E402, F401
-from enferno.tasks.exports import (
-    generate_export,
+)
+from enferno.tasks.deduplication import (  # noqa: E402
+    dedup_cron,
+    process_dedup,
+    start_dedup,
+    update_stats,
+)
+from enferno.tasks.exports import (  # noqa: E402
     export_cleanup_cron,
-    generate_pdf_files,
-    generate_json_file,
     generate_csv_file,
+    generate_export,
     generate_export_media,
     generate_export_zip,
-)  # noqa: E402, F401
-from enferno.tasks.deduplication import (
-    start_dedup,
-    process_dedup,
-    dedup_cron,
-    update_stats,
-)  # noqa: E402, F401
-from enferno.tasks.graph import generate_graph  # noqa: E402, F401
-from enferno.tasks.maintenance import (
+    generate_json_file,
+    generate_pdf_files,
+)
+from enferno.tasks.graph import generate_graph  # noqa: E402
+from enferno.tasks.maintenance import (  # noqa: E402
     activity_cleanup_cron,
-    session_cleanup,
     daily_backup_cron,
     regenerate_locations,
     reload_app,
     reload_celery,
-)  # noqa: E402, F401
-from enferno.tasks.media_download import download_media_from_web  # noqa: E402, F401
-from enferno.tasks.ml import load_whisper_model, load_whisper_model_on_startup  # noqa: E402, F401
-from enferno.tasks.ocr import (
-    ocr_single,
+    session_cleanup,
+)
+from enferno.tasks.media_download import download_media_from_web  # noqa: E402
+from enferno.tasks.ml import (  # noqa: E402
+    load_whisper_model,
+    load_whisper_model_on_startup,
+)
+from enferno.tasks.notifications import send_email_notification  # noqa: E402
+from enferno.tasks.ocr import (  # noqa: E402
     bulk_ocr_finalize,
     bulk_ocr_process,
-)  # noqa: E402, F401
+    ocr_single,
+)
+
+__all__ = [
+    "celery",
+    "cfg",
+    "chunk_list",
+    "BULK_CHUNK_SIZE",
+    # bulk_ops
+    "bulk_update_actors",
+    "bulk_update_bulletins",
+    "bulk_update_incidents",
+    # data_import
+    "batch_complete_notification",
+    "etl_process_file",
+    "process_files",
+    "process_row",
+    # deduplication
+    "dedup_cron",
+    "process_dedup",
+    "start_dedup",
+    "update_stats",
+    # exports
+    "export_cleanup_cron",
+    "generate_csv_file",
+    "generate_export",
+    "generate_export_media",
+    "generate_export_zip",
+    "generate_json_file",
+    "generate_pdf_files",
+    # graph
+    "generate_graph",
+    # maintenance
+    "activity_cleanup_cron",
+    "daily_backup_cron",
+    "regenerate_locations",
+    "reload_app",
+    "reload_celery",
+    "session_cleanup",
+    # media_download
+    "download_media_from_web",
+    # ml
+    "load_whisper_model",
+    "load_whisper_model_on_startup",
+    # notifications
+    "send_email_notification",
+    # ocr
+    "bulk_ocr_finalize",
+    "bulk_ocr_process",
+    "ocr_single",
+]

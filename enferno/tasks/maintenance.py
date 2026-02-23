@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 
 from enferno.admin.models import Activity, Location
 from enferno.extensions import db, rds
+from enferno.tasks import celery, cfg
 from enferno.user.models import Session
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
 from enferno.utils.logging_utils import get_logger
-
-from enferno.tasks import celery, cfg
 
 logger = get_logger("celery.tasks.maintenance")
 
@@ -21,7 +20,7 @@ def activity_cleanup_cron() -> None:
     expired_activities = Activity.query.filter(
         datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
     )
-    logger.info(f"Cleaning up Activities...")
+    logger.info("Cleaning up Activities...")
     deleted = expired_activities.delete(synchronize_session=False)
     if deleted:
         db.session.commit()
@@ -72,7 +71,7 @@ def daily_backup_cron():
                 os.remove(filepath)
             except FileNotFoundError:
                 logger.error(f"Backup file {filename} not found to delete.", exc_info=True)
-            except OSError as e:
+            except OSError:
                 logger.error(f"Unable to remove backup file {filename}.", exc_info=True)
 
 

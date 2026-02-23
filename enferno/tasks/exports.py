@@ -10,15 +10,13 @@ import pandas as pd
 from celery import chain
 from sqlalchemy import and_
 
-from enferno.admin.models import Bulletin, Actor, Incident
+import enferno.utils.typing as t
+from enferno.admin.models import Actor, Bulletin, Incident
 from enferno.export.models import Export
-from enferno.extensions import db
+from enferno.tasks import BULK_CHUNK_SIZE, celery, cfg, chunk_list
 from enferno.utils.csv_utils import convert_list_attributes
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
-import enferno.utils.typing as t
-
-from enferno.tasks import celery, cfg, chunk_list, BULK_CHUNK_SIZE
 
 logger = get_logger("celery.tasks.exports")
 
@@ -108,7 +106,7 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} PDF file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing PDF file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -159,7 +157,7 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} JSON file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing JSON file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -219,7 +217,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
         logger.info(f"Export #{export_request.id} CSV file generated successfully.")
         # pass the ids to the next celery task
         return export_id
-    except Exception as e:
+    except Exception:
         logger.error(f"Error writing CSV file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
@@ -236,7 +234,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
     Returns:
         - export_request.id if successful, None otherwise.
     """
-    if previous_result == False:
+    if previous_result is False:
         return False
 
     export_request = Export.query.get(previous_result)
@@ -285,7 +283,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                 )
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
-                except Exception as e:
+                except Exception:
                     logger.error(
                         f"Error downloading Export #{export_request.id} file from S3.",
                         exc_info=True,
@@ -309,7 +307,7 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     Returns:
         - False if previous task failed, None otherwise.
     """
-    if previous_result == False:
+    if previous_result is False:
         return False
 
     export_request = Export.query.get(previous_result)
