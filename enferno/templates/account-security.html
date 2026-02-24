@@ -1,0 +1,229 @@
+{% extends 'layout.html' %} {% block content %}
+
+<v-main class="system-admin">
+    <div class="pa-4">
+        <v-card class="pa-4" elevation="2" height="calc(100dvh - 96px)">
+            <h1 class="text-h6 mb-5">{{ _('Account Security') }}</h1>
+
+            <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px)">
+                <!-- Left navigation menu -->
+                <v-card class="py-5 h-100 overflow-y-auto" elevation="2"
+                    style="min-width: 255px; max-height: fit-content">
+                    <v-tabs height="40" v-model="tab" selected-class="text-primary" direction="vertical">
+                        <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
+                            class="px-7 justify-start text-none text-subtitle-2">
+                            ${tab.text}
+                        </v-tab>
+                    </v-tabs>
+                </v-card>
+
+                <!-- Main content -->
+                <v-card elevation="2" class="w-100 overflow-y-auto">
+                    <!-- Main content header -->
+                    <v-card-title class="d-flex flex-column pa-0 px-6 position-sticky top-0 z-1 bg-surface">
+                        <div class="d-flex my-3">
+                            ${tabsMap[tab]?.text}
+                            <v-spacer></v-spacer>
+                        </div>
+                        <v-divider></v-divider>
+                    </v-card-title>
+
+                    <div>
+                        <!-- Change Password tab -->
+                        <div v-if="tab === 'change-password'">
+                            <v-card flat class="px-6 py-8">
+                                <v-form ref="changePasswordForm" name="change_password_form">
+                                    {{ change_password_form.hidden_tag() }}
+
+                                    <v-alert v-if="changePassword.success" type="success" variant="tonal" class="mb-6">
+                                        {{ _('Your password has been changed successfully.') }}
+                                    </v-alert>
+                                    <v-alert v-if="changePassword.error" type="error" variant="tonal" class="mb-6">
+                                        ${changePassword.error}
+                                    </v-alert>
+
+                                    <v-card-text class="d-flex flex-column ga-2 pa-0">
+                                        {% if active_password %}
+                                        <v-text-field
+                                            v-model="changePassword.form.password"
+                                            :type="changePassword.showPassword ? 'text' : 'password'"
+                                            name="password"
+                                            :rules="[validationRules.required()]"
+                                            :append-inner-icon="changePassword.showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                                            @click:append-inner="changePassword.showPassword = !changePassword.showPassword"
+                                            v-bind="inputProps">
+                                            <template v-slot:label>{{ _('Current Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                        </v-text-field>
+                                        {% else %}
+                                        <v-card-title>
+                                            {{ _fsdomain('You do not currently have a password - this will add one.') }}
+                                        </v-card-title>
+                                        {% endif %}
+
+                                        <v-text-field
+                                            v-model="changePassword.form.newPassword"
+                                            :type="changePassword.showNewPassword ? 'text' : 'password'"
+                                            name="new_password"
+                                            :class="changePassword.isStrong ? 'text-success' : undefined"
+                                            :hint="changePassword.isStrong ? '{{ _('Strong password') }}' : undefined"
+                                            :rules="[
+                                                validationRules.required(),
+                                                validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                            ]"
+                                            :append-inner-icon="changePassword.showNewPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                                            @click:append-inner="changePassword.showNewPassword = !changePassword.showNewPassword"
+                                            @input="changePassword.isStrong = false"
+                                            v-bind="inputProps">
+                                            <template v-slot:label>{{ _('New Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                        </v-text-field>
+
+                                        <v-text-field
+                                            v-model="changePassword.form.newPasswordConfirm"
+                                            :type="changePassword.showNewPasswordConfirm ? 'text' : 'password'"
+                                            name="new_password_confirm"
+                                            :rules="[validationRules.matchesField(changePassword.form.newPassword)]"
+                                            :append-inner-icon="changePassword.showNewPasswordConfirm ? 'mdi-eye-off' : 'mdi-eye'"
+                                            @click:append-inner="changePassword.showNewPasswordConfirm = !changePassword.showNewPasswordConfirm"
+                                            v-bind="inputProps">
+                                            <template v-slot:label>{{ _('Retype Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                        </v-text-field>
+                                    </v-card-text>
+
+                                    <v-card-actions class="px-0">
+                                        <v-btn @click="submitChangePassword" variant="flat" color="primary" :loading="changePassword.loading">
+                                            {{ _('Change Password') }}
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-form>
+                            </v-card>
+                        </div>
+
+                        <!-- Authentication Methods tab -->
+                        <div v-if="tab === 'authentication-methods'">
+                            <v-card class="px-6 py-8">
+                                <h4 class="subtitle-2 mb-n1">{{ _('Enable Mail System') }}</h4>
+                                <v-switch color="primary" class="mb-4" persistent-hint
+                                    hint="{{ _('Enables sending emails from Bayanat.') }}">
+                                </v-switch>
+                            </v-card>
+                        </div>
+                    </div>
+                </v-card>
+            </div>
+        </v-card>
+    </div>
+</v-main>
+{% endblock %} {% block js %}
+<script nonce="{{ csp_nonce() }}">
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+    const vuetify = createVuetify(vuetifyConfig);
+
+    const app = createApp({
+        delimiters: delimiters,
+        mixins: [globalMixin],
+
+        data() {
+            const tabsMap = {
+                'change-password': { text: "{{ _('Change Password') }}" },
+                'authentication-methods': { text: "{{ _('Authentication Methods') }}" },
+            };
+            const hash = window.location.hash.replace('#', '');
+            const defaultTab = Object.keys(tabsMap)[0];
+
+            return {
+                tab: hash in tabsMap ? hash : defaultTab,
+                drawer: drawer,
+                tabsMap,
+                validationRules: validationRules,
+                inputProps: { variant: 'filled' },
+
+                // Change Password module
+                changePassword: {
+                    form: {
+                        password: '',
+                        newPassword: '',
+                        newPasswordConfirm: '',
+                    },
+                    loading: false,
+                    isStrong: false,
+                    error: null,
+                    showPassword: false,
+                    showNewPassword: false,
+                    showNewPasswordConfirm: false,
+                },
+
+                // Authentication Methods module (2FA)
+                authMethods: {
+                    // 2FA state will go here
+                },
+            };
+        },
+
+        watch: {
+            tab(newTab) {
+                const fullPath = `${window.location.pathname}${window.location.search}`;
+                this.$router.push(`${fullPath}#${newTab}`);
+            },
+        },
+
+        mounted() {},
+
+        computed: {},
+
+        methods: {
+            // Change Password methods
+            onPasswordCheckResponse(response) {
+                this.changePassword.isStrong = Boolean(response);
+            },
+
+            submitChangePassword() {
+                this.$refs.changePasswordForm.validate().then(({ valid }) => {
+                    if (valid) {
+                        this.saveNewPassword();
+                    } else {
+                        this.showSnack("{{ _('Please review the form for errors.')}}");
+                        scrollToFirstError();
+                    }
+                });
+            },
+
+            async saveNewPassword() {
+                this.changePassword.error = null;
+                this.changePassword.success = false;
+                this.changePassword.loading = true;
+                try {
+                    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                    await axios.post("{{ url_for_security('change_password') }}", {
+                        password: this.changePassword.form.password,
+                        new_password: this.changePassword.form.newPassword,
+                        new_password_confirm: this.changePassword.form.newPasswordConfirm,
+                        csrf_token: csrfToken,
+                    });
+                    this.changePassword.success = true;
+                    setTimeout(() => this.changePassword.success = false, 5_000);
+                    this.changePassword.isStrong = false;
+                    this.$refs.changePasswordForm.reset();
+                } catch (error) {
+                    this.changePassword.isStrong = false;
+                    this.changePassword.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('An error occurred. Please try again.') }}";
+                } finally {
+                    this.changePassword.loading = false;
+                }
+            },
+
+            // Authentication Methods (2FA) methods will go here
+        },
+    });
+
+    app.use(router).use(vuetify);
+    router.isReady().then(() => {
+        app.mount('#app');
+        window.app = app;
+    });
+</script>
+
+{% endblock %}

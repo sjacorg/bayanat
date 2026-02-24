@@ -434,6 +434,7 @@ const routes = [
     { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
     {path: '/admin/media/:id', name: 'media', component: Vue.defineComponent({})},
     {path: '/admin/media/', name: 'medias', component: Vue.defineComponent({})},
+    {path: '/account-security/', name: 'account-security', component: Vue.defineComponent({})},
 
 ];
 

@@ -12,7 +12,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.admin.constants import Constants
 from enferno.settings import Config
-from enferno.user.forms import ExtendedLoginForm
+from enferno.user.forms import ExtendedLoginForm, ExtendedChangePasswordForm
 from enferno.user.models import User, Session
 from enferno.admin.models.Notification import Notification
 from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
@@ -179,6 +179,15 @@ def account() -> str:
 def settings() -> str:
     """Endpoint for user settings."""
     return render_template("settings.html")
+
+
+@bp_user.route("/account-security/")
+@auth_required("session")
+def account_security() -> str:
+    """Endpoint for account security settings."""
+    form = ExtendedChangePasswordForm()
+    active_password = current_user.password is not None
+    return render_template("account-security.html", change_password_form=form, active_password=active_password)
 
 
 @bp_user.route("/settings/save", methods=["PUT"])
