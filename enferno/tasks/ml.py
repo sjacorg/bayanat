@@ -3,11 +3,9 @@ import os
 
 from celery.signals import worker_ready
 
-from enferno.utils.logging_utils import get_logger
-
-from flask import current_app
-
 from enferno.tasks import celery, cfg
+from enferno.utils.logging_utils import get_logger
+from flask import current_app
 
 logger = get_logger("celery.tasks.ml")
 
