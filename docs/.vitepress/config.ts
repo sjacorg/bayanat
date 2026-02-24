@@ -112,7 +112,7 @@ export default defineConfig({
 
     footer: {
       message:
-        "Released under the AGPL-3.0 License. Developed by the Syria Justice and Accountability Centre.",
+        'Released under the AGPL-3.0 License. Developed by the <a href="https://syriaaccountability.org/">Syria Justice and Accountability Centre</a>.',
     },
   },
 });

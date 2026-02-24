@@ -1,6 +1,6 @@
 # What is Bayanat?
 
-[Bayanat](https://bayanat.org/) is the second generation of SJAC's [open-source](https://github.com/sjacorg/bayanat) web data management application. SJAC had been using the first generation, Corroborator, since 2014. In late 2019, SJAC decided to rewrite the application from scratch using the Flask Python microframework. SJAC used its own six years of first-hand experience in collecting, preserving, processing, and sharing documentation of human rights violations to build Bayanat.
+[Bayanat](https://bayanat.org/) is the second generation of [SJAC](https://syriaaccountability.org/)'s [open-source](https://github.com/sjacorg/bayanat) web data management application. SJAC had been using the first generation, Corroborator, since 2014. In late 2019, SJAC decided to rewrite the application from scratch using the Flask Python microframework. SJAC used its own six years of first-hand experience in collecting, preserving, processing, and sharing documentation of human rights violations to build Bayanat.
 
 The main purpose of Bayanat is to attack the challenge of big data in human rights documentation head-on. SJAC has developed an analytical methodology based on international humanitarian and human rights law. Events are cataloged according to specific IHL violations. This allows the most relevant evidence to be identified at a keystroke, enabling a variety of transitional justice efforts. Despite its main focus on human rights documentation, Bayanat can be utilized to research any other topic.
 

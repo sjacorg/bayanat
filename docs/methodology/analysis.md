@@ -1,6 +1,6 @@
 # Analysis Methodology
 
-The Syria Justice and Accountability Centre (SJAC) strives to prevent impunity, promote redress, and facilitate principled reform in Syria and beyond.
+The [Syria Justice and Accountability Centre](https://syriaaccountability.org/) (SJAC) strives to prevent impunity, promote redress, and facilitate principled reform in Syria and beyond.
 
 This guide, along with [unverified labels](/methodology/unverified-labels), [verified labels](/methodology/verified-labels), and [workflow](/guide/workflow), forms the written part of SJAC's methodology.
 
