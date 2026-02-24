@@ -8,13 +8,18 @@ from pathlib import Path
 import boto3
 import httpx
 from botocore.config import Config as BotoConfig
-from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 
-from enferno.admin.models import Media, Extraction
+from enferno.admin.models import Extraction, Media
 from enferno.extensions import db
 from enferno.utils.logging_utils import get_logger
+from flask import current_app
 
 logger = get_logger()
 

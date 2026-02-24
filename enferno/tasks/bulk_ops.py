@@ -2,23 +2,22 @@
 import time
 from collections import namedtuple
 
+import enferno.utils.typing as t
 from enferno.admin.constants import Constants
 from enferno.admin.models import (
-    Bulletin,
-    Actor,
-    Incident,
-    BulletinHistory,
     Activity,
+    Actor,
     ActorHistory,
+    Bulletin,
+    BulletinHistory,
+    Incident,
     IncidentHistory,
 )
 from enferno.admin.models.Notification import Notification
 from enferno.extensions import db
+from enferno.tasks import BULK_CHUNK_SIZE, celery, chunk_list
 from enferno.user.models import Role, User
 from enferno.utils.logging_utils import get_logger
-import enferno.utils.typing as t
-
-from enferno.tasks import celery, chunk_list, BULK_CHUNK_SIZE
 
 logger = get_logger("celery.tasks.bulk_ops")
 

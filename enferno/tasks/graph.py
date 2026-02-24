@@ -3,15 +3,14 @@ import hashlib
 import json
 from typing import Any, Optional
 
-from enferno.admin.models import Bulletin, Actor, Incident
+import enferno.utils.typing as t
+from enferno.admin.models import Actor, Bulletin, Incident
 from enferno.extensions import db, rds
+from enferno.tasks import celery
 from enferno.user.models import User
 from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.search_utils import SearchUtils
-import enferno.utils.typing as t
-
-from enferno.tasks import celery
 
 logger = get_logger("celery.tasks.graph")
 

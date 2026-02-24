@@ -3,10 +3,9 @@ from datetime import datetime, timezone
 
 from enferno.admin.models.Notification import Notification
 from enferno.extensions import db
+from enferno.tasks import celery
 from enferno.utils.email_utils import EmailUtils
 from enferno.utils.logging_utils import get_logger
-
-from enferno.tasks import celery
 
 logger = get_logger("celery.tasks.notifications")
 
