@@ -4,16 +4,33 @@ Bayanat has a built-in feature to control access to Actors, Bulletins, and Incid
 
 ## Default Behavior
 
-All items are unrestricted and accessible by all active users unless restricted by administrators.
+All items are unrestricted and accessible by all active users. Items only become restricted when explicitly assigned to a group by an administrator.
 
-## Restricting Imported Items
+## How It Works
 
-Media and Sheet Import tools provide the ability to assign imported items to groups during import.
+1. **Create groups**: Administrator creates Roles/Groups in user management
+2. **Assign users to groups**: Users can belong to multiple groups
+3. **Restrict items**: Assign items to one or more groups
 
-## Restricting Existing Items
+Once restricted, only users who belong to at least one of the item's assigned groups can view or edit it. Other users see restricted items as blurred entries in data tables. Attempting to open a restricted item shows a restriction message.
 
-1. **Create groups**: Admin creates Roles/Groups in the system
-2. **Assign users**: Add groups to users who need access (users can belong to multiple groups)
-3. **Restrict items**: Select items in data tables and use bulk-update to assign groups
+## Restricting Items
 
-Restricted items appear blurry in the data table for unauthorized users. Attempting to access a restricted item shows a restriction message.
+### During Import
+
+Media and Sheet Import tools provide the option to assign imported items to groups during the import process. This is useful for bulk imports of sensitive data.
+
+### Existing Items
+
+Select items in the data table and use the bulk update tool to assign groups. See [Bulk Operations](/guide/bulk-operations) for details.
+
+### Individual Items
+
+Edit any item and set its access groups in the access control section.
+
+## Permissions
+
+- Only administrators can create and manage groups
+- Only administrators can assign or change access restrictions
+- Moderators cannot modify access roles (the option is hidden)
+- Users see only the items they have access to in search results and data tables
