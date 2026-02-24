@@ -2,9 +2,6 @@
 
 Incident is a folder where the evidence analyzed in Actors and Bulletins about a specific violation can be gathered and organized.
 
-::: info
-This section of Bayanat is still under development.
-:::
 
 ## Purpose
 

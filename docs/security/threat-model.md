@@ -1,7 +1,7 @@
 # Threat Model
 
 ::: info
-This threat model is current as of Bayanat v2.9.0.
+This threat model was last reviewed for Bayanat v3.0.0.
 :::
 
 ## Goal
