@@ -22,3 +22,8 @@
 
   --vp-home-hero-name-color: #4DB8AA;
 }
+
+.VPNavBarTitle .logo {
+  height: 36px;
+  width: auto;
+}

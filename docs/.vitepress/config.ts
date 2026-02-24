@@ -8,7 +8,8 @@ export default defineConfig({
   head: [["link", { rel: "icon", href: "/favicon.ico" }]],
 
   themeConfig: {
-    logo: "/logo.svg",
+    logo: { src: "/logo.svg", alt: "Bayanat" },
+    siteTitle: false,
 
     nav: [
       { text: "Guide", link: "/guide/what-is-bayanat" },
