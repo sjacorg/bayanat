@@ -130,9 +130,20 @@
                                         <v-expansion-panel-text>
                                             <v-divider class="mb-4"></v-divider>
 
+                                            <v-alert v-if="authMethods.twoFactor.error" type="error" variant="tonal" class="mb-4">
+                                                ${authMethods.twoFactor.error}
+                                            </v-alert>
+
+                                            {% if primary_method != 'none' %}
+                                            <v-alert v-if="authMethods.twoFactor.success" type="success" variant="tonal" class="mb-4">
+                                                {{ _('Two-factor authentication has been set up successfully.') }}
+                                            </v-alert>
+                                            {% endif %}
+
                                             <!-- Currently configured method -->
                                             {% if primary_method != 'none' %}
-                                            <div v-if="!authMethods.twoFactor.key" class="d-flex align-center ga-4 mb-4">
+                                            <span class="text-subtitle-1 font-weight-medium">{{ _('Current Two-Factor Method') }}</span>
+                                            <div class="d-flex align-center ga-4 mb-4 mt-5">
                                                 <v-card color="primary" class="pa-4 d-flex align-center ga-3" rounded="lg" min-width="200">
                                                     <v-icon icon="mdi-key-variant" size="32"></v-icon>
                                                     <span class="text-h6 font-weight-bold text-uppercase">{{ primary_method }}</span>
@@ -145,15 +156,8 @@
                                             </div>
                                             {% endif %}
 
-                                            <v-alert v-if="authMethods.twoFactor.error" type="error" variant="tonal" class="mb-4">
-                                                ${authMethods.twoFactor.error}
-                                            </v-alert>
-
-                                            <v-alert v-if="authMethods.twoFactor.success" type="success" variant="tonal" class="mb-4">
-                                                {{ _('Two-factor authentication has been set up successfully.') }}
-                                            </v-alert>
-
                                             <!-- QR setup flow -->
+                                            {% if primary_method == 'none' %}
                                             <div class="d-flex flex-column ga-6 py-2" style="max-width: 690px;">
                                                 <div>
                                                     <span class="font-weight-medium mb-1">{{ _('Step 1') }}</span>&nbsp;
@@ -179,23 +183,26 @@
                                                     <span class="text-medium-emphasis mb-3">{{ _('Enter the six digit code from your authenticator app into Bayanat.') }}</span>
                                                 </div>
         
-                                                <form action="{{ url_for_security('two_factor_token_validation') }}" method="post">
-                                                    {{ two_factor_verify_code_form.hidden_tag() }}
-                                                    <v-text-field
-                                                        autocomplete="one-time-code"
-                                                        name="code"
-                                                        inputmode="numeric"
-                                                        pattern="[0-9]*"
-                                                        maxlength="6"
-                                                        variant="filled">
-                                                        <template v-slot:label>{{ _('Enter six digit code') }} <span class="text-error">*</span></template>
-                                                    </v-text-field>
-                                                    <div class="d-flex ga-2 mt-2">
-                                                        <v-btn variant="outlined" @click="resetTwoFactorPanel" class="border-thin">{{ _('Cancel') }}</v-btn>
-                                                        <v-btn color="primary" variant="flat" type="submit">{{ _('Submit Code') }}</v-btn>
-                                                    </div>
-                                                </form>
+                                                <v-text-field
+                                                    v-model="authMethods.twoFactor.code"
+                                                    autocomplete="one-time-code"
+                                                    inputmode="numeric"
+                                                    pattern="[0-9]*"
+                                                    maxlength="6"
+                                                    variant="filled">
+                                                    <template v-slot:label>{{ _('Enter six digit code') }} <span class="text-error">*</span></template>
+                                                </v-text-field>
+                                                <div class="d-flex ga-2 mt-2">
+                                                    <v-btn variant="outlined" @click="resetTwoFactorPanel" class="border-thin">{{ _('Cancel') }}</v-btn>
+                                                    <v-btn color="primary" variant="flat"
+                                                        :loading="authMethods.twoFactor.submitting"
+                                                        :disabled="(authMethods.twoFactor.code || 0).length !== 6"
+                                                        @click="submitTwoFactorCode">
+                                                        {{ _('Submit Code') }}
+                                                    </v-btn>
+                                                </div>
                                             </div>
+                                            {% endif %}
 
                                         </v-expansion-panel-text>
                                     </v-expansion-panel>
@@ -262,7 +269,7 @@
                 'change-password': { text: "{{ _('Change Password') }}" },
                 'authentication-methods': { text: "{{ _('Authentication Methods') }}" },
             };
-            const hash = window.location.hash.replace('#', '');
+            const hash = this.$route.hash.replace('#', '').split('?')[0];
             const defaultTab = Object.keys(tabsMap)[0];
 
             return {
@@ -313,10 +320,24 @@
         },
 
         mounted() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('method') === '2fa' && this.tab === 'authentication-methods') {
-                this.authMethods.twoFactor.panel = 'open';
-                this.twoFactorSetup();
+            const hashParams = new URLSearchParams(this.$route.hash.split('?')[1]);
+            const method = hashParams.get('method');
+            const success = hashParams.get('success');
+
+            if (this.tab === 'authentication-methods') {
+                if (method === '2fa') {
+                    this.authMethods.twoFactor.panel = 'open';
+                    this.twoFactorSetup();
+                }
+                if (success === '2fa') {
+                    this.authMethods.twoFactor.panel = 'open';
+                    this.authMethods.twoFactor.success = true;
+                    setTimeout(() => {
+                        this.authMethods.twoFactor.success = false;
+                        const fullPath = `${window.location.pathname}${window.location.search}`;
+                        this.$router.push(`${fullPath}#${this.tab}`);
+                    }, 5_000);
+                }
             }
         },
 
@@ -379,6 +400,27 @@
                 }
             },
 
+            async submitTwoFactorCode() {
+                this.authMethods.twoFactor.submitting = true;
+                this.authMethods.twoFactor.error = null;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    await axios.post('/tf-validate', {
+                        csrf_token: csrf,
+                        code: this.authMethods.twoFactor.code,
+                    }, { headers: { 'Accept': 'application/json' } });
+                    
+                    window.location.replace('/account-security/#authentication-methods?success=2fa');
+                    window.location.reload();
+                } catch (error) {
+                    this.authMethods.twoFactor.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('Invalid code. Please try again.') }}";
+                } finally {
+                    this.authMethods.twoFactor.submitting = false;
+                }
+            },
+
             async twoFactorSetup() {
                 this.authMethods.twoFactor.loading = true;
                 this.authMethods.twoFactor.error = null;
@@ -426,7 +468,7 @@
                         { setup: 'disable', csrf_token: csrf },
                         { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
                     );
-                    setTimeout(() => window.location.reload(), 1000);
+                    window.location.reload();
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
                         window.location.href = '/verify?next=/account-security/%23authentication-methods';
