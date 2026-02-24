@@ -170,6 +170,7 @@
                                                         <v-btn icon="mdi-content-copy" size="x-small" variant="text" color="primary"
                                                             @click="copyManualKey">
                                                         </v-btn>
+                                                        <v-chip v-if="authMethods.twoFactor.keyCopied" color="primary">{{ _('Copied!') }}</v-chip>
                                                     </div>
                                                 </div>
 
@@ -291,6 +292,7 @@
                 authMethods: {
                     twoFactor: {
                         panel: undefined,
+                        keyCopied: false,
                         loading: false,
                         removing: false,
                         success: false,
@@ -449,6 +451,8 @@
 
             copyManualKey() {
                 navigator.clipboard.writeText(this.authMethods.twoFactor.key);
+                this.authMethods.twoFactor.keyCopied = true;
+                setTimeout(() => this.authMethods.twoFactor.keyCopied = false, 5_000)
                 this.showSnack("{{ _('Key copied to clipboard.') }}");
             },
         },
