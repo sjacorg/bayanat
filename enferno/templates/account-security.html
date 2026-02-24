@@ -55,9 +55,9 @@
                                             <template v-slot:label>{{ _('Current Password') }} <span class="text-error" aria-label="required">*</span></template>
                                         </v-text-field>
                                         {% else %}
-                                        <v-card-title>
+                                        <p class="text-body-2 text-medium-emphasis">
                                             {{ _fsdomain('You do not currently have a password - this will add one.') }}
-                                        </v-card-title>
+                                        </p>
                                         {% endif %}
 
                                         <v-text-field
@@ -91,7 +91,8 @@
                                     </v-card-text>
 
                                     <v-card-actions class="px-0">
-                                        <v-btn @click="submitChangePassword" variant="flat" color="primary" :loading="changePassword.loading">
+                                        <v-btn @click="submitChangePassword" variant="flat" color="primary"
+                                            :loading="changePassword.loading">
                                             {{ _('Change Password') }}
                                         </v-btn>
                                     </v-card-actions>
@@ -101,11 +102,140 @@
 
                         <!-- Authentication Methods tab -->
                         <div v-if="tab === 'authentication-methods'">
-                            <v-card class="px-6 py-8">
-                                <h4 class="subtitle-2 mb-n1">{{ _('Enable Mail System') }}</h4>
-                                <v-switch color="primary" class="mb-4" persistent-hint
-                                    hint="{{ _('Enables sending emails from Bayanat.') }}">
-                                </v-switch>
+                            <v-card flat class="px-6 py-8 d-flex flex-column ga-3">
+
+                                <!-- 2FA Authentication -->
+                                <v-expansion-panels :model-value="authMethods.twoFactor.panel" @update:model-value="toggleTwoFactorPanel($event)">
+                                    <v-expansion-panel value="open">
+                                        <v-expansion-panel-title :hide-actions="true">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-center ga-2 mb-1">
+                                                    <span class="text-subtitle-1 font-weight-medium">{{ _('2FA Authentication') }}</span>
+                                                    {% if primary_method != 'none' %}
+                                                    <v-chip color="success" size="small" label variant="outlined">{{ _('Configured') }}</v-chip>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-body-2 text-medium-emphasis">
+                                                    {{ _('Two factor authentication (2FA) adds an extra layer of protection to your Bayanat account by requiring a verification code from an authenticator app.') }}
+                                                </div>
+                                            </div>
+                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                                :loading="authMethods.twoFactor.loading">
+                                                ${authMethods.twoFactor.panel === 'open'
+                                                    ? '{{ _('Cancel') }}'
+                                                    : '{{ _('Edit') if primary_method != 'none' else _('Setup') }}'}
+                                            </v-btn>
+                                        </v-expansion-panel-title>
+
+                                        <v-expansion-panel-text>
+                                            <v-divider class="mb-4"></v-divider>
+
+                                            <!-- Currently configured method -->
+                                            {% if primary_method != 'none' %}
+                                            <div v-if="!authMethods.twoFactor.key" class="d-flex align-center ga-4 mb-4">
+                                                <v-card color="primary" class="pa-4 d-flex align-center ga-3" rounded="lg" min-width="200">
+                                                    <v-icon icon="mdi-key-variant" size="32"></v-icon>
+                                                    <span class="text-h6 font-weight-bold text-uppercase">{{ primary_method }}</span>
+                                                </v-card>
+                                                <v-btn variant="text" color="error" prepend-icon="mdi-close"
+                                                    :loading="authMethods.twoFactor.removing"
+                                                    @click="removeTwoFactor">
+                                                    {{ _('Remove 2FA Method') }}
+                                                </v-btn>
+                                            </div>
+                                            {% endif %}
+
+                                            <v-alert v-if="authMethods.twoFactor.error" type="error" variant="tonal" class="mb-4">
+                                                ${authMethods.twoFactor.error}
+                                            </v-alert>
+
+                                            <v-alert v-if="authMethods.twoFactor.success" type="success" variant="tonal" class="mb-4">
+                                                {{ _('Two-factor authentication has been set up successfully.') }}
+                                            </v-alert>
+
+                                            <!-- QR setup flow -->
+                                            <div class="d-flex flex-column ga-6 py-2" style="max-width: 690px;">
+                                                <div>
+                                                    <span class="font-weight-medium mb-1">{{ _('Step 1') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Open your authenticator app such as Google Authenticator, LastPass, or Authy.') }}</span>
+                                                </div>
+
+                                                <div>
+                                                    <span class="font-weight-medium mb-1">{{ _('Step 2') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis mb-3">{{ _('Scan the QR code or enter the setup key manually.') }}</span>
+                                                    <div id="qrcode" class="mt-6 mb-5 d-flex justify-center"></div>
+                                                    <p class="text-body-2 text-medium-emphasis mb-1">{{ _('QR not working? Enter this code manually in your authenticator app.') }}</p>
+                                                    <div class="d-flex align-center ga-2">
+                                                        <code class="text-primary text-body-2">${authMethods.twoFactor.key}</code>
+                                                        <v-btn icon="mdi-content-copy" size="x-small" variant="text" color="primary"
+                                                            @click="copyManualKey">
+                                                        </v-btn>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <span class="font-weight-medium mb-1">{{ _('Step 3') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis mb-3">{{ _('Enter the six digit code from your authenticator app into Bayanat.') }}</span>
+                                                </div>
+        
+                                                <form action="{{ url_for_security('two_factor_token_validation') }}" method="post">
+                                                    {{ two_factor_verify_code_form.hidden_tag() }}
+                                                    <v-text-field
+                                                        autocomplete="one-time-code"
+                                                        name="code"
+                                                        inputmode="numeric"
+                                                        pattern="[0-9]*"
+                                                        maxlength="6"
+                                                        variant="filled">
+                                                        <template v-slot:label>{{ _('Enter six digit code') }} <span class="text-error">*</span></template>
+                                                    </v-text-field>
+                                                    <div class="d-flex ga-2 mt-2">
+                                                        <v-btn variant="outlined" @click="resetTwoFactorPanel" class="border-thin">{{ _('Cancel') }}</v-btn>
+                                                        <v-btn color="primary" variant="flat" type="submit">{{ _('Submit Code') }}</v-btn>
+                                                    </div>
+                                                </form>
+                                            </div>
+
+                                        </v-expansion-panel-text>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
+
+                                <!-- Security Keys & Passkeys -->
+                                <v-expansion-panels>
+                                    <v-expansion-panel>
+                                        <v-expansion-panel-title :hide-actions="true">
+                                            <div class="flex-grow-1">
+                                                <div class="text-subtitle-1 font-weight-medium mb-1">{{ _('Security Keys & Passkeys') }}</div>
+                                                <div class="text-body-2 text-medium-emphasis">
+                                                    {{ _('Security keys and passkeys let you sign in using a physical device or built‑in biometric authentication. They provide strong protection against phishing and unauthorized access.') }}
+                                                </div>
+                                            </div>
+                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                                href="{{ url_for_security('wan_register') }}">
+                                                {{ _('Setup') }}
+                                            </v-btn>
+                                        </v-expansion-panel-title>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
+
+                                <!-- Recovery Codes -->
+                                <v-expansion-panels>
+                                    <v-expansion-panel>
+                                        <v-expansion-panel-title :hide-actions="true">
+                                            <div class="flex-grow-1">
+                                                <div class="text-subtitle-1 font-weight-medium mb-1">{{ _('Recovery Codes') }}</div>
+                                                <div class="text-body-2 text-medium-emphasis">
+                                                    {{ _('Recovery codes allow you to regain access to your Bayanat account if you lose your authenticator app or security key. Store them somewhere safe and accessible.') }}
+                                                </div>
+                                            </div>
+                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                                href="{{ url_for_security('mf_recovery_codes') }}">
+                                                {{ _('Setup') }}
+                                            </v-btn>
+                                        </v-expansion-panel-title>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
+
                             </v-card>
                         </div>
                     </div>
@@ -115,6 +245,8 @@
     </div>
 </v-main>
 {% endblock %} {% block js %}
+<script src="/static/js/qrcodejs/qrcode.min.js"></script>
+
 <script nonce="{{ csp_nonce() }}">
     const { createApp } = Vue;
     const { createVuetify } = Vuetify;
@@ -134,8 +266,8 @@
 
             return {
                 tab: hash in tabsMap ? hash : defaultTab,
-                drawer: drawer,
                 tabsMap,
+                drawer,
                 validationRules: validationRules,
                 inputProps: { variant: 'filled' },
 
@@ -147,16 +279,26 @@
                         newPasswordConfirm: '',
                     },
                     loading: false,
-                    isStrong: false,
+                    success: false,
                     error: null,
+                    isStrong: false,
                     showPassword: false,
                     showNewPassword: false,
                     showNewPasswordConfirm: false,
                 },
 
-                // Authentication Methods module (2FA)
+                // Authentication Methods module
                 authMethods: {
-                    // 2FA state will go here
+                    twoFactor: {
+                        panel: undefined,
+                        loading: false,
+                        removing: false,
+                        success: false,
+                        error: null,
+                        key: null,
+                        username: null,
+                        issuer: null,
+                    },
                 },
             };
         },
@@ -168,11 +310,21 @@
             },
         },
 
-        mounted() {},
+        mounted() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('method') === '2fa' && this.tab === 'authentication-methods') {
+                this.authMethods.twoFactor.panel = 'open';
+                this.twoFactorSetup();
+            }
+        },
 
         computed: {},
 
         methods: {
+            async getCsrfToken() {
+                const response = await axios.get('/csrf');
+                return response.data.csrf_token;
+            },
             // Change Password methods
             onPasswordCheckResponse(response) {
                 this.changePassword.isStrong = Boolean(response);
@@ -183,7 +335,7 @@
                     if (valid) {
                         this.saveNewPassword();
                     } else {
-                        this.showSnack("{{ _('Please review the form for errors.')}}");
+                        this.showSnack("{{ _('Please review the form for errors.') }}");
                         scrollToFirstError();
                     }
                 });
@@ -194,17 +346,17 @@
                 this.changePassword.success = false;
                 this.changePassword.loading = true;
                 try {
-                    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                    const csrf = await this.getCsrfToken();
                     await axios.post("{{ url_for_security('change_password') }}", {
                         password: this.changePassword.form.password,
                         new_password: this.changePassword.form.newPassword,
                         new_password_confirm: this.changePassword.form.newPasswordConfirm,
-                        csrf_token: csrfToken,
+                        csrf_token: csrf,
                     });
                     this.changePassword.success = true;
-                    setTimeout(() => this.changePassword.success = false, 5_000);
                     this.changePassword.isStrong = false;
                     this.$refs.changePasswordForm.reset();
+                    setTimeout(() => this.changePassword.success = false, 5_000);
                 } catch (error) {
                     this.changePassword.isStrong = false;
                     this.changePassword.error =
@@ -215,7 +367,90 @@
                 }
             },
 
-            // Authentication Methods (2FA) methods will go here
+            // 2FA methods
+            toggleTwoFactorPanel($event) {
+                if (this.authMethods.twoFactor.panel === 'open') {
+                    this.resetTwoFactorPanel();
+                } else {
+                    this.authMethods.twoFactor.panel = 'open';
+                    this.twoFactorSetup();
+                }
+            },
+
+            async twoFactorSetup() {
+                this.authMethods.twoFactor.loading = true;
+                this.authMethods.twoFactor.error = null;
+
+                try {
+                    const csrf = await this.getCsrfToken();
+                    const response = await api.post('/tf-setup',
+                        { setup: 'authenticator', csrf_token: csrf },
+                        { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+                    )
+
+                    const data = response.data.response;
+                    this.authMethods.twoFactor.key = data.tf_authr_key;
+                    this.authMethods.twoFactor.username = data.tf_authr_username;
+                    this.authMethods.twoFactor.issuer = data.tf_authr_issuer;
+
+                    this.$nextTick(() => {
+                        const el = document.getElementById('qrcode');
+                        if (el) {
+                            el.innerHTML = '';
+                            secret = data.tf_authr_key.replace(/-/g, '').replace(/\s+/g, '');
+                            const otpUri = `otpauth://totp/${data.tf_authr_issuer}:${data.tf_authr_username}?secret=${secret}&issuer=${data.tf_authr_issuer}`;
+                            new QRCode(el, { text: otpUri, width: 230, height: 230, correctLevel: QRCode.CorrectLevel.L });
+                        }
+                    });
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=2fa';
+                        return;
+                    }
+                    this.authMethods.twoFactor.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('An error occurred. Please try again.') }}";
+                } finally {
+                    this.authMethods.twoFactor.loading = false;
+                }
+            },
+
+            async removeTwoFactor() {
+                this.authMethods.twoFactor.error = null;
+                this.authMethods.twoFactor.removing = true;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    await api.post('/tf-setup',
+                        { setup: 'disable', csrf_token: csrf },
+                        { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+                    );
+                    setTimeout(() => window.location.reload(), 1000);
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods';
+                        return;
+                    }
+                    this.authMethods.twoFactor.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('An error occurred. Please try again.') }}";
+                } finally {
+                    this.authMethods.twoFactor.removing = false;
+                }
+            },
+
+            resetTwoFactorPanel() {
+                this.authMethods.twoFactor.panel = undefined;
+                this.authMethods.twoFactor.key = null;
+                this.authMethods.twoFactor.username = null;
+                this.authMethods.twoFactor.issuer = null;
+                this.authMethods.twoFactor.error = null;
+                this.authMethods.twoFactor.success = false;
+            },
+
+            copyManualKey() {
+                navigator.clipboard.writeText(this.authMethods.twoFactor.key);
+                this.showSnack("{{ _('Key copied to clipboard.') }}");
+            },
         },
     });
 
