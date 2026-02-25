@@ -125,7 +125,9 @@
                         <v-card-text class="pt-6">
                                 <v-row>
                                     <v-col cols="12" md="6">
-                                        <v-text-field v-model="editedItem.title" label="{{ _('Title') }}"></v-text-field>
+                                        <v-text-field v-model="editedItem.title">
+                                            <template v-slot:label>{{ _('Title') }} <span class="text-error">*</span></template>
+                                        </v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <v-text-field v-model="editedItem.title_ar" label="{{ _('Title (AR)') }}"></v-text-field>
@@ -153,34 +155,23 @@
                                         ></search-field>
                                     </v-col>
                                 </v-row>
+                                <div class="mb-3">{{ _('Available In') }}</div>
                                 <v-row>
-                                    <v-col cols="12" md="2">
-                                        <v-checkbox
-                                            v-model="editedItem.for_bulletin"
-                                            :disabled="parentDisables('for_bulletin')"
-                                            label="{{ _('Bulletin') }}"
-                                        ></v-checkbox>
-                                    </v-col>
-                                    <v-col cols="12" md="2">
-                                        <v-checkbox
-                                            v-model="editedItem.for_actor"
-                                            :disabled="parentDisables('for_actor')"
-                                            label="{{ _('Actor') }}"
-                                        ></v-checkbox>
-                                    </v-col>
-                                    <v-col cols="12" md="2">
-                                        <v-checkbox
-                                            v-model="editedItem.for_incident"
-                                            :disabled="parentDisables('for_incident')"
-                                            label="{{ _('Incident') }}"
-                                        ></v-checkbox>
-                                    </v-col>
-                                    <v-col cols="12" md="2">
-                                        <v-checkbox
-                                            v-model="editedItem.for_offline"
-                                            :disabled="parentDisables('for_offline')"
-                                            label="{{ _('Offline') }}"
-                                        ></v-checkbox>
+                                    <v-col
+                                        v-for="opt in availabilityOptions"
+                                        :key="opt.key"
+                                        cols="12"
+                                        md="2"
+                                    >
+                                        <v-btn
+                                        @click="editedItem[opt.key] = !editedItem[opt.key]"
+                                        :disabled="parentDisables(opt.key)"
+                                        :prepend-icon="editedItem[opt.key] ? 'mdi-check' : undefined"
+                                        variant="outlined"
+                                        class="border-thin w-100"
+                                        >
+                                            ${opt.label}
+                                        </v-btn>
                                     </v-col>
                                 </v-row>
 
@@ -188,7 +179,7 @@
                                     {{ _('Some options are unavailable because they\'re disabled at the parent level.') }}
                                 </div>
                         </v-card-text>
-                        <v-card-actions>
+                        <v-card-actions class="mt-4 px-6 pb-5">
                             <v-spacer></v-spacer>
                             <v-btn @click="close">{{ _('Cancel') }}</v-btn>
                             <v-btn color="primary" variant="elevated" @click="save">{{ _('Save') }}</v-btn>
@@ -233,6 +224,12 @@
                 treeLoading: false,
                 csvFile: null,
                 options: {},
+                availabilityOptions: [
+                    { key: 'for_bulletin', label: "{{ _('Bulletin') }}" },
+                    { key: 'for_actor', label: "{{ _('Actor') }}" },
+                    { key: 'for_incident', label: "{{ _('Incident') }}" },
+                    { key: 'for_offline', label: "{{ _('Offline') }}" },
+                ],
 
                 headers: [
                     {title: "{{_('ID')}}", value: "id", width: 80},
