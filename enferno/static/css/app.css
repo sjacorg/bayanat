@@ -980,3 +980,11 @@ div.jsondiffpatch-child-node-type-array:after {
 .grid-row-span-2 {
   grid-row: span 2;
 }
+
+.v-theme--light .v-treeview .v-list-item.v-treeview-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.v-theme--dark .v-treeview .v-list-item.v-treeview-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}

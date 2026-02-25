@@ -13,7 +13,7 @@
 
                                 <v-card-text>
                                     <!-- Toolbar -->
-                                    <v-toolbar flat color="white" density="compact" class="mb-2">
+                                    <v-toolbar flat density="compact" class="mb-2">
                                         <v-text-field
                                             v-if="viewMode === 'table'"
                                             variant="outlined"
@@ -35,7 +35,7 @@
 
                                         <v-btn
                                             color="primary"
-                                            variant="elevated"
+                                            variant="flat"
                                             class="ma-2"
                                             @click="openCreateDialog">
                                             {{ _('New Item') }}
@@ -43,9 +43,8 @@
 
                                         {% if current_user.roles_in(['Admin']) %}
                                         <v-btn
-                                            color="secondary"
-                                            variant="elevated"
-                                            class="ma-2"
+                                            variant="outlined"
+                                            class="ma-2 border-thin"
                                             @click="imDialog = true">
                                             {{ _('Import CSV') }}
                                         </v-btn>
@@ -55,7 +54,7 @@
                                     <!-- Table view -->
                                     <v-data-table-server
                                         v-if="viewMode === 'table'"
-                                        height="calc(100vh - 320px)"
+                                        height="calc(100vh - 295px)"
                                         fixed-header
                                         @update:options="refresh"
                                         :page="options.page"
@@ -69,29 +68,25 @@
                                             ${ item.parent ? item.parent.title : '' }
                                         </template>
 
-                                        <template v-slot:item.for_bulletin="{ item }">
-                                            <v-icon v-if="item.for_bulletin" color="primary" size="small">mdi-check</v-icon>
-                                        </template>
-                                        <template v-slot:item.for_actor="{ item }">
-                                            <v-icon v-if="item.for_actor" color="primary" size="small">mdi-check</v-icon>
-                                        </template>
-                                        <template v-slot:item.for_incident="{ item }">
-                                            <v-icon v-if="item.for_incident" color="primary" size="small">mdi-check</v-icon>
-                                        </template>
-                                        <template v-slot:item.for_offline="{ item }">
-                                            <v-icon v-if="item.for_offline" color="primary" size="small">mdi-check</v-icon>
+                                        <template v-slot:item.available_in="{ item }">
+                                            <div class="d-flex ga-2">
+                                                <v-chip v-if="item.for_bulletin" size="default">{{ _('Bulletin') }}</v-chip>
+                                                <v-chip v-if="item.for_actor" size="default">{{ _('Actor') }}</v-chip>
+                                                <v-chip v-if="item.for_incident" size="default">{{ _('Incident') }}</v-chip>
+                                                <v-chip v-if="item.for_offline" size="default">{{ _('Offline') }}</v-chip>
+                                            </div>
                                         </template>
 
                                         <template v-slot:item.action="{ item }">
-                                            <v-icon size="small" class="mr-2" @click="editItem(item)">mdi-pencil</v-icon>
-                                            <v-icon size="small" @click="deleteItem(item)">mdi-delete-sweep</v-icon>
+                                            <v-btn icon="mdi-pencil" density="compact" class="mr-2" @click="editItem(item)"></v-btn>
+                                            <v-btn icon="mdi-delete-sweep" density="compact" @click="deleteItem(item)"></v-btn>
                                         </template>
 
                                         <template v-slot:no-data></template>
                                     </v-data-table-server>
 
                                     <!-- Tree view -->
-                                    <div v-if="viewMode === 'tree'" style="height: calc(100vh - 320px); overflow-y: auto;">
+                                    <div v-if="viewMode === 'tree'" style="height: calc(100vh - 235px); overflow-y: auto;">
                                         <v-treeview
                                             v-if="treeItems.length"
                                             :items="treeItems"
@@ -105,12 +100,12 @@
                                                 <v-icon size="small">mdi-label</v-icon>
                                             </template>
                                             <template v-slot:append="{ item }">
-                                                <v-chip v-if="item.for_bulletin" size="x-small" class="mr-1">B</v-chip>
-                                                <v-chip v-if="item.for_actor" size="x-small" class="mr-1">A</v-chip>
-                                                <v-chip v-if="item.for_incident" size="x-small" class="mr-1">I</v-chip>
-                                                <v-chip v-if="item.for_offline" size="x-small" class="mr-1">O</v-chip>
-                                                <v-icon size="small" class="ml-2" @click="editItem(item)">mdi-pencil</v-icon>
-                                                <v-icon size="small" class="ml-1" @click="deleteItem(item)">mdi-delete-sweep</v-icon>
+                                                <v-chip v-if="item.for_bulletin" size="default" class="mr-2">&nbsp;B&nbsp;</v-chip>
+                                                <v-chip v-if="item.for_actor" size="default" class="mr-2">&nbsp;A&nbsp;</v-chip>
+                                                <v-chip v-if="item.for_incident" size="default" class="mr-2">&nbsp;I&nbsp;</v-chip>
+                                                <v-chip v-if="item.for_offline" size="default" class="mr-2">&nbsp;O&nbsp;</v-chip>
+                                                <v-icon class="ml-4" @click="editItem(item)">mdi-pencil</v-icon>
+                                                <v-icon class="ml-4 mr-10" @click="deleteItem(item)">mdi-delete-sweep</v-icon>
                                             </template>
                                         </v-treeview>
                                         <div v-else-if="treeLoading" class="text-center pa-4">
@@ -125,10 +120,9 @@
                 </v-container>
 
                 <!-- Create/Edit dialog -->
-                <v-dialog v-model="dialog" max-width="900px">
-                    <v-card :title="formTitle" class="pa-4">
-                        <v-card-text>
-                            <v-container>
+                <v-dialog v-model="dialog" max-width="790px">
+                    <v-card :title="formTitle">
+                        <v-card-text class="pt-6">
                                 <v-row>
                                     <v-col cols="12" md="6">
                                         <v-text-field v-model="editedItem.title" label="{{ _('Title') }}"></v-text-field>
@@ -157,11 +151,6 @@
                                             :multiple="false"
                                             :query-params="parentQueryParams"
                                         ></search-field>
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-alert v-if="parentRestrictions" type="info" density="compact" variant="tonal" class="mt-2">
-                                            ${parentRestrictions}
-                                        </v-alert>
                                     </v-col>
                                 </v-row>
                                 <v-row>
@@ -194,7 +183,10 @@
                                         ></v-checkbox>
                                     </v-col>
                                 </v-row>
-                            </v-container>
+
+                                <div v-if="parentRestrictions" class="mt-3 text-caption text-medium-emphasis">
+                                    {{ _('Some options are unavailable because they\'re disabled at the parent level.') }}
+                                </div>
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
@@ -246,10 +238,7 @@
                     {title: "{{_('ID')}}", value: "id", width: 80},
                     {title: "{{_('Title')}}", value: "title"},
                     {title: "{{_('Parent')}}", value: "parent", sortable: false},
-                    {title: "{{_('Bulletin')}}", value: "for_bulletin"},
-                    {title: "{{_('Actor')}}", value: "for_actor"},
-                    {title: "{{_('Incident')}}", value: "for_incident"},
-                    {title: "{{_('Offline')}}", value: "for_offline"},
+                    {title: "{{_('Available In')}}", value: "available_in"},
                     {% if current_user.roles_in(['Admin','Mod']) %}
                         {title: "{{_('Actions')}}", value: "action", sortable: false}
                     {% endif %}
@@ -288,7 +277,7 @@
 
             computed: {
                 formTitle() {
-                    return this.isEditing ? "{{_('Edit Item')}}" : "{{_('New Item')}}";
+                    return this.isEditing ? "{{_('Edit Item')}}" : "{{_('Add New Item')}}";
                 },
                 currentFltr() {
                     return this.tab === 'verified' ? 'verified' : 'all';
