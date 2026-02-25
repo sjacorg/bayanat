@@ -752,7 +752,7 @@ def api_ocr_process(media_id: int):
     if not current_user.can_access(media):
         return HTTPResponse.forbidden("Restricted Access")
 
-    result = process_media_extraction_task(media_id)
+    result = process_media_extraction_task(media_id, force=True)
 
     Activity.create(
         current_user,

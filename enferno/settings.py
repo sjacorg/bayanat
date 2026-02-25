@@ -178,7 +178,6 @@ class Config(object):
     # Valid video extension list (will be processed during ETL)
     ETL_VID_EXT = manager.get_config("ETL_VID_EXT")
 
-    # valid image extenstions supported by Tesseract OCR
     OCR_ENABLED = manager.get_config("OCR_ENABLED")
     OCR_EXT = manager.get_config("OCR_EXT")
     TESSERACT_CMD = os.environ.get("TESSERACT_CMD", "/usr/bin/tesseract")
@@ -186,10 +185,9 @@ class Config(object):
         "GOOGLE_VISION_API_KEY"
     )
     OCR_PROVIDER = os.environ.get("OCR_PROVIDER") or manager.get_config("OCR_PROVIDER")
-    OLLAMA_OCR_URL = os.environ.get("OLLAMA_OCR_URL") or manager.get_config("OLLAMA_OCR_URL")
-    OLLAMA_OCR_MODEL = os.environ.get("OLLAMA_OCR_MODEL") or manager.get_config("OLLAMA_OCR_MODEL")
-    SGLANG_OCR_URL = os.environ.get("SGLANG_OCR_URL") or manager.get_config("SGLANG_OCR_URL")
-    SGLANG_OCR_MODEL = os.environ.get("SGLANG_OCR_MODEL") or manager.get_config("SGLANG_OCR_MODEL")
+    LLM_OCR_URL = os.environ.get("LLM_OCR_URL") or manager.get_config("LLM_OCR_URL")
+    LLM_OCR_MODEL = os.environ.get("LLM_OCR_MODEL") or manager.get_config("LLM_OCR_MODEL")
+    LLM_OCR_API_KEY = os.environ.get("LLM_OCR_API_KEY") or manager.get_config("LLM_OCR_API_KEY")
 
     # S3 settings
     # Bucket needs to be private with public access blocked
@@ -539,10 +537,9 @@ class TestConfig:
     TESSERACT_CMD = "/usr/bin/tesseract"
     GOOGLE_VISION_API_KEY = "dummy_vision_api_key_for_testing"
     OCR_PROVIDER = "google_vision"
-    OLLAMA_OCR_URL = "http://localhost:11434"
-    OLLAMA_OCR_MODEL = "deepseek-ocr"
-    SGLANG_OCR_URL = "http://localhost:8000"
-    SGLANG_OCR_MODEL = "Qwen/Qwen2.5-VL-72B-Instruct"
+    LLM_OCR_URL = "http://localhost:11434"
+    LLM_OCR_MODEL = "llava"
+    LLM_OCR_API_KEY = ""
 
     # Geo & Maps
     GEO_MAP_DEFAULT_CENTER_LAT = 33.510414

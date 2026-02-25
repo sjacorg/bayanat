@@ -1,12 +1,16 @@
-"""OCR provider dispatch. Convention: each module exports extract_text()."""
+"""OCR provider dispatch."""
 
-import importlib
+PROVIDERS = {
+    "google_vision": "enferno.utils.ocr.google_vision",
+    "llm": "enferno.utils.ocr.llm",
+}
 
 
 def get_provider(name: str):
     """Return the extract_text function for the given provider name."""
-    try:
-        mod = importlib.import_module(f"enferno.utils.ocr.{name}")
-        return mod.extract_text
-    except (ModuleNotFoundError, AttributeError):
+    import importlib
+
+    module_path = PROVIDERS.get(name)
+    if not module_path:
         raise ValueError(f"Unknown OCR provider: {name}")
+    return importlib.import_module(module_path).extract_text
