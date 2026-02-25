@@ -21,10 +21,8 @@ enferno/media/*
 .aws
 config.json
 build
-docs/source
-!docs/source/index.rst
-!docs/source/conf.py
-!docs/source/intro.rst
+docs/.vitepress/dist
+docs/.vitepress/cache
 backups/*
 
 .cursorrules
