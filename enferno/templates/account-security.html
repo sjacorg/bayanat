@@ -150,7 +150,7 @@
                                                 </v-card>
                                                 <v-btn variant="text" color="error" prepend-icon="mdi-close"
                                                     :loading="authMethods.twoFactor.removing"
-                                                    @click="removeTwoFactor">
+                                                    @click="confirmRevokeTwoFactor()">
                                                     {{ _('Remove 2FA Method') }}
                                                 </v-btn>
                                             </div>
@@ -457,6 +457,19 @@
                 } finally {
                     this.authMethods.twoFactor.loading = false;
                 }
+            },
+
+            async confirmRevokeTwoFactor() {
+                this.$confirm({
+                    title: "{{ _('Are you sure you want to remove this 2FA method?') }}",
+                    message: `{{ _('Removing this authenticator app means you\'ll no longer use it to sign in to Bayanat.') }}\r\n\r\n{{ _('To keep your account safe, please make sure you have another 2FA method active or your recovery codes handy so you don\'t get locked out.') }}`,
+                    acceptProps: {
+                        text: "{{ _('I understand, remove this method') }}",
+                        color: 'red',
+                    },
+                    dialogProps: { width: 780 },
+                    onAccept: () => this.removeTwoFactor(),
+                });
             },
 
             async removeTwoFactor() {
