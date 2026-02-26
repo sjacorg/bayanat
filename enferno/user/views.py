@@ -184,16 +184,34 @@ def settings() -> str:
 @bp_user.route("/account-security/")
 @auth_required("session")
 def account_security() -> str:
-    two_factor_verify_code_form = TwoFactorVerifyCodeForm()
     change_password_form = ExtendedChangePasswordForm()
+    two_factor_verify_code_form = TwoFactorVerifyCodeForm()
     active_password = current_user.password is not None
     primary_method = current_user.tf_primary_method or 'none'
+
+    registered_credentials = []
+    has_passkeys = False
+    try:
+        creds = current_user.webauthn or []
+        registered_credentials = [
+            {
+                'name': cred.name,
+                'lastuse': cred.lastuse_datetime.strftime('%b %d, %Y, %I:%M %p') if cred.lastuse_datetime else _('Never'),
+            }
+            for cred in creds
+        ]
+        has_passkeys = len(registered_credentials) > 0
+    except Exception:
+        pass
+
     return render_template(
         "account-security.html",
-        two_factor_verify_code_form=two_factor_verify_code_form,
         change_password_form=change_password_form,
+        two_factor_verify_code_form=two_factor_verify_code_form,
         active_password=active_password,
         primary_method=primary_method,
+        registered_credentials=registered_credentials,
+        has_passkeys=has_passkeys,
     )
 
 
