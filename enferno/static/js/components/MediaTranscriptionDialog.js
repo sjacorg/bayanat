@@ -179,7 +179,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
     },
     runOCRProcess() {
       if (!this.media?.id) return;
-      if (!this.hasOcrProvider) return this.$root.showSnack(this.translations.googleVisionApiHasNotBeenConfigured_);
+      if (!this.hasOcrProvider) return this.$root.showSnack(this.translations.apiNotConfigured_);
 
       this.saving = true;
 
