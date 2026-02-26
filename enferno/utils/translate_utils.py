@@ -3,10 +3,6 @@
 import httpx
 from flask import current_app
 
-from enferno.utils.logging_utils import get_logger
-
-logger = get_logger()
-
 GOOGLE_TRANSLATE_URL = "https://translation.googleapis.com/language/translate/v2"
 
 
@@ -58,9 +54,6 @@ def _translate_llm(text: str, target_language: str, source_language: str = None)
     base_url = current_app.config.get("LLM_OCR_URL", "http://localhost:11434")
     model = current_app.config.get("LLM_OCR_MODEL", "llava")
     api_key = current_app.config.get("LLM_OCR_API_KEY")
-
-    if not base_url:
-        raise RuntimeError("LLM OCR URL not configured")
 
     url = f"{base_url.rstrip('/')}/v1/chat/completions"
     headers = {"Content-Type": "application/json"}
