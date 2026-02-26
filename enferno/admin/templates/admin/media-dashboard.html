@@ -59,7 +59,7 @@
                             :loading="loading"
                             :items-length="itemsLength"
                             class="elevation-1"
-                            :show-select="Boolean(visionApiKey)"
+                            :show-select="hasOcrProvider"
                             item-value="id"
                             select-strategy="page"
                             :item-selectable="canRunOCRProcess"
@@ -129,7 +129,7 @@
                             <v-toolbar v-if="selected.length > 0" height="auto" class="mb-2">
                                 <div class="d-flex align-center justify-space-between w-100 px-4">
                                     <v-chip variant="tonal">${selected.length} {{ _('selected') }}</v-chip>
-                                    <v-tooltip location="top" :disabled="Boolean(visionApiKey)">
+                                    <v-tooltip location="top" :disabled="hasOcrProvider">
                                         <template v-slot:activator="{ props }">
                                             <div v-bind="props">
                                                 <v-btn
@@ -137,7 +137,7 @@
                                                     variant="elevated"
                                                     @click="runBulkOCR"
                                                     :loading="bulkLoading"
-                                                    :disabled="!visionApiKey"
+                                                    :disabled="!hasOcrProvider"
                                                     prepend-icon="mdi-text-recognition"
                                                 >
                                                     {{ _('Run OCR') }}
@@ -255,7 +255,7 @@
                 loading: true,
                 bulkLoading: false,
                 itemsPerPageOptions: window.itemsPerPageOptions,
-                visionApiKey: '{{ config.GOOGLE_VISION_API_KEY }}',
+                hasOcrProvider: Boolean('{{ config.OCR_PROVIDER }}'),
                 processingIds: new Set(), // Track media IDs being processed
                 pollInterval: null, // For periodic polling
                 options: {
@@ -409,7 +409,7 @@
                 },
                 runBulkOCR() {
                     if (this.selected.length === 0) return;
-                    if (!this.visionApiKey) return this.showSnack("{{ _('Google Vision API is not configured. Please contact your administrator.') }}");
+                    if (!this.hasOcrProvider) return this.showSnack("{{ _('Google Vision API is not configured. Please contact your administrator.') }}");
 
                     this.bulkLoading = true;
 
