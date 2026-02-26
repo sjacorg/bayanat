@@ -7,7 +7,13 @@ import re
 import httpx
 from flask import current_app
 from PIL import Image, ImageOps
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential_jitter,
+    retry_if_exception_type,
+    RetryError,
+)
 
 from enferno.utils.logging_utils import get_logger
 
@@ -33,6 +39,9 @@ def _prepare_image(file_bytes: bytes) -> bytes:
         img = img.resize((new_w, new_h), Image.LANCZOS)
         logger.info(f"LLM OCR: downscaled {w}x{h} -> {new_w}x{new_h}")
 
+    if img.mode in ("RGBA", "P", "LA"):
+        img = img.convert("RGB")
+
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=85)
     return buf.getvalue()
@@ -43,7 +52,7 @@ def _prepare_image(file_bytes: bytes) -> bytes:
     wait=wait_exponential_jitter(initial=2, max=30),
     retry=retry_if_exception_type(LLMProviderError),
 )
-def extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
+def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
     """Extract text via any OpenAI-compatible vision model."""
     base_url = current_app.config.get("LLM_OCR_URL", "http://localhost:11434")
     model = current_app.config.get("LLM_OCR_MODEL", "llava")
@@ -116,3 +125,12 @@ def extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
         "orientation": 0,
         "raw": data,
     }
+
+
+def extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
+    """Wrapper that catches retry exhaustion."""
+    try:
+        return _extract_text_inner(file_bytes, language_hints)
+    except RetryError:
+        logger.error("LLM OCR: all retry attempts failed")
+        return None
