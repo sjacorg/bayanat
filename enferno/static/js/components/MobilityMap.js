@@ -324,7 +324,6 @@ const MobilityMap = Vue.defineComponent({
         ctx.fillStyle = fillColor;
         ctx.fill();
         ctx.lineWidth = strokeWidth;
-        ctx.strokeStyle = strokeStyle;
         ctx.strokeStyle = (c.id === this.hoveredDot) ? '#FFD700' : strokeStyle;
         ctx.stroke();
 
