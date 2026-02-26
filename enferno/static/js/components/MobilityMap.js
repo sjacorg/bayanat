@@ -383,7 +383,6 @@ const MobilityMap = Vue.defineComponent({
 
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(255,255,255,1)';
       ctx.strokeStyle = isHovered ? '#FFD700' : 'rgba(255,255,255,1)';
       ctx.lineWidth = 2;
       ctx.stroke(path);
