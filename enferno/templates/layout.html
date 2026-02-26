@@ -92,7 +92,7 @@
   data-settings='{{ current_user.settings|tojson if current_user.is_authenticated and current_user.settings else '{}' }}'
   data-lang="{{ session.get('lang', 'en') }}"
   data-maps-api-endpoint="{{ config.MAPS_API_ENDPOINT }}"
-  data-google-vision-api-key="{{ config.GOOGLE_VISION_API_KEY }}"
+  data-ocr-provider="{{ config.OCR_PROVIDER }}"
 ></div>
 
 <script nonce="{{ csp_nonce() }}">
@@ -104,7 +104,7 @@
     window.__settings__ = JSON.parse(el.dataset.settings);
     window.__lang__ = el.dataset.lang;
     window.__MAPS_API_ENDPOINT__ = el.dataset.mapsApiEndpoint;
-    window.__GOOGLE_VISION_API_KEY__ = el.dataset.googleVisionApiKey;
+    window.__OCR_PROVIDER__ = el.dataset.ocrProvider;
 </script>
 
 
