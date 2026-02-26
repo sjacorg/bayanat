@@ -120,10 +120,8 @@
                                                 </div>
                                             </div>
                                             <v-btn variant="outlined" class="border-thin ml-4"
-                                                :loading="authMethods.twoFactor.loading">
-                                                ${authMethods.twoFactor.panel === 'open'
-                                                    ? '{{ _('Cancel') }}'
-                                                    : '{{ _('Edit') if primary_method != 'none' else _('Setup') }}'}
+                                                :disabled="authMethods.twoFactor.loading">
+                                                ${'{{ _('Edit') if primary_method != 'none' else _('Setup') }}'}
                                             </v-btn>
                                         </v-expansion-panel-title>
 
@@ -222,10 +220,8 @@
                                                 </div>
                                             </div>
                                             <v-btn variant="outlined" class="border-thin ml-4"
-                                                :loading="authMethods.securityKeys.loading">
-                                                ${authMethods.securityKeys.panel === 'open'
-                                                    ? '{{ _('Cancel') }}'
-                                                    : '{{ _('Edit') if has_passkeys else _('Setup') }}'}
+                                                :disabled="authMethods.securityKeys.panel === 'open'">
+                                                ${'{{ _('Edit') if has_passkeys else _('Setup') }}'}
                                             </v-btn>
                                         </v-expansion-panel-title>
 
@@ -242,7 +238,7 @@
 
                                             <!-- Registered keys list -->
                                             {% if registered_credentials %}
-                                            <div class="mb-6">
+                                            <div class="mb-4">
                                                 <span class="text-subtitle-1 font-weight-medium">{{ _('Currently Registered Security Keys & Passkeys') }}</span>
                                                 <div class="d-flex flex-column ga-2 mt-4">
                                                     {% for cred in registered_credentials %}
@@ -261,19 +257,15 @@
                                                     {% endfor %}
                                                 </div>
                                             </div>
-                                            {% endif %}
 
                                             <!-- Add new key -->
                                             <div v-if="!authMethods.securityKeys.registering">
-                                                <span class="text-subtitle-1 font-weight-medium">{{ _('Add a New Security Key or Passkey') }}</span>
-                                                <p class="text-body-2 text-medium-emphasis mt-1 mb-4">
-                                                    {{ _('Register a new security key or passkey using your device\'s biometric authentication or a hardware key.') }}
-                                                </p>
-                                                <v-btn color="primary" variant="flat" prepend-icon="mdi-plus"
+                                                <v-btn variant="text" color="primary" prepend-icon="mdi-plus"
                                                     @click="authMethods.securityKeys.registering = true">
-                                                    {{ _('Add Security Key or Passkey') }}
+                                                    {{ _('Add Security Key/Passkey') }}
                                                 </v-btn>
                                             </div>
+                                            {% endif %}
 
                                             <!-- Registration flow -->
                                             <div v-if="authMethods.securityKeys.registering" style="max-width: 560px">
@@ -288,26 +280,28 @@
                                                             style="max-width: 320px">
                                                             <template v-slot:label>{{ _('Device Name') }} <span class="text-error">*</span></template>
                                                         </v-text-field>
+                                                        <div class="d-flex ga-2">
+                                                            <v-btn variant="outlined" class="border-thin"
+                                                                @click="authMethods.securityKeys.panel = false">
+                                                                {{ _('Cancel') }}
+                                                            </v-btn>
+                                                            <v-btn color="primary" variant="flat"
+                                                                :disabled="!authMethods.securityKeys.deviceName || authMethods.securityKeys.loading"
+                                                                @click="registerPasskey">
+                                                                {{ _('Continue') }}
+                                                            </v-btn>
+                                                        </div>
                                                     </div>
                                                     <div>
                                                         <span class="font-weight-medium">{{ _('Step 2') }}</span>&nbsp;
                                                         <span class="text-medium-emphasis">{{ _('After clicking Continue, follow your browser\'s prompt to scan your fingerprint, face, or tap your USB key.') }}</span>
+                                                        <div v-if="authMethods.securityKeys.loading" class="d-flex align-center ga-2 mt-4">
+                                                            <v-progress-circular indeterminate color="info" size="20" width="2"></v-progress-circular>{{ _('Verifying your security key...') }}
+                                                        </div>
                                                     </div>
                                                     <div>
                                                         <span class="font-weight-medium">{{ _('Step 3') }}</span>&nbsp;
                                                         <span class="text-medium-emphasis">{{ _('Once your device confirms your identity, the setup is complete and your account is secure.') }}</span>
-                                                    </div>
-                                                    <div class="d-flex ga-2">
-                                                        <v-btn variant="outlined" class="border-thin"
-                                                            @click="authMethods.securityKeys.registering = false">
-                                                            {{ _('Cancel') }}
-                                                        </v-btn>
-                                                        <v-btn color="primary" variant="flat"
-                                                            :loading="authMethods.securityKeys.loading"
-                                                            :disabled="!authMethods.securityKeys.deviceName"
-                                                            @click="registerPasskey">
-                                                            {{ _('Continue') }}
-                                                        </v-btn>
                                                     </div>
                                                 </div>
                                             </div>
@@ -356,8 +350,8 @@
 
         data() {
             const tabsMap = {
-                'change-password': { text: "{{ _('Change Password') }}" },
                 'authentication-methods': { text: "{{ _('Authentication Methods') }}" },
+                'change-password': { text: "{{ _('Change Password') }}" },
             };
             const hash = this.$route.hash.replace('#', '').split('?')[0];
             const defaultTab = Object.keys(tabsMap)[0];
@@ -593,7 +587,7 @@
                     window.location.reload();
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
-                        window.location.href = '/verify?next=/account-security/%23authentication-methods';
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=2fa';
                         return;
                     }
                     this.authMethods.twoFactor.error =
@@ -629,6 +623,7 @@
                     this.authMethods.securityKeys.error = null;
                 } else {
                     this.authMethods.securityKeys.panel = 'open';
+                    this.authMethods.securityKeys.registering = {{ 'false' if registered_credentials else 'true' }};
                 }
             },
 
@@ -666,7 +661,10 @@
                     window.location.reload();
 
                 } catch (error) {
-                    if (error.name === 'NotAllowedError') {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=securityKeys';
+                        return;
+                    } else if (error.name === 'NotAllowedError') {
                         // User cancelled the browser prompt
                         this.authMethods.securityKeys.error = "{{ _('Registration was cancelled. Please try again.') }}";
                     } else {
@@ -730,9 +728,14 @@
                     }, { headers: { 'Accept': 'application/json' } });
                     window.location.reload();
                 } catch (error) {
-                    this.authMethods.securityKeys.error =
-                        error.response?.data?.response?.errors?.join(' ') ||
-                        "{{ _('An error occurred. Please try again.') }}";
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=securityKeys';
+                        return;
+                    } else {
+                        this.authMethods.securityKeys.error =
+                            error.response?.data?.response?.errors?.join(' ') ||
+                            "{{ _('An error occurred. Please try again.') }}";
+                    }
                 }
             },
         },
