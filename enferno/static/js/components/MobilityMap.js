@@ -288,7 +288,10 @@ const MobilityMap = Vue.defineComponent({
 
       segments
         .sort((a, b) => a.width - b.width)
-        .forEach((seg, i) => this.drawArrow(seg, arrowMin, arrowMax, i === this.hoveredArrow));
+        .forEach((seg) => {
+          const segId = `${seg.fromCluster}|${seg.toCluster}`;
+          this.drawArrow(seg, arrowMin, arrowMax, segId === this.hoveredArrow);
+        });
 
       this.clusterDefs.forEach((c) => {
         const p = clusterPixels[c.id];
@@ -351,7 +354,6 @@ const MobilityMap = Vue.defineComponent({
         });
       });
 
-      this.arrowShapes.sort((a, b) => a.weight - b.weight);
     },
 
     drawArrow(seg, minW, maxW, isHovered = false) {
@@ -567,7 +569,7 @@ const MobilityMap = Vue.defineComponent({
 
           if (MobilityMapUtils.pointOnArrow(p.x, p.y, arrow, this.ctx)) {
             if (this.mode === 'event') return;
-            this.hoveredArrow = i;
+            this.hoveredArrow = `${arrow.clusterFrom}|${arrow.clusterTo}`;
             hovering = true;
             const pairs = arrow.rawPairs || [];
 
