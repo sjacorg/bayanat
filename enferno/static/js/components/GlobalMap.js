@@ -210,7 +210,7 @@ const GlobalMap = Vue.defineComponent({
           let marker = L.circleMarker([loc.lat, loc.lng], {
             color: 'white',
             fillColor: loc.color,
-            fillOpacity: 0.65,
+            fillOpacity: 1,
             radius: 8,
             weight: 2,
             stroke: 'white',
@@ -285,9 +285,9 @@ const GlobalMap = Vue.defineComponent({
 
         // Create bezier curve path between events
         const curve = L.curve(['M', startCoord, 'Q', midpointCoord, endCoord], {
-          color: '#00f166',
+          color: '#78babf',
           weight: 4,
-          opacity: 0.4,
+          opacity: 1,
           dashArray: '5',
           animate: { duration: 15000, iterations: Infinity },
         }).addTo(this.eventLinks);
@@ -352,7 +352,7 @@ const GlobalMap = Vue.defineComponent({
                   {{ translations.geoMarkers_ }}
                 </div>
                 <div class="caption">
-                  <v-icon small color="#00f166"> mdi-checkbox-blank-circle</v-icon>
+                  <v-icon small color="#78babf"> mdi-checkbox-blank-circle</v-icon>
                   {{ translations.events_ }}
                 </div>
               </div>
