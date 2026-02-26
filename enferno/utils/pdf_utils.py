@@ -1,7 +1,5 @@
 from typing import Optional
-from flask import render_template
-from weasyprint import HTML
-from flask import current_app
+from flask import render_template, current_app
 
 
 class PDFUtil:
@@ -33,7 +31,9 @@ class PDFUtil:
             )
 
         if output:
-            pdf = HTML(string=html).write_pdf(output)
+            from weasyprint import HTML
+
+            HTML(string=html).write_pdf(output)
 
     @property
     def filename(self):

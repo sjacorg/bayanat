@@ -782,6 +782,28 @@ div.jsondiffpatch-child-node-type-array:after {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Advanced search redesign */
+.search-box-redesign {
+    padding: 8px 0;
+}
+
+.search-box-redesign .search-panels .v-expansion-panel-title {
+    min-height: 48px;
+    padding: 12px 16px;
+}
+
+.search-box-redesign .search-panels .v-expansion-panel-text__wrapper {
+    padding: 12px 16px 16px;
+}
+
+.search-box-redesign .search-panels .v-expansion-panel {
+    margin-bottom: 2px;
+}
+
+.search-box-redesign .search-panels .v-expansion-panel--active > .v-expansion-panel-title {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 /* improved flask security styles */
 .security form ul {
     list-style: none;
@@ -871,6 +893,11 @@ div.jsondiffpatch-child-node-type-array:after {
 .lg-backdrop,
 .lg-outer {
     z-index: 3001 !important;
+}
+.lg-toolbar {
+    backdrop-filter: blur(10px) saturate(180%);
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Form builder drag-n-drop */

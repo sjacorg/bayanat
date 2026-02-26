@@ -1,0 +1,10 @@
+<media-transcription-dialog
+    v-model:open="ocr.dialog.show"
+    :loading="ocr.dialog.loading"
+    :media="ocr.dialog.data"
+    :has-vision-api-key="Boolean('{{ config.GOOGLE_VISION_API_KEY }}')"
+    @rejected="onTranscriptionUpdated($event)"
+    @transcribed="onTranscriptionUpdated($event)"
+    @processed="onMediaProcessed($event)"
+    @orientation-saved="onMediaProcessed($event)"
+></media-transcription-dialog>

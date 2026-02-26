@@ -198,8 +198,6 @@ def status() -> Response:
     """
     Endpoint to return deduplication backend status.
     """
-    if status := rds.get("dedup"):
-        response = {"status": status.decode()}
-        return HTTPResponse.success(data=response)
-
-    return HTTPResponse.error("Background tasks are not running correctly", status=503)
+    status = rds.get("dedup")
+    response = {"status": status.decode() if status else "0"}
+    return HTTPResponse.success(data=response)

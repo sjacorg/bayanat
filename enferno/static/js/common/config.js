@@ -432,6 +432,8 @@ const routes = [
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
     { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
     { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
+    {path: '/admin/media/:id', name: 'media', component: Vue.defineComponent({})},
+    {path: '/admin/media/', name: 'medias', component: Vue.defineComponent({})},
 
 ];
 
@@ -733,6 +735,7 @@ function buildVideoElement() {
     videoElement.setAttribute('controls', '');
     videoElement.setAttribute('width', '620');
     videoElement.setAttribute('height', '348');
+    videoElement.setAttribute('preload', 'none');
 
     return videoElement;
 }

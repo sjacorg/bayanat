@@ -11,6 +11,7 @@
 
 
     <v-main>
+        {% include 'admin/partials/media_transcription_dialog.html' %}
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
         {% include 'admin/partials/bulk_bulletin_drawer.html' %}
@@ -379,6 +380,7 @@
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/mixins/form-builder-mixin.js"></script>
+    <script src="/static/js/mixins/ocr-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -421,6 +423,7 @@
     <script src="/static/js/components/GeoLocations.js"></script>
     <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/MediaThumbnail.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
     
@@ -436,6 +439,8 @@
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
     <script src="/static/js/components/FieldRenderer.js"></script>
+    <script src="/static/js/components/OcrTextLayer.js"></script>
+    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
 
 
     <script src="/static/js/components/MissingPersonCard.js"></script>
@@ -466,7 +471,7 @@
         const app = createApp({
                 delimiters: delimiters,
 
-                mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin],
+                mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin, ocrMixin],
 
                 data: () => ({
                     itemsPerPageOptions: window.itemsPerPageOptions,
@@ -474,6 +479,7 @@
 
                     valid: false,
                     leftDialogProps: {
+                        'retain-focus': false,
                         'content-props': {
                             style: { width: '60%' },
                         },
@@ -484,6 +490,7 @@
                         scrim: false,
                     },
                     rightDialogProps: {
+                        'retain-focus': false,
                         'content-props': {
                             style: { width: '60%', contain: 'none' },
                         },
@@ -494,6 +501,7 @@
                         scrim: false,
                     },
                     rightContainedDialogProps: {
+                        'retain-focus': false,
                         contained: true,
                         persistent: true,
                         'no-click-animation': true,
@@ -885,6 +893,25 @@
                 },
 
                 methods: {
+                    refreshEditedMedia(mediaId) {
+                        if (!this.editedItem?.medias) return;
+                        api.get(`/admin/api/media/${mediaId}`).then(response => {
+                            const idx = this.editedItem.medias.findIndex(m => m.id === mediaId);
+                            if (idx !== -1) {
+                                Object.assign(this.editedItem.medias[idx], response.data);
+                            }
+                        });
+                    },
+                    onTranscriptionUpdated({ media }) {
+                        this.showOcrDialog(media.id);
+                        this.refreshEditedMedia(media.id);
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
+                    },
+                    onMediaProcessed({ media }) {
+                        this.showOcrDialog(media.id);
+                        this.refreshEditedMedia(media.id);
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
+                    },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                         if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
@@ -1315,9 +1342,29 @@
 
                     showBulletin(id) {
                         this.bulletinLoader = true
-                        this.bulletinDrawer = true;
+                        
+                        // Save current s3urls before reload
+                        const s3urlCache = {};
+                        if (this.bulletin?.medias) {
+                            this.bulletin.medias.forEach(media => {
+                                if (media.s3url) {
+                                    s3urlCache[media.id] = media.s3url;
+                                }
+                            });
+                        }
+                        
                         api.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
                             this.bulletin = response.data;
+                            this.bulletinDrawer = true;
+                            
+                            // Restore s3urls after reload
+                            if (this.bulletin?.medias) {
+                                this.bulletin.medias.forEach(media => {
+                                    if (s3urlCache[media.id]) {
+                                        media.s3url = s3urlCache[media.id];
+                                    }
+                                });
+                            }
                         }).catch(error => {
                             this.bulletinDrawer = false;
                         }).finally(() => {
@@ -1742,6 +1789,7 @@
         app.component('MobilityMap', MobilityMap);
         app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
+        app.component('MediaThumbnail', MediaThumbnail);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
         app.component('SnapshotDialog', SnapshotDialog);
@@ -1762,6 +1810,8 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
+        app.component('OcrTextLayer', OcrTextLayer);
+        app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {
