@@ -282,7 +282,8 @@ const MobilityMap = Vue.defineComponent({
 
       const { segments, arrowMin, arrowMax } = MobilityMapUtils.prepareArrowSegments(
         this.flowGroups,
-        clusterPixels
+        clusterPixels,
+        this.clusterDefs
       );
 
       segments

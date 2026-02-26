@@ -230,8 +230,13 @@ const MobilityMapUtils = {
   // ARROW PROCESSING
   // =============================================
 
-  prepareArrowSegments(flowGroups, clusterPixels) {
+  prepareArrowSegments(flowGroups, clusterPixels, clusters = []) {
     const merged = {};
+    const clusterRadii = {};
+
+    clusters.forEach((c) => {
+      clusterRadii[c.id] = c.radius || 0;
+    });
 
     Object.values(flowGroups).forEach((group) => {
       const fromPx = clusterPixels[group.fromClusterId];
@@ -276,8 +281,11 @@ const MobilityMapUtils = {
       const offset = thisHalf + oppositeHalf + baseSpacing;
 
       const { offsetA1, offsetB1 } = this.computeOffsets(seg.start, seg.end, offset);
-      seg.from = offsetA1;
-      seg.to = offsetB1;
+      const fromInset = (clusterRadii[seg.fromCluster] || 0) + 1;
+      const toInset = (clusterRadii[seg.toCluster] || 0) + 1;
+      const { from, to } = this.trimSegment(offsetA1, offsetB1, fromInset, toInset);
+      seg.from = from;
+      seg.to = to;
     });
 
     return { segments, arrowMin, arrowMax };
@@ -325,6 +333,32 @@ const MobilityMapUtils = {
     return {
       offsetA1: { x: p1.x + ox, y: p1.y + oy },
       offsetB1: { x: p2.x + ox, y: p2.y + oy },
+    };
+  },
+
+  trimSegment(p1, p2, fromInset = 0, toInset = 0) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+
+    if (len === 0) return { from: p1, to: p2 };
+
+    let start = Math.max(0, fromInset);
+    let end = Math.max(0, toInset);
+    const total = start + end;
+
+    if (total >= len) {
+      const scale = Math.max(len - 1, 0) / total;
+      start *= scale;
+      end *= scale;
+    }
+
+    const ux = dx / len;
+    const uy = dy / len;
+
+    return {
+      from: { x: p1.x + ux * start, y: p1.y + uy * start },
+      to: { x: p2.x - ux * end, y: p2.y - uy * end },
     };
   },
 
