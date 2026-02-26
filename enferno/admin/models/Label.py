@@ -20,7 +20,11 @@ class Label(db.Model, BaseMixin):
     SQL Alchemy model for labels
     """
 
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        db.CheckConstraint("parent_label_id != id", name="label_no_self_parent"),
+        db.UniqueConstraint("title", "parent_label_id", name="label_unique_sibling_title"),
+        {"extend_existing": True},
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, index=True)
@@ -36,6 +40,88 @@ class Label(db.Model, BaseMixin):
 
     parent_label_id = db.Column(db.Integer, db.ForeignKey("label.id"), index=True, nullable=True)
     parent = db.relationship("Label", remote_side=id, backref="sub_label")
+
+    def _build_path(self) -> str:
+        """Walk up parent chain, return 'Grandparent > Parent' (excludes self)."""
+        parts = []
+        current = self.parent
+        seen = set()
+        while current and current.id not in seen:
+            seen.add(current.id)
+            parts.append(current.title)
+            current = current.parent
+        parts.reverse()
+        return " > ".join(parts) if parts else ""
+
+    def _is_valid_parent(self, parent_id) -> bool:
+        """Check that setting parent_id won't create a cycle."""
+        if parent_id is None:
+            return True
+        if parent_id == self.id:
+            return False
+        # Walk down from self's children to see if parent_id is a descendant
+        visited = set()
+        queue = [c.id for c in self.sub_label]
+        while queue:
+            cid = queue.pop()
+            if cid == parent_id:
+                return False
+            if cid in visited:
+                continue
+            visited.add(cid)
+            child = Label.query.get(cid)
+            if child:
+                queue.extend(c.id for c in child.sub_label)
+        return True
+
+    @staticmethod
+    def build_tree(verified=None):
+        """Build nested tree structure using raw SQL for performance."""
+        query = "SELECT id, title, parent_label_id, verified, for_bulletin, for_actor, for_incident, for_offline FROM label"
+        conditions = []
+        if verified is True:
+            conditions.append("verified = true")
+        elif verified is False:
+            conditions.append("(verified = false OR verified IS NULL)")
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY title"
+
+        with db.engine.connect() as conn:
+            rows = conn.execute(text(query)).fetchall()
+
+        nodes = {}
+        for r in rows:
+            nodes[r[0]] = {
+                "id": r[0],
+                "title": r[1],
+                "parent_label_id": r[2],
+                "verified": r[3],
+                "for_bulletin": r[4],
+                "for_actor": r[5],
+                "for_incident": r[6],
+                "for_offline": r[7],
+                "children": [],
+            }
+
+        roots = []
+        for node in nodes.values():
+            pid = node["parent_label_id"]
+            if pid and pid in nodes:
+                nodes[pid]["children"].append(node)
+            else:
+                roots.append(node)
+
+        # Remove empty children arrays so leaves don't show expand arrows
+        def strip_empty_children(items):
+            for item in items:
+                if item["children"]:
+                    strip_empty_children(item["children"])
+                else:
+                    del item["children"]
+
+        strip_empty_children(roots)
+        return roots
 
     # custom serialization method
     def to_dict(self, mode: str = "1") -> dict[str, Any]:
@@ -64,22 +150,22 @@ class Label(db.Model, BaseMixin):
             "for_incident": self.for_incident,
             "for_offline": self.for_offline,
             "parent": {"id": self.parent.id, "title": self.parent.title} if self.parent else None,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
         }
 
-    # custom compact serialization
     def to_mode2(self) -> dict[str, Any]:
-        """
-        Compact serialization for labels
-
-        Returns:
-            - dictionary with id and title keys.
-        """
+        """Compact serialization with path for hierarchy display."""
         return {
             "id": self.id,
             "title": self.title,
+            "path": self._build_path(),
+            "verified": self.verified,
+            "for_bulletin": self.for_bulletin,
+            "for_actor": self.for_actor,
+            "for_incident": self.for_incident,
+            "for_offline": self.for_offline,
         }
 
     def to_json(self) -> str:
@@ -168,39 +254,32 @@ class Label(db.Model, BaseMixin):
         else:
             return Label.query.filter(Label.title.ilike(title)).first()
 
-    # populate object from json data
     def from_json(self, json: dict[str, Any]) -> "Label":
-        """
-        Create a label object from a json dictionary.
-
-        Args:
-            - json: the json dictionary to create the label from.
-
-        Returns:
-            - the label object.
-        """
+        """Create/update a label from a json dictionary."""
         self.title = json["title"]
-        self.title_ar = json["title_ar"] if "title_ar" in json else ""
-        self.comments = json["comments"] if "comments" in json else ""
-        self.comments_ar = json["comments_ar"] if "comments_ar" in json else ""
-        self.verified = json.get("verified", False)
-        self.for_bulletin = json.get("for_bulletin", False)
-        self.for_actor = json.get("for_actor", False)
-        self.for_incident = json.get("for_incident", False)
-        self.for_offline = json.get("for_offline", False)
+        self.title_ar = json.get("title_ar", "")
+        self.comments = json.get("comments", "")
+        self.comments_ar = json.get("comments_ar", "")
 
+        # Handle parent assignment
         parent_info = json.get("parent")
         if parent_info and "id" in parent_info:
             parent_id = parent_info["id"]
-            if parent_id != self.id:
+            if self._is_valid_parent(parent_id):
                 p_label = Label.query.get(parent_id)
-                # Check for circular relations
-                if (
-                    p_label
-                    and p_label.id != self.id
-                    and (not p_label.parent or p_label.parent.id != self.id)
-                ):
+                if p_label:
                     self.parent_label_id = p_label.id
+                    # Enforce parent restrictions: child can't enable flags parent has disabled
+                    self.verified = json.get("verified", False)
+                    if p_label.verified and not self.verified:
+                        self.verified = True
+                    for flag in ("for_bulletin", "for_actor", "for_incident", "for_offline"):
+                        val = json.get(flag, False)
+                        # Child can't enable a flag the parent has disabled
+                        if not getattr(p_label, flag) and val:
+                            val = False
+                        setattr(self, flag, val)
+                    return self
                 else:
                     self.parent_label_id = None
             else:
@@ -208,6 +287,11 @@ class Label(db.Model, BaseMixin):
         else:
             self.parent_label_id = None
 
+        self.verified = json.get("verified", False)
+        self.for_bulletin = json.get("for_bulletin", False)
+        self.for_actor = json.get("for_actor", False)
+        self.for_incident = json.get("for_incident", False)
+        self.for_offline = json.get("for_offline", False)
         return self
 
     # import csv data into db

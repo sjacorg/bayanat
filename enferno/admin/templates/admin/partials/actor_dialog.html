@@ -392,10 +392,13 @@
                                                         <search-field
                                                                 v-model="profile.labels"
                                                                 api="/admin/api/labels/"
+                                                                :query-params="{ typ: 'for_actor', mode: 2 }"
                                                                 item-title="title"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 :show-copy-icon="advFeatures"
+                                                                item-subtitle="path"
+                                                                :retain-search="true"
                                                                 label="{{ _('Labels') }}"
                                                         ></search-field>
                                                     </v-card-text>
@@ -404,11 +407,13 @@
                                                         <search-field
                                                                 v-model="profile.ver_labels"
                                                                 api="/admin/api/labels/"
-                                                                :query-params="{ fltr: 'verified', typ: 'for_actor' }"
+                                                                :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
                                                                 item-title="title"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 :show-copy-icon="advFeatures"
+                                                                item-subtitle="path"
+                                                                :retain-search="true"
                                                                 label="{{ _('Verified Labels') }}"
                                                         ></search-field>
                                                     </v-card-text>

@@ -4,6 +4,7 @@ from flask import Response, request
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import Label, Activity
@@ -53,34 +54,60 @@ def api_labels() -> Response:
     elif fltr == "all":
         pass
     else:
-        # Include both False and NULL values for unverified labels
         query.append(or_(Label.verified == False, Label.verified.is_(None)))
+
+    # Exclude specific label IDs (useful for parent picker)
+    exclude = request.args.get("exclude", None)
+    if exclude:
+        try:
+            exclude_ids = [int(x) for x in exclude.split(",")]
+            query.append(~Label.id.in_(exclude_ids))
+        except ValueError:
+            pass
 
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
+    mode = request.args.get("mode", "1")
 
-    # pull children only when specific labels are searched
+    # Eager load parent when mode=2 to avoid N+1 on _build_path()
+    base_query = Label.query
+    if mode == "2":
+        base_query = base_query.options(joinedload(Label.parent))
+
     if q:
-        result = Label.query.filter(*query).all()
+        result = base_query.filter(*query).all()
         labels = [label for label in result]
         ids = []
         children = Label.get_children(labels)
         for label in labels + children:
             ids.append(label.id)
-        # remove dups
         ids = list(set(ids))
-        result = Label.query.filter(Label.id.in_(ids)).paginate(
+        result = base_query.filter(Label.id.in_(ids)).paginate(
             page=page, per_page=per_page, count=True
         )
     else:
-        result = Label.query.filter(*query).paginate(page=page, per_page=per_page, count=True)
+        result = base_query.filter(*query).paginate(page=page, per_page=per_page, count=True)
 
     response = {
-        "items": [item.to_dict(request.args.get("mode", 1)) for item in result.items],
+        "items": [item.to_dict(mode) for item in result.items],
         "perPage": per_page,
         "total": result.total,
     }
     return HTTPResponse.success(data=response)
+
+
+@admin.route("/api/labels/tree")
+@roles_accepted("Admin", "Mod")
+def api_labels_tree() -> Response:
+    """Return labels as nested tree structure for admin tree view."""
+    verified_param = request.args.get("verified", None)
+    verified = None
+    if verified_param == "true":
+        verified = True
+    elif verified_param == "false":
+        verified = False
+    tree = Label.build_tree(verified=verified)
+    return HTTPResponse.success(data={"items": tree})
 
 
 @admin.post("/api/label/")
