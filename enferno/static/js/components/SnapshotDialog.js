@@ -44,7 +44,7 @@ const SnapshotDialog = Vue.defineComponent({
           <v-card-text>
             <!-- Snapshot preview w/ crop support -->
             <div class="crop mb-4">
-              <img id="cropImg" />
+              <img id="cropImg" loading="lazy" />
             </div>
 
             <dual-field
