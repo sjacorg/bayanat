@@ -12,7 +12,38 @@
     {% include 'admin/partials/export_drawer.html' %}
     <v-main>
         {% include 'admin/partials/actor_advsearch.html' %}
+        <map-visualization
+            ref="mapVisualizationRef"
+            v-model:open="mapVisualizationOpen"
+            v-model:search.trim="search[0].tsv"
+            :query="search"
+            entities-endpoint="/admin/api/actors/"
+            :entity="actor"
+            :entity-loader="actorLoader"
+            @advanced-search="advSearchExpand = true"
+            @do-search="doSearch"
+            @reset-search="resetSearch"
+            @show-entity-details="showActor($event.entity.id, { width: $event.drawerWidth, closeIcon: 'mdi-arrow-left', closePosition: 'prepend', hideMap: true, style: { zIndex: 2410 } })"
+            @close-entity-details="closeActorDrawer()"
+        ></map-visualization>
+
         <v-container fluid>
+            <v-tooltip text="{{ _('Map visualization') }}">
+                <template #activator="{props}">
+                    <v-btn
+                            elevation="16"
+                            color="primary"
+                            outlined
+                            icon="mdi-map-outline"
+                            @click.stop="mapVisualizationOpen = true"
+                            v-bind="props"
+                            v-if="showMapVisualize"
+                            variant="elevated"
+                            class="mb-5 mr-5 position-absolute"
+                            style="right: 30px; bottom: 150px; z-index: 1000;"
+                    ></v-btn>
+                </template>
+            </v-tooltip>
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template v-slot:activator="{ props }">
                     <v-btn
@@ -353,6 +384,7 @@
 
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/EntityFlowMap.js"></script>
     <script src="/static/js/components/PopDateField.js"></script>
     <script src="/static/js/components/PopDateRangeField.js"></script>
     <script src="/static/js/components/PopDateTimeField.js"></script>
@@ -376,6 +408,9 @@
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
 
+    <script src="/static/js/components/MapVisualization.js"></script>
+    <script src="/static/js/components/MobilityMap.js"></script>
+    <script src="/static/js/utils/MobilityMapUtils.js"></script>
 
     <script src="/static/js/components/MissingPersonCard.js"></script>
     <script src="/static/js/components/MissingPersonField.js"></script>
@@ -406,6 +441,7 @@
             mixins: [mediaMixin, globalMixin, relationsMixin, formBuilderMixin, ocrMixin],
 
             data: () => ({
+                mapVisualizationOpen: false,
                 commonDialogProps: { class: 'w-sm-100 w-md-75' },
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
@@ -458,6 +494,7 @@
                 // advanced search
                 advSearchExpand: false,
 
+                showMapVisualize: false,
                 showVisualize: false,
                 visualizeLoading: false,
                 graphTimer: null,
@@ -505,6 +542,7 @@
                 relateIncidentTerm: "",
 
                 actorDrawer: false,
+                actorDrawerSettings: {},
                 bulkActorDrawer: false,
 
                 exportDrawer: false,
@@ -1103,15 +1141,20 @@
                             console.log(`API call took ${duration}ms`)
 
                             this.items = response.data.items;
-                            this.showVisualize = !(
-                                this.search.length === 1 &&
-                                Object.keys(this.search[0]).length === 0
-                            );
+                            const isSearchEmpty = this.search.length === 1 && Object.keys(this.search[0]).length === 0;
+                            const hasSearched = !isSearchEmpty;
+
+                            this.showVisualize = hasSearched;
+                            this.showMapVisualize = hasSearched;
                             if ('total' in response.data) {
                                 this.totalCount = response.data.total
                                 this.countType = response.data.totalType
                             }
                             this.nextCursor = response.data.nextCursor || null;
+
+                            if (this.mapVisualizationOpen) {
+                                this.$refs.mapVisualizationRef.initMapFlow()
+                            }
                         })
                         .catch((error) => {
                             console.error('Error loading data:', error);
@@ -1303,8 +1346,10 @@
 
                 },
 
-                showActor(id) {
+                showActor(id, options = {}) {
                     this.actorLoader = true;
+                    this.actorDrawerSettings = options
+
                     this.fetchIdNumberTypes();
 
                     // Save current s3urls before reload
@@ -1329,11 +1374,30 @@
                                 }
                             });
                         }
+
+                        if (this.mapVisualizationOpen) {
+                            this.$refs.mapVisualizationRef.applyAllEventTypes()
+                        }
                     }).catch(error => {
                         this.actorDrawer = false;
                     }).finally(() => {
                         this.actorLoader = false;
                     });
+                },
+
+                closeActorDrawer() {
+                    this.actorLoader = false;
+                    this.actorDrawer = false;
+
+                    this.actor = null;
+                    this.actorDrawerSettings = null;
+
+                    if (this.$refs.mapVisualizationRef) {
+                        this.$nextTick(() => {
+                            this.$refs.mapVisualizationRef.entities.selected = null;
+                            this.$refs.mapVisualizationRef.applyAllEventTypes();
+                        })
+                    }
                 },
 
                 searchUsers: debounce(function (evt) {
@@ -1511,7 +1575,7 @@
 
 
                 editItem(item) {
-                    this.actorDrawer = false;
+                    this.closeActorDrawer();
                     this.fetchDynamicFields({ entityType: 'actor' });
                     this.fetchIdNumberTypes();
 
@@ -1731,6 +1795,7 @@
         app.component('PopDateRangeField', PopDateRangeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
+        app.component('EntityFlowMap', EntityFlowMap);
         app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('MediaThumbnail', MediaThumbnail);
@@ -1758,6 +1823,9 @@
         app.component('MissingPersonField', MissingPersonField);
         app.component('MissingPersonCard', MissingPersonCard);
         app.component('VueDropzone', VueDropzone);
+
+        app.component('MapVisualization', MapVisualization);
+        app.component('MobilityMap', MobilityMap);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

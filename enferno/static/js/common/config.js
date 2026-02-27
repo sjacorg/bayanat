@@ -606,7 +606,7 @@ function prepareEventLocations(parentId, events, class_type) {
         x.location.type = 'Event';
         x.location.parentId = parentId;
         x.location.class_type = class_type;
-        x.location.color = '#00f166';
+        x.location.color = '#78babf';
         x.location.lat = x.location.latlng.lat;
         x.location.lng = x.location.latlng.lng;
         x.location.zombie = x.from_date === null && x.to_date === null;
@@ -689,7 +689,7 @@ var aggregateIncidentLocations = function (incident) {
                 //attach serial number to events for map reference
                 x.location.number = i + 1;
                 x.location.title = x.title;
-                x.location.color = '#00f166';
+                x.location.color = '#78babf';
                 x.location.class_type = 'incident';
                 return x.location;
             });
