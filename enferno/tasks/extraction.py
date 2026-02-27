@@ -13,6 +13,7 @@ from enferno.admin.models import Extraction, Media
 from enferno.extensions import db
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.ocr import get_provider
+from enferno.utils.ocr.pdf import pdf_to_images
 
 logger = get_logger()
 
@@ -54,7 +55,24 @@ def process_media_extraction_task(
         provider_name = current_app.config.get("OCR_PROVIDER", "google_vision")
         extract_text = get_provider(provider_name)
         hints = language_hints or DEFAULT_LANGUAGE_HINTS
-        result = extract_text(file_bytes, hints)
+
+        ext = Path(media.media_file).suffix.lstrip(".").lower()
+        if ext == "pdf":
+            page_images = pdf_to_images(file_bytes)
+            if not page_images:
+                _save_failed_extraction(media_id, "PDF conversion failed")
+                return {"success": False, "media_id": media_id, "error": "PDF conversion failed"}
+
+            page_results = [extract_text(img, hints) for img in page_images]
+            page_results = [r for r in page_results if r is not None]
+
+            if not page_results:
+                _save_failed_extraction(media_id, f"{provider_name} failed on all pages")
+                return {"success": False, "media_id": media_id, "error": f"{provider_name} failed"}
+
+            result = _merge_page_results(page_results)
+        else:
+            result = extract_text(file_bytes, hints)
 
         if result is None:
             _save_failed_extraction(media_id, f"{provider_name} failed")
@@ -100,6 +118,24 @@ def process_media_extraction_task(
     except Exception as e:
         logger.error(f"Error processing media {media_id}: {e}")
         return {"success": False, "media_id": media_id, "error": str(e)}
+
+
+def _merge_page_results(results: list[dict]) -> dict:
+    """Combine per-page OCR results into a single result dict."""
+    texts = [r["text"] for r in results if r.get("text")]
+    confidences = [r["confidence"] for r in results if r.get("confidence")]
+    word_count = sum(r.get("word_count", 0) for r in results)
+    language = next((r["language"] for r in results if r.get("language")), None)
+    orientation = results[0].get("orientation", 0) if results else 0
+
+    return {
+        "text": "\n\n".join(texts),
+        "confidence": sum(confidences) / len(confidences) if confidences else 0.0,
+        "word_count": word_count,
+        "language": language,
+        "orientation": orientation,
+        "raw": {"pages": [r["raw"] for r in results]},
+    }
 
 
 def _read_media_bytes(media: Media) -> bytes | None:

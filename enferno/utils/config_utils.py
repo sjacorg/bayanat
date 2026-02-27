@@ -106,7 +106,7 @@ class ConfigManager:
                 "pdf",
             ],
             "OCR_ENABLED": False,
-            "OCR_EXT": ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"],
+            "OCR_EXT": ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm", "pdf"],
             "GOOGLE_VISION_API_KEY": "",
             "OCR_PROVIDER": "google_vision",
             "LLM_OCR_URL": "http://localhost:11434",

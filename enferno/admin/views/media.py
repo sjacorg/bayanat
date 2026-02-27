@@ -7,11 +7,13 @@ from typing import Optional
 
 import boto3
 from botocore.config import Config as BotoConfig
+import requests as http_requests
 from flask import (
     Response,
     request,
     current_app,
     send_from_directory,
+    stream_with_context,
     abort,
     jsonify,
     render_template,
@@ -375,6 +377,30 @@ def api_local_serve_media(
                 "media",
             )
         return send_from_directory("media", filename)
+
+
+@admin.route("/api/media/<int:id>/proxy")
+@auth_required()
+def api_media_proxy(id: int) -> Response:
+    """Proxy media file through Flask -- ensures same-origin inline display for PDFs."""
+    media = Media.query.get(id)
+    if not media:
+        abort(404)
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        return send_from_directory("media", media.media_file)
+
+    s3_url = _media_url(media.media_file)
+    r = http_requests.get(s3_url, stream=True, timeout=30)
+    content_type = r.headers.get("Content-Type", "application/octet-stream")
+    headers = {"Content-Disposition": "inline"}
+    return Response(
+        stream_with_context(r.iter_content(chunk_size=8192)),
+        content_type=content_type,
+        headers=headers,
+    )
 
 
 @admin.post("/api/inline/upload")
