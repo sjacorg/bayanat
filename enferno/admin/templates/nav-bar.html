@@ -3,90 +3,54 @@
     <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
   </template>
 
-  <v-toolbar-title  class="ml-0 pl-3">
+  <v-toolbar-title class="ml-0 pl-2 flex-fill">
     <a href="/">
-      <img
-        src="/static/img/bayanat-h-w-v2.svg"
-        class="mt-1"
-        height="42"
-        cover
-        loading="lazy"
-        >
-        </a>
+      <img src="/static/img/bayanat-h-w-v2.svg" class="mt-1" height="42" cover loading="lazy" />
+    </a>
   </v-toolbar-title>
   <v-spacer></v-spacer>
 
-  <v-tooltip location="bottom">
-    <template v-slot:activator="{ props }">
-      <v-btn v-bind="props" icon="mdi-file-document" href="https://docs.bayanat.org/" target="_blank"></v-btn>
-    </template>
-      {{ _('User Guides') }} <v-icon  size="x-small">mdi-open-in-new</v-icon>
-  </v-tooltip>
-
-  <v-tooltip location="bottom">
-    <template v-slot:activator="{ props }">
-      <v-btn v-bind="props" icon="mdi-forum" href="https://community.bayanat.org/" target="_blank"></v-btn>
-    </template>
-      {{ _('Support') }} <v-icon  size="x-small">mdi-open-in-new</v-icon>
-  </v-tooltip>
-
-  <v-tooltip location="bottom">
-    <template v-slot:activator="{ props }">
-      <v-btn v-bind="props" icon="mdi-bug" href="https://github.com/sjacorg/bayanat/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=" target="_blank"></v-btn>
-    </template>
-      {{ _('Report a Bug') }} <v-icon size="x-small">mdi-open-in-new</v-icon>
-  </v-tooltip>
-
-  <v-tooltip location="bottom">
-    <template v-slot:activator="{ props }">
-      <v-btn id="menu-activator" v-bind="props" icon="mdi-translate"></v-btn>
-    </template>
-      {{ _('Interface Language') }}
-  </v-tooltip>
-
-  <v-menu activator="#menu-activator">
-    <v-list color="primary">
-      <v-list-subheader>{{ _('Translations')}}</v-list-subheader>
-      <v-list-item
-        v-for="(name, code) in languages"
-        @click="updateLang(code)"
-        :title="name"
-        :value="code"
-        :active="code === settings.language"
-        density="compact"
-      >
-      </v-list-item>
-    </v-list>
-  </v-menu>
-
-  <v-tooltip location="bottom">
+  <template v-slot:append>  
+    <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
-        <v-btn v-bind="props" icon @click="toggleNotificationsDrawer()">
-          <v-badge
-            color="error"
-            :content="notifications.unreadCount"
-            :model-value="hasUnreadNotifications"
-            :max="9"
-          >
-            <v-icon>mdi-bell</v-icon>
-          </v-badge>
-        </v-btn>
+        <v-btn id="menu-activator" v-bind="props" icon="mdi-translate"></v-btn>
       </template>
-      {{ _('Notifications') }}
-  </v-tooltip>
+        {{ _('Interface Language') }}
+    </v-tooltip>
+  
+    <v-menu activator="#menu-activator">
+      <v-list color="primary">
+        <v-list-subheader>{{ _('Translations')}}</v-list-subheader>
+        <v-list-item
+          v-for="(name, code) in languages"
+          @click="updateLang(code)"
+          :title="name"
+          :value="code"
+          :active="code === settings.language"
+          density="compact"
+        >
+        </v-list-item>
+      </v-list>
+    </v-menu>
+  
+    <v-tooltip location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn v-bind="props" icon @click="toggleNotificationsDrawer()">
+            <v-badge
+              color="error"
+              :content="notifications.unreadCount"
+              :model-value="hasUnreadNotifications"
+              :max="9"
+            >
+              <v-icon>mdi-bell</v-icon>
+            </v-badge>
+          </v-btn>
+        </template>
+        {{ _('Notifications') }}
+    </v-tooltip>
 
-  <v-tooltip location="bottom">
-      <template v-slot:activator="{ props }">
-        <v-btn v-bind="props" icon="mdi-cog" @click="toggleUserSettingsDrawer()"></v-btn>
-      </template>
-      {{ _('User Settings') }}
-  </v-tooltip>
+    <profile-dropdown name="{{ current_user.name }}" username="{{ current_user.username }}" email="{{ current_user.email }}"></profile-dropdown>
+  </template>
 
-  <v-tooltip location="bottom">
-    <template v-slot:activator="{ props }">
-      <v-btn v-bind="props" icon="mdi-logout" href="/logout"></v-btn>
-    </template>
-    {{ _('Logout') }}
-  </v-tooltip>
 
 </v-app-bar>

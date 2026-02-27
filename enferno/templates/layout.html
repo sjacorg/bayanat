@@ -55,7 +55,6 @@
                 {% if current_user.is_authenticated %}
                     {% include 'nav-bar.html' %}
                     {% include 'nav-drawer.html' %}
-                    {% include 'settings_drawer.html' %}
                     {% include 'notifications_drawer.html' %}
                     {% include 'notifications_dialog.html' %}
                     {% include 'important_notifications_dialog.html' %}
@@ -134,6 +133,7 @@
 <script nonce="{{ csp_nonce() }}">
     {%  include 'admin/jsapi.jinja2' %}
 </script>
+<script src="/static/js/components/ProfileDropdown.js"></script>
 <script src="/static/js/components/NotificationsList.js"></script>
 <script src="/static/js/components/ConfirmDialog.js"></script>
 <script src="/static/js/components/Toast.js"></script>
