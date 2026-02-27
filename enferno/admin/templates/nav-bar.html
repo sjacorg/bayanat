@@ -16,6 +16,22 @@
   </v-toolbar-title>
   <v-spacer></v-spacer>
 
+  {% if config.OCR_PROVIDER == 'google_vision' %}
+  <v-tooltip location="bottom">
+    <template v-slot:activator="{ props }">
+      <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-google" size="small" class="mr-2" href="/admin/media/">Vision API</v-chip>
+    </template>
+    {{ _('OCR powered by Google Vision') }}
+  </v-tooltip>
+  {% elif config.OCR_PROVIDER %}
+  <v-tooltip location="bottom">
+    <template v-slot:activator="{ props }">
+      <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-creation" size="small" class="mr-2" href="/admin/media/">AI Powered</v-chip>
+    </template>
+    {{ _('OCR powered by AI') }}
+  </v-tooltip>
+  {% endif %}
+
   <v-tooltip location="bottom">
     <template v-slot:activator="{ props }">
       <v-btn v-bind="props" icon="mdi-file-document" href="https://docs.bayanat.org/" target="_blank"></v-btn>
