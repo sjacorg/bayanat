@@ -6,13 +6,13 @@ import requests
 from flask import Blueprint, request, session, redirect, g, Response, current_app
 from flask.templating import render_template
 from flask_security import auth_required, login_user, current_user
-from flask_security.forms import LoginForm
+from flask_security.forms import LoginForm, TwoFactorVerifyCodeForm
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.admin.constants import Constants
 from enferno.settings import Config
-from enferno.user.forms import ExtendedLoginForm
+from enferno.user.forms import ExtendedLoginForm, ExtendedChangePasswordForm
 from enferno.user.models import User, Session
 from enferno.admin.models.Notification import Notification
 from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
@@ -179,6 +179,43 @@ def account() -> str:
 def settings() -> str:
     """Endpoint for user settings."""
     return render_template("settings.html")
+
+
+@bp_user.route("/account-security/")
+@auth_required("session")
+def account_security() -> str:
+    change_password_form = ExtendedChangePasswordForm()
+    two_factor_verify_code_form = TwoFactorVerifyCodeForm()
+    active_password = current_user.password is not None
+    primary_method = current_user.tf_primary_method or 'none'
+
+    registered_credentials = []
+    has_passkeys = False
+    try:
+        creds = current_user.webauthn or []
+        registered_credentials = [
+            {
+                'name': cred.name,
+                'lastuse': cred.lastuse_datetime.strftime('%b %d, %Y, %I:%M %p') if cred.lastuse_datetime else _('Never'),
+            }
+            for cred in creds
+        ]
+        has_passkeys = len(registered_credentials) > 0
+    except Exception:
+        pass
+
+    has_recovery_codes = bool(getattr(current_user, 'mf_recovery_codes', None))
+
+    return render_template(
+        "account-security.html",
+        change_password_form=change_password_form,
+        two_factor_verify_code_form=two_factor_verify_code_form,
+        active_password=active_password,
+        primary_method=primary_method,
+        registered_credentials=registered_credentials,
+        has_passkeys=has_passkeys,
+        has_recovery_codes=has_recovery_codes,
+    )
 
 
 @bp_user.route("/settings/save", methods=["PUT"])

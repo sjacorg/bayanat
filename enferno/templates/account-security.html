@@ -1,0 +1,921 @@
+{% extends 'layout.html' %} {% block content %}
+
+<v-main class="system-admin">
+    <div class="pa-4">
+        <v-card class="pa-4" elevation="2" height="calc(100dvh - 96px)">
+            <h1 class="text-h6 mb-5">{{ _('Account Security') }}</h1>
+
+            <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px)">
+                <!-- Left navigation menu -->
+                <v-card class="py-5 h-100 overflow-y-auto" elevation="2"
+                    style="min-width: 255px; max-height: fit-content">
+                    <v-tabs height="40" v-model="tab" selected-class="text-primary" direction="vertical">
+                        <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
+                            class="px-7 justify-start text-none text-subtitle-2">
+                            ${tab.text}
+                        </v-tab>
+                    </v-tabs>
+                </v-card>
+
+                <!-- Main content -->
+                <v-card elevation="2" class="w-100 overflow-y-auto">
+                    <!-- Main content header -->
+                    <v-card-title class="d-flex flex-column pa-0 px-6 position-sticky top-0 z-1 bg-surface">
+                        <div class="d-flex my-3">
+                            ${tabsMap[tab]?.text}
+                            <v-spacer></v-spacer>
+                        </div>
+                        <v-divider></v-divider>
+                    </v-card-title>
+
+                    <div>
+                        <!-- Change Password tab -->
+                        <div v-if="tab === 'change-password'">
+                            <v-card flat class="px-6 py-8">
+                                <v-form ref="changePasswordForm" name="change_password_form">
+                                    {{ change_password_form.hidden_tag() }}
+
+                                    <v-alert v-if="changePassword.success" type="success" variant="tonal" class="mb-6">
+                                        {{ _('Your password has been changed successfully.') }}
+                                    </v-alert>
+                                    <v-alert v-if="changePassword.error" type="error" variant="tonal" class="mb-6">
+                                        ${changePassword.error}
+                                    </v-alert>
+
+                                    <v-card-text class="d-flex flex-column ga-2 pa-0">
+                                        {% if active_password %}
+                                        <v-text-field
+                                            v-model="changePassword.form.password"
+                                            :type="changePassword.showPassword ? 'text' : 'password'"
+                                            name="password"
+                                            :rules="[validationRules.required()]"
+                                            :append-inner-icon="changePassword.showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                                            @click:append-inner="changePassword.showPassword = !changePassword.showPassword"
+                                            v-bind="inputProps">
+                                            <template v-slot:label>{{ _('Current Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                        </v-text-field>
+                                        {% else %}
+                                        <p class="text-body-2 text-medium-emphasis">
+                                            {{ _fsdomain('You do not currently have a password - this will add one.') }}
+                                        </p>
+                                        {% endif %}
+
+                                        <v-text-field
+                                            v-model="changePassword.form.newPassword"
+                                            :type="changePassword.showNewPassword ? 'text' : 'password'"
+                                            name="new_password"
+                                            :class="changePassword.isStrong ? 'text-success' : undefined"
+                                            :hint="changePassword.isStrong ? '{{ _('Strong password') }}' : undefined"
+                                            :rules="[
+                                                validationRules.required(),
+                                                validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                            ]"
+                                            :append-inner-icon="changePassword.showNewPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                                            @click:append-inner="changePassword.showNewPassword = !changePassword.showNewPassword"
+                                            @input="changePassword.isStrong = false"
+                                            v-bind="inputProps">
+                                            <template v-slot:label>{{ _('New Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                        </v-text-field>
+
+                                        <v-text-field
+                                            v-model="changePassword.form.newPasswordConfirm"
+                                            :type="changePassword.showNewPasswordConfirm ? 'text' : 'password'"
+                                            name="new_password_confirm"
+                                            :rules="[validationRules.matchesField(changePassword.form.newPassword)]"
+                                            :append-inner-icon="changePassword.showNewPasswordConfirm ? 'mdi-eye-off' : 'mdi-eye'"
+                                            @click:append-inner="changePassword.showNewPasswordConfirm = !changePassword.showNewPasswordConfirm"
+                                            v-bind="inputProps">
+                                            <template v-slot:label>{{ _('Retype Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                        </v-text-field>
+                                    </v-card-text>
+
+                                    <v-card-actions class="px-0">
+                                        <v-btn @click="submitChangePassword" variant="flat" color="primary"
+                                            :loading="changePassword.loading">
+                                            {{ _('Change Password') }}
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-form>
+                            </v-card>
+                        </div>
+
+                        <!-- Authentication Methods tab -->
+                        <div v-if="tab === 'authentication-methods'">
+                            <v-card flat class="px-6 py-8 d-flex flex-column ga-3">
+
+                                <!-- 2FA Authentication -->
+                                <v-expansion-panels :model-value="authMethods.twoFactor.panel" @update:model-value="toggleTwoFactorPanel($event)">
+                                    <v-expansion-panel value="open">
+                                        <v-expansion-panel-title :hide-actions="true">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-center ga-2 mb-1">
+                                                    <span class="text-subtitle-1 font-weight-medium">{{ _('2FA Authentication') }}</span>
+                                                    {% if primary_method != 'none' %}
+                                                    <v-chip color="success" size="small" label variant="outlined">{{ _('Configured') }}</v-chip>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-body-2 text-medium-emphasis">
+                                                    {{ _('Two factor authentication (2FA) adds an extra layer of protection to your Bayanat account by requiring a verification code from an authenticator app.') }}
+                                                </div>
+                                            </div>
+                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                                :disabled="authMethods.twoFactor.loading">
+                                                ${'{{ _('Edit') if primary_method != 'none' else _('Setup') }}'}
+                                            </v-btn>
+                                        </v-expansion-panel-title>
+
+                                        <v-expansion-panel-text>
+                                            <v-divider class="mb-4"></v-divider>
+
+                                            <v-alert v-if="authMethods.twoFactor.error" type="error" variant="tonal" class="mb-4">
+                                                ${authMethods.twoFactor.error}
+                                            </v-alert>
+
+                                            {% if primary_method != 'none' %}
+                                            <v-alert v-if="authMethods.twoFactor.success" type="success" variant="tonal" class="mb-4">
+                                                {{ _('Two-factor authentication has been set up successfully.') }}
+                                            </v-alert>
+                                            {% endif %}
+
+                                            {% if primary_method != 'none' %}
+                                            <span class="text-subtitle-1 font-weight-medium">{{ _('Current Two-Factor Method') }}</span>
+                                            <div class="d-flex align-center ga-4 mb-4 mt-5">
+                                                <v-card color="primary" class="pa-4 d-flex align-center ga-3" rounded="lg" min-width="200">
+                                                    <v-icon icon="mdi-key-variant" size="32"></v-icon>
+                                                    <span class="text-h6 font-weight-bold text-uppercase">{{ primary_method }}</span>
+                                                </v-card>
+                                                <v-btn variant="text" color="error" prepend-icon="mdi-close"
+                                                    :loading="authMethods.twoFactor.removing"
+                                                    @click="confirmRevokeTwoFactor()">
+                                                    {{ _('Remove 2FA Method') }}
+                                                </v-btn>
+                                            </div>
+                                            {% endif %}
+
+                                            {% if primary_method == 'none' %}
+                                            <div class="d-flex flex-column ga-6 py-2" style="max-width: 690px;">
+                                                <div>
+                                                    <span class="font-weight-medium mb-1">{{ _('Step 1') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Open your authenticator app such as Google Authenticator, LastPass, or Authy.') }}</span>
+                                                </div>
+
+                                                <div>
+                                                    <span class="font-weight-medium mb-1">{{ _('Step 2') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis mb-3">{{ _('Scan the QR code or enter the setup key manually.') }}</span>
+                                                    <div id="qrcode" class="mt-6 mb-5 d-flex justify-center"></div>
+                                                    <p class="text-body-2 text-medium-emphasis mb-1">{{ _('QR not working? Enter this code manually in your authenticator app.') }}</p>
+                                                    <div class="d-flex align-center ga-2">
+                                                        <code class="text-primary text-body-2">${authMethods.twoFactor.key}</code>
+                                                        <v-btn icon="mdi-content-copy" size="x-small" variant="text" color="primary"
+                                                            @click="copyManualKey">
+                                                        </v-btn>
+                                                        <v-chip v-if="authMethods.twoFactor.keyCopied" color="primary">{{ _('Copied!') }}</v-chip>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <span class="font-weight-medium mb-1">{{ _('Step 3') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis mb-3">{{ _('Enter the six digit code from your authenticator app into Bayanat.') }}</span>
+                                                </div>
+
+                                                <v-text-field
+                                                    v-model="authMethods.twoFactor.code"
+                                                    autocomplete="one-time-code"
+                                                    inputmode="numeric"
+                                                    pattern="[0-9]*"
+                                                    maxlength="6"
+                                                    variant="filled">
+                                                    <template v-slot:label>{{ _('Enter six digit code') }} <span class="text-error">*</span></template>
+                                                </v-text-field>
+                                                <div class="d-flex ga-2 mt-2">
+                                                    <v-btn variant="outlined" @click="resetTwoFactorPanel" class="border-thin">{{ _('Cancel') }}</v-btn>
+                                                    <v-btn color="primary" variant="flat"
+                                                        :loading="authMethods.twoFactor.submitting"
+                                                        :disabled="(authMethods.twoFactor.code || 0).length !== 6"
+                                                        @click="submitTwoFactorCode">
+                                                        {{ _('Submit Code') }}
+                                                    </v-btn>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+
+                                        </v-expansion-panel-text>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
+
+                                <!-- Security Keys & Passkeys -->
+                                <v-expansion-panels :model-value="authMethods.securityKeys.panel" @update:model-value="toggleSecurityKeysPanel($event)">
+                                    <v-expansion-panel value="open">
+                                        <v-expansion-panel-title :hide-actions="true">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-center ga-2 mb-1">
+                                                    <span class="text-subtitle-1 font-weight-medium">{{ _('Security Keys & Passkeys') }}</span>
+                                                    {% if has_passkeys %}
+                                                    <v-chip color="success" size="small" label variant="outlined">{{ _('Configured') }}</v-chip>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-body-2 text-medium-emphasis">
+                                                    {{ _('Security keys and passkeys let you sign in using a physical device or built‑in biometric authentication. They provide strong protection against phishing and unauthorized access.') }}
+                                                </div>
+                                            </div>
+                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                                :disabled="authMethods.securityKeys.panel === 'open'">
+                                                ${'{{ _('Edit') if has_passkeys else _('Setup') }}'}
+                                            </v-btn>
+                                        </v-expansion-panel-title>
+
+                                        <v-expansion-panel-text>
+                                            <v-divider class="mb-4"></v-divider>
+
+                                            <v-alert v-if="authMethods.securityKeys.error" type="error" variant="tonal" class="mb-4">
+                                                ${authMethods.securityKeys.error}
+                                            </v-alert>
+
+                                            <v-alert v-if="authMethods.securityKeys.success" type="success" variant="tonal" class="mb-4">
+                                                {{ _('Security key added successfully.') }}
+                                            </v-alert>
+
+                                            <!-- Registered keys list -->
+                                            {% if registered_credentials %}
+                                            <div class="mb-4">
+                                                <span class="text-subtitle-1 font-weight-medium">{{ _('Currently Registered Security Keys & Passkeys') }}</span>
+                                                <div class="d-flex flex-column ga-2 mt-4">
+                                                    {% for cred in registered_credentials %}
+                                                    <v-card border flat class="pa-4 d-flex align-center">
+                                                        <v-icon icon="mdi-key" class="mr-3 text-medium-emphasis"></v-icon>
+                                                        <div class="flex-grow-1">
+                                                            <div class="text-body-1 font-weight-medium">{{ cred.name }}</div>
+                                                            <div class="text-body-2 text-medium-emphasis">{{ _('Last Used') }}: {{ cred.lastuse }}</div>
+                                                        </div>
+                                                        <v-btn variant="text" color="error" prepend-icon="mdi-close"
+                                                            :loading="authMethods.twoFactor.removing"
+                                                            @click="confirmDeleteKey('{{ cred.name }}')">
+                                                            {{ _('Remove 2FA Method') }}
+                                                        </v-btn>
+                                                    </v-card>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+
+                                            <!-- Add new key -->
+                                            <div v-if="!authMethods.securityKeys.registering">
+                                                <v-btn variant="text" color="primary" prepend-icon="mdi-plus"
+                                                    @click="authMethods.securityKeys.registering = true">
+                                                    {{ _('Add Security Key/Passkey') }}
+                                                </v-btn>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Registration flow -->
+                                            <div v-if="authMethods.securityKeys.registering" style="max-width: 560px">
+                                                <div class="d-flex flex-column ga-6">
+                                                    <div>
+                                                        <span class="font-weight-medium">{{ _('Step 1') }}</span>&nbsp;
+                                                        <span class="text-medium-emphasis">{{ _('Give your device a nickname (e.g., "My Laptop" or "USB Key") so you can recognize it later.') }}</span>
+                                                        <v-text-field
+                                                            v-model="authMethods.securityKeys.deviceName"
+                                                            class="mt-4"
+                                                            variant="filled"
+                                                            style="max-width: 320px">
+                                                            <template v-slot:label>{{ _('Device Name') }} <span class="text-error">*</span></template>
+                                                        </v-text-field>
+                                                        <div class="d-flex ga-2">
+                                                            <v-btn variant="outlined" class="border-thin"
+                                                                @click="authMethods.securityKeys.panel = false">
+                                                                {{ _('Cancel') }}
+                                                            </v-btn>
+                                                            <v-btn color="primary" variant="flat"
+                                                                :disabled="!authMethods.securityKeys.deviceName || authMethods.securityKeys.loading"
+                                                                @click="registerPasskey">
+                                                                {{ _('Continue') }}
+                                                            </v-btn>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <span class="font-weight-medium">{{ _('Step 2') }}</span>&nbsp;
+                                                        <span class="text-medium-emphasis">{{ _('After clicking Continue, follow your browser\'s prompt to scan your fingerprint, face, or tap your USB key.') }}</span>
+                                                        <div v-if="authMethods.securityKeys.loading" class="d-flex align-center ga-2 mt-4">
+                                                            <v-progress-circular indeterminate color="info" size="20" width="2"></v-progress-circular>{{ _('Verifying your security key...') }}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <span class="font-weight-medium">{{ _('Step 3') }}</span>&nbsp;
+                                                        <span class="text-medium-emphasis">{{ _('Once your device confirms your identity, the setup is complete and your account is secure.') }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </v-expansion-panel-text>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
+
+                                <!-- Recovery Codes -->
+                                <v-expansion-panels :model-value="authMethods.recoveryCodes.panel" @update:model-value="toggleRecoveryCodesPanel($event)">
+                                    <v-expansion-panel value="open">
+                                        <v-expansion-panel-title :hide-actions="true">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-center ga-2 mb-1">
+                                                    <span class="text-subtitle-1 font-weight-medium">{{ _('Recovery Codes') }}</span>
+                                                    <v-chip v-if="authMethods.recoveryCodes.hasExisting || authMethods.recoveryCodes.codes.length" color="success" size="small" label variant="outlined">{{ _('Generated') }}</v-chip>
+                                                </div>
+                                                <div class="text-body-2 text-medium-emphasis">
+                                                    {{ _('Recovery codes allow you to regain access to your Bayanat account if you lose your authenticator app or security key. Store them somewhere safe and accessible.') }}
+                                                </div>
+                                            </div>
+                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                                :disabled="authMethods.recoveryCodes.panel === 'open'">
+                                                ${'{{ _('View') if has_recovery_codes else _('Setup') }}'}
+                                            </v-btn>
+                                        </v-expansion-panel-title>
+
+                                        <v-expansion-panel-text>
+                                            <v-divider class="mb-4"></v-divider>
+
+                                            <v-alert v-if="authMethods.recoveryCodes.error" type="error" variant="tonal" class="mb-4">
+                                                ${authMethods.recoveryCodes.error}
+                                            </v-alert>
+
+                                            <div class="d-flex flex-column ga-6 py-2" style="max-width: 690px;">
+
+                                                <!-- Step 1 -->
+                                                <div>
+                                                    <span class="font-weight-medium">{{ _('Step 1') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Click the Generate Recovery Codes button to create a new set of backup codes.') }}</span>
+                                                    <div class="d-flex ga-2 mt-4">
+                                                        <v-btn variant="outlined" class="border-thin"
+                                                            @click="toggleRecoveryCodesPanel(undefined)">
+                                                            {{ _('Cancel') }}
+                                                        </v-btn>
+                                                        <v-btn color="primary" variant="flat"
+                                                            :loading="authMethods.recoveryCodes.generating"
+                                                            @click="generateRecoveryCodes">
+                                                            {{ _('Generate New Recovery Codes') }}
+                                                        </v-btn>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Step 2 - codes appear here after generate/show -->
+                                                <div>
+                                                    <span class="font-weight-medium">{{ _('Step 2') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Copy your codes and store them in a secure location (like a password manager or a locked physical safe).') }}</span>
+                                                    
+                                                    <div v-if="authMethods.recoveryCodes.codes.length" class="mt-4">
+                                                        <div class="d-flex flex-wrap ga-2 mb-3">
+                                                            <v-card v-for="code in authMethods.recoveryCodes.codes" :key="code"
+                                                                border flat rounded="lg" variant="tonal" class="pa-4 d-flex align-center ga-3 border-opacity-25" min-width="180">
+                                                                <span class="text-body-1 font-weight-medium font-monospace flex-grow-1">${code}</span>
+                                                                <v-btn icon="mdi-content-copy" size="x-small" variant="text" color="primary"
+                                                                    @click="copyCode(code)">
+                                                                </v-btn>
+                                                            </v-card>
+                                                        </div>
+                                                        <v-btn variant="outlined" class="border-thin" prepend-icon="mdi-content-copy"
+                                                            @click="copyRecoveryCodes">
+                                                            {{ _('Copy All Codes') }}
+                                                        </v-btn>
+                                                    </div>
+
+                                                    <div v-else class="mt-4 text-medium-emphasis text-body-2">
+                                                        {% if has_recovery_codes %}
+                                                            <v-btn v-if="!authMethods.recoveryCodes.codes.length" variant="outlined" class="border-thin mb-2"
+                                                                :loading="authMethods.recoveryCodes.loading"
+                                                                :disabled="authMethods.recoveryCodes.codes.length > 0"
+                                                                @click="showRecoveryCodes">
+                                                                {{ _('View Existing Codes') }}
+                                                            </v-btn>
+                                                        {% endif %}
+                                                        <div>{{ _('Your codes will appear here after generating or viewing them.') }}</div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Step 3 -->
+                                                <div>
+                                                    <span class="font-weight-medium">{{ _('Step 3') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Keep in mind that each code can only be used once. After a code is used, it becomes invalid.') }}</span>
+                                                </div>
+
+                                            </div>
+                                        </v-expansion-panel-text>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
+
+                            </v-card>
+                        </div>
+                    </div>
+                </v-card>
+            </div>
+        </v-card>
+    </div>
+</v-main>
+{% endblock %} {% block js %}
+<script src="/static/js/qrcodejs/qrcode.min.js"></script>
+
+<script nonce="{{ csp_nonce() }}">
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+    const vuetify = createVuetify(vuetifyConfig);
+
+    const app = createApp({
+        delimiters: delimiters,
+        mixins: [globalMixin],
+
+        data() {
+            const tabsMap = {
+                'authentication-methods': { text: "{{ _('Authentication Methods') }}" },
+                'change-password': { text: "{{ _('Change Password') }}" },
+            };
+            const hash = this.$route.hash.replace('#', '').split('?')[0];
+            const defaultTab = Object.keys(tabsMap)[0];
+
+            return {
+                tab: hash in tabsMap ? hash : defaultTab,
+                tabsMap,
+                drawer,
+                validationRules: validationRules,
+                inputProps: { variant: 'filled' },
+
+                // Change Password module
+                changePassword: {
+                    form: {
+                        password: '',
+                        newPassword: '',
+                        newPasswordConfirm: '',
+                    },
+                    loading: false,
+                    success: false,
+                    error: null,
+                    isStrong: false,
+                    showPassword: false,
+                    showNewPassword: false,
+                    showNewPasswordConfirm: false,
+                },
+
+                // Authentication Methods module
+                authMethods: {
+                    twoFactor: {
+                        panel: undefined,
+                        keyCopied: false,
+                        loading: false,
+                        removing: false,
+                        submitting: false,
+                        success: false,
+                        error: null,
+                        key: null,
+                        code: null,
+                        username: null,
+                        issuer: null,
+                    },
+                    securityKeys: {
+                        panel: undefined,
+                        loading: false,
+                        registering: false,
+                        deviceName: '',
+                        success: false,
+                        error: null,
+                    },
+                    recoveryCodes: {
+                        panel: undefined,
+                        loading: false,
+                        generating: false,
+                        visible: false,
+                        codes: [],
+                        error: null,
+                        hasExisting: {{ 'true' if has_recovery_codes else 'false' }},
+                    },
+                },
+            };
+        },
+
+        watch: {
+            tab(newTab) {
+                const fullPath = `${window.location.pathname}${window.location.search}`;
+                this.$router.push(`${fullPath}#${newTab}`);
+            },
+        },
+
+        mounted() {
+            const hashParams = new URLSearchParams(this.$route.hash.split('?')[1]);
+            const method = hashParams.get('method');
+            const success = hashParams.get('success');
+
+            if (this.tab === 'authentication-methods') {
+                if (method === '2fa') {
+                    this.authMethods.twoFactor.panel = 'open';
+                    this.twoFactorSetup();
+                }
+                if (success === '2fa') {
+                    this.authMethods.twoFactor.panel = 'open';
+                    this.authMethods.twoFactor.success = true;
+                    setTimeout(() => {
+                        this.authMethods.twoFactor.success = false;
+                        const fullPath = `${window.location.pathname}${window.location.search}`;
+                        this.$router.push(`${fullPath}#${this.tab}`);
+                    }, 5_000);
+                }
+                if (method === 'securityKeys') {
+                    this.authMethods.securityKeys.panel = 'open';
+                    this.twoFactorSetup();
+                }
+                if (success === 'securityKeys') {
+                    this.authMethods.securityKeys.panel = 'open';
+                    this.authMethods.securityKeys.success = true;
+                    setTimeout(() => {
+                        this.authMethods.securityKeys.success = false;
+                        const fullPath = `${window.location.pathname}${window.location.search}`;
+                        this.$router.push(`${fullPath}#${this.tab}`);
+                    }, 5_000);
+                }
+                if (method === 'recoveryCodes') {
+                    this.authMethods.recoveryCodes.panel = 'open';
+                    this.twoFactorSetup();
+                }
+                if (success === 'recoveryCodes') {
+                    this.authMethods.recoveryCodes.panel = 'open';
+                    this.authMethods.recoveryCodes.success = true;
+                    setTimeout(() => {
+                        this.authMethods.recoveryCodes.success = false;
+                        const fullPath = `${window.location.pathname}${window.location.search}`;
+                        this.$router.push(`${fullPath}#${this.tab}`);
+                    }, 5_000);
+                }
+            }
+        },
+
+        computed: {},
+
+        methods: {
+            async getCsrfToken() {
+                const response = await axios.get('/csrf');
+                return response.data.csrf_token;
+            },
+
+            // Change Password methods
+            onPasswordCheckResponse(response) {
+                this.changePassword.isStrong = Boolean(response);
+            },
+
+            submitChangePassword() {
+                this.$refs.changePasswordForm.validate().then(({ valid }) => {
+                    if (valid) {
+                        this.saveNewPassword();
+                    } else {
+                        this.showSnack("{{ _('Please review the form for errors.') }}");
+                        scrollToFirstError();
+                    }
+                });
+            },
+
+            async saveNewPassword() {
+                this.changePassword.error = null;
+                this.changePassword.success = false;
+                this.changePassword.loading = true;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    await axios.post("{{ url_for_security('change_password') }}", {
+                        password: this.changePassword.form.password,
+                        new_password: this.changePassword.form.newPassword,
+                        new_password_confirm: this.changePassword.form.newPasswordConfirm,
+                        csrf_token: csrf,
+                    });
+                    this.changePassword.success = true;
+                    this.changePassword.isStrong = false;
+                    this.$refs.changePasswordForm.reset();
+                    setTimeout(() => this.changePassword.success = false, 5_000);
+                } catch (error) {
+                    this.changePassword.isStrong = false;
+                    this.changePassword.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('An error occurred. Please try again.') }}";
+                } finally {
+                    this.changePassword.loading = false;
+                }
+            },
+
+            // 2FA methods
+            toggleTwoFactorPanel($event) {
+                if (this.authMethods.twoFactor.panel === 'open') {
+                    this.resetTwoFactorPanel();
+                } else {
+                    this.authMethods.twoFactor.panel = 'open';
+                    this.twoFactorSetup();
+                }
+            },
+
+            async submitTwoFactorCode() {
+                this.authMethods.twoFactor.submitting = true;
+                this.authMethods.twoFactor.error = null;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    await axios.post('/tf-validate', {
+                        csrf_token: csrf,
+                        code: this.authMethods.twoFactor.code,
+                    }, { headers: { 'Accept': 'application/json' } });
+
+                    window.location.replace('/account-security/#authentication-methods?success=2fa');
+                    window.location.reload();
+                } catch (error) {
+                    this.authMethods.twoFactor.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('Invalid code. Please try again.') }}";
+                } finally {
+                    this.authMethods.twoFactor.submitting = false;
+                }
+            },
+
+            async twoFactorSetup() {
+                this.authMethods.twoFactor.loading = true;
+                this.authMethods.twoFactor.error = null;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    const response = await api.post('/tf-setup',
+                        { setup: 'authenticator', csrf_token: csrf },
+                        { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+                    );
+                    const data = response.data.response;
+                    this.authMethods.twoFactor.key = data.tf_authr_key;
+                    this.authMethods.twoFactor.username = data.tf_authr_username;
+                    this.authMethods.twoFactor.issuer = data.tf_authr_issuer;
+
+                    this.$nextTick(() => {
+                        const el = document.getElementById('qrcode');
+                        if (el) {
+                            el.innerHTML = '';
+                            const secret = data.tf_authr_key.replace(/-/g, '').replace(/\s+/g, '');
+                            const otpUri = `otpauth://totp/${data.tf_authr_issuer}:${data.tf_authr_username}?secret=${secret}&issuer=${data.tf_authr_issuer}`;
+                            new QRCode(el, { text: otpUri, width: 230, height: 230, correctLevel: QRCode.CorrectLevel.L });
+                        }
+                    });
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=2fa';
+                        return;
+                    }
+                    this.authMethods.twoFactor.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('An error occurred. Please try again.') }}";
+                } finally {
+                    this.authMethods.twoFactor.loading = false;
+                }
+            },
+
+            async confirmRevokeTwoFactor() {
+                this.$confirm({
+                    title: "{{ _('Are you sure you want to remove this 2FA method?') }}",
+                    message: `{{ _('Removing this authenticator app means you\'ll no longer use it to sign in to Bayanat.') }}\r\n\r\n{{ _('To keep your account safe, please make sure you have another 2FA method active or your recovery codes handy so you don\'t get locked out.') }}`,
+                    acceptProps: { text: "{{ _('I understand, remove this method') }}", color: 'red' },
+                    dialogProps: { width: 780 },
+                    onAccept: () => this.removeTwoFactor(),
+                });
+            },
+
+            async removeTwoFactor() {
+                this.authMethods.twoFactor.error = null;
+                this.authMethods.twoFactor.removing = true;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    await api.post('/tf-setup',
+                        { setup: 'disable', csrf_token: csrf },
+                        { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+                    );
+                    window.location.reload();
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=2fa';
+                        return;
+                    }
+                    this.authMethods.twoFactor.error =
+                        error.response?.data?.response?.errors?.join(' ') ||
+                        "{{ _('An error occurred. Please try again.') }}";
+                } finally {
+                    this.authMethods.twoFactor.removing = false;
+                }
+            },
+
+            resetTwoFactorPanel() {
+                this.authMethods.twoFactor.panel = undefined;
+                this.authMethods.twoFactor.key = null;
+                this.authMethods.twoFactor.username = null;
+                this.authMethods.twoFactor.issuer = null;
+                this.authMethods.twoFactor.error = null;
+                this.authMethods.twoFactor.success = false;
+            },
+
+            copyManualKey() {
+                navigator.clipboard.writeText(this.authMethods.twoFactor.key);
+                this.authMethods.twoFactor.keyCopied = true;
+                setTimeout(() => this.authMethods.twoFactor.keyCopied = false, 5_000);
+                this.showSnack("{{ _('Key copied to clipboard.') }}");
+            },
+
+            // Security Keys & Passkeys methods
+            toggleSecurityKeysPanel($event) {
+                if (this.authMethods.securityKeys.panel === 'open') {
+                    this.authMethods.securityKeys.panel = undefined;
+                    this.authMethods.securityKeys.registering = false;
+                    this.authMethods.securityKeys.deviceName = '';
+                    this.authMethods.securityKeys.error = null;
+                } else {
+                    this.authMethods.securityKeys.panel = 'open';
+                    this.authMethods.securityKeys.registering = {{ 'false' if registered_credentials else 'true' }};
+                }
+            },
+
+            async registerPasskey() {
+                this.authMethods.securityKeys.loading = true;
+                this.authMethods.securityKeys.error = null;
+                try {
+                    const csrf = await this.getCsrfToken();
+
+                    // Step 1 - get credential options from FST
+                    const initResponse = await axios.post("{{ url_for_security('wan_register') }}", {
+                        name: this.authMethods.securityKeys.deviceName,
+                        csrf_token: csrf,
+                    }, { headers: { 'Accept': 'application/json' } });
+
+                    const { credential_options, wan_state } = initResponse.data.response;
+
+                    // Step 2 - trigger browser prompt using reauthMixin's getWebauthnCredentials
+                    // but adapted for registration (not authentication)
+                    const credential = await this.createWebauthnCredential(credential_options);
+
+                    // Step 3 - submit result back to FST
+                    const csrf2 = await this.getCsrfToken();
+                    const formData = new FormData();
+                    formData.append('credential', JSON.stringify(credential)); // stringify here
+                    formData.append('csrf_token', csrf2);
+
+                    await axios.post(`{{ url_for_security('wan_register') }}/${wan_state}`, formData, { headers: { 'Accept': 'application/json' } });
+
+                    // Success
+                    this.authMethods.securityKeys.registering = false;
+                    this.authMethods.securityKeys.deviceName = '';
+                    this.authMethods.securityKeys.success = true;
+                    window.location.replace('/account-security/#authentication-methods?success=securityKeys');
+                    window.location.reload();
+
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=securityKeys';
+                        return;
+                    } else if (error.name === 'NotAllowedError') {
+                        // User cancelled the browser prompt
+                        this.authMethods.securityKeys.error = "{{ _('Registration was cancelled. Please try again.') }}";
+                    } else {
+                        this.authMethods.securityKeys.error =
+                            error.response?.data?.response?.errors?.join(' ') ||
+                            error.message ||
+                            "{{ _('An error occurred. Please try again.') }}";
+                    }
+                } finally {
+                    this.authMethods.securityKeys.loading = false;
+                }
+            },
+
+            async createWebauthnCredential(credentialOptions) {
+                // Convert base64 challenge and user id to Uint8Array for WebAuthn API
+                const options = { ...credentialOptions };
+                options.challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
+                options.user.id = Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0));
+                if (options.excludeCredentials) {
+                    options.excludeCredentials = options.excludeCredentials.map(cred => ({
+                        ...cred,
+                        id: Uint8Array.from(atob(cred.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)),
+                    }));
+                }
+
+                // Trigger browser native prompt
+                const credential = await navigator.credentials.create({ publicKey: options });
+
+                // Convert result back to base64 for server
+                return {
+                    id: credential.id,
+                    rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                    type: credential.type,
+                    response: {
+                        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
+                        attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))),
+                    },
+                };
+            },
+
+            async confirmDeleteKey(name) {
+                this.$confirm({
+                    title: "{{ _('Remove this security key?') }}",
+                    message: `{{ _('Removing this security key means you\'ll no longer be able to use it to sign in to Bayanat.') }}\r\n\r\n{{ _('To keep your account safe, make sure you have another sign-in method active so you don\'t get locked out.') }}`,
+                    acceptProps: {
+                        text: "{{ _('I understand, remove this key') }}",
+                        color: 'red',
+                    },
+                    dialogProps: { width: 780 },
+                    onAccept: () => this.deleteKey(name),
+                });
+            },
+
+            async deleteKey(name) {
+                this.authMethods.securityKeys.error = null;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    await api.post("{{ url_for_security('wan_delete') }}", {
+                        name,
+                        csrf_token: csrf,
+                    }, { headers: { 'Accept': 'application/json' } });
+                    window.location.reload();
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=securityKeys';
+                        return;
+                    } else {
+                        this.authMethods.securityKeys.error =
+                            error.response?.data?.response?.errors?.join(' ') ||
+                            "{{ _('An error occurred. Please try again.') }}";
+                    }
+                }
+            },
+
+            toggleRecoveryCodesPanel($event) {
+                if (this.authMethods.recoveryCodes.panel === 'open') {
+                    this.authMethods.recoveryCodes.panel = undefined;
+                    this.authMethods.recoveryCodes.visible = false;
+                    this.authMethods.recoveryCodes.codes = [];
+                    this.authMethods.recoveryCodes.error = null;
+                } else {
+                    this.authMethods.recoveryCodes.panel = 'open';
+                }
+            },
+
+            async showRecoveryCodes() {
+                this.authMethods.recoveryCodes.loading = true;
+                this.authMethods.recoveryCodes.error = null;
+                try {
+                    const response = await axios.get(
+                        "{{ url_for_security('mf_recovery_codes') }}",
+                        { 
+                            params: { show_codes: 'Show Recovery Codes' },
+                            headers: { 'Accept': 'application/json' }
+                        }
+                    );
+                    this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
+                    this.authMethods.recoveryCodes.hasExisting = true;
+                    this.authMethods.recoveryCodes.visible = true;
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
+                        return;
+                    } else {
+                        this.authMethods.recoveryCodes.error =
+                            error.response?.data?.response?.errors?.join(' ') ||
+                            "{{ _('An error occurred. Please try again.') }}";
+                    }
+                } finally {
+                    this.authMethods.recoveryCodes.loading = false;
+                }
+            },
+
+            async generateRecoveryCodes() {
+                this.authMethods.recoveryCodes.generating = true;
+                this.authMethods.recoveryCodes.error = null;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    const response = await axios.post(
+                        "{{ url_for_security('mf_recovery_codes') }}",
+                        { csrf_token: csrf },
+                        { headers: { 'Accept': 'application/json' } }
+                    );
+                    this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
+                    this.authMethods.recoveryCodes.hasExisting = true;
+                    this.authMethods.recoveryCodes.visible = true;
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
+                        return;
+                    } else {
+                        this.authMethods.recoveryCodes.error =
+                            error.response?.data?.response?.errors?.join(' ') ||
+                            "{{ _('An error occurred. Please try again.') }}";
+                    }
+                } finally {
+                    this.authMethods.recoveryCodes.generating = false;
+                }
+            },
+
+            copyRecoveryCodes() {
+                navigator.clipboard.writeText(this.authMethods.recoveryCodes.codes.join('\n'));
+                this.showSnack("{{ _('Recovery codes copied to clipboard.') }}");
+            },
+
+            copyCode(code) {
+                navigator.clipboard.writeText(code);
+                this.showSnack("{{ _('Code copied to clipboard.') }}");
+            },
+        },
+    });
+
+    app.use(router).use(vuetify);
+    router.isReady().then(() => {
+        app.mount('#app');
+        window.app = app;
+    });
+</script>
+
+{% endblock %}
