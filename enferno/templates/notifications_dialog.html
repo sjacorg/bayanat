@@ -42,6 +42,20 @@
                 <div class="w-100">
                     <v-window v-model="notifications.ui.currentTab" style="min-height: calc(100vh - 251px);">
                         <v-window-item v-for="tab in ['all', 'unread', 'read']" :key="tab" :value="tab">
+                            <v-divider class="border-opacity-25"></v-divider>
+
+                            <v-btn
+                                @click="markAllAsRead()"
+                                :loading="notifications.status.markingAllAsRead"
+                                :disabled="!notifications.unreadCount"
+                                color="primary"
+                                variant="text"
+                                class="font-weight-medium"
+                                block
+                                tile
+                                size="x-large"
+                            >{{ _('Mark All as Read') }}</v-btn>
+
                             <notifications-list
                                 :config="{ hideScrollFeedback: false, maxTitleLines: false, maxSubtitleLines: false }"
                                 :notifications="notifications.items"
