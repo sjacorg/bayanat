@@ -204,6 +204,8 @@ def account_security() -> str:
     except Exception:
         pass
 
+    has_recovery_codes = bool(getattr(current_user, 'mf_recovery_codes', None))
+
     return render_template(
         "account-security.html",
         change_password_form=change_password_form,
@@ -212,6 +214,7 @@ def account_security() -> str:
         primary_method=primary_method,
         registered_credentials=registered_credentials,
         has_passkeys=has_passkeys,
+        has_recovery_codes=has_recovery_codes,
     )
 
 
