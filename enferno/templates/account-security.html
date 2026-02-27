@@ -317,9 +317,7 @@
                                             <div class="flex-grow-1">
                                                 <div class="d-flex align-center ga-2 mb-1">
                                                     <span class="text-subtitle-1 font-weight-medium">{{ _('Recovery Codes') }}</span>
-                                                    {% if has_recovery_codes %}
-                                                    <v-chip color="success" size="small" label variant="outlined">{{ _('Generated') }}</v-chip>
-                                                    {% endif %}
+                                                    <v-chip v-if="authMethods.recoveryCodes.hasExisting || authMethods.recoveryCodes.codes.length" color="success" size="small" label variant="outlined">{{ _('Generated') }}</v-chip>
                                                 </div>
                                                 <div class="text-body-2 text-medium-emphasis">
                                                     {{ _('Recovery codes allow you to regain access to your Bayanat account if you lose your authenticator app or security key. Store them somewhere safe and accessible.') }}
@@ -483,6 +481,7 @@
                         visible: false,
                         codes: [],
                         error: null,
+                        hasExisting: {{ 'true' if has_recovery_codes else 'false' }},
                     },
                 },
             };
@@ -857,6 +856,7 @@
                         }
                     );
                     this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
+                    this.authMethods.recoveryCodes.hasExisting = true;
                     this.authMethods.recoveryCodes.visible = true;
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
@@ -883,6 +883,7 @@
                         { headers: { 'Accept': 'application/json' } }
                     );
                     this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
+                    this.authMethods.recoveryCodes.hasExisting = true;
                     this.authMethods.recoveryCodes.visible = true;
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
