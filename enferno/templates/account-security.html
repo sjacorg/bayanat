@@ -311,20 +311,94 @@
                                 </v-expansion-panels>
 
                                 <!-- Recovery Codes -->
-                                <v-expansion-panels>
-                                    <v-expansion-panel>
+                                <v-expansion-panels :model-value="authMethods.recoveryCodes.panel" @update:model-value="toggleRecoveryCodesPanel($event)">
+                                    <v-expansion-panel value="open">
                                         <v-expansion-panel-title :hide-actions="true">
                                             <div class="flex-grow-1">
-                                                <div class="text-subtitle-1 font-weight-medium mb-1">{{ _('Recovery Codes') }}</div>
+                                                <div class="d-flex align-center ga-2 mb-1">
+                                                    <span class="text-subtitle-1 font-weight-medium">{{ _('Recovery Codes') }}</span>
+                                                    {% if has_recovery_codes %}
+                                                    <v-chip color="success" size="small" label variant="outlined">{{ _('Generated') }}</v-chip>
+                                                    {% endif %}
+                                                </div>
                                                 <div class="text-body-2 text-medium-emphasis">
                                                     {{ _('Recovery codes allow you to regain access to your Bayanat account if you lose your authenticator app or security key. Store them somewhere safe and accessible.') }}
                                                 </div>
                                             </div>
                                             <v-btn variant="outlined" class="border-thin ml-4"
-                                                href="{{ url_for_security('mf_recovery_codes') }}">
-                                                {{ _('Setup') }}
+                                                :disabled="authMethods.recoveryCodes.panel === 'open'">
+                                                ${'{{ _('View') if has_recovery_codes else _('Setup') }}'}
                                             </v-btn>
                                         </v-expansion-panel-title>
+
+                                        <v-expansion-panel-text>
+                                            <v-divider class="mb-4"></v-divider>
+
+                                            <v-alert v-if="authMethods.recoveryCodes.error" type="error" variant="tonal" class="mb-4">
+                                                ${authMethods.recoveryCodes.error}
+                                            </v-alert>
+
+                                            <div class="d-flex flex-column ga-6 py-2" style="max-width: 690px;">
+
+                                                <!-- Step 1 -->
+                                                <div>
+                                                    <span class="font-weight-medium">{{ _('Step 1') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Click the Generate Recovery Codes button to create a new set of backup codes.') }}</span>
+                                                    <div class="d-flex ga-2 mt-4">
+                                                        <v-btn variant="outlined" class="border-thin"
+                                                            @click="toggleRecoveryCodesPanel(undefined)">
+                                                            {{ _('Cancel') }}
+                                                        </v-btn>
+                                                        <v-btn color="primary" variant="flat"
+                                                            :loading="authMethods.recoveryCodes.generating"
+                                                            @click="generateRecoveryCodes">
+                                                            {{ _('Generate New Recovery Codes') }}
+                                                        </v-btn>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Step 2 - codes appear here after generate/show -->
+                                                <div>
+                                                    <span class="font-weight-medium">{{ _('Step 2') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Copy your codes and store them in a secure location (like a password manager or a locked physical safe).') }}</span>
+                                                    
+                                                    <div v-if="authMethods.recoveryCodes.codes.length" class="mt-4">
+                                                        <div class="d-flex flex-wrap ga-2 mb-3">
+                                                            <v-card v-for="code in authMethods.recoveryCodes.codes" :key="code"
+                                                                border flat rounded="lg" variant="tonal" class="pa-4 d-flex align-center ga-3 border-opacity-25" min-width="180">
+                                                                <span class="text-body-1 font-weight-medium font-monospace flex-grow-1">${code}</span>
+                                                                <v-btn icon="mdi-content-copy" size="x-small" variant="text" color="primary"
+                                                                    @click="copyCode(code)">
+                                                                </v-btn>
+                                                            </v-card>
+                                                        </div>
+                                                        <v-btn variant="outlined" class="border-thin" prepend-icon="mdi-content-copy"
+                                                            @click="copyRecoveryCodes">
+                                                            {{ _('Copy All Codes') }}
+                                                        </v-btn>
+                                                    </div>
+
+                                                    <div v-else class="mt-4 text-medium-emphasis text-body-2">
+                                                        {% if has_recovery_codes %}
+                                                            <v-btn v-if="!authMethods.recoveryCodes.codes.length" variant="outlined" class="border-thin mb-2"
+                                                                :loading="authMethods.recoveryCodes.loading"
+                                                                :disabled="authMethods.recoveryCodes.codes.length > 0"
+                                                                @click="showRecoveryCodes">
+                                                                {{ _('View Existing Codes') }}
+                                                            </v-btn>
+                                                        {% endif %}
+                                                        <div>{{ _('Your codes will appear here after generating or viewing them.') }}</div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Step 3 -->
+                                                <div>
+                                                    <span class="font-weight-medium">{{ _('Step 3') }}</span>&nbsp;
+                                                    <span class="text-medium-emphasis">{{ _('Keep in mind that each code can only be used once. After a code is used, it becomes invalid.') }}</span>
+                                                </div>
+
+                                            </div>
+                                        </v-expansion-panel-text>
                                     </v-expansion-panel>
                                 </v-expansion-panels>
 
@@ -402,6 +476,14 @@
                         success: false,
                         error: null,
                     },
+                    recoveryCodes: {
+                        panel: undefined,
+                        loading: false,
+                        generating: false,
+                        visible: false,
+                        codes: [],
+                        error: null,
+                    },
                 },
             };
         },
@@ -441,6 +523,19 @@
                     this.authMethods.securityKeys.success = true;
                     setTimeout(() => {
                         this.authMethods.securityKeys.success = false;
+                        const fullPath = `${window.location.pathname}${window.location.search}`;
+                        this.$router.push(`${fullPath}#${this.tab}`);
+                    }, 5_000);
+                }
+                if (method === 'recoveryCodes') {
+                    this.authMethods.recoveryCodes.panel = 'open';
+                    this.twoFactorSetup();
+                }
+                if (success === 'recoveryCodes') {
+                    this.authMethods.recoveryCodes.panel = 'open';
+                    this.authMethods.recoveryCodes.success = true;
+                    setTimeout(() => {
+                        this.authMethods.recoveryCodes.success = false;
                         const fullPath = `${window.location.pathname}${window.location.search}`;
                         this.$router.push(`${fullPath}#${this.tab}`);
                     }, 5_000);
@@ -737,6 +832,80 @@
                             "{{ _('An error occurred. Please try again.') }}";
                     }
                 }
+            },
+
+            toggleRecoveryCodesPanel($event) {
+                if (this.authMethods.recoveryCodes.panel === 'open') {
+                    this.authMethods.recoveryCodes.panel = undefined;
+                    this.authMethods.recoveryCodes.visible = false;
+                    this.authMethods.recoveryCodes.codes = [];
+                    this.authMethods.recoveryCodes.error = null;
+                } else {
+                    this.authMethods.recoveryCodes.panel = 'open';
+                }
+            },
+
+            async showRecoveryCodes() {
+                this.authMethods.recoveryCodes.loading = true;
+                this.authMethods.recoveryCodes.error = null;
+                try {
+                    const response = await axios.get(
+                        "{{ url_for_security('mf_recovery_codes') }}",
+                        { 
+                            params: { show_codes: 'Show Recovery Codes' },
+                            headers: { 'Accept': 'application/json' }
+                        }
+                    );
+                    this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
+                    this.authMethods.recoveryCodes.visible = true;
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
+                        return;
+                    } else {
+                        this.authMethods.recoveryCodes.error =
+                            error.response?.data?.response?.errors?.join(' ') ||
+                            "{{ _('An error occurred. Please try again.') }}";
+                    }
+                } finally {
+                    this.authMethods.recoveryCodes.loading = false;
+                }
+            },
+
+            async generateRecoveryCodes() {
+                this.authMethods.recoveryCodes.generating = true;
+                this.authMethods.recoveryCodes.error = null;
+                try {
+                    const csrf = await this.getCsrfToken();
+                    const response = await axios.post(
+                        "{{ url_for_security('mf_recovery_codes') }}",
+                        { csrf_token: csrf },
+                        { headers: { 'Accept': 'application/json' } }
+                    );
+                    this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
+                    this.authMethods.recoveryCodes.visible = true;
+                } catch (error) {
+                    if (error.response?.data?.response?.reauth_required) {
+                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
+                        return;
+                    } else {
+                        this.authMethods.recoveryCodes.error =
+                            error.response?.data?.response?.errors?.join(' ') ||
+                            "{{ _('An error occurred. Please try again.') }}";
+                    }
+                } finally {
+                    this.authMethods.recoveryCodes.generating = false;
+                }
+            },
+
+            copyRecoveryCodes() {
+                navigator.clipboard.writeText(this.authMethods.recoveryCodes.codes.join('\n'));
+                this.showSnack("{{ _('Recovery codes copied to clipboard.') }}");
+            },
+
+            copyCode(code) {
+                navigator.clipboard.writeText(code);
+                this.showSnack("{{ _('Code copied to clipboard.') }}");
             },
         },
     });
