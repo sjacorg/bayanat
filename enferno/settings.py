@@ -533,7 +533,7 @@ class TestConfig:
 
     # OCR Settings
     OCR_ENABLED = False
-    OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"]
+    OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm", "pdf"]
     TESSERACT_CMD = "/usr/bin/tesseract"
     GOOGLE_VISION_API_KEY = "dummy_vision_api_key_for_testing"
     OCR_PROVIDER = "google_vision"

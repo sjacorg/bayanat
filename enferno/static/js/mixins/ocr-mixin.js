@@ -24,7 +24,7 @@ const ocrMixin = {
       return ['pending', 'failed', 'cant_read'];
     },
     selectableFileTypes() {
-      return ['image'];
+      return ['image', 'pdf'];
     }
   },
   methods: {
