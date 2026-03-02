@@ -767,7 +767,7 @@ def api_extraction_translate(extraction_id: int):
 
 @admin.post("/api/ocr/process/<int:media_id>")
 @auth_required("session")
-@roles_accepted("Admin")
+@roles_accepted("Admin", "DA")
 def api_ocr_process(media_id: int):
     """Run OCR on a single media item (sync)."""
     from enferno.tasks.extraction import process_media_extraction_task
@@ -794,7 +794,7 @@ def api_ocr_process(media_id: int):
 
 @admin.post("/api/ocr/bulk")
 @auth_required("session")
-@roles_accepted("Admin")
+@roles_accepted("Admin", "DA")
 def api_ocr_bulk():
     """
     Bulk OCR processing via Celery (async).
@@ -857,7 +857,7 @@ def api_ocr_bulk():
 
 @admin.get("/api/ocr/processing")
 @auth_required("session")
-@roles_accepted("Admin")
+@roles_accepted("Admin", "DA")
 def api_ocr_processing():
     """Get list of media IDs currently being processed by bulk OCR."""
     redis_key = f"ocr_processing:{current_user.id}"
