@@ -489,8 +489,7 @@
 
         watch: {
             tab(newTab) {
-                const fullPath = `${window.location.pathname}${window.location.search}`;
-                this.$router.push(`${fullPath}#${newTab}`);
+                this.cleanupUrl();
             },
         },
 
@@ -509,8 +508,7 @@
                     this.authMethods.twoFactor.success = true;
                     setTimeout(() => {
                         this.authMethods.twoFactor.success = false;
-                        const fullPath = `${window.location.pathname}${window.location.search}`;
-                        this.$router.push(`${fullPath}#${this.tab}`);
+                        this.cleanupUrl();
                     }, 5_000);
                 }
                 if (method === 'securityKeys') {
@@ -522,8 +520,7 @@
                     this.authMethods.securityKeys.success = true;
                     setTimeout(() => {
                         this.authMethods.securityKeys.success = false;
-                        const fullPath = `${window.location.pathname}${window.location.search}`;
-                        this.$router.push(`${fullPath}#${this.tab}`);
+                        this.cleanupUrl();
                     }, 5_000);
                 }
                 if (method === 'recoveryCodes') {
@@ -535,8 +532,7 @@
                     this.authMethods.recoveryCodes.success = true;
                     setTimeout(() => {
                         this.authMethods.recoveryCodes.success = false;
-                        const fullPath = `${window.location.pathname}${window.location.search}`;
-                        this.$router.push(`${fullPath}#${this.tab}`);
+                        this.cleanupUrl();
                     }, 5_000);
                 }
             }
@@ -545,6 +541,10 @@
         computed: {},
 
         methods: {
+            cleanupUrl() {
+                const fullPath = `${window.location.pathname}${window.location.search}`;
+                this.$router.push(`${fullPath}#${this.tab}`);
+            },
             async getCsrfToken() {
                 const response = await axios.get('/csrf');
                 return response.data.csrf_token;
@@ -678,6 +678,7 @@
                         { setup: 'disable', csrf_token: csrf },
                         { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
                     );
+                    window.location.replace('/account-security/#authentication-methods');
                     window.location.reload();
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
@@ -820,6 +821,7 @@
                         name,
                         csrf_token: csrf,
                     }, { headers: { 'Accept': 'application/json' } });
+                    window.location.replace('/account-security/#authentication-methods');
                     window.location.reload();
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
