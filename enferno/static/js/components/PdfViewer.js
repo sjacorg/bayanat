@@ -144,6 +144,10 @@ const PdfViewer = Vue.defineComponent({
         this.renderPage(page.pageNumber);
       }
     },
+
+    requestFullscreen() {
+      this.$refs.container?.requestFullscreen?.();
+    },
   },
 
   template: `
