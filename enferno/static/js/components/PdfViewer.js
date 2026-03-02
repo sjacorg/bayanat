@@ -197,7 +197,7 @@ const PdfViewer = Vue.defineComponent({
 
             <!-- Skeleton placeholder shown until the page is painted -->
             <div v-if="!page.rendered" class="pa-4">
-              <v-skeleton-loader type="article, paragraph, paragraph, paragraph"></v-skeleton-loader>
+              <v-skeleton-loader type="article, paragraph, paragraph"></v-skeleton-loader>
             </div>
           </template>
         </div>
