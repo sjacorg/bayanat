@@ -80,6 +80,11 @@ const SearchField = Vue.defineComponent({
         this._justSelected = true;
       }
       this.$emit('update:model-value', val);
+
+      // Refocus the input after selection so user can keep typing
+      if (this.multiple) {
+        this.$refs.autocomplete.focus()
+      }
     },
     copyValue() {
       let textToCopy = '';
@@ -117,6 +122,7 @@ const SearchField = Vue.defineComponent({
   },
   template: `
     <v-autocomplete
+      ref="autocomplete"
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
       :auto-select-first="true"
