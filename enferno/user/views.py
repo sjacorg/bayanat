@@ -6,7 +6,7 @@ import requests
 from flask import Blueprint, request, session, redirect, g, Response, current_app
 from flask.templating import render_template
 from flask_security import auth_required, login_user, current_user
-from flask_security.forms import LoginForm, TwoFactorVerifyCodeForm
+from flask_security.forms import LoginForm
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -185,7 +185,6 @@ def settings() -> str:
 @auth_required("session")
 def account_security() -> str:
     change_password_form = ExtendedChangePasswordForm()
-    two_factor_verify_code_form = TwoFactorVerifyCodeForm()
     active_password = current_user.password is not None
     primary_method = current_user.tf_primary_method or 'none'
 
@@ -209,7 +208,6 @@ def account_security() -> str:
     return render_template(
         "account-security.html",
         change_password_form=change_password_form,
-        two_factor_verify_code_form=two_factor_verify_code_form,
         active_password=active_password,
         primary_method=primary_method,
         registered_credentials=registered_credentials,
