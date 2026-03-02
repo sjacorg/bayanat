@@ -251,7 +251,7 @@
                                                         <v-btn variant="text" color="error" prepend-icon="mdi-close"
                                                             :loading="authMethods.securityKeys.removing"
                                                             @click="confirmDeleteKey('{{ cred.name }}')">
-                                                            {{ _('Remove 2FA Method') }}
+                                                            {{ _('Remove') }}
                                                         </v-btn>
                                                     </v-card>
                                                     {% endfor %}
@@ -473,13 +473,12 @@
                         deviceName: '',
                         success: false,
                         error: null,
+                        removing: false,
                     },
                     recoveryCodes: {
-                        success: false,
                         panel: undefined,
                         loading: false,
                         generating: false,
-                        visible: false,
                         codes: [],
                         error: null,
                         hasExisting: {{ 'true' if has_recovery_codes else 'false' }},
@@ -528,16 +527,9 @@
                 }
                 if (success === 'recoveryCodes') {
                     this.authMethods.recoveryCodes.panel = 'open';
-                    this.authMethods.recoveryCodes.success = true;
-                    setTimeout(() => {
-                        this.authMethods.recoveryCodes.success = false;
-                        this.cleanupUrl();
-                    }, 5_000);
                 }
             }
         },
-
-        computed: {},
 
         methods: {
             cleanupUrl() {
@@ -837,7 +829,6 @@
             toggleRecoveryCodesPanel($event) {
                 if (this.authMethods.recoveryCodes.panel === 'open') {
                     this.authMethods.recoveryCodes.panel = undefined;
-                    this.authMethods.recoveryCodes.visible = false;
                     this.authMethods.recoveryCodes.codes = [];
                     this.authMethods.recoveryCodes.error = null;
                 } else {
@@ -858,7 +849,6 @@
                     );
                     this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
                     this.authMethods.recoveryCodes.hasExisting = true;
-                    this.authMethods.recoveryCodes.visible = true;
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
                         window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
@@ -885,7 +875,6 @@
                     );
                     this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
                     this.authMethods.recoveryCodes.hasExisting = true;
-                    this.authMethods.recoveryCodes.visible = true;
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
                         window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
