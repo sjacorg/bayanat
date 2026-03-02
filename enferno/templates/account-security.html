@@ -490,7 +490,7 @@
 
         watch: {
             tab(newTab) {
-                this.cleanupUrl();
+                this.$router.push(`${window.location.pathname}${window.location.search}#${newTab}`);
             },
         },
 
