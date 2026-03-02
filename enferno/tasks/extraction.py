@@ -95,11 +95,11 @@ def process_media_extraction_task(
     except SQLAlchemyError as e:
         db.session.rollback()
         logger.error(f"DB error for media {media_id}: {e}")
-        return {"success": False, "media_id": media_id, "error": str(e)}
+        return {"success": False, "media_id": media_id, "error": "Database error during extraction"}
 
     except Exception as e:
         logger.error(f"Error processing media {media_id}: {e}")
-        return {"success": False, "media_id": media_id, "error": str(e)}
+        return {"success": False, "media_id": media_id, "error": "Extraction failed"}
 
 
 def _read_media_bytes(media: Media) -> bytes | None:
