@@ -9,9 +9,7 @@ const PdfViewer = Vue.defineComponent({
 
   computed: {
     src() {
-      return this.media?.id
-        ? `/admin/api/media/${this.media.id}/proxy`
-        : null;
+      return this.media?.id ? `/admin/api/media/${this.media.id}/proxy` : null;
     },
   },
 
@@ -25,8 +23,8 @@ const PdfViewer = Vue.defineComponent({
   },
 
   created() {
-    this._pdf = null; // non-reactive
-    this._rendering = new Set(); // prevent double renders
+    this._pdf = null;               // non-reactive PDFDocumentProxy
+    this._rendering = new Set();    // guard against double render
   },
 
   beforeUnmount() {
@@ -49,23 +47,18 @@ const PdfViewer = Vue.defineComponent({
         if (typeof pdfjsLib === 'undefined') {
           await loadScript('/static/js/pdf.js/pdf.min.mjs');
         }
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-          '/static/js/pdf.js/pdf.worker.min.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdf.js/pdf.worker.min.mjs';
 
         const pdf = await pdfjsLib.getDocument(url).promise;
         this._pdf = pdf;
 
-        // ✅ GET REAL RATIO FROM PAGE 1 ONLY
+        // Use page 1 dimensions as the aspect ratio placeholder for all pages
         const firstPage = await pdf.getPage(1);
-        const viewport = firstPage.getViewport({ scale: 1 });
-
-        const ratioWidth = viewport.width;
-        const ratioHeight = viewport.height;
-
+        const firstVp = firstPage.getViewport({ scale: 1 });
+        const ratioWidth = firstVp.width;
+        const ratioHeight = firstVp.height;
         await firstPage.cleanup();
 
-        // ✅ Use same ratio for all placeholders
         for (let i = 1; i <= pdf.numPages; i++) {
           this.pageMap.set(i, {
             pageNumber: i,
@@ -73,10 +66,8 @@ const PdfViewer = Vue.defineComponent({
             height: ratioHeight,
             rendered: false,
             renderError: false,
-            img: null,
           });
         }
-
       } catch (e) {
         console.error('PDF load error:', e);
         this.error = true;
@@ -85,44 +76,64 @@ const PdfViewer = Vue.defineComponent({
       }
     },
 
+    getCanvasEl(pageNumber) {
+      // With v-for + :ref, Vue may store refs as arrays
+      const ref = this.$refs[`pageCanvas-${pageNumber}`];
+      return Array.isArray(ref) ? ref[0] : ref;
+    },
+
     async renderPage(pageNumber) {
       if (this._rendering.has(pageNumber)) return;
 
-      const selectedPage = this.pageMap.get(pageNumber);
-      if (!selectedPage || selectedPage.rendered || selectedPage.renderError) return;
+      const pageState = this.pageMap.get(pageNumber);
+      if (!pageState || pageState.rendered || pageState.renderError) return;
       if (!this._pdf) return;
+
+      const canvas = this.getCanvasEl(pageNumber);
+      if (!canvas) return; // not in DOM (scrolled away / destroyed)
 
       this._rendering.add(pageNumber);
 
       try {
         const page = await this._pdf.getPage(pageNumber);
-        const viewport = page.getViewport({ scale: 1.5 });
 
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const scale = 1.5;
+        const viewport = page.getViewport({ scale });
 
+        // HiDPI support
         const dpr = window.devicePixelRatio || 1;
+
+        // Size canvas backing store in physical pixels
         canvas.width = Math.floor(viewport.width * dpr);
         canvas.height = Math.floor(viewport.height * dpr);
+
+        // Size canvas element in CSS pixels
+        canvas.style.width = '100%';
+        canvas.style.height = 'auto';
+
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        // Reset transform then scale for DPR
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Fill white BEFORE rendering to prevent black flash on canvas resize
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, viewport.width, viewport.height);
 
         await page.render({ canvasContext: ctx, viewport }).promise;
 
+        // Update to actual rendered dimensions and mark as done
         this.pageMap.set(pageNumber, {
-          ...selectedPage,
+          ...pageState,
           width: viewport.width,
           height: viewport.height,
-          img: canvas.toDataURL('image/png'),
           rendered: true,
         });
 
         await page.cleanup();
       } catch (e) {
         console.error('Page render error:', e);
-        this.pageMap.set(pageNumber, {
-          ...selectedPage,
-          renderError: true,
-        });
+        this.pageMap.set(pageNumber, { ...pageState, renderError: true });
       } finally {
         this._rendering.delete(pageNumber);
       }
@@ -136,10 +147,8 @@ const PdfViewer = Vue.defineComponent({
   },
 
   template: `
-    <div ref="container"
-         class="w-100 h-100 overflow-y-auto d-flex flex-column align-center bg-grey-lighten-3 pa-4 ga-4">
+    <div ref="container" class="w-100 h-100 overflow-y-auto d-flex flex-column align-center bg-grey-lighten-3 pa-4 ga-4">
 
-      <!-- GLOBAL LOADING -->
       <v-progress-circular
         v-if="loading"
         indeterminate
@@ -148,44 +157,45 @@ const PdfViewer = Vue.defineComponent({
         class="mt-8"
       ></v-progress-circular>
 
-      <!-- GLOBAL LOAD ERROR -->
-      <div v-else-if="error"
-           class="d-flex flex-column align-center justify-center h-100 text-medium-emphasis">
+      <div v-else-if="error" class="d-flex flex-column align-center justify-center h-100 text-medium-emphasis">
         <v-icon size="64" color="red">mdi-file-pdf-box</v-icon>
         <div class="mt-2 text-caption">Failed to load PDF</div>
       </div>
 
-      <!-- PDF PAGES -->
-      <div v-else
-           v-for="(page, i) in Array.from(pageMap.values())"
-           :key="i"
-           class="w-100 d-flex justify-center">
+      <div v-else v-for="page in Array.from(pageMap.values())" :key="page.pageNumber" class="w-100 d-flex justify-center">
+        <div
+          class="w-100 bg-white elevation-2 rounded overflow-hidden"
+          style="max-width: 900px;"
+          v-intersect="(isIntersecting, entries, observer) => onIntersect(isIntersecting, entries, observer, page)"
+          :style="{ aspectRatio: page.width + ' / ' + page.height }"
+        >
+          <div v-if="page.renderError" class="pa-6 d-flex flex-column align-center justify-center">
+            <v-icon size="48" color="red">mdi-alert-circle</v-icon>
+            <div class="mt-2 text-caption">Failed to render page</div>
+          </div>
 
-        <!-- Rendered Image -->
-        <img v-if="page.img"
-             :src="page.img"
-             class="w-100 elevation-2 rounded"
-             style="max-width: 900px;" />
+          <template v-else>
+            <!--
+              Canvas is always in the DOM so the ref is available when
+              onIntersect fires. It stays hidden (via opacity) until rendered
+              to avoid the black flash from an unpainted canvas backing store.
+            -->
+            <canvas
+              :ref="'pageCanvas-' + page.pageNumber"
+              class="w-100"
+              :style="{
+                display: 'block',
+                background: '#fff',
+                opacity: page.rendered ? 1 : 0,
+                position: page.rendered ? 'static' : 'absolute',
+              }"
+            ></canvas>
 
-        <!-- Render Error -->
-        <div v-else-if="page.renderError"
-             class="w-100 bg-grey-lighten-2 elevation-2 rounded d-flex flex-column align-center justify-center"
-             style="max-width: 900px; min-height: 300px;">
-          <v-icon size="48" color="red">mdi-alert-circle</v-icon>
-          <div class="mt-2 text-caption">Failed to render page</div>
-        </div>
-
-        <!-- Skeleton Placeholder -->
-        <div v-else
-             v-intersect="(isIntersecting, entries, observer) => onIntersect(isIntersecting, entries, observer, page)"
-             :style="{ aspectRatio: page.width + ' / ' + page.height }"
-             class="w-100 bg-white elevation-2 d-flex align-center justify-center"
-             style="max-width: 900px;">
-
-          <v-skeleton-loader
-            type="article, paragraph, paragraph, paragraph"
-          ></v-skeleton-loader>
-
+            <!-- Skeleton placeholder shown until the page is painted -->
+            <div v-if="!page.rendered" class="pa-4">
+              <v-skeleton-loader type="article, paragraph, paragraph, paragraph"></v-skeleton-loader>
+            </div>
+          </template>
         </div>
       </div>
     </div>
