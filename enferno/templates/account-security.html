@@ -249,7 +249,7 @@
                                                             <div class="text-body-2 text-medium-emphasis">{{ _('Last Used') }}: {{ cred.lastuse }}</div>
                                                         </div>
                                                         <v-btn variant="text" color="error" prepend-icon="mdi-close"
-                                                            :loading="authMethods.twoFactor.removing"
+                                                            :loading="authMethods.securityKeys.removing"
                                                             @click="confirmDeleteKey('{{ cred.name }}')">
                                                             {{ _('Remove 2FA Method') }}
                                                         </v-btn>
@@ -325,7 +325,7 @@
                                             </div>
                                             <v-btn variant="outlined" class="border-thin ml-4"
                                                 :disabled="authMethods.recoveryCodes.panel === 'open'">
-                                                ${'{{ _('View') if has_recovery_codes else _('Setup') }}'}
+                                                ${authMethods.recoveryCodes.hasExisting ? '{{ _('View') }}' : '{{ _('Setup') }}'}
                                             </v-btn>
                                         </v-expansion-panel-title>
 
@@ -475,6 +475,7 @@
                         error: null,
                     },
                     recoveryCodes: {
+                        success: false,
                         panel: undefined,
                         loading: false,
                         generating: false,
@@ -513,7 +514,6 @@
                 }
                 if (method === 'securityKeys') {
                     this.authMethods.securityKeys.panel = 'open';
-                    this.twoFactorSetup();
                 }
                 if (success === 'securityKeys') {
                     this.authMethods.securityKeys.panel = 'open';
@@ -525,7 +525,6 @@
                 }
                 if (method === 'recoveryCodes') {
                     this.authMethods.recoveryCodes.panel = 'open';
-                    this.twoFactorSetup();
                 }
                 if (success === 'recoveryCodes') {
                     this.authMethods.recoveryCodes.panel = 'open';
