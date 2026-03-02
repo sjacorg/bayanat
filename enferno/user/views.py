@@ -200,8 +200,8 @@ def account_security() -> str:
             for cred in creds
         ]
         has_passkeys = len(registered_credentials) > 0
-    except Exception:
-        pass
+    except Exception as e:
+        current_app.logger.exception("Failed to load WebAuthn credentials for account security page")
 
     has_recovery_codes = bool(getattr(current_user, 'mf_recovery_codes', None))
 
