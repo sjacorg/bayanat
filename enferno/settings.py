@@ -185,6 +185,7 @@ class Config(object):
         "GOOGLE_VISION_API_KEY"
     )
     OCR_PROVIDER = os.environ.get("OCR_PROVIDER") or manager.get_config("OCR_PROVIDER")
+    PDF_OCR_MAX_PAGES = int(os.environ.get("PDF_OCR_MAX_PAGES", 20))
     LLM_OCR_URL = os.environ.get("LLM_OCR_URL") or manager.get_config("LLM_OCR_URL")
     LLM_OCR_MODEL = os.environ.get("LLM_OCR_MODEL") or manager.get_config("LLM_OCR_MODEL")
     LLM_OCR_API_KEY = os.environ.get("LLM_OCR_API_KEY") or manager.get_config("LLM_OCR_API_KEY")
@@ -537,6 +538,7 @@ class TestConfig:
     TESSERACT_CMD = "/usr/bin/tesseract"
     GOOGLE_VISION_API_KEY = "dummy_vision_api_key_for_testing"
     OCR_PROVIDER = "google_vision"
+    PDF_OCR_MAX_PAGES = 20
     LLM_OCR_URL = "http://localhost:11434"
     LLM_OCR_MODEL = "llava"
     LLM_OCR_API_KEY = ""

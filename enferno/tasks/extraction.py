@@ -63,6 +63,12 @@ def process_media_extraction_task(
                 _save_failed_extraction(media_id, "PDF conversion failed")
                 return {"success": False, "media_id": media_id, "error": "PDF conversion failed"}
 
+            max_pages = current_app.config.get("PDF_OCR_MAX_PAGES", 20)
+            total_pages = len(page_images)
+            if total_pages > max_pages:
+                logger.warning(f"PDF {media_id} has {total_pages} pages, truncating to {max_pages}")
+                page_images = page_images[:max_pages]
+
             page_results = [extract_text(img, hints) for img in page_images]
             page_results = [r for r in page_results if r is not None]
 
