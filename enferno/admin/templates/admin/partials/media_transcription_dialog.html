@@ -2,7 +2,7 @@
     v-model:open="ocr.dialog.show"
     :loading="ocr.dialog.loading"
     :media="ocr.dialog.data"
-    :has-vision-api-key="Boolean('{{ config.GOOGLE_VISION_API_KEY }}')"
+    :has-ocr-provider="Boolean('{{ config.OCR_PROVIDER }}')"
     @rejected="onTranscriptionUpdated($event)"
     @transcribed="onTranscriptionUpdated($event)"
     @processed="onMediaProcessed($event)"

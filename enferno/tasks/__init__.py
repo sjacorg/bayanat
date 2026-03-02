@@ -162,6 +162,7 @@ from enferno.tasks.exports import (  # noqa: E402
     generate_json_file,
     generate_pdf_files,
 )
+from enferno.tasks.flowmap import generate_actor_flowmap  # noqa: E402
 from enferno.tasks.graph import generate_graph  # noqa: E402
 from enferno.tasks.maintenance import (  # noqa: E402
     activity_cleanup_cron,
@@ -210,6 +211,8 @@ __all__ = [
     "generate_export_zip",
     "generate_json_file",
     "generate_pdf_files",
+    # flowmap
+    "generate_actor_flowmap",
     # graph
     "generate_graph",
     # maintenance
