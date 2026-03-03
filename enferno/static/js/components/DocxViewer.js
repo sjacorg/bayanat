@@ -45,14 +45,18 @@ const DocxViewer = Vue.defineComponent({
   template: `
     <div class="w-100 h-100 d-flex align-center justify-center bg-grey-lighten-3">
       <!-- Loading state -->
-      <div v-if="loading" class="d-flex align-center justify-center" style="height:100%;">
-        <v-progress-circular indeterminate color="blue"></v-progress-circular>
-      </div>
+      <v-progress-circular
+        v-if="loading"
+        indeterminate
+        color="primary"
+        size="64"
+        class="mt-8"
+      ></v-progress-circular>
 
       <!-- Error state -->
-      <div v-else-if="error" class="d-flex flex-column align-center justify-center ga-2 text-medium-emphasis" style="height:100%;">
-        <v-icon icon="mdi-alert-circle-outline" color="error" size="48"></v-icon>
-        <div class="text-caption">Failed to load document</div>
+      <div v-else-if="error" class="d-flex flex-column align-center justify-center h-100 text-medium-emphasis">
+        <v-icon size="64" color="blue">mdi-file-word-outline</v-icon>
+        <div class="mt-2 text-caption">Failed to load Docx</div>
       </div>
 
       <!-- Docx render target -->
