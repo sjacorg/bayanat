@@ -452,6 +452,11 @@ const MediaThumbnail = Vue.defineComponent({
         </div>
       </div>
 
+      <!-- DOCX preview -->
+      <div v-else-if="mediaType === 'docx'" class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
+        <v-icon :size="compact ? '32' : '64'" color="blue">mdi-file-word-outline</v-icon>
+      </div>
+
       <!-- Other file types preview -->
       <div v-else-if="mediaType === 'unknown'" class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
         <v-icon :size="compact ? '32' : '64'">mdi-file-download</v-icon>

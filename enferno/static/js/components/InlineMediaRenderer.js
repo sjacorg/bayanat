@@ -33,6 +33,7 @@ const InlineMediaRenderer = Vue.defineComponent({
         video: 'mdi-video',
         pdf: 'mdi-file-pdf-box',
         audio: 'mdi-music-box',
+        docx: 'mdi-file-word-outline',
         unknown: 'mdi-file-download'
       },
     }),
@@ -156,6 +157,7 @@ const InlineMediaRenderer = Vue.defineComponent({
           ></div>
           <pdf-viewer ref="pdfViewer" v-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
           <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :initial-orientation="initialOrientation" :media="media" :media-type="mediaType" class="h-100" @orientation-changed="$emit('orientation-changed', $event)"></image-viewer>
+          <docx-viewer v-if="mediaType === 'docx'" :media="media" class="w-100 h-100"></docx-viewer>
 
           <!-- Fallback for unknown file types -->
           <div v-if="mediaType === 'unknown'" class="h-100 d-flex flex-column align-center justify-center bg-grey-lighten-2">

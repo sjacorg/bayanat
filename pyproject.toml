@@ -45,6 +45,7 @@ dependencies = [
     "cryptography>=45.0.0",
     "decorator>=5.2.0",
     "dnspython>=2.7.0",
+    "docx2python>=2.0.0",
     "docutils>=0.21.0",
     "email-validator>=2.2.0",
     "Flask-Babel>=4.0.0",

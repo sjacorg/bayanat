@@ -14,6 +14,7 @@ from enferno.extensions import db
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.ocr import get_provider
 from enferno.utils.ocr.pdf import pdf_to_images
+from enferno.utils.docx_utils import extract_docx_text
 
 logger = get_logger()
 
@@ -57,7 +58,12 @@ def process_media_extraction_task(
         hints = language_hints or DEFAULT_LANGUAGE_HINTS
 
         ext = Path(media.media_file).suffix.lstrip(".").lower()
-        if ext == "pdf":
+        if ext == "docx":
+            result = extract_docx_text(file_bytes)
+            if result is None:
+                _save_failed_extraction(media_id, "DOCX extraction failed")
+                return {"success": False, "media_id": media_id, "error": "DOCX extraction failed"}
+        elif ext == "pdf":
             page_images = pdf_to_images(file_bytes)
             if not page_images:
                 _save_failed_extraction(media_id, "PDF conversion failed")
