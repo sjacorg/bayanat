@@ -41,9 +41,12 @@ const DocxViewer = Vue.defineComponent({
         this.loading = false;
       }
     },
+    requestFullscreen() {
+      this.$refs.container?.requestFullscreen?.();
+    },
   },
   template: `
-    <div class="w-100 h-100 d-flex align-center justify-center bg-grey-lighten-3">
+    <div ref="container" class="w-100 h-100 d-flex align-center justify-center bg-grey-lighten-3">
       <!-- Loading state -->
       <v-progress-circular
         v-if="loading"
