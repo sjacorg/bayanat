@@ -127,6 +127,20 @@
                                     <v-col cols="12" md="6">
                                         <v-text-field v-model="editedItem.title">
                                             <template v-slot:label>{{ _('Title') }} <span class="text-error">*</span></template>
+                                            <template v-if="editedItem.parent" v-slot:append-inner>
+                                                <v-tooltip location="bottom">
+                                                    <template v-slot:activator="{ props }">
+                                                        <v-btn
+                                                            icon="mdi-subdirectory-arrow-right"
+                                                            density="comfortable"
+                                                            variant="text"
+                                                            @click="prependParentName"
+                                                            v-bind="props"
+                                                        ></v-btn>
+                                                    </template>
+                                                    {{ _('Add parent name to title') }}
+                                                </v-tooltip>
+                                            </template>
                                         </v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="6">
@@ -326,6 +340,13 @@
             },
 
             methods: {
+                prependParentName() {
+                    const parentTitle = this.editedItem.parent?.title;
+                    if (!parentTitle) return;
+                    if (!this.editedItem.title.startsWith(parentTitle)) {
+                        this.editedItem.title = parentTitle + ' / ' + this.editedItem.title;
+                    }
+                },
                 parentDisables(flag) {
                     const p = this.editedItem.parent;
                     if (!p || typeof p !== 'object') return false;
