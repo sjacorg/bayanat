@@ -13,6 +13,10 @@ const SearchField = Vue.defineComponent({
       type: Object,
       default: () => ({}),
     },
+    filterItems: {
+      type: Function,
+      default: null,
+    },
     disabled: Boolean,
     returnObject: {
       type: Boolean,
@@ -42,6 +46,14 @@ const SearchField = Vue.defineComponent({
     searchQuery: '',
     _justSelected: false,
   }),
+  computed: {
+    filteredItems() {
+      if (typeof this.filterItems === 'function') {
+        return this.filterItems(this.items);
+      }
+      return this.items;
+    }
+  },
   methods: {
     startSearch(search) {
       this.loading = true;
@@ -130,12 +142,12 @@ const SearchField = Vue.defineComponent({
       @update:model-value="onSelect"
       v-model:search="searchQuery"
       @update:focused="onFocused"
-      hide-no-data
+      :hide-no-data="loading"
       hide-selected
       no-filter
       item-color="secondary"
       :label="label"
-      :items="items"
+      :items="filteredItems"
       :item-title="itemTitle"
       :item-value="itemValue"
       prepend-inner-icon="mdi-magnify"

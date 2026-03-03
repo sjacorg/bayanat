@@ -163,6 +163,7 @@
                                             item-subtitle="path"
                                             label="{{ _('Parent') }}"
                                             v-model="editedItem.parent"
+                                            :filter-items="filterCircularParents"
                                             item-value="id"
                                             :multiple="false"
                                             :query-params="parentQueryParams"
@@ -260,6 +261,7 @@
                 itemsLength: 10,
                 isEditing: false,
                 q: '',
+                editedItemCopy: {},
                 editedItem: {
                     title: "",
                     title_ar: "",
@@ -347,6 +349,10 @@
                         this.editedItem.title = parentTitle + ' / ' + this.editedItem.title;
                     }
                 },
+                filterCircularParents(items) {
+                    const title = this.editedItemCopy.title || '';
+                    return items.filter(i => i.path.split('>').map(s => s.trim()).indexOf(title) === -1);
+                },
                 parentDisables(flag) {
                     const p = this.editedItem.parent;
                     if (!p || typeof p !== 'object') return false;
@@ -394,6 +400,7 @@
                 openCreateDialog() {
                     this.isEditing = false;
                     this.editedItem = Object.assign({}, this.defaultItem);
+                    this.editedItemCopy = Object.assign({}, this.defaultItem);
                     if (this.tab === 'verified') {
                         this.editedItem.verified = true;
                     }
@@ -403,6 +410,7 @@
                 editItem(item) {
                     this.isEditing = true;
                     this.editedItem = Object.assign({}, item);
+                    this.editedItemCopy = Object.assign({}, item);
                     this.dialog = true;
                 },
 
