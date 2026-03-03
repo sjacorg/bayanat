@@ -46,7 +46,7 @@ const DocxViewer = Vue.defineComponent({
     },
   },
   template: `
-    <div ref="container" class="w-100 h-100 d-flex align-center justify-center bg-grey-lighten-3">
+    <div ref="container" class="w-100 h-100 d-flex flex-column align-center bg-grey-lighten-3">
       <!-- Loading state -->
       <v-progress-circular
         v-if="loading"

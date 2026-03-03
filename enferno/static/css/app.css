@@ -984,3 +984,8 @@ div.jsondiffpatch-child-node-type-array:after {
 .map-visualization-dialog .v-overlay__content {
     overflow: hidden;
 }
+
+.docx-preview p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
