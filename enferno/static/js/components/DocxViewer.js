@@ -31,8 +31,9 @@ const DocxViewer = Vue.defineComponent({
         const blob = response.data;
 
         await docx.renderAsync(blob, this.$refs.docxContainer, null, {
-          className: 'docx-preview bg-white elevation-2 rounded mx-auto pa-16',
+          className: 'docx-preview',
           inWrapper: false,
+          useBase64URL: true
         });
       } catch (e) {
         console.error('Docx load error:', e);
