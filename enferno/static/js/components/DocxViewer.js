@@ -30,11 +30,7 @@ const DocxViewer = Vue.defineComponent({
         const response = await api.get(url, { responseType: 'blob' });
         const blob = response.data;
 
-        await this.$nextTick();
-        const container = this.$refs.docxContainer;
-        if (!container) return;
-
-        await docx.renderAsync(blob, container, null, {
+        await docx.renderAsync(blob, this.$refs.docxContainer, null, {
           className: 'docx-preview bg-white elevation-2 rounded mx-auto pa-16',
           inWrapper: false,
         });
