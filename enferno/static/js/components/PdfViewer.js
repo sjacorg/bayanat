@@ -44,9 +44,7 @@ const PdfViewer = Vue.defineComponent({
       }
 
       try {
-        if (typeof pdfjsLib === 'undefined') {
-          await loadScript('/static/js/pdf.js/pdf.min.mjs');
-        }
+        await loadScript('/static/js/pdf.js/pdf.min.mjs');
         pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdf.js/pdf.worker.min.mjs';
 
         const pdf = await pdfjsLib.getDocument(url).promise;
