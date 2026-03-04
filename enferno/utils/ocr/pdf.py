@@ -5,7 +5,8 @@ from enferno.utils.logging_utils import get_logger
 
 logger = get_logger()
 
-DPI = 200  # Good balance: readable text, manageable size
+DPI = 200
+MAX_DIMENSION = 4096  # Cap longest side to keep Vision API happy
 
 
 def pdf_to_images(file_bytes: bytes) -> list[bytes]:
@@ -18,6 +19,10 @@ def pdf_to_images(file_bytes: bytes) -> list[bytes]:
         result = []
         for page in doc:
             pix = page.get_pixmap(dpi=DPI)
+            longest = max(pix.width, pix.height)
+            if longest > MAX_DIMENSION:
+                scale = MAX_DIMENSION / longest
+                pix = page.get_pixmap(matrix=fitz.Matrix(scale * DPI / 72, scale * DPI / 72))
             result.append(pix.tobytes("jpeg"))
         doc.close()
         logger.info(f"PDF split into {len(result)} page(s)")
