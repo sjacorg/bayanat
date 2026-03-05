@@ -9,6 +9,7 @@ from flask import current_app
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
 
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.ocr.image import prepare_image
 
 logger = get_logger()
 
@@ -70,6 +71,7 @@ def extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
     """
     try:
         api_key = _get_api_key()
+        file_bytes = prepare_image(file_bytes)
         image_content = base64.b64encode(file_bytes).decode("utf-8")
 
         response = httpx.post(
