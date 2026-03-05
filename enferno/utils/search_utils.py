@@ -760,7 +760,12 @@ class SearchUtils:
                         )
                     )
 
-                subquery = select(Actor.id).join(Actor.actor_profiles).where(and_(*qsearch))
+                # Use explicit join to avoid backref lazy initialization issues
+                subquery = (
+                    select(Actor.id)
+                    .join(ActorProfile, ActorProfile.actor_id == Actor.id)
+                    .where(and_(*qsearch))
+                )
                 conditions.append(Actor.id.in_(subquery))
         # Exclude text search
         if extsv := q.get("extsv"):

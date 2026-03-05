@@ -8,42 +8,62 @@
 [![pip-audit](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml)
 [![Tests](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml)
 
-Bayanat is an open source data management solution for processing huge amounts of data relevant to human rights abuses and war crimes, developed and maintained by Syrian talents at the [Syria Justice and Accountability Centre](https://syriaaccountability.org/) (SJAC). You can watch this [video](https://www.youtube.com/watch?v=thCkihoXAk0) for a quick introduction into Bayanat.
+Bayanat is an open source data management platform for processing human rights violations and war crimes data, developed and maintained by the [Syria Justice and Accountability Centre](https://syriaaccountability.org/) (SJAC). Watch this [video](https://www.youtube.com/watch?v=thCkihoXAk0) for a quick introduction.
 
-Installation and Documentation
-------------------------------
-Installation guidelines and user manual are available at [docs.bayanat.org](https://docs.bayanat.org/).
+## Features
 
-Localization
-------------
-Check Bayanat's [project](https://poeditor.com/join/project/XRamVw2AD0) on POEditor to check on current available languages and to help translating Bayanat to your language.
+- **Evidence management**: Track bulletins, actors, and incidents with rich metadata and entity relationships
+- **Geospatial analysis**: PostGIS-powered queries with interactive Leaflet maps
+- **Workflow management**: Built-in analysis and peer review workflow with role-based permissions
+- **Advanced search**: Complex queries across all data fields with saved searches
+- **Data import/export**: CSV, Excel, and media import tools with PDF/JSON/CSV export
+- **Security**: WebAuthn/FIDO hardware keys, 2FA, CSRF protection, audit logging
+- **Revision history**: Full snapshot-based change tracking with diff view
+- **Access control**: Group-based item restriction for sensitive data
 
-Live Demo
----------
-You can access a demo instance of Bayanat on [demo.bayanat.org](https://demo.bayanat.org/). Login instructions can be found on [docs.bayanat.org](https://docs.bayanat.org/en/demo).
+## Tech Stack
 
-Updates
--------
-The main purpose of this project is to support the work of SJAC's [Data Analysis team](https://syriaaccountability.org/what-we-do/) as well as partner organizations currently using Bayanat. SJAC is looking for additional resources in order to develop extra features and tools that make it easier for other human rights organizations and activists to use Bayanat and load existing data.
+Flask, PostgreSQL/PostGIS, Vue.js 3, Vuetify, Celery, Redis
 
-Stable releases will be pushed to this repository every few weeks and critical updates will be pushed sooner.
+## Quick Start
 
-In most cases updates can be implemented by pulling the new code and restarting the services. However, in some cases where changes to the database have been introduced, migrations might be needed. We'll provide [instructions](https://github.com/sjacorg/bayanat/releases) to carry out those migrations if they are required.
+Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
-It's critical to understand that, in all cases, **backups must be taken before pulling any new updates**. For production environments with important data, it's advised to use two backup methods with at least one taking daily backups.
+```bash
+git clone https://github.com/sjacorg/bayanat.git
+cd bayanat
+uv sync
+bash gen-env.sh
+uv run flask install
+uv run flask run
+```
 
-Support
--------
-You can use [Issues](https://github.com/sjacorg/bayanat/issues) in this repository to report bugs in Bayanat.
+See the full [installation guide](https://docs.bayanat.org/deployment/installation) for production deployment.
 
-Contributing
--------------
-Check our [Contributing Guidelines](./CONTRIBUTING.md) and Bayanat's [Code of Conduct](./CODE_OF_CONDUCT.md).
+## Documentation
 
-Donate
--------
-If you like our work please consider making a donation at [donate.syriaaccountability.org](https://donate.syriaaccountability.org/).
+Full documentation is available at [docs.bayanat.org](https://docs.bayanat.org/).
 
-License
--------------
-This system is distributed WITHOUT ANY WARRANTY under the GNU Affero General Public License v3.0.
+## Live Demo
+
+Try Bayanat at [demo.bayanat.org](https://demo.bayanat.org/).
+
+## Localization
+
+Help translate Bayanat on [POEditor](https://poeditor.com/join/project/XRamVw2AD0).
+
+## Updates
+
+Stable releases are pushed every few weeks. Critical updates are pushed sooner. Always **backup before pulling updates**. Check [releases](https://github.com/sjacorg/bayanat/releases) for migration instructions when needed.
+
+## Support
+
+Report bugs via [Issues](https://github.com/sjacorg/bayanat/issues).
+
+## Contributing
+
+See [Contributing Guidelines](./CONTRIBUTING.md) and [Code of Conduct](./CODE_OF_CONDUCT.md).
+
+## License
+
+GNU Affero General Public License v3.0. Distributed WITHOUT ANY WARRANTY.
