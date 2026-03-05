@@ -105,9 +105,9 @@ def bulk_status() -> Response:
         if type == "bulletin":
             status = bulk_update_bulletins.AsyncResult(id).status
         elif type == "actor":
-            status = bulk_update_incidents.AsyncResult(id).status
-        elif type == "incident":
             status = bulk_update_actors.AsyncResult(id).status
+        elif type == "incident":
+            status = bulk_update_incidents.AsyncResult(id).status
         else:
             return HTTPResponse.error("Invalid type")
 

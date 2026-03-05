@@ -21,6 +21,7 @@ class AppConfig(db.Model, BaseMixin):
         "MAIL_PASSWORD",
         "YTDLP_COOKIES",
         "GOOGLE_MAPS_API_KEY",
+        "GOOGLE_VISION_API_KEY",
     }
 
     id = db.Column(db.Integer, primary_key=True)

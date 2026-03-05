@@ -1156,6 +1156,7 @@ class PartialEventTypeModel(BaseValidationModel):
 class QueryBaseModel(StrictValidationModel):
     tsv: Optional[str] = None
     extsv: Optional[str] = None
+    ocr: Optional[str] = None  # Search in OCR extracted text from media
     labels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
     oplabels: Optional[bool] = None
     exlabels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
@@ -1608,6 +1609,18 @@ class GraphVisualizeRequestModel(BaseValidationModel):
     q: list[dict[str, Any]] | dict[str, Any]
 
 
+class FlowmapVisualizeRequestModel(BaseValidationModel):
+    q: list[dict[str, Any]]
+
+
+class FlowmapActorsForLocationsModel(BaseValidationModel):
+    location_ids: Optional[list[int]] = None
+    origin_ids: Optional[list[int]] = None
+    dest_ids: Optional[list[int]] = None
+    q: list[dict[str, Any]]
+    event_types: Optional[list[str]] = None
+
+
 class DefaultMapCenterModel(BaseValidationModel):
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)
@@ -1658,6 +1671,7 @@ class ConfigValidationModel(StrictValidationModel):
     EXPORT_DEFAULT_EXPIRY: int = Field(gt=0)
     ACTIVITIES_RETENTION: int = Field(gt=0)
     WEB_IMPORT: bool
+    GOOGLE_VISION_API_KEY: Optional[str] = None
 
     @field_validator("MAPS_API_ENDPOINT", "GOOGLE_DISCOVERY_URL", mode="before", check_fields=False)
     @classmethod
