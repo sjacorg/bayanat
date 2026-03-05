@@ -9,6 +9,12 @@
                 <template #append>
                     <v-btn v-if="notifications.ui.dialogFullscreen" icon="mdi-fullscreen-exit" @click="notifications.ui.dialogFullscreen = false"></v-btn>
                     <v-btn v-else icon="mdi-fullscreen" @click="notifications.ui.dialogFullscreen = true"></v-btn>
+                    <v-tooltip location="bottom" :style="{ zIndex: 3002 }">
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" icon="mdi-cog" href="/admin/system-administration/#notifications"></v-btn>
+                        </template>
+                        {{ _('Notification Settings') }}
+                    </v-tooltip>
                     <v-btn icon="mdi-close" @click="notifications.ui.dialogVisible=false"></v-btn>
                 </template>
             </v-toolbar>
