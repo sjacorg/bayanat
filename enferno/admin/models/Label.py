@@ -108,8 +108,10 @@ class Label(db.Model, BaseMixin):
         for node in nodes.values():
             pid = node["parent_label_id"]
             if pid and pid in nodes:
+                node["parent"] = {"id": pid, "title": nodes[pid]["title"]}
                 nodes[pid]["children"].append(node)
             else:
+                node["parent"] = None
                 roots.append(node)
 
         # Remove empty children arrays so leaves don't show expand arrows
