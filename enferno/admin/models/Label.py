@@ -108,7 +108,15 @@ class Label(db.Model, BaseMixin):
         for node in nodes.values():
             pid = node["parent_label_id"]
             if pid and pid in nodes:
-                node["parent"] = {"id": pid, "title": nodes[pid]["title"]}
+                p = nodes[pid]
+                node["parent"] = {
+                    "id": pid,
+                    "title": p["title"],
+                    "for_bulletin": p["for_bulletin"],
+                    "for_actor": p["for_actor"],
+                    "for_incident": p["for_incident"],
+                    "for_offline": p["for_offline"],
+                }
                 nodes[pid]["children"].append(node)
             else:
                 node["parent"] = None
