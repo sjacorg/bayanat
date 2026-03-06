@@ -151,7 +151,18 @@ class Label(db.Model, BaseMixin):
             "for_actor": self.for_actor,
             "for_incident": self.for_incident,
             "for_offline": self.for_offline,
-            "parent": {"id": self.parent.id, "title": self.parent.title} if self.parent else None,
+            "parent": (
+                {
+                    "id": self.parent.id,
+                    "title": self.parent.title,
+                    "for_bulletin": self.parent.for_bulletin,
+                    "for_actor": self.parent.for_actor,
+                    "for_incident": self.parent.for_incident,
+                    "for_offline": self.parent.for_offline,
+                }
+                if self.parent
+                else None
+            ),
             "updated_at": (
                 DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
             ),

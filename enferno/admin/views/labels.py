@@ -86,7 +86,11 @@ def api_labels() -> Response:
             page=page, per_page=per_page, count=True
         )
     else:
-        result = base_query.filter(*query).paginate(page=page, per_page=per_page, count=True)
+        result = (
+            base_query.filter(*query)
+            .order_by(Label.id.desc())
+            .paginate(page=page, per_page=per_page, count=True)
+        )
 
     response = {
         "items": [item.to_dict(mode) for item in result.items],
