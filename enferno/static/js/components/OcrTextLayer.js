@@ -148,7 +148,7 @@ const OcrTextLayer = Vue.defineComponent({
         ></v-btn>
       </div>
 
-      <div class="flex-1-1 overflow-auto d-flex justify-center align-center" style="min-height: 0;">
+      <div class="flex-1-1 overflow-auto d-flex justify-center align-start" style="min-height: 0;">
         <div
           class="position-relative d-inline-block"
           :style="{
@@ -163,7 +163,7 @@ const OcrTextLayer = Vue.defineComponent({
             class="d-block"
             :style="{
               maxWidth: '100%',
-              maxHeight: 'calc(100vh - 220px)',
+              maxHeight: '100%',
               pointerEvents: 'none',
               userSelect: 'none'
             }"

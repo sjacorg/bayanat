@@ -42,7 +42,7 @@ Person or body (entity).
 
 ### Events
 
-Time and location entries about the Actor's life events.
+Time and location entries about the Actor's life events. These events power the [Map Visualization](/guide/map-visualization) feature, which renders actor movement patterns across locations.
 
 ### Occupation / Position / Spoken Dialects / Family Status / Ethnographic Information / Nationality / National ID Number
 

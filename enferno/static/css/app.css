@@ -988,3 +988,7 @@ div.jsondiffpatch-child-node-type-array:after {
 .v-theme--dark .v-treeview .v-list-item.v-treeview-item {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
+
+.map-visualization-dialog .v-overlay__content {
+    overflow: hidden;
+}
