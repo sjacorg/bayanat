@@ -435,6 +435,15 @@ const routes = [
     {path: '/admin/media/:id', name: 'media', component: Vue.defineComponent({})},
     {path: '/admin/media/', name: 'medias', component: Vue.defineComponent({})},
     {path: '/account-security/', name: 'account-security', component: Vue.defineComponent({})},
+    {path: '/admin/sources/', name: 'sources', component: Vue.defineComponent({})},
+    {path: '/admin/labels/', name: 'labels', component: Vue.defineComponent({})},
+    {path: '/admin/eventtypes/', name: 'eventtypes', component: Vue.defineComponent({})},
+    {path: '/admin/roles/', name: 'roles', component: Vue.defineComponent({})},
+    {path: '/admin/logs/', name: 'logs', component: Vue.defineComponent({})},
+    {path: '/import/media/', name: 'import-media', component: Vue.defineComponent({})},
+    {path: '/import/sheets/', name: 'import-sheets', component: Vue.defineComponent({})},
+    {path: '/import/log/', name: 'import-log', component: Vue.defineComponent({})},
+    {path: '/deduplication/dashboard/', name: 'deduplication-dashboard', component: Vue.defineComponent({})},
 
 ];
 
