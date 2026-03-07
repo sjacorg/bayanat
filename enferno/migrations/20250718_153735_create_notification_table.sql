@@ -28,9 +28,12 @@ CREATE INDEX IF NOT EXISTS ix_notification_user_read ON notification (user_id, r
 CREATE INDEX IF NOT EXISTS ix_notification_user_type ON notification (user_id, category);
 
 -- Add foreign key constraint
-ALTER TABLE notification 
-ADD CONSTRAINT fk_notification_user_id 
-FOREIGN KEY (user_id) REFERENCES "user"(id);
+DO $$ BEGIN
+    ALTER TABLE notification
+    ADD CONSTRAINT fk_notification_user_id
+    FOREIGN KEY (user_id) REFERENCES "user"(id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Rollback script:
 /*

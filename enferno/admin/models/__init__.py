@@ -38,6 +38,7 @@ from .LocationHistory import LocationHistory
 from .LocationType import LocationType
 from .Media import Media
 from .MediaCategory import MediaCategory
+from .MigrationHistory import MigrationHistory
 from .PotentialViolation import PotentialViolation
 from .Query import Query
 from .Settings import Settings
