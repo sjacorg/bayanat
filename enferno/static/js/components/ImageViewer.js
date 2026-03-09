@@ -31,11 +31,7 @@ const ImageViewer = Vue.defineComponent({
                 inline: null,
                 fullscreen: null
             },
-            pluginsMap: {
-                'lgZoom': lgZoom,
-                'lgThumbnail': lgThumbnail,
-                'lgRotate': lgRotate,
-            }
+            pluginsMap: {}
         };
     },
     computed: {
@@ -62,16 +58,22 @@ const ImageViewer = Vue.defineComponent({
     },
     methods: {
         async loadLibraries() {
-          await loadAsset([
-            '/static/js/lightgallery/css/lg-rotate.css',
-            '/static/js/lightgallery/css/lg-zoom.css',
-            '/static/js/lightgallery/css/lg-thumbnail.css',
-            '/static/js/lightgallery/css/lightgallery.css',
-            '/static/js/lightgallery/plugins/rotate/lg-rotate.min.js',
-            '/static/js/lightgallery/plugins/zoom/lg-zoom.min.js',
-            '/static/js/lightgallery/plugins/thumbnail/lg-thumbnail.min.js',
-            '/static/js/lightgallery/lightgallery.min.js'
-          ]);
+            await loadAsset([
+                '/static/js/lightgallery/css/lg-rotate.css',
+                '/static/js/lightgallery/css/lg-zoom.css',
+                '/static/js/lightgallery/css/lg-thumbnail.css',
+                '/static/js/lightgallery/css/lightgallery.css',
+                '/static/js/lightgallery/plugins/rotate/lg-rotate.min.js',
+                '/static/js/lightgallery/plugins/zoom/lg-zoom.min.js',
+                '/static/js/lightgallery/plugins/thumbnail/lg-thumbnail.min.js',
+                '/static/js/lightgallery/lightgallery.min.js'
+            ]);
+
+            this.pluginsMap = {
+                lgZoom: lgZoom,
+                lgThumbnail: lgThumbnail,
+                lgRotate: lgRotate,
+            };
         },
         getRotatePlugin(lgInstance) {
             if (!lgInstance?.plugins) return null;
