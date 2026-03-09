@@ -410,7 +410,8 @@ function getInfraMessage(status) {
 const {createRouter, createWebHistory, createWebHashHistory} = VueRouter;
 
 const routes = [
-    {path: '/', name: 'home', component: Vue.defineComponent({template: ''})},
+    {path: '/', name: 'home', component: Vue.defineComponent({})},
+    {path: '/dashboard', name: 'dashboard', component: Vue.defineComponent({})},
 
     {path: '/admin/bulletins/:id', name: 'bulletin', component: Vue.defineComponent({})},
     {path: '/admin/bulletins/', name: 'bulletins', component: Vue.defineComponent({})},

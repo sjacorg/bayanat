@@ -42,9 +42,9 @@ const GlobalMap = Vue.defineComponent({
     };
   },
 
-  mounted() {
+  async mounted() {
     this.map = null;
-    this.initMap();
+    await this.initMap();
   },
 
   watch: {

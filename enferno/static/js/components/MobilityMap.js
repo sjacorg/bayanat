@@ -45,11 +45,11 @@ const MobilityMap = Vue.defineComponent({
     };
   },
 
-  mounted() {
+  async mounted() {
     this.map = null;
 
-    this.$nextTick(() => {
-      this.initMap();
+    this.$nextTick(async () => {
+      await this.initMap();
       this.initPoints();
       this.initCanvas();
       this.initResizeObserver();
