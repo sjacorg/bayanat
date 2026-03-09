@@ -128,6 +128,7 @@ const MediaCard = Vue.defineComponent({
         video: 'mdi-video',
         pdf: 'mdi-file-pdf-box',
         audio: 'mdi-music-box',
+        docx: 'mdi-file-word-outline',
         unknown: 'mdi-file-download'
       },
       ocrDetails: null,
@@ -145,7 +146,7 @@ const MediaCard = Vue.defineComponent({
 
       const isMediaSaved = !!this.media?.id;
       const isSupportedType = this.$root.selectableFileTypes.includes(this.mediaType);
-      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && this.hasOcrProvider;
+      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && (this.hasOcrProvider || this.mediaType === 'docx');
       const disabled = !isSupportedType || !isMediaSaved;
       let text = '';
 
@@ -176,6 +177,7 @@ const MediaCard = Vue.defineComponent({
         case 'image':
         case 'video':
         case 'audio':
+        case 'docx':
           this.$emit('media-click', clickPayload);
           break;
         default:

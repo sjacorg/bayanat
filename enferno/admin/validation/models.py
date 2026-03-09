@@ -1481,6 +1481,7 @@ class UserValidationModel(StrictValidationModel):
     force_reset: Optional[str] = None
     google_id: Optional[str] = None
     id: Optional[int] = None
+    display_name: Optional[str] = None
     two_factor_devices: Optional[Any] = None
 
     @field_validator("username", mode="before")
