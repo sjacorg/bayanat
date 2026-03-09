@@ -113,7 +113,25 @@ const MobilityMap = Vue.defineComponent({
       this._resizeObserver.observe(el);
     },
 
-    initMap() {
+    async loadLibraries() {
+      await loadAsset('/static/js/leaflet.js')
+      await loadAsset([
+        '/static/css/leaflet.css',
+        '/static/css/MarkerCluster.css',
+        '/static/css/MarkerCluster.Default.css',
+        '/static/css/Leaflet.PolylineMeasure.css',
+        '/static/leaflet-fullscreen/leaflet.fullscreen.css',
+        '/static/leaflet-fullscreen/leaflet.fullscreen.min.js',
+        '/static/js/leaflet.markercluster.js',
+        '/static/js/leaflet.curve.min.js',
+        '/static/js/leaflet.rotatedmarker.min.js',
+        '/static/js/Leaflet.PolylineMeasure.js',
+        '/static/js/Leaflet.GoogleMutant.js',
+      ])
+    },
+
+    async initMap() {
+      await this.loadLibraries();
       const el = this.$refs.mapContainer;
       if (!el) return this.$nextTick(() => this.initMap());
 

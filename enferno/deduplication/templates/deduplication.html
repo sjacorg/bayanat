@@ -146,7 +146,6 @@
 <script src="/static/js/components/InlineMediaRenderer.js"></script>
 
 <script src="/static/js/components/Visualization.js"></script>
-<script src="/static/js/force-graph.min.js"></script>
 
 <script src="/static/js/components/MissingPersonCard.js"></script>
 <script src="/static/js/components/MissingPersonField.js"></script>
@@ -154,13 +153,11 @@
 <script src="/static/js/components/MixSelectField.js"></script>
 <script src="/static/js/components/MixReportersField.js"></script>
 
-<script src="/static/js/videojs/video.min.js"></script>
 
 {% if config.GOOGLE_MAPS_API_KEY %}
 {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
 {% endif %}
 
-<script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
 <script nonce="{{ csp_nonce() }}">
 

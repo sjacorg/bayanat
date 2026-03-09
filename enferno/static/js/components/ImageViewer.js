@@ -61,6 +61,18 @@ const ImageViewer = Vue.defineComponent({
         this.destroyFullscreenLightbox();
     },
     methods: {
+        async loadLibraries() {
+          await loadAsset([
+            '/static/js/lightgallery/css/lg-rotate.css',
+            '/static/js/lightgallery/css/lg-zoom.css',
+            '/static/js/lightgallery/css/lg-thumbnail.css',
+            '/static/js/lightgallery/css/lightgallery.css',
+            '/static/js/lightgallery/plugins/rotate/lg-rotate.min.js',
+            '/static/js/lightgallery/plugins/zoom/lg-zoom.min.js',
+            '/static/js/lightgallery/plugins/thumbnail/lg-thumbnail.min.js',
+            '/static/js/lightgallery/lightgallery.min.js'
+          ]);
+        },
         getRotatePlugin(lgInstance) {
             if (!lgInstance?.plugins) return null;
             const rotateIndex = Object.keys(this.pluginsMap).indexOf('lgRotate');
@@ -89,9 +101,11 @@ const ImageViewer = Vue.defineComponent({
             }
         },
         
-        requestFullscreen(nextOptions) {
+        async requestFullscreen(nextOptions) {
             const el = this.$refs.imageViewer;
             if (!el) return;
+
+            await this.loadLibraries()
 
             const defaultOptions = {
                 plugins: this.pluginsList,
@@ -117,9 +131,11 @@ const ImageViewer = Vue.defineComponent({
             this.setupZoomHack(this.lg.fullscreen);
         },
         
-        initInlineLightbox(nextOptions) {
+        async initInlineLightbox(nextOptions) {
             const el = this.$refs.imageViewer;
             if (!el) return;
+
+            await this.loadLibraries()
 
             const defaultOptions = {
                 plugins: this.pluginsList,

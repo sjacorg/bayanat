@@ -49,8 +49,8 @@ const Visualization = Vue.defineComponent({
 
       this.resetGraph();
       this.show();
-      this.getGraphData(item.id, item.class).then(() => {
-        this.drawGraph();
+      this.getGraphData(item.id, item.class).then(async () => {
+        await this.drawGraph();
       });
     },
     resetGraph() {
@@ -64,10 +64,10 @@ const Visualization = Vue.defineComponent({
 
       axios
         .get('/admin/api/graph/data')
-        .then((response) => {
+        .then(async (response) => {
           this.graphData = response.data;
 
-          this.drawGraph(); // Call drawGraph to render the graph with new data
+          await this.drawGraph(); // Call drawGraph to render the graph with new data
         })
         .catch((error) => {
           console.error('Error fetching graph data from Redis:', error);
@@ -79,7 +79,9 @@ const Visualization = Vue.defineComponent({
         });
     },
 
-    drawGraph() {
+    async drawGraph() {
+      await loadAsset('/static/js/force-graph.min.js');
+  
       if (!this.graph) {
         this.graph = ForceGraph()(document.querySelector('#graph'));
       }
@@ -211,9 +213,9 @@ drawLink(link, ctx) {
       this.loading = true;
       axios
         .get(`/admin/api/graph/json`, { params: { id, type, expanded: false } })
-        .then((res) => {
+        .then(async (res) => {
           this.mergeGraphData(res.data);
-          this.drawGraph();
+          await this.drawGraph();
         })
         .catch(console.error)
         .finally(() => {
