@@ -794,7 +794,21 @@ function loadAsset(src) {
     }
     
     // For all JavaScript files (js, mjs, esm), use dynamic import
-    return await import(src);
+    return await import(src).catch(() => {
+        return new Promise((resolve, reject) => {
+            const existing = document.querySelector(`script[src="${src}"]`);
+            if (existing) {
+                resolve();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+            document.head.appendChild(script);
+        });
+    });
   })();
 
   loadedAssets.set(src, promise);
