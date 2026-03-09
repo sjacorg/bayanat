@@ -130,10 +130,10 @@ const GeoMap = Vue.defineComponent({
 
   },
 
-  mounted() {
+  async mounted() {
     this.map = null;
     this.marker = null;
-    this.initMap();
+    await this.initMap();
     const { lat, lng, radius = 1000 } = this.modelValue || {};
     if (lat && lng) {
       this.lat = lat;
