@@ -759,38 +759,44 @@ function deepClone(value) {
 }
 
 // Load external script dynamically with caching
-const loadedScripts = new Map();
-function loadScript(src) {
-  if (loadedScripts.has(src)) {
-    return loadedScripts.get(src);
+const loadedAssets = new Map();
+function loadAsset(src) {
+  // Handle array of sources
+  if (Array.isArray(src)) {
+    return Promise.all(src.map(s => loadAsset(s)));
   }
 
-  const isModule = src.endsWith('.mjs');
+  // Handle single source (existing logic)
+  if (loadedAssets.has(src)) {
+    return loadedAssets.get(src);
+  }
+
+  const isCSS = src.endsWith('.css');
   
   const promise = (async () => {
-    // For ES modules, use dynamic import
-    if (isModule) {
-      return await import(src);
+    // For CSS files
+    if (isCSS) {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`link[href="${src}"]`);
+        if (existing) {
+          resolve();
+          return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = src;
+        link.onload = () => resolve();
+        link.onerror = () => reject(new Error(`Failed to load CSS: ${src}`));
+
+        document.head.appendChild(link);
+      });
     }
     
-    // For regular scripts, use the existing logic
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src="${src}"]`);
-      if (existing) {
-        resolve();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-
-      document.head.appendChild(script);
-    });
+    // For all JavaScript files (js, mjs, esm), use dynamic import
+    return await import(src);
   })();
 
-  loadedScripts.set(src, promise);
+  loadedAssets.set(src, promise);
   return promise;
 }
