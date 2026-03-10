@@ -180,7 +180,6 @@
                                     >
                                         <v-btn
                                         @click="editedItem[opt.key] = !editedItem[opt.key]"
-                                        :disabled="parentDisables(opt.key)"
                                         :prepend-icon="editedItem[opt.key] ? 'mdi-check' : undefined"
                                         variant="outlined"
                                         class="border-thin w-100"
@@ -190,9 +189,6 @@
                                     </v-col>
                                 </v-row>
 
-                                <div v-if="parentRestrictions" class="mt-3 text-caption text-medium-emphasis">
-                                    {{ _('Some options are unavailable because they\'re disabled at the parent level.') }}
-                                </div>
                         </v-card-text>
                         <v-card-actions class="mt-4 px-6 pb-5">
                             <v-spacer></v-spacer>
@@ -302,15 +298,6 @@
                     }
                     return params;
                 },
-                parentRestrictions() {
-                    const p = this.editedItem.parent;
-                    if (!p) return null;
-                    const disabled = [];
-                    for (const flag of ['for_bulletin', 'for_actor', 'for_incident', 'for_offline']) {
-                        if (p[flag] === false) disabled.push(`${flag.replace('for_', '')} disabled by parent`);
-                    }
-                    return disabled.length ? disabled.join(', ') : null;
-                },
             },
 
             watch: {
@@ -331,14 +318,6 @@
                         this.refresh();
                     }
                 },
-                'editedItem.parent'(val) {
-                    if (val && typeof val === 'object') {
-                        // Enforce parent restrictions on flag checkboxes
-                        for (const flag of ['for_bulletin', 'for_actor', 'for_incident', 'for_offline']) {
-                            if (val[flag] === false) this.editedItem[flag] = false;
-                        }
-                    }
-                },
             },
 
             methods: {
@@ -346,17 +325,12 @@
                     const parentTitle = this.editedItem.parent?.title;
                     if (!parentTitle) return;
                     if (!this.editedItem.title.startsWith(parentTitle)) {
-                        this.editedItem.title = parentTitle + ' / ' + this.editedItem.title;
+                        this.editedItem.title = parentTitle + ', ' + this.editedItem.title;
                     }
                 },
                 filterCircularParents(items) {
                     const title = this.editedItemCopy.title || '';
                     return items.filter(i => i.path.split('>').map(s => s.trim()).indexOf(title) === -1);
-                },
-                parentDisables(flag) {
-                    const p = this.editedItem.parent;
-                    if (!p || typeof p !== 'object') return false;
-                    return p[flag] === false;
                 },
 
                 refresh(options) {

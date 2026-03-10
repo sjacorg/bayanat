@@ -290,17 +290,6 @@ class Label(db.Model, BaseMixin):
                 p_label = Label.query.get(parent_id)
                 if p_label:
                     self.parent_label_id = p_label.id
-                    # Enforce parent restrictions: child can't enable flags parent has disabled
-                    self.verified = json.get("verified", False)
-                    if p_label.verified and not self.verified:
-                        self.verified = True
-                    for flag in ("for_bulletin", "for_actor", "for_incident", "for_offline"):
-                        val = json.get(flag, False)
-                        # Child can't enable a flag the parent has disabled
-                        if not getattr(p_label, flag) and val:
-                            val = False
-                        setattr(self, flag, val)
-                    return self
                 else:
                     self.parent_label_id = None
             else:
