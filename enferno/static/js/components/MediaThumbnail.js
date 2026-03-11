@@ -150,7 +150,7 @@ const MediaThumbnail = Vue.defineComponent({
       
       try {
         await loadAsset('/static/js/pdf.js/pdf.min.mjs');
-        await loadAsset('/static/js/pdf.js/pdf.worker.min.mjs');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdf.js/pdf.worker.min.mjs';
 
         const pdf = await pdfjsLib.getDocument(this.s3url).promise;
         const page = await pdf.getPage(1);
@@ -448,6 +448,11 @@ const MediaThumbnail = Vue.defineComponent({
             style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
           ></v-btn>
         </div>
+      </div>
+
+      <!-- DOCX preview -->
+      <div v-else-if="mediaType === 'docx'" class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
+        <v-icon :size="compact ? '32' : '64'" color="blue">mdi-file-word-outline</v-icon>
       </div>
 
       <!-- Other file types preview -->
