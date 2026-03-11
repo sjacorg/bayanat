@@ -40,6 +40,9 @@ const GeoMap = Vue.defineComponent({
         width: '100%',
       };
     },
+    currentYear() {
+      return new Date().getFullYear();
+    },
 
     mapCenter: {
       get() {
@@ -76,7 +79,7 @@ const GeoMap = Vue.defineComponent({
       mapsApiEndpoint: mapsApiEndpoint,
       location: null,
       attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
+      googleAttribution: `&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©${this.currentYear} Google, Maxar Technologies`,
       radiusCircle: null,
     };
   },

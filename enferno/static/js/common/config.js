@@ -462,6 +462,8 @@ const routes = [
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
     { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
     { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
+    {path: '/admin/media/:id', name: 'media', component: Vue.defineComponent({})},
+    {path: '/admin/media/', name: 'medias', component: Vue.defineComponent({})},
 
 ];
 
@@ -634,7 +636,7 @@ function prepareEventLocations(parentId, events, class_type) {
         x.location.type = 'Event';
         x.location.parentId = parentId;
         x.location.class_type = class_type;
-        x.location.color = '#00f166';
+        x.location.color = '#78babf';
         x.location.lat = x.location.latlng.lat;
         x.location.lng = x.location.latlng.lng;
         x.location.zombie = x.from_date === null && x.to_date === null;
@@ -717,7 +719,7 @@ var aggregateIncidentLocations = function (incident) {
                 //attach serial number to events for map reference
                 x.location.number = i + 1;
                 x.location.title = x.title;
-                x.location.color = '#00f166';
+                x.location.color = '#78babf';
                 x.location.class_type = 'incident';
                 return x.location;
             });
@@ -763,6 +765,7 @@ function buildVideoElement() {
     videoElement.setAttribute('controls', '');
     videoElement.setAttribute('width', '620');
     videoElement.setAttribute('height', '348');
+    videoElement.setAttribute('preload', 'none');
 
     return videoElement;
 }
