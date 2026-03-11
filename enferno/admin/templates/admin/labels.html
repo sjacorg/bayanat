@@ -331,6 +331,8 @@
                 },
                 filterCircularParents(items) {
                     const title = this.editedItemCopy.title || '';
+                    if (!title) return items;
+
                     return items.filter(i => i.path.split('>').map(s => s.trim()).indexOf(title) === -1);
                 },
 
