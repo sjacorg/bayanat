@@ -63,6 +63,7 @@ def api_labels() -> Response:
             exclude_ids = [int(x) for x in exclude.split(",")]
             query.append(~Label.id.in_(exclude_ids))
         except ValueError:
+            # If exclude contains non-integer values, ignore the filter and proceed.
             pass
 
     page = request.args.get("page", 1, int)
