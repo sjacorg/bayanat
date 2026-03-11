@@ -137,7 +137,7 @@ const ImageViewer = Vue.defineComponent({
             const el = this.$refs.imageViewer;
             if (!el) return;
 
-            await this.loadLibraries()
+            await this.loadLibraries();
 
             const defaultOptions = {
                 plugins: this.pluginsList,
