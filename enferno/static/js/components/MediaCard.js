@@ -119,7 +119,7 @@ const MediaCard = Vue.defineComponent({
   data() {
     return {
       s3url: '',
-      visionApiKey: window.__GOOGLE_VISION_API_KEY__,
+      hasOcrProvider: Boolean(window.__OCR_PROVIDER__),
       isCurrentUserAdmin: window.__isAdmin__ || false,
       isCurrentUserDA: window.__isDA__ || false,
       translations: window.translations,
@@ -128,6 +128,7 @@ const MediaCard = Vue.defineComponent({
         video: 'mdi-video',
         pdf: 'mdi-file-pdf-box',
         audio: 'mdi-music-box',
+        docx: 'mdi-file-word-outline',
         unknown: 'mdi-file-download'
       },
       ocrDetails: null,
@@ -145,7 +146,7 @@ const MediaCard = Vue.defineComponent({
 
       const isMediaSaved = !!this.media?.id;
       const isSupportedType = this.$root.selectableFileTypes.includes(this.mediaType);
-      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && Boolean(this.visionApiKey);
+      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && (this.hasOcrProvider || this.mediaType === 'docx');
       const disabled = !isSupportedType || !isMediaSaved;
       let text = '';
 
@@ -176,6 +177,7 @@ const MediaCard = Vue.defineComponent({
         case 'image':
         case 'video':
         case 'audio':
+        case 'docx':
           this.$emit('media-click', clickPayload);
           break;
         default:
@@ -275,7 +277,7 @@ const MediaCard = Vue.defineComponent({
               <v-progress-linear v-if="ocrLoading" indeterminate color="primary" class="mb-2"></v-progress-linear>
               <div v-else-if="ocrDetails?.text" class="text-body-2" dir="auto" style="max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;">{{ ocrDetails?.text }}</div>
               <div class="d-flex justify-end mt-1">
-                <v-btn v-if="visionApiKey" size="x-small" variant="text" icon="mdi-pencil" @click="expansionPanel = null; $root.showOcrDialog(media.id)"></v-btn>
+                <v-btn v-if="hasOcrProvider" size="x-small" variant="text" icon="mdi-pencil" @click="expansionPanel = null; $root.showOcrDialog(media.id)"></v-btn>
                 <v-btn size="x-small" variant="text" icon="mdi-content-copy" @click="copyToClipboard(ocrDetails?.text)" :disabled="!ocrDetails?.text"></v-btn>
               </div>
             </v-expansion-panel-text>
