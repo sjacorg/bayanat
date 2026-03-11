@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 from datetime import datetime, timedelta
+from functools import wraps
 from typing import Optional
 
 import boto3
@@ -24,7 +25,9 @@ from sqlalchemy import func, desc
 from werkzeug.utils import safe_join, secure_filename
 
 from enferno.admin.models import Media, Activity, Extraction
+from enferno.admin.models.tables import bulletin_roles, actor_roles
 from enferno.extensions import db, rds
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
@@ -38,6 +41,54 @@ logger = get_logger()
 
 GRACE_PERIOD = timedelta(hours=2)
 S3_URL_EXPIRY = 3600
+
+
+def _require_media_access(f):
+    """Decorator: allow Admin users or users with can_access_media permission."""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.has_role("Admin") and not current_user.can_access_media:
+            return HTTPResponse.forbidden("Unauthorized")
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def _apply_media_access_filter(query):
+    """Filter media query to respect access roles on parent bulletins/actors.
+
+    Mirrors User.can_access logic:
+    - Admin sees everything
+    - Others see media whose parent shares at least one role with the user
+    - Non-restrictive mode also includes media whose parent has no roles
+    """
+    if current_user.has_role("Admin"):
+        return query
+
+    user_role_ids = [r.id for r in current_user.roles]
+    restrictive = current_app.config.get("ACCESS_CONTROL_RESTRICTIVE", False)
+
+    bulletin_match = Media.bulletin_id.isnot(None) & Media.bulletin_id.in_(
+        db.session.query(bulletin_roles.c.bulletin_id).filter(
+            bulletin_roles.c.role_id.in_(user_role_ids)
+        )
+    )
+    actor_match = Media.actor_id.isnot(None) & Media.actor_id.in_(
+        db.session.query(actor_roles.c.actor_id).filter(actor_roles.c.role_id.in_(user_role_ids))
+    )
+    conditions = [bulletin_match, actor_match]
+
+    if not restrictive:
+        unrestricted_bulletins = Media.bulletin_id.isnot(None) & ~Media.bulletin_id.in_(
+            db.session.query(bulletin_roles.c.bulletin_id)
+        )
+        unrestricted_actors = Media.actor_id.isnot(None) & ~Media.actor_id.in_(
+            db.session.query(actor_roles.c.actor_id)
+        )
+        conditions.extend([unrestricted_bulletins, unrestricted_actors])
+
+    return query.filter(db.or_(*conditions))
 
 
 def _media_url(media_file):
@@ -520,7 +571,7 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
 # OCR Extraction endpoints
 @admin.get("/api/media/dashboard")
 @auth_required("session")
-@roles_accepted("Admin", "DA")
+@_require_media_access
 def api_media_dashboard():
     """
     Media dashboard with OCR status.
@@ -540,6 +591,7 @@ def api_media_dashboard():
     date_to = request.args.get("date_to")
 
     query = Media.query.outerjoin(Extraction)
+    query = _apply_media_access_filter(query)
 
     # Filter by bulletin
     if bulletin_id:
@@ -567,19 +619,7 @@ def api_media_dashboard():
 
     items = []
     for media in paginated.items:
-        item = media.to_dict()
-        item["extraction"] = media.extraction.to_dict() if media.extraction else None
-        item["ocr_status"] = media.extraction.status if media.extraction else "pending"
-        # Add bulletin info for FE
-        if media.bulletin:
-            item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
-        else:
-            item["bulletin"] = None
-        # Add media URLs for thumbnails (FE expects thumbnail_url and url)
-        media_url = _media_url(media.media_file)
-        item["media_url"] = media_url
-        item["thumbnail_url"] = media_url
-        item["url"] = media_url
+        item = _media_dashboard_item(media)
         items.append(item)
 
     return jsonify(
@@ -593,9 +633,37 @@ def api_media_dashboard():
     )
 
 
+def _media_dashboard_item(media):
+    """Serialize a media item for the dashboard. Bypasses @check_roles since
+    access is already enforced at the query level."""
+    from enferno.admin.models import MediaCategory
+
+    media_category = MediaCategory.query.get(media.category) if media.category else None
+    item = {
+        "id": media.id,
+        "title": media.title,
+        "fileType": media.media_file_type,
+        "filename": media.media_file,
+        "etag": getattr(media, "etag", None),
+        "category": media_category.to_dict() if media_category else None,
+        "updated_at": DateHelper.serialize_datetime(media.updated_at),
+    }
+    item["extraction"] = media.extraction.to_dict() if media.extraction else None
+    item["ocr_status"] = media.extraction.status if media.extraction else "pending"
+    if media.bulletin:
+        item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
+    else:
+        item["bulletin"] = None
+    media_url = _media_url(media.media_file)
+    item["media_url"] = media_url
+    item["thumbnail_url"] = media_url
+    item["url"] = media_url
+    return item
+
+
 @admin.get("/api/ocr/stats")
 @auth_required("session")
-@roles_accepted("Admin", "DA")
+@_require_media_access
 def api_ocr_stats():
     """OCR processing statistics for dashboard header."""
     # Only count media with OCR-eligible file extensions
@@ -767,7 +835,7 @@ def api_extraction_translate(extraction_id: int):
 
 @admin.post("/api/ocr/process/<int:media_id>")
 @auth_required("session")
-@roles_accepted("Admin", "DA")
+@_require_media_access
 def api_ocr_process(media_id: int):
     """Run OCR on a single media item (sync)."""
     from enferno.tasks.extraction import process_media_extraction_task
@@ -794,7 +862,7 @@ def api_ocr_process(media_id: int):
 
 @admin.post("/api/ocr/bulk")
 @auth_required("session")
-@roles_accepted("Admin", "DA")
+@_require_media_access
 def api_ocr_bulk():
     """
     Bulk OCR processing via Celery (async).
@@ -857,7 +925,7 @@ def api_ocr_bulk():
 
 @admin.get("/api/ocr/processing")
 @auth_required("session")
-@roles_accepted("Admin", "DA")
+@_require_media_access
 def api_ocr_processing():
     """Get list of media IDs currently being processed by bulk OCR."""
     redis_key = f"ocr_processing:{current_user.id}"
