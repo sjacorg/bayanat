@@ -13,6 +13,10 @@ const SearchField = Vue.defineComponent({
       type: Object,
       default: () => ({}),
     },
+    filterItems: {
+      type: Function,
+      default: null,
+    },
     disabled: Boolean,
     returnObject: {
       type: Boolean,
@@ -26,13 +30,30 @@ const SearchField = Vue.defineComponent({
       type: Boolean,
       default: false,
     },
+    itemSubtitle: {
+      type: String,
+      default: null,
+    },
+    retainSearch: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['update:model-value'],
   data: () => ({
     loading: false,
     items: [],
     searchQuery: '',
+    _justSelected: false,
   }),
+  computed: {
+    filteredItems() {
+      if (typeof this.filterItems === 'function') {
+        return this.filterItems(this.items);
+      }
+      return this.items;
+    }
+  },
   methods: {
     startSearch(search) {
       this.loading = true;
@@ -48,13 +69,35 @@ const SearchField = Vue.defineComponent({
           },
         })
         .then((response) => {
-          this.items = response.data.items;
+          this.items = this._mergeSelected(response.data.items);
         })
         .catch(console.error)
         .finally(() => {
           this.loading = false;
         });
     }, 350),
+    _mergeSelected(fetchedItems) {
+      if (!this.multiple || !Array.isArray(this.modelValue) || !this.modelValue.length) {
+        return fetchedItems;
+      }
+      const fetchedIds = new Set(fetchedItems.map(i => this.returnObject ? i[this.itemValue] : i));
+      const missing = this.modelValue.filter(v => {
+        const key = this.returnObject ? v[this.itemValue] : v;
+        return !fetchedIds.has(key);
+      });
+      return [...missing, ...fetchedItems];
+    },
+    onSelect(val) {
+      if (this.retainSearch) {
+        this._justSelected = true;
+      }
+      this.$emit('update:model-value', val);
+
+      // Refocus the input after selection so user can keep typing
+      if (this.multiple) {
+        this.$refs.autocomplete.focus()
+      }
+    },
     copyValue() {
       let textToCopy = '';
       if (this.multiple && Array.isArray(this.modelValue)) {
@@ -77,24 +120,34 @@ const SearchField = Vue.defineComponent({
     }
   },
   watch: {
-    searchQuery(nextSearchQuery) {
-      this.startSearch(nextSearchQuery)
+    searchQuery(val) {
+      // After selection with retainSearch, search clears automatically.
+      // Skip the refetch so results stay visible for picking more items.
+      if (this.retainSearch && this._justSelected && !val) {
+        this._justSelected = false;
+        this.loading = false;
+        return;
+      }
+      this._justSelected = false;
+      this.startSearch(val);
     }
   },
   template: `
     <v-autocomplete
+      ref="autocomplete"
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
       :auto-select-first="true"
       :model-value="modelValue"
-      @update:model-value="$emit('update:model-value', $event)"
+      @update:model-value="onSelect"
       v-model:search="searchQuery"
       @update:focused="onFocused"
-      hide-no-data
+      :hide-no-data="loading"
+      hide-selected
       no-filter
       item-color="secondary"
       :label="label"
-      :items="items"
+      :items="filteredItems"
       :item-title="itemTitle"
       :item-value="itemValue"
       prepend-inner-icon="mdi-magnify"
@@ -108,6 +161,19 @@ const SearchField = Vue.defineComponent({
       :loading="loading"
       :rules="rules"
     >
+      <template v-if="itemSubtitle" v-slot:item="{ item, props }">
+        <v-list-item v-bind="props" density="compact">
+          <template v-if="multiple" v-slot:prepend="{ isActive }">
+            <v-checkbox-btn :model-value="isActive" density="compact" tabindex="-1" style="pointer-events: none;"></v-checkbox-btn>
+          </template>
+          <template v-slot:title>
+            <span class="text-body-2">{{ item.raw[itemTitle] }}</span>
+          </template>
+          <template v-if="item.raw[itemSubtitle]" v-slot:subtitle>
+            <span class="text-caption text-grey">{{ item.raw[itemSubtitle] }}</span>
+          </template>
+        </v-list-item>
+      </template>
       <template v-if="showCopyIcon" v-slot:append>
         <v-btn icon="mdi-content-copy" variant="plain" @click="copyValue"></v-btn>
       </template>
@@ -129,7 +195,7 @@ const LocationSearchField = Vue.defineComponent({
           options: {},
         })
         .then((response) => {
-          this.items = response.data.items;
+          this.items = this._mergeSelected(response.data.items);
         }).finally(() => {
           this.loading = false;
         });
