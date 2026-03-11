@@ -97,7 +97,7 @@
                                             density="compact"
                                         >
                                             <template v-slot:prepend="{ item }">
-                                                <v-icon size="small">mdi-label</v-icon>
+                                                <v-icon size="small">${ item.for_bulletin || item.for_actor || item.for_incident || item.for_offline ? 'mdi-label' : 'mdi-folder-outline' }</v-icon>
                                             </template>
                                             <template v-slot:append="{ item }">
                                                 <v-chip v-if="item.for_bulletin" size="default" class="mr-2">&nbsp;B&nbsp;</v-chip>
@@ -181,8 +181,9 @@
                                         <v-btn
                                         @click="editedItem[opt.key] = !editedItem[opt.key]"
                                         :prepend-icon="editedItem[opt.key] ? 'mdi-check' : undefined"
-                                        variant="outlined"
-                                        class="border-thin w-100"
+                                        :variant="editedItem[opt.key] ? 'flat' : 'outlined'"
+                                        :color="editedItem[opt.key] ? 'primary' : undefined"
+                                        :class="['w-100', editedItem[opt.key] ? '' : 'border-thin opacity-50']"
                                         >
                                             ${opt.label}
                                         </v-btn>
