@@ -11,7 +11,8 @@ render_field %} {% block navbar %}{% endblock %} {% block content %}
       <v-card-text class="px-0">
         {{ mf_recovery_form.hidden_tag() }}
         <label for="code" class="text-body-2 mb-1 d-block">{{ _('Recovery code') }}</label>
-        <v-text-field density="compact" id="code" name="code" messages="{{ _('Enter your 12-character recovery code, including dashes') }}" placeholder="XXXX-XXXX-XXXX" prepend-inner-icon="mdi-key"></v-text-field>
+        <input type="hidden" id="code_hidden" name="code" v-model="code">
+        <v-text-field density="compact" v-model.trim="code" @input="code = code.toLowerCase()" messages="{{ _('Enter your 12-character recovery code, including dashes') }}" placeholder="xxxx-xxxx-xxxx" prepend-inner-icon="mdi-key"></v-text-field>
       </v-card-text>
 
       <v-card-text class="px-0 pt-0">{% include "security/_messages.html" %}</v-card-text>
@@ -43,6 +44,11 @@ render_field %} {% block navbar %}{% endblock %} {% block content %}
 
   const app = createApp({
     delimiters: delimiters,
+    data() {
+      return {
+        code: ''
+      };
+    },
     methods: {
       goBack() {
         if (window.history.length > 1) {

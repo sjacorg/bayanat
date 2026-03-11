@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+from urllib.parse import urlparse
 from flask import Flask, render_template, current_app
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
@@ -152,7 +153,8 @@ def register_talisman(app):
 
     # Add map tile servers to img-src and connect-src
     maps_endpoint = app.config.get("MAPS_API_ENDPOINT", "")
-    if "openstreetmap" in maps_endpoint or "tile.osm.org" in maps_endpoint:
+    _maps_host = urlparse(maps_endpoint).hostname or ""
+    if _maps_host.endswith("openstreetmap.org") or _maps_host.endswith("tile.osm.org"):
         csp["img-src"].append("https://tile.osm.org")
         csp["img-src"].append("https://*.tile.osm.org")
         csp["img-src"].append("https://tile.openstreetmap.org")
@@ -183,6 +185,19 @@ def register_talisman(app):
     if app.config.get("GOOGLE_OAUTH_ENABLED"):
         csp["connect-src"].append("https://accounts.google.com")
         csp["img-src"].append("https://accounts.google.com")
+
+    # Add S3 bucket to CSP when using S3 storage
+    if not app.config.get("FILESYSTEM_LOCAL"):
+        s3_region = app.config.get("AWS_REGION", "us-east-1")
+        s3_bucket = app.config.get("S3_BUCKET", "")
+        s3_origins = [
+            f"https://{s3_bucket}.s3.amazonaws.com",
+            f"https://{s3_bucket}.s3.{s3_region}.amazonaws.com",
+        ]
+        for origin in s3_origins:
+            csp["img-src"].append(origin)
+            csp["media-src"].append(origin)
+            csp["connect-src"].append(origin)
 
     # Check if CSP should be enabled
     csp_enabled = app.config.get("CSP_ENABLED", True)
@@ -324,9 +339,11 @@ def register_commands(app):
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
+    app.cli.add_command(commands.reset_all_passwords)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
     app.cli.add_command(commands.generate_config)
+    app.cli.add_command(commands.ocr_cli)
 
 
 def register_errorhandlers(app):
