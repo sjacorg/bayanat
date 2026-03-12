@@ -1477,6 +1477,7 @@ class UserValidationModel(StrictValidationModel):
     can_edit_locations: Optional[bool] = None
     can_export: Optional[bool] = None
     can_import_web: Optional[bool] = None
+    can_access_media: Optional[bool] = None
     active: bool
     force_reset: Optional[str] = None
     google_id: Optional[str] = None
