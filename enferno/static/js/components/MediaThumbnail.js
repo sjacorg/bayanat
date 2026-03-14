@@ -149,9 +149,7 @@ const MediaThumbnail = Vue.defineComponent({
       this.hasError = false; // Reset error state
       
       try {
-        if (typeof pdfjsLib === 'undefined') {
-          await loadScript('/static/js/pdf.js/pdf.min.mjs');
-        }
+        await loadAsset('/static/js/pdf.js/pdf.min.mjs');
         pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdf.js/pdf.worker.min.mjs';
 
         const pdf = await pdfjsLib.getDocument(this.s3url).promise;

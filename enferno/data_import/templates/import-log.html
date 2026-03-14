@@ -1,7 +1,4 @@
 {% extends 'layout.html' %}
-{% block css %}
-<link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
-{% endblock %}
 {% block content %}
 
             {% include 'log_dialog.html' %}
@@ -124,8 +121,6 @@
 <script src="/static/js/components/MobilityMap.js"></script>
 <script src="/static/js/utils/MobilityMapUtils.js"></script>
 <script src="/static/js/components/Visualization.js"></script>
-<script src="/static/js/videojs/video.min.js"></script>
-<script src="/static/js/force-graph.min.js"></script>
 <script src="/static/js/components/PreviewCard.js"></script>
 <script src="/static/js/components/ImportLogStatus.js"></script>
 <script src="/static/js/components/ImportLogCard.js"></script>
@@ -135,7 +130,6 @@
 {% if config.GOOGLE_MAPS_API_KEY %}
     {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
 {% endif %}
-<script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
     <script nonce="{{ csp_nonce() }}">
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
@@ -329,9 +323,10 @@
 
         app.component('MissingPersonCard', MissingPersonCard);
 
-        app.use(router);
-        app.use(vuetify).mount('#app');
-
-
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}

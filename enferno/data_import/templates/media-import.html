@@ -1,10 +1,4 @@
 {% extends 'layout.html' %}
-{% block css %}
-<link rel="stylesheet" href="/static/css/dropzone.min.css">
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
-
-
-{% endblock %}
 {% block content %}
 
             <v-main class="align-start ma-4">
@@ -341,10 +335,8 @@
     <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.ETL_VID_EXT) }}'></div>
 {% endblock %}
 {% block js %}
-    <script src="/static/js/videojs/video.min.js"></script>
 
 
-    <script src="/static/js/dropzone.min.js"></script>
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/components/SearchField.js" ></script>
@@ -629,9 +621,10 @@
         app.component('SearchField', SearchField);
         app.component('LocationSearchField', LocationSearchField);
 
-        app.use(vuetify).mount('#app');
-
-
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}

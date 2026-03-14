@@ -410,7 +410,8 @@ function getInfraMessage(status) {
 const {createRouter, createWebHistory, createWebHashHistory} = VueRouter;
 
 const routes = [
-    {path: '/', name: 'home', component: Vue.defineComponent({template: ''})},
+    {path: '/', name: 'home', component: Vue.defineComponent({})},
+    {path: '/dashboard', name: 'dashboard', component: Vue.defineComponent({})},
 
     {path: '/admin/bulletins/:id', name: 'bulletin', component: Vue.defineComponent({})},
     {path: '/admin/bulletins/', name: 'bulletins', component: Vue.defineComponent({})},
@@ -434,6 +435,15 @@ const routes = [
     { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
     {path: '/admin/media/:id', name: 'media', component: Vue.defineComponent({})},
     {path: '/admin/media/', name: 'medias', component: Vue.defineComponent({})},
+    {path: '/admin/sources/', name: 'sources', component: Vue.defineComponent({})},
+    {path: '/admin/labels/', name: 'labels', component: Vue.defineComponent({})},
+    {path: '/admin/eventtypes/', name: 'eventtypes', component: Vue.defineComponent({})},
+    {path: '/admin/roles/', name: 'roles', component: Vue.defineComponent({})},
+    {path: '/admin/logs/', name: 'logs', component: Vue.defineComponent({})},
+    {path: '/import/media/', name: 'import-media', component: Vue.defineComponent({})},
+    {path: '/import/sheets/', name: 'import-sheets', component: Vue.defineComponent({})},
+    {path: '/import/log/', name: 'import-log', component: Vue.defineComponent({})},
+    {path: '/deduplication/dashboard/', name: 'deduplication-dashboard', component: Vue.defineComponent({})},
 
 ];
 
@@ -750,38 +760,58 @@ function deepClone(value) {
 }
 
 // Load external script dynamically with caching
-const loadedScripts = new Map();
-function loadScript(src) {
-  if (loadedScripts.has(src)) {
-    return loadedScripts.get(src);
+const loadedAssets = new Map();
+function loadAsset(src) {
+  // Handle array of sources
+  if (Array.isArray(src)) {
+    return Promise.all(src.map(s => loadAsset(s)));
   }
 
-  const isModule = src.endsWith('.mjs');
+  // Handle single source (existing logic)
+  if (loadedAssets.has(src)) {
+    return loadedAssets.get(src);
+  }
+
+  const isCSS = src.endsWith('.css');
   
   const promise = (async () => {
-    // For ES modules, use dynamic import
-    if (isModule) {
-      return await import(src);
+    // For CSS files
+    if (isCSS) {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`link[href="${src}"]`);
+        if (existing) {
+          resolve();
+          return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = src;
+        link.onload = () => resolve();
+        link.onerror = () => reject(new Error(`Failed to load CSS: ${src}`));
+
+        document.head.appendChild(link);
+      });
     }
     
-    // For regular scripts, use the existing logic
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src="${src}"]`);
-      if (existing) {
-        resolve();
-        return;
-      }
+    // For all JavaScript files (js, mjs, esm), use dynamic import
+    return await import(src).catch(() => {
+        return new Promise((resolve, reject) => {
+            const existing = document.querySelector(`script[src="${src}"]`);
+            if (existing) {
+                resolve();
+                return;
+            }
 
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-
-      document.head.appendChild(script);
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+            document.head.appendChild(script);
+        });
     });
   })();
 
-  loadedScripts.set(src, promise);
+  loadedAssets.set(src, promise);
   return promise;
 }

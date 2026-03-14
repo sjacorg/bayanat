@@ -1,7 +1,4 @@
 {% extends 'layout.html' %}
-{% block css %}
-    <link rel="stylesheet" href="/static/css/dropzone.min.css">
-{% endblock %}
 
 {% block content %}
 
@@ -824,7 +821,6 @@
 {% block js %}
 
 
-    <script src="/static/js/dropzone.min.js"></script>
     <script src="/static/js/components/VueDropzone.js"></script>
 
 
@@ -1459,8 +1455,10 @@
         app.component('DropField', DropField);
         app.component('Draggable', draggable);
 
-
-        app.use(vuetify).mount('#app');
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}
