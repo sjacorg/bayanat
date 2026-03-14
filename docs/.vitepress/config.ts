@@ -102,6 +102,10 @@ export default defineConfig({
       { icon: "github", link: "https://github.com/sjacorg/bayanat" },
     ],
 
+    outline: {
+      level: [2, 4],
+    },
+
     search: {
       provider: "local",
     },
