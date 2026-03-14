@@ -53,19 +53,8 @@
 
         <v-divider class="mb-4"></v-divider>
         
-        <v-container class="pa-3">
-            <v-label class="mb-2 ml-2 ">
-                {{ _('Security') }}
-            </v-label>
-            
-            <v-list density="compact" nav>
-                
-                <v-list-item href="/change">{{ _('Change Password') }}</v-list-item>
-                <v-list-item href="/tf-setup">{{ _('Two-Factor Authentication') }}</v-list-item>
-                <v-list-item href="/mf-recovery-codes">{{ _('Recovery Codes') }}</v-list-item>
-                <v-list-item href="/wan-register">{{ _('Security Keys/Passkeys') }}</v-list-item>
-
-            </v-list>
-        </v-container>            
+        <v-list nav>
+            <v-list-item href="/account-security">{{ _('Account Security') }}</v-list-item>
+        </v-list>
     </v-card>
 </v-navigation-drawer>
