@@ -850,7 +850,7 @@ def api_ocr_bulk():
     return jsonify(
         {
             "queued": len(media_ids),
-            "message": f"Queued {len(media_ids)} items for processing.",
+            "message": f"Queued {len(media_ids)} items. You'll be notified when complete.",
         }
     )
 
