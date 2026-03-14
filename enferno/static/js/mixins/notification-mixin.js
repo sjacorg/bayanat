@@ -24,6 +24,7 @@ const notificationMixin = {
         initialLoading: false,
         loadingMore: false,
         markingImportantAsRead: false,
+        markingAllAsRead: false,
         loadError: false
       },
       ui: {
@@ -231,6 +232,34 @@ const notificationMixin = {
         this.notifications.unreadCount = previousUnreadCount;
       }
     },    
+    async markAllAsRead() {
+      if (this.notifications.status.markingAllAsRead) return; // Prevent duplicate calls
+      
+      const previousUnreadCount = this.notifications.unreadCount;
+      const previousNotifications = [...this.notifications.items];
+      const previousImportantNotifications = [...this.notifications.importantItems];
+
+      const readNotification = (notification) => { notification.read_status = true };
+
+      this.notifications.status.markingAllAsRead = true; // Add this flag
+      this.notifications.unreadCount = 0;
+      this.notifications.items.map(readNotification);
+      this.notifications.importantItems.map(readNotification);
+
+      try {
+        await axios.post(`/admin/api/notifications/mark-all-read`);
+      } catch (error) {
+        console.error(error);
+        this.showSnack(handleRequestError(error));
+
+        // Revert state if request failed
+        this.notifications.unreadCount = previousUnreadCount;
+        this.notifications.items = previousNotifications;
+        this.notifications.importantItems = previousImportantNotifications;
+      } finally {
+        this.notifications.status.markingAllAsRead = false;
+      }
+    },
     async refetchNotifications() {
       this.loadNotifications({ page: 1 });
     },
