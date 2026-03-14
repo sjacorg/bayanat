@@ -106,13 +106,33 @@ This is the main part of the analysis workflow. Items in this phase are transfor
 Administrators or Moderators can assign items to analysts, changing the items status from their initial status to `Assigned`. The assignee can find items under this status and due to be processed using the "Assigned to me" shortcut. After processing these items, their status will be changed to `Updated`. The items can be updated as many times as required in this status by the assignee.
 
 ### Review
-Peer review is an essential part of the analysis workflow. Not only it is the main tool for quality control of the analysis, in addition, it can be used as a learning tool, especially for new analysts.
+Peer review is an essential part of the analysis workflow. Not only it is the main tool for quality control of the analysis, in addition, it can be used as a learning tool, especially for new members of the data analysis team.
 
-Administrators or Moderators can assign items processed by analysts to other analysts for review, using the `Peer Review Assigned` status. At this point the original assignee can't make updates to the item until it's reviewed by the reviewer.
+Administrators or Moderators can assign items processed by analysts to other analysts for review, using the `Peer Review Assigned` status. At this point the original assignee (the "Owner") can't make updates to the item until it's reviewed by the reviewer.
 
-Reviewers can examine items fully, checking all fields completed by the assignee and comparing the data with the source and metadata. This amounts to a mock analysis done by a second pair of eyes. The reviewer can leave comments without making any changes to the data itself.
+The reviewer could have several peer review assignments simultaneously, all of which can be found under the "My Review List" tab in Bayanat for each of the different items (Actors, Bulletins, or Incidents).
 
-After the reviewer is done, the status of the item will be changed to `Peer Reviewed`, and the reviewer will need to indicated whether the item required review (contained issues to address) or not. If the item require reviewe, the assignee can make changes to the item to correct any issues, changing the status to `Revisited`. The assignee can also discuss any issues with the reviewer directly or within the team if there's disagreement about the review.
+#### The Review Process
+
+The reviewer goes through each item in an assignment, and reviews everything related to it: titles, locations, labels, and every other field. The reviewer must NOT (and also lacks the ability to) make any changes inside the items. Instead, the reviewer accesses a review mode where they can view the items and all related information without the ability to modify anything. The reviewer also has access to the full list of labels and locations inside the review mode for reference.
+
+When the reviewer finishes, they leave a decision and a comment indicating the result:
+
+1. **No Review Needed**: The reviewer did not find any issues. The review process is over, and the owner does not need to revisit the item.
+2. **Needs Review**: The reviewer found issues that require the owner's attention. The reviewer must leave a comment explaining the nature of the issue.
+
+::: tip Comment Format Convention
+Use the following format for standardized review feedback:
+- `-Label` — a label already added to the item needs to be **removed**
+- `+Label` — a missing label needs to be **added**
+- `*Text` — a possible mistake or any additional comment for the owner
+:::
+
+#### The Revisit Process
+
+When the reviewer finishes reviewing all items in a peer review assignment and marks it as "Completed", this creates a "Revisit" assignment for the owners of the reviewed items. The owner only needs to revisit items flagged as "Needs Review" and can use the search function to filter these items. For each flagged item, the owner checks the reviewer's comment and applies the advised changes.
+
+If the owner disagrees with any feedback, they should discuss it with the reviewer. The reviewer must explain their reasoning. If they fail to agree, they can ask a Senior DA to review the item and provide feedback. Once all flagged items are revisited, the owner closes the "Revisit" assignment, and the review process is complete.
 
 ### Senior Actions
 Administrators have the ability to make changes to all items in the database. While they are able to choose any status, the convention is to use `Senior Updated` or `Senior Reviewed`.
