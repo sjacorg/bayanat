@@ -9,7 +9,7 @@
         <v-list-item prepend-icon="mdi-hazard-lights" title="{{ _('Incidents') }}" href="/admin/incidents/"
                      key="incidents"></v-list-item>
 
-        {% if current_user.has_role("Admin") %}
+        {% if current_user.has_role("Admin") or current_user.can_access_media %}
             <v-list-item prepend-icon="mdi-image-multiple" title="{{ _('Media Dashboard') }}" href="/admin/media/" key="media"></v-list-item>
         {% endif %}
 
