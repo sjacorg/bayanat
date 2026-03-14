@@ -12,16 +12,16 @@ The following chart describes the workflow designed by SJAC for its data analysi
 <br>
 
 ```mermaid
-%%{ init: { 'flowchart': { 'curve': 'basis' } } }%%
+%%{ init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#171717', 'lineColor': '#525252', 'primaryTextColor': '#fafafa', 'secondaryColor': '#262626', 'tertiaryColor': '#1a1a1a', 'primaryBorderColor': '#404040', 'fontFamily': 'system-ui, -apple-system, sans-serif', 'fontSize': '13px' }, 'flowchart': { 'curve': 'basis' } } }%%
 graph TB
 
-	subgraph 0 [Initial Status]
-		A(Machine Created)
-		B(Human Created)
+  subgraph 0 [Initial Status]
+    A(Machine Created)
+    B(Human Created)
   end
 
-	subgraph 1 [Analysis]
-  	A & B --> C[Assigned to user by admin]
+  subgraph 1 [Analysis]
+    A & B --> C[Assigned to user by admin]
     C --> D(Assigned)
     D --> DD[Updated by assignee]
     DD --> E(Updated)
@@ -46,40 +46,36 @@ graph TB
     J --> N[No review needed]
   end
 
-
   K --> N
 
   M --> Z[Finalized]
   N --> Z
 
   subgraph 4 [Machine Actions]
-  	T(Any status)
-  	T --> V(Machine Updated)
+    T(Any status)
+    T --> V(Machine Updated)
   end
 
-style A fill:#4a8cff,stroke:#333,stroke-width:2px
-style B fill:#4a8cff,stroke:#333,stroke-width:2px
-style C fill:#bbb,stroke:#333,stroke-width:0px
-style D fill:#ff901d,stroke:#333,stroke-width:2px
-style DD fill:#bbb,stroke:#333,stroke-width:0px
-style E fill:#dc143c,stroke:#333,stroke-width:2px
-style F fill:#bbb,stroke:#333,stroke-width:0px
-style G fill:#bbb,stroke:#333,stroke-width:0px
-style H fill:#60f4c7,stroke:#333,stroke-width:2px
-style I fill:#bbb,stroke:#333,stroke-width:0px
-style J fill:#61c87b,stroke:#333,stroke-width:2px
-style L fill:#bbb,stroke:#333,stroke-width:0px
-style N fill:#bbb,stroke:#333,stroke-width:0px
-style 0 fill:#eee,stroke:#333,stroke-width:2px
-style 1 fill:#6fa8dc,stroke:#333,stroke-width:2px
-style 2 fill:#fff888,stroke:#333,stroke-width:2px
-style EE fill:#bbb,stroke:#333,stroke-width:0px
-style EZ fill:#ffc0cb,stroke:#333,stroke-width:2px
-style K fill:#ffc0cb,stroke:#333,stroke-width:2px
-style M fill:#a5f2dd,stroke:#333,stroke-width:2px
-style T fill:#fff,stroke:#333,stroke-width:2px
-style V fill:#a5e2ff,stroke:#333,stroke-width:2px
-style Z fill:#000,stroke:#333,stroke-width:2px,color:#fff
+style A fill:#0070f3,stroke:#0060df,color:#fff
+style B fill:#0070f3,stroke:#0060df,color:#fff
+style C fill:#333,stroke:#444,color:#aaa
+style D fill:#f5a623,stroke:#e09500,color:#111
+style DD fill:#333,stroke:#444,color:#aaa
+style E fill:#e00,stroke:#c00,color:#fff
+style F fill:#333,stroke:#444,color:#aaa
+style G fill:#333,stroke:#444,color:#aaa
+style H fill:#50e3c2,stroke:#3cc7a8,color:#111
+style I fill:#333,stroke:#444,color:#aaa
+style J fill:#0070f3,stroke:#0060df,color:#fff
+style L fill:#333,stroke:#444,color:#aaa
+style N fill:#333,stroke:#444,color:#aaa
+style EE fill:#333,stroke:#444,color:#aaa
+style EZ fill:#7928ca,stroke:#6622aa,color:#fff
+style K fill:#7928ca,stroke:#6622aa,color:#fff
+style M fill:#50e3c2,stroke:#3cc7a8,color:#111
+style T fill:#333,stroke:#444,color:#aaa
+style V fill:#0070f3,stroke:#0060df,color:#fff
+style Z fill:#111,stroke:#333,color:#fff
 ```
 
 ### List of statuses
