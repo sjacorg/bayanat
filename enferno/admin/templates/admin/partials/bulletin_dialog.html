@@ -81,13 +81,17 @@
                             <div v-if="movableDynamicFields({ entityType: 'bulletin' }).length" class="form-grid mt-4">
                                 <template v-for="(field, index) in movableDynamicFields({ entityType: 'bulletin' })" :key="field.id">
                                     <div v-if="isFieldActive(field, 'title')" :class="[fieldClass(field), 'px-3 py-2']">
-                                        <dual-field v-model:original="editedItem.title" v-model:translation="editedItem.title_ar"
-                                            label-original="{{ _('Original Title') }}" label-translation="{{ _('Original Title (Ar)') }}" :rules="[
+                                        <dual-field v-model:original="editedItem.title" v-model:translation="editedItem.title_ar" label-translation="{{ _('Original Title (Ar)') }}"
+                                            :rules="[
                                                 validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
                                                 validationRules.maxLength(255),
                                             ]"
                                             v-bind="serverErrorPropsForDualField(serverErrors, 'item.title', 'item.title_ar')"
-                                        ></dual-field>
+                                        >
+                                            <template v-slot:label-original>
+                                                {{ _('Original Title') }} <Asterisk />
+                                            </template>
+                                        </dual-field>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'sjac_title')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <dual-field v-model:original="editedItem.sjac_title" v-model:translation="editedItem.sjac_title_ar"
@@ -151,12 +155,14 @@
                                     <div v-else-if="isFieldActive(field, 'source_link')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <v-sheet class="d-flex align-center">
                                             <v-text-field class="mx-2" :disabled="source_disabled" v-model="editedItem.source_link"
-                                                label="{{ _('Source Link') }}" :rules="[
+                                                :rules="[
                                                 validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
                                                     validationRules.maxLength(255)
                                                 ]"
                                                 v-bind="serverErrorPropsForField(serverErrors, 'item.source_link')"
-                                            ></v-text-field>
+                                            >
+                                                <template v-slot:label>{{ _('Source Link') }} <Asterisk v-if="!source_disabled" /></template>
+                                            </v-text-field>
                                         
                                             <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
                                             </v-checkbox>
@@ -172,7 +178,9 @@
                                 <template v-for="(field, index) in fixedDynamicFields({ entityType: 'bulletin' })" :key="field.id">
                                     <div v-if="isFieldActive(field, 'comments')" :class="fieldClass(field)">
                                         <v-textarea required class="h-100" :rules="[validationRules.required()]" outlined v-model="editedItem.comments"
-                                            label="{{ _('Comments') }}" v-bind="serverErrorPropsForField(serverErrors, 'item.comments')">
+                                            v-bind="serverErrorPropsForField(serverErrors, 'item.comments')"
+                                        >
+                                            <template v-slot:label>{{ _('Comments') }} <Asterisk /></template>
                                         </v-textarea>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'status')" :class="fieldClass(field)">
@@ -185,9 +193,11 @@
                                     <v-select :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
                                         :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'" chips :disabled="unrestricted"
                                         item-title="name" return-object :items="allowedRoles" multiple v-model="editedItem.roles"
-                                        label="{{ _('Restrict Bulletin to Access Group(s)') }}" :rules="
-                                                                                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []
-                                                                                                                " clearable></v-select>
+                                        :rules="!unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unrestricted.')}}')] : []"
+                                        clearable
+                                    >
+                                        <template v-slot:label>{{ _('Restrict Bulletin to Access Group(s)') }} <Asterisk v-if="!unrestricted" /></template>
+                                    </v-select>
                                     <v-checkbox color="error" @change="unrestricted? editedItem.roles = [] : null" class="mx-2"
                                         label="{{ _('No Access Groups') }}" v-model="unrestricted">
                                     </v-checkbox>

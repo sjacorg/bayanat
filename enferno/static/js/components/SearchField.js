@@ -161,6 +161,10 @@ const SearchField = Vue.defineComponent({
       :loading="loading"
       :rules="rules"
     >
+      <template v-slot:label>
+        <slot v-if="$slots['label']" name="label"></slot>
+        <template v-else>{{ label }}</template>
+      </template>
       <template v-if="itemSubtitle" v-slot:item="{ item, props }">
         <v-list-item v-bind="props" density="compact">
           <template v-if="multiple" v-slot:prepend="{ isActive }">
