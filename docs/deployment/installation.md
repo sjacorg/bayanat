@@ -25,7 +25,7 @@ sudo apt install -y python3-dev libpq-dev redis-server postgresql postgresql-con
 **Ubuntu 24.04:**
 
 ```bash
-sudo apt install -y python3-dev libpq-dev redis-server postgresql postgresql-contrib postgis libgdal-dev uwsgi
+sudo apt install -y python3-dev libpq-dev redis-server postgresql postgresql-contrib postgis libgdal-dev uwsgi libimage-exiftool-perl
 ```
 
 Optionally install Tesseract OCR:
@@ -80,6 +80,12 @@ Generate the `.env` file interactively:
 
 ```bash
 bash gen-env.sh
+```
+
+Create the db tables
+
+```bash
+uv run flask create-db
 ```
 
 See [Configuration](/deployment/configuration) for manual setup.
