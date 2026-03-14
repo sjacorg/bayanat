@@ -179,7 +179,6 @@ from enferno.tasks.ml import (  # noqa: E402
 )
 from enferno.tasks.notifications import send_email_notification  # noqa: E402
 from enferno.tasks.ocr import (  # noqa: E402
-    bulk_ocr_finalize,
     bulk_ocr_process,
     ocr_single,
 )
@@ -230,7 +229,6 @@ __all__ = [
     # notifications
     "send_email_notification",
     # ocr
-    "bulk_ocr_finalize",
     "bulk_ocr_process",
     "ocr_single",
 ]
