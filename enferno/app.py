@@ -152,7 +152,12 @@ def register_talisman(app):
     # Add map tile servers to img-src and connect-src
     maps_endpoint = app.config.get("MAPS_API_ENDPOINT", "")
     _maps_host = urlparse(maps_endpoint).hostname or ""
-    if _maps_host.endswith("openstreetmap.org") or _maps_host.endswith("tile.osm.org"):
+    if (
+        _maps_host == "tile.openstreetmap.org"
+        or _maps_host.endswith(".openstreetmap.org")
+        or _maps_host == "tile.osm.org"
+        or _maps_host.endswith(".tile.osm.org")
+    ):
         csp["img-src"].append("https://tile.osm.org")
         csp["img-src"].append("https://*.tile.osm.org")
         csp["img-src"].append("https://tile.openstreetmap.org")
