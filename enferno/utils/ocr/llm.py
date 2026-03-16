@@ -41,7 +41,13 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
     img_b64 = base64.b64encode(file_bytes).decode("utf-8")
 
     lang_str = ", ".join(language_hints) if language_hints else "Arabic, English"
-    prompt = f"OCR this document. Extract all text exactly as written. Languages: {lang_str}"
+
+    system_msg = (
+        "You are an OCR engine. Output ONLY the raw text from the image, nothing else. "
+        "No introductions, no explanations, no commentary, no refusals. "
+        "If the image contains no readable text, output an empty string."
+    )
+    prompt = f"Extract all text exactly as written. Languages: {lang_str}"
 
     headers = {}
     if api_key:
@@ -54,6 +60,7 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
             json={
                 "model": model,
                 "messages": [
+                    {"role": "system", "content": system_msg},
                     {
                         "role": "user",
                         "content": [
@@ -63,10 +70,10 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
                             },
                             {"type": "text", "text": prompt},
                         ],
-                    }
+                    },
                 ],
                 "max_tokens": 4096,
-                "temperature": 0.1,
+                "temperature": 0.0,
             },
             timeout=300.0,
         )
@@ -95,6 +102,15 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
 
     # Strip markdown code fences if model wraps output
     text = re.sub(r"^```\w*\n?|```$", "", text, flags=re.MULTILINE).strip()
+
+    # Strip LLM conversational preamble/refusals
+    preamble = re.match(
+        r"^(Sure[,.].*?:|Here is.*?:|I'm sorry.*?\.|I cannot.*?\.|I can't.*?\.)\s*",
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if preamble:
+        text = text[preamble.end() :].strip()
 
     return {
         "text": text,
