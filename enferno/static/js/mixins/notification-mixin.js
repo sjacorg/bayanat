@@ -246,6 +246,7 @@ const notificationMixin = {
 
       try {
         await axios.post(`/admin/api/notifications/mark-all-read`);
+        this.notifications.unreadCount = data.unreadCount;
       } catch (error) {
         console.error(error);
         this.showSnack(handleRequestError(error));
