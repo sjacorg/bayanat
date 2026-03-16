@@ -19,7 +19,7 @@ You can install Bayanat by following these steps exactly without changes. Adjust
 **Ubuntu 22.04:**
 
 ```bash
-sudo apt install -y python3-dev libpq-dev redis-server postgresql postgresql-contrib postgis libgdal-dev uwsgi
+sudo apt install -y python3-dev libpq-dev redis-server postgresql postgresql-contrib postgis libgdal-dev uwsgi libimage-exiftool-perl
 ```
 
 **Ubuntu 24.04:**
@@ -82,13 +82,15 @@ Generate the `.env` file interactively:
 bash gen-env.sh
 ```
 
+See [Configuration](/deployment/configuration) for manual setup.
+
+### Initialize Database
+
 Create the db tables
 
 ```bash
 uv run flask create-db
 ```
-
-See [Configuration](/deployment/configuration) for manual setup.
 
 ### Create Admin User
 
