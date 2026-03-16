@@ -84,6 +84,14 @@ bash gen-env.sh
 
 See [Configuration](/deployment/configuration) for manual setup.
 
+### Initialize Database
+
+Create the db tables
+
+```bash
+uv run flask create-db
+```
+
 ### Create Admin User
 
 ```bash
