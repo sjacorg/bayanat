@@ -70,9 +70,7 @@ const notificationMixin = {
     async markAsReadImportantNotifications() {
       try {
         this.notifications.status.markingImportantAsRead = true;
-        await Promise.all(this.notifications.importantItems.map(async notification => {
-          await this.readNotification(notification)
-        }))
+        await Promise.all(this.notifications.importantItems.map(notification => this.readNotification(notification)))
       } catch (error) {
         console.error(error);
         this.showSnack(handleRequestError(error))
@@ -243,8 +241,8 @@ const notificationMixin = {
 
       this.notifications.status.markingAllAsRead = true; // Add this flag
       this.notifications.unreadCount = 0;
-      this.notifications.items.map(readNotification);
-      this.notifications.importantItems.map(readNotification);
+      this.notifications.items.forEach(readNotification);
+      this.notifications.importantItems.forEach(readNotification);
 
       try {
         await axios.post(`/admin/api/notifications/mark-all-read`);
