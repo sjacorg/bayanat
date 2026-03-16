@@ -51,7 +51,7 @@ def init_worker_process(**kwargs):
         from enferno.app import create_app
 
         _flask_app = create_app(cfg)
-        logger.info("Flask app initialized for worker process")
+        logger.debug("Flask app initialized for worker process")
 
 
 # Class to run tasks within application's context

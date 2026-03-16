@@ -122,8 +122,6 @@ def register_extensions(app):
     rds.init_app(app)
     mail.init_app(app)
 
-    # Configure limiter storage with the correct config
-    limiter.storage_uri = app.config["REDIS_URL"]
     limiter.init_app(app)
 
     # Initialize Talisman with security headers
