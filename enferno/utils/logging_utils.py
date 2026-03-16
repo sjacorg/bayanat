@@ -63,34 +63,44 @@ def get_logger(name="app_logger"):
 
     # Prevent race condition when called from multiple threads
     if not logger.handlers:
+        handlers = []
         if cfg.APP_LOG_ENABLED:
-            handler = TimedRotatingFileHandler(
+            file_handler = TimedRotatingFileHandler(
                 os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
                 when="midnight",
                 backupCount=cfg.LOG_BACKUP_COUNT,
             )
-            handler.setFormatter(JsonFormatter())
-        else:
-            handler = logging.NullHandler()
+            file_handler.setFormatter(JsonFormatter())
+            handlers.append(file_handler)
 
-        logger.handlers = [handler]
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(JsonFormatter())
+        handlers.append(stream_handler)
+
+        logger.handlers = handlers if handlers else [logging.NullHandler()]
     return logger
 
 
 @after_setup_logger.connect
 def setup_celery_logger(logger, *args, **kwargs):
     """Configure the Celery logger to use our existing logging setup."""
+    handlers = []
     if cfg.CELERY_LOG_ENABLED:
-        handler = TimedRotatingFileHandler(
+        file_handler = TimedRotatingFileHandler(
             os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
             when="midnight",
             backupCount=cfg.LOG_BACKUP_COUNT,
         )
-        handler.setFormatter(JsonFormatter())
-        handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
-        logger.handlers = [handler]
-    for handler in logger.handlers:
-        handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
+        file_handler.setFormatter(JsonFormatter())
+        file_handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
+        handlers.append(file_handler)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(JsonFormatter())
+    stream_handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
+    handlers.append(stream_handler)
+
+    logger.handlers = handlers
 
 
 @after_setup_task_logger.connect
