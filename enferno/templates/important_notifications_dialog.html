@@ -16,6 +16,7 @@
         
             <v-btn :disabled="notifications.status.markingImportantAsRead" :loading="notifications.status.markingImportantAsRead" variant="flat" @click="markAsReadImportantNotifications()"
                 class="text-medium-emphasis font-weight-medium"
+                color="primary"
             >
                 {{ _('Review Later') }}
             </v-btn>
