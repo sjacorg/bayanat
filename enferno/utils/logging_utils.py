@@ -56,51 +56,45 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(record_dict)
 
 
-def get_logger(name="app_logger"):
-    """Get a logger instance."""
-    logger = logging.getLogger(name)
-    logger.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
-
-    # Prevent race condition when called from multiple threads
-    if not logger.handlers:
-        handlers = []
-        if cfg.APP_LOG_ENABLED:
-            file_handler = TimedRotatingFileHandler(
-                os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
-                when="midnight",
-                backupCount=cfg.LOG_BACKUP_COUNT,
-            )
-            file_handler.setFormatter(JsonFormatter())
-            handlers.append(file_handler)
-
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(JsonFormatter())
-        handlers.append(stream_handler)
-
-        logger.handlers = handlers if handlers else [logging.NullHandler()]
-    return logger
-
-
-@after_setup_logger.connect
-def setup_celery_logger(logger, *args, **kwargs):
-    """Configure the Celery logger to use our existing logging setup."""
+def _build_handlers(enable_file=True):
+    """Build the standard handler list (file + stream)."""
     handlers = []
-    if cfg.CELERY_LOG_ENABLED:
+    if enable_file:
         file_handler = TimedRotatingFileHandler(
             os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
             when="midnight",
             backupCount=cfg.LOG_BACKUP_COUNT,
         )
         file_handler.setFormatter(JsonFormatter())
-        file_handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
         handlers.append(file_handler)
-
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(JsonFormatter())
-    stream_handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
     handlers.append(stream_handler)
+    return handlers
 
-    logger.handlers = handlers
+
+def get_logger(name="app_logger"):
+    """Get a logger instance."""
+    logger = logging.getLogger(name)
+    logger.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
+    logger.propagate = False
+
+    if not logger.handlers:
+        logger.handlers = _build_handlers(enable_file=cfg.APP_LOG_ENABLED)
+    return logger
+
+
+@after_setup_logger.connect
+def setup_celery_logger(logger, *args, **kwargs):
+    """Configure the Celery logger to use our existing logging setup."""
+    log_level = cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL
+    logger.handlers = _build_handlers(enable_file=cfg.CELERY_LOG_ENABLED)
+    for h in logger.handlers:
+        h.setLevel(log_level)
+    logger.propagate = False
+
+    # Suppress celery.redirected to prevent SMTP debug output (leaks credentials)
+    logging.getLogger("celery.redirected").setLevel(logging.CRITICAL)
 
 
 @after_setup_task_logger.connect
