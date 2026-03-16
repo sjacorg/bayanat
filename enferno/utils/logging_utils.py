@@ -56,39 +56,46 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(record_dict)
 
 
-def _build_handlers(enable_file=True):
-    """Build the standard handler list (file + stream)."""
-    handlers = []
-    if enable_file:
-        file_handler = TimedRotatingFileHandler(
-            os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
-            when="midnight",
-            backupCount=cfg.LOG_BACKUP_COUNT,
-        )
-        file_handler.setFormatter(JsonFormatter())
-        handlers.append(file_handler)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(JsonFormatter())
-    handlers.append(stream_handler)
-    return handlers
+def _file_handler():
+    """Build a file handler for logging."""
+    handler = TimedRotatingFileHandler(
+        os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
+        when="midnight",
+        backupCount=cfg.LOG_BACKUP_COUNT,
+    )
+    handler.setFormatter(JsonFormatter())
+    return handler
+
+
+def _stream_handler():
+    """Build a stdout handler for logging."""
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    return handler
 
 
 def get_logger(name="app_logger"):
-    """Get a logger instance."""
+    """Get a logger instance. File-only for the app process."""
     logger = logging.getLogger(name)
     logger.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
     logger.propagate = False
 
     if not logger.handlers:
-        logger.handlers = _build_handlers(enable_file=cfg.APP_LOG_ENABLED)
+        if cfg.APP_LOG_ENABLED:
+            logger.handlers = [_file_handler()]
+        else:
+            logger.handlers = [logging.NullHandler()]
     return logger
 
 
 @after_setup_logger.connect
 def setup_celery_logger(logger, *args, **kwargs):
-    """Configure the Celery logger to use our existing logging setup."""
+    """Configure Celery logger: file + stdout for live visibility."""
     log_level = cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL
-    logger.handlers = _build_handlers(enable_file=cfg.CELERY_LOG_ENABLED)
+    handlers = [_stream_handler()]
+    if cfg.CELERY_LOG_ENABLED:
+        handlers.append(_file_handler())
+    logger.handlers = handlers
     for h in logger.handlers:
         h.setLevel(log_level)
     logger.propagate = False
