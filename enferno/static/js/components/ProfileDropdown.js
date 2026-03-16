@@ -79,7 +79,7 @@ const ProfileDropdown = Vue.defineComponent({
       </template>
       <v-card variant="flat" width="225">
         <v-container class="d-flex ga-3 align-center">
-          <v-avatar color="primary" variant="teal" class="border">
+          <v-avatar variant="tonal" color="primary">
             <span class="text-h5 text-primary">{{ userInitials }}</span>
           </v-avatar>
           <span class="text-subtitle-2 text-truncate">{{ displayName }}</span>
@@ -110,10 +110,12 @@ const ProfileDropdown = Vue.defineComponent({
         
         <v-list density="compact" nav class="text-body-2">
             <v-list-subheader>{{ translations.mySecurity_ }}</v-list-subheader>
-            <v-list-item class="ml-5" href="/change">{{ translations.changePassword_ }}</v-list-item>
-            <v-list-item class="ml-5" href="/tf-setup">{{ translations.tfaAuthentication_ }}</v-list-item>
-            <v-list-item class="ml-5" href="/mf-recovery-codes">{{ translations.recoveryCodes_ }}</v-list-item>
-            <v-list-item class="ml-5" href="/wan-register">{{ translations.securityKeys_ }}</v-list-item>
+            <div class="ml-5">
+              <v-list-item href="/change">{{ translations.changePassword_ }}</v-list-item>
+              <v-list-item href="/tf-setup">{{ translations.tfaAuthentication_ }}</v-list-item>
+              <v-list-item href="/mf-recovery-codes">{{ translations.recoveryCodes_ }}</v-list-item>
+              <v-list-item href="/wan-register">{{ translations.securityKeys_ }}</v-list-item>
+            </div>
         </v-list>
         
         <v-divider></v-divider>
