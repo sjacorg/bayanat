@@ -107,17 +107,8 @@
                          href="/admin/component-data/" key="comp-data"></v-list-item>
             </v-list-group>
 
-            <v-list-group>
-                <template v-slot:activator="{props}">
-                    <v-list-item v-bind="props" prepend-icon="mdi-wrench-cog"
-                                title="{{ _('System Administration') }}"></v-list-item>
-                </template>
-
-                <v-list-item prepend-icon="mdi-cog" title="{{ _('System Settings') }}" href="/admin/system-administration/"
-                            key="sysadmin"></v-list-item>
-                <v-list-item prepend-icon="mdi-clipboard-text" title="{{ _('System Logs') }}" href="/admin/logs/"
-                            key="syslogs"></v-list-item>
-            </v-list-group>
+            <v-list-item prepend-icon="mdi-cog" title="{{ _('Organization System Settings') }}" href="/admin/system-administration/" key="sysadmin"></v-list-item>
+            <v-list-item prepend-icon="mdi-clipboard-text" title="{{ _('System Logs') }}" href="/admin/logs/" key="syslogs"></v-list-item>
         {% endif %}
 
     </v-list>

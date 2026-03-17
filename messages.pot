@@ -1,14 +1,14 @@
 # Translations template for PROJECT.
-# Copyright (C) 2025 ORGANIZATION
+# Copyright (C) 2026 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-11-01 15:17+0000\n"
+"POT-Creation-Date: 2026-03-17 18:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,39 +17,47 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: enferno/admin/templates/nav-bar.html:22
+#: enferno/admin/templates/nav-bar.html:24
+msgid "OCR powered by Google Vision"
+msgstr ""
+
+#: enferno/admin/templates/nav-bar.html:31
+msgid "OCR powered by AI"
+msgstr ""
+
+#: enferno/admin/templates/nav-bar.html:39
 msgid "User Guides"
 msgstr ""
 
-#: enferno/admin/templates/nav-bar.html:29
+#: enferno/admin/templates/nav-bar.html:46
 msgid "Support"
 msgstr ""
 
-#: enferno/admin/templates/nav-bar.html:36
+#: enferno/admin/templates/nav-bar.html:53
 msgid "Report a Bug"
 msgstr ""
 
-#: enferno/admin/templates/nav-bar.html:43
+#: enferno/admin/templates/nav-bar.html:60
 msgid "Interface Language"
 msgstr ""
 
-#: enferno/admin/templates/nav-bar.html:48
+#: enferno/admin/templates/nav-bar.html:65
 msgid "Translations"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1182
-#: enferno/admin/templates/nav-bar.html:74
+#: enferno/admin/templates/admin/system-administration.html:1160
+#: enferno/admin/templates/nav-bar.html:91
 #: enferno/templates/notifications_dialog.html:8
-#: enferno/templates/notifications_drawer.html:11
+#: enferno/templates/notifications_drawer.html:12
 msgid "Notifications"
 msgstr ""
 
-#: enferno/admin/templates/nav-bar.html:81
-#: enferno/templates/settings_drawer.html:11
+#: enferno/admin/templates/nav-bar.html:98
+#: enferno/templates/settings_drawer.html:12
 msgid "User Settings"
 msgstr ""
 
-#: enferno/admin/templates/nav-bar.html:88
+#: enferno/admin/templates/nav-bar.html:105
 #: enferno/templates/login_dialog.html:41
 #: enferno/templates/login_dialog.html:81
 #: enferno/templates/login_dialog.html:120
@@ -82,48 +90,50 @@ msgstr ""
 msgid "Show Items"
 msgstr ""
 
-#: enferno/admin/templates/admin/activity.html:262
+#: enferno/admin/templates/admin/activity.html:267
+#: enferno/admin/templates/admin/media-dashboard.html:273
 msgid "Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/activity.html:263
-#: enferno/admin/templates/admin/jsapi.jinja2:432
-#: enferno/data_import/templates/import-log.html:166
+#: enferno/admin/templates/admin/activity.html:268
+#: enferno/data_import/templates/import-log.html:171
 msgid "User"
 msgstr ""
 
-#: enferno/admin/templates/admin/activity.html:264
+#: enferno/admin/templates/admin/activity.html:269
 msgid "Action"
 msgstr ""
 
-#: enferno/admin/templates/admin/activity.html:265
-#: enferno/admin/templates/admin/actors.html:574
-#: enferno/admin/templates/admin/bulletins.html:650
-#: enferno/admin/templates/admin/incidents.html:541
-#: enferno/admin/templates/admin/jsapi.jinja2:120
-#: enferno/admin/templates/admin/jsapi.jinja2:377
-#: enferno/admin/templates/admin/partials/actor_dialog.html:918
+#: enferno/admin/templates/admin/activity.html:270
+#: enferno/admin/templates/admin/actors.html:618
+#: enferno/admin/templates/admin/bulletins.html:662
+#: enferno/admin/templates/admin/incidents.html:547
+#: enferno/admin/templates/admin/jsapi.jinja2:197
+#: enferno/admin/templates/admin/jsapi.jinja2:483
+#: enferno/admin/templates/admin/media-dashboard.html:80
+#: enferno/admin/templates/admin/partials/actor_dialog.html:923
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:60
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:60
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:59
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:180
-#: enferno/admin/templates/admin/partials/incident_dialog.html:177
-#: enferno/data_import/templates/import-log.html:169
+#: enferno/admin/templates/admin/partials/incident_dialog.html:179
+#: enferno/data_import/templates/import-log.html:174
 #: enferno/data_import/templates/sheets-import.html:17
-#: enferno/deduplication/templates/deduplication.html:197
-#: enferno/export/templates/export-dashboard.html:167
+#: enferno/deduplication/templates/deduplication.html:202
+#: enferno/export/templates/export-dashboard.html:175
 msgid "Status"
 msgstr ""
 
-#: enferno/admin/templates/admin/activity.html:266
-msgid "Subject"
+#: enferno/admin/templates/admin/activity.html:271
+msgid "Affected Item"
 msgstr ""
 
-#: enferno/admin/templates/admin/activity.html:267
+#: enferno/admin/templates/admin/activity.html:272
 msgid "Class"
 msgstr ""
 
-#: enferno/admin/templates/admin/activity.html:268
+#: enferno/admin/templates/admin/activity.html:273
+#: enferno/admin/templates/admin/jsapi.jinja2:302
 #: enferno/data_import/templates/sheets-import.html:501
 #: enferno/data_import/templates/sheets-import.html:506
 #: enferno/data_import/templates/sheets-import.html:514
@@ -161,7 +171,7 @@ msgstr ""
 #: enferno/admin/templates/admin/incident-fields.html:29
 #: enferno/admin/templates/admin/incident-fields.html:81
 #: enferno/admin/templates/admin/system-administration.html:41
-#: enferno/admin/templates/admin/system-administration.html:990
+#: enferno/admin/templates/admin/system-administration.html:1000
 msgid "Revision history"
 msgstr ""
 
@@ -174,7 +184,7 @@ msgstr ""
 #: enferno/admin/templates/admin/actor-fields.html:31
 #: enferno/admin/templates/admin/bulletin-fields.html:31
 #: enferno/admin/templates/admin/incident-fields.html:31
-#: enferno/admin/templates/admin/system-administration.html:992
+#: enferno/admin/templates/admin/system-administration.html:1002
 msgid "No more items in history"
 msgstr ""
 
@@ -187,7 +197,7 @@ msgstr ""
 #: enferno/admin/templates/admin/actor-fields.html:36
 #: enferno/admin/templates/admin/bulletin-fields.html:36
 #: enferno/admin/templates/admin/incident-fields.html:36
-#: enferno/admin/templates/admin/system-administration.html:996
+#: enferno/admin/templates/admin/system-administration.html:1006
 msgid "updated the settings"
 msgstr ""
 
@@ -200,16 +210,14 @@ msgstr ""
 #: enferno/admin/templates/admin/actor-fields.html:37
 #: enferno/admin/templates/admin/bulletin-fields.html:37
 #: enferno/admin/templates/admin/incident-fields.html:37
-#: enferno/admin/templates/admin/system-administration.html:998
-#: enferno/admin/templates/admin/system-administration.html:1064
+#: enferno/admin/templates/admin/system-administration.html:1008
 msgid "Show detailed changes"
 msgstr ""
 
 #: enferno/admin/templates/admin/actor-fields.html:37
 #: enferno/admin/templates/admin/bulletin-fields.html:37
 #: enferno/admin/templates/admin/incident-fields.html:37
-#: enferno/admin/templates/admin/system-administration.html:998
-#: enferno/admin/templates/admin/system-administration.html:1064
+#: enferno/admin/templates/admin/system-administration.html:1008
 msgid "Collapse"
 msgstr ""
 
@@ -218,13 +226,13 @@ msgid "Actor Dynamic From Builder"
 msgstr ""
 
 #: enferno/admin/templates/admin/actor-fields.html:71
-#: enferno/admin/templates/admin/actors.html:82
+#: enferno/admin/templates/admin/actors.html:113
 #: enferno/admin/templates/admin/bulletin-fields.html:71
-#: enferno/admin/templates/admin/bulletins.html:88
+#: enferno/admin/templates/admin/bulletins.html:89
 #: enferno/admin/templates/admin/incident-fields.html:71
 #: enferno/admin/templates/admin/incidents.html:82
-#: enferno/admin/templates/admin/jsapi.jinja2:178
-#: enferno/admin/templates/admin/labels.html:37
+#: enferno/admin/templates/admin/jsapi.jinja2:279
+#: enferno/admin/templates/admin/labels.html:26
 #: enferno/admin/templates/admin/locations.html:42
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:84
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:88
@@ -236,7 +244,7 @@ msgstr ""
 #: enferno/admin/templates/admin/actor-fields.html:84
 #: enferno/admin/templates/admin/bulletin-fields.html:84
 #: enferno/admin/templates/admin/incident-fields.html:84
-#: enferno/admin/templates/admin/jsapi.jinja2:81
+#: enferno/admin/templates/admin/jsapi.jinja2:155
 msgid "Discard Changes"
 msgstr ""
 
@@ -264,159 +272,162 @@ msgstr ""
 msgid "We couldn't find any fields for that search. Try another keyword."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:16
-#: enferno/admin/templates/admin/bulletins.html:21
+#: enferno/admin/templates/admin/actors.html:31
+msgid "Map visualization"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:47
+#: enferno/admin/templates/admin/bulletins.html:22
 #: enferno/admin/templates/admin/incidents.html:15
 msgid "Visualize Results"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:63
+#: enferno/admin/templates/admin/actors.html:94
 msgid "All Actors"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:66
-#: enferno/admin/templates/admin/bulletins.html:68
+#: enferno/admin/templates/admin/actors.html:97
+#: enferno/admin/templates/admin/bulletins.html:69
 #: enferno/admin/templates/admin/incidents.html:65
 msgid "Assigned to me"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:69
-#: enferno/admin/templates/admin/bulletins.html:72
+#: enferno/admin/templates/admin/actors.html:100
+#: enferno/admin/templates/admin/bulletins.html:73
 #: enferno/admin/templates/admin/incidents.html:68
 msgid "My Review List"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:89
-#: enferno/admin/templates/admin/jsapi.jinja2:19
+#: enferno/admin/templates/admin/actors.html:121
+#: enferno/admin/templates/admin/jsapi.jinja2:93
 msgid "New Actor"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:99
-#: enferno/admin/templates/admin/bulletins.html:122
-#: enferno/admin/templates/admin/incidents.html:101
+#: enferno/admin/templates/admin/actors.html:131
+#: enferno/admin/templates/admin/bulletins.html:123
+#: enferno/admin/templates/admin/incidents.html:102
 msgid "Unselect all"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:118
-#: enferno/admin/templates/admin/bulletins.html:143
-#: enferno/admin/templates/admin/incidents.html:121
+#: enferno/admin/templates/admin/actors.html:150
+#: enferno/admin/templates/admin/bulletins.html:144
+#: enferno/admin/templates/admin/incidents.html:122
 msgid "Bulk update"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:131
-#: enferno/admin/templates/admin/bulletins.html:156
-#: enferno/admin/templates/admin/incidents.html:135
+#: enferno/admin/templates/admin/actors.html:163
+#: enferno/admin/templates/admin/bulletins.html:157
+#: enferno/admin/templates/admin/incidents.html:136
 #: enferno/admin/templates/admin/system-administration.html:379
-#: enferno/admin/templates/admin/system-administration.html:845
-#: enferno/admin/templates/admin/system-administration.html:1179
+#: enferno/admin/templates/admin/system-administration.html:855
+#: enferno/admin/templates/admin/system-administration.html:1157
 msgid "Export"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:150
-#: enferno/admin/templates/admin/bulletins.html:175
-#: enferno/admin/templates/admin/incidents.html:154
+#: enferno/admin/templates/admin/actors.html:182
+#: enferno/admin/templates/admin/bulletins.html:176
+#: enferno/admin/templates/admin/incidents.html:155
 msgid "Selected items"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:158
-#: enferno/admin/templates/admin/bulletins.html:182
-#: enferno/admin/templates/admin/incidents.html:161
+#: enferno/admin/templates/admin/actors.html:190
+#: enferno/admin/templates/admin/bulletins.html:183
+#: enferno/admin/templates/admin/incidents.html:162
 msgid "Search time: "
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:159
-#: enferno/admin/templates/admin/bulletins.html:183
-#: enferno/admin/templates/admin/incidents.html:162
+#: enferno/admin/templates/admin/actors.html:191
+#: enferno/admin/templates/admin/bulletins.html:184
+#: enferno/admin/templates/admin/incidents.html:163
 msgid "seconds"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:164
-#: enferno/admin/templates/admin/bulletins.html:188
-#: enferno/admin/templates/admin/incidents.html:167
+#: enferno/admin/templates/admin/actors.html:196
+#: enferno/admin/templates/admin/bulletins.html:189
+#: enferno/admin/templates/admin/incidents.html:168
 msgid "Items per page:"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:278
+#: enferno/admin/templates/admin/actors.html:310
 msgid "Self Assign Actor"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:281
-#: enferno/admin/templates/admin/bulletins.html:309
+#: enferno/admin/templates/admin/actors.html:313
+#: enferno/admin/templates/admin/bulletins.html:310
 #: enferno/admin/templates/admin/eventtypes.html:84
-#: enferno/admin/templates/admin/eventtypes.html:214
-#: enferno/admin/templates/admin/incidents.html:276
-#: enferno/admin/templates/admin/jsapi.jinja2:118
-#: enferno/admin/templates/admin/jsapi.jinja2:265
-#: enferno/admin/templates/admin/labels.html:75
-#: enferno/admin/templates/admin/labels.html:275
-#: enferno/admin/templates/admin/partials/actor_dialog.html:912
+#: enferno/admin/templates/admin/eventtypes.html:213
+#: enferno/admin/templates/admin/incidents.html:277
+#: enferno/admin/templates/admin/jsapi.jinja2:195
+#: enferno/admin/templates/admin/jsapi.jinja2:368
+#: enferno/admin/templates/admin/labels.html:152
+#: enferno/admin/templates/admin/partials/actor_dialog.html:917
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:94
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:102
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:86
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:175
 #: enferno/admin/templates/admin/partials/export_drawer.html:60
-#: enferno/admin/templates/admin/partials/incident_dialog.html:172
+#: enferno/admin/templates/admin/partials/incident_dialog.html:174
 #: enferno/admin/templates/admin/sources.html:90
 #: enferno/admin/templates/admin/sources.html:222
 #: enferno/data_import/templates/sheets-import.html:700
 msgid "Comments"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:285
-#: enferno/admin/templates/admin/bulletins.html:313
-#: enferno/admin/templates/admin/incidents.html:223
-#: enferno/admin/templates/admin/incidents.html:281
+#: enferno/admin/templates/admin/actors.html:317
+#: enferno/admin/templates/admin/bulletins.html:314
+#: enferno/admin/templates/admin/incidents.html:224
+#: enferno/admin/templates/admin/incidents.html:282
 msgid "Assign to self"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:429
-#: enferno/admin/templates/admin/jsapi.jinja2:213
+#: enferno/admin/templates/admin/actors.html:471
+#: enferno/admin/templates/admin/jsapi.jinja2:314
 msgid "Normal"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:430
-#: enferno/admin/templates/admin/jsapi.jinja2:214
+#: enferno/admin/templates/admin/actors.html:472
+#: enferno/admin/templates/admin/jsapi.jinja2:315
 msgid "Main"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:431
-#: enferno/admin/templates/admin/jsapi.jinja2:315
+#: enferno/admin/templates/admin/actors.html:473
+#: enferno/admin/templates/admin/jsapi.jinja2:421
 msgid "Missing Person"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:567
-#: enferno/admin/templates/admin/bulletins.html:643
+#: enferno/admin/templates/admin/actors.html:611
+#: enferno/admin/templates/admin/bulletins.html:655
 #: enferno/admin/templates/admin/component-data.html:414
-#: enferno/admin/templates/admin/eventtypes.html:209
-#: enferno/admin/templates/admin/incidents.html:535
-#: enferno/admin/templates/admin/jsapi.jinja2:243
-#: enferno/admin/templates/admin/labels.html:273
+#: enferno/admin/templates/admin/eventtypes.html:208
+#: enferno/admin/templates/admin/incidents.html:541
+#: enferno/admin/templates/admin/jsapi.jinja2:346
+#: enferno/admin/templates/admin/labels.html:247
 #: enferno/admin/templates/admin/locations.html:206
 #: enferno/admin/templates/admin/partials/actor_dialog.html:13
 #: enferno/admin/templates/admin/roles.html:216
-#: enferno/admin/templates/admin/system-administration.html:1188
-#: enferno/admin/templates/admin/system-administration.html:1198
+#: enferno/admin/templates/admin/system-administration.html:1166
+#: enferno/admin/templates/admin/system-administration.html:1176
 #: enferno/admin/templates/admin/users.html:351
-#: enferno/data_import/templates/import-log.html:165
-#: enferno/deduplication/templates/deduplication.html:192
-#: enferno/export/templates/export-dashboard.html:159
+#: enferno/data_import/templates/import-log.html:170
+#: enferno/deduplication/templates/deduplication.html:197
+#: enferno/export/templates/export-dashboard.html:167
 #: enferno/templates/setup_wizard.html:526
 msgid "ID"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:568
-#: enferno/admin/templates/admin/jsapi.jinja2:208
-#: enferno/admin/templates/admin/jsapi.jinja2:494
+#: enferno/admin/templates/admin/actors.html:612
+#: enferno/admin/templates/admin/jsapi.jinja2:309
+#: enferno/admin/templates/admin/jsapi.jinja2:600
 #: enferno/admin/templates/admin/system-logs.html:148
 msgid "Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:569
-#: enferno/admin/templates/admin/jsapi.jinja2:99
-#: enferno/admin/templates/admin/jsapi.jinja2:202
-#: enferno/admin/templates/admin/jsapi.jinja2:323
+#: enferno/admin/templates/admin/actors.html:613
+#: enferno/admin/templates/admin/jsapi.jinja2:177
+#: enferno/admin/templates/admin/jsapi.jinja2:303
+#: enferno/admin/templates/admin/jsapi.jinja2:429
 #: enferno/admin/templates/admin/partials/actor_dialog.html:57
-#: enferno/admin/templates/admin/partials/actor_dialog.html:498
+#: enferno/admin/templates/admin/partials/actor_dialog.html:503
 #: enferno/admin/templates/admin/roles.html:217
 #: enferno/admin/templates/admin/users.html:354
 #: enferno/data_import/templates/sheets-import.html:217
@@ -425,19 +436,19 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:571
-#: enferno/admin/templates/admin/bulletins.html:647
-#: enferno/admin/templates/admin/incidents.html:538
+#: enferno/admin/templates/admin/actors.html:615
+#: enferno/admin/templates/admin/bulletins.html:659
+#: enferno/admin/templates/admin/incidents.html:544
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:30
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:31
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:29
 msgid "Assigned To"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:572
-#: enferno/admin/templates/admin/bulletins.html:648
-#: enferno/admin/templates/admin/incidents.html:539
-#: enferno/admin/templates/admin/jsapi.jinja2:222
+#: enferno/admin/templates/admin/actors.html:616
+#: enferno/admin/templates/admin/bulletins.html:660
+#: enferno/admin/templates/admin/incidents.html:545
+#: enferno/admin/templates/admin/jsapi.jinja2:324
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:80
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:87
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:71
@@ -445,91 +456,91 @@ msgstr ""
 msgid "Access Groups"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:575
-#: enferno/admin/templates/admin/bulletins.html:653
+#: enferno/admin/templates/admin/actors.html:619
+#: enferno/admin/templates/admin/bulletins.html:665
 #: enferno/admin/templates/admin/component-data.html:423
-#: enferno/admin/templates/admin/eventtypes.html:216
-#: enferno/admin/templates/admin/incidents.html:542
-#: enferno/admin/templates/admin/labels.html:283
+#: enferno/admin/templates/admin/eventtypes.html:215
+#: enferno/admin/templates/admin/incidents.html:548
+#: enferno/admin/templates/admin/labels.html:252
 #: enferno/admin/templates/admin/locations.html:214
 #: enferno/admin/templates/admin/roles.html:222
 #: enferno/admin/templates/admin/sources.html:226
-#: enferno/admin/templates/admin/system-administration.html:1144
-#: enferno/admin/templates/admin/system-administration.html:1191
-#: enferno/admin/templates/admin/system-administration.html:1200
+#: enferno/admin/templates/admin/system-administration.html:1123
+#: enferno/admin/templates/admin/system-administration.html:1169
+#: enferno/admin/templates/admin/system-administration.html:1178
 #: enferno/admin/templates/admin/users.html:358
 #: enferno/templates/setup_wizard.html:529
 msgid "Actions"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:645
-#: enferno/admin/templates/admin/bulletins.html:803
-#: enferno/admin/templates/admin/incidents.html:606
+#: enferno/admin/templates/admin/actors.html:689
+#: enferno/admin/templates/admin/bulletins.html:814
+#: enferno/admin/templates/admin/incidents.html:612
 #, python-brace-format
 msgid "Showing {items} of"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:754
-#: enferno/admin/templates/admin/bulletins.html:865
-#: enferno/admin/templates/admin/incidents.html:702
+#: enferno/admin/templates/admin/actors.html:803
+#: enferno/admin/templates/admin/bulletins.html:883
+#: enferno/admin/templates/admin/incidents.html:711
 msgid "It looks like you have been editing something. "
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:755
-#: enferno/admin/templates/admin/bulletins.html:866
-#: enferno/admin/templates/admin/incidents.html:703
+#: enferno/admin/templates/admin/actors.html:804
+#: enferno/admin/templates/admin/bulletins.html:884
+#: enferno/admin/templates/admin/incidents.html:712
 msgid "If you leave before saving, your changes will be lost."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:803
-#: enferno/admin/templates/admin/bulletins.html:893
-#: enferno/admin/templates/admin/incidents.html:730
-#: enferno/admin/templates/admin/jsapi.jinja2:93
+#: enferno/admin/templates/admin/actors.html:871
+#: enferno/admin/templates/admin/bulletins.html:930
+#: enferno/admin/templates/admin/incidents.html:739
+#: enferno/admin/templates/admin/jsapi.jinja2:171
 #: enferno/admin/templates/admin/locations.html:526
 #: enferno/admin/templates/admin/users.html:449
 #: enferno/templates/security/change_password.html:102
 msgid "Please review the form for errors."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:815
+#: enferno/admin/templates/admin/actors.html:883
 msgid "Are you sure you want to delete this profile?"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:833
+#: enferno/admin/templates/admin/actors.html:901
 msgid "Main profile already exists."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:862
+#: enferno/admin/templates/admin/actors.html:930
 msgid "A main profile already exists. Cannot duplicate another main profile."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:909
-#: enferno/admin/templates/admin/bulletins.html:929
-#: enferno/admin/templates/admin/incidents.html:760
+#: enferno/admin/templates/admin/actors.html:977
+#: enferno/admin/templates/admin/bulletins.html:966
+#: enferno/admin/templates/admin/incidents.html:769
 msgid "Graph is being generated."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:953
+#: enferno/admin/templates/admin/actors.html:1021
 msgid "Actor assigned successfully."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:1003
-#: enferno/admin/templates/admin/bulletins.html:1039
-#: enferno/admin/templates/admin/incidents.html:857
+#: enferno/admin/templates/admin/actors.html:1071
+#: enferno/admin/templates/admin/bulletins.html:1076
+#: enferno/admin/templates/admin/incidents.html:866
 msgid "Bulk Update is finished!"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:1268
-#: enferno/admin/templates/admin/bulletins.html:1298
-#: enferno/admin/templates/admin/incidents.html:1097
+#: enferno/admin/templates/admin/actors.html:1341
+#: enferno/admin/templates/admin/bulletins.html:1335
+#: enferno/admin/templates/admin/incidents.html:1106
 msgid "This item is restricted."
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:1505
-#: enferno/admin/templates/admin/bulletins.html:1534
-#: enferno/admin/templates/admin/eventtypes.html:279
-#: enferno/admin/templates/admin/incidents.html:1384
-#: enferno/admin/templates/admin/labels.html:360
+#: enferno/admin/templates/admin/actors.html:1617
+#: enferno/admin/templates/admin/bulletins.html:1591
+#: enferno/admin/templates/admin/eventtypes.html:278
+#: enferno/admin/templates/admin/incidents.html:1393
+#: enferno/admin/templates/admin/labels.html:395
 #: enferno/admin/templates/admin/locations.html:457
 #: enferno/admin/templates/admin/roles.html:303
 #: enferno/admin/templates/admin/sources.html:308
@@ -541,91 +552,91 @@ msgid "Bulletin Dynamic From Builder"
 msgstr ""
 
 #: enferno/admin/templates/admin/bulletin-fields.html:95
-#: enferno/admin/templates/admin/jsapi.jinja2:254
+#: enferno/admin/templates/admin/jsapi.jinja2:357
 #: enferno/admin/templates/admin/partials/media_dialog.html:7
 msgid "Media"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:64
+#: enferno/admin/templates/admin/bulletins.html:65
 msgid "All Bulletins"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:102
-#: enferno/admin/templates/admin/jsapi.jinja2:17
+#: enferno/admin/templates/admin/bulletins.html:103
+#: enferno/admin/templates/admin/jsapi.jinja2:91
 msgid "New Bulletin"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:112
-#: enferno/admin/templates/admin/bulletins.html:323
+#: enferno/admin/templates/admin/bulletins.html:113
+#: enferno/admin/templates/admin/bulletins.html:324
 msgid "Import from Web"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:288
+#: enferno/admin/templates/admin/bulletins.html:289
 msgid "Create Related Actor"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:298
+#: enferno/admin/templates/admin/bulletins.html:299
 msgid "Self Assign Bulletin"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:305
-#: enferno/admin/templates/admin/jsapi.jinja2:101
-#: enferno/admin/templates/admin/jsapi.jinja2:139
+#: enferno/admin/templates/admin/bulletins.html:306
+#: enferno/admin/templates/admin/jsapi.jinja2:179
+#: enferno/admin/templates/admin/jsapi.jinja2:238
 #: enferno/admin/templates/admin/partials/actor_dialog.html:256
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:67
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:71
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:100
 #: enferno/admin/templates/admin/partials/export_drawer.html:50
-#: enferno/admin/templates/admin/partials/location_dialog.html:158
+#: enferno/admin/templates/admin/partials/location_dialog.html:154
 #: enferno/admin/templates/admin/partials/review_dialog.html:43
 #: enferno/data_import/templates/media-import.html:209
 #: enferno/data_import/templates/sheets-import.html:318
 msgid "Tags"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:331
+#: enferno/admin/templates/admin/bulletins.html:332
 msgid "Enter URL"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:345
+#: enferno/admin/templates/admin/bulletins.html:346
 msgid "Import"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:644
+#: enferno/admin/templates/admin/bulletins.html:656
 #: enferno/admin/templates/admin/component-data.html:417
 #: enferno/admin/templates/admin/component-data.html:418
 #: enferno/admin/templates/admin/component-data.html:419
 #: enferno/admin/templates/admin/component-data.html:420
 #: enferno/admin/templates/admin/eventtypes.html:56
-#: enferno/admin/templates/admin/eventtypes.html:210
-#: enferno/admin/templates/admin/incidents.html:536
-#: enferno/admin/templates/admin/jsapi.jinja2:96
-#: enferno/admin/templates/admin/jsapi.jinja2:248
-#: enferno/admin/templates/admin/labels.html:59
-#: enferno/admin/templates/admin/labels.html:274
+#: enferno/admin/templates/admin/eventtypes.html:209
+#: enferno/admin/templates/admin/incidents.html:542
+#: enferno/admin/templates/admin/jsapi.jinja2:174
+#: enferno/admin/templates/admin/jsapi.jinja2:351
+#: enferno/admin/templates/admin/labels.html:129
+#: enferno/admin/templates/admin/labels.html:248
 #: enferno/admin/templates/admin/locations.html:207
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:94
 #: enferno/admin/templates/admin/partials/incident_dialog.html:36
-#: enferno/admin/templates/admin/partials/location_dialog.html:38
-#: enferno/admin/templates/admin/partials/media_dialog.html:77
+#: enferno/admin/templates/admin/partials/location_dialog.html:34
+#: enferno/admin/templates/admin/partials/media_dialog.html:79
 #: enferno/admin/templates/admin/sources.html:59
 #: enferno/admin/templates/admin/sources.html:219
-#: enferno/admin/templates/admin/system-administration.html:1190
-#: enferno/admin/templates/admin/system-administration.html:1199
+#: enferno/admin/templates/admin/system-administration.html:1168
+#: enferno/admin/templates/admin/system-administration.html:1177
 #: enferno/data_import/templates/sheets-import.html:672
 #: enferno/templates/setup_wizard.html:528
 msgid "Title"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:979
+#: enferno/admin/templates/admin/bulletins.html:1016
 msgid "Bulletin assigned successfully."
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:1671
+#: enferno/admin/templates/admin/bulletins.html:1728
 msgid "Please enter a URL"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:1681
+#: enferno/admin/templates/admin/bulletins.html:1738
 msgid "URL import started"
 msgstr ""
 
@@ -758,7 +769,7 @@ msgid "Claimed Violation Categories"
 msgstr ""
 
 #: enferno/admin/templates/admin/component-data.html:317
-#: enferno/admin/templates/admin/system-administration.html:1181
+#: enferno/admin/templates/admin/system-administration.html:1159
 #: enferno/data_import/templates/sheets-import.html:702
 #: enferno/templates/setup_wizard.html:156
 msgid "Location"
@@ -813,7 +824,7 @@ msgid "Violation Categories"
 msgstr ""
 
 #: enferno/admin/templates/admin/component-data.html:417
-#: enferno/admin/templates/admin/system-administration.html:1189
+#: enferno/admin/templates/admin/system-administration.html:1167
 #: enferno/templates/login_dialog.html:112
 #: enferno/templates/setup_wizard.html:527
 msgid "Code"
@@ -821,7 +832,7 @@ msgstr ""
 
 #: enferno/admin/templates/admin/component-data.html:419
 #: enferno/admin/templates/admin/component-data.html:420
-msgid "Title (tr)"
+msgid "Translated Title"
 msgstr ""
 
 #: enferno/admin/templates/admin/component-data.html:420
@@ -829,19 +840,18 @@ msgid "Reverse Title"
 msgstr ""
 
 #: enferno/admin/templates/admin/component-data.html:420
-msgid "Reverse Title (tr)"
+msgid "Translated Reverse Title"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:28
-#: enferno/templates/nav-drawer.html:25
+#: enferno/templates/nav-drawer.html:29
 msgid "Event Types"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:37
-#: enferno/admin/templates/admin/eventtypes.html:233
-#: enferno/admin/templates/admin/jsapi.jinja2:21
-#: enferno/admin/templates/admin/labels.html:47
-#: enferno/admin/templates/admin/labels.html:303
+#: enferno/admin/templates/admin/eventtypes.html:232
+#: enferno/admin/templates/admin/jsapi.jinja2:95
+#: enferno/admin/templates/admin/labels.html:41
 #: enferno/admin/templates/admin/sources.html:46
 #: enferno/admin/templates/admin/sources.html:248
 #: enferno/admin/templates/admin/users.html:387
@@ -849,27 +859,27 @@ msgid "New Item"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:63
-#: enferno/admin/templates/admin/jsapi.jinja2:97
-#: enferno/admin/templates/admin/labels.html:66
-#: enferno/admin/templates/admin/partials/media_dialog.html:78
+#: enferno/admin/templates/admin/jsapi.jinja2:175
+#: enferno/admin/templates/admin/labels.html:147
+#: enferno/admin/templates/admin/partials/media_dialog.html:80
 msgid "Title (AR)"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:69
-#: enferno/admin/templates/admin/eventtypes.html:212
+#: enferno/admin/templates/admin/eventtypes.html:211
 msgid "For Actors"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:75
-#: enferno/admin/templates/admin/eventtypes.html:213
+#: enferno/admin/templates/admin/eventtypes.html:212
 msgid "For Bulletins"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:99
 #: enferno/admin/templates/admin/eventtypes.html:149
-#: enferno/admin/templates/admin/jsapi.jinja2:87
-#: enferno/admin/templates/admin/labels.html:158
-#: enferno/admin/templates/admin/labels.html:209
+#: enferno/admin/templates/admin/jsapi.jinja2:165
+#: enferno/admin/templates/admin/labels.html:196
+#: enferno/admin/templates/admin/labels.html:211
 #: enferno/admin/templates/admin/locations.html:98
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:102
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:105
@@ -878,17 +888,16 @@ msgstr ""
 #: enferno/admin/templates/admin/roles.html:151
 #: enferno/admin/templates/admin/sources.html:104
 #: enferno/admin/templates/admin/sources.html:156
-#: enferno/admin/templates/admin/system-administration.html:1042
-#: enferno/admin/templates/admin/system-administration.html:1075
+#: enferno/admin/templates/admin/system-administration.html:1052
 #: enferno/data_import/templates/media-import.html:299
 #: enferno/data_import/templates/media-import.html:325
 msgid "Cancel"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:105
-#: enferno/admin/templates/admin/jsapi.jinja2:207
-#: enferno/admin/templates/admin/labels.html:165
-#: enferno/admin/templates/admin/labels.html:215
+#: enferno/admin/templates/admin/jsapi.jinja2:308
+#: enferno/admin/templates/admin/labels.html:197
+#: enferno/admin/templates/admin/labels.html:212
 #: enferno/admin/templates/admin/locations.html:102
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:103
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:106
@@ -904,8 +913,8 @@ msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:120
 #: enferno/admin/templates/admin/eventtypes.html:127
-#: enferno/admin/templates/admin/labels.html:180
-#: enferno/admin/templates/admin/labels.html:187
+#: enferno/admin/templates/admin/labels.html:49
+#: enferno/admin/templates/admin/labels.html:205
 #: enferno/admin/templates/admin/locations.html:63
 #: enferno/admin/templates/admin/locations.html:77
 #: enferno/admin/templates/admin/roles.html:123
@@ -916,20 +925,20 @@ msgid "Import CSV"
 msgstr ""
 
 #: enferno/admin/templates/admin/eventtypes.html:136
-#: enferno/admin/templates/admin/labels.html:196
+#: enferno/admin/templates/admin/labels.html:207
 #: enferno/admin/templates/admin/locations.html:87
 #: enferno/admin/templates/admin/roles.html:138
 #: enferno/admin/templates/admin/sources.html:143
 msgid "Select CSV File"
 msgstr ""
 
-#: enferno/admin/templates/admin/eventtypes.html:211
+#: enferno/admin/templates/admin/eventtypes.html:210
 msgid "Title (ar)"
 msgstr ""
 
-#: enferno/admin/templates/admin/eventtypes.html:233
-#: enferno/admin/templates/admin/jsapi.jinja2:22
-#: enferno/admin/templates/admin/labels.html:303
+#: enferno/admin/templates/admin/eventtypes.html:232
+#: enferno/admin/templates/admin/jsapi.jinja2:96
+#: enferno/admin/templates/admin/labels.html:290
 #: enferno/admin/templates/admin/sources.html:248
 #: enferno/admin/templates/admin/users.html:387
 msgid "Edit Item"
@@ -943,426 +952,744 @@ msgstr ""
 msgid "All Incidents"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:89
-#: enferno/admin/templates/admin/incidents.html:646
+#: enferno/admin/templates/admin/incidents.html:90
+#: enferno/admin/templates/admin/incidents.html:655
 msgid "New Incident"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:209
-#: enferno/admin/templates/admin/jsapi.jinja2:245
+#: enferno/admin/templates/admin/incidents.html:210
+#: enferno/admin/templates/admin/jsapi.jinja2:348
 msgid "Edit"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:239
+#: enferno/admin/templates/admin/incidents.html:240
 #: enferno/admin/templates/admin/partials/review_dialog.html:5
 msgid "Add Review"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:273
+#: enferno/admin/templates/admin/incidents.html:274
 msgid "Self Assign Incident"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:646
+#: enferno/admin/templates/admin/incidents.html:655
 msgid "Edit Incident"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:809
+#: enferno/admin/templates/admin/incidents.html:818
 msgid "Incident assigned successfully."
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:13
-#: enferno/admin/templates/admin/labels.html:119
-#: enferno/admin/templates/admin/labels.html:278
+#: enferno/admin/templates/admin/labels.html:73
+#: enferno/admin/templates/admin/labels.html:240
+#: enferno/admin/templates/admin/media-dashboard.html:271
 msgid "Bulletin"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:14
-#: enferno/admin/templates/admin/labels.html:127
-#: enferno/admin/templates/admin/labels.html:279
+#: enferno/admin/templates/admin/labels.html:74
+#: enferno/admin/templates/admin/labels.html:241
 msgid "Actor"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:15
-#: enferno/admin/templates/admin/labels.html:135
-#: enferno/admin/templates/admin/labels.html:280
+#: enferno/admin/templates/admin/labels.html:75
+#: enferno/admin/templates/admin/labels.html:242
 msgid "Incident"
 msgstr ""
 
+#: enferno/admin/templates/admin/jsapi.jinja2:17
+msgid "Filters"
+msgstr ""
+
 #: enferno/admin/templates/admin/jsapi.jinja2:18
-msgid "Edit Bulletin"
+msgid "Violations"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:19
+msgid "Personal Information"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:20
-msgid "Edit Actor"
+msgid "NAME INFORMATION"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:21
+msgid "DEMOGRAPHICS"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:22
+msgid "PROFESSIONAL & FAMILY"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:23
-msgid "Invalid username: only letters and numbers are allowed"
+msgid "CULTURAL INFORMATION"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:24
-msgid "Username already taken"
+msgid "ORIGIN LOCATIONS"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:25
-msgid "Invalid email address"
+msgid "Search Logic"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:26
-msgid "Invalid date"
+msgid "How to combine filters"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:27
-msgid "From date must be before To date"
+msgid "Text Search"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:28
-msgid "To date must be after From date"
+msgid "TAGS"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:29
-msgid "Must be a valid URL or 'NA'"
+msgid "Dates"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:30
-msgid "Fields do not match"
+msgid "Classification"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:31
-msgid "Password is too weak"
+msgid "LABELS"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:32
-msgid "Select Field Type"
+msgid "VERIFIED LABELS"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:33
-msgid "Short Text"
+msgid "SOURCES"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:34
-msgid "Long Text"
+msgid "Workflow & Access"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:35
-#: enferno/admin/templates/admin/jsapi.jinja2:492
-#: enferno/data_import/templates/sheets-import.html:342
-msgid "Number"
+msgid "Custom Fields"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:36
-msgid "Dropdown"
+msgid "Access & Review"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:37
-msgid "Multi-Select"
+msgid "Separate words with space, use quotes for exact match"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:38
-msgid "Date and Time"
+#, python-brace-format
+msgid "{count} active filter(s)"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:39
-msgid "Make the field required"
+#: enferno/admin/templates/admin/media-dashboard.html:147
+#: enferno/admin/templates/admin/media-dashboard.html:413
+msgid "Google Vision API is not configured. Please contact your administrator."
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:40
-msgid "Make the field searchable"
+msgid "API is not configured."
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:41
-msgid "Show Field"
+msgid "Transcription Review"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:42
-msgid "Hide Field"
+msgid "Type what you see in the media here..."
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:43
-msgid "Show Option"
+msgid "Save transcription"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:44
-msgid "Hide Option"
+msgid "Accept transcription"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:45
-msgid "Delete Field"
+#: enferno/admin/templates/admin/media-dashboard.html:143
+msgid "Run OCR"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:46
-msgid "Deletion Restricted"
+msgid "Confidence Level"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:47
-msgid "Max Length"
+msgid "Unsupported"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:48
-msgid "Help Text"
+msgid "Translation completed"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:49
-msgid "Field Properties"
+msgid "English"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:50
-msgid "Add another option"
+msgid "Spanish"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:51
-msgid "One selection only"
+msgid "Dutch"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:52
-msgid "Field Options"
+msgid "German"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:53
-msgid "DEFAULT"
+msgid "French"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:54
-msgid "CUSTOM"
+#: enferno/admin/templates/admin/media-dashboard.html:34
+msgid "Pending"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:55
-msgid "Full"
+#: enferno/admin/templates/admin/media-dashboard.html:26
+msgid "Failed"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:56
-msgid "Half"
+msgid "Cannot Read"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:57
-msgid "New Field"
+#: enferno/admin/templates/admin/media-dashboard.html:18
+msgid "Processed"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:58
-msgid "Field Title"
+msgid "Processing"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:59
-#, python-brace-format
-msgid "Option {num}"
+msgid "Please wait while we process this media"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:60
-#, python-brace-format
-msgid "Field {num}"
+msgid "Manually transcribed"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:61
-msgid "Width"
+msgid "OCR processing failed for this media"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:62
-msgid "No UI component mapped for this field"
+msgid "Click retry to attempt OCR processing again"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:63
-msgid "Show or Hide Event Types"
+msgid "OCR Processing Failed"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:64
-#: enferno/admin/templates/admin/system-administration.html:1026
-msgid "Added"
+msgid "Retry OCR"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:65
-msgid "Modified"
+#: enferno/admin/templates/admin/media-dashboard.html:272
+msgid "OCR Status"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:66
-msgid "Deleted"
+msgid "This media has been marked as unreadable by a reviewer"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:67
-#: enferno/admin/templates/admin/system-logs.html:322
-msgid "Copied to clipboard"
+msgid "This media was manually transcribed by a reviewer"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:68
-msgid "Copy coordinates"
+msgid "This media has been reviewed and accepted"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:69
-msgid "Failed to copy coordinates"
+msgid "Extracted text"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:70
-msgid "Up to 255 characters"
+msgid "Error processing OCR"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:71
-msgid "Unlimited text length"
+msgid "Source Language"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:72
-msgid "Whole numbers only"
+msgid "Translate"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:73
-msgid "Single or multiple choice"
+msgid "Orientation saved"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:74
-msgid "Date with optional time"
+msgid "Save Orientation"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:75
-#, python-brace-format
-msgid "Deleting the field '{field}' will remove it from your form."
+msgid "Word Count"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:76
 #, python-brace-format
-msgid "Field '{field}' has been deleted successfully."
+msgid "This document has only {count} words."
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:77
-msgid "Google OAuth"
+msgid "Review Recommended"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:78
-msgid "You're about to discard changes"
+msgid "Consider checking if any handwritten content was missed."
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:79
-msgid "Discarding will remove all unsaved edits you've made to this form."
+msgid "Transcription is required"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:80
-msgid "Do you want to continue?"
+msgid "OCR processed successfully"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:81
+msgid "OCR has not been run on this media yet"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:82
-msgid "All unsaved edits in the form have been discarded."
+msgid "Click 'Run OCR' below to extract text from this image"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:83
-msgid "Review & Confirm Changes"
+msgid "No extraction data found for this media."
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:84
-msgid "You're about to delete a field"
+msgid "Media manually transcribed"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:85
-msgid "Fields saved successfully"
+msgid "Media marked as accepted"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:86
+msgid "Media marked as cannot read"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:87
+msgid "Can't Read"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:88
-#: enferno/admin/templates/admin/partials/location_dialog.html:41
-msgid "Title or Title (Ar) is required"
+msgid "High"
 msgstr ""
 
 #: enferno/admin/templates/admin/jsapi.jinja2:89
+msgid "Medium"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:90
+msgid "Low"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:92
+msgid "Edit Bulletin"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:94
+msgid "Edit Actor"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:97
+msgid "Invalid username: only letters and numbers are allowed"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:98
+msgid "Username already taken"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:99
+msgid "Invalid email address"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:100
+msgid "Invalid date"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:101
+msgid "From date must be before To date"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:102
+msgid "To date must be after From date"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:103
+msgid "Must be a valid URL or 'NA'"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:104
+msgid "Fields do not match"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:105
+msgid "Password is too weak"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:106
+msgid "Select Field Type"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:107
+msgid "Short Text"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:108
+msgid "Long Text"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:109
+#: enferno/admin/templates/admin/jsapi.jinja2:598
+#: enferno/data_import/templates/sheets-import.html:342
+msgid "Number"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:110
+msgid "Dropdown"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:111
+msgid "Multi-Select"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:112
+msgid "Date and Time"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:113
+msgid "Make the field required"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:114
+msgid "Make the field searchable"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:115
+msgid "Show Field"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:116
+msgid "Hide Field"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:117
+msgid "Show Option"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:118
+msgid "Hide Option"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:119
+msgid "Delete Field"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:120
+msgid "Deletion Restricted"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:121
+msgid "Max Length"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:122
+msgid "Help Text"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:123
+msgid "Field Properties"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:124
+msgid "Add another option"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:125
+msgid "One selection only"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:126
+msgid "Field Options"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:127
+msgid "DEFAULT"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:128
+msgid "CUSTOM"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:129
+msgid "Full"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:130
+msgid "Half"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:131
+msgid "New Field"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:132
+msgid "Field Title"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:133
+#, python-brace-format
+msgid "Option {num}"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:134
+#, python-brace-format
+msgid "Field {num}"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:135
+msgid "Width"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:136
+msgid "No UI component mapped for this field"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:137
+msgid "Show or Hide Event Types"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:138
+#: enferno/admin/templates/admin/system-administration.html:1036
+msgid "Added"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:139
+msgid "Modified"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:140
+msgid "Deleted"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:141
+#: enferno/admin/templates/admin/system-logs.html:322
+msgid "Copied to clipboard"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:142
+msgid "Copy coordinates"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:143
+msgid "Failed to copy coordinates"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:144
+msgid "Up to 255 characters"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:145
+msgid "Unlimited text length"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:146
+msgid "Whole numbers only"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:147
+msgid "Single or multiple choice"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:148
+msgid "Date with optional time"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:149
+#, python-brace-format
+msgid "Deleting the field '{field}' will remove it from your form."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:150
+#, python-brace-format
+msgid "Field '{field}' has been deleted successfully."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:151
+msgid "Google OAuth"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:152
+msgid "You're about to discard changes"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:153
+msgid "Discarding will remove all unsaved edits you've made to this form."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:154
+msgid "Do you want to continue?"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:156
+msgid "All unsaved edits in the form have been discarded."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:157
+msgid "Review & Confirm Changes"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:158
+msgid "You're about to delete a field"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:159
+msgid "Fields saved successfully"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:160
+#, python-brace-format
+msgid "{names} and {num} more"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:161
+msgid "View/Edit Transcription"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:162
+msgid "Transcribe"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:163
+msgid "Transcription available after saving"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:166
+#: enferno/admin/templates/admin/partials/location_dialog.html:37
+msgid "Title or Title (Ar) is required"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:167
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:203
 msgid "Review"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:90
+#: enferno/admin/templates/admin/jsapi.jinja2:168
 msgid "Location or Date is required"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:91
+#: enferno/admin/templates/admin/jsapi.jinja2:169
 msgid "Title or Event Type is required"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:92
+#: enferno/admin/templates/admin/jsapi.jinja2:170
 msgid "Preview"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:94
-#: enferno/admin/templates/admin/partials/actor_dialog.html:936
+#: enferno/admin/templates/admin/jsapi.jinja2:172
+#: enferno/admin/templates/admin/partials/actor_dialog.html:941
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:189
-#: enferno/admin/templates/admin/partials/incident_dialog.html:186
+#: enferno/admin/templates/admin/partials/incident_dialog.html:188
 msgid "Access Group(s) are required unless unrestricted."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:95
+#: enferno/admin/templates/admin/jsapi.jinja2:173
 #: enferno/admin/templates/admin/partials/actor_dialog.html:22
 msgid "Save Actor"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:98
-#: enferno/admin/templates/admin/partials/media_dialog.html:88
+#: enferno/admin/templates/admin/jsapi.jinja2:176
+#: enferno/admin/templates/admin/partials/media_dialog.html:90
 msgid "Media Category"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:100
+#: enferno/admin/templates/admin/jsapi.jinja2:178
 #: enferno/admin/templates/admin/partials/actor_dialog.html:58
 #: enferno/data_import/templates/sheets-import.html:232
 msgid "Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:102
-#: enferno/admin/templates/admin/jsapi.jinja2:273
+#: enferno/admin/templates/admin/jsapi.jinja2:180
+#: enferno/admin/templates/admin/jsapi.jinja2:376
 #: enferno/admin/templates/admin/partials/actor_dialog.html:71
 #: enferno/data_import/templates/sheets-import.html:243
 msgid "First Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:103
+#: enferno/admin/templates/admin/jsapi.jinja2:181
 #: enferno/admin/templates/admin/partials/actor_dialog.html:72
 #: enferno/data_import/templates/sheets-import.html:246
 msgid "First Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:104
+#: enferno/admin/templates/admin/jsapi.jinja2:182
 #: enferno/admin/templates/admin/partials/actor_dialog.html:85
 msgid "Middle Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:105
+#: enferno/admin/templates/admin/jsapi.jinja2:183
 #: enferno/admin/templates/admin/partials/actor_dialog.html:86
 msgid "Middle Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:106
-#: enferno/admin/templates/admin/jsapi.jinja2:275
+#: enferno/admin/templates/admin/jsapi.jinja2:184
+#: enferno/admin/templates/admin/jsapi.jinja2:378
 #: enferno/admin/templates/admin/partials/actor_dialog.html:97
 #: enferno/data_import/templates/sheets-import.html:257
 msgid "Last Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:107
+#: enferno/admin/templates/admin/jsapi.jinja2:185
 #: enferno/admin/templates/admin/partials/actor_dialog.html:98
 #: enferno/data_import/templates/sheets-import.html:260
 msgid "Last Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:108
-#: enferno/admin/templates/admin/jsapi.jinja2:192
-#: enferno/admin/templates/admin/jsapi.jinja2:280
+#: enferno/admin/templates/admin/jsapi.jinja2:186
+#: enferno/admin/templates/admin/jsapi.jinja2:293
+#: enferno/admin/templates/admin/jsapi.jinja2:383
 #: enferno/admin/templates/admin/partials/actor_dialog.html:150
 #: enferno/data_import/templates/sheets-import.html:278
 msgid "Sex"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:109
-#: enferno/admin/templates/admin/jsapi.jinja2:194
+#: enferno/admin/templates/admin/jsapi.jinja2:187
+#: enferno/admin/templates/admin/jsapi.jinja2:295
 #: enferno/admin/templates/admin/partials/actor_dialog.html:170
 #: enferno/data_import/templates/sheets-import.html:282
 msgid "Civilian/Non Civilian"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:110
-#: enferno/admin/templates/admin/jsapi.jinja2:287
+#: enferno/admin/templates/admin/jsapi.jinja2:188
+#: enferno/admin/templates/admin/jsapi.jinja2:390
 #: enferno/admin/templates/admin/partials/actor_dialog.html:181
 #: enferno/data_import/templates/sheets-import.html:286
 msgid "Place of Origin"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:111
-#: enferno/admin/templates/admin/jsapi.jinja2:289
-msgid "ID Number"
-msgstr ""
-
-#: enferno/admin/templates/admin/jsapi.jinja2:112
-#: enferno/admin/templates/admin/jsapi.jinja2:138
-#: enferno/admin/templates/admin/jsapi.jinja2:244
+#: enferno/admin/templates/admin/jsapi.jinja2:189
+#: enferno/admin/templates/admin/jsapi.jinja2:235
+#: enferno/admin/templates/admin/jsapi.jinja2:347
 #: enferno/admin/templates/admin/partials/actor_dialog.html:342
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:40
 #: enferno/admin/templates/admin/sources.html:78
@@ -1371,557 +1698,656 @@ msgstr ""
 msgid "Origin ID"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:113
-#: enferno/admin/templates/admin/jsapi.jinja2:250
+#: enferno/admin/templates/admin/jsapi.jinja2:190
+#: enferno/admin/templates/admin/jsapi.jinja2:353
 #: enferno/admin/templates/admin/partials/actor_dialog.html:385
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:104
 #: enferno/admin/templates/admin/partials/review_dialog.html:102
 #: enferno/admin/templates/admin/sources.html:26
 #: enferno/data_import/templates/media-import.html:201
 #: enferno/data_import/templates/sheets-import.html:386
-#: enferno/templates/nav-drawer.html:19
+#: enferno/templates/nav-drawer.html:23
 msgid "Sources"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:114
-#: enferno/admin/templates/admin/jsapi.jinja2:251
-#: enferno/admin/templates/admin/labels.html:27
-#: enferno/admin/templates/admin/labels.html:97
-#: enferno/admin/templates/admin/partials/actor_dialog.html:399
+#: enferno/admin/templates/admin/jsapi.jinja2:191
+#: enferno/admin/templates/admin/jsapi.jinja2:354
+#: enferno/admin/templates/admin/labels.html:10
+#: enferno/admin/templates/admin/partials/actor_dialog.html:402
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:112
-#: enferno/admin/templates/admin/partials/incident_dialog.html:75
+#: enferno/admin/templates/admin/partials/incident_dialog.html:77
 #: enferno/admin/templates/admin/partials/review_dialog.html:76
 #: enferno/data_import/templates/media-import.html:167
 #: enferno/data_import/templates/sheets-import.html:388
-#: enferno/templates/nav-drawer.html:22
+#: enferno/templates/nav-drawer.html:26
 msgid "Labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:115
+#: enferno/admin/templates/admin/jsapi.jinja2:192
 #: enferno/data_import/templates/sheets-import.html:710
 msgid "Estimated Time"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:116
+#: enferno/admin/templates/admin/jsapi.jinja2:193
 #: enferno/data_import/templates/sheets-import.html:706
 msgid "From"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:117
+#: enferno/admin/templates/admin/jsapi.jinja2:194
 #: enferno/data_import/templates/sheets-import.html:708
 msgid "To"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:119
+#: enferno/admin/templates/admin/jsapi.jinja2:196
 msgid "Comments (Ar)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:121
-#: enferno/admin/templates/admin/partials/actor_dialog.html:934
+#: enferno/admin/templates/admin/jsapi.jinja2:198
+#: enferno/admin/templates/admin/partials/actor_dialog.html:939
 msgid "Restrict Actor to Access Group(s)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:122
-#: enferno/admin/templates/admin/partials/actor_dialog.html:944
+#: enferno/admin/templates/admin/jsapi.jinja2:199
+#: enferno/admin/templates/admin/partials/actor_dialog.html:949
 msgid "No Access Access Groups"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:123
+#: enferno/admin/templates/admin/jsapi.jinja2:200
 #: enferno/admin/templates/admin/partials/actor_dialog.html:302
 msgid "Profile"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:125
+#: enferno/admin/templates/admin/jsapi.jinja2:201
+msgid "No items available"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:202
+msgid "No more items to load"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:204
+msgid "Map Visualization"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:205
+msgid "Starting map generation..."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:206
+msgid "Waiting for map data..."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:207
+msgid "Loading map data..."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:208
+msgid "Map generation failed"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:209
+msgid "Preparing map..."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:210
+msgid "Rendering map..."
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:211
+msgid "Flow Details"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:212
+msgid "Origin"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:213
+msgid "Destination"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:214
+msgid "Count"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:215
+msgid "Location Details"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:216
+msgid "Total In"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:217
+msgid "Total Out"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:218
+#, python-brace-format
+msgid ""
+"Loaded {total_locations} locations, {total_flows} flows, and "
+"{total_actors} actors"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:219
+msgid "File Type Not Supported"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:220
+#, python-brace-format
+msgid "OCR processing is only available for the following file types: {fileTypes}"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:222
 msgid "Show more"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:126
+#: enferno/admin/templates/admin/jsapi.jinja2:223
 msgid "Show less"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:127
+#: enferno/admin/templates/admin/jsapi.jinja2:224
 msgid "Add as related"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:128
+#: enferno/admin/templates/admin/jsapi.jinja2:225
 msgid "Hide from results"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:129
+#: enferno/admin/templates/admin/jsapi.jinja2:226
 msgid "Show search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:130
+#: enferno/admin/templates/admin/jsapi.jinja2:227
 msgid "Hide search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:131
-#: enferno/deduplication/templates/deduplication.html:193
+#: enferno/admin/templates/admin/jsapi.jinja2:228
+#: enferno/deduplication/templates/deduplication.html:198
 msgid "Query"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:132
+#: enferno/admin/templates/admin/jsapi.jinja2:229
 msgid "Advanced Search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:133
+#: enferno/admin/templates/admin/jsapi.jinja2:230
 msgid "No (more) items found."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:134
+#: enferno/admin/templates/admin/jsapi.jinja2:231
 msgid "Hide"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:135
+#: enferno/admin/templates/admin/jsapi.jinja2:232
 msgid "Relate"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:136
+#: enferno/admin/templates/admin/jsapi.jinja2:233
 msgid "Contains"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:137
+#: enferno/admin/templates/admin/jsapi.jinja2:234
 msgid "Does not contain"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:140
+#: enferno/admin/templates/admin/jsapi.jinja2:236
+msgid "Search Terms"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:237
+msgid "Exclude Terms"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:239
 msgid "Include Tags"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:141
+#: enferno/admin/templates/admin/jsapi.jinja2:240
 msgid "Include Tags (All)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:142
+#: enferno/admin/templates/admin/jsapi.jinja2:241
 msgid "Exclude Tags"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:143
+#: enferno/admin/templates/admin/jsapi.jinja2:242
 msgid "Exclude Tags (Any)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:144
-#: enferno/admin/templates/admin/jsapi.jinja2:262
-#: enferno/admin/templates/admin/partials/actor_dialog.html:423
+#: enferno/admin/templates/admin/jsapi.jinja2:243
+#: enferno/admin/templates/admin/jsapi.jinja2:365
+#: enferno/admin/templates/admin/partials/actor_dialog.html:428
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:135
 #: enferno/data_import/templates/sheets-import.html:451
 msgid "Publish Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:145
-#: enferno/admin/templates/admin/jsapi.jinja2:263
-#: enferno/admin/templates/admin/partials/actor_dialog.html:431
+#: enferno/admin/templates/admin/jsapi.jinja2:244
+#: enferno/admin/templates/admin/jsapi.jinja2:366
+#: enferno/admin/templates/admin/partials/actor_dialog.html:436
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:139
 #: enferno/data_import/templates/sheets-import.html:453
 msgid "Documentation Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:146
+#: enferno/admin/templates/admin/jsapi.jinja2:245
 msgid "Creation Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:147
+#: enferno/admin/templates/admin/jsapi.jinja2:246
 msgid "Last Modified Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:148
+#: enferno/admin/templates/admin/jsapi.jinja2:247
 msgid "Event Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:149
+#: enferno/admin/templates/admin/jsapi.jinja2:248
 msgid "Event"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:150
+#: enferno/admin/templates/admin/jsapi.jinja2:249
 msgid "Timing for this event is estimated"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:151
+#: enferno/admin/templates/admin/jsapi.jinja2:250
 msgid "Search in a single event"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:152
+#: enferno/admin/templates/admin/jsapi.jinja2:251
+msgid "ASSIGNED USER"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:252
 msgid "Assigned User"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:153
+#: enferno/admin/templates/admin/jsapi.jinja2:253
 msgid "Unassigned"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:154
-msgid "Reviewer"
+#: enferno/admin/templates/admin/jsapi.jinja2:254
+msgid "REVIEWER"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:155
+#: enferno/admin/templates/admin/jsapi.jinja2:255
+msgid "WORKFLOW STATUS"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:256
 msgid "Workflow Status"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:156
-msgid "Review Action"
+#: enferno/admin/templates/admin/jsapi.jinja2:257
+msgid "REVIEW ACTION"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:157
+#: enferno/admin/templates/admin/jsapi.jinja2:258
 msgid "Include sources"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:158
+#: enferno/admin/templates/admin/jsapi.jinja2:259
 msgid "Exclude sources (All)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:159
+#: enferno/admin/templates/admin/jsapi.jinja2:260
 msgid "Also include child sources"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:160
+#: enferno/admin/templates/admin/jsapi.jinja2:261
 msgid "Any"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:161
+#: enferno/admin/templates/admin/jsapi.jinja2:262
+#: enferno/admin/templates/admin/media-dashboard.html:302
 #: enferno/templates/notifications_dialog.html:20
 msgid "All"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:162
+#: enferno/admin/templates/admin/jsapi.jinja2:263
 msgid "Include labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:163
+#: enferno/admin/templates/admin/jsapi.jinja2:264
 msgid "Exclude labels (All)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:164
+#: enferno/admin/templates/admin/jsapi.jinja2:265
 msgid "Also include child labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:165
+#: enferno/admin/templates/admin/jsapi.jinja2:266
 msgid "Include verified labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:166
+#: enferno/admin/templates/admin/jsapi.jinja2:267
 msgid "Exclude verified labels (All)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:167
+#: enferno/admin/templates/admin/jsapi.jinja2:268
 msgid "Also include verified child labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:168
+#: enferno/admin/templates/admin/jsapi.jinja2:269
 msgid "Include locations"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:169
+#: enferno/admin/templates/admin/jsapi.jinja2:270
 msgid "Radius"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:170
+#: enferno/admin/templates/admin/jsapi.jinja2:271
 msgid "Meters"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:171
+#: enferno/admin/templates/admin/jsapi.jinja2:272
 msgid "Exclude locations (All)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:172
+#: enferno/admin/templates/admin/jsapi.jinja2:273
 msgid "Include origin locations (Any)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:173
+#: enferno/admin/templates/admin/jsapi.jinja2:274
 msgid "Exclude origin locations (All)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:174
+#: enferno/admin/templates/admin/jsapi.jinja2:275
 msgid "Include event locations"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:175
+#: enferno/admin/templates/admin/jsapi.jinja2:276
 msgid "Event type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:176
-msgid "Geospatial"
+#: enferno/admin/templates/admin/jsapi.jinja2:277
+msgid "GEOSPATIAL"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:177
+#: enferno/admin/templates/admin/jsapi.jinja2:278
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:69
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:73
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:55
 msgid "Clear Search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:179
+#: enferno/admin/templates/admin/jsapi.jinja2:280
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:71
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:75
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:56
 msgid "Save Search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:180
+#: enferno/admin/templates/admin/jsapi.jinja2:281
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:83
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:87
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:68
 msgid "Save As New"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:181
+#: enferno/admin/templates/admin/jsapi.jinja2:282
 msgid "Delete Search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:182
+#: enferno/admin/templates/admin/jsapi.jinja2:283
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:77
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:81
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:62
 msgid "Update Search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:183
+#: enferno/admin/templates/admin/jsapi.jinja2:284
 msgid "Refine/Extend Search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:184
+#: enferno/admin/templates/admin/jsapi.jinja2:285
 msgid "Load existing search"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:185
-#: enferno/admin/templates/admin/jsapi.jinja2:295
+#: enferno/admin/templates/admin/jsapi.jinja2:286
+#: enferno/admin/templates/admin/jsapi.jinja2:399
 #: enferno/admin/templates/admin/partials/actor_dialog.html:188
 #: enferno/data_import/templates/sheets-import.html:291
 msgid "Occupation"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:186
+#: enferno/admin/templates/admin/jsapi.jinja2:287
 msgid "Occupation (Ar)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:187
-#: enferno/admin/templates/admin/jsapi.jinja2:296
+#: enferno/admin/templates/admin/jsapi.jinja2:288
+#: enferno/admin/templates/admin/jsapi.jinja2:400
 #: enferno/admin/templates/admin/partials/actor_dialog.html:200
 #: enferno/data_import/templates/sheets-import.html:298
 msgid "Position"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:188
+#: enferno/admin/templates/admin/jsapi.jinja2:289
 msgid "Position (Ar)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:189
+#: enferno/admin/templates/admin/jsapi.jinja2:290
 msgid "Spoken dialects"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:190
-#: enferno/admin/templates/admin/jsapi.jinja2:298
+#: enferno/admin/templates/admin/jsapi.jinja2:291
+#: enferno/admin/templates/admin/jsapi.jinja2:402
 #: enferno/admin/templates/admin/partials/actor_dialog.html:215
 #: enferno/data_import/templates/sheets-import.html:304
 msgid "Family Status"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:191
+#: enferno/admin/templates/admin/jsapi.jinja2:292
 #: enferno/admin/templates/admin/partials/actor_dialog.html:220
 #: enferno/data_import/templates/sheets-import.html:307
 msgid "No of Children"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:193
+#: enferno/admin/templates/admin/jsapi.jinja2:294
 #: enferno/admin/templates/admin/partials/actor_dialog.html:160
 #: enferno/data_import/templates/sheets-import.html:280
 msgid "Minor/Adult"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:195
-#: enferno/admin/templates/admin/jsapi.jinja2:283
+#: enferno/admin/templates/admin/jsapi.jinja2:296
+#: enferno/admin/templates/admin/jsapi.jinja2:386
 #: enferno/data_import/templates/sheets-import.html:191
 #: enferno/data_import/templates/sheets-import.html:195
 msgid "Actor Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:196
+#: enferno/admin/templates/admin/jsapi.jinja2:297
 msgid "Ethnography"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:197
+#: enferno/admin/templates/admin/jsapi.jinja2:298
 msgid "Nationality"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:198
+#: enferno/admin/templates/admin/jsapi.jinja2:299
 msgid "Yes"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:199
+#: enferno/admin/templates/admin/jsapi.jinja2:300
 msgid "No"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:200
-#: enferno/admin/templates/admin/jsapi.jinja2:553
-#: enferno/admin/templates/admin/jsapi.jinja2:557
+#: enferno/admin/templates/admin/jsapi.jinja2:301
+#: enferno/admin/templates/admin/jsapi.jinja2:661
+#: enferno/admin/templates/admin/jsapi.jinja2:665
 msgid "Unknown"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:201
-msgid "details"
-msgstr ""
-
-#: enferno/admin/templates/admin/jsapi.jinja2:203
+#: enferno/admin/templates/admin/jsapi.jinja2:304
 msgid "Reporting Persons"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:204
+#: enferno/admin/templates/admin/jsapi.jinja2:305
 msgid "Contact info ( phone, email, address)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:205
+#: enferno/admin/templates/admin/jsapi.jinja2:306
 msgid "Relation"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:206
+#: enferno/admin/templates/admin/jsapi.jinja2:307
 msgid "Relationship"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:209
+#: enferno/admin/templates/admin/jsapi.jinja2:310
 msgid "Latitude"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:210
+#: enferno/admin/templates/admin/jsapi.jinja2:311
 msgid "Longitude"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:211
-#: enferno/admin/templates/admin/labels.html:93
-#: enferno/admin/templates/admin/labels.html:276
+#: enferno/admin/templates/admin/jsapi.jinja2:312
+#: enferno/admin/templates/admin/labels.html:164
+#: enferno/admin/templates/admin/labels.html:249
 #: enferno/admin/templates/admin/locations.html:209
 #: enferno/admin/templates/admin/sources.html:72
 #: enferno/admin/templates/admin/sources.html:223
 msgid "Parent"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:212
-#: enferno/admin/templates/admin/partials/location_dialog.html:123
+#: enferno/admin/templates/admin/jsapi.jinja2:313
+#: enferno/admin/templates/admin/partials/location_dialog.html:119
 msgid "Postal Code"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:215
+#: enferno/admin/templates/admin/jsapi.jinja2:316
 msgid "Main Incident"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:216
+#: enferno/admin/templates/admin/jsapi.jinja2:317
 msgid "Filter and display related items in main table"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:217
+#: enferno/admin/templates/admin/jsapi.jinja2:318
 msgid "Load More"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:218
+#: enferno/admin/templates/admin/jsapi.jinja2:319
 msgid "Restricted"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:219
+#: enferno/admin/templates/admin/jsapi.jinja2:320
 msgid "Unrestricted"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:220
+#: enferno/admin/templates/admin/jsapi.jinja2:321
 msgid "And"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:221
+#: enferno/admin/templates/admin/jsapi.jinja2:322
 msgid "Or"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:223
+#: enferno/admin/templates/admin/jsapi.jinja2:323
+msgid "ACCESS GROUPS"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:325
 #: enferno/admin/templates/admin/partials/review_dialog.html:142
 msgid "No Review Needed"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:224
+#: enferno/admin/templates/admin/jsapi.jinja2:326
 #: enferno/admin/templates/admin/partials/review_dialog.html:140
 msgid "Needs Review"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:225
+#: enferno/admin/templates/admin/jsapi.jinja2:327
+msgid "Needs Transcription"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:328
 msgid "Load Geo Map"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:226
+#: enferno/admin/templates/admin/jsapi.jinja2:329
 msgid "By"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:227
+#: enferno/admin/templates/admin/jsapi.jinja2:330
 msgid "Search Locations"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:228
+#: enferno/admin/templates/admin/jsapi.jinja2:331
 #: enferno/admin/templates/admin/locations.html:210
-#: enferno/admin/templates/admin/partials/location_dialog.html:67
+#: enferno/admin/templates/admin/partials/location_dialog.html:63
 msgid "Location Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:229
+#: enferno/admin/templates/admin/jsapi.jinja2:332
 #: enferno/admin/templates/admin/locations.html:211
-#: enferno/admin/templates/admin/partials/location_dialog.html:84
+#: enferno/admin/templates/admin/partials/location_dialog.html:80
 msgid "Admin Level"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:230
-#: enferno/admin/templates/admin/partials/location_dialog.html:98
+#: enferno/admin/templates/admin/jsapi.jinja2:333
+#: enferno/admin/templates/admin/partials/location_dialog.html:94
 msgid "Country"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:231
+#: enferno/admin/templates/admin/jsapi.jinja2:334
 msgid "Estimated"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:232
-#: enferno/admin/templates/admin/system-administration.html:1045
-#: enferno/admin/templates/admin/system-administration.html:1078
+#: enferno/admin/templates/admin/jsapi.jinja2:335
+#: enferno/admin/templates/admin/system-administration.html:1055
 msgid "Confirm"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:233
+#: enferno/admin/templates/admin/jsapi.jinja2:336
 msgid "Are you sure?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:234
+#: enferno/admin/templates/admin/jsapi.jinja2:337
 msgid "Confirmation"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:235
+#: enferno/admin/templates/admin/jsapi.jinja2:338
 msgid "Are you sure you want to proceed?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:236
+#: enferno/admin/templates/admin/jsapi.jinja2:339
 msgid "Mark as read"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:237
-#: enferno/admin/templates/admin/system-administration.html:689
+#: enferno/admin/templates/admin/jsapi.jinja2:340
 #: enferno/admin/templates/admin/system-administration.html:699
-#: enferno/admin/templates/admin/system-administration.html:708
-#: enferno/admin/templates/admin/system-administration.html:717
-#: enferno/admin/templates/admin/system-administration.html:726
-#: enferno/admin/templates/admin/system-administration.html:738
-#: enferno/admin/templates/admin/system-administration.html:750
-#: enferno/admin/templates/admin/system-administration.html:769
-#: enferno/admin/templates/admin/system-administration.html:780
-#: enferno/admin/templates/admin/system-administration.html:791
-#: enferno/admin/templates/admin/system-administration.html:802
-#: enferno/admin/templates/admin/system-administration.html:813
-#: enferno/admin/templates/admin/system-administration.html:824
-#: enferno/admin/templates/admin/system-administration.html:835
-#: enferno/admin/templates/admin/system-administration.html:850
-#: enferno/admin/templates/admin/system-administration.html:861
-#: enferno/admin/templates/admin/system-administration.html:875
-#: enferno/admin/templates/admin/system-administration.html:892
-#: enferno/admin/templates/admin/system-administration.html:903
+#: enferno/admin/templates/admin/system-administration.html:709
+#: enferno/admin/templates/admin/system-administration.html:718
+#: enferno/admin/templates/admin/system-administration.html:727
+#: enferno/admin/templates/admin/system-administration.html:736
+#: enferno/admin/templates/admin/system-administration.html:748
+#: enferno/admin/templates/admin/system-administration.html:760
+#: enferno/admin/templates/admin/system-administration.html:779
+#: enferno/admin/templates/admin/system-administration.html:790
+#: enferno/admin/templates/admin/system-administration.html:801
+#: enferno/admin/templates/admin/system-administration.html:812
+#: enferno/admin/templates/admin/system-administration.html:823
+#: enferno/admin/templates/admin/system-administration.html:834
+#: enferno/admin/templates/admin/system-administration.html:845
+#: enferno/admin/templates/admin/system-administration.html:860
+#: enferno/admin/templates/admin/system-administration.html:871
+#: enferno/admin/templates/admin/system-administration.html:885
+#: enferno/admin/templates/admin/system-administration.html:902
+#: enferno/admin/templates/admin/system-administration.html:913
 msgid "In-app"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:240
+#: enferno/admin/templates/admin/jsapi.jinja2:343
 msgid "Search Activities"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:246
+#: enferno/admin/templates/admin/jsapi.jinja2:349
 msgid "Visualize"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:247
+#: enferno/admin/templates/admin/jsapi.jinja2:350
 #: enferno/admin/templates/admin/partials/actor_dialog.html:369
 #: enferno/admin/templates/admin/roles.html:85
 #: enferno/admin/templates/admin/roles.html:219
@@ -1929,14 +2355,14 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:249
+#: enferno/admin/templates/admin/jsapi.jinja2:352
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:85
 msgid "Original Title"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:252
-#: enferno/admin/templates/admin/labels.html:112
-#: enferno/admin/templates/admin/partials/actor_dialog.html:412
+#: enferno/admin/templates/admin/jsapi.jinja2:355
+#: enferno/admin/templates/admin/labels.html:11
+#: enferno/admin/templates/admin/partials/actor_dialog.html:417
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:117
 #: enferno/admin/templates/admin/partials/review_dialog.html:90
 #: enferno/data_import/templates/media-import.html:178
@@ -1944,55 +2370,55 @@ msgstr ""
 msgid "Verified Labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:253
-#: enferno/admin/templates/admin/jsapi.jinja2:526
-#: enferno/admin/templates/admin/jsapi.jinja2:533
+#: enferno/admin/templates/admin/jsapi.jinja2:356
+#: enferno/admin/templates/admin/jsapi.jinja2:634
+#: enferno/admin/templates/admin/jsapi.jinja2:641
 #: enferno/data_import/templates/sheets-import.html:666
 msgid "Events"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:255
-#: enferno/admin/templates/admin/jsapi.jinja2:524
+#: enferno/admin/templates/admin/jsapi.jinja2:358
+#: enferno/admin/templates/admin/jsapi.jinja2:632
 #: enferno/admin/templates/admin/locations.html:30
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:121
-#: enferno/admin/templates/admin/partials/incident_dialog.html:85
+#: enferno/admin/templates/admin/partials/incident_dialog.html:87
 #: enferno/admin/templates/admin/partials/review_dialog.html:63
 #: enferno/data_import/templates/media-import.html:190
-#: enferno/templates/nav-drawer.html:14
+#: enferno/templates/nav-drawer.html:18
 msgid "Locations"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:256
+#: enferno/admin/templates/admin/jsapi.jinja2:359
 msgid "Probability"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:257
+#: enferno/admin/templates/admin/jsapi.jinja2:360
 msgid "Related as"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:258
+#: enferno/admin/templates/admin/jsapi.jinja2:361
 #: enferno/admin/templates/admin/partials/edit_related_bulletins.html:4
 #: enferno/admin/templates/admin/partials/review_dialog.html:116
 msgid "Related Bulletins"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:259
+#: enferno/admin/templates/admin/jsapi.jinja2:362
 #: enferno/admin/templates/admin/partials/edit_related_actors.html:3
 #: enferno/admin/templates/admin/partials/review_dialog.html:123
 msgid "Related Actors"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:260
+#: enferno/admin/templates/admin/jsapi.jinja2:363
 #: enferno/admin/templates/admin/partials/edit_related_incidents.html:3
 #: enferno/admin/templates/admin/partials/review_dialog.html:129
 msgid "Related Incidents"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:261
+#: enferno/admin/templates/admin/jsapi.jinja2:364
 msgid "Relationship Info"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:264
+#: enferno/admin/templates/admin/jsapi.jinja2:367
 #: enferno/admin/templates/admin/partials/actor_dialog.html:351
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:57
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:154
@@ -2000,1054 +2426,1094 @@ msgstr ""
 msgid "Source Link"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:266
+#: enferno/admin/templates/admin/jsapi.jinja2:369
 msgid "Log History"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:269
+#: enferno/admin/templates/admin/jsapi.jinja2:372
 #: enferno/admin/templates/admin/users.html:150
 msgid "Full Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:270
+#: enferno/admin/templates/admin/jsapi.jinja2:373
 #: enferno/admin/templates/admin/partials/actor_dialog.html:111
 #: enferno/data_import/templates/sheets-import.html:235
-#: enferno/templates/security/wan_register.html:161
+#: enferno/templates/security/wan_register.html:144
 msgid "Nickname"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:271
+#: enferno/admin/templates/admin/jsapi.jinja2:374
 msgid "Nickname (Ar)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:272
+#: enferno/admin/templates/admin/jsapi.jinja2:375
 msgid "Nickname(s)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:274
+#: enferno/admin/templates/admin/jsapi.jinja2:377
 #: enferno/data_import/templates/sheets-import.html:250
 msgid "Middle Name(s)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:276
+#: enferno/admin/templates/admin/jsapi.jinja2:379
 #: enferno/admin/templates/admin/partials/actor_dialog.html:123
 #: enferno/data_import/templates/sheets-import.html:263
 msgid "Father's Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:277
+#: enferno/admin/templates/admin/jsapi.jinja2:380
 msgid "Father's Name (Ar)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:278
+#: enferno/admin/templates/admin/jsapi.jinja2:381
 #: enferno/admin/templates/admin/partials/actor_dialog.html:135
 #: enferno/data_import/templates/sheets-import.html:269
 msgid "Mother's Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:279
+#: enferno/admin/templates/admin/jsapi.jinja2:382
 msgid "Mother's Name (Ar)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:281
+#: enferno/admin/templates/admin/jsapi.jinja2:384
 msgid "Age"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:282
-#: enferno/admin/templates/admin/jsapi.jinja2:558
+#: enferno/admin/templates/admin/jsapi.jinja2:385
+#: enferno/admin/templates/admin/jsapi.jinja2:666
 msgid "Civilian"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:284
+#: enferno/admin/templates/admin/jsapi.jinja2:387
 #, python-brace-format
 msgid "Relationship with Bulletin {id}"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:285
+#: enferno/admin/templates/admin/jsapi.jinja2:388
 msgid ""
 "The relationship between the new Actor and the Bulletin will be created "
 "when the Actor is saved"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:290
+#: enferno/admin/templates/admin/jsapi.jinja2:392
+msgid "ID NUMBER"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:393
+msgid "ID Number"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:394
 #: enferno/data_import/templates/sheets-import.html:322
 msgid "ID Numbers"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:291
+#: enferno/admin/templates/admin/jsapi.jinja2:395
 #: enferno/data_import/templates/sheets-import.html:329
 msgid "ID Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:292
+#: enferno/admin/templates/admin/jsapi.jinja2:396
 msgid "Are you sure you want to delete this record?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:293
+#: enferno/admin/templates/admin/jsapi.jinja2:397
 msgid "Leave blank to include all types."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:297
+#: enferno/admin/templates/admin/jsapi.jinja2:401
 #: enferno/data_import/templates/sheets-import.html:316
 msgid "Spoken Dialects"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:300
+#: enferno/admin/templates/admin/jsapi.jinja2:404
 msgid "Ethnographic Info"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:301
+#: enferno/admin/templates/admin/jsapi.jinja2:405
 #: enferno/admin/templates/admin/partials/actor_dialog.html:241
 #: enferno/data_import/templates/sheets-import.html:314
 msgid "Nationalities"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:302
+#: enferno/admin/templates/admin/jsapi.jinja2:406
 msgid "National ID Card"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:304
+#: enferno/admin/templates/admin/jsapi.jinja2:408
 msgid "Overview"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:307
+#: enferno/admin/templates/admin/jsapi.jinja2:411
+msgid "CLAIMED VIOLATIONS CATEGORIES"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:412
 #: enferno/admin/templates/admin/partials/incident_dialog.html:64
 msgid "Claimed Violations Categories"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:308
+#: enferno/admin/templates/admin/jsapi.jinja2:413
 #: enferno/admin/templates/admin/partials/incident_dialog.html:54
 msgid "Potential violation categories"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:311
-#: enferno/admin/templates/admin/jsapi.jinja2:525
+#: enferno/admin/templates/admin/jsapi.jinja2:414
+msgid "POTENTIAL VIOLATION CATEGORIES"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:417
+#: enferno/admin/templates/admin/jsapi.jinja2:633
 msgid "Geo Markers"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:312
+#: enferno/admin/templates/admin/jsapi.jinja2:418
 msgid "Add Geo Marker"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:317
-#: enferno/admin/templates/admin/partials/actor_dialog.html:450
-#: enferno/data_import/templates/sheets-import.html:465
-msgid "Last Address"
+#: enferno/admin/templates/admin/jsapi.jinja2:423
+msgid "Place of Disappearance"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:318
-#: enferno/admin/templates/admin/partials/actor_dialog.html:456
+#: enferno/admin/templates/admin/jsapi.jinja2:424
+#: enferno/admin/templates/admin/partials/actor_dialog.html:461
 #: enferno/data_import/templates/sheets-import.html:467
 msgid "Marriage History"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:319
+#: enferno/admin/templates/admin/jsapi.jinja2:425
 msgid "Bio Children"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:320
-#: enferno/admin/templates/admin/partials/actor_dialog.html:465
+#: enferno/admin/templates/admin/jsapi.jinja2:426
+#: enferno/admin/templates/admin/partials/actor_dialog.html:470
 #: enferno/data_import/templates/sheets-import.html:472
 msgid "Pregnant at Disappearance"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:321
+#: enferno/admin/templates/admin/jsapi.jinja2:427
 msgid "Months Pregnant at Disappearance"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:322
-#: enferno/admin/templates/admin/partials/actor_dialog.html:483
+#: enferno/admin/templates/admin/jsapi.jinja2:428
+#: enferno/admin/templates/admin/partials/actor_dialog.html:488
 #: enferno/data_import/templates/sheets-import.html:476
 msgid "Missing Relatives"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:324
-#: enferno/admin/templates/admin/partials/actor_dialog.html:503
+#: enferno/admin/templates/admin/jsapi.jinja2:430
+#: enferno/admin/templates/admin/partials/actor_dialog.html:508
 #: enferno/data_import/templates/sheets-import.html:489
 msgid "Address"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:325
-#: enferno/admin/templates/admin/partials/actor_dialog.html:507
+#: enferno/admin/templates/admin/jsapi.jinja2:431
+#: enferno/admin/templates/admin/partials/actor_dialog.html:512
 #: enferno/data_import/templates/sheets-import.html:491
 msgid "Phone"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:326
-#: enferno/admin/templates/admin/partials/actor_dialog.html:511
-#: enferno/admin/templates/admin/system-administration.html:690
+#: enferno/admin/templates/admin/jsapi.jinja2:432
+#: enferno/admin/templates/admin/partials/actor_dialog.html:516
 #: enferno/admin/templates/admin/system-administration.html:700
-#: enferno/admin/templates/admin/system-administration.html:709
-#: enferno/admin/templates/admin/system-administration.html:718
+#: enferno/admin/templates/admin/system-administration.html:710
+#: enferno/admin/templates/admin/system-administration.html:719
 #: enferno/admin/templates/admin/system-administration.html:728
-#: enferno/admin/templates/admin/system-administration.html:740
-#: enferno/admin/templates/admin/system-administration.html:752
-#: enferno/admin/templates/admin/system-administration.html:771
-#: enferno/admin/templates/admin/system-administration.html:782
-#: enferno/admin/templates/admin/system-administration.html:793
-#: enferno/admin/templates/admin/system-administration.html:804
-#: enferno/admin/templates/admin/system-administration.html:815
-#: enferno/admin/templates/admin/system-administration.html:826
-#: enferno/admin/templates/admin/system-administration.html:837
-#: enferno/admin/templates/admin/system-administration.html:852
-#: enferno/admin/templates/admin/system-administration.html:863
-#: enferno/admin/templates/admin/system-administration.html:877
-#: enferno/admin/templates/admin/system-administration.html:894
-#: enferno/admin/templates/admin/system-administration.html:905
+#: enferno/admin/templates/admin/system-administration.html:738
+#: enferno/admin/templates/admin/system-administration.html:750
+#: enferno/admin/templates/admin/system-administration.html:762
+#: enferno/admin/templates/admin/system-administration.html:781
+#: enferno/admin/templates/admin/system-administration.html:792
+#: enferno/admin/templates/admin/system-administration.html:803
+#: enferno/admin/templates/admin/system-administration.html:814
+#: enferno/admin/templates/admin/system-administration.html:825
+#: enferno/admin/templates/admin/system-administration.html:836
+#: enferno/admin/templates/admin/system-administration.html:847
+#: enferno/admin/templates/admin/system-administration.html:862
+#: enferno/admin/templates/admin/system-administration.html:873
+#: enferno/admin/templates/admin/system-administration.html:887
+#: enferno/admin/templates/admin/system-administration.html:904
+#: enferno/admin/templates/admin/system-administration.html:915
 #: enferno/admin/templates/admin/users.html:164
 #: enferno/admin/templates/admin/users.html:353
 #: enferno/data_import/templates/sheets-import.html:493
 msgid "Email"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:327
-#: enferno/admin/templates/admin/partials/actor_dialog.html:520
+#: enferno/admin/templates/admin/jsapi.jinja2:433
+#: enferno/admin/templates/admin/partials/actor_dialog.html:525
 msgid "Seen in a detention center?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:328
-#: enferno/admin/templates/admin/partials/actor_dialog.html:527
+#: enferno/admin/templates/admin/jsapi.jinja2:434
+#: enferno/admin/templates/admin/partials/actor_dialog.html:532
 msgid "Injured around time of disappearance?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:329
-#: enferno/admin/templates/admin/partials/actor_dialog.html:536
+#: enferno/admin/templates/admin/jsapi.jinja2:435
+#: enferno/admin/templates/admin/partials/actor_dialog.html:541
 msgid "Known to be dead?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:330
-#: enferno/admin/templates/admin/partials/actor_dialog.html:545
+#: enferno/admin/templates/admin/jsapi.jinja2:436
+#: enferno/admin/templates/admin/partials/actor_dialog.html:550
 msgid "Details about circumstances of death"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:331
-#: enferno/admin/templates/admin/partials/actor_dialog.html:553
+#: enferno/admin/templates/admin/jsapi.jinja2:437
+#: enferno/admin/templates/admin/partials/actor_dialog.html:558
 msgid "Personal Items (watch,ring,chains etc)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:332
-#: enferno/admin/templates/admin/partials/actor_dialog.html:563
+#: enferno/admin/templates/admin/jsapi.jinja2:438
+#: enferno/admin/templates/admin/partials/actor_dialog.html:568
 #: enferno/data_import/templates/sheets-import.html:521
 msgid "Height"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:333
-#: enferno/admin/templates/admin/partials/actor_dialog.html:573
+#: enferno/admin/templates/admin/jsapi.jinja2:439
+#: enferno/admin/templates/admin/partials/actor_dialog.html:578
 #: enferno/data_import/templates/sheets-import.html:523
 msgid "Weight"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:334
-#: enferno/admin/templates/admin/partials/actor_dialog.html:582
+#: enferno/admin/templates/admin/jsapi.jinja2:440
+#: enferno/admin/templates/admin/partials/actor_dialog.html:587
 #: enferno/data_import/templates/sheets-import.html:525
 msgid "Physique"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:335
+#: enferno/admin/templates/admin/jsapi.jinja2:441
 #: enferno/data_import/templates/sheets-import.html:527
 msgid "Hair Loss"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:336
+#: enferno/admin/templates/admin/jsapi.jinja2:442
 #: enferno/data_import/templates/sheets-import.html:532
 msgid "Hair Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:337
+#: enferno/admin/templates/admin/jsapi.jinja2:443
 #: enferno/data_import/templates/sheets-import.html:534
 msgid "Hair Length"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:338
+#: enferno/admin/templates/admin/jsapi.jinja2:444
 #: enferno/data_import/templates/sheets-import.html:536
 msgid "Hair Color"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:339
+#: enferno/admin/templates/admin/jsapi.jinja2:445
 #: enferno/data_import/templates/sheets-import.html:538
 msgid "Facial Hair"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:340
-#: enferno/admin/templates/admin/partials/actor_dialog.html:647
+#: enferno/admin/templates/admin/jsapi.jinja2:446
+#: enferno/admin/templates/admin/partials/actor_dialog.html:652
 msgid "Notes on posture and walking style"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:341
-#: enferno/admin/templates/admin/partials/actor_dialog.html:670
+#: enferno/admin/templates/admin/jsapi.jinja2:447
+#: enferno/admin/templates/admin/partials/actor_dialog.html:675
 msgid "Skin Markings"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:342
+#: enferno/admin/templates/admin/jsapi.jinja2:448
 #: enferno/data_import/templates/sheets-import.html:544
 msgid "Handedness"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:343
-#: enferno/admin/templates/admin/partials/actor_dialog.html:656
+#: enferno/admin/templates/admin/jsapi.jinja2:449
+#: enferno/admin/templates/admin/partials/actor_dialog.html:661
 #: enferno/data_import/templates/sheets-import.html:546
 msgid "Glasses"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:344
+#: enferno/admin/templates/admin/jsapi.jinja2:450
 #: enferno/data_import/templates/sheets-import.html:548
 msgid "Eye Color"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:345
-#: enferno/admin/templates/admin/partials/actor_dialog.html:687
+#: enferno/admin/templates/admin/jsapi.jinja2:451
+#: enferno/admin/templates/admin/partials/actor_dialog.html:692
 #: enferno/data_import/templates/sheets-import.html:560
 msgid "Distinctive characteristics (congenital)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:346
-#: enferno/admin/templates/admin/partials/actor_dialog.html:694
+#: enferno/admin/templates/admin/jsapi.jinja2:452
+#: enferno/admin/templates/admin/partials/actor_dialog.html:699
 #: enferno/data_import/templates/sheets-import.html:562
 msgid "Distinctive characteristics (acquired)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:347
-#: enferno/admin/templates/admin/partials/actor_dialog.html:703
+#: enferno/admin/templates/admin/jsapi.jinja2:453
+#: enferno/admin/templates/admin/partials/actor_dialog.html:708
 msgid "Physical habits"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:348
-#: enferno/admin/templates/admin/partials/actor_dialog.html:710
+#: enferno/admin/templates/admin/jsapi.jinja2:454
+#: enferno/admin/templates/admin/partials/actor_dialog.html:715
 #: enferno/data_import/templates/sheets-import.html:568
 msgid "Other comments"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:349
+#: enferno/admin/templates/admin/jsapi.jinja2:455
 #: enferno/data_import/templates/sheets-import.html:572
 msgid "Physician's name and contact"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:350
+#: enferno/admin/templates/admin/jsapi.jinja2:456
 #: enferno/data_import/templates/sheets-import.html:574
 msgid "Fractures / Injuries"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:351
+#: enferno/admin/templates/admin/jsapi.jinja2:457
 msgid "Implants "
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:352
+#: enferno/admin/templates/admin/jsapi.jinja2:458
 #: enferno/data_import/templates/sheets-import.html:581
 msgid "Congenital malformations"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:353
+#: enferno/admin/templates/admin/jsapi.jinja2:459
 msgid "Pain and / or ailments"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:354
+#: enferno/admin/templates/admin/jsapi.jinja2:460
 #: enferno/data_import/templates/sheets-import.html:588
 msgid "Other medical conditions"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:355
+#: enferno/admin/templates/admin/jsapi.jinja2:461
 #: enferno/data_import/templates/sheets-import.html:593
 msgid "Accidents"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:356
+#: enferno/admin/templates/admin/jsapi.jinja2:462
 #: enferno/data_import/templates/sheets-import.html:595
 msgid "Prescription drugs taken"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:357
-#: enferno/admin/templates/admin/partials/actor_dialog.html:788
+#: enferno/admin/templates/admin/jsapi.jinja2:463
+#: enferno/admin/templates/admin/partials/actor_dialog.html:793
 #: enferno/data_import/templates/sheets-import.html:600
 msgid "Smoker"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:358
+#: enferno/admin/templates/admin/jsapi.jinja2:464
 msgid "Is there a Dental Record"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:359
-#: enferno/admin/templates/admin/partials/actor_dialog.html:800
+#: enferno/admin/templates/admin/jsapi.jinja2:465
+#: enferno/admin/templates/admin/partials/actor_dialog.html:805
 #: enferno/data_import/templates/sheets-import.html:606
 msgid "Dentist's name and contact"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:360
+#: enferno/admin/templates/admin/jsapi.jinja2:466
 #: enferno/data_import/templates/sheets-import.html:608
 msgid "Teeth features"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:361
+#: enferno/admin/templates/admin/jsapi.jinja2:467
 #: enferno/data_import/templates/sheets-import.html:613
 msgid "Dental problems"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:362
+#: enferno/admin/templates/admin/jsapi.jinja2:468
 #: enferno/data_import/templates/sheets-import.html:615
 msgid "Dental treatments"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:363
+#: enferno/admin/templates/admin/jsapi.jinja2:469
 msgid "Dental habits"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:364
-#: enferno/admin/templates/admin/partials/actor_dialog.html:838
+#: enferno/admin/templates/admin/jsapi.jinja2:470
+#: enferno/admin/templates/admin/partials/actor_dialog.html:843
 msgid "Case status"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:365
+#: enferno/admin/templates/admin/jsapi.jinja2:471
 msgid "Reporters"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:366
-#: enferno/admin/templates/admin/partials/actor_dialog.html:859
+#: enferno/admin/templates/admin/jsapi.jinja2:472
+#: enferno/admin/templates/admin/partials/actor_dialog.html:864
 msgid "Identified by (responsible institution)"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:367
-#: enferno/admin/templates/admin/partials/actor_dialog.html:866
+#: enferno/admin/templates/admin/jsapi.jinja2:473
+#: enferno/admin/templates/admin/partials/actor_dialog.html:871
 msgid "Was the family notified?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:368
+#: enferno/admin/templates/admin/jsapi.jinja2:474
 #: enferno/data_import/templates/sheets-import.html:658
 msgid "Location of reburial"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:369
-#: enferno/admin/templates/admin/partials/actor_dialog.html:495
+#: enferno/admin/templates/admin/jsapi.jinja2:475
+#: enferno/admin/templates/admin/partials/actor_dialog.html:500
 #: enferno/data_import/templates/sheets-import.html:481
 msgid "Details of the person who saw them last"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:371
+#: enferno/admin/templates/admin/jsapi.jinja2:477
 msgid "Contact"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:376
-#: enferno/admin/templates/admin/jsapi.jinja2:415
+#: enferno/admin/templates/admin/jsapi.jinja2:482
+#: enferno/admin/templates/admin/jsapi.jinja2:521
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:135
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:139
 msgid "Time"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:380
+#: enferno/admin/templates/admin/jsapi.jinja2:486
 #: enferno/templates/nav-drawer.html:6
 msgid "Actors"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:381
+#: enferno/admin/templates/admin/jsapi.jinja2:487
 #: enferno/templates/nav-drawer.html:3
 msgid "Bulletins"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:382
+#: enferno/admin/templates/admin/jsapi.jinja2:488
 #: enferno/templates/nav-drawer.html:9
 msgid "Incidents"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:383
+#: enferno/admin/templates/admin/jsapi.jinja2:489
 msgid "Double click on a node to expand graph, click and hold CTRL to view"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:386
+#: enferno/admin/templates/admin/jsapi.jinja2:492
 msgid "Import Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:387
-#: enferno/data_import/templates/import-log.html:170
+#: enferno/admin/templates/admin/jsapi.jinja2:493
+#: enferno/data_import/templates/import-log.html:175
 msgid "File"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:388
+#: enferno/admin/templates/admin/jsapi.jinja2:494
 #: enferno/data_import/templates/import-log.html:32
-#: enferno/templates/nav-drawer.html:40
+#: enferno/templates/nav-drawer.html:55
 msgid "Import Log"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:391
+#: enferno/admin/templates/admin/jsapi.jinja2:497
 msgid "Requested On"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:392
+#: enferno/admin/templates/admin/jsapi.jinja2:498
 msgid "Expires On"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:393
+#: enferno/admin/templates/admin/jsapi.jinja2:499
 msgid "Admin Actions"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:394
+#: enferno/admin/templates/admin/jsapi.jinja2:500
 msgid "Approve"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:395
+#: enferno/admin/templates/admin/jsapi.jinja2:501
 msgid "Expire Now"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:396
+#: enferno/admin/templates/admin/jsapi.jinja2:502
 msgid "Reject"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:397
+#: enferno/admin/templates/admin/jsapi.jinja2:503
 msgid "Change Expiry"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:398
+#: enferno/admin/templates/admin/jsapi.jinja2:504
 msgid "Set Expiry"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:399
+#: enferno/admin/templates/admin/jsapi.jinja2:505
 msgid "Export Expiry"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:402
-#: enferno/admin/templates/admin/jsapi.jinja2:587
+#: enferno/admin/templates/admin/jsapi.jinja2:508
+#: enferno/admin/templates/admin/jsapi.jinja2:695
 msgid "Maybe"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:403
-#: enferno/admin/templates/admin/jsapi.jinja2:588
+#: enferno/admin/templates/admin/jsapi.jinja2:509
+#: enferno/admin/templates/admin/jsapi.jinja2:696
 msgid "Likely"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:404
-#: enferno/admin/templates/admin/jsapi.jinja2:589
+#: enferno/admin/templates/admin/jsapi.jinja2:510
+#: enferno/admin/templates/admin/jsapi.jinja2:697
 msgid "Certain"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:407
+#: enferno/admin/templates/admin/jsapi.jinja2:513
 #: enferno/admin/templates/admin/system-logs.html:150
 msgid "Message"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:408
+#: enferno/admin/templates/admin/jsapi.jinja2:514
 msgid "Stacktrace"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:409
+#: enferno/admin/templates/admin/jsapi.jinja2:515
 #: enferno/admin/templates/admin/system-logs.html:149
 msgid "Endpoint"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:410
+#: enferno/admin/templates/admin/jsapi.jinja2:516
 msgid "User ID"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:411
+#: enferno/admin/templates/admin/jsapi.jinja2:517
 msgid "Line No"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:412
+#: enferno/admin/templates/admin/jsapi.jinja2:518
 msgid "Path"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:413
+#: enferno/admin/templates/admin/jsapi.jinja2:519
 msgid "Error Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:414
+#: enferno/admin/templates/admin/jsapi.jinja2:520
 #: enferno/admin/templates/admin/system-logs.html:147
 msgid "Level"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:416
+#: enferno/admin/templates/admin/jsapi.jinja2:522
 msgid "Refresh available log files and select latest log file"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:417
+#: enferno/admin/templates/admin/jsapi.jinja2:523
 msgid "No log files available"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:420
+#: enferno/admin/templates/admin/jsapi.jinja2:526
 msgid "URGENT"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:421
+#: enferno/admin/templates/admin/jsapi.jinja2:527
 msgid "No notifications yet"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:422
+#: enferno/admin/templates/admin/jsapi.jinja2:528
 msgid ""
 "You haven't received any notifications yet. When you do, they'll appear "
 "here."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:423
+#: enferno/admin/templates/admin/jsapi.jinja2:529
 msgid "Load more"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:424
+#: enferno/admin/templates/admin/jsapi.jinja2:530
 msgid "No more notifications to load."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:425
+#: enferno/admin/templates/admin/jsapi.jinja2:531
 msgid "Oops! Notifications couldn’t be loaded"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:426
+#: enferno/admin/templates/admin/jsapi.jinja2:532
 msgid ""
 "We’re having trouble fetching your notifications right now. Check your "
 "connection or refresh the page."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:427
+#: enferno/admin/templates/admin/jsapi.jinja2:533
 msgid "We couldn’t load more notifications. Please try again."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:428
+#: enferno/admin/templates/admin/jsapi.jinja2:534
 msgid "Oops"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:429
+#: enferno/admin/templates/admin/jsapi.jinja2:535
 msgid "Retry"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:433
-msgid "Select Type"
+#: enferno/admin/templates/admin/jsapi.jinja2:538
+msgid "USER"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:434
-msgid "Select Action"
+#: enferno/admin/templates/admin/jsapi.jinja2:539
+msgid "SELECT TYPE"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:435
+#: enferno/admin/templates/admin/jsapi.jinja2:540
+msgid "SELECT ACTION"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:541
 msgid "Activity Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:438
+#: enferno/admin/templates/admin/jsapi.jinja2:544
 msgid "Select Event Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:441
+#: enferno/admin/templates/admin/jsapi.jinja2:547
 msgid "Exact Match"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:444
+#: enferno/admin/templates/admin/jsapi.jinja2:550
 msgid "Address Line 1"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:445
+#: enferno/admin/templates/admin/jsapi.jinja2:551
 msgid "Address Line 2"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:446
+#: enferno/admin/templates/admin/jsapi.jinja2:552
 msgid "City"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:447
+#: enferno/admin/templates/admin/jsapi.jinja2:553
 msgid "Street"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:448
+#: enferno/admin/templates/admin/jsapi.jinja2:554
 msgid "Street No"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:451
+#: enferno/admin/templates/admin/jsapi.jinja2:557
 msgid "Are you sure you want to delete"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:452
+#: enferno/admin/templates/admin/jsapi.jinja2:558
 msgid "Confirm deleting this event?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:455
+#: enferno/admin/templates/admin/jsapi.jinja2:561
 #: enferno/export/templates/export-dashboard.html:68
-#: enferno/export/templates/export-dashboard.html:164
+#: enferno/export/templates/export-dashboard.html:172
 msgid "Include Media"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:456
+#: enferno/admin/templates/admin/jsapi.jinja2:562
 #: enferno/admin/templates/admin/partials/export_drawer.html:27
 msgid "Export format"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:459
-#: enferno/export/templates/export-dashboard.html:168
+#: enferno/admin/templates/admin/jsapi.jinja2:565
+#: enferno/export/templates/export-dashboard.html:176
 msgid "Download"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:462
-#: enferno/data_import/templates/import-log.html:251
-#: enferno/data_import/templates/import-log.html:265
-#: enferno/export/templates/export-dashboard.html:216
+#: enferno/admin/templates/admin/jsapi.jinja2:568
+#: enferno/data_import/templates/import-log.html:256
+#: enferno/data_import/templates/import-log.html:270
+#: enferno/export/templates/export-dashboard.html:224
 msgid "Oops! We couldn't find this item."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:465
-#: enferno/admin/templates/admin/jsapi.jinja2:593
+#: enferno/admin/templates/admin/jsapi.jinja2:571
+#: enferno/admin/templates/admin/jsapi.jinja2:701
 msgid "You have been logged out. Please log in again."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:466
-#: enferno/admin/templates/admin/jsapi.jinja2:594
+#: enferno/admin/templates/admin/jsapi.jinja2:572
+#: enferno/admin/templates/admin/jsapi.jinja2:702
 msgid "Are you sure you want to log out all sessions for this user?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:467
-#: enferno/admin/templates/admin/jsapi.jinja2:601
+#: enferno/admin/templates/admin/jsapi.jinja2:573
+#: enferno/admin/templates/admin/jsapi.jinja2:709
 msgid "User Permissions"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:468
+#: enferno/admin/templates/admin/jsapi.jinja2:574
 msgid "User 2FA Methods"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:469
+#: enferno/admin/templates/admin/jsapi.jinja2:575
 #: enferno/admin/templates/admin/users.html:84
 msgid "2FA Inactive"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:470
-#: enferno/admin/templates/admin/jsapi.jinja2:602
+#: enferno/admin/templates/admin/jsapi.jinja2:576
+#: enferno/admin/templates/admin/jsapi.jinja2:710
 msgid "Can View Usernames"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:471
+#: enferno/admin/templates/admin/jsapi.jinja2:577
 msgid "Cannot View Usernames"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:472
-#: enferno/admin/templates/admin/jsapi.jinja2:603
+#: enferno/admin/templates/admin/jsapi.jinja2:578
+#: enferno/admin/templates/admin/jsapi.jinja2:711
 msgid "Can View Simple History"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:473
+#: enferno/admin/templates/admin/jsapi.jinja2:579
 msgid "Cannot View Simple History"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:474
-#: enferno/admin/templates/admin/jsapi.jinja2:604
+#: enferno/admin/templates/admin/jsapi.jinja2:580
+#: enferno/admin/templates/admin/jsapi.jinja2:712
 msgid "Can View Full History"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:475
+#: enferno/admin/templates/admin/jsapi.jinja2:581
 msgid "Cannot View Full History"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:476
-#: enferno/admin/templates/admin/jsapi.jinja2:605
+#: enferno/admin/templates/admin/jsapi.jinja2:582
+#: enferno/admin/templates/admin/jsapi.jinja2:713
 msgid "Can Edit Locations"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:477
+#: enferno/admin/templates/admin/jsapi.jinja2:583
 msgid "Cannot Edit Locations"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:478
-#: enferno/admin/templates/admin/jsapi.jinja2:606
+#: enferno/admin/templates/admin/jsapi.jinja2:584
+#: enferno/admin/templates/admin/jsapi.jinja2:714
 msgid "Can Export"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:479
+#: enferno/admin/templates/admin/jsapi.jinja2:585
 msgid "Cannot Export"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:480
-#: enferno/admin/templates/admin/jsapi.jinja2:607
+#: enferno/admin/templates/admin/jsapi.jinja2:586
+#: enferno/admin/templates/admin/jsapi.jinja2:715
 msgid "Can Self Assign"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:481
+#: enferno/admin/templates/admin/jsapi.jinja2:587
 msgid "Cannot Self Assign"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:482
-#: enferno/admin/templates/admin/jsapi.jinja2:608
+#: enferno/admin/templates/admin/jsapi.jinja2:588
+#: enferno/admin/templates/admin/jsapi.jinja2:716
 msgid "User Sessions"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:483
-#: enferno/admin/templates/admin/jsapi.jinja2:609
+#: enferno/admin/templates/admin/jsapi.jinja2:589
+#: enferno/admin/templates/admin/jsapi.jinja2:717
 msgid "Session"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:484
-#: enferno/admin/templates/admin/jsapi.jinja2:610
+#: enferno/admin/templates/admin/jsapi.jinja2:590
+#: enferno/admin/templates/admin/jsapi.jinja2:718
 msgid "IP"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:485
-#: enferno/admin/templates/admin/jsapi.jinja2:611
+#: enferno/admin/templates/admin/jsapi.jinja2:591
+#: enferno/admin/templates/admin/jsapi.jinja2:719
 msgid "User Agent"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:486
-#: enferno/admin/templates/admin/jsapi.jinja2:612
+#: enferno/admin/templates/admin/jsapi.jinja2:592
+#: enferno/admin/templates/admin/jsapi.jinja2:720
 msgid "Started"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:487
-#: enferno/admin/templates/admin/jsapi.jinja2:613
+#: enferno/admin/templates/admin/jsapi.jinja2:593
+#: enferno/admin/templates/admin/jsapi.jinja2:721
 msgid "Log off this device"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:490
+#: enferno/admin/templates/admin/jsapi.jinja2:596
 msgid "View Fullscreen"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:491
+#: enferno/admin/templates/admin/jsapi.jinja2:597
 msgid "Exit Fullscreen"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:493
+#: enferno/admin/templates/admin/jsapi.jinja2:599
 msgid "Coordinates"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:495
+#: enferno/admin/templates/admin/jsapi.jinja2:601
 #: enferno/data_import/templates/sheets-import.html:678
 #: enferno/data_import/templates/sheets-import.html:682
 msgid "Event Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:496
+#: enferno/admin/templates/admin/jsapi.jinja2:602
 msgid "Parent ID"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:499
+#: enferno/admin/templates/admin/jsapi.jinja2:605
 msgid "Preview Image"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:500
+#: enferno/admin/templates/admin/jsapi.jinja2:606
 msgid "Play Video"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:501
+#: enferno/admin/templates/admin/jsapi.jinja2:607
 msgid "Open PDF in PDF Viewer"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:502
+#: enferno/admin/templates/admin/jsapi.jinja2:608
 msgid "Download File"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:503
+#: enferno/admin/templates/admin/jsapi.jinja2:609
 msgid "Category"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:504
+#: enferno/admin/templates/admin/jsapi.jinja2:610
 msgid "Duration"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:505
+#: enferno/admin/templates/admin/jsapi.jinja2:611
 msgid "Click to copy"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:506
+#: enferno/admin/templates/admin/jsapi.jinja2:612
 msgid "File Hash"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:507
+#: enferno/admin/templates/admin/jsapi.jinja2:613
+#: enferno/admin/templates/admin/media-dashboard.html:270
 msgid "Filename"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:510
+#: enferno/admin/templates/admin/jsapi.jinja2:614
+msgid "Preview not available"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:615
+msgid "Download file"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:618
 msgid "Default settings loaded. Click Save to apply changes."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:511
+#: enferno/admin/templates/admin/jsapi.jinja2:619
 msgid "Field"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:512
+#: enferno/admin/templates/admin/jsapi.jinja2:620
 msgid "Previous"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:513
+#: enferno/admin/templates/admin/jsapi.jinja2:621
 msgid "Updated"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:514
+#: enferno/admin/templates/admin/jsapi.jinja2:622
 msgid "UNSET"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:515
+#: enferno/admin/templates/admin/jsapi.jinja2:623
 msgid "On"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:516
+#: enferno/admin/templates/admin/jsapi.jinja2:624
 msgid "Off"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:519
+#: enferno/admin/templates/admin/jsapi.jinja2:627
 msgid "Include Postal Code"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:520
+#: enferno/admin/templates/admin/jsapi.jinja2:628
 #: enferno/admin/templates/admin/system-logs.html:146
 msgid "Logger"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:532
+#: enferno/admin/templates/admin/jsapi.jinja2:640
 msgid "Origin Place"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:541
+#: enferno/admin/templates/admin/jsapi.jinja2:649
 msgid "Person"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:542
+#: enferno/admin/templates/admin/jsapi.jinja2:650
 msgid "Entity"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:546
+#: enferno/admin/templates/admin/jsapi.jinja2:654
 msgid "Male"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:547
+#: enferno/admin/templates/admin/jsapi.jinja2:655
 msgid "Female"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:551
+#: enferno/admin/templates/admin/jsapi.jinja2:659
 msgid "Minor"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:552
+#: enferno/admin/templates/admin/jsapi.jinja2:660
 msgid "Adult"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:559
+#: enferno/admin/templates/admin/jsapi.jinja2:667
 msgid "Non-Civilian"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:560
+#: enferno/admin/templates/admin/jsapi.jinja2:668
 msgid "Police"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:561
+#: enferno/admin/templates/admin/jsapi.jinja2:669
 msgid "Other Security Forces"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:565
+#: enferno/admin/templates/admin/jsapi.jinja2:673
 msgid "Single"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:566
+#: enferno/admin/templates/admin/jsapi.jinja2:674
 msgid "Married"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:567
+#: enferno/admin/templates/admin/jsapi.jinja2:675
 msgid "Seperated"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:568
+#: enferno/admin/templates/admin/jsapi.jinja2:676
 msgid "Divorced"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:569
+#: enferno/admin/templates/admin/jsapi.jinja2:677
 msgid "Widowed"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:595
+#: enferno/admin/templates/admin/jsapi.jinja2:703
 msgid "Are you sure you want to end the session for this device?"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:596
+#: enferno/admin/templates/admin/jsapi.jinja2:704
 msgid "All sessions for the user have been logged out successfully."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:597
+#: enferno/admin/templates/admin/jsapi.jinja2:705
 msgid "Logged out session"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:598
+#: enferno/admin/templates/admin/jsapi.jinja2:706
 msgid "Error fetching sessions"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:599
+#: enferno/admin/templates/admin/jsapi.jinja2:707
 msgid "Error logging out session"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:600
+#: enferno/admin/templates/admin/jsapi.jinja2:708
 msgid "Error logging out all sessions for user ID:"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:614
+#: enferno/admin/templates/admin/jsapi.jinja2:722
 #: enferno/admin/templates/admin/users.html:108
 #: enferno/admin/templates/admin/users.html:258
 msgid "Active"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:615
+#: enferno/admin/templates/admin/jsapi.jinja2:723
 #: enferno/admin/templates/admin/users.html:108
 msgid "Inactive"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:616
+#: enferno/admin/templates/admin/jsapi.jinja2:724
 #: enferno/admin/templates/admin/users.html:305
 msgid "Logout All Sessions"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:617
+#: enferno/admin/templates/admin/jsapi.jinja2:725
 msgid "Reset password"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:618
+#: enferno/admin/templates/admin/jsapi.jinja2:726
 #: enferno/admin/templates/admin/users.html:43
 msgid "Password reset already requested."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:619
+#: enferno/admin/templates/admin/jsapi.jinja2:727
 #: enferno/admin/templates/admin/users.html:72
 msgid "Password reset requested."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:620
+#: enferno/admin/templates/admin/jsapi.jinja2:728
 #: enferno/admin/templates/admin/users.html:43
 msgid "Force password reset"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:621
+#: enferno/admin/templates/admin/jsapi.jinja2:729
 #: enferno/admin/templates/admin/users.html:59
 #: enferno/admin/templates/admin/users.html:300
 msgid "Revoke 2FA"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:624
+#: enferno/admin/templates/admin/jsapi.jinja2:732
 #, python-brace-format
 msgid "Must be {max} characters or fewer."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:625
+#: enferno/admin/templates/admin/jsapi.jinja2:733
 #, python-brace-format
 msgid "Must be at least {min} characters."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:626
+#: enferno/admin/templates/admin/jsapi.jinja2:734
 msgid "This field is required."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:627
+#: enferno/admin/templates/admin/jsapi.jinja2:735
 msgid "Please enter a valid number."
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:713
+#: enferno/admin/templates/admin/jsapi.jinja2:821
 #: enferno/data_import/templates/sheets-import.html:1257
 msgid "Error"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:714
+#: enferno/admin/templates/admin/jsapi.jinja2:822
 msgid "Warning"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:715
+#: enferno/admin/templates/admin/jsapi.jinja2:823
 msgid "Info"
 msgstr ""
 
-#: enferno/admin/templates/admin/jsapi.jinja2:716
+#: enferno/admin/templates/admin/jsapi.jinja2:824
 msgid "Debug"
 msgstr ""
 
-#: enferno/admin/templates/admin/labels.html:82
-msgid "Comments (AR)"
-msgstr ""
-
-#: enferno/admin/templates/admin/labels.html:143
-#: enferno/admin/templates/admin/labels.html:281
+#: enferno/admin/templates/admin/labels.html:76
+#: enferno/admin/templates/admin/labels.html:243
 msgid "Offline"
 msgstr ""
 
-#: enferno/admin/templates/admin/labels.html:277
-msgid "Verified"
+#: enferno/admin/templates/admin/labels.html:114
+msgid "No labels found"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:141
+msgid "Add parent name to title"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:155
+msgid "Comments (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:173
+#: enferno/admin/templates/admin/labels.html:250
+msgid "Available In"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:290
+msgid "Add New Item"
 msgstr ""
 
 #: enferno/admin/templates/admin/locations.html:53
@@ -3056,12 +3522,65 @@ msgid "New Location"
 msgstr ""
 
 #: enferno/admin/templates/admin/locations.html:208
-#: enferno/admin/templates/admin/partials/location_dialog.html:53
+#: enferno/admin/templates/admin/partials/location_dialog.html:49
 msgid "Full Location"
 msgstr ""
 
 #: enferno/admin/templates/admin/locations.html:244
 msgid "Edit Location"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:42
+msgid "Total Media"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:72
+#: enferno/templates/nav-drawer.html:13
+msgid "Media Dashboard"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:89
+msgid "Search extraction text or by ID"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:101
+msgid "Date Range"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:114
+msgid "Apply"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:121
+msgid "Clear"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:131
+msgid "selected"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:213
+msgid "Low Word Count"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:213
+msgid "words"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:269
+msgid "Thumbnail"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:361
+msgid "Bulk OCR Complete"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:430
+msgid "Error processing OCR request"
+msgstr ""
+
+#: enferno/admin/templates/admin/media-dashboard.html:481
+msgid "Error loading data"
 msgstr ""
 
 #: enferno/admin/templates/admin/roles.html:24
@@ -3651,14 +4170,13 @@ msgid "Allowed Media Import Extensions"
 msgstr ""
 
 #: enferno/admin/templates/admin/system-administration.html:506
-msgid "Enable OCR"
+msgid "Tesseract OCR (Import)"
 msgstr ""
 
 #: enferno/admin/templates/admin/system-administration.html:508
 msgid ""
-"Bayanat's Media Import tool can utilize Google's Tesseract OCR engine. "
-"This enables parsing and extracting text from images and scanned PDF "
-"files (requires Tesseract system package)."
+"Basic OCR during data import using Tesseract. Extracts text from images "
+"and scanned PDFs (requires Tesseract system package)."
 msgstr ""
 
 #: enferno/admin/templates/admin/system-administration.html:519
@@ -3674,10 +4192,20 @@ msgid "OCR Extensions"
 msgstr ""
 
 #: enferno/admin/templates/admin/system-administration.html:532
+msgid "Google Cloud API Key"
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:533
+msgid ""
+"Enables advanced OCR (Vision) and text translation. Used across OCR "
+"extraction and translation features."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:542
 msgid "Enable transcription"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:534
+#: enferno/admin/templates/admin/system-administration.html:544
 msgid ""
 "Enables transcription of audio and video files using OpenAI's Whisper "
 "during import. Bayanat will need to download the specified model below "
@@ -3686,79 +4214,79 @@ msgid ""
 "required resources and available language please check:"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:545
+#: enferno/admin/templates/admin/system-administration.html:555
 msgid ""
 "OpenAI Whisper is not installed. Please install it to enable "
 "transcription."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:552
+#: enferno/admin/templates/admin/system-administration.html:562
 msgid "Whisper model to use for transcription."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:553
+#: enferno/admin/templates/admin/system-administration.html:563
 msgid "Whisper Model"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:566
+#: enferno/admin/templates/admin/system-administration.html:576
 msgid "Sheet Import"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:567
+#: enferno/admin/templates/admin/system-administration.html:577
 #: enferno/templates/setup_wizard.html:339
 msgid "Enables dynamic import of spreadsheets into Actors."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:575
+#: enferno/admin/templates/admin/system-administration.html:585
 msgid "Allowed spreadsheet extensions for Sheets Import Tool."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:576
+#: enferno/admin/templates/admin/system-administration.html:586
 msgid "Allowed Sheets Extensions"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:585
+#: enferno/admin/templates/admin/system-administration.html:595
 msgid "Web import"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:586
+#: enferno/admin/templates/admin/system-administration.html:596
 msgid "Enables import of videos from online sources into Bulletins."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:593
+#: enferno/admin/templates/admin/system-administration.html:603
 msgid "Web import proxy"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:594
+#: enferno/admin/templates/admin/system-administration.html:604
 msgid ""
 "Proxy URL to use when importing media from web sources (e.g. "
 "socks5://user:pass@host:port)."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:599
+#: enferno/admin/templates/admin/system-administration.html:609
 msgid "Allowed domains"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:601
+#: enferno/admin/templates/admin/system-administration.html:611
 msgid ""
 "List of domains from which media can be imported. Check yt-dlp's "
 "repository (https://github.com/yt-dlp/yt-"
 "dlp/blob/master/supportedsites.md) for a list of supported websites."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:607
+#: enferno/admin/templates/admin/system-administration.html:617
 msgid "Web import cookies"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:608
+#: enferno/admin/templates/admin/system-administration.html:618
 msgid "Cookie data for authenticated web imports (in Netscape/Mozilla format)."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:623
+#: enferno/admin/templates/admin/system-administration.html:633
 msgid "Export system"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:625
+#: enferno/admin/templates/admin/system-administration.html:635
 #: enferno/templates/setup_wizard.html:343
 msgid ""
 "Enables exporting Actors, Bulletins and Incidents into various formats. "
@@ -3767,33 +4295,33 @@ msgid ""
 " be downloaded by the requesting user from the Exports dashboard."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:628
+#: enferno/admin/templates/admin/system-administration.html:638
 #: enferno/templates/setup_wizard.html:368
 msgid "Export Expiry Time"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:629
+#: enferno/admin/templates/admin/system-administration.html:639
 #: enferno/templates/setup_wizard.html:369
 msgid "Period after which exports will expired and be deleted."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:641
+#: enferno/admin/templates/admin/system-administration.html:651
 msgid "Map API endpoint"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:642
+#: enferno/admin/templates/admin/system-administration.html:652
 msgid ""
 "API provider for Open Street Maps tiles. By default, Bayanat uses "
 "OpenStreetMaps tiles servers. This can be changed using this setting, for"
 " example to use an offline instance of OSM."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:645
+#: enferno/admin/templates/admin/system-administration.html:655
 #: enferno/templates/setup_wizard.html:169
 msgid "Satellite Imagery"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:646
+#: enferno/admin/templates/admin/system-administration.html:656
 msgid ""
 "Bayanat uses OpenStreetMaps by default. Optionally, it is\n"
 "                                        able to show satellite imagery "
@@ -3801,63 +4329,63 @@ msgid ""
 "                                        API Key."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:650
+#: enferno/admin/templates/admin/system-administration.html:660
 #: enferno/templates/setup_wizard.html:171
 msgid "Google Maps API Key"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:651
+#: enferno/admin/templates/admin/system-administration.html:661
 #: enferno/templates/setup_wizard.html:173
 msgid ""
 "API key for Google Maps. Adding a key enables satellite imagery in "
 "Bayanat's maps."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:654
+#: enferno/admin/templates/admin/system-administration.html:664
 #: enferno/templates/setup_wizard.html:164
 msgid "Default Map Position"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:655
+#: enferno/admin/templates/admin/system-administration.html:665
 msgid "Changes default position for all maps in all components."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:669
+#: enferno/admin/templates/admin/system-administration.html:679
 msgid "Include postal code generation settings"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:671
+#: enferno/admin/templates/admin/system-administration.html:681
 msgid ""
 "Include postal codes in the format of full location text of all entries. "
 "Note: you must regenerate full locations from the Component Data "
 "dashboard for this change to take effect."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:681
+#: enferno/admin/templates/admin/system-administration.html:691
 msgid ""
 "Email is not configured, and email notifications are currently disabled. "
 "To enable them, set up the email service in the Mail tab."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:683
+#: enferno/admin/templates/admin/system-administration.html:693
 msgid "Notifications for users"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:684
+#: enferno/admin/templates/admin/system-administration.html:694
 msgid ""
 "These notifications are sent to users about important changes to their "
 "accounts and new task assignments."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:687
+#: enferno/admin/templates/admin/system-administration.html:697
 msgid "Login from new IP"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:692
+#: enferno/admin/templates/admin/system-administration.html:702
 msgid "Notify when a user logs in from a new IP address."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:697
+#: enferno/admin/templates/admin/system-administration.html:707
 #: enferno/admin/templates/admin/users.html:185
 #: enferno/templates/login_dialog.html:24
 #: enferno/templates/reauth_dialog.html:11
@@ -3868,303 +4396,294 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:702
+#: enferno/admin/templates/admin/system-administration.html:712
 msgid "Notify when a user changes their password."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:706
+#: enferno/admin/templates/admin/system-administration.html:716
 msgid "Two-factor authentication"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:711
+#: enferno/admin/templates/admin/system-administration.html:721
 msgid "Notify when a user sets up, updates or removes 2FA."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:715
+#: enferno/admin/templates/admin/system-administration.html:725
 msgid "Recovery codes"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:720
+#: enferno/admin/templates/admin/system-administration.html:730
 msgid "Notify when a user generates new recovery codes."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:724
+#: enferno/admin/templates/admin/system-administration.html:734
 msgid "New assignment"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:731
+#: enferno/admin/templates/admin/system-administration.html:741
 msgid "Notify user when they are assigned a new task."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:736
+#: enferno/admin/templates/admin/system-administration.html:746
 msgid "Review needed"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:743
+#: enferno/admin/templates/admin/system-administration.html:753
 msgid "Notify user when their review is requested."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:748
+#: enferno/admin/templates/admin/system-administration.html:758
 msgid "Web Import status"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:755
+#: enferno/admin/templates/admin/system-administration.html:765
 msgid "Notify user about their web import status."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:762
+#: enferno/admin/templates/admin/system-administration.html:772
 msgid "Notifications for all administrators"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:763
+#: enferno/admin/templates/admin/system-administration.html:773
 msgid "Notifications sent to all administrators about important events."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:764
-#: enferno/admin/templates/admin/system-administration.html:1175
-#: enferno/templates/settings_drawer.html:57
+#: enferno/admin/templates/admin/system-administration.html:774
+#: enferno/admin/templates/admin/system-administration.html:1153
+#: enferno/templates/settings_drawer.html:58
 #: enferno/templates/setup_wizard.html:235
 msgid "Security"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:767
+#: enferno/admin/templates/admin/system-administration.html:777
 msgid "New user"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:774
+#: enferno/admin/templates/admin/system-administration.html:784
 msgid "Notify when a new user account is created."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:778
+#: enferno/admin/templates/admin/system-administration.html:788
 msgid "User updates"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:785
+#: enferno/admin/templates/admin/system-administration.html:795
 msgid "Notify when an existing user is updated."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:789
+#: enferno/admin/templates/admin/system-administration.html:799
 msgid "New group"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:796
+#: enferno/admin/templates/admin/system-administration.html:806
 msgid "Notify when a new group is created."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:800
+#: enferno/admin/templates/admin/system-administration.html:810
 msgid "System settings change"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:807
+#: enferno/admin/templates/admin/system-administration.html:817
 msgid "Notify when system settings are updated."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:811
+#: enferno/admin/templates/admin/system-administration.html:821
 msgid "Unauthorized action"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:818
+#: enferno/admin/templates/admin/system-administration.html:828
 msgid "An unauthorized action is attempted."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:822
+#: enferno/admin/templates/admin/system-administration.html:832
 msgid "Admin security credentials change"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:829
+#: enferno/admin/templates/admin/system-administration.html:839
 msgid "Notify when an administrator updates their security credentials."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:833
+#: enferno/admin/templates/admin/system-administration.html:843
 msgid "Deleted items"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:840
+#: enferno/admin/templates/admin/system-administration.html:850
 msgid "Notify when items are deleted from the system."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:848
+#: enferno/admin/templates/admin/system-administration.html:858
 msgid "New request"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:855
+#: enferno/admin/templates/admin/system-administration.html:865
 msgid "Notify when a new export request is created."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:859
+#: enferno/admin/templates/admin/system-administration.html:869
 msgid "Approved request"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:866
+#: enferno/admin/templates/admin/system-administration.html:876
 msgid "Notify when an export request is approved."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:870
+#: enferno/admin/templates/admin/system-administration.html:880
 msgid "Media and Sheet Import"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:873
+#: enferno/admin/templates/admin/system-administration.html:883
 msgid "New batch"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:880
+#: enferno/admin/templates/admin/system-administration.html:890
 msgid "Notify when a new import batch is queued."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:886
+#: enferno/admin/templates/admin/system-administration.html:896
 msgid "Notifications for administrators"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:887
+#: enferno/admin/templates/admin/system-administration.html:897
 msgid ""
 "Notifications sent to individual administrators about the results of "
 "actions they initiated."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:890
+#: enferno/admin/templates/admin/system-administration.html:900
 msgid "Import batch status"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:897
+#: enferno/admin/templates/admin/system-administration.html:907
 msgid "Notify about the results of their Media or Sheets Import batches."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:901
+#: enferno/admin/templates/admin/system-administration.html:911
 msgid "Bulk operations status"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:908
+#: enferno/admin/templates/admin/system-administration.html:918
 msgid "Notify about the status of their bulk operations."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:917
+#: enferno/admin/templates/admin/system-administration.html:927
 msgid "Enable Mail System"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:919
+#: enferno/admin/templates/admin/system-administration.html:929
 msgid "Enables sending emails from Bayanat."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:926
+#: enferno/admin/templates/admin/system-administration.html:936
 msgid "Mail Server"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:927
+#: enferno/admin/templates/admin/system-administration.html:937
 msgid "SMTP server for sending emails."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:931
+#: enferno/admin/templates/admin/system-administration.html:941
 msgid "Mail Port"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:932
+#: enferno/admin/templates/admin/system-administration.html:942
 msgid "Port for SMTP server."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:936
+#: enferno/admin/templates/admin/system-administration.html:946
 msgid "Use TLS"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:937
+#: enferno/admin/templates/admin/system-administration.html:947
 msgid "Use TLS for SMTP server."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:941
+#: enferno/admin/templates/admin/system-administration.html:951
 msgid "Use SSL"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:942
+#: enferno/admin/templates/admin/system-administration.html:952
 msgid "Use SSL for SMTP server."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:946
+#: enferno/admin/templates/admin/system-administration.html:956
 msgid "Mail Username"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:946
+#: enferno/admin/templates/admin/system-administration.html:956
 msgid "Username for SMTP server."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:951
+#: enferno/admin/templates/admin/system-administration.html:961
 msgid "Mail Password"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:951
+#: enferno/admin/templates/admin/system-administration.html:961
 msgid "Password for SMTP server."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:956
+#: enferno/admin/templates/admin/system-administration.html:966
 msgid "Mail Default Sender"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:957
+#: enferno/admin/templates/admin/system-administration.html:967
 msgid "Default sender for emails."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:962
+#: enferno/admin/templates/admin/system-administration.html:972
 msgid "Allowed Email Domains"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:963
+#: enferno/admin/templates/admin/system-administration.html:973
 msgid ""
 "Only emails from the listed domains will be allowed (e.g., gmail.com, "
 "yahoo.com). Use * to allow all domains."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:996
+#: enferno/admin/templates/admin/system-administration.html:1006
 msgid "(Current settings)"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:997
+#: enferno/admin/templates/admin/system-administration.html:1007
 msgid "No changes in this configuration"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1001
+#: enferno/admin/templates/admin/system-administration.html:1011
 msgid "Revert to this version"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1015
+#: enferno/admin/templates/admin/system-administration.html:1025
 msgid "Review and confirm your changes"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1021
+#: enferno/admin/templates/admin/system-administration.html:1031
 msgid "Removed"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1036
-#: enferno/admin/templates/admin/system-administration.html:1070
+#: enferno/admin/templates/admin/system-administration.html:1046
 msgid "No changes detected"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1057
-msgid "Are you sure you want to revert to this version?"
-msgstr ""
-
-#: enferno/admin/templates/admin/system-administration.html:1061
-msgid "Version settings changed by"
-msgstr ""
-
-#: enferno/admin/templates/admin/system-administration.html:1096
+#: enferno/admin/templates/admin/system-administration.html:1074
 #: enferno/templates/setup_wizard.html:430
 msgid "Restarting Bayanat to new settings to take effect, please wait..."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1099
+#: enferno/admin/templates/admin/system-administration.html:1077
 #: enferno/templates/setup_wizard.html:433
 msgid ""
 "This can take up to a minute. If it takes longer, please restart Bayanat "
 "manually."
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1141
+#: enferno/admin/templates/admin/system-administration.html:1120
 msgid "Version"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1142
+#: enferno/admin/templates/admin/system-administration.html:1121
 msgid "Edit time"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1143
+#: enferno/admin/templates/admin/system-administration.html:1122
 #: enferno/admin/templates/admin/users.html:218
 #: enferno/admin/templates/admin/users.html:352
 #: enferno/templates/security/forgot_password.html:10
@@ -4173,36 +4692,36 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1173
+#: enferno/admin/templates/admin/system-administration.html:1151
 msgid "General"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1174
+#: enferno/admin/templates/admin/system-administration.html:1152
 #: enferno/templates/setup_wizard.html:197
 msgid "Storage"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1176
+#: enferno/admin/templates/admin/system-administration.html:1154
 msgid "Access control"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1177
+#: enferno/admin/templates/admin/system-administration.html:1155
 msgid "Activity monitor"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1178
+#: enferno/admin/templates/admin/system-administration.html:1156
 msgid "Import tools"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1180
+#: enferno/admin/templates/admin/system-administration.html:1158
 msgid "Maps"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1183
+#: enferno/admin/templates/admin/system-administration.html:1161
 msgid "Mail"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:1386
+#: enferno/admin/templates/admin/system-administration.html:1361
 #: enferno/templates/setup_wizard.html:626
 msgid "Bayanat reloaded successfully."
 msgstr ""
@@ -4263,7 +4782,7 @@ msgstr ""
 
 #: enferno/admin/templates/admin/users.html:250
 #: enferno/admin/templates/admin/users.html:356
-#: enferno/templates/nav-drawer.html:85
+#: enferno/templates/nav-drawer.html:89
 msgid "Groups"
 msgstr ""
 
@@ -4296,7 +4815,7 @@ msgid "Can Import from Web"
 msgstr ""
 
 #: enferno/admin/templates/admin/users.html:311
-#: enferno/templates/security/login_user.html:77
+#: enferno/templates/security/login_user.html:78
 msgid "Close"
 msgstr ""
 
@@ -4365,102 +4884,107 @@ msgstr ""
 msgid "Private"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:443
+#: enferno/admin/templates/admin/partials/actor_dialog.html:448
 msgid "Missing Person Profile"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:476
+#: enferno/admin/templates/admin/partials/actor_dialog.html:455
+#: enferno/data_import/templates/sheets-import.html:465
+msgid "Last Address"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:481
 msgid "Months Pregnant at time of disappearance"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:592
+#: enferno/admin/templates/admin/partials/actor_dialog.html:597
 msgid "Hair loss"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:605
+#: enferno/admin/templates/admin/partials/actor_dialog.html:610
 msgid "Hair type"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:614
+#: enferno/admin/templates/admin/partials/actor_dialog.html:619
 msgid "Hair length"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:623
+#: enferno/admin/templates/admin/partials/actor_dialog.html:628
 msgid "Hair color"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:632
+#: enferno/admin/templates/admin/partials/actor_dialog.html:637
 msgid "Facial hair"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:650
+#: enferno/admin/templates/admin/partials/actor_dialog.html:655
 msgid "Handness"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:662
+#: enferno/admin/templates/admin/partials/actor_dialog.html:667
 msgid "Eye color"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:720
+#: enferno/admin/templates/admin/partials/actor_dialog.html:725
 msgid "Physician’s name and contact"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:727
+#: enferno/admin/templates/admin/partials/actor_dialog.html:732
 msgid ""
 "Fractures / Injuries (indicate place, side, circumstances, age at the "
 "time of injury, treatment)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:736
+#: enferno/admin/templates/admin/partials/actor_dialog.html:741
 msgid ""
 "Implants (pacemakers, orthopedic prostheses, screws or metal plates, "
 "etc...) with date or age"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:743
+#: enferno/admin/templates/admin/partials/actor_dialog.html:748
 msgid ""
 "Congenital malformations (indicate type and whether there is more than "
 "one relative with the same pathology)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:752
+#: enferno/admin/templates/admin/partials/actor_dialog.html:757
 #: enferno/data_import/templates/sheets-import.html:586
 msgid "Pain and/or ailments"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:759
+#: enferno/admin/templates/admin/partials/actor_dialog.html:764
 msgid "Other medical conditions (specify type and age of occurrence)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:768
+#: enferno/admin/templates/admin/partials/actor_dialog.html:773
 msgid "Accidents (indicate age of occurrence)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:775
+#: enferno/admin/templates/admin/partials/actor_dialog.html:780
 msgid "Prescription drugs taken (indicate at what age and reason)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:795
+#: enferno/admin/templates/admin/partials/actor_dialog.html:800
 msgid "Is there a Dental Record?"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:807
+#: enferno/admin/templates/admin/partials/actor_dialog.html:812
 msgid "Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:818
+#: enferno/admin/templates/admin/partials/actor_dialog.html:823
 msgid "Dental problems (absences, infections, bleeding, etc...)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:825
+#: enferno/admin/templates/admin/partials/actor_dialog.html:830
 msgid "Dental treatments (extractions, fillings, etc...) with dates"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:832
+#: enferno/admin/templates/admin/partials/actor_dialog.html:837
 msgid "Dental habits (toothpicks, smoking, etc...)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:872
+#: enferno/admin/templates/admin/partials/actor_dialog.html:877
 msgid "Location of reburial (full address)"
 msgstr ""
 
@@ -4530,7 +5054,7 @@ msgid "Original Title is required."
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:94
-#: enferno/admin/templates/admin/partials/location_dialog.html:39
+#: enferno/admin/templates/admin/partials/location_dialog.html:35
 msgid "Title (Ar)"
 msgstr ""
 
@@ -4543,27 +5067,27 @@ msgid "Not Available"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:188
-#: enferno/admin/templates/admin/partials/incident_dialog.html:185
+#: enferno/admin/templates/admin/partials/incident_dialog.html:187
 msgid "Restrict Bulletin to Access Group(s)"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:192
-#: enferno/admin/templates/admin/partials/incident_dialog.html:189
+#: enferno/admin/templates/admin/partials/incident_dialog.html:191
 msgid "No Access Groups"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/edit_related_actors.html:10
-#: enferno/admin/templates/admin/partials/incident_dialog.html:131
+#: enferno/admin/templates/admin/partials/incident_dialog.html:133
 msgid "Search & Relate Actors"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/edit_related_bulletins.html:12
-#: enferno/admin/templates/admin/partials/incident_dialog.html:105
+#: enferno/admin/templates/admin/partials/incident_dialog.html:107
 msgid "Search & Relate Bulletins"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/edit_related_incidents.html:11
-#: enferno/admin/templates/admin/partials/incident_dialog.html:155
+#: enferno/admin/templates/admin/partials/incident_dialog.html:157
 msgid "Search & Relate Incidents"
 msgstr ""
 
@@ -4583,23 +5107,23 @@ msgstr ""
 msgid "Save Incident"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/incident_dialog.html:97
+#: enferno/admin/templates/admin/partials/incident_dialog.html:99
 msgid "Load Related Bulletins"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/incident_dialog.html:122
+#: enferno/admin/templates/admin/partials/incident_dialog.html:124
 msgid "Load Related Actors"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/incident_dialog.html:147
+#: enferno/admin/templates/admin/partials/incident_dialog.html:149
 msgid "Load Related Incidents"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/location_dialog.html:21
+#: enferno/admin/templates/admin/partials/location_dialog.html:17
 msgid "Save Location"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/location_dialog.html:114
+#: enferno/admin/templates/admin/partials/location_dialog.html:110
 msgid "Parent Location"
 msgstr ""
 
@@ -4607,11 +5131,11 @@ msgstr ""
 msgid "Log Details "
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/media_dialog.html:47
+#: enferno/admin/templates/admin/partials/media_dialog.html:48
 msgid "Media File"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/media_dialog.html:52
+#: enferno/admin/templates/admin/partials/media_dialog.html:53
 msgid "Attach Media"
 msgstr ""
 
@@ -4627,29 +5151,29 @@ msgstr ""
 msgid "Data Assistant"
 msgstr ""
 
-#: enferno/data_import/templates/import-log.html:167
-#: enferno/export/templates/export-dashboard.html:161
+#: enferno/data_import/templates/import-log.html:172
+#: enferno/export/templates/export-dashboard.html:169
 msgid "Table"
 msgstr ""
 
-#: enferno/data_import/templates/import-log.html:168
+#: enferno/data_import/templates/import-log.html:173
 msgid "Item"
 msgstr ""
 
-#: enferno/data_import/templates/import-log.html:171
-#: enferno/export/templates/export-dashboard.html:163
+#: enferno/data_import/templates/import-log.html:176
+#: enferno/export/templates/export-dashboard.html:171
 msgid "Format"
 msgstr ""
 
-#: enferno/data_import/templates/import-log.html:172
+#: enferno/data_import/templates/import-log.html:177
 msgid "Batch ID"
 msgstr ""
 
-#: enferno/data_import/templates/import-log.html:173
+#: enferno/data_import/templates/import-log.html:178
 msgid "Requested Time"
 msgstr ""
 
-#: enferno/data_import/templates/import-log.html:174
+#: enferno/data_import/templates/import-log.html:179
 msgid "Import Time"
 msgstr ""
 
@@ -4691,7 +5215,7 @@ msgid "Next"
 msgstr ""
 
 #: enferno/data_import/templates/media-import.html:129
-#: enferno/templates/security/mf_recovery.html:32
+#: enferno/templates/security/mf_recovery.html:33
 #: enferno/templates/security/two_factor_select.html:55
 #: enferno/templates/security/two_factor_verify_code.html:38
 #: enferno/templates/security/wan_signin.html:75
@@ -4844,7 +5368,7 @@ msgid "Map Name"
 msgstr ""
 
 #: enferno/data_import/templates/sheets-import.html:178
-#: enferno/templates/security/wan_register.html:162
+#: enferno/templates/security/wan_register.html:145
 msgid "Delete"
 msgstr ""
 
@@ -5003,56 +5527,56 @@ msgstr ""
 msgid "Stop"
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:194
+#: enferno/deduplication/templates/deduplication.html:199
 msgid "Match"
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:195
+#: enferno/deduplication/templates/deduplication.html:200
 msgid "Distance"
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:196
+#: enferno/deduplication/templates/deduplication.html:201
 msgid "Data"
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:288
+#: enferno/deduplication/templates/deduplication.html:293
 msgid " hours"
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:288
+#: enferno/deduplication/templates/deduplication.html:293
 msgid " minutes"
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:289
+#: enferno/deduplication/templates/deduplication.html:294
 msgid "Processed: "
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:289
+#: enferno/deduplication/templates/deduplication.html:294
 msgid "Speed: "
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:289
+#: enferno/deduplication/templates/deduplication.html:294
 msgid "/hour"
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:289
+#: enferno/deduplication/templates/deduplication.html:294
 msgid "Approx. time to complete: "
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:306
+#: enferno/deduplication/templates/deduplication.html:311
 msgid " of "
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:306
+#: enferno/deduplication/templates/deduplication.html:311
 msgid " items ("
 msgstr ""
 
-#: enferno/deduplication/templates/deduplication.html:306
+#: enferno/deduplication/templates/deduplication.html:311
 msgid " pending)"
 msgstr ""
 
 #: enferno/export/templates/export-dashboard.html:30
-#: enferno/templates/nav-drawer.html:64
+#: enferno/templates/nav-drawer.html:68
 msgid "Exports"
 msgstr ""
 
@@ -5060,25 +5584,25 @@ msgstr ""
 msgid "Do not include Media"
 msgstr ""
 
-#: enferno/export/templates/export-dashboard.html:160
+#: enferno/export/templates/export-dashboard.html:168
 msgid "Requester"
 msgstr ""
 
-#: enferno/export/templates/export-dashboard.html:162
+#: enferno/export/templates/export-dashboard.html:170
 msgid "# of items"
 msgstr ""
 
-#: enferno/export/templates/export-dashboard.html:165
+#: enferno/export/templates/export-dashboard.html:173
 msgid "Requested time"
 msgstr ""
 
-#: enferno/export/templates/export-dashboard.html:166
+#: enferno/export/templates/export-dashboard.html:174
 msgid "Expiry time"
 msgstr ""
 
 #: enferno/templates/change-password.html:6
 #: enferno/templates/security/change_password.html:53
-#: enferno/templates/settings_drawer.html:62
+#: enferno/templates/settings_drawer.html:63
 msgid "Change Password"
 msgstr ""
 
@@ -5148,7 +5672,7 @@ msgid ""
 "country(s) your team will be working on."
 msgstr ""
 
-#: enferno/templates/dashboard.html:84 enferno/templates/nav-drawer.html:102
+#: enferno/templates/dashboard.html:84 enferno/templates/nav-drawer.html:106
 msgid "Component Data"
 msgstr ""
 
@@ -5162,7 +5686,7 @@ msgid ""
 "customized even further from the System Settings."
 msgstr ""
 
-#: enferno/templates/dashboard.html:102 enferno/templates/nav-drawer.html:112
+#: enferno/templates/dashboard.html:102 enferno/templates/nav-drawer.html:116
 msgid "System Settings"
 msgstr ""
 
@@ -5257,7 +5781,7 @@ msgid "Submit"
 msgstr ""
 
 #: enferno/templates/login_dialog.html:132
-#: enferno/templates/settings_drawer.html:65
+#: enferno/templates/settings_drawer.html:66
 msgid "Security Keys/Passkeys"
 msgstr ""
 
@@ -5270,55 +5794,55 @@ msgstr ""
 msgid "Authenticate"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:36
+#: enferno/templates/nav-drawer.html:40
 msgid "Data Import"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:43
+#: enferno/templates/nav-drawer.html:44
 msgid "Media Import"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:49
+#: enferno/templates/nav-drawer.html:50
 msgid "Sheets Import"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:57
+#: enferno/templates/nav-drawer.html:61
 msgid "Deduplication"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:71
+#: enferno/templates/nav-drawer.html:75
 msgid "Activity"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:77
+#: enferno/templates/nav-drawer.html:81
 msgid "Users & Groups"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:81
+#: enferno/templates/nav-drawer.html:85
 msgid "Users"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:92
+#: enferno/templates/nav-drawer.html:96
 msgid "Customize Database"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:95
+#: enferno/templates/nav-drawer.html:99
 msgid "Bulletin Form Builder"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:97
+#: enferno/templates/nav-drawer.html:101
 msgid "Actor Form Builder"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:99
+#: enferno/templates/nav-drawer.html:103
 msgid "Incident Form Builder"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:109
+#: enferno/templates/nav-drawer.html:113
 msgid "System Administration"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:114
+#: enferno/templates/nav-drawer.html:118
 msgid "System Logs"
 msgstr ""
 
@@ -5330,7 +5854,7 @@ msgstr ""
 msgid "Read"
 msgstr ""
 
-#: enferno/templates/notifications_drawer.html:18
+#: enferno/templates/notifications_drawer.html:19
 msgid "Open notifications dialog"
 msgstr ""
 
@@ -5342,23 +5866,23 @@ msgstr ""
 msgid "You must re-authenticate to continue."
 msgstr ""
 
-#: enferno/templates/settings_drawer.html:22
+#: enferno/templates/settings_drawer.html:23
 msgid "Theme"
 msgstr ""
 
-#: enferno/templates/settings_drawer.html:36
+#: enferno/templates/settings_drawer.html:37
 msgid "Light"
 msgstr ""
 
-#: enferno/templates/settings_drawer.html:46
+#: enferno/templates/settings_drawer.html:47
 msgid "Dark"
 msgstr ""
 
-#: enferno/templates/settings_drawer.html:63
+#: enferno/templates/settings_drawer.html:64
 msgid "Two-Factor Authentication"
 msgstr ""
 
-#: enferno/templates/settings_drawer.html:64
+#: enferno/templates/settings_drawer.html:65
 msgid "Recovery Codes"
 msgstr ""
 
@@ -5586,11 +6110,11 @@ msgstr ""
 msgid "You’ve chosen to use a recovery code. Please enter it below to continue."
 msgstr ""
 
-#: enferno/templates/security/mf_recovery.html:14
+#: enferno/templates/security/mf_recovery.html:15
 msgid "Enter your 12-character recovery code, including dashes"
 msgstr ""
 
-#: enferno/templates/security/mf_recovery.html:25
+#: enferno/templates/security/mf_recovery.html:26
 msgid "Continue"
 msgstr ""
 
@@ -5685,39 +6209,39 @@ msgstr ""
 msgid "Add Device"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:109
+#: enferno/templates/security/wan_register.html:92
 msgid "Usage"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:111
+#: enferno/templates/security/wan_register.html:94
 msgid "Transports"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:115
+#: enferno/templates/security/wan_register.html:98
 msgid "Backed Up"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:117
+#: enferno/templates/security/wan_register.html:100
 msgid "Device Type"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:119
+#: enferno/templates/security/wan_register.html:102
 msgid "Discoverable"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:121
+#: enferno/templates/security/wan_register.html:104
 msgid "Last Used"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:138
+#: enferno/templates/security/wan_register.html:121
 msgid "Delete Key"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:208
+#: enferno/templates/security/wan_register.html:210
 msgid "Are you sure you want to delete this device?"
 msgstr ""
 
-#: enferno/templates/security/wan_register.html:216
+#: enferno/templates/security/wan_register.html:218
 msgid "Device Removed Successfully"
 msgstr ""
 
