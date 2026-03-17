@@ -7,11 +7,13 @@ from typing import Optional
 
 import boto3
 from botocore.config import Config as BotoConfig
+import requests as http_requests
 from flask import (
     Response,
     request,
     current_app,
     send_from_directory,
+    stream_with_context,
     abort,
     jsonify,
     render_template,
@@ -160,7 +162,7 @@ def api_medias_chunk() -> Response:
         etag = get_file_hash(filepath)
 
         # validate etag here // if it exists // reject the upload and send an error code
-        if Media.query.filter(Media.etag == etag, Media.deleted.is_not(True)).first():
+        if Media.query.filter(Media.etag == etag, Media.deleted == False).first():
             return HTTPResponse.error("Error, file already exists", status=409)
 
         if not current_app.config["FILESYSTEM_LOCAL"] and not import_upload:
@@ -223,7 +225,7 @@ def api_medias_upload() -> Response:
         # get md5 hash
         etag = get_file_hash(filepath)
         # check if file already exists
-        if Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
+        if Media.query.filter(Media.etag == etag, Media.deleted == False).first():
             return HTTPResponse.error("Error: File already exists", status=409)
 
         response = {"etag": etag, "filename": filename}
@@ -245,7 +247,7 @@ def api_medias_upload() -> Response:
         etag = response.get()["ETag"].replace('"', "")
 
         # check if file already exists
-        if Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
+        if Media.query.filter(Media.etag == etag, Media.deleted == False).first():
             return HTTPResponse.error("Error: File already exists", status=409)
 
         return HTTPResponse.success(data={"filename": filename, "etag": etag})
@@ -375,6 +377,30 @@ def api_local_serve_media(
                 "media",
             )
         return send_from_directory("media", filename)
+
+
+@admin.route("/api/media/<int:id>/proxy")
+@auth_required()
+def api_media_proxy(id: int) -> Response:
+    """Proxy media file through Flask -- ensures same-origin inline display for PDFs."""
+    media = Media.query.get(id)
+    if not media:
+        abort(404)
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        return send_from_directory("media", media.media_file)
+
+    s3_url = _media_url(media.media_file)
+    r = http_requests.get(s3_url, stream=True, timeout=30)
+    content_type = r.headers.get("Content-Type", "application/octet-stream")
+    headers = {"Content-Disposition": "inline"}
+    return Response(
+        stream_with_context(r.iter_content(chunk_size=8192)),
+        content_type=content_type,
+        headers=headers,
+    )
 
 
 @admin.post("/api/inline/upload")
@@ -741,7 +767,7 @@ def api_extraction_translate(extraction_id: int):
 
 @admin.post("/api/ocr/process/<int:media_id>")
 @auth_required("session")
-@roles_accepted("Admin")
+@roles_accepted("Admin", "DA")
 def api_ocr_process(media_id: int):
     """Run OCR on a single media item (sync)."""
     from enferno.tasks.extraction import process_media_extraction_task
@@ -768,7 +794,7 @@ def api_ocr_process(media_id: int):
 
 @admin.post("/api/ocr/bulk")
 @auth_required("session")
-@roles_accepted("Admin")
+@roles_accepted("Admin", "DA")
 def api_ocr_bulk():
     """
     Bulk OCR processing via Celery (async).
@@ -831,7 +857,7 @@ def api_ocr_bulk():
 
 @admin.get("/api/ocr/processing")
 @auth_required("session")
-@roles_accepted("Admin")
+@roles_accepted("Admin", "DA")
 def api_ocr_processing():
     """Get list of media IDs currently being processed by bulk OCR."""
     redis_key = f"ocr_processing:{current_user.id}"

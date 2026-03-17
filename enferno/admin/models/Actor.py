@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 import sqlalchemy
+from flask import g, has_app_context
 from flask_babel import gettext
 from flask_login import current_user
 from geoalchemy2 import Geography
@@ -828,8 +829,13 @@ class Actor(db.Model, BaseMixin):
             for relation in self.incident_relations:
                 incident_relations_dict.append(relation.to_dict())
 
-        # Get all ID types for id_number formatting
-        id_types = {t.id: t.to_dict() for t in IDNumberType.query.all()}
+        # Get all ID types for id_number formatting (cached per request)
+        if has_app_context() and hasattr(g, "_id_number_types"):
+            id_types = g._id_number_types
+        else:
+            id_types = {t.id: t.to_dict() for t in IDNumberType.query.all()}
+            if has_app_context():
+                g._id_number_types = id_types
 
         actor = {
             "class": self.__tablename__,
@@ -1113,8 +1119,13 @@ class Actor(db.Model, BaseMixin):
         if not self.id_number:
             return {}
 
-        # Get all ID types in one query
-        id_types = {t.id: t.title for t in IDNumberType.query.all()}
+        # Get all ID types (cached per request)
+        if has_app_context() and hasattr(g, "_id_number_type_titles"):
+            id_types = g._id_number_type_titles
+        else:
+            id_types = {t.id: t.title for t in IDNumberType.query.all()}
+            if has_app_context():
+                g._id_number_type_titles = id_types
 
         # Group by type name
         grouped = {}

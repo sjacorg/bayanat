@@ -194,6 +194,7 @@
 
     <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/DocxViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
 
@@ -267,7 +268,7 @@
         { title: "{{_('User')}}", value: "user_id", width:50, sortable: false },
         { title: "{{_('Action')}}", value: "action", width:50, sortable: false },
         { title: "{{_('Status')}}", value: "status", width:50, sortable: false },
-        { title: "{{_('Subject')}}", value: "subject", width:50, sortable: false },
+        { title: "{{_('Affected Item')}}", value: "subject", width:50, sortable: false },
         { title: "{{_('Class')}}", value: "model", width:100, sortable: false },
         { title: "{{_('Details')}}", value: "details", width:200, sortable: false },
       ],
@@ -432,6 +433,7 @@
 
   app.component('MediaGrid', MediaGrid);
   app.component('PdfViewer', PdfViewer);
+        app.component('DocxViewer', DocxViewer);
   app.component('ImageViewer', ImageViewer);
   app.component('InlineMediaRenderer', InlineMediaRenderer);
 

@@ -1,12 +1,10 @@
 """LLM OCR provider. Works with any OpenAI-compatible endpoint (Ollama, SGLang, vLLM, etc.)."""
 
 import base64
-import io
 import re
 
 import httpx
 from flask import current_app
-from PIL import Image, ImageOps
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -16,35 +14,16 @@ from tenacity import (
 )
 
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.ocr.image import prepare_image
 
 logger = get_logger()
 
 DEFAULT_CONFIDENCE = 80.0
-MAX_IMAGE_PIXELS = 2048 * 2048
+LLM_MAX_DIMENSION = 2048
 
 
 class LLMProviderError(Exception):
     pass
-
-
-def _prepare_image(file_bytes: bytes) -> bytes:
-    """Apply EXIF orientation correction and downscale if needed."""
-    img = Image.open(io.BytesIO(file_bytes))
-    img = ImageOps.exif_transpose(img)
-
-    w, h = img.size
-    if w * h > MAX_IMAGE_PIXELS:
-        scale = (MAX_IMAGE_PIXELS / (w * h)) ** 0.5
-        new_w, new_h = int(w * scale), int(h * scale)
-        img = img.resize((new_w, new_h), Image.LANCZOS)
-        logger.info(f"LLM OCR: downscaled {w}x{h} -> {new_w}x{new_h}")
-
-    if img.mode in ("RGBA", "P", "LA"):
-        img = img.convert("RGB")
-
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=85)
-    return buf.getvalue()
 
 
 @retry(
@@ -58,11 +37,17 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
     model = current_app.config.get("LLM_OCR_MODEL", "llava")
     api_key = current_app.config.get("LLM_OCR_API_KEY")
 
-    file_bytes = _prepare_image(file_bytes)
+    file_bytes = prepare_image(file_bytes, max_dimension=LLM_MAX_DIMENSION)
     img_b64 = base64.b64encode(file_bytes).decode("utf-8")
 
     lang_str = ", ".join(language_hints) if language_hints else "Arabic, English"
-    prompt = f"OCR this document. Extract all text exactly as written. Languages: {lang_str}"
+
+    system_msg = (
+        "You are an OCR engine. Output ONLY the raw text from the image, nothing else. "
+        "No introductions, no explanations, no commentary, no refusals. "
+        "If the image contains no readable text, output an empty string."
+    )
+    prompt = f"Extract all text exactly as written. Languages: {lang_str}"
 
     headers = {}
     if api_key:
@@ -75,6 +60,7 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
             json={
                 "model": model,
                 "messages": [
+                    {"role": "system", "content": system_msg},
                     {
                         "role": "user",
                         "content": [
@@ -84,10 +70,10 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
                             },
                             {"type": "text", "text": prompt},
                         ],
-                    }
+                    },
                 ],
                 "max_tokens": 4096,
-                "temperature": 0.1,
+                "temperature": 0.0,
             },
             timeout=300.0,
         )
@@ -116,6 +102,15 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
 
     # Strip markdown code fences if model wraps output
     text = re.sub(r"^```\w*\n?|```$", "", text, flags=re.MULTILINE).strip()
+
+    # Strip LLM conversational preamble/refusals
+    preamble = re.match(
+        r"^(Sure[,.].*?:|Here is.*?:|I'm sorry.*?\.|I cannot.*?\.|I can't.*?\.)\s*",
+        text,
+        re.IGNORECASE,
+    )
+    if preamble:
+        text = text[preamble.end() :].strip()
 
     return {
         "text": text,

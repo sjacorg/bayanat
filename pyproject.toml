@@ -45,6 +45,7 @@ dependencies = [
     "cryptography>=45.0.0",
     "decorator>=5.2.0",
     "dnspython>=2.7.0",
+    "docx2python>=2.0.0",
     "docutils>=0.21.0",
     "email-validator>=2.2.0",
     "Flask-Babel>=4.0.0",
@@ -81,6 +82,7 @@ dependencies = [
     "parso>=0.8.4",
 
     "pdf2image>=1.17.0",
+    "pymupdf>=1.24.0",
     "pexpect>=4.9.0",
     "pickleshare>=0.7.5",
     "Pillow>=11.3.0",
@@ -92,7 +94,8 @@ dependencies = [
     "pyexifinfo>=0.4.0",
     "Pygments>=2.19.0",
     "pyparsing>=3.2.0",
-    "pypdf>=6.0.0",
+    "pyOpenSSL>=26.0.0",
+    "pypdf>=6.8.0",
     "PyQRCode>=1.2.0",
     "python-dateutil>=2.9.0",
     "python-docx>=1.1.0",
@@ -119,11 +122,12 @@ dependencies = [
     "webauthn>=2.5.0",
     "Werkzeug>=3.1.0",
     "WTForms>=3.2.0",
-    "yt-dlp>=2025.5.0",
+    "yt-dlp>=2026.2.21",
     "zipp>=3.22.0",
     "zxcvbn>=4.5.0",
     "flask-talisman>=1.1.0",
     "tinycss2>=1.5.1",
+    "weasyprint>=65.0",
 ]
 
 [project.optional-dependencies]
@@ -132,7 +136,7 @@ dev = [
     "flask_pydantic>=0.13.0",
     "SQLAlchemy-Utils>=0.41.0",
     "pre-commit>=4.2.0",
-    "black>=25.1.0",
+    "black>=26.3.1",
     "factory-boy>=3.3.0",
     "pytest-sugar>=1.0.0"
 ]
@@ -142,7 +146,6 @@ ai = [
     "pytesseract>=0.3.13",
     "torch>=2.8.0",
     "numba>=0.60.0",  # Required for Python 3.12+ compatibility (whisper dependency)
-    "weasyprint>=65.0",  # PDF export - requires system libs: brew install pango libffi
 ]
 
 [project.urls]
