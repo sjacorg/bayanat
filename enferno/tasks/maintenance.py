@@ -88,8 +88,17 @@ def regenerate_locations() -> None:
 
 
 def reload_app():
-    """Touch reload.ini to trigger uWSGI graceful reload."""
+    """Touch reload.ini to trigger uWSGI graceful reload.
+    Returns True if uWSGI reload was triggered, False in dev mode.
+    """
     import pathlib
 
     reload_file = pathlib.Path(__file__).resolve().parents[2] / "reload.ini"
-    reload_file.touch()
+    try:
+        import uwsgi  # noqa: F401
+
+        reload_file.touch()
+        return True
+    except ImportError:
+        # Dev mode (flask run), no uWSGI available
+        return False
