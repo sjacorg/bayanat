@@ -6,6 +6,7 @@ from flask import Response, request
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import Actor, ActorProfile, Activity, WorkflowStatus
@@ -76,7 +77,11 @@ def api_actors(validated_data: dict) -> Response:
     include_count = validated_data.get("include_count", False)
 
     search = SearchUtils(q, "actor")
-    base_query = search.get_query()
+    base_query = search.get_query().options(
+        selectinload(Actor.assigned_to),
+        selectinload(Actor.first_peer_reviewer),
+        selectinload(Actor.roles),
+    )
 
     if include_count and cursor is None:
         # Check if this is a simple listing query (no search filters)
