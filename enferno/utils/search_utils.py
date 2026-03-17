@@ -508,6 +508,7 @@ class SearchUtils:
 
         # Search Terms - chips-based multi-term text search
         # Searches both bulletin fields AND OCR extracted text from attached media
+        # Uses pre-fetched OCR IDs to avoid OR-subquery killing the GIN index
         if search_terms := q.get("searchTerms"):
             exact = q.get("termsExact", False)
             bulletin_conds = self._build_term_conditions(Bulletin.search, search_terms, exact)
@@ -521,12 +522,22 @@ class SearchUtils:
                     .where(Extraction.search_text.isnot(None))
                 )
                 if q.get("opTerms", False):
-                    ocr_sub = ocr_base.where(or_(*ocr_conds))
-                    conditions.append(or_(*bulletin_conds, Bulletin.id.in_(ocr_sub)))
+                    # OR mode: pre-fetch OCR IDs matching any term
+                    ocr_query = ocr_base.where(or_(*ocr_conds))
+                    ocr_ids = {row[0] for row in db.session.execute(ocr_query)}
+                    if ocr_ids:
+                        conditions.append(or_(*bulletin_conds, Bulletin.id.in_(ocr_ids)))
+                    else:
+                        conditions.append(or_(*bulletin_conds))
                 else:
-                    for b_cond, o_cond in zip(bulletin_conds, ocr_conds):
-                        ocr_sub = ocr_base.where(o_cond)
-                        conditions.append(or_(b_cond, Bulletin.id.in_(ocr_sub)))
+                    # AND mode: pre-fetch OCR IDs matching all terms
+                    for cond in ocr_conds:
+                        ocr_base = ocr_base.where(cond)
+                    ocr_ids = {row[0] for row in db.session.execute(ocr_base)}
+                    if ocr_ids:
+                        conditions.append(or_(and_(*bulletin_conds), Bulletin.id.in_(ocr_ids)))
+                    else:
+                        conditions.extend(bulletin_conds)
 
         # Exclude Search Terms
         if ex_terms := q.get("exTerms"):

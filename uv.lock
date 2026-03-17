@@ -246,6 +246,7 @@ dependencies = [
     { name = "uwsgi" },
     { name = "vine" },
     { name = "wcwidth" },
+    { name = "weasyprint" },
     { name = "webauthn" },
     { name = "webencodings" },
     { name = "werkzeug" },
@@ -261,7 +262,6 @@ ai = [
     { name = "openai-whisper" },
     { name = "pytesseract" },
     { name = "torch" },
-    { name = "weasyprint" },
 ]
 dev = [
     { name = "black" },
@@ -385,7 +385,7 @@ requires-dist = [
     { name = "uwsgi", specifier = ">=2.0.0" },
     { name = "vine", specifier = ">=5.1.0" },
     { name = "wcwidth", specifier = ">=0.2.13" },
-    { name = "weasyprint", marker = "extra == 'ai'", specifier = ">=65.0" },
+    { name = "weasyprint", specifier = ">=65.0" },
     { name = "webauthn", specifier = ">=2.5.0" },
     { name = "webencodings", specifier = ">=0.5.1" },
     { name = "werkzeug", specifier = ">=3.1.0" },
