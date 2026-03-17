@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timezone
+from smtplib import SMTPAuthenticationError
 
 from enferno.admin.models.Notification import Notification
 from enferno.extensions import db
@@ -13,7 +14,7 @@ logger = get_logger("celery.tasks.notifications")
 @celery.task(bind=True, max_retries=3)
 def send_email_notification(self, notification_id: int) -> bool:
     """
-    Send email notification with retry logic - simplified status tracking.
+    Send email notification with retry logic.
 
     Args:
         notification_id: ID of the notification to send
@@ -21,47 +22,42 @@ def send_email_notification(self, notification_id: int) -> bool:
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
-
-    # Get the notification record
     notification = db.session.get(Notification, notification_id)
     if not notification:
         logger.error(f"Notification {notification_id} not found")
         return False
 
     if notification.email_sent:
-        logger.info(f"Notification {notification_id} already sent; skipping send")
         return True
 
-    # Check if user has email (should be validated already, but double-check)
     if not notification.user.email:
         logger.error(f"User {notification.user.id} has no email address")
         return False
 
-    success = EmailUtils.send_email(
-        recipient=notification.user.email,
-        subject=notification.title,
-        body=f"{notification.message}",
-    )
+    try:
+        success = EmailUtils.send_email(
+            recipient=notification.user.email,
+            subject=notification.title,
+            body=notification.message,
+        )
+    except SMTPAuthenticationError:
+        logger.error(
+            f"Email notification {notification_id} failed: bad SMTP credentials, not retrying"
+        )
+        return False
 
     if success:
         notification.email_sent = True
         notification.email_sent_at = datetime.now(timezone.utc)
         notification.save()
-        logger.info(
-            f"Email notification {notification_id} sent successfully to {notification.user.id}"
-        )
+        logger.info(f"Email notification {notification_id} sent to user {notification.user.id}")
         return True
 
-    else:
-        # Retry if retries remaining
-        if self.request.retries < self.max_retries:
-            logger.info(
-                f"Retrying email notification {notification_id}... (attempt {self.request.retries + 1})"
-            )
-            raise self.retry(countdown=60 * (2**self.request.retries))
-
-        # Log failure after retries exhausted
-        logger.error(
-            f"Failed to send email notification {notification_id} after {self.max_retries} retries"
+    if self.request.retries < self.max_retries:
+        logger.info(
+            f"Retrying email notification {notification_id} (attempt {self.request.retries + 1})"
         )
-        return False
+        raise self.retry(countdown=60 * (2**self.request.retries))
+
+    logger.error(f"Email notification {notification_id} failed after {self.max_retries} retries")
+    return False
