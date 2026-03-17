@@ -122,8 +122,6 @@ def register_extensions(app):
     rds.init_app(app)
     mail.init_app(app)
 
-    # Configure limiter storage with the correct config
-    limiter.storage_uri = app.config["REDIS_URL"]
     limiter.init_app(app)
 
     # Initialize Talisman with security headers
@@ -154,7 +152,12 @@ def register_talisman(app):
     # Add map tile servers to img-src and connect-src
     maps_endpoint = app.config.get("MAPS_API_ENDPOINT", "")
     _maps_host = urlparse(maps_endpoint).hostname or ""
-    if _maps_host.endswith("openstreetmap.org") or _maps_host.endswith("tile.osm.org"):
+    if (
+        _maps_host == "tile.openstreetmap.org"
+        or _maps_host.endswith(".openstreetmap.org")
+        or _maps_host == "tile.osm.org"
+        or _maps_host.endswith(".tile.osm.org")
+    ):
         csp["img-src"].append("https://tile.osm.org")
         csp["img-src"].append("https://*.tile.osm.org")
         csp["img-src"].append("https://tile.openstreetmap.org")
