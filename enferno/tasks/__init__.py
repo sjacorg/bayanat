@@ -32,6 +32,9 @@ celery.conf.update(
 )
 celery.conf.update({"SECRET_KEY": os.environ.get("SECRET_KEY", cfg.SECRET_KEY)})
 celery.conf.broker_connection_retry_on_startup = True
+celery.conf.task_routes = {
+    "enferno.tasks.ocr.ocr_single": {"queue": "ocr"},
+}
 celery.conf.add_defaults(cfg)
 
 logger = get_logger("celery.tasks")
@@ -48,7 +51,7 @@ def init_worker_process(**kwargs):
         from enferno.app import create_app
 
         _flask_app = create_app(cfg)
-        logger.info("Flask app initialized for worker process")
+        logger.debug("Flask app initialized for worker process")
 
 
 # Class to run tasks within application's context
