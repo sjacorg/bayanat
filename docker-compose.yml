@@ -86,6 +86,27 @@ services:
       redis:
         condition: service_healthy
 
+  celery-ocr:
+    container_name: celery-ocr
+    build:
+      context: .
+      dockerfile: ./flask/Dockerfile
+      args:
+        - ROLE=celery-ocr
+        - ENV_FILE=${ENV_FILE:-.env}
+    volumes_from:
+      - bayanat
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   nginx:
     container_name: nginx
     restart: always

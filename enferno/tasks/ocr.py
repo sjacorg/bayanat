@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from celery import chord, group
-
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
 from enferno.extensions import rds
@@ -20,42 +18,21 @@ def ocr_single(
     result = process_media_extraction_task(media_id, language_hints=language_hints, force=force)
     if user_id:
         rds.srem(f"ocr_processing:{user_id}", media_id)
+        if rds.scard(f"ocr_processing:{user_id}") == 0:
+            user = User.query.get(user_id)
+            if user:
+                Notification.send_notification_for_event(
+                    Constants.NotificationEvent.BULK_OPERATION_STATUS,
+                    user,
+                    "Bulk OCR Complete",
+                    "All queued items have been processed.",
+                )
     return result
-
-
-@celery.task
-def bulk_ocr_finalize(results: list, user_id: int = None) -> dict:
-    """Callback after all ocr_single tasks complete. Notifies user with summary."""
-    processed = sum(1 for r in results if r and r.get("success") and not r.get("skipped"))
-    skipped = sum(1 for r in results if r and r.get("success") and r.get("skipped"))
-    failed = len(results) - processed - skipped
-
-    # Clear any remaining tracking keys
-    if user_id:
-        rds.delete(f"ocr_processing:{user_id}")
-
-    logger.info(f"Bulk OCR complete. Processed: {processed}, Skipped: {skipped}, Failed: {failed}")
-
-    if user_id:
-        user = User.query.get(user_id)
-        if user:
-            Notification.send_notification_for_event(
-                Constants.NotificationEvent.BULK_OPERATION_STATUS,
-                user,
-                "Bulk OCR Complete",
-                f"{processed} processed, {skipped} skipped, {failed} failed.",
-            )
-
-    return {"processed": processed, "skipped": skipped, "failed": failed}
 
 
 def bulk_ocr_process(
     media_ids: list, user_id: int = None, language_hints: list = None, force: bool = False
 ):
-    """Dispatch OCR tasks as a parallel group with a finalize callback."""
-    tasks = group(
-        ocr_single.s(mid, user_id=user_id, language_hints=language_hints, force=force)
-        for mid in media_ids
-    )
-    callback = bulk_ocr_finalize.s(user_id=user_id)
-    chord(tasks)(callback)
+    """Dispatch independent OCR tasks. Each task is fire-and-forget with rate limiting."""
+    for mid in media_ids:
+        ocr_single.delay(mid, user_id=user_id, language_hints=language_hints, force=force)
