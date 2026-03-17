@@ -107,7 +107,7 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
     preamble = re.match(
         r"^(Sure[,.].*?:|Here is.*?:|I'm sorry.*?\.|I cannot.*?\.|I can't.*?\.)\s*",
         text,
-        re.IGNORECASE | re.DOTALL,
+        re.IGNORECASE,
     )
     if preamble:
         text = text[preamble.end() :].strip()

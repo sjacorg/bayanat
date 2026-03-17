@@ -1,6 +1,7 @@
 import glob
 import json
 import logging
+import sys
 from logging.handlers import TimedRotatingFileHandler
 from traceback import format_exception
 from enferno.settings import Config
@@ -69,7 +70,7 @@ def _file_handler():
 
 def _stream_handler():
     """Build a stdout handler for logging."""
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JsonFormatter())
     return handler
 
@@ -92,6 +93,7 @@ def get_logger(name="app_logger"):
 def setup_celery_logger(logger, *args, **kwargs):
     """Configure Celery logger: file + stdout for live visibility."""
     log_level = cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL
+    logger.setLevel(log_level)
     handlers = [_stream_handler()]
     if cfg.CELERY_LOG_ENABLED:
         handlers.append(_file_handler())
