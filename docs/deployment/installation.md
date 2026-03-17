@@ -6,6 +6,46 @@ Bayanat can be deployed natively on a Linux system or using Docker.
 Although this guide follows best security practices, you still need to secure the server itself (firewall, VPN, HTTPS, etc.).
 :::
 
+## Quick Install
+
+The fastest way to get Bayanat running on a fresh Ubuntu server. One command installs all dependencies, sets up the database, configures HTTPS, and starts the services.
+
+**Requirements:** Ubuntu 22.04+ with root access and a domain pointing to the server's IP.
+
+**With a domain (recommended, automatic HTTPS):**
+
+```bash
+curl -sL https://raw.githubusercontent.com/sjacorg/bayanat/main/bayanat | sudo bash -s install yourdomain.com
+```
+
+**Without a domain (HTTP only, for testing):**
+
+```bash
+curl -sL https://raw.githubusercontent.com/sjacorg/bayanat/main/bayanat | sudo bash -s install
+```
+
+This will:
+- Install system packages (PostgreSQL, Redis, Caddy, ffmpeg, etc.)
+- Create the `bayanat` system user
+- Set up the database
+- Clone the latest release into `/opt/bayanat/releases/`
+- Install Python dependencies via `uv`
+- Configure Caddy as a reverse proxy with automatic SSL
+- Set up systemd services for Bayanat and Celery
+- Start everything
+
+Once complete, open your domain in a browser. The setup wizard will guide you through creating an admin account and configuring the application.
+
+**Check status:**
+
+```bash
+sudo bayanat status
+```
+
+::: tip
+The quick installer uses a symlink-based release structure at `/opt/bayanat/` with shared configuration and media that persists across updates. See the [architecture documentation](/deployment/architecture) for details.
+:::
+
 ## Manual Installation
 
 The following steps are for Ubuntu. They should work on other Linux distributions with equivalent packages.
