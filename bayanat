@@ -59,10 +59,10 @@ swap_symlink() {
 
 health_check() {
     local retries=10
-    local url="http://127.0.0.1:5000"
-    log "Health check: $url"
+    local sock="$CURRENT_LINK/bayanat.sock"
+    log "Health check: $sock"
     for _ in $(seq 1 $retries); do
-        if curl -sf -o /dev/null "$url" 2>/dev/null; then
+        if curl -sf -o /dev/null --unix-socket "$sock" http://localhost/ 2>/dev/null; then
             log "Health check passed"
             return 0
         fi
@@ -112,6 +112,8 @@ cmd_install() {
 
     # App user
     id "$APP_USER" &>/dev/null || useradd -m "$APP_USER"
+    # Caddy needs to read the uWSGI socket
+    usermod -aG "$APP_USER" caddy 2>/dev/null || true
 
     # Database
     log "Setting up database..."
@@ -280,7 +282,7 @@ _install_caddy() {
     if [[ "$domain" == "localhost" ]]; then
         cat > /etc/caddy/Caddyfile << 'EOF'
 :80 {
-    reverse_proxy 127.0.0.1:5000
+    reverse_proxy unix//opt/bayanat/current/bayanat.sock
     handle_path /static/* {
         root * /opt/bayanat/current/enferno/static
         file_server
@@ -293,7 +295,7 @@ EOF
     else
         cat > /etc/caddy/Caddyfile << EOF
 $domain {
-    reverse_proxy 127.0.0.1:5000
+    reverse_proxy unix//opt/bayanat/current/bayanat.sock
     handle_path /static/* {
         root * /opt/bayanat/current/enferno/static
         file_server
