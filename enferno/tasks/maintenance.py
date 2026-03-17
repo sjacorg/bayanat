@@ -88,12 +88,8 @@ def regenerate_locations() -> None:
 
 
 def reload_app():
-    import os
-    import signal
+    """Touch reload.ini to trigger uWSGI graceful reload."""
+    import pathlib
 
-    os.kill(os.getppid(), signal.SIGHUP)
-
-
-@celery.task
-def reload_celery():
-    reload_app()
+    reload_file = pathlib.Path(__file__).resolve().parents[2] / "reload.ini"
+    reload_file.touch()
