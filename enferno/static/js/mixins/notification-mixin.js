@@ -85,7 +85,6 @@ const notificationMixin = {
 
       // Close the settings dialog if the notifications dialog is open
       if (this.notifications.ui.dialogVisible) {
-        this.settingsDrawer = false;
         this.notifications.ui.drawerVisible = false;
 
         // Load notifications if not already loaded
@@ -100,8 +99,6 @@ const notificationMixin = {
 
       // Close the settings drawer if the notifications drawer is open
       if (this.notifications.ui.drawerVisible) {
-        this.settingsDrawer = false;
-
         // Load notifications if not already loaded
         if (!this.notifications.items) {
           this.loadNotifications({ page: 1 });

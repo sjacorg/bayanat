@@ -1,14 +1,11 @@
+from smtplib import SMTPAuthenticationError
+
 from flask_mail import Message
+
 from enferno.extensions import mail
 from enferno.utils.logging_utils import get_logger
-import logging
 
 logger = get_logger()
-
-# Configure Flask-Mail's logger to use our custom logger
-mail_logger = logging.getLogger("flask_mail")
-mail_logger.parent = logger
-mail_logger.propagate = True
 
 
 class EmailUtils:
@@ -28,21 +25,27 @@ class EmailUtils:
 
         Returns:
             bool: True if email was sent successfully, False otherwise
-        """
-        try:
-            if not recipient:
-                logger.error("No recipient email address provided")
-                return False
 
+        Raises:
+            SMTPAuthenticationError: re-raised so callers can skip retries.
+        """
+        if not recipient:
+            logger.error("No recipient email address provided")
+            return False
+
+        try:
             msg = Message(
                 subject=subject,
                 recipients=[recipient],
                 body=body,
             )
-
             mail.send(msg)
             return True
 
+        except SMTPAuthenticationError:
+            logger.error("SMTP authentication failed, check mail credentials")
+            raise
+
         except Exception as e:
-            logger.error(f"Failed to send email: {str(e)}", exc_info=True)
+            logger.error(f"Failed to send email: {e}")
             return False

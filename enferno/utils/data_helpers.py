@@ -70,7 +70,7 @@ def media_check_duplicates(etag: str, data_import_id: Optional[t.id] = None) -> 
     exists = False
     # checking for existing media or pending or processing imports
     exists = (
-        Media.query.filter(Media.etag == etag, Media.deleted is not True).first()
+        Media.query.filter(Media.etag == etag, Media.deleted == False).first()
         or DataImport.query.filter(
             and_(
                 DataImport.id != data_import_id,
