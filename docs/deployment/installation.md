@@ -19,13 +19,13 @@ You can install Bayanat by following these steps exactly without changes. Adjust
 **Ubuntu 22.04:**
 
 ```bash
-sudo apt install -y python3-dev libpq-dev redis-server postgresql postgresql-contrib postgis libgdal-dev uwsgi
+sudo apt install build-essential python3-dev python3.10-venv libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools postgresql postgresql-contrib python3-pip libpq-dev git redis-server libimage-exiftool-perl postgis ffmpeg
 ```
 
 **Ubuntu 24.04:**
 
 ```bash
-sudo apt install -y python3-dev libpq-dev redis-server postgresql postgresql-contrib postgis libgdal-dev uwsgi
+sudo apt install build-essential python3.12 python3.12-dev python3.12-venv python3-pip libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev postgresql postgresql-contrib python3-pip libpq-dev git libimage-exiftool-perl postgis ffmpeg redis-server
 ```
 
 Optionally install Tesseract OCR:
