@@ -56,7 +56,7 @@ const MissingPersonCard = Vue.defineComponent({
           <template v-if="mp">
             <v-card-text>
 
-              <missing-person-field :field="this.mp.last_address" :title="translations.lastAddress_"></missing-person-field>
+              <missing-person-field :field="this.mp.last_address" :title="translations.placeOfDisappearance_"></missing-person-field>
 
               <missing-person-field :field="this.mp.marriage_history" :title="translations.marriageHistory_"></missing-person-field>
 
