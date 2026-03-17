@@ -312,6 +312,7 @@ _install_sudoers() {
     cat > /etc/sudoers.d/bayanat << 'EOF'
 bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
 bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat status
+bayanat ALL=(root) NOPASSWD: /usr/bin/systemctl restart bayanat-celery
 EOF
     chmod 440 /etc/sudoers.d/bayanat
 }
