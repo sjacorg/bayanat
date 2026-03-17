@@ -51,21 +51,96 @@ This is standalone, well-tested, and doesn't pull in any update system complexit
 
 ```
 /opt/bayanat/
-  current -> releases/3.1.0/       # Atomic symlink swap
+  current -> releases/3.1.0/          # Atomic symlink, services point here
   releases/
-    3.1.0/                          # Immutable release (code + venv)
-    3.0.0/                          # Previous, kept for rollback
+    3.1.0/                             # Immutable release (code + .venv)
+      .env -> /opt/bayanat/shared/.env # Symlink to shared config
+      enferno/
+        media -> /opt/bayanat/shared/media  # Symlink to shared media
+      config.json                      # Written by app, lives in release dir
+      bayanat.sock                     # uWSGI socket (created at runtime)
+      reload.ini                       # Touch this to trigger uWSGI reload
+      uwsgi.ini                        # uWSGI config (part of repo)
+      .venv/                           # Python virtualenv for this release
+    3.0.0/                             # Previous release, kept for rollback
   shared/
-    .env                            # Config (persists across versions)
-    media/                          # User uploads
-    backups/                        # DB backups
-  system/
-    caddy.conf                      # Generated, symlinked to Caddy config
-    bayanat.service                 # Generated systemd unit
-    bayanat-celery.service
+    .env                               # Environment secrets (persists across updates)
+    media/                             # User uploads (persists across updates)
+    backups/                           # DB backups before each update
+  system/                              # Reserved for generated system configs
   logs/
-    update.log                      # CLI writes structured update logs
+    update.log                         # CLI writes structured update logs
 ```
+
+### What lives where
+
+| Location | Persists across updates? | Who writes it? |
+|---|---|---|
+| `shared/.env` | Yes | Installer generates once, admin edits manually |
+| `shared/media/` | Yes | App writes during normal use |
+| `shared/backups/` | Yes | CLI writes before each update |
+| `releases/<ver>/config.json` | No (per-release) | App writes via settings dashboard |
+| `releases/<ver>/.venv/` | No (per-release) | `uv sync` during install/update |
+| `releases/<ver>/bayanat.sock` | No (runtime) | uWSGI creates at startup |
+| `/etc/systemd/system/bayanat.service` | Yes | Installer generates, points at `current/` |
+| `/etc/caddy/Caddyfile` | Yes | Installer generates |
+| `/etc/sudoers.d/bayanat` | Yes | Installer generates |
+
+### config.json handling during updates
+
+`config.json` is written by the app (settings dashboard) and lives in the release directory. During updates, the CLI copies `config.json` from the old release to the new one before swapping the symlink.
+
+---
+
+## Service Restart Strategy
+
+Three scenarios require restarting services from within the app:
+
+### 1. Config change from settings dashboard (uWSGI + Celery)
+
+**uWSGI:** Touch-reload via `reload.ini`. uWSGI watches this file and does a graceful reload. Caddy stays up (proxies to unix socket), so the frontend sees 502 briefly then reconnects. Reload takes ~5 seconds.
+
+**Celery:** `sudo systemctl restart bayanat-celery` via sudoers entry. The app calls this from the reload endpoint.
+
+**Dev mode:** `import uwsgi` fails, app returns "please restart manually" message. No silent failures.
+
+### 2. System update (full restart via CLI)
+
+The bash CLI runs `systemctl restart bayanat bayanat-celery` directly (runs as root via sudo). No app involvement needed.
+
+### 3. Dev mode (flask run)
+
+No uWSGI, no systemd. Reload endpoint detects this and tells the user to restart manually.
+
+### Sudoers entries
+
+```
+bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
+bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat status
+bayanat ALL=(root) NOPASSWD: /usr/bin/systemctl restart bayanat-celery
+```
+
+### uWSGI config (uwsgi.ini)
+
+```ini
+[uwsgi]
+virtualenv=.venv
+module=run:app
+master=true
+processes=1
+threads=2
+http-socket=/opt/bayanat/current/bayanat.sock
+chmod-socket=660
+vacuum=true
+touch-reload=reload.ini
+reload-mercy=5
+worker-reload-mercy=3
+```
+
+Key settings:
+- `http-socket` (not `http`): unix socket so Caddy can proxy. Caddy stays up during reloads.
+- `touch-reload=reload.ini`: app touches this file to trigger graceful reload, no signals needed.
+- `reload-mercy=5`: kill workers after 5s if they don't finish (web requests should be <1s, long work runs in Celery).
 
 ---
 
@@ -83,11 +158,12 @@ Flask: return "Update started" (user sees maintenance page with auto-refresh)
 CLI: backup DB
 CLI: clone new release into releases/<new>/
 CLI: create venv, uv sync
-CLI: symlink shared resources
+CLI: symlink shared resources (.env, media/)
+CLI: copy config.json from old release to new
 CLI: run SQL migrations (via flask apply-migrations)
 CLI: atomic symlink swap (current -> new)
 CLI: systemctl restart bayanat bayanat-celery
-CLI: health check (HTTP ping + DB alignment)
+CLI: health check (curl unix socket + flask check-db-alignment)
 CLI: if health check fails -> rollback (swap symlink back, restore DB, restart)
 CLI: write update result to update.log + DB
 CLI: clear maintenance mode
@@ -98,16 +174,18 @@ App comes back on new version. Admin sees success on refresh.
 
 ## Security Model
 
-One sudoers line replaces the entire daemon + socket API + handler script:
+Sudoers entries replace the entire daemon + socket API + handler script:
 
 ```
 bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
+bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat status
+bayanat ALL=(root) NOPASSWD: /usr/bin/systemctl restart bayanat-celery
 ```
 
-- `bayanat` user runs the app. Zero sudo except this one command. No access outside `/opt/bayanat/`.
-- The CLI runs as root (via sudo), can restart services directly.
-- No daemon user, no socket API, no handler script.
+- `bayanat` user runs the app. Minimal sudo (three commands only). No access outside `/opt/bayanat/`.
 - The CLI script is owned by root (`root:root`, mode `755`), not writable by the app user. Tamper-proof.
+- Caddy user added to `bayanat` group to read the unix socket.
+- No daemon user, no socket API, no handler script.
 - This is **stronger** than the current two-user model with less attack surface.
 
 ---
@@ -116,11 +194,12 @@ bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
 
 - **Releases are immutable.** No in-place `git pull`. Each version is a fresh directory.
 - **`current` symlink is the single source of truth** for which version is running.
-- **`shared/` persists across updates.** Config, uploads, backups never move.
+- **`shared/` persists across updates.** Secrets, uploads, backups never move.
 - **Rollback = swap symlink + restore DB.** Instant, no rebuild.
 - **Bash CLI does system work.** No Python/Node dependency for the management tool.
 - **App only triggers and displays.** Flask never touches git, systemd, or its own process lifecycle.
 - **Fail-safe defaults.** Auto-backup before update, auto-rollback on failure, health checks after restart.
+- **Dev mode is honest.** No fake reloads, just "please restart manually."
 
 ---
 
@@ -136,6 +215,7 @@ bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
 | `UPDATE_GRACE_PERIOD_MINUTES` | Grace period config | Gone |
 | `VERSION_CHECK_INTERVAL` | Periodic version polling via Celery | Simple check on admin page load |
 | Redis update state keys | Track update progress across processes | CLI writes to log file, app reads it |
+| SIGHUP reload | Unreliable, races with HTTP response | touch-reload via uWSGI (production), manual restart (dev) |
 
 ## What Stays (Simplified)
 
@@ -147,47 +227,31 @@ bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
 | "Update available" check | Admin page calls `git ls-remote` on load (or CLI caches latest version) |
 | "Update Now" button | Triggers `sudo /usr/local/bin/bayanat update` via detached subprocess |
 | SQL migration tracking | `MigrationHistory` model + `migration_utils.py` + `flask apply-migrations` (cherry-picked) |
+| touch-reload | uWSGI watches `reload.ini`, Caddy proxies via unix socket, seamless reload |
 
 ---
 
 ## Phased Plan
 
-### Phase 1: Foundation (PR 1)
+### Phase 1: Installer PR
 
-Create `bayanat-cli` branch from `main`. Cherry-pick the migration tracking system.
+Create `bayanat-cli` branch from `main`. Cherry-pick migration tracking. Build CLI installer.
 
-```
-git checkout main
-git pull
-git checkout -b bayanat-cli
-git cherry-pick ec151683c    # SQL migration tracking system
-```
+**Done:**
+- [x] Branch created, cherry-pick applied
+- [x] `bayanat install` command (system deps, users, DB, clone, venv, .env, systemd, Caddy, sudoers)
+- [x] Symlink-based directory layout
+- [x] uWSGI unix socket + Caddy reverse proxy
+- [x] touch-reload for config changes (production)
+- [x] Dev mode detection (skip reload, ask user to restart)
+- [x] Tested on Hetzner Ubuntu 24.04 (ARM64) with SSL via Caddy
 
-Resolve any conflicts (should be minimal since the commit is self-contained).
+**Remaining:**
+- [ ] Add Celery restart to reload endpoint (for settings dashboard changes)
+- [ ] Test idempotency edge cases
+- [ ] Open PR
 
-### Phase 2: Installer (PR 2)
-
-Build `/usr/local/bin/bayanat` bash CLI with the `install` subcommand.
-
-`bayanat install`:
-1. Install system deps (postgres, redis, caddy, ffmpeg, uv, etc.)
-2. Create `bayanat` user + directory structure (`/opt/bayanat/{releases,shared,system,logs}`)
-3. Configure sudoers entry for `bayanat` user
-4. Clone repo, checkout latest release tag into `releases/<version>/`
-5. Create venv in release dir, `uv sync --frozen`
-6. Generate `.env` into `shared/`, symlink into release
-7. Run `flask create-db --create-exts && flask import-data`
-8. Run `flask apply-migrations` (idempotent, safe on fresh install)
-9. Generate + install systemd units (pointing at `/opt/bayanat/current/`)
-10. Generate + install Caddy config (SSL or localhost)
-11. Set `current` symlink, start services
-12. Health check (HTTP ping)
-
-Entry point: `curl -sL https://get.bayanat.org | sudo bash` (or repo raw URL).
-
-Reference: borrow from `automatic-updates:install.sh` for system dep installation and service generation patterns.
-
-### Phase 3: Updater (PR 3)
+### Phase 2: Updater PR
 
 Add `update`, `rollback`, and `status` subcommands to the CLI.
 
@@ -201,15 +265,16 @@ Add `update`, `rollback`, and `status` subcommands to the CLI.
 7. Clone/checkout new version into `releases/<new>/`
 8. Create venv, `uv sync --frozen`
 9. Symlink shared resources (`.env`, `media/`)
-10. Run `flask apply-migrations` (from new release's venv)
-11. Atomic symlink swap: `current -> releases/<new>/`
-12. Restart services (`systemctl restart bayanat bayanat-celery`)
-13. Health check (HTTP GET + `flask check-db-alignment`)
-14. If health check fails: swap symlink back, restore DB backup, restart, log failure
-15. Clear maintenance mode
-16. Write update record (version_from, version_to, status, timestamp)
-17. Prune old releases (keep last 3)
-18. Release lockfile
+10. Copy `config.json` from old release to new
+11. Run `flask apply-migrations` (from new release's venv)
+12. Atomic symlink swap: `current -> releases/<new>/`
+13. Restart services (`systemctl restart bayanat bayanat-celery`)
+14. Health check (curl unix socket + `flask check-db-alignment`)
+15. If health check fails: swap symlink back, restore DB backup, restart, log failure
+16. Clear maintenance mode
+17. Write update record (version_from, version_to, status, timestamp)
+18. Prune old releases (keep last 3)
+19. Release lockfile
 
 `bayanat rollback`:
 1. Find previous release in `releases/`
@@ -221,21 +286,31 @@ Add `update`, `rollback`, and `status` subcommands to the CLI.
 `bayanat status`:
 - Current version, available version, last update result, service health (`systemctl is-active`)
 
-### Phase 4: App Integration (PR 4)
+### Phase 3: App Integration PR
 
 Wire the Flask admin UI to the CLI:
 - "Update Now" button: spawns `sudo /usr/local/bin/bayanat update` detached via `setsid`/`nohup`
 - "Check for Updates": lightweight version check (reads cached result or calls `git ls-remote`)
 - Update history page: reads from `UpdateHistory` table
-- Maintenance page: auto-refresh until app comes back (already exists, can borrow from old branch)
+- Maintenance page: auto-refresh until app comes back (borrow from old branch)
 - Add `UpdateHistory` model + migration (borrow from `automatic-updates`)
 - Add maintenance middleware (borrow from `automatic-updates:enferno/utils/maintenance.py`)
 
-### Phase 5: Migration Path (PR 5, optional)
+### Phase 4: Migration Path (optional)
 
 For existing installs using the old flat layout:
 - `bayanat migrate-layout`: reorganizes `/opt/bayanat` into the new `releases/` + `shared/` structure
 - One-time operation, documented in release notes
+
+---
+
+## Testing Strategy
+
+- **Test repo:** `sjacorg/bayanat-test` (public) for pushing dummy release tags
+- **Test server:** Hetzner `cax11` (ARM64, Ubuntu 24.04) with real domain for SSL testing
+- **Installer uses `BAYANAT_REPO` env var** to point at test repo instead of production
+- Push branch code to test repo as tagged releases (e.g. `v99.0.0`)
+- Clean-slate test: drop DB, rm -rf /opt/bayanat, re-run installer
 
 ---
 
@@ -258,7 +333,7 @@ While building on the fresh branch, use these as reference (read, adapt, don't m
 
 | File | What to borrow |
 |---|---|
-| `install.sh` | System dep installation, Caddy config generation, systemd unit templates, uWSGI setup |
+| `install.sh` | System dep installation, Caddy config generation, systemd unit templates |
 | `enferno/utils/maintenance.py` | File-based maintenance mode (lock file + middleware). Clean, bring most of it over. |
 | `enferno/admin/models/UpdateHistory.py` | Model structure for update audit log |
 | `enferno/migrations/20251022_000002_create_update_history.sql` | SQL for update_history table |

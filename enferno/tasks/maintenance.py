@@ -102,3 +102,20 @@ def reload_app():
     except ImportError:
         # Dev mode (flask run), no uWSGI available
         return False
+
+
+def restart_celery():
+    """Restart Celery worker via systemd. Requires sudoers entry.
+    Silently skips in dev mode (no systemd).
+    """
+    import subprocess
+
+    try:
+        subprocess.Popen(
+            ["sudo", "/usr/bin/systemctl", "restart", "bayanat-celery"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        # Dev mode or no systemd
+        pass
