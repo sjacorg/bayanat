@@ -206,7 +206,7 @@ const ActorSearchBox = Vue.defineComponent({
     },
 
     updateIdNumber(field, value) {
-      this.id_number[field] = value;
+      this.id_number[field] = value === '' ? null : value;
 
       // Create a filtered copy of newVal omitting null values
       const filteredIdNumber = Object.fromEntries(
