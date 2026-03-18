@@ -825,6 +825,9 @@ class LabelValidationModel(StrictValidationModel):
     id: Optional[int] = None
     order: Optional[int] = None
     updated_at: Optional[str] = None
+    # sent by tree view edit (build_tree node shape), not used by from_json
+    parent_label_id: Optional[int] = None
+    children: Optional[List] = None
 
 
 class LabelRequestModel(BaseValidationModel):
@@ -1477,10 +1480,12 @@ class UserValidationModel(StrictValidationModel):
     can_edit_locations: Optional[bool] = None
     can_export: Optional[bool] = None
     can_import_web: Optional[bool] = None
+    can_access_media: Optional[bool] = None
     active: bool
     force_reset: Optional[str] = None
     google_id: Optional[str] = None
     id: Optional[int] = None
+    display_name: Optional[str] = None
     two_factor_devices: Optional[Any] = None
 
     @field_validator("username", mode="before")
@@ -1607,6 +1612,18 @@ class QueryValidationModel(BaseValidationModel):
 
 class GraphVisualizeRequestModel(BaseValidationModel):
     q: list[dict[str, Any]] | dict[str, Any]
+
+
+class FlowmapVisualizeRequestModel(BaseValidationModel):
+    q: list[dict[str, Any]]
+
+
+class FlowmapActorsForLocationsModel(BaseValidationModel):
+    location_ids: Optional[list[int]] = None
+    origin_ids: Optional[list[int]] = None
+    dest_ids: Optional[list[int]] = None
+    q: list[dict[str, Any]]
+    event_types: Optional[list[str]] = None
 
 
 class DefaultMapCenterModel(BaseValidationModel):

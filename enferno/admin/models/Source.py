@@ -42,7 +42,16 @@ class Source(db.Model, BaseMixin):
             self.comments = json["comments_ar"]
         parent = json.get("parent")
         if parent:
-            self.parent_id = parent.get("id")
+            parent_id = parent.get("id")
+            # Prevent self-reference and circular parent assignment
+            if parent_id and parent_id != self.id:
+                p_source = Source.query.get(parent_id)
+                if p_source and (not p_source.parent_id or p_source.parent_id != self.id):
+                    self.parent_id = parent_id
+                else:
+                    self.parent_id = None
+            else:
+                self.parent_id = None
         else:
             self.parent_id = None
         return self
@@ -55,9 +64,9 @@ class Source(db.Model, BaseMixin):
             "etl_id": self.etl_id,
             "parent": {"id": self.parent.id, "title": self.parent.title} if self.parent else None,
             "comments": self.comments,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
         }
 
     def __repr__(self) -> str:

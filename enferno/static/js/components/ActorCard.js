@@ -1,5 +1,15 @@
 const ActorCard = Vue.defineComponent({
-  props: ['actor', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
+  props: {
+    actor: { type: Object, required: true },
+    active: { type: Boolean, default: false },
+    log: { type: Boolean, default: false },
+    diff: { type: Boolean, default: false },
+    showEdit: { type: Boolean, default: true },
+    close: { type: Boolean, default: false },
+    hideMap: { type: Boolean, default: false },
+    closeIcon: { type: String, default: 'mdi-close' },
+    closePosition: { type: String, default: 'append', validator: v => ['append', 'prepend'].includes(v) }
+  },
   emits: ['edit', 'close'],
   mounted() {
     this.$root.fetchDynamicFields({ entityType: 'actor' });
@@ -73,27 +83,27 @@ const ActorCard = Vue.defineComponent({
   computed: {
     groupedIdNumbers() {
       const idNumbers = this.actor.id_number;
-    
+
       if (!Array.isArray(idNumbers) || idNumbers.length === 0) {
         return {};
       }
-    
+
       return idNumbers.reduce((acc, { type, number }) => {
         if (!type || !number) return acc;
-    
+
         const key = type.id; // group by type.id to avoid duplicate keys
         if (!acc[key]) {
           acc[key] = {
             title: type.title || `Unknown Type ${type.id}`,
             title_tr: type.title_tr || null,
-            numbers: []
+            numbers: [],
           };
         }
-    
+
         acc[key].numbers.push(number);
         return acc;
       }, {});
-    }   
+    },
   },
 
   data: function () {
@@ -145,9 +155,8 @@ const ActorCard = Vue.defineComponent({
               {{ translations.visualize_ }}
             </v-btn>
 
-            <template #append>
-              <v-btn variant="text" icon="mdi-close" v-if="close" @click="$emit('close',$event.target.value)">
-            </v-btn>
+            <template #[closePosition]>
+              <v-btn variant="text" :icon="closeIcon" v-if="close" @click="$emit('close',$event.target.value)"></v-btn>
             </template>
             
           </v-toolbar>
@@ -366,10 +375,10 @@ const ActorCard = Vue.defineComponent({
               <actor-profiles :actor-id="actor.id" />
             </div>
 
-            <div>
+            <div v-if="!hideMap">
               <v-divider></v-divider>
               <v-card variant="flat">
-                <global-map v-model="mapLocations"></global-map>
+                <entity-flow-map :entities="[actor]"></entity-flow-map>
               </v-card>
             </div>
           </div>

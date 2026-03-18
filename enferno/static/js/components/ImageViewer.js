@@ -238,6 +238,7 @@ const ImageViewer = Vue.defineComponent({
                 :class="{ 'cursor-pointer': mode === 'click' }"
                 :data-src="fullSizeUrl"
                 @click.prevent="handleClick"
+                loading="lazy"
             >
                 <img 
                     :src="mode === 'click' ? thumbnailUrl : fullSizeUrl" 

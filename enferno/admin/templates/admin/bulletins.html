@@ -414,6 +414,9 @@
 
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/EntityFlowMap.js"></script>
+    <script src="/static/js/components/MobilityMap.js"></script>
+    <script src="/static/js/utils/MobilityMapUtils.js"></script>
     <script src="/static/js/components/PopDateField.js"></script>
     <script src="/static/js/components/PopDateTimeField.js"></script>
     <script src="/static/js/components/PopDateRangeField.js"></script>
@@ -427,6 +430,7 @@
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/DocxViewer.js"></script>
     <script src="/static/js/components/SnapshotDialog.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
@@ -436,6 +440,7 @@
     <script src="/static/js/components/EventsSection.js"></script>
     <script src="/static/js/components/ReadMore.js"></script>
     <script src="/static/js/components/FieldRenderer.js"></script>
+    <script src="/static/js/components/OcrTextLayer.js"></script>
     <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
 
 
@@ -889,13 +894,24 @@
                 },
 
                 methods: {
+                    refreshEditedMedia(mediaId) {
+                        if (!this.editedItem?.medias) return;
+                        api.get(`/admin/api/media/${mediaId}`).then(response => {
+                            const idx = this.editedItem.medias.findIndex(m => m.id === mediaId);
+                            if (idx !== -1) {
+                                Object.assign(this.editedItem.medias[idx], response.data);
+                            }
+                        });
+                    },
                     onTranscriptionUpdated({ media }) {
                         this.showOcrDialog(media.id);
-                        this.showBulletin(this.$route.params.id);
+                        this.refreshEditedMedia(media.id);
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                     },
                     onMediaProcessed({ media }) {
                         this.showOcrDialog(media.id);
-                        this.showBulletin(this.$route.params.id);
+                        this.refreshEditedMedia(media.id);
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                     },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
@@ -1770,11 +1786,14 @@
         app.component('PopDateTimeField', PopDateTimeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
+        app.component('EntityFlowMap', EntityFlowMap);
+        app.component('MobilityMap', MobilityMap);
         app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('MediaThumbnail', MediaThumbnail);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('DocxViewer', DocxViewer);
         app.component('SnapshotDialog', SnapshotDialog);
         app.component('PreviewCard', PreviewCard);
         app.component('RelationEditorCard', RelationEditorCard);
@@ -1793,6 +1812,7 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
+        app.component('OcrTextLayer', OcrTextLayer);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.use(router).use(vuetify);

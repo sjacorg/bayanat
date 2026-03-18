@@ -156,6 +156,9 @@
 
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/EntityFlowMap.js"></script>
+    <script src="/static/js/components/MobilityMap.js"></script>
+    <script src="/static/js/utils/MobilityMapUtils.js"></script>
     <script src="/static/js/components/GeoLocations.js"></script>
 
     <script src="/static/js/components/UniField.js"></script>
@@ -191,6 +194,7 @@
 
     <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/DocxViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
 
@@ -264,7 +268,7 @@
         { title: "{{_('User')}}", value: "user_id", width:50, sortable: false },
         { title: "{{_('Action')}}", value: "action", width:50, sortable: false },
         { title: "{{_('Status')}}", value: "status", width:50, sortable: false },
-        { title: "{{_('Subject')}}", value: "subject", width:50, sortable: false },
+        { title: "{{_('Affected Item')}}", value: "subject", width:50, sortable: false },
         { title: "{{_('Class')}}", value: "model", width:100, sortable: false },
         { title: "{{_('Details')}}", value: "details", width:200, sortable: false },
       ],
@@ -403,6 +407,8 @@
   app.component('GeoMap', GeoMap);
   app.component('GeoLocations', GeoLocations);
   app.component('GlobalMap', GlobalMap);
+  app.component('EntityFlowMap', EntityFlowMap);
+  app.component('MobilityMap', MobilityMap);
 
   app.component('BulletinSearchBox', BulletinSearchBox);
   app.component('ActorSearchBox', ActorSearchBox);
@@ -427,6 +433,7 @@
 
   app.component('MediaGrid', MediaGrid);
   app.component('PdfViewer', PdfViewer);
+        app.component('DocxViewer', DocxViewer);
   app.component('ImageViewer', ImageViewer);
   app.component('InlineMediaRenderer', InlineMediaRenderer);
 
