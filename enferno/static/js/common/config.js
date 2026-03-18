@@ -474,8 +474,17 @@ var tinyConfig = {
 
 // adjust rich text editor theme based on mode
 if (__settings__.dark) {
+    setTinyMceTheme('dark')
+}
+
+function setTinyMceTheme(theme) {
+  if (theme === 'dark') {
     tinyConfig.skin = 'oxide-dark';
     tinyConfig.content_css = 'dark';
+  } else {
+    delete tinyConfig.skin;
+    delete tinyConfig.content_css;
+  }
 }
 
 // helper prototype functions
