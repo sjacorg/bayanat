@@ -12,8 +12,8 @@ const BulletinResult = Vue.defineComponent({
     <template v-if="!hide">
       <v-card v-if="!bulletin.restricted" hover class="ma-2">
         <v-toolbar density="compact" class="d-flex px-2">
-          <v-chip color="primary" variant="flat" size="small">{{ translations.id_ }} {{ bulletin.id }}</v-chip>
-          <v-chip v-if="bulletin.originid" variant="text" :href="bulletin.source_link" target="_blank" class="white--text ml-1" label
+          <v-chip color="primary" variant="flat" size="small" class="flex-shrink-0">{{ translations.id_ }} {{ bulletin.id }}</v-chip>
+          <v-chip v-if="bulletin.originid" variant="text" :href="bulletin.source_link" target="_blank" class="white--text ml-1 chip-truncate" label
                   size="small"># {{ bulletin.originid }}
           </v-chip>
           <v-spacer></v-spacer>

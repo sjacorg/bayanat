@@ -124,7 +124,7 @@ const ActorCard = Vue.defineComponent({
       <v-card class="rounded-0">
         <v-card variant="flat" class=" mb-4 rounded-0">
           <v-toolbar class="d-flex px-2 ga-2">
-            <v-chip size="small">
+            <v-chip size="small" class="flex-shrink-0">
               {{ translations.id_ }} {{ actor.id }}
             </v-chip>
 
@@ -137,12 +137,12 @@ const ActorCard = Vue.defineComponent({
                         target="_blank" 
                         label
                         append-icon="mdi-open-in-new"
-                        class="ml-1">
+                        class="ml-1 chip-truncate"
+                      >
                         {{ actor.originid }}
-
                     </v-chip>
                 </template>
-                {{ translations.originid_ }}
+                {{ translations.originid_ }}: {{ actor.originid }}
             </v-tooltip>
 
             <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"

@@ -177,7 +177,7 @@ const BulletinCard = Vue.defineComponent({
       <!-- Sticky header -->
       <div class="bd-header" >
         <v-toolbar class="d-flex px-2 ga-2">
-          <v-chip size="small" class="bd-copyable" @click="copyToClipboard(String(bulletin.id))">
+          <v-chip size="small" class="bd-copyable" @click="copyToClipboard(String(bulletin.id))" class="flex-shrink-0">
             {{ translations.id_ }} {{ bulletin.id }}
             <v-icon size="x-small" class="ml-1 bd-copy-icon">mdi-content-copy</v-icon>
           </v-chip>
@@ -191,11 +191,12 @@ const BulletinCard = Vue.defineComponent({
                       target="_blank"
                       label
                       append-icon="mdi-open-in-new"
-                      class="ml-1">
+                      class="ml-1 chip-truncate"
+                    >
                       {{ bulletin.originid }}
                   </v-chip>
               </template>
-              {{ translations.originid_ }}
+              {{ translations.originid_ }}: {{ bulletin.originid }}
           </v-tooltip>
 
           <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"

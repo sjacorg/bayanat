@@ -12,8 +12,8 @@ const ActorResult = Vue.defineComponent({
     <template v-if="!hide">
       <v-card hover class="ma-2" v-if="!actor.restricted">
         <v-toolbar density="compact" class="d-flex px-2">
-          <v-chip color="primary" variant="flat" size="small">{{ translations.id_ }} {{ actor.id }}</v-chip>
-          <v-chip v-if="actor.originid" variant="text" class="ml-1"># {{ actor.originid }}</v-chip>
+          <v-chip color="primary" variant="flat" size="small" class="flex-shrink-0">{{ translations.id_ }} {{ actor.id }}</v-chip>
+          <v-chip v-if="actor.originid" variant="text" class="ml-1 chip-truncate"># {{ actor.originid }}</v-chip>
           <v-spacer></v-spacer>
           <v-chip variant="text" v-if="actor.publish_date" size="small">{{ $root.formatDate(actor.publish_date) }}</v-chip>
           <v-tooltip location="bottom">
