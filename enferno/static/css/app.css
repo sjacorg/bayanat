@@ -1428,3 +1428,14 @@ div.jsondiffpatch-child-node-type-array:after {
     gap: 3px;
 }
 
+.docx-preview p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.chip-truncate .v-chip__content {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+}
