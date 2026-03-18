@@ -508,6 +508,7 @@ class SearchUtils:
 
         # Search Terms - chips-based multi-term text search
         # Searches both bulletin fields AND OCR extracted text from attached media
+        # Uses pre-fetched OCR IDs to avoid OR-subquery killing the GIN index
         if search_terms := q.get("searchTerms"):
             exact = q.get("termsExact", False)
             bulletin_conds = self._build_term_conditions(Bulletin.search, search_terms, exact)
@@ -521,12 +522,22 @@ class SearchUtils:
                     .where(Extraction.search_text.isnot(None))
                 )
                 if q.get("opTerms", False):
-                    ocr_sub = ocr_base.where(or_(*ocr_conds))
-                    conditions.append(or_(*bulletin_conds, Bulletin.id.in_(ocr_sub)))
+                    # OR mode: pre-fetch OCR IDs matching any term
+                    ocr_query = ocr_base.where(or_(*ocr_conds))
+                    ocr_ids = {row[0] for row in db.session.execute(ocr_query)}
+                    if ocr_ids:
+                        conditions.append(or_(*bulletin_conds, Bulletin.id.in_(ocr_ids)))
+                    else:
+                        conditions.append(or_(*bulletin_conds))
                 else:
-                    for b_cond, o_cond in zip(bulletin_conds, ocr_conds):
-                        ocr_sub = ocr_base.where(o_cond)
-                        conditions.append(or_(b_cond, Bulletin.id.in_(ocr_sub)))
+                    # AND mode: pre-fetch OCR IDs matching all terms
+                    for cond in ocr_conds:
+                        ocr_base = ocr_base.where(cond)
+                    ocr_ids = {row[0] for row in db.session.execute(ocr_base)}
+                    if ocr_ids:
+                        conditions.append(or_(and_(*bulletin_conds), Bulletin.id.in_(ocr_ids)))
+                    else:
+                        conditions.extend(bulletin_conds)
 
         # Exclude Search Terms
         if ex_terms := q.get("exTerms"):
@@ -544,20 +555,14 @@ class SearchUtils:
             recursive = q.get("childlabels", None)
             if q.get("oplabels"):
                 if recursive:
-                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    direct = [label for label in result]
-                    all_labels = direct + Label.get_children(direct)
-                    all_labels = list(set(all_labels))
-                    ids = [label.id for label in all_labels]
+                    all_ids = [item["id"] for item in Label.find_by_ids(ids)]
+                    ids = all_ids
                 conditions.append(Bulletin.labels.any(Label.id.in_(ids)))
             else:
                 if recursive:
-                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    for label in direct:
-                        children = Label.get_children([label])
-                        children = list(set([label] + children))
-                        ids = [child.id for child in children]
-                        conditions.append(Bulletin.labels.any(Label.id.in_(ids)))
+                    for id in ids:
+                        all_ids = [item["id"] for item in Label.find_by_ids([id])]
+                        conditions.append(Bulletin.labels.any(Label.id.in_(all_ids)))
                 else:
                     conditions.extend([Bulletin.labels.any(Label.id == id) for id in ids])
 
@@ -572,20 +577,14 @@ class SearchUtils:
             recursive = q.get("childverlabels", None)
             if q.get("opvlabels"):
                 if recursive:
-                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    direct = [label for label in result]
-                    all_labels = direct + Label.get_children(direct)
-                    all_labels = list(set(all_labels))
-                    ids = [label.id for label in all_labels]
+                    all_ids = [item["id"] for item in Label.find_by_ids(ids)]
+                    ids = all_ids
                 conditions.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
             else:
                 if recursive:
-                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    for label in direct:
-                        children = Label.get_children([label])
-                        children = list(set([label] + children))
-                        ids = [child.id for child in children]
-                        conditions.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
+                    for id in ids:
+                        all_ids = [item["id"] for item in Label.find_by_ids([id])]
+                        conditions.append(Bulletin.ver_labels.any(Label.id.in_(all_ids)))
                 else:
                     conditions.extend([Bulletin.ver_labels.any(Label.id == id) for id in ids])
 
@@ -600,20 +599,14 @@ class SearchUtils:
             recursive = q.get("childsources", None)
             if q.get("opsources"):
                 if recursive:
-                    result = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
-                    direct = [source for source in result]
-                    all_sources = direct + Source.get_children(direct)
-                    all_sources = list(set(all_sources))
-                    ids = [source.id for source in all_sources]
+                    all_ids = [item["id"] for item in Source.find_by_ids(ids)]
+                    ids = all_ids
                 conditions.append(Bulletin.sources.any(Source.id.in_(ids)))
             else:
                 if recursive:
-                    direct = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
-                    for source in direct:
-                        children = Source.get_children([source])
-                        children = list(set([source] + children))
-                        ids = [child.id for child in children]
-                        conditions.append(Bulletin.sources.any(Source.id.in_(ids)))
+                    for id in ids:
+                        all_ids = [item["id"] for item in Source.find_by_ids([id])]
+                        conditions.append(Bulletin.sources.any(Source.id.in_(all_ids)))
                 else:
                     conditions.extend([Bulletin.sources.any(Source.id == id) for id in ids])
 
@@ -634,8 +627,16 @@ class SearchUtils:
                 loc_ids = [loc for loc in locs]
                 conditions.append(Bulletin.locations.any(Location.id.in_(loc_ids)))
             else:
-                id_mix = [Location.get_children_by_id(id) for id in ids]
-                conditions.extend(Bulletin.locations.any(Location.id.in_(i)) for i in id_mix)
+                # Batch all location children lookups into one query
+                all_locs = db.session.execute(
+                    select(Location.id, Location.id_tree).where(
+                        or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids])
+                    )
+                ).all()
+                for parent_id in ids:
+                    pattern = "[{}]".format(parent_id)
+                    matching = [row[0] for row in all_locs if pattern in (row[1] or "")]
+                    conditions.append(Bulletin.locations.any(Location.id.in_(matching)))
 
         # Excluded locations
         if exlocations := q.get("exlocations", []):
@@ -952,25 +953,17 @@ class SearchUtils:
             ids = [item.get("id") for item in labels]
             if q.get("oplabels"):
                 if recursive:
-                    # get ids of children // update ids
-                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    direct = [label for label in result]
-                    all_labels = direct + Label.get_children(direct)
-                    all_labels = list(set(all_labels))
-                    ids = [label.id for label in all_labels]
+                    all_ids = [item["id"] for item in Label.find_by_ids(ids)]
+                    ids = all_ids
                 conditions.append(
                     Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids)))
                 )
             else:
                 if recursive:
-                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    for label in direct:
-                        children = Label.get_children([label])
-                        # add original label + uniquify list
-                        children = list(set([label] + children))
-                        ids = [child.id for child in children]
+                    for id in ids:
+                        all_ids = [item["id"] for item in Label.find_by_ids([id])]
                         conditions.append(
-                            Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids)))
+                            Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(all_ids)))
                         )
                 else:
                     conditions.extend(
@@ -990,28 +983,20 @@ class SearchUtils:
             ids = [item.get("id") for item in vlabels]
             recursive = q.get("childverlabels", None)
             if q.get("opvlabels"):
-                # or operator
                 if recursive:
-                    # get ids of children // update ids
-                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    direct = [label for label in result]
-                    all_labels = direct + Label.get_children(direct)
-                    all_labels = list(set(all_labels))
-                    ids = [label.id for label in all_labels]
+                    all_ids = [item["id"] for item in Label.find_by_ids(ids)]
+                    ids = all_ids
                 conditions.append(
                     Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
                 )
             else:
-                # and operator (modify children search logic)
                 if recursive:
-                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
-                    for label in direct:
-                        children = Label.get_children([label])
-                        # add original label + uniquify list
-                        children = list(set([label] + children))
-                        ids = [child.id for child in children]
+                    for id in ids:
+                        all_ids = [item["id"] for item in Label.find_by_ids([id])]
                         conditions.append(
-                            Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
+                            Actor.actor_profiles.any(
+                                ActorProfile.ver_labels.any(Label.id.in_(all_ids))
+                            )
                         )
                 else:
                     conditions.extend(
@@ -1031,30 +1016,22 @@ class SearchUtils:
         # Sources
         if sources := q.get("sources"):
             ids = [item.get("id") for item in sources]
-            # children search ?
             recursive = q.get("childsources", None)
             if q.get("opsources"):
                 if recursive:
-                    # get ids of children // update ids
-                    result = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
-                    direct = [source for source in result]
-                    all_sources = direct + Source.get_children(direct)
-                    all_sources = list(set(all_sources))
-                    ids = [source.id for source in all_sources]
+                    all_ids = [item["id"] for item in Source.find_by_ids(ids)]
+                    ids = all_ids
                 conditions.append(
                     Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids)))
                 )
             else:
-                # and operator (modify children search logic)
                 if recursive:
-                    direct = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
-                    for source in direct:
-                        children = Source.get_children([source])
-                        # add original label + uniquify list
-                        children = list(set([source] + children))
-                        ids = [child.id for child in children]
+                    for id in ids:
+                        all_ids = [item["id"] for item in Source.find_by_ids([id])]
                         conditions.append(
-                            Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids)))
+                            Actor.actor_profiles.any(
+                                ActorProfile.sources.any(Source.id.in_(all_ids))
+                            )
                         )
                 else:
                     conditions.extend(
@@ -1413,9 +1390,16 @@ class SearchUtils:
                 loc_ids = [loc for loc in locs]
                 conditions.append(Incident.locations.any(Location.id.in_(loc_ids)))
             else:
-                # get combined lists of ids for each location
-                id_mix = [Location.get_children_by_id(id) for id in ids]
-                conditions.extend(Incident.locations.any(Location.id.in_(i)) for i in id_mix)
+                # Batch all location children lookups into one query
+                all_locs = db.session.execute(
+                    select(Location.id, Location.id_tree).where(
+                        or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids])
+                    )
+                ).all()
+                for parent_id in ids:
+                    pattern = "[{}]".format(parent_id)
+                    matching = [row[0] for row in all_locs if pattern in (row[1] or "")]
+                    conditions.append(Incident.locations.any(Location.id.in_(matching)))
 
         # Excluded locations
         if exlocations := q.get("exlocations", []):
