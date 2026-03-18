@@ -334,7 +334,7 @@ const ActorCard = Vue.defineComponent({
             v-else-if="$root.isFieldActiveAndHasContent(field, 'ethnographies', actor.ethnographies)"
             :class="$root.fieldClassDrawer(field)"
           >
-            <v-card :subtitle="translations.ethnographicInfo_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
+            <v-card :subtitle="translations.ethnographicInformation_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
               <div class="flex-chips">
                 <v-chip size="small" v-for="e in actor.ethnographies" class="flex-chip">{{ e.title }}</v-chip>
               </div>
