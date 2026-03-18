@@ -11,6 +11,12 @@ const BulletinCard = Vue.defineComponent({
       });
     },
   },
+  beforeUnmount() {
+    this.$root.closeExpandedMedia?.(this.mediaRendererId);
+    if (this.$root.renderers?.[this.mediaRendererId]) {
+      delete this.$root.renderers[this.mediaRendererId];
+    }
+  },
 
   mounted() {
     this.$root.fetchDynamicFields({ entityType: 'bulletin' })
@@ -104,6 +110,7 @@ const BulletinCard = Vue.defineComponent({
       // image viewer
       lightbox: null,
       mediasReady: 0,
+      mediaRendererId: `bulletin-card-${Math.random().toString(36).slice(2, 10)}`,
     };
   },
 
@@ -379,17 +386,17 @@ const BulletinCard = Vue.defineComponent({
         </v-toolbar>
 
         <inline-media-renderer
-          renderer-id="bulletin-card"
-          :media="$root.expandedByRenderer?.['bulletin-card']?.media"
-          :media-type="$root.expandedByRenderer?.['bulletin-card']?.mediaType"
+          :renderer-id="mediaRendererId"
+          :media="$root.expandedByRenderer?.[mediaRendererId]?.media"
+          :media-type="$root.expandedByRenderer?.[mediaRendererId]?.mediaType"
           @ready="$root.onMediaRendererReady"
-          @fullscreen="$root.handleFullscreen('bulletin-card')"
-          @close="$root.closeExpandedMedia('bulletin-card')"
+          @fullscreen="$root.handleFullscreen(mediaRendererId)"
+          @close="$root.closeExpandedMedia(mediaRendererId)"
         ></inline-media-renderer>
         
         <v-card-text>
           
-          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'bulletin-card', ...$event })"></media-grid>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event })"></media-grid>
         </v-card-text>
       </v-card>
 
