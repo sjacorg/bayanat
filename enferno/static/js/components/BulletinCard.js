@@ -177,7 +177,7 @@ const BulletinCard = Vue.defineComponent({
       <!-- Sticky header -->
       <div class="bd-header" >
         <v-toolbar class="d-flex px-2 ga-2">
-          <v-chip size="small" class="bd-copyable" @click="copyToClipboard(String(bulletin.id))" class="flex-shrink-0">
+          <v-chip size="small" class="bd-copyable flex-shrink-0" @click="copyToClipboard(String(bulletin.id))">
             {{ translations.id_ }} {{ bulletin.id }}
             <v-icon size="x-small" class="ml-1 bd-copy-icon">mdi-content-copy</v-icon>
           </v-chip>
