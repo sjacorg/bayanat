@@ -598,8 +598,7 @@
                         code: this.authMethods.twoFactor.code,
                     });
 
-                    window.location.replace('/account-security/#authentication-methods?success=2fa');
-                    window.location.reload();
+                    window.location.href = '/account-security/#authentication-methods?success=2fa';
                 } catch (error) {
                     this.authMethods.twoFactor.error =
                         error.response?.data?.response?.errors?.join(' ') ||
@@ -664,8 +663,7 @@
                         { setup: 'disable', csrf_token: csrf },
                         { headers: { 'Content-Type': 'application/json' } }
                     );
-                    window.location.replace('/account-security/#authentication-methods');
-                    window.location.reload();
+                    window.location.href = '/account-security/#authentication-methods';
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
                         window.location.href = '/verify?next=/account-security/%23authentication-methods?method=2fa';
@@ -738,8 +736,7 @@
                     this.authMethods.securityKeys.registering = false;
                     this.authMethods.securityKeys.deviceName = '';
                     this.authMethods.securityKeys.success = true;
-                    window.location.replace('/account-security/#authentication-methods?success=securityKeys');
-                    window.location.reload();
+                    window.location.href = '/account-security/#authentication-methods?success=securityKeys';
 
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
@@ -807,8 +804,7 @@
                         name,
                         csrf_token: csrf,
                     }, );
-                    window.location.replace('/account-security/#authentication-methods');
-                    window.location.reload();
+                    window.location.href = '/account-security/#authentication-methods';
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
                         window.location.href = '/verify?next=/account-security/%23authentication-methods?method=securityKeys';
