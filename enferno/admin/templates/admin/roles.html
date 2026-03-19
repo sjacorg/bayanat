@@ -20,7 +20,7 @@
                                     :items-length="itemsLength"
                             >
                                 <template v-slot:top>
-                                    <v-toolbar flat color="white">
+                                    <v-toolbar flat>
                                         <v-toolbar-title>{{ _('User Groups') }}</v-toolbar-title>
 
                                         <v-spacer></v-spacer>
@@ -57,7 +57,7 @@
                                                                     <v-icon v-if="editedItem.color === predefinedColor">mdi-check</v-icon>
                                                                 </v-avatar>
                                                             </v-btn>
-                                                            <v-btn icon tile density="comfortable" @click="editedItem.color = customColor">
+                                                            <v-btn v-if="customColor" icon tile density="comfortable" @click="editedItem.color = customColor">
                                                                 <v-avatar size="30" rounded="0" :color="customColor">
                                                                     <v-icon v-if="editedItem.color === customColor">mdi-check</v-icon>
                                                                 </v-avatar>
@@ -136,7 +136,21 @@
                                 </template>
 
                                 <template v-slot:item.color="{item}">
-                                    <v-avatar size="24" v-if="item.color" :style="'background:' + item.color"></v-avatar>
+                                    <v-chip
+                                        v-if="item.color"
+                                        label
+                                        size="small"
+                                        class="font-weight-medium"
+                                        :style="{
+                                            backgroundColor: item.color,
+                                            color: 'white',
+                                            textShadow: 'black 0px 0px 2px',
+                                            minWidth: '120px',
+                                            justifyContent: 'center'
+                                        }"
+                                    >
+                                        ${ item.name }
+                                    </v-chip>
                                 </template>
 
                                 <template v-slot:item.action="{ item }">
