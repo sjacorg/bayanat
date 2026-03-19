@@ -105,7 +105,7 @@
                             <v-card flat class="px-6 py-8 d-flex flex-column ga-3">
 
                                 <!-- 2FA Authentication -->
-                                <v-expansion-panels :model-value="authMethods.twoFactor.panel" @update:model-value="toggleTwoFactorPanel($event)">
+                                <v-expansion-panels :model-value="authMethods.twoFactor.panel" @update:model-value="toggleTwoFactorPanel()">
                                     <v-expansion-panel value="open">
                                         <v-expansion-panel-title :hide-actions="true">
                                             <div class="flex-grow-1">
@@ -205,7 +205,7 @@
                                 </v-expansion-panels>
 
                                 <!-- Security Keys & Passkeys -->
-                                <v-expansion-panels :model-value="authMethods.securityKeys.panel" @update:model-value="toggleSecurityKeysPanel($event)">
+                                <v-expansion-panels :model-value="authMethods.securityKeys.panel" @update:model-value="toggleSecurityKeysPanel()">
                                     <v-expansion-panel value="open">
                                         <v-expansion-panel-title :hide-actions="true">
                                             <div class="flex-grow-1">
@@ -311,7 +311,7 @@
                                 </v-expansion-panels>
 
                                 <!-- Recovery Codes -->
-                                <v-expansion-panels :model-value="authMethods.recoveryCodes.panel" @update:model-value="toggleRecoveryCodesPanel($event)">
+                                <v-expansion-panels :model-value="authMethods.recoveryCodes.panel" @update:model-value="toggleRecoveryCodesPanel()">
                                     <v-expansion-panel value="open">
                                         <v-expansion-panel-title :hide-actions="true">
                                             <div class="flex-grow-1">
@@ -380,7 +380,6 @@
                                                         {% if has_recovery_codes %}
                                                             <v-btn v-if="!authMethods.recoveryCodes.codes.length" variant="outlined" class="border-thin mb-2"
                                                                 :loading="authMethods.recoveryCodes.loading"
-                                                                :disabled="authMethods.recoveryCodes.codes.length > 0"
                                                                 @click="showRecoveryCodes">
                                                                 {{ _('View Existing Codes') }}
                                                             </v-btn>
@@ -536,10 +535,6 @@
                 const fullPath = `${window.location.pathname}${window.location.search}`;
                 this.$router.push(`${fullPath}#${this.tab}`);
             },
-            async getCsrfToken() {
-                const response = await axios.get('/csrf');
-                return response.data.csrf_token;
-            },
 
             // Change Password methods
             onPasswordCheckResponse(response) {
@@ -563,7 +558,7 @@
                 this.changePassword.loading = true;
                 try {
                     const csrf = await this.getCsrfToken();
-                    await axios.post("{{ url_for_security('change_password') }}", {
+                    await api.post("{{ url_for_security('change_password') }}", {
                         password: this.changePassword.form.password,
                         new_password: this.changePassword.form.newPassword,
                         new_password_confirm: this.changePassword.form.newPasswordConfirm,
@@ -584,7 +579,7 @@
             },
 
             // 2FA methods
-            toggleTwoFactorPanel($event) {
+            toggleTwoFactorPanel() {
                 if (this.authMethods.twoFactor.panel === 'open') {
                     this.resetTwoFactorPanel();
                 } else {
@@ -598,10 +593,10 @@
                 this.authMethods.twoFactor.error = null;
                 try {
                     const csrf = await this.getCsrfToken();
-                    await axios.post('/tf-validate', {
+                    await api.post('/tf-validate', {
                         csrf_token: csrf,
                         code: this.authMethods.twoFactor.code,
-                    }, { headers: { 'Accept': 'application/json' } });
+                    });
 
                     window.location.replace('/account-security/#authentication-methods?success=2fa');
                     window.location.reload();
@@ -621,7 +616,7 @@
                     const csrf = await this.getCsrfToken();
                     const response = await api.post('/tf-setup',
                         { setup: 'authenticator', csrf_token: csrf },
-                        { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+                        { headers: { 'Content-Type': 'application/json' } }
                     );
                     const data = response.data.response;
                     this.authMethods.twoFactor.key = data.tf_authr_key;
@@ -633,7 +628,7 @@
                         if (el) {
                             el.innerHTML = '';
                             const secret = data.tf_authr_key.replace(/-/g, '').replace(/\s+/g, '');
-                            const otpUri = `otpauth://totp/${data.tf_authr_issuer}:${data.tf_authr_username}?secret=${secret}&issuer=${data.tf_authr_issuer}`;
+                            const otpUri = `otpauth://totp/${encodeURIComponent(data.tf_authr_issuer)}:${encodeURIComponent(data.tf_authr_username)}?secret=${secret}&issuer=${encodeURIComponent(data.tf_authr_issuer)}`;
                             new QRCode(el, { text: otpUri, width: 230, height: 230, correctLevel: QRCode.CorrectLevel.L });
                         }
                     });
@@ -650,7 +645,7 @@
                 }
             },
 
-            async confirmRevokeTwoFactor() {
+            confirmRevokeTwoFactor() {
                 this.$confirm({
                     title: "{{ _('Are you sure you want to remove this 2FA method?') }}",
                     message: `{{ _('Removing this authenticator app means you\'ll no longer use it to sign in to Bayanat.') }}\r\n\r\n{{ _('To keep your account safe, please make sure you have another 2FA method active or your recovery codes handy so you don\'t get locked out.') }}`,
@@ -667,7 +662,7 @@
                     const csrf = await this.getCsrfToken();
                     await api.post('/tf-setup',
                         { setup: 'disable', csrf_token: csrf },
-                        { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+                        { headers: { 'Content-Type': 'application/json' } }
                     );
                     window.location.replace('/account-security/#authentication-methods');
                     window.location.reload();
@@ -701,7 +696,7 @@
             },
 
             // Security Keys & Passkeys methods
-            toggleSecurityKeysPanel($event) {
+            toggleSecurityKeysPanel() {
                 if (this.authMethods.securityKeys.panel === 'open') {
                     this.authMethods.securityKeys.panel = undefined;
                     this.authMethods.securityKeys.registering = false;
@@ -720,10 +715,10 @@
                     const csrf = await this.getCsrfToken();
 
                     // Step 1 - get credential options from FST
-                    const initResponse = await axios.post("{{ url_for_security('wan_register') }}", {
+                    const initResponse = await api.post("{{ url_for_security('wan_register') }}", {
                         name: this.authMethods.securityKeys.deviceName,
                         csrf_token: csrf,
-                    }, { headers: { 'Accept': 'application/json' } });
+                    });
 
                     const { credential_options, wan_state } = initResponse.data.response;
 
@@ -737,7 +732,7 @@
                     formData.append('credential', JSON.stringify(credential)); // stringify here
                     formData.append('csrf_token', csrf2);
 
-                    await axios.post(`{{ url_for_security('wan_register') }}/${wan_state}`, formData, { headers: { 'Accept': 'application/json' } });
+                    await api.post(`{{ url_for_security('wan_register') }}/${wan_state}`, formData);
 
                     // Success
                     this.authMethods.securityKeys.registering = false;
@@ -811,7 +806,7 @@
                     await api.post("{{ url_for_security('wan_delete') }}", {
                         name,
                         csrf_token: csrf,
-                    }, { headers: { 'Accept': 'application/json' } });
+                    }, );
                     window.location.replace('/account-security/#authentication-methods');
                     window.location.reload();
                 } catch (error) {
@@ -826,7 +821,7 @@
                 }
             },
 
-            toggleRecoveryCodesPanel($event) {
+            toggleRecoveryCodesPanel() {
                 if (this.authMethods.recoveryCodes.panel === 'open') {
                     this.authMethods.recoveryCodes.panel = undefined;
                     this.authMethods.recoveryCodes.codes = [];
@@ -840,11 +835,10 @@
                 this.authMethods.recoveryCodes.loading = true;
                 this.authMethods.recoveryCodes.error = null;
                 try {
-                    const response = await axios.get(
+                    const response = await api.get(
                         "{{ url_for_security('mf_recovery_codes') }}",
                         { 
                             params: { show_codes: 'Show Recovery Codes' },
-                            headers: { 'Accept': 'application/json' }
                         }
                     );
                     this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
@@ -868,10 +862,9 @@
                 this.authMethods.recoveryCodes.error = null;
                 try {
                     const csrf = await this.getCsrfToken();
-                    const response = await axios.post(
+                    const response = await api.post(
                         "{{ url_for_security('mf_recovery_codes') }}",
-                        { csrf_token: csrf },
-                        { headers: { 'Accept': 'application/json' } }
+                        { csrf_token: csrf }
                     );
                     this.authMethods.recoveryCodes.codes = response.data.response.recovery_codes;
                     this.authMethods.recoveryCodes.hasExisting = true;
