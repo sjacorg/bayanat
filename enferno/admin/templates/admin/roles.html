@@ -52,7 +52,7 @@
                                                     <div>
                                                         <div class="text-body-2 mb-2">{{ _('Group Colors') }}</div>
                                                         <div class="d-flex align-center ga-3">
-                                                            <v-btn v-for="(predefinedColor, index) in predefinedColors" :key="predefinedColor" icon tile density="comfortable" @click="editedItem.color = predefinedColor">
+                                                            <v-btn v-for="predefinedColor in predefinedColors" :key="predefinedColor" icon tile density="comfortable" @click="editedItem.color = predefinedColor">
                                                                 <v-avatar size="30" rounded="0" :color="predefinedColor">
                                                                     <v-icon v-if="editedItem.color === predefinedColor">mdi-check</v-icon>
                                                                 </v-avatar>
@@ -206,10 +206,10 @@
                 itemsLength: 10,
                 editedIndex: -1,
                 editedItem: {
-                    title: ""
+                    name: ""
                 },
                 defaultItem: {
-                    title: "",
+                    name: "",
                     color: '#439d92',
                 },
                 predefinedColors: ['#A61C00', '#CC0000', '#E69138', '#F1C232', '#6AA84F', '#45818E', '#3C78D8', '#3D85C6', '#674EA7', '#A64D79'],
@@ -223,43 +223,25 @@
                 isNewRecord() {
                     return this.editedIndex === -1;
                 },
-                isEditingRecord() {
-                    return !this.isNewRecord;
-                }
             },
 
             watch: {
                 dialog(open) {
-                    if (open) {
-                        if (this.isEditingRecord && this.editedItem.color) {
-                            // Inject the item's current color as the last custom slot
-                            this.injectEditedColor(this.editedItem.color);
-                        }
+                    if (open && !this.isNewRecord && this.editedItem.color) {
+                        this.setCustomColor(this.editedItem.color);
                     }
                 },
             },
 
             methods: {
                 onCloseColorPicker(isOpen) {
-                    if (!isOpen && this.editedItem.color) {
-                        if (!this.predefinedColors.includes(this.editedItem.color)) {
-                            this.addCustomColor(this.editedItem.color);
-                        }
+                    if (!isOpen) {
+                        this.setCustomColor(this.editedItem.color);
                     }
                 },
 
-                addCustomColor(color) {
-                    if (!color) return;
-
-                    this.customColor = color;
-                },
-
-                injectEditedColor(color) {
-                    if (!color) return;
-
-                    // Don't inject if it's already covered by predefined swatches
-                    if (this.predefinedColors.includes(color)) return;
-
+                setCustomColor(color) {
+                    if (!color || this.predefinedColors.includes(color)) return;
                     this.customColor = color;
                 },
 
@@ -323,7 +305,7 @@
                 },
 
                 save() {
-                    if (this.editedIndex > -1) {
+                    if (!this.isNewRecord) {
                         Object.assign(this.items[this.editedIndex], this.editedItem);
                         api.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
