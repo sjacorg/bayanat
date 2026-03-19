@@ -233,7 +233,6 @@
                     if (open) {
                         if (this.isEditingRecord && this.editedItem.color) {
                             // Inject the item's current color as the last custom slot
-                            // without persisting — it only persists if user actively picks via color picker
                             this.injectEditedColor(this.editedItem.color);
                         }
                     }
@@ -243,7 +242,6 @@
             methods: {
                 onCloseColorPicker(isOpen) {
                     if (!isOpen && this.editedItem.color) {
-                        // Don't add to custom history if it's already a predefined color
                         if (!this.predefinedColors.includes(this.editedItem.color)) {
                             this.addCustomColor(this.editedItem.color);
                         }
