@@ -57,14 +57,14 @@
                                                                     <v-icon v-if="editedItem.color === predefinedColor">mdi-check</v-icon>
                                                                 </v-avatar>
                                                             </v-btn>
-                                                            <v-btn v-for="(customColor, index) in customColors" :key="customColor" icon tile density="comfortable" @click="editedItem.color = customColor">
+                                                            <v-btn icon tile density="comfortable" @click="editedItem.color = customColor">
                                                                 <v-avatar size="30" rounded="0" :color="customColor">
                                                                     <v-icon v-if="editedItem.color === customColor">mdi-check</v-icon>
                                                                 </v-avatar>
                                                             </v-btn>
                                                             <v-menu :close-on-content-click="false" @update:model-value="onCloseColorPicker">
                                                                 <template v-slot:activator="{ props }">
-                                                                    <v-btn v-bind="props" @click="addCustomColor()" icon="mdi-plus" density="compact" variant="tonal"></v-btn>
+                                                                    <v-btn v-bind="props" icon="mdi-plus" density="compact" variant="tonal"></v-btn>
                                                                 </template>
                                                                 <v-color-picker v-model="editedItem.color"></v-color-picker>
                                                             </v-menu>
@@ -136,7 +136,7 @@
                                 </template>
 
                                 <template v-slot:item.color="{item}">
-                                    <v-avatar size="24" v-if="item.color"  :style="'background:' + item.color"></v-avatar>
+                                    <v-avatar size="24" v-if="item.color" :style="'background:' + item.color"></v-avatar>
                                 </template>
 
                                 <template v-slot:item.action="{ item }">
@@ -199,7 +199,7 @@
                     color: '#439d92',
                 },
                 predefinedColors: ['#A61C00', '#CC0000', '#E69138', '#F1C232', '#6AA84F', '#45818E', '#3C78D8', '#3D85C6', '#674EA7', '#A64D79'],
-                customColors: [],
+                customColor: null,
             }),
 
             computed: {
@@ -217,9 +217,6 @@
             watch: {
                 dialog(open) {
                     if (open) {
-                        // Always start from persisted history
-                        this.customColors = this.getPersistedCustomColors();
-
                         if (this.isEditingRecord && this.editedItem.color) {
                             // Inject the item's current color as the last custom slot
                             // without persisting — it only persists if user actively picks via color picker
@@ -235,27 +232,14 @@
                         // Don't add to custom history if it's already a predefined color
                         if (!this.predefinedColors.includes(this.editedItem.color)) {
                             this.addCustomColor(this.editedItem.color);
-                            this.persistCustomColors();
                         }
                     }
                 },
 
                 addCustomColor(color) {
                     if (!color) return;
-                    const LIMIT = 3;
 
-                    // Remove duplicate if already present (will re-add at end as most-recent)
-                    const existing = this.customColors.indexOf(color);
-                    if (existing !== -1) {
-                        this.customColors.splice(existing, 1);
-                    }
-
-                    this.customColors.push(color);
-
-                    // Trim oldest entries from the front to stay within limit
-                    if (this.customColors.length > LIMIT) {
-                        this.customColors.splice(0, this.customColors.length - LIMIT);
-                    }
+                    this.customColor = color;
                 },
 
                 injectEditedColor(color) {
@@ -264,30 +248,7 @@
                     // Don't inject if it's already covered by predefined swatches
                     if (this.predefinedColors.includes(color)) return;
 
-                    const LIMIT = 3;
-                    if (this.customColors.includes(color)) return;
-
-                    if (this.customColors.length >= LIMIT) {
-                        this.customColors.splice(0, 1, color);
-                    } else {
-                        this.customColors.push(color);
-                    }
-                },
-
-                persistCustomColors() {
-                    try {
-                        localStorage.setItem('groupCustomColors', JSON.stringify(this.customColors));
-                    } catch (e) {
-                        console.warn('Could not persist custom colors:', e);
-                    }
-                },
-
-                getPersistedCustomColors() {
-                    try {
-                        return JSON.parse(localStorage.getItem('groupCustomColors') || '[]');
-                    } catch {
-                        return [];
-                    }
+                    this.customColor = color;
                 },
 
                 refresh(options) {
@@ -346,7 +307,7 @@
                     this.dialog = false;
                     this.editedItem = Object.assign({}, this.defaultItem);
                     this.editedIndex = -1;
-                    this.customColors = [];
+                    this.customColor = null;
                 },
 
                 save() {
