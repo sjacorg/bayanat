@@ -488,14 +488,16 @@
 
         watch: {
             tab(newTab) {
-                this.$router.push(`${window.location.pathname}${window.location.search}#${newTab}`);
+                this.$router.replace(`${window.location.pathname}${window.location.search}#${newTab}`);
             },
         },
 
         mounted() {
+            const searchParams = new URLSearchParams(window.location.search);
             const hashParams = new URLSearchParams(this.$route.hash.split('?')[1]);
             const method = hashParams.get('method');
-            const success = hashParams.get('success');
+            const success = searchParams.get('success');
+            const hasRefresh = searchParams.has('refresh');
 
             if (this.tab === 'authentication-methods') {
                 if (method === '2fa') {
@@ -527,13 +529,34 @@
                 if (success === 'recoveryCodes') {
                     this.authMethods.recoveryCodes.panel = 'open';
                 }
+
+                if (hasRefresh && !success) {
+                    this.cleanupUrl();
+                }
             }
         },
 
         methods: {
             cleanupUrl() {
-                const fullPath = `${window.location.pathname}${window.location.search}`;
-                this.$router.push(`${fullPath}#${this.tab}`);
+                this.$router.replace(`${window.location.pathname}#${this.tab}`);
+            },
+
+            reloadAuthenticationMethods(success = null) {
+                const params = new URLSearchParams({ refresh: Date.now().toString() });
+                if (success) params.set('success', success);
+                window.location.replace(`/account-security/?${params.toString()}#authentication-methods`);
+            },
+
+            redirectToReauth(method) {
+                const encodedMethod = encodeURIComponent(method);
+                window.location.href = `/verify?next=/account-security/%23authentication-methods?method=${encodedMethod}`;
+            },
+
+            getErrorMessage(error, fallback, includeClientMessage = false) {
+                const errors = error?.response?.data?.response?.errors;
+                if (Array.isArray(errors) && errors.length) return errors.join(' ');
+                if (includeClientMessage && error?.message) return error.message;
+                return fallback;
             },
 
             // Change Password methods
@@ -570,9 +593,10 @@
                     setTimeout(() => this.changePassword.success = false, 5_000);
                 } catch (error) {
                     this.changePassword.isStrong = false;
-                    this.changePassword.error =
-                        error.response?.data?.response?.errors?.join(' ') ||
-                        "{{ _('An error occurred. Please try again.') }}";
+                    this.changePassword.error = this.getErrorMessage(
+                        error,
+                        "{{ _('An error occurred. Please try again.') }}"
+                    );
                 } finally {
                     this.changePassword.loading = false;
                 }
@@ -598,11 +622,12 @@
                         code: this.authMethods.twoFactor.code,
                     });
 
-                    window.location.href = '/account-security/#authentication-methods?success=2fa';
+                    this.reloadAuthenticationMethods('2fa');
                 } catch (error) {
-                    this.authMethods.twoFactor.error =
-                        error.response?.data?.response?.errors?.join(' ') ||
-                        "{{ _('Invalid code. Please try again.') }}";
+                    this.authMethods.twoFactor.error = this.getErrorMessage(
+                        error,
+                        "{{ _('Invalid code. Please try again.') }}"
+                    );
                 } finally {
                     this.authMethods.twoFactor.submitting = false;
                 }
@@ -633,12 +658,13 @@
                     });
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
-                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=2fa';
+                        this.redirectToReauth('2fa');
                         return;
                     }
-                    this.authMethods.twoFactor.error =
-                        error.response?.data?.response?.errors?.join(' ') ||
-                        "{{ _('An error occurred. Please try again.') }}";
+                    this.authMethods.twoFactor.error = this.getErrorMessage(
+                        error,
+                        "{{ _('An error occurred. Please try again.') }}"
+                    );
                 } finally {
                     this.authMethods.twoFactor.loading = false;
                 }
@@ -663,15 +689,16 @@
                         { setup: 'disable', csrf_token: csrf },
                         { headers: { 'Content-Type': 'application/json' } }
                     );
-                    window.location.href = '/account-security/#authentication-methods';
+                    this.reloadAuthenticationMethods();
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
-                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=2fa';
+                        this.redirectToReauth('2fa');
                         return;
                     }
-                    this.authMethods.twoFactor.error =
-                        error.response?.data?.response?.errors?.join(' ') ||
-                        "{{ _('An error occurred. Please try again.') }}";
+                    this.authMethods.twoFactor.error = this.getErrorMessage(
+                        error,
+                        "{{ _('An error occurred. Please try again.') }}"
+                    );
                 } finally {
                     this.authMethods.twoFactor.removing = false;
                 }
@@ -736,20 +763,21 @@
                     this.authMethods.securityKeys.registering = false;
                     this.authMethods.securityKeys.deviceName = '';
                     this.authMethods.securityKeys.success = true;
-                    window.location.href = '/account-security/#authentication-methods?success=securityKeys';
+                    this.reloadAuthenticationMethods('securityKeys');
 
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
-                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=securityKeys';
+                        this.redirectToReauth('securityKeys');
                         return;
                     } else if (error.name === 'NotAllowedError') {
                         // User cancelled the browser prompt
                         this.authMethods.securityKeys.error = "{{ _('Registration was cancelled. Please try again.') }}";
                     } else {
-                        this.authMethods.securityKeys.error =
-                            error.response?.data?.response?.errors?.join(' ') ||
-                            error.message ||
-                            "{{ _('An error occurred. Please try again.') }}";
+                        this.authMethods.securityKeys.error = this.getErrorMessage(
+                            error,
+                            "{{ _('An error occurred. Please try again.') }}",
+                            true
+                        );
                     }
                 } finally {
                     this.authMethods.securityKeys.loading = false;
@@ -783,7 +811,7 @@
                 };
             },
 
-            async confirmDeleteKey(name) {
+            confirmDeleteKey(name) {
                 this.$confirm({
                     title: "{{ _('Remove this security key?') }}",
                     message: `{{ _('Removing this security key means you\'ll no longer be able to use it to sign in to Bayanat.') }}\r\n\r\n{{ _('To keep your account safe, make sure you have another sign-in method active so you don\'t get locked out.') }}`,
@@ -803,16 +831,17 @@
                     await api.post("{{ url_for_security('wan_delete') }}", {
                         name,
                         csrf_token: csrf,
-                    }, );
-                    window.location.href = '/account-security/#authentication-methods';
+                    });
+                    this.reloadAuthenticationMethods();
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
-                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=securityKeys';
+                        this.redirectToReauth('securityKeys');
                         return;
                     } else {
-                        this.authMethods.securityKeys.error =
-                            error.response?.data?.response?.errors?.join(' ') ||
-                            "{{ _('An error occurred. Please try again.') }}";
+                        this.authMethods.securityKeys.error = this.getErrorMessage(
+                            error,
+                            "{{ _('An error occurred. Please try again.') }}"
+                        );
                     }
                 }
             },
@@ -841,12 +870,13 @@
                     this.authMethods.recoveryCodes.hasExisting = true;
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
-                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
+                        this.redirectToReauth('recoveryCodes');
                         return;
                     } else {
-                        this.authMethods.recoveryCodes.error =
-                            error.response?.data?.response?.errors?.join(' ') ||
-                            "{{ _('An error occurred. Please try again.') }}";
+                        this.authMethods.recoveryCodes.error = this.getErrorMessage(
+                            error,
+                            "{{ _('An error occurred. Please try again.') }}"
+                        );
                     }
                 } finally {
                     this.authMethods.recoveryCodes.loading = false;
@@ -866,12 +896,13 @@
                     this.authMethods.recoveryCodes.hasExisting = true;
                 } catch (error) {
                     if (error.response?.data?.response?.reauth_required) {
-                        window.location.href = '/verify?next=/account-security/%23authentication-methods?method=recoveryCodes';
+                        this.redirectToReauth('recoveryCodes');
                         return;
                     } else {
-                        this.authMethods.recoveryCodes.error =
-                            error.response?.data?.response?.errors?.join(' ') ||
-                            "{{ _('An error occurred. Please try again.') }}";
+                        this.authMethods.recoveryCodes.error = this.getErrorMessage(
+                            error,
+                            "{{ _('An error occurred. Please try again.') }}"
+                        );
                     }
                 } finally {
                     this.authMethods.recoveryCodes.generating = false;
