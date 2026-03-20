@@ -482,8 +482,8 @@ function setTinyMceTheme(theme) {
     tinyConfig.skin = 'oxide-dark';
     tinyConfig.content_css = 'dark';
   } else {
-    delete tinyConfig.skin;
-    delete tinyConfig.content_css;
+    tinyConfig.skin = 'oxide';
+    tinyConfig.content_css = 'default';
   }
 }
 
