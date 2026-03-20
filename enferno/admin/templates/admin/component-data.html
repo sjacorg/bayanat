@@ -415,8 +415,8 @@
                 const fieldMaps = {
                     codeAndTitle: [{ title: "{{ _('Code') }}", value: 'code' }, { title: "{{ _('Title') }}", value: 'title' }],
                     basicTitle: [{ title: "{{ _('Title') }}", value: 'title' }],
-                    titleLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Title (tr)') }}", value: 'title_tr' }],
-                    titleWithReverseLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Title (tr)') }}", value: 'title_tr' }, { title: "{{ _('Reverse Title') }}", value: 'reverse_title' }, { title: "{{ _('Reverse Title (tr)') }}", value: 'reverse_title_tr' }],
+                    titleLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Translated Title') }}", value: 'title_tr' }],
+                    titleWithReverseLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Translated Title') }}", value: 'title_tr' }, { title: "{{ _('Reverse Title') }}", value: 'reverse_title' }, { title: "{{ _('Translated Reverse Title') }}", value: 'reverse_title_tr' }],
                 };
 
                 return [...base, ...(fieldMaps[type] || customFields), { title: "{{ _('Actions') }}", value: 'actions', align: 'end' }];

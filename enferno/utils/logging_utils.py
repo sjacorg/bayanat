@@ -1,6 +1,7 @@
 import glob
 import json
 import logging
+import sys
 from logging.handlers import TimedRotatingFileHandler
 from traceback import format_exception
 from enferno.settings import Config
@@ -56,41 +57,53 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(record_dict)
 
 
+def _file_handler():
+    """Build a file handler for logging."""
+    handler = TimedRotatingFileHandler(
+        os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
+        when="midnight",
+        backupCount=cfg.LOG_BACKUP_COUNT,
+    )
+    handler.setFormatter(JsonFormatter())
+    return handler
+
+
+def _stream_handler():
+    """Build a stdout handler for logging."""
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    return handler
+
+
 def get_logger(name="app_logger"):
-    """Get a logger instance."""
+    """Get a logger instance. File-only for the app process."""
     logger = logging.getLogger(name)
     logger.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
+    logger.propagate = False
 
-    # Prevent race condition when called from multiple threads
     if not logger.handlers:
         if cfg.APP_LOG_ENABLED:
-            handler = TimedRotatingFileHandler(
-                os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
-                when="midnight",
-                backupCount=cfg.LOG_BACKUP_COUNT,
-            )
-            handler.setFormatter(JsonFormatter())
+            logger.handlers = [_file_handler()]
         else:
-            handler = logging.NullHandler()
-
-        logger.handlers = [handler]
+            logger.handlers = [logging.NullHandler()]
     return logger
 
 
 @after_setup_logger.connect
 def setup_celery_logger(logger, *args, **kwargs):
-    """Configure the Celery logger to use our existing logging setup."""
+    """Configure Celery logger: file + stdout for live visibility."""
+    log_level = cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL
+    logger.setLevel(log_level)
+    handlers = [_stream_handler()]
     if cfg.CELERY_LOG_ENABLED:
-        handler = TimedRotatingFileHandler(
-            os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
-            when="midnight",
-            backupCount=cfg.LOG_BACKUP_COUNT,
-        )
-        handler.setFormatter(JsonFormatter())
-        handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
-        logger.handlers = [handler]
-    for handler in logger.handlers:
-        handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
+        handlers.append(_file_handler())
+    logger.handlers = handlers
+    for h in logger.handlers:
+        h.setLevel(log_level)
+    logger.propagate = False
+
+    # Suppress celery.redirected to prevent SMTP debug output (leaks credentials)
+    logging.getLogger("celery.redirected").setLevel(logging.CRITICAL)
 
 
 @after_setup_task_logger.connect

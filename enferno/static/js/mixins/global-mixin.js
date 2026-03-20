@@ -3,13 +3,13 @@ const globalMixin = {
   components: {
     'ConfirmDialog': ConfirmDialog,
     'Toast': Toast,
+    'ProfileDropdown': ProfileDropdown,
   },
   data: () => ({
     snackbar: false,
     snackMessage: '',
 
     // settings drawer
-    settingsDrawer: false,
     settings: {},
     languages: languages,
 
@@ -133,19 +133,11 @@ const globalMixin = {
     saveSettings() {
         api.put('/settings/save', { settings: this.settings }).then(res => {
             this.$vuetify.theme.name = this.settings.dark ? 'dark' : 'light';
+            setTinyMceTheme(this.$vuetify.theme.name);
             this.showSnack('Settings have been saved!');
         }).catch(err => {
             this.showSnack(err.body);
         });
-    },
-    toggleUserSettingsDrawer() {
-      // Toggle the settings drawer
-      this.settingsDrawer = !this.settingsDrawer;
-
-      // Close the notifications drawer if the settings drawer is open
-      if (this.settingsDrawer) {
-        this.notifications.ui.drawerVisible = false;
-      }
     },
     updateLang(l) {
       this.settings.language = l

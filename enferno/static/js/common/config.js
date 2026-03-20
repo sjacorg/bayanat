@@ -444,6 +444,7 @@ const routes = [
     {path: '/import/sheets/', name: 'import-sheets', component: Vue.defineComponent({})},
     {path: '/import/log/', name: 'import-log', component: Vue.defineComponent({})},
     {path: '/deduplication/dashboard/', name: 'deduplication-dashboard', component: Vue.defineComponent({})},
+    {path: '/account-security/', name: 'account-security', component: Vue.defineComponent({})},
 
 ];
 
@@ -484,8 +485,17 @@ var tinyConfig = {
 
 // adjust rich text editor theme based on mode
 if (__settings__.dark) {
+    setTinyMceTheme('dark')
+}
+
+function setTinyMceTheme(theme) {
+  if (theme === 'dark') {
     tinyConfig.skin = 'oxide-dark';
     tinyConfig.content_css = 'dark';
+  } else {
+    tinyConfig.skin = 'oxide';
+    tinyConfig.content_css = 'default';
+  }
 }
 
 // helper prototype functions

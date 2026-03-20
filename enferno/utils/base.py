@@ -6,7 +6,6 @@ from enferno.extensions import db
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
-
 logger = get_logger()
 
 
@@ -17,7 +16,7 @@ class DatabaseException(Exception):
 class BaseMixin(object):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    deleted = db.Column(db.Boolean)
+    deleted = db.Column(db.Boolean, default=False, nullable=False, server_default="false")
 
     def serialize_column(self, column_name):
         """
