@@ -109,18 +109,7 @@ const ProfileDropdown = Vue.defineComponent({
         <v-divider></v-divider>
         
         <v-list density="compact" nav class="text-body-2">
-            <v-list-subheader>{{ translations.mySecurity_ }}</v-list-subheader>
-            <div class="ml-5">
-              <v-list-item href="/change">{{ translations.changePassword_ }}</v-list-item>
-              <v-list-item href="/tf-setup">{{ translations.tfaAuthentication_ }}</v-list-item>
-              <v-list-item href="/mf-recovery-codes">{{ translations.recoveryCodes_ }}</v-list-item>
-              <v-list-item href="/wan-register">{{ translations.securityKeys_ }}</v-list-item>
-            </div>
-        </v-list>
-        
-        <v-divider></v-divider>
-
-        <v-list density="compact" nav class="text-body-2">
+          <v-list-item href="/account-security">{{ translations.accountSecurity_ }}</v-list-item>
           <v-list-item href="https://docs.bayanat.org/" target="_blank">{{ translations.userGuides_ }} <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
           <v-list-item href="https://community.bayanat.org/" target="_blank">{{ translations.support_ }} <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
           <v-list-item href="https://github.com/sjacorg/bayanat/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=" target="_blank">{{ translations.reportABug_ }} <v-icon size="x-small">mdi-open-in-new</v-icon></v-list-item>
