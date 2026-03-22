@@ -292,6 +292,10 @@
                                             <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Import from Web') }}"
                                                       v-model="editedItem.can_import_web"></v-switch>
                                         </v-col>
+                                        <v-col cols="12" md="3">
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Access Media') }}"
+                                                      v-model="editedItem.can_access_media"></v-switch>
+                                        </v-col>
                                     </v-row>
                                 </v-container>
                             </v-card-text>
@@ -598,6 +602,7 @@
                         this.editedItem.can_edit_locations = true;
                         this.editedItem.can_export = true;
                         this.editedItem.can_import_web = true;
+                        this.editedItem.can_access_media = true;
                         return true;
                     }
                     return false;
