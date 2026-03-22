@@ -133,6 +133,7 @@ const globalMixin = {
     saveSettings() {
         api.put('/settings/save', { settings: this.settings }).then(res => {
             this.$vuetify.theme.name = this.settings.dark ? 'dark' : 'light';
+            setTinyMceTheme(this.$vuetify.theme.name);
             this.showSnack('Settings have been saved!');
         }).catch(err => {
             this.showSnack(err.body);
