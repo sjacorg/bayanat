@@ -36,29 +36,69 @@ const EventsSection = Vue.defineComponent({
       }
       return () => true;
     },
+    hasDateOrLocation() {
+      const e = this.editedEvent;
+      return !!(e.location || e.from_date || e.to_date);
+    },
+    hasTitleOrType() {
+      const e = this.editedEvent;
+      return !!(e.title || e.title_ar || e.eventtype);
+    },
+    // Show asterisk only if the group is not yet satisfied
+    showTitleTypeAsterisk() {
+      return !this.hasTitleOrType;
+    },
+    showLocationDateAsterisk() {
+      return !this.hasDateOrLocation;
+    },
+    // Validation rules for groups
+    titleOrTypeRule() {
+      return () => this.hasTitleOrType || this.translations.titleOrTypeRequired_;
+    },
+    locationOrDateRule() {
+      return () => this.hasDateOrLocation || this.translations.locationOrDateRequired_;
+    },
+  },
+  watch: {
+    // Watch for changes in title/type group
+    'editedEvent.title'() {
+      this.validateTitleTypeGroup();
+    },
+    'editedEvent.title_ar'() {
+      this.validateTitleTypeGroup();
+    },
+    'editedEvent.eventtype'() {
+      this.validateTitleTypeGroup();
+    },
+    // Watch for changes in location/date group
+    'editedEvent.location'() {
+      this.validateLocationDateGroup();
+    },
+    'editedEvent.from_date'() {
+      this.validateLocationDateGroup();
+    },
+    'editedEvent.to_date'() {
+      this.validateLocationDateGroup();
+    },
   },
   methods: {
-    checkEventFormRules() {
-      const e = this.editedEvent;
-
-      const hasDateOrLocation = !!(e.location || e.from_date || e.to_date);
-      const hasTitleOrType = !!(e.title || e.title_ar || e.eventtype);
-
-      const missing = [];
-      if (!hasDateOrLocation) missing.push(this.translations.locationOrDateRequired_);
-      if (!hasTitleOrType) missing.push(this.translations.titleOrTypeRequired_);
-
-      if (missing.length > 0) {
-        this.$root.showSnack(missing.join('<br />'));
-        return false;
-      }
-
-      return true;
+    validateTitleTypeGroup() {
+      // Trigger validation on the next tick to ensure the form is updated
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.validate();
+        }
+      });
+    },
+    validateLocationDateGroup() {
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.validate();
+        }
+      });
     },
     validateFormAndSave() {
       this.$refs.form.validate().then(({ valid, errors }) => {
-        if (!this.checkEventFormRules()) return
-
         if (valid) {
           this.saveEvent();
         } else {
@@ -87,7 +127,6 @@ const EventsSection = Vue.defineComponent({
 
       this.$nextTick(() => {
         this.editedEvent = Object.assign({}, item);
-
         this.editedEventIndex = index;
       });
     },
@@ -161,7 +200,13 @@ const EventsSection = Vue.defineComponent({
                 <v-spacer></v-spacer>
 
                 <template #append>
-                    <v-btn variant="elevated" @click="validateFormAndSave" class="mx-2">{{ translations.save_ }}</v-btn>
+                    <v-btn 
+                        variant="elevated" 
+                        @click="validateFormAndSave" 
+                        class="mx-2"
+                    >
+                        {{ translations.save_ }}
+                    </v-btn>
                     <v-btn icon="mdi-close" @click="closeEvent"></v-btn>
                 </template>
             </v-toolbar>
@@ -169,26 +214,50 @@ const EventsSection = Vue.defineComponent({
             <v-form @submit.prevent="validateFormAndSave" ref="form" v-model="valid">
                 <v-card-text>
                     <v-container>
+                        <!-- Info banner explaining requirements -->
+                        <v-alert 
+                            type="info" 
+                            variant="tonal" 
+                            density="compact" 
+                            class="mb-6"
+                        >
+                            <div class="text-body-2">
+                                <strong>{{ translations.requiredFields_ }}:</strong>
+                                <div class="mt-1">
+                                    • {{ translations.titleOrTypeRequired_ }}
+                                </div>
+                                <div>
+                                    • {{ translations.locationOrDateRequired_ }}
+                                </div>
+                            </div>
+                        </v-alert>
+
                         <v-row>
                             <v-col cols="12" md="6">
-                                <dual-field v-model:original="editedEvent.title"
-                                            v-model:translation="editedEvent.title_ar"
-                                            :label-original="translations.title_"
-                                            :label-translation="translations.titleAr_"
-                                            :rules="[
-                                              validationRules.maxLength(255),
-                                            ]"
-                                ></dual-field>
+                                <dual-field 
+                                    v-model:original="editedEvent.title"
+                                    v-model:translation="editedEvent.title_ar"
+                                    :rules="[
+                                        validationRules.maxLength(255),
+                                        titleOrTypeRule
+                                    ]"
+                                >
+                                    <template #label-original>
+                                        {{ translations.title_ }} <Asterisk v-if="showTitleTypeAsterisk" />
+                                    </template>
+                                    <template #label-translation>
+                                        {{ translations.titleAr_ }} <Asterisk v-if="showTitleTypeAsterisk" />
+                                    </template>
+                                </dual-field>
                             </v-col>
 
                             <v-col cols="12" md="6">
-                                <dual-field v-model:original="editedEvent.comments"
-                                            v-model:translation="editedEvent.comments_ar"
-                                            :label-original="translations.comments_"
-                                            :label-translation="translations.commentsAr_"
-                                            :rules="[
-                                                validationRules.maxLength(255),
-                                            ]"
+                                <dual-field 
+                                    v-model:original="editedEvent.comments"
+                                    v-model:translation="editedEvent.comments_ar"
+                                    :label-original="translations.comments_"
+                                    :label-translation="translations.commentsAr_"
+                                    :rules="[validationRules.maxLength(255)]"
                                 ></dual-field>
                             </v-col>
                         </v-row>
@@ -196,47 +265,79 @@ const EventsSection = Vue.defineComponent({
                         <v-row>
                             <v-col cols="12" md="8">
                                 <location-search-field
-                                        v-model="editedEvent.location"
-                                        api="/admin/api/locations/"
-                                        item-title="full_string"
-                                        item-value="id"
-                                        :multiple="false"
-                                        :show-copy-icon="advFeatures"
-                                        :label="translations.location_"
-                                ></location-search-field>
-
-
+                                    v-model="editedEvent.location"
+                                    api="/admin/api/locations/"
+                                    item-title="full_string"
+                                    item-value="id"
+                                    :multiple="false"
+                                    :show-copy-icon="advFeatures"
+                                    :rules="[locationOrDateRule]"
+                                >
+                                    <template v-slot:label>
+                                        {{ translations.location_ }} <Asterisk v-if="showLocationDateAsterisk" />
+                                    </template>
+                                </location-search-field>
                             </v-col>
-                            <v-col md="4">
-
+                            
+                            <v-col cols="12" md="4">
                                 <search-field
-                                        v-model="editedEvent.eventtype"
-                                        api="/admin/api/eventtypes/"
-                                        :query-params="eventParams"
-                                        item-title="title"
-                                        item-value="id"
-                                        :multiple="false"
-                                        :label="translations.eventType_"
-                                ></search-field>
-
-
+                                    v-model="editedEvent.eventtype"
+                                    api="/admin/api/eventtypes/"
+                                    :query-params="eventParams"
+                                    item-title="title"
+                                    item-value="id"
+                                    :multiple="false"
+                                    :rules="[titleOrTypeRule]"
+                                >
+                                    <template v-slot:label>
+                                        {{ translations.eventType_ }} <Asterisk v-if="showTitleTypeAsterisk" />
+                                    </template>
+                                </search-field>
                             </v-col>
                         </v-row>
 
                         <v-row>
                             <v-col cols="12" md="6">
-                                <pop-date-time-field :rules="[validationRules.date(), validationRules.dateBeforeOtherDate(editedEvent.to_date)]" :allowed-dates="allowedDateFrom" :time-label="translations.time_" :label="translations.from_" v-model="editedEvent.from_date"></pop-date-time-field>
+                                <pop-date-time-field 
+                                    v-model="editedEvent.from_date"
+                                    :rules="[
+                                        validationRules.date(), 
+                                        validationRules.dateBeforeOtherDate(editedEvent.to_date),
+                                        locationOrDateRule
+                                    ]" 
+                                    :allowed-dates="allowedDateFrom" 
+                                    :time-label="translations.time_"
+                                >
+                                    <template #label>
+                                        {{ translations.from_ }} <Asterisk v-if="showLocationDateAsterisk" />
+                                    </template>
+                                </pop-date-time-field>
                             </v-col>
+                            
                             <v-col cols="12" md="6">
-                                <pop-date-time-field :rules="[validationRules.date(), validationRules.dateAfterOtherDate(editedEvent.from_date)]" :allowed-dates="allowedDateTo" :time-label="translations.time_" :label="translations.to_" v-model="editedEvent.to_date"></pop-date-time-field>
+                                <pop-date-time-field 
+                                    v-model="editedEvent.to_date"
+                                    :rules="[
+                                        validationRules.date(), 
+                                        validationRules.dateAfterOtherDate(editedEvent.from_date),
+                                        locationOrDateRule
+                                    ]" 
+                                    :allowed-dates="allowedDateTo" 
+                                    :time-label="translations.time_"
+                                >
+                                    <template #label>
+                                        {{ translations.to_ }} <Asterisk v-if="showLocationDateAsterisk" />
+                                    </template>
+                                </pop-date-time-field>
                             </v-col>
                         </v-row>
+                        
                         <v-row>
                             <v-col md="4">
                                 <v-switch
-                                        color="primary"
-                                        :label="translations.estimatedTime_"
-                                        v-model="editedEvent.estimated"
+                                    color="primary"
+                                    :label="translations.estimatedTime_"
+                                    v-model="editedEvent.estimated"
                                 ></v-switch>
                             </v-col>
                         </v-row>

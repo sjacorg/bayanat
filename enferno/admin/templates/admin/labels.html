@@ -121,82 +121,84 @@
 
                 <!-- Create/Edit dialog -->
                 <v-dialog v-model="dialog" max-width="790px">
-                    <v-card :title="formTitle">
-                        <v-card-text class="pt-6">
-                                <v-row>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="editedItem.title">
-                                            <template v-slot:label>{{ _('Title') }} <span class="text-error">*</span></template>
-                                            <template v-if="editedItem.parent" v-slot:append-inner>
-                                                <v-tooltip location="bottom">
-                                                    <template v-slot:activator="{ props }">
-                                                        <v-btn
-                                                            icon="mdi-subdirectory-arrow-right"
-                                                            density="comfortable"
-                                                            variant="text"
-                                                            @click="prependParentName"
-                                                            v-bind="props"
-                                                        ></v-btn>
-                                                    </template>
-                                                    {{ _('Add parent name to title') }}
-                                                </v-tooltip>
-                                            </template>
-                                        </v-text-field>
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="editedItem.title_ar" label="{{ _('Title (AR)') }}"></v-text-field>
-                                    </v-col>
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="editedItem.comments" label="{{ _('Comments') }}"></v-text-field>
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="editedItem.comments_ar" label="{{ _('Comments (AR)') }}"></v-text-field>
-                                    </v-col>
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12" md="6">
-                                        <search-field
-                                            api="/admin/api/labels/"
-                                            item-title="title"
-                                            item-subtitle="path"
-                                            label="{{ _('Parent') }}"
-                                            v-model="editedItem.parent"
-                                            :filter-items="filterCircularParents"
-                                            item-value="id"
-                                            :multiple="false"
-                                            :query-params="parentQueryParams"
-                                        ></search-field>
-                                    </v-col>
-                                </v-row>
-                                <div class="mb-3">{{ _('Available In') }}</div>
-                                <v-row>
-                                    <v-col
-                                        v-for="opt in availabilityOptions"
-                                        :key="opt.key"
-                                        cols="12"
-                                        md="2"
-                                    >
-                                        <v-btn
-                                        @click="editedItem[opt.key] = !editedItem[opt.key]"
-                                        :prepend-icon="editedItem[opt.key] ? 'mdi-check' : undefined"
-                                        :variant="editedItem[opt.key] ? 'flat' : 'outlined'"
-                                        :color="editedItem[opt.key] ? 'primary' : undefined"
-                                        :class="['w-100', editedItem[opt.key] ? '' : 'border-thin opacity-50']"
+                    <v-form ref="form" @submit.prevent="save">
+                        <v-card :title="formTitle">
+                            <v-card-text class="pt-6">
+                                    <v-row>
+                                        <v-col cols="12" md="6">
+                                            <v-text-field v-model="editedItem.title" :rules="[validationRules.required()]">
+                                                <template v-slot:label>{{ _('Title') }} <Asterisk /></template>
+                                                <template v-if="editedItem.parent" v-slot:append-inner>
+                                                    <v-tooltip location="bottom">
+                                                        <template v-slot:activator="{ props }">
+                                                            <v-btn
+                                                                icon="mdi-subdirectory-arrow-right"
+                                                                density="comfortable"
+                                                                variant="text"
+                                                                @click="prependParentName"
+                                                                v-bind="props"
+                                                            ></v-btn>
+                                                        </template>
+                                                        {{ _('Add parent name to title') }}
+                                                    </v-tooltip>
+                                                </template>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12" md="6">
+                                            <v-text-field v-model="editedItem.title_ar" label="{{ _('Title (AR)') }}"></v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                    <v-row>
+                                        <v-col cols="12" md="6">
+                                            <v-text-field v-model="editedItem.comments" label="{{ _('Comments') }}"></v-text-field>
+                                        </v-col>
+                                        <v-col cols="12" md="6">
+                                            <v-text-field v-model="editedItem.comments_ar" label="{{ _('Comments (AR)') }}"></v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                    <v-row>
+                                        <v-col cols="12" md="6">
+                                            <search-field
+                                                api="/admin/api/labels/"
+                                                item-title="title"
+                                                item-subtitle="path"
+                                                label="{{ _('Parent') }}"
+                                                v-model="editedItem.parent"
+                                                :filter-items="filterCircularParents"
+                                                item-value="id"
+                                                :multiple="false"
+                                                :query-params="parentQueryParams"
+                                            ></search-field>
+                                        </v-col>
+                                    </v-row>
+                                    <div class="mb-3">{{ _('Available In') }}</div>
+                                    <v-row>
+                                        <v-col
+                                            v-for="opt in availabilityOptions"
+                                            :key="opt.key"
+                                            cols="12"
+                                            md="2"
                                         >
-                                            ${opt.label}
-                                        </v-btn>
-                                    </v-col>
-                                </v-row>
+                                            <v-btn
+                                            @click="editedItem[opt.key] = !editedItem[opt.key]"
+                                            :prepend-icon="editedItem[opt.key] ? 'mdi-check' : undefined"
+                                            :variant="editedItem[opt.key] ? 'flat' : 'outlined'"
+                                            :color="editedItem[opt.key] ? 'primary' : undefined"
+                                            :class="['w-100', editedItem[opt.key] ? '' : 'border-thin opacity-50']"
+                                            >
+                                                ${opt.label}
+                                            </v-btn>
+                                        </v-col>
+                                    </v-row>
 
-                        </v-card-text>
-                        <v-card-actions class="mt-4 px-6 pb-5">
-                            <v-spacer></v-spacer>
-                            <v-btn @click="close">{{ _('Cancel') }}</v-btn>
-                            <v-btn color="primary" variant="elevated" @click="save">{{ _('Save') }}</v-btn>
-                        </v-card-actions>
-                    </v-card>
+                            </v-card-text>
+                            <v-card-actions class="mt-4 px-6 pb-5">
+                                <v-spacer></v-spacer>
+                                <v-btn @click="close">{{ _('Cancel') }}</v-btn>
+                                <v-btn color="primary" variant="elevated" @click="save">{{ _('Save') }}</v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-form>
                 </v-dialog>
 
                 <!-- Import CSV dialog -->
@@ -217,6 +219,8 @@
 
 {% endblock %} {% block js %}
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/Asterisk.js"></script>
+    <script src="/static/js/components/ImportCsvDialog.js"></script>
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -230,6 +234,7 @@
                 tab: 'labels',
                 viewMode: 'table',
                 dialog: dialog,
+                validationRules: validationRules,
                 imDialog: false,
                 drawer: drawer,
                 loading: true,
@@ -410,24 +415,34 @@
                 },
 
                 save() {
-                    if (this.isEditing && this.editedItem.id) {
-                        api.put(`/admin/api/label/${this.editedItem.id}`, {item: this.editedItem}).then(response => {
-                            this.showSnack(response.data);
-                            if (this.viewMode === 'table') this.refresh();
-                            else this.loadTree();
-                        });
-                    } else {
-                        api.post("/admin/api/label/", {item: this.editedItem}).then(response => {
-                            this.showSnack(response.data);
-                            if (this.viewMode === 'table') this.refresh();
-                            else this.loadTree();
-                        });
-                    }
-                    this.close();
+                    this.$refs.form.validate().then(({ valid }) => {
+                        if (!valid) {
+                            this.showSnack("{{ _('Please review form for errors.') }}");
+                            return;
+                        }
+
+                        if (this.isEditing && this.editedItem.id) {
+                            api.put(`/admin/api/label/${this.editedItem.id}`, {item: this.editedItem}).then(response => {
+                                this.showSnack(response.data);
+                                if (this.viewMode === 'table') this.refresh();
+                                else this.loadTree();
+                                this.close();
+                            });
+                        } else {
+                            api.post("/admin/api/label/", {item: this.editedItem}).then(response => {
+                                this.showSnack(response.data);
+                                if (this.viewMode === 'table') this.refresh();
+                                else this.loadTree();
+                                this.close();
+                            });
+                        }
+                    });
                 },
             }
         });
         app.component('SearchField', SearchField);
+        app.component('Asterisk', Asterisk);
+        app.component('ImportCsvDialog', ImportCsvDialog);
         app.use(vuetify).mount('#app');
     </script>
 {% endblock %}
