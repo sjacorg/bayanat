@@ -162,13 +162,14 @@ def setup_db_uninitialized(uninitialized_app):
             conn.execute(text("INSERT INTO id_number_types (id, title) VALUES (1, 'National ID');"))
             conn.commit()
     except Exception as e:
-        pass
+        pytest.fail(f"Uninitialized DB setup failed: {e}")
+
     yield _db
     from enferno.admin.models.IDNumberType import IDNumberType
 
     try:
         _db.session.query(IDNumberType).delete()
-    except Exception as e:
+    except Exception:
         pass
     try:
         _db.session.remove()
