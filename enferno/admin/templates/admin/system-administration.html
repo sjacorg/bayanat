@@ -24,14 +24,16 @@
 
                         <!-- Main content header -->
                         <v-card-title class="d-flex flex-column pa-0 px-4 position-sticky top-0 z-1 bg-surface">
-                            <div class="d-flex my-3">
+                            <div class="d-flex flex-column flex-md-row my-3 ga-2">
 
                                 <!-- Title -->
-                                ${tabsMap[tab]?.text}
+                                <div>
+                                    <div class="text-h6 font-weight-bold">${tabsMap[tab]?.text}</div>
+                                </div>
                                 <v-spacer></v-spacer>
 
                                 <!-- Actions -->
-                                <div class="d-flex ga-4">
+                                <div class="d-flex ga-4 flex-wrap">
                                     <v-btn class="outlined-btn" color="primary" prepend-icon="mdi-restore" @click="loadDefaults"
                                         variant="outlined">
                                         {{ _('Restore default settings') }}
@@ -52,6 +54,8 @@
                             <!-- General tab -->
                             <div v-if="tab === 'general'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Interface defaults') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Control default list behavior and media playback options.') }}</p>
                                     <v-row>
                                         <v-col cols="6">
                                             <h4 class="subtitle-2 mb-1">{{ _('Table settings') }}</h4>
@@ -70,6 +74,8 @@
                     
                                     <v-divider class="my-4"></v-divider>
                     
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Localization') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Set the default interface language for new sessions.') }}</p>
                                     <h4 class="subtitle-2 mb-1">{{ _('Default language') }}</h4>
                                     <p class="text-caption mb-1">{{ _('Changes default interface language for all users. Users can still choose their own interface language.') }}</p>
                                     <v-btn-toggle divided variant="outlined" color="primary" mandatory v-model="eitem.BABEL_DEFAULT_LOCALE">
@@ -80,6 +86,8 @@
                     
                                     <v-divider class="my-4"></v-divider>
                     
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Data quality and analysis') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Configure record-matching behavior and advanced analysis capabilities.') }}</p>
                                     <h4 class="subtitle-2 mb-n1">{{ _('Deduplication tool') }}</h4>
                                     <v-switch v-model="eitem.DEDUP_TOOL" persistent-hint
                                         hint="{{ _('Enables integration with Benetech\'s Deduplication tool.') }}"></v-switch>
@@ -128,7 +136,7 @@
                             <div v-if="tab === 'storage'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <div style="max-width: 823px;">
-                                        <h4 class="subtitle-2 mb-1">{{ _('Settings') }}</h4>
+                                        <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Storage backend') }}</h4>
                                         <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
                                         <v-btn-toggle divided variant="outlined" color="primary" mandatory v-model="eitem.FILESYSTEM_LOCAL"
                                             class="my-3 mb-9">
@@ -138,6 +146,7 @@
                     
                                         <v-slide-y-transition>
                                             <v-sheet v-show="!eitem.FILESYSTEM_LOCAL" class="mb-9">
+                                                <h4 class="subtitle-2 mb-3">{{ _('S3 connection details') }}</h4>
                                                 <v-row>
                                                     <v-col cols="6">
                                                         <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('AWS Access Key ID') }}"
@@ -159,6 +168,8 @@
                                             </v-sheet>
                                         </v-slide-y-transition>
                     
+                                        <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Upload restrictions') }}</h4>
+                                        <p class="text-caption text-muted mb-4">{{ _('Define which files are accepted and the maximum upload size.') }}</p>
                                         <v-combobox v-bind="inputProps" class="mb-9" multiple chips :items="eitem.MEDIA_ALLOWED_EXTENSIONS"
                                             v-model="eitem.MEDIA_ALLOWED_EXTENSIONS" label="{{ _('Allowed Media Extensions') }}"
                                             persistent-hint
@@ -176,6 +187,8 @@
                             <!-- Security tab -->
                             <div v-if="tab === 'security'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Credential policies') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Define password rules and authentication requirements for all users.') }}</p>
                                     <v-row>
                                         <v-col cols="12" lg="4">
                                             <h4 class="subtitle-2 mb-1">{{ _('Password Policies') }}</h4>
@@ -232,7 +245,8 @@
                                     <v-divider class="my-7"></v-divider>
                     
                     
-                                    <h4 class="subtitle-2 mb-1">{{ _('Additional Security Settings') }}</h4>
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Login protection and sign-in providers') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Configure verification checks and optional third-party login methods.') }}</p>
                                     <h4 class="text-body-2 mb-n1">{{ _('Recaptcha enabled') }}</h4>
                                     <v-switch class="mb-4" persistent-hint
                                         hint="{{ _('Add further security to Bayanat\'s by requiring Google Recaptcha on the login form.') }}"
@@ -270,6 +284,8 @@
                     
                                     <v-divider class="my-7"></v-divider>
                     
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Re-authentication windows') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Set how often users must re-authenticate on secure actions.') }}</p>
                                     <v-row>
                                         <v-col cols="12" lg="4">
                                             <v-text-field v-bind="inputProps" type="number" label="{{ _('Security freshness') }}" persistent-hint
@@ -297,6 +313,7 @@
                                         restrict access to certain items by assigning Access Group(s) to these items. Additionally, only
                                         administrators can restrict items. This default behaviour can be changed with the following
                                         settings.') }}</p>
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-4">{{ _('Default access behavior') }}</h4>
                     
                                     <v-row>
                                         <v-col cols="12" lg="4">
@@ -434,6 +451,7 @@
                     
                                     <v-divider class="my-6"></v-divider>
                     
+                                    <h4 class="subtitle-2 mb-3">{{ _('Other actions') }}</h4>
                                     <v-row>
                                         <v-col cols="12" lg="4">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Search queries made') }}</strong>{{ _(' by users.')
@@ -481,6 +499,8 @@
                             <!-- Import tools tab -->
                             <div v-if="tab === 'import'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Ingestion pipelines') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Enable and configure how media and structured data are imported into the platform.') }}</p>
                                     <h4 class="subtitle-2 mb-n1">{{ _('Media Import tool') }}</h4>
                                     <v-switch persistent-hint
                                         hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
@@ -648,6 +668,8 @@
                             <!-- Maps tab -->
                             <div v-if="tab === 'maps'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Map tiles provider') }}</h4>
+                                    <p class="text-caption text-muted mb-3">{{ _('Choose the map tiles endpoint used throughout Bayanat.') }}</p>
                                     <v-text-field v-bind="inputProps" class="mb-9" label="{{ _('Map API endpoint') }}" persistent-hint
                                         hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
                                         v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
@@ -661,7 +683,7 @@
                                         hint="{{ _('API key for Google Maps. Adding a key enables satellite imagery in Bayanat\'s maps.') }}"
                                         v-model="eitem.GOOGLE_MAPS_API_KEY"></v-text-field>
                     
-                                    <h4 class="subtitle-2">{{ _('Default Map Position') }}</h4>
+                                    <h4 class="text-subtitle-1 font-weight-bold">{{ _('Default Map Position') }}</h4>
                                     <span class="text-caption text-muted">{{ _('Changes default position for all maps in all components.')
                                         }}</span>
                     
@@ -924,6 +946,8 @@
                             <!-- Mail tab -->
                             <div v-if="tab === 'mail'">
                                 <v-card :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Mail transport') }}</h4>
+                                    <p class="text-caption text-muted mb-4">{{ _('Configure SMTP delivery settings used by system emails and notifications.') }}</p>
                                     <h4 class="subtitle-2 mb-n1">{{ _('Enable Mail System') }}</h4>
                                     <v-switch color="primary" class="mb-4" v-model="eitem.MAIL_ENABLED" persistent-hint
                                         hint="{{ _('Enables sending emails from Bayanat.') }}">
