@@ -175,44 +175,54 @@ def setup_db_uninitialized(uninitialized_app):
 
 @pytest.fixture(scope="function")
 def session(setup_db, app):
-    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
+    """Database session with nested transaction rollback for test isolation.
+
+    Structure:
+        connection.begin()          <-- outer transaction
+            connection.begin_nested()   <-- savepoint (test runs here)
+            savepoint auto-rolls-back on exit
+        transaction.rollback()      <-- explicit rollback so nothing leaks
+
+    Every ORM write inside the test is undone. The DB returns to
+    the state setup_db left it in.
+    """
     from enferno.extensions import db
 
     with app.app_context():
-        # Create connection and transaction with context managers for automatic cleanup
         with db.engine.connect() as connection:
-            with connection.begin() as transaction:
-                # Configure session to use this connection
-                db.session.configure(bind=connection)
+            transaction = connection.begin()
+            db.session.configure(bind=connection)
 
-                # Create nested transaction (savepoint) for test isolation
-                with connection.begin_nested() as savepoint:
-                    try:
-                        yield db.session
-                    finally:
-                        # Explicit rollback and session cleanup
-                        db.session.remove()
+            nested = connection.begin_nested()
+            try:
+                yield db.session
+            finally:
+                # Roll back savepoint if still active
+                if nested.is_active:
+                    nested.rollback()
+                db.session.remove()
+                # Roll back outer transaction so nothing persists
+                transaction.rollback()
 
 
 @pytest.fixture(scope="function")
 def session_uninitialized(setup_db_uninitialized, uninitialized_app):
-    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
+    """Same isolation pattern as session(), for setup wizard tests."""
     from enferno.extensions import db
 
     with uninitialized_app.app_context():
-        # Create connection and transaction with context managers for automatic cleanup
         with db.engine.connect() as connection:
-            with connection.begin() as transaction:
-                # Configure session to use this connection
-                db.session.configure(bind=connection)
+            transaction = connection.begin()
+            db.session.configure(bind=connection)
 
-                # Create nested transaction (savepoint) for test isolation
-                with connection.begin_nested() as savepoint:
-                    try:
-                        yield db.session
-                    finally:
-                        # Explicit rollback and session cleanup
-                        db.session.remove()
+            nested = connection.begin_nested()
+            try:
+                yield db.session
+            finally:
+                if nested.is_active:
+                    nested.rollback()
+                db.session.remove()
+                transaction.rollback()
 
 
 @pytest.fixture(scope="function")
