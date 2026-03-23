@@ -23,7 +23,7 @@ ADMIN_ONLY_UPDATE = {
     "create": [
         ("admin_client", 201),
         ("da_client", 403),
-        ("mod_client", 201),
+        ("mod_client", 403),
         ("anonymous_client", 401),
     ],
     "update": [
@@ -41,11 +41,28 @@ ADMIN_ONLY_UPDATE = {
 }
 
 ADMIN_MOD_UPDATE = {
-    **ADMIN_ONLY_UPDATE,
+    "list": [
+        ("admin_client", 200),
+        ("da_client", 200),
+        ("mod_client", 200),
+        ("anonymous_client", 401),
+    ],
+    "create": [
+        ("admin_client", 201),
+        ("da_client", 403),
+        ("mod_client", 201),
+        ("anonymous_client", 401),
+    ],
     "update": [
         ("admin_client", 200),
         ("da_client", 403),
         ("mod_client", 200),
+        ("anonymous_client", 401),
+    ],
+    "delete": [
+        ("admin_client", 200),
+        ("da_client", 403),
+        ("mod_client", 403),
         ("anonymous_client", 401),
     ],
 }
@@ -267,6 +284,9 @@ def test_lookup_update(
     item = _create_item_via_orm(session, entity, create_payload)
     base = create_url.rstrip("/")
 
+    # Patch update payload to match created item's immutable unique fields
+    update_payload = _patch_update_payload(update_payload, entity, item)
+
     client = request.getfixturevalue(client_fixture)
     resp = client.put(f"{base}/{item.id}", json=update_payload, headers=HEADERS)
     assert resp.status_code == expected
@@ -328,10 +348,46 @@ def _get_model_map():
     return _MODEL_MAP
 
 
+def _patch_update_payload(update_payload, entity_name, item):
+    """Patch update payload so immutable unique fields match the created item."""
+    import copy
+
+    payload = copy.deepcopy(update_payload)
+    if entity_name == "location_admin_levels":
+        payload["item"]["code"] = item.code
+    return payload
+
+
+_admin_level_code_counter = 1000
+
+
+def _next_admin_level_code():
+    """Monotonically increasing code, always higher than any previously created level."""
+    global _admin_level_code_counter
+    _admin_level_code_counter += 1
+    return _admin_level_code_counter
+
+
 def _create_item_via_orm(session, entity_name, payload):
-    """Create an item directly via ORM for update/delete tests."""
+    """Create an item directly via ORM for update/delete tests.
+
+    Unique fields are randomized per call to avoid constraint collisions
+    when multiple parametrized tests create items for the same entity.
+    """
     Model = _get_model_map()[entity_name]
-    fields = payload.get("item", payload)
+    fields = dict(payload.get("item", payload))  # shallow copy
+
+    # Randomize unique-constrained fields
+    suffix = uuid4().hex[:8]
+    if entity_name == "roles":
+        fields["name"] = f"TestRole_{suffix}"
+    elif entity_name == "location_admin_levels":
+        # Always use the highest code so the delete endpoint accepts it
+        # (it requires deleting only the highest-coded level).
+        fields["code"] = _next_admin_level_code()
+    elif entity_name == "sources":
+        fields["etl_id"] = f"test-src-{suffix}"
+
     item = Model(**fields)
     session.add(item)
     session.commit()
