@@ -122,8 +122,16 @@ const ActorCard = Vue.defineComponent({
       hloading: false,
       mapLocations: [],
       mediasReady: 0,
-      mediaRendererId: `actor-card-${Math.random().toString(36).slice(2, 10)}`,
+      mediaRendererId: `actor-card-${this.$.uid}`,
     };
+  },
+
+  watch: {
+    actor(val, old) {
+      if (old?.id !== val?.id) {
+        this.$root.closeExpandedMedia?.(this.mediaRendererId);
+      }
+    },
   },
 
   template: `

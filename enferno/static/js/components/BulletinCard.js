@@ -2,7 +2,7 @@ const BulletinCard = Vue.defineComponent({
   props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   watch: {
-    bulletin: function (val, old) {
+    bulletin(val, old) {
       if (old?.id !== val?.id) {
         this.$root.closeExpandedMedia?.(this.mediaRendererId);
       }
@@ -113,7 +113,7 @@ const BulletinCard = Vue.defineComponent({
       // image viewer
       lightbox: null,
       mediasReady: 0,
-      mediaRendererId: `bulletin-card-${Math.random().toString(36).slice(2, 10)}`,
+      mediaRendererId: `bulletin-card-${this.$.uid}`,
     };
   },
 
