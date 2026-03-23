@@ -86,10 +86,10 @@ See [Configuration](/deployment/configuration) for manual setup.
 
 ### Initialize Database
 
-Create the database tables, roles, and default data:
+Create the database tables, roles, and default data. The create-exts flag creates extensions in the bayanat db for postgis and pg_trim
 
 ```bash
-uv run flask create-db
+uv run flask create-db --create-exts
 ```
 
 ### Create Admin User
