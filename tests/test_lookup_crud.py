@@ -191,6 +191,13 @@ LOOKUP_TABLES = {
         {"item": {"name": f"Updated_{uuid4().hex[:6]}", "description": "Upd", "color": "#444"}},
         ADMIN_ONLY,
     ),
+    "id_number_types": (
+        "/admin/api/idnumbertypes/",
+        "/admin/api/idnumbertype",
+        {"item": {"title": "TestIDNumType", "title_tr": ""}},
+        {"item": {"title": "Updated", "title_tr": ""}},
+        ADMIN_ONLY_UPDATE,
+    ),
 }
 
 
@@ -261,6 +268,10 @@ def test_lookup_list(request, session, entity, list_url, client_fixture, expecte
     "entity,create_url,payload,client_fixture,expected", list(_create_params())
 )
 def test_lookup_create(request, session, entity, create_url, payload, client_fixture, expected):
+    global _id_seq_fixed
+    if entity == "id_number_types" and not _id_seq_fixed:
+        _ensure_id_number_types_sequence(session)
+        _id_seq_fixed = True
     client = request.getfixturevalue(client_fixture)
     resp = client.post(create_url, json=payload, headers=HEADERS)
     assert resp.status_code == expected
@@ -322,6 +333,7 @@ def _get_model_map():
             Ethnography,
             Eventtype,
             GeoLocationType,
+            IDNumberType,
             Label,
             LocationAdminLevel,
             LocationType,
@@ -344,6 +356,7 @@ def _get_model_map():
             "sources": Source,
             "event_types": Eventtype,
             "roles": Role,
+            "id_number_types": IDNumberType,
         }
     return _MODEL_MAP
 
@@ -368,12 +381,35 @@ def _next_admin_level_code():
     return _admin_level_code_counter
 
 
+def _ensure_id_number_types_sequence(session):
+    """Advance id_number_types sequence past any existing rows.
+
+    setup_db inserts (id=1, 'National ID') with explicit id, which
+    does not advance the serial sequence. Fix it once per session.
+    """
+    from sqlalchemy import text
+
+    session.execute(
+        text(
+            "SELECT setval('id_number_types_id_seq', COALESCE((SELECT MAX(id) FROM id_number_types), 1))"
+        )
+    )
+
+
+_id_seq_fixed = False
+
+
 def _create_item_via_orm(session, entity_name, payload):
     """Create an item directly via ORM for update/delete tests.
 
     Unique fields are randomized per call to avoid constraint collisions
     when multiple parametrized tests create items for the same entity.
     """
+    global _id_seq_fixed
+    if entity_name == "id_number_types" and not _id_seq_fixed:
+        _ensure_id_number_types_sequence(session)
+        _id_seq_fixed = True
+
     Model = _get_model_map()[entity_name]
     fields = dict(payload.get("item", payload))  # shallow copy
 
@@ -392,3 +428,45 @@ def _create_item_via_orm(session, entity_name, payload):
     session.add(item)
     session.commit()
     return item
+
+
+# ---------------------------------------------------------------------------
+# Special case: delete IDNumberType that is still referenced by an Actor
+# ---------------------------------------------------------------------------
+
+_DELETE_REFERENCED_ROLES = [
+    ("admin_client", 409),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 401),
+]
+
+
+class TestDeleteIDNumberTypeStillReferenced:
+    @pytest.mark.parametrize("client_fixture, expected", _DELETE_REFERENCED_ROLES)
+    def test_delete_referenced(self, request, session, users, client_fixture, expected):
+        from enferno.admin.models import IDNumberType
+
+        from tests.factories import ActorFactory
+
+        _ensure_id_number_types_sequence(session)
+
+        # Create an IDNumberType via ORM
+        idt = IDNumberType(title="ReferencedType", title_tr="")
+        session.add(idt)
+        session.commit()
+
+        # Create an actor that references this IDNumberType
+        actor = ActorFactory()
+        actor.id_number = [{"type": str(idt.id), "number": "1234567890"}]
+        session.add(actor)
+        session.commit()
+
+        client = request.getfixturevalue(client_fixture)
+        resp = client.delete(
+            f"/admin/api/idnumbertype/{idt.id}",
+            headers=HEADERS,
+        )
+        assert resp.status_code == expected
+        if expected == 409:
+            assert "is referenced by" in resp.text.lower()

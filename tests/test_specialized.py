@@ -769,3 +769,178 @@ class TestRelationInfoEndpoint:
             headers=HEADERS,
         )
         assert resp.status_code == expected
+
+
+# =========================================================================
+# LOCATION IMPORT
+# =========================================================================
+
+
+class TestLocationImport:
+    @pytest.mark.parametrize(
+        "client_fixture, expected",
+        [
+            ("admin_client", 200),
+            ("da_client", 403),
+            ("mod_client", 403),
+            ("anonymous_client", 401),
+        ],
+    )
+    def test_import(self, request, session, client_fixture, expected):
+        import csv
+
+        # Use high IDs to avoid conflicts with default data.
+        # Note: Location.import_csv uses to_sql(engine) which bypasses the
+        # savepoint, so we must clean up manually after success.
+        loc_ids = [99990, 99991]
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".csv") as tmp:
+            writer = csv.writer(tmp)
+            writer.writerow(["id", "title", "title_ar", "parent_id", "deleted"])
+            for lid in loc_ids:
+                writer.writerow([lid, f"ImportLoc{lid}", f"ImportLocAr{lid}", "", "False"])
+            tmp.flush()
+            csv_path = tmp.name
+
+        try:
+            with open(csv_path, "rb") as f:
+                client = request.getfixturevalue(client_fixture)
+                resp = client.post(
+                    "/admin/api/location/import/",
+                    content_type="multipart/form-data",
+                    data={"csv": (f, "test.csv")},
+                    follow_redirects=True,
+                    headers={"Accept": "application/json"},
+                )
+            assert resp.status_code == expected
+        finally:
+            os.unlink(csv_path)
+            # Clean up rows written directly to DB (bypasses savepoint)
+            if expected == 200:
+                from sqlalchemy import text
+
+                with session.get_bind().connect() as conn:
+                    conn.execute(
+                        text("DELETE FROM location WHERE id IN :ids"), {"ids": tuple(loc_ids)}
+                    )
+                    conn.commit()
+
+
+# =========================================================================
+# MEDIA UPLOAD (single file)
+# =========================================================================
+
+
+class TestMediaUpload:
+    @pytest.mark.parametrize(
+        "client_fixture, expected",
+        [
+            ("admin_client", 200),
+            ("da_client", 200),
+            ("mod_client", 403),
+            ("anonymous_client", 401),
+        ],
+    )
+    def test_upload(self, request, session, app, client_fixture, expected):
+        ext = random.choice(ALLOWED_EXTS)
+        content = b"Test file content for upload"
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=f".{ext}") as tmp:
+            tmp.write(content)
+            tmp.flush()
+            tmp_path = tmp.name
+
+        try:
+            with open(tmp_path, "rb") as f:
+                client = request.getfixturevalue(client_fixture)
+                with patch.dict(
+                    current_app.config,
+                    {"MEDIA_ALLOWED_EXTENSIONS": ALLOWED_EXTS},
+                ):
+                    resp = client.post(
+                        "/admin/api/media/upload/",
+                        content_type="multipart/form-data",
+                        data={"file": (f, f"test.{ext}")},
+                        headers={"Accept": "application/json"},
+                    )
+                assert resp.status_code == expected
+                if expected == 200:
+                    media_dir = "enferno/media"
+                    for fname in os.listdir(media_dir):
+                        if fname.endswith(f"test.{ext}"):
+                            os.remove(os.path.join(media_dir, fname))
+                            break
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+
+# =========================================================================
+# MEDIA CHUNKED UPLOAD (multi-chunk)
+# =========================================================================
+
+
+class TestMediaChunkedUpload:
+    @pytest.mark.parametrize(
+        "client_fixture, expected",
+        [
+            ("admin_client", 200),
+            ("da_client", 200),
+            ("mod_client", 403),
+            ("anonymous_client", 401),
+        ],
+    )
+    def test_chunked_upload(self, request, session, app, client_fixture, expected):
+        ext = random.choice(ALLOWED_EXTS)
+        content = b"A" * 500  # large enough to split into chunks
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=f".{ext}") as tmp:
+            tmp.write(content)
+            tmp.flush()
+            tmp_path = tmp.name
+
+        try:
+            file_size = os.path.getsize(tmp_path)
+            total_chunks = 5
+            chunk_size = file_size // total_chunks
+            dzuuid = "test-chunked-uuid"
+
+            for chunk_index in range(total_chunks):
+                with open(tmp_path, "rb") as f:
+                    f.seek(chunk_index * chunk_size)
+                    if chunk_index == total_chunks - 1:
+                        chunk_data = f.read()  # read remainder
+                    else:
+                        chunk_data = f.read(chunk_size)
+
+                from werkzeug.datastructures import FileStorage
+
+                data = {
+                    "file": FileStorage(stream=BytesIO(chunk_data), filename=f"test-chunk.{ext}"),
+                    "dzuuid": dzuuid,
+                    "dzchunkindex": str(chunk_index),
+                    "dztotalchunkcount": str(total_chunks),
+                    "dztotalfilesize": str(file_size),
+                }
+                client = request.getfixturevalue(client_fixture)
+                with patch.dict(
+                    current_app.config,
+                    {"MEDIA_ALLOWED_EXTENSIONS": ALLOWED_EXTS},
+                ):
+                    resp = client.post(
+                        "/admin/api/media/chunk",
+                        content_type="multipart/form-data",
+                        data=data,
+                        headers={"Referer": "", "Accept": "application/json"},
+                    )
+                assert resp.status_code == expected
+
+                if chunk_index == total_chunks - 1 and expected == 200:
+                    media_dir = "enferno/media"
+                    for fname in os.listdir(media_dir):
+                        if fname.endswith(f"test-chunk.{ext}"):
+                            final_path = os.path.join(media_dir, fname)
+                            assert os.path.getsize(final_path) == file_size
+                            os.remove(final_path)
+                            break
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)

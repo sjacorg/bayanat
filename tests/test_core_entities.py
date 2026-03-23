@@ -755,3 +755,161 @@ class TestIncidentRelations:
             headers=HEADERS,
         )
         assert resp.status_code == expected
+
+
+# =========================================================================
+# ROLE-SCOPED ACCESS tests
+# =========================================================================
+
+_ROLED_ACCESS = [
+    ("admin_client", 200),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("roled_client", 200),
+    ("anonymous_client", 401),
+]
+
+
+def _assign_role(session, entity, role_name):
+    """Assign a role to an entity (bulletin/actor/incident) by name."""
+    from enferno.user.models import Role
+
+    role = session.query(Role).filter(Role.name == role_name).first()
+    assert role, f"Role {role_name} not found"
+    entity.roles.append(role)
+    session.commit()
+
+
+class TestBulletinRoledNormal:
+    """GET bulletin with TestRole assigned, non-restrictive mode."""
+
+    @pytest.mark.parametrize("client_fixture, expected", _ROLED_ACCESS)
+    def test_roled_normal(
+        self, request, session, users, create_test_role, client_fixture, expected
+    ):
+        b = BulletinFactory()
+        admin_user, _, _, _ = users
+        b.assigned_to = admin_user
+        b.first_peer_reviewer = admin_user
+        session.add(b)
+        session.commit()
+        _assign_role(session, b, "TestRole")
+        client = request.getfixturevalue(client_fixture)
+        resp = client.get(
+            f"/admin/api/bulletin/{b.id}",
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == expected
+
+
+class TestBulletinRoledRestricted:
+    """GET bulletin with TestRole assigned, restrictive mode."""
+
+    @pytest.mark.parametrize("client_fixture, expected", _ROLED_ACCESS)
+    def test_roled_restricted(
+        self, request, session, users, create_test_role, client_fixture, expected
+    ):
+        b = BulletinFactory()
+        admin_user, _, _, _ = users
+        b.assigned_to = admin_user
+        b.first_peer_reviewer = admin_user
+        session.add(b)
+        session.commit()
+        _assign_role(session, b, "TestRole")
+        client = request.getfixturevalue(client_fixture)
+        with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
+            resp = client.get(
+                f"/admin/api/bulletin/{b.id}",
+                headers={"Accept": "application/json"},
+            )
+        assert resp.status_code == expected
+
+
+class TestActorRoledNormal:
+    """GET actor with TestRole assigned, non-restrictive mode."""
+
+    @pytest.mark.parametrize("client_fixture, expected", _ROLED_ACCESS)
+    def test_roled_normal(
+        self, request, session, users, create_test_role, client_fixture, expected
+    ):
+        a = ActorFactory()
+        admin_user, _, _, _ = users
+        a.assigned_to = admin_user
+        a.first_peer_reviewer = admin_user
+        session.add(a)
+        session.commit()
+        _assign_role(session, a, "TestRole")
+        client = request.getfixturevalue(client_fixture)
+        resp = client.get(
+            f"/admin/api/actor/{a.id}?mode=3",
+            headers=HEADERS,
+        )
+        assert resp.status_code == expected
+
+
+class TestActorRoledRestricted:
+    """GET actor with TestRole assigned, restrictive mode."""
+
+    @pytest.mark.parametrize("client_fixture, expected", _ROLED_ACCESS)
+    def test_roled_restricted(
+        self, request, session, users, create_test_role, client_fixture, expected
+    ):
+        a = ActorFactory()
+        admin_user, _, _, _ = users
+        a.assigned_to = admin_user
+        a.first_peer_reviewer = admin_user
+        session.add(a)
+        session.commit()
+        _assign_role(session, a, "TestRole")
+        client = request.getfixturevalue(client_fixture)
+        with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
+            resp = client.get(
+                f"/admin/api/actor/{a.id}?mode=3",
+                headers=HEADERS,
+            )
+        assert resp.status_code == expected
+
+
+class TestIncidentRoledNormal:
+    """GET incident with TestRole assigned, non-restrictive mode."""
+
+    @pytest.mark.parametrize("client_fixture, expected", _ROLED_ACCESS)
+    def test_roled_normal(
+        self, request, session, users, create_test_role, client_fixture, expected
+    ):
+        i = IncidentFactory()
+        admin_user, _, _, _ = users
+        i.assigned_to = admin_user
+        i.first_peer_reviewer = admin_user
+        session.add(i)
+        session.commit()
+        _assign_role(session, i, "TestRole")
+        client = request.getfixturevalue(client_fixture)
+        resp = client.get(
+            f"/admin/api/incident/{i.id}",
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == expected
+
+
+class TestIncidentRoledRestricted:
+    """GET incident with TestRole assigned, restrictive mode."""
+
+    @pytest.mark.parametrize("client_fixture, expected", _ROLED_ACCESS)
+    def test_roled_restricted(
+        self, request, session, users, create_test_role, client_fixture, expected
+    ):
+        i = IncidentFactory()
+        admin_user, _, _, _ = users
+        i.assigned_to = admin_user
+        i.first_peer_reviewer = admin_user
+        session.add(i)
+        session.commit()
+        _assign_role(session, i, "TestRole")
+        client = request.getfixturevalue(client_fixture)
+        with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": True}):
+            resp = client.get(
+                f"/admin/api/incident/{i.id}",
+                headers={"Accept": "application/json"},
+            )
+        assert resp.status_code == expected
