@@ -42,8 +42,12 @@ def flush_redis_after_tests():
 
 
 @pytest.fixture(autouse=True)
-def _isolated_session_store(app, monkeypatch):
-    """Give each test its own FakeRedis so FlaskLoginClient sessions never collide."""
+def isolated_session_store(app, monkeypatch):
+    """Give each test its own FakeRedis so FlaskLoginClient sessions never collide.
+
+    Named without underscore prefix so client fixtures can depend on it
+    explicitly to guarantee ordering (swap happens BEFORE client creation).
+    """
     import fakeredis
 
     monkeypatch.setattr(app.session_interface, "client", fakeredis.FakeStrictRedis())
@@ -327,79 +331,63 @@ def uninitialized_anonymous_client(uninitialized_app):
             yield client
 
 
-# test client for a user logged in as Admin role
+# Client fixtures: use FlaskLoginClient with app.app_context() to keep
+# User objects attached to the session. The isolated_session_store fixture
+# dependency ensures FakeRedis is swapped BEFORE the client writes its session.
+
+
 @pytest.fixture(scope="function")
-def admin_client(app, session, users):
-    """Test client for a user logged in as Admin role."""
+def admin_client(app, session, users, isolated_session_store):
+    admin_user, _, _, _ = users
     with app.app_context():
-        admin_user, _, _, _ = users
         with app.test_client(user=admin_user) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for a user logged in as DA role
 @pytest.fixture(scope="function")
-def da_client(app, session, users):
-    """Test client for a user logged in as DA role."""
+def da_client(app, session, users, isolated_session_store):
+    _, da_user, _, _ = users
     with app.app_context():
-        _, da_user, _, _ = users
         with app.test_client(user=da_user) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for a user logged in as Mod role
 @pytest.fixture(scope="function")
-def mod_client(app, session, users):
-    """Test client for a user logged in as Mod role."""
+def mod_client(app, session, users, isolated_session_store):
+    _, _, mod_user, _ = users
     with app.app_context():
-        _, _, mod_user, _ = users
         with app.test_client(user=mod_user) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for an unauthenticated user
 @pytest.fixture(scope="function")
-def anonymous_client(app, session):
-    """Test client for an unauthenticated user."""
+def anonymous_client(app, session, isolated_session_store):
     with app.app_context():
         with app.test_client() as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for admin that can self-assign
 @pytest.fixture(scope="function")
-def admin_sa_client(app, session, users):
-    """Test client for admin that can self-assign."""
+def admin_sa_client(app, session, users, isolated_session_store):
+    _, _, _, sa_dict = users
     with app.app_context():
-        _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["admin"]) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for da that can self-assign
 @pytest.fixture(scope="function")
-def da_sa_client(app, session, users):
-    """Test client for da that can self-assign."""
+def da_sa_client(app, session, users, isolated_session_store):
+    _, _, _, sa_dict = users
     with app.app_context():
-        _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["da"]) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for mod that can self-assign
 @pytest.fixture(scope="function")
-def mod_sa_client(app, session, users):
-    """Test client for mod that can self-assign."""
+def mod_sa_client(app, session, users, isolated_session_store):
+    _, _, _, sa_dict = users
     with app.app_context():
-        _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["mod"]) as client:
-            client.follow_redirects = False
             yield client
 
 
@@ -420,7 +408,7 @@ def create_test_role(app, session):
 
 
 @pytest.fixture(scope="function")
-def roled_client(app, session, create_test_role):
+def roled_client(app, session, create_test_role, isolated_session_store):
     from enferno.user.models import User
     from enferno.admin.models import Activity
 
@@ -431,7 +419,6 @@ def roled_client(app, session, create_test_role):
     session.commit()
     with app.app_context():
         with app.test_client(user=new_user) as client:
-            client.follow_redirects = False
             yield client
     new_user.roles = []
     session.query(Activity).filter(Activity.user_id == new_user.id).delete(
