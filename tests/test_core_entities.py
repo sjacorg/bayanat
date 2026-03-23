@@ -45,6 +45,31 @@ def _get_uid(users, client_fixture):
 # =========================================================================
 
 
+class TestBulletinList:
+    @pytest.mark.parametrize(
+        "client_fixture, expected",
+        [
+            ("admin_client", 200),
+            ("da_client", 200),
+            ("mod_client", 200),
+            ("anonymous_client", 401),
+        ],
+    )
+    def test_list(self, request, session, client_fixture, expected):
+        b = BulletinFactory()
+        session.add(b)
+        session.commit()
+        client = request.getfixturevalue(client_fixture)
+        with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
+            resp = client.get(
+                "/admin/api/bulletins",
+                json={"q": [{}]},
+                headers=HEADERS,
+                follow_redirects=True,
+            )
+        assert resp.status_code == expected
+
+
 class TestBulletinCreate:
     @pytest.mark.parametrize(
         "client_fixture, expected",
@@ -282,6 +307,31 @@ class TestBulletinRelations:
 # =========================================================================
 # ACTOR tests
 # =========================================================================
+
+
+class TestActorList:
+    @pytest.mark.parametrize(
+        "client_fixture, expected",
+        [
+            ("admin_client", 200),
+            ("da_client", 200),
+            ("mod_client", 200),
+            ("anonymous_client", 401),
+        ],
+    )
+    def test_list(self, request, session, client_fixture, expected):
+        a = ActorFactory()
+        session.add(a)
+        session.commit()
+        client = request.getfixturevalue(client_fixture)
+        with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
+            resp = client.post(
+                "/admin/api/actors",
+                json={"q": [{}]},
+                headers=HEADERS,
+                follow_redirects=True,
+            )
+        assert resp.status_code == expected
 
 
 class TestActorCreate:
@@ -525,6 +575,31 @@ class TestActorRelations:
 # =========================================================================
 # INCIDENT tests
 # =========================================================================
+
+
+class TestIncidentList:
+    @pytest.mark.parametrize(
+        "client_fixture, expected",
+        [
+            ("admin_client", 200),
+            ("da_client", 200),
+            ("mod_client", 200),
+            ("anonymous_client", 401),
+        ],
+    )
+    def test_list(self, request, session, client_fixture, expected):
+        i = IncidentFactory()
+        session.add(i)
+        session.commit()
+        client = request.getfixturevalue(client_fixture)
+        with patch.dict(current_app.config, {"ACCESS_CONTROL_RESTRICTIVE": False}):
+            resp = client.post(
+                "/admin/api/incidents",
+                json={"q": {}},
+                headers=HEADERS,
+                follow_redirects=True,
+            )
+        assert resp.status_code == expected
 
 
 class TestIncidentCreate:
