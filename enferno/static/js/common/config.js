@@ -426,8 +426,8 @@ const routes = [
     {path: '/admin/activity/', name: 'activity', component: Vue.defineComponent({})},
     {path: '/export/dashboard/:id', name: 'export', component: Vue.defineComponent({})},
     {path: '/export/dashboard/', name: 'exports', component: Vue.defineComponent({})},
-    {path: '/import/log/:id', name: 'log', component: Vue.defineComponent({})},
-    {path: '/import/log/', name: 'logs', component: Vue.defineComponent({})},
+    {path: '/import/log/:id', name: 'import-log', component: Vue.defineComponent({})},
+    {path: '/import/log/', name: 'import-logs', component: Vue.defineComponent({})},
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
     { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
@@ -442,7 +442,6 @@ const routes = [
     {path: '/admin/logs/', name: 'logs', component: Vue.defineComponent({})},
     {path: '/import/media/', name: 'import-media', component: Vue.defineComponent({})},
     {path: '/import/sheets/', name: 'import-sheets', component: Vue.defineComponent({})},
-    {path: '/import/log/', name: 'import-log', component: Vue.defineComponent({})},
     {path: '/deduplication/dashboard/', name: 'deduplication-dashboard', component: Vue.defineComponent({})},
 
 ];
