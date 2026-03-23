@@ -1268,61 +1268,61 @@
                     mail: { text: "{{ _('Mail') }}" },
                 },
                 settingsSearchMap: [
-                    { id: 'items_per_page', tab: 'general', section: "{{ _('Interface defaults') }}", label: "{{ _('Items per page options') }}", anchorId: 'setting-items-per-page-options', keywords: ['table', 'pagination', 'list'] },
-                    { id: 'video_rate', tab: 'general', section: "{{ _('Interface defaults') }}", label: "{{ _('Video playback rate') }}", anchorId: 'setting-video-playback-rate', keywords: ['media', 'speed', 'video'] },
-                    { id: 'default_language', tab: 'general', section: "{{ _('Localization') }}", label: "{{ _('Default language') }}", anchorId: 'setting-default-language', keywords: ['locale', 'translation', 'language'] },
-                    { id: 'dedup_tool', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool', keywords: ['matching', 'duplicates'] },
-                    { id: 'adv_analysis', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Advanced analysis features') }}", anchorId: 'setting-advanced-analysis', keywords: ['analysis', 'features'] },
+                    { id: 'items_per_page', tab: 'general', section: "{{ _('Interface defaults') }}", label: "{{ _('Items per page options') }}", anchorId: 'setting-items-per-page-options', keywords: ["{{ _('table') }}", "{{ _('pagination') }}", "{{ _('list') }}"] },
+                    { id: 'video_rate', tab: 'general', section: "{{ _('Interface defaults') }}", label: "{{ _('Video playback rate') }}", anchorId: 'setting-video-playback-rate', keywords: ["{{ _('media') }}", "{{ _('speed') }}", "{{ _('video') }}"] },
+                    { id: 'default_language', tab: 'general', section: "{{ _('Localization') }}", label: "{{ _('Default language') }}", anchorId: 'setting-default-language', keywords: ["{{ _('locale') }}", "{{ _('translation') }}", "{{ _('language') }}"] },
+                    { id: 'dedup_tool', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool', keywords: ["{{ _('matching') }}", "{{ _('duplicates') }}"] },
+                    { id: 'adv_analysis', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Advanced analysis features') }}", anchorId: 'setting-advanced-analysis', keywords: ["{{ _('analysis') }}", "{{ _('features') }}"] },
 
-                    { id: 'storage_backend', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('Local Filesystem / S3 Storage') }}", anchorId: 'setting-storage-backend', keywords: ['files', 's3', 'bucket'] },
-                    { id: 's3_bucket', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('S3 Bucket Name') }}", anchorId: 'setting-s3-bucket', keywords: ['aws', 'storage', 'bucket'] },
-                    { id: 'media_extensions', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Allowed Media Extensions') }}", anchorId: 'setting-media-allowed-extensions', keywords: ['upload', 'extensions', 'files'] },
-                    { id: 'media_size', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Media Max Upload Size') }}", anchorId: 'setting-media-max-upload-size', keywords: ['upload', 'size', 'limit'] },
+                    { id: 'storage_backend', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('Local Filesystem / S3 Storage') }}", anchorId: 'setting-storage-backend', keywords: ["{{ _('files') }}", "{{ _('s3') }}", "{{ _('bucket') }}"] },
+                    { id: 's3_bucket', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('S3 Bucket Name') }}", anchorId: 'setting-s3-bucket', keywords: ["{{ _('aws') }}", "{{ _('storage') }}", "{{ _('bucket') }}"] },
+                    { id: 'media_extensions', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Allowed Media Extensions') }}", anchorId: 'setting-media-allowed-extensions', keywords: ["{{ _('upload') }}", "{{ _('extensions') }}", "{{ _('files') }}"] },
+                    { id: 'media_size', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Media Max Upload Size') }}", anchorId: 'setting-media-max-upload-size', keywords: ["{{ _('upload') }}", "{{ _('size') }}", "{{ _('limit') }}"] },
 
-                    { id: 'password_min_len', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Minimum Length') }}", anchorId: 'setting-password-min-length', keywords: ['password', 'security'] },
-                    { id: 'password_strength', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Strength') }}", anchorId: 'setting-password-strength', keywords: ['zxcvbn', 'security'] },
-                    { id: 'force_2fa', tab: 'security', section: "{{ _('Two Factor Authentication Policies') }}", label: "{{ _('Force 2FA enrollment') }}", anchorId: 'setting-force-2fa', keywords: ['2fa', 'mfa', 'security'] },
-                    { id: 'disallow_sessions', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Disallow multiple concurrent sessions') }}", anchorId: 'setting-disallow-multiple-sessions', keywords: ['session', 'login', 'devices'] },
-                    { id: 'session_retention', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Session Data Retention Period') }}", anchorId: 'setting-session-retention', keywords: ['session', 'retention', 'days'] },
-                    { id: 'recaptcha_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha enabled') }}", anchorId: 'setting-recaptcha-enabled', keywords: ['captcha', 'bot', 'login'] },
-                    { id: 'google_oauth_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Enable Google OAuth') }}", anchorId: 'setting-google-oauth-enabled', keywords: ['sso', 'oauth', 'google'] },
-                    { id: 'security_freshness', tab: 'security', section: "{{ _('Re-authentication windows') }}", label: "{{ _('Security freshness') }}", anchorId: 'setting-security-freshness', keywords: ['reauth', 'timeout', 'minutes'] },
+                    { id: 'password_min_len', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Minimum Length') }}", anchorId: 'setting-password-min-length', keywords: ["{{ _('password') }}", "{{ _('security') }}"] },
+                    { id: 'password_strength', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Strength') }}", anchorId: 'setting-password-strength', keywords: ["{{ _('zxcvbn') }}", "{{ _('security') }}"] },
+                    { id: 'force_2fa', tab: 'security', section: "{{ _('Two Factor Authentication Policies') }}", label: "{{ _('Force 2FA enrollment') }}", anchorId: 'setting-force-2fa', keywords: ["{{ _('2fa') }}", "{{ _('mfa') }}", "{{ _('security') }}"] },
+                    { id: 'disallow_sessions', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Disallow multiple concurrent sessions') }}", anchorId: 'setting-disallow-multiple-sessions', keywords: ["{{ _('session') }}", "{{ _('login') }}", "{{ _('devices') }}"] },
+                    { id: 'session_retention', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Session Data Retention Period') }}", anchorId: 'setting-session-retention', keywords: ["{{ _('session') }}", "{{ _('retention') }}", "{{ _('days') }}"] },
+                    { id: 'recaptcha_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha enabled') }}", anchorId: 'setting-recaptcha-enabled', keywords: ["{{ _('captcha') }}", "{{ _('bot') }}", "{{ _('login') }}"] },
+                    { id: 'google_oauth_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Enable Google OAuth') }}", anchorId: 'setting-google-oauth-enabled', keywords: ["{{ _('sso') }}", "{{ _('oauth') }}", "{{ _('google') }}"] },
+                    { id: 'security_freshness', tab: 'security', section: "{{ _('Re-authentication windows') }}", label: "{{ _('Security freshness') }}", anchorId: 'setting-security-freshness', keywords: ["{{ _('reauth') }}", "{{ _('timeout') }}", "{{ _('minutes') }}"] },
 
-                    { id: 'restrictive_access', tab: 'control', section: "{{ _('Default access behavior') }}", label: "{{ _('Restrictive access control') }}", anchorId: 'setting-restrictive-access-control', keywords: ['permissions', 'default access'] },
-                    { id: 'non_admin_restrict', tab: 'control', section: "{{ _('Default access behavior') }}", label: "{{ _('Allow non-admin users to restrict new items') }}", anchorId: 'setting-non-admin-restrict', keywords: ['permissions', 'item restriction'] },
+                    { id: 'restrictive_access', tab: 'control', section: "{{ _('Default access behavior') }}", label: "{{ _('Restrictive access control') }}", anchorId: 'setting-restrictive-access-control', keywords: ["{{ _('permissions') }}", "{{ _('default access') }}"] },
+                    { id: 'non_admin_restrict', tab: 'control', section: "{{ _('Default access behavior') }}", label: "{{ _('Allow non-admin users to restrict new items') }}", anchorId: 'setting-non-admin-restrict', keywords: ["{{ _('permissions') }}", "{{ _('item restriction') }}"] },
 
-                    { id: 'activity_items', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items activity logging') }}", anchorId: 'setting-activity-items', keywords: ['logging', 'audit', 'items'] },
-                    { id: 'activity_export', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export activity logging') }}", anchorId: 'setting-activity-export', keywords: ['logging', 'audit', 'export'] },
-                    { id: 'activity_auth', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Authentication activity logging') }}", anchorId: 'setting-activity-auth', keywords: ['logging', 'login', 'logout'] },
-                    { id: 'activity_other', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Other actions logging') }}", anchorId: 'setting-activity-other', keywords: ['search', 'upload', 'bulk'] },
-                    { id: 'activity_retention', tab: 'logging', section: "{{ _('Retention period') }}", label: "{{ _('Activity Retention Period') }}", anchorId: 'setting-activity-retention', keywords: ['retention', 'cleanup', 'days'] },
+                    { id: 'activity_items', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items activity logging') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('logging') }}", "{{ _('audit') }}", "{{ _('items') }}"] },
+                    { id: 'activity_export', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export activity logging') }}", anchorId: 'setting-activity-export', keywords: ["{{ _('logging') }}", "{{ _('audit') }}", "{{ _('export') }}"] },
+                    { id: 'activity_auth', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Authentication activity logging') }}", anchorId: 'setting-activity-auth', keywords: ["{{ _('logging') }}", "{{ _('login') }}", "{{ _('logout') }}"] },
+                    { id: 'activity_other', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Other actions logging') }}", anchorId: 'setting-activity-other', keywords: ["{{ _('search') }}", "{{ _('upload') }}", "{{ _('bulk') }}"] },
+                    { id: 'activity_retention', tab: 'logging', section: "{{ _('Retention period') }}", label: "{{ _('Activity Retention Period') }}", anchorId: 'setting-activity-retention', keywords: ["{{ _('retention') }}", "{{ _('cleanup') }}", "{{ _('days') }}"] },
 
-                    { id: 'media_import_tool', tab: 'import', section: "{{ _('Ingestion pipelines') }}", label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool', keywords: ['etl', 'import', 'media'] },
-                    { id: 'import_path_scanning', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Media Import path scanning') }}", anchorId: 'setting-import-path-scanning', keywords: ['path', 'scan', 'security'] },
-                    { id: 'ocr_import', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Tesseract OCR (Import)') }}", anchorId: 'setting-import-ocr', keywords: ['ocr', 'tesseract', 'text extraction'] },
-                    { id: 'vision_api_key', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Google Cloud API Key') }}", anchorId: 'setting-google-vision-api-key', keywords: ['vision', 'ocr', 'translation'] },
-                    { id: 'transcription_enabled', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Enable transcription') }}", anchorId: 'setting-transcription-enabled', keywords: ['whisper', 'audio', 'transcript'] },
-                    { id: 'sheet_import', tab: 'import', section: "{{ _('Sheet Import') }}", label: "{{ _('Sheet Import') }}", anchorId: 'setting-sheet-import', keywords: ['spreadsheet', 'excel', 'import'] },
-                    { id: 'web_import', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import') }}", anchorId: 'setting-web-import', keywords: ['yt-dlp', 'url', 'media import'] },
+                    { id: 'media_import_tool', tab: 'import', section: "{{ _('Ingestion pipelines') }}", label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool', keywords: ["{{ _('etl') }}", "{{ _('import') }}", "{{ _('media') }}"] },
+                    { id: 'import_path_scanning', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Media Import path scanning') }}", anchorId: 'setting-import-path-scanning', keywords: ["{{ _('path') }}", "{{ _('scan') }}", "{{ _('security') }}"] },
+                    { id: 'ocr_import', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Tesseract OCR (Import)') }}", anchorId: 'setting-import-ocr', keywords: ["{{ _('ocr') }}", "{{ _('tesseract') }}", "{{ _('text extraction') }}"] },
+                    { id: 'vision_api_key', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Google Cloud API Key') }}", anchorId: 'setting-google-vision-api-key', keywords: ["{{ _('vision') }}", "{{ _('ocr') }}", "{{ _('translation') }}"] },
+                    { id: 'transcription_enabled', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Enable transcription') }}", anchorId: 'setting-transcription-enabled', keywords: ["{{ _('whisper') }}", "{{ _('audio') }}", "{{ _('transcript') }}"] },
+                    { id: 'sheet_import', tab: 'import', section: "{{ _('Sheet Import') }}", label: "{{ _('Sheet Import') }}", anchorId: 'setting-sheet-import', keywords: ["{{ _('spreadsheet') }}", "{{ _('excel') }}", "{{ _('import') }}"] },
+                    { id: 'web_import', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import') }}", anchorId: 'setting-web-import', keywords: ["{{ _('yt-dlp') }}", "{{ _('url') }}", "{{ _('media import') }}"] },
 
-                    { id: 'export_tool', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export system') }}", anchorId: 'setting-export-tool', keywords: ['exports', 'requests'] },
-                    { id: 'export_expiry', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export Expiry Time') }}", anchorId: 'setting-export-expiry-time', keywords: ['expiry', 'retention', 'hours'] },
+                    { id: 'export_tool', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export system') }}", anchorId: 'setting-export-tool', keywords: ["{{ _('exports') }}", "{{ _('requests') }}"] },
+                    { id: 'export_expiry', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export Expiry Time') }}", anchorId: 'setting-export-expiry-time', keywords: ["{{ _('expiry') }}", "{{ _('retention') }}", "{{ _('hours') }}"] },
 
-                    { id: 'map_endpoint', tab: 'maps', section: "{{ _('Map tiles provider') }}", label: "{{ _('Map API endpoint') }}", anchorId: 'setting-map-api-endpoint', keywords: ['maps', 'osm', 'tiles'] },
-                    { id: 'google_maps_api', tab: 'maps', section: "{{ _('Satellite Imagery') }}", label: "{{ _('Google Maps API Key') }}", anchorId: 'setting-google-maps-api-key', keywords: ['maps', 'satellite', 'google'] },
-                    { id: 'map_default_position', tab: 'maps', section: "{{ _('Default Map Position') }}", label: "{{ _('Default Map Position') }}", anchorId: 'setting-map-default-position', keywords: ['coordinates', 'center', 'default map'] },
+                    { id: 'map_endpoint', tab: 'maps', section: "{{ _('Map tiles provider') }}", label: "{{ _('Map API endpoint') }}", anchorId: 'setting-map-api-endpoint', keywords: ["{{ _('maps') }}", "{{ _('osm') }}", "{{ _('tiles') }}"] },
+                    { id: 'google_maps_api', tab: 'maps', section: "{{ _('Satellite Imagery') }}", label: "{{ _('Google Maps API Key') }}", anchorId: 'setting-google-maps-api-key', keywords: ["{{ _('maps') }}", "{{ _('satellite') }}", "{{ _('google') }}"] },
+                    { id: 'map_default_position', tab: 'maps', section: "{{ _('Default Map Position') }}", label: "{{ _('Default Map Position') }}", anchorId: 'setting-map-default-position', keywords: ["{{ _('coordinates') }}", "{{ _('center') }}", "{{ _('default map') }}"] },
 
-                    { id: 'postal_code_generation', tab: 'locations', section: "{{ _('Location') }}", label: "{{ _('Include postal code generation settings') }}", anchorId: 'setting-include-postal-code', keywords: ['location', 'postal code'] },
+                    { id: 'postal_code_generation', tab: 'locations', section: "{{ _('Location') }}", label: "{{ _('Include postal code generation settings') }}", anchorId: 'setting-include-postal-code', keywords: ["{{ _('location') }}", "{{ _('postal code') }}"] },
 
-                    { id: 'notifications_users', tab: 'notifications', section: "{{ _('Notifications') }}", label: "{{ _('Notifications for users') }}", anchorId: 'setting-notifications-users', keywords: ['notification', 'users'] },
-                    { id: 'notifications_admins_all', tab: 'notifications', section: "{{ _('Notifications') }}", label: "{{ _('Notifications for all administrators') }}", anchorId: 'setting-notifications-admins-all', keywords: ['notification', 'admins'] },
-                    { id: 'notifications_admins', tab: 'notifications', section: "{{ _('Notifications') }}", label: "{{ _('Notifications for administrators') }}", anchorId: 'setting-notifications-admins', keywords: ['notification', 'admin'] },
+                    { id: 'notifications_users', tab: 'notifications', section: "{{ _('Notifications') }}", label: "{{ _('Notifications for users') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('notification') }}", "{{ _('users') }}"] },
+                    { id: 'notifications_admins_all', tab: 'notifications', section: "{{ _('Notifications') }}", label: "{{ _('Notifications for all administrators') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('notification') }}", "{{ _('admins') }}"] },
+                    { id: 'notifications_admins', tab: 'notifications', section: "{{ _('Notifications') }}", label: "{{ _('Notifications for administrators') }}", anchorId: 'setting-notifications-admins', keywords: ["{{ _('notification') }}", "{{ _('admin') }}"] },
 
-                    { id: 'mail_enabled', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Enable Mail System') }}", anchorId: 'setting-mail-enabled', keywords: ['mail', 'smtp', 'email'] },
-                    { id: 'mail_server', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Server') }}", anchorId: 'setting-mail-server', keywords: ['smtp', 'host'] },
-                    { id: 'mail_port', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Port') }}", anchorId: 'setting-mail-port', keywords: ['smtp', 'port'] },
-                    { id: 'mail_default_sender', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Default Sender') }}", anchorId: 'setting-mail-default-sender', keywords: ['sender', 'from'] },
-                    { id: 'mail_allowed_domains', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Allowed Email Domains') }}", anchorId: 'setting-mail-allowed-domains', keywords: ['email', 'domains', 'allowlist'] },
+                    { id: 'mail_enabled', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Enable Mail System') }}", anchorId: 'setting-mail-enabled', keywords: ["{{ _('mail') }}", "{{ _('smtp') }}", "{{ _('email') }}"] },
+                    { id: 'mail_server', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Server') }}", anchorId: 'setting-mail-server', keywords: ["{{ _('smtp') }}", "{{ _('host') }}"] },
+                    { id: 'mail_port', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Port') }}", anchorId: 'setting-mail-port', keywords: ["{{ _('smtp') }}", "{{ _('port') }}"] },
+                    { id: 'mail_default_sender', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Default Sender') }}", anchorId: 'setting-mail-default-sender', keywords: ["{{ _('sender') }}", "{{ _('from') }}"] },
+                    { id: 'mail_allowed_domains', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Allowed Email Domains') }}", anchorId: 'setting-mail-allowed-domains', keywords: ["{{ _('email') }}", "{{ _('domains') }}", "{{ _('allowlist') }}"] },
                 ],
 
 
@@ -1384,10 +1384,16 @@
                     }));
                 },
                 filteredSettings() {
-                    const query = (this.settingsQuery || '').toLowerCase().trim();
+                    const query = this.normalizeForSearch(this.settingsQuery);
                     const items = this.settingsSearchMap.map(setting => ({
                         ...setting,
                         tabText: this.tabsMap?.[setting.tab]?.text || setting.tab,
+                        normalizedHaystack: this.normalizeForSearch([
+                            setting.label,
+                            setting.section,
+                            this.tabsMap?.[setting.tab]?.text || setting.tab,
+                            ...(setting.keywords || []),
+                        ].join(' ')),
                     }));
 
                     if (!query) {
@@ -1396,16 +1402,7 @@
 
                     const terms = query.split(/\s+/).filter(Boolean);
                     return items
-                        .filter(setting => {
-                            const haystack = [
-                                setting.label,
-                                setting.section,
-                                setting.tabText,
-                                ...(setting.keywords || []),
-                            ].join(' ').toLowerCase();
-
-                            return terms.every(term => haystack.includes(term));
-                        })
+                        .filter(setting => terms.every(term => setting.normalizedHaystack.includes(term)))
                         .slice(0, 24);
                 },
                 hasChanges() {
@@ -1414,6 +1411,21 @@
             },
 
             methods: {
+                normalizeForSearch(value) {
+                    return String(value || '')
+                        .normalize('NFKD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+                        .replace(/\u0640/g, '')
+                        .replace(/[أإآٱ]/g, 'ا')
+                        .replace(/[ؤئ]/g, 'ء')
+                        .replace(/ى/g, 'ي')
+                        .replace(/ة/g, 'ه')
+                        .replace(/[_./-]+/g, ' ')
+                        .toLocaleLowerCase()
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                },
                 loadWhisperModels(){
                     api.get('/import/api/whisper/models/').then(res => {
                         this.whisperModels = res.data.models;
