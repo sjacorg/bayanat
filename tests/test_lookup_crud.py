@@ -255,7 +255,6 @@ def test_lookup_create(request, session, entity, create_url, payload, client_fix
 )
 def test_lookup_update(
     request,
-    admin_client,
     session,
     entity,
     create_url,
@@ -264,15 +263,12 @@ def test_lookup_update(
     client_fixture,
     expected,
 ):
-    # Create item as admin first
-    resp = admin_client.post(create_url, json=create_payload, headers=HEADERS)
-    assert resp.status_code in (200, 201), f"Setup: {resp.data[:200]}"
-    data = resp.json.get("data", resp.json)
-    item_id = data.get("item", data).get("id")
+    # Create item via ORM so it's in the savepoint
+    item = _create_item_via_orm(session, entity, create_payload)
     base = create_url.rstrip("/")
 
     client = request.getfixturevalue(client_fixture)
-    resp = client.put(f"{base}/{item_id}", json=update_payload, headers=HEADERS)
+    resp = client.put(f"{base}/{item.id}", json=update_payload, headers=HEADERS)
     assert resp.status_code == expected
 
 
@@ -280,23 +276,63 @@ def test_lookup_update(
     "entity,create_url,create_payload,client_fixture,expected", list(_delete_params())
 )
 def test_lookup_delete(
-    request, admin_client, session, entity, create_url, create_payload, client_fixture, expected
+    request, session, entity, create_url, create_payload, client_fixture, expected
 ):
-    # Create a fresh item as admin
-    payload = dict(create_payload)
-    if "item" in payload:
-        inner = dict(payload["item"])
-        for k in ("title", "name"):
-            if k in inner:
-                inner[k] = f"Del_{uuid4().hex[:6]}"
-        payload["item"] = inner
-
-    resp = admin_client.post(create_url, json=payload, headers=HEADERS)
-    assert resp.status_code in (200, 201), f"Setup: {resp.data[:200]}"
-    data = resp.json.get("data", resp.json)
-    item_id = data.get("item", data).get("id")
+    item = _create_item_via_orm(session, entity, create_payload)
     base = create_url.rstrip("/")
 
     client = request.getfixturevalue(client_fixture)
-    resp = client.delete(f"{base}/{item_id}", headers=HEADERS)
+    resp = client.delete(f"{base}/{item.id}", headers=HEADERS)
     assert resp.status_code == expected
+
+
+# ---------------------------------------------------------------------------
+# ORM helpers
+# ---------------------------------------------------------------------------
+
+_MODEL_MAP = None
+
+
+def _get_model_map():
+    global _MODEL_MAP
+    if _MODEL_MAP is None:
+        from enferno.admin.models import (
+            ClaimedViolation,
+            Country,
+            Ethnography,
+            Eventtype,
+            GeoLocationType,
+            Label,
+            LocationAdminLevel,
+            LocationType,
+            MediaCategory,
+            PotentialViolation,
+            Source,
+        )
+        from enferno.user.models import Role
+
+        _MODEL_MAP = {
+            "countries": Country,
+            "ethnographies": Ethnography,
+            "location_types": LocationType,
+            "location_admin_levels": LocationAdminLevel,
+            "media_categories": MediaCategory,
+            "geo_location_types": GeoLocationType,
+            "claimed_violations": ClaimedViolation,
+            "potential_violations": PotentialViolation,
+            "labels": Label,
+            "sources": Source,
+            "event_types": Eventtype,
+            "roles": Role,
+        }
+    return _MODEL_MAP
+
+
+def _create_item_via_orm(session, entity_name, payload):
+    """Create an item directly via ORM for update/delete tests."""
+    Model = _get_model_map()[entity_name]
+    fields = payload.get("item", payload)
+    item = Model(**fields)
+    session.add(item)
+    session.commit()
+    return item
