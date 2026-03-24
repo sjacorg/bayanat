@@ -1,4 +1,4 @@
-name: Checks
+name: "Tests: pytest"
 
 on:
   pull_request: {}
@@ -9,7 +9,7 @@ on:
       - stable
 
 jobs:
-  checks:
+  pytest:
     runs-on: ubuntu-22.04
     services:
       postgres:
