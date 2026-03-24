@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
+      - name: Create test directories
+        run: mkdir -p tests/imports
+
       - name: Run tests
         env:
           SECRET_KEY: test-secret-key-ci
