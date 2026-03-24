@@ -95,6 +95,7 @@
                                     >
                                     {% if config.WEB_IMPORT and (current_user.can_import_web or current_user.has_role("Admin")) %}
                                     <v-btn
+                                        v-if="this.$vuetify.display.smAndUp"
                                             @click="webImportDlg = true"
                                             color="primary"
                                             variant="elevated"

@@ -64,14 +64,13 @@
 <v-main>
   <div class="pa-4">
     <v-card>
-      <v-card-text class="d-flex justify-space-between ga-12 pt-6">
-        <div class="text-h6 text-no-wrap">{{ _('Bulletin Dynamic From Builder') }}
-        </div>
+      <v-card-text class="d-flex justify-space-between pt-6" :class="{ 'flex-column ga-4': $vuetify.display.smAndDown, 'ga-12': $vuetify.display.smAndUp }">
+        <div class="text-h6 text-no-wrap">{{ _('Bulletin Dynamic From Builder') }}</div>
       
         <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
           hide-details v-model="ui.search" clearable></v-text-field>
       
-        <div class="d-flex ga-4 align-center">
+        <div v-if="$vuetify.display.smAndUp" class="d-flex ga-4 align-center">
           <v-btn
             class="outlined-btn"
             prepend-icon="mdi-history"
@@ -90,12 +89,12 @@
       </v-card-text>
 
       <div class="d-flex">
-        <div class="ml-1">
+        <div v-if="$vuetify.display.smAndUp" class="ml-1">
           <v-card class="h-fit ma-3 flex-shrink-0 rounded-10 border border-opacity-25">
             <v-card-text class="text-no-wrap font-weight-medium text-h6 text-medium-emphasis py-6 px-5">{{ _('Media') }}</v-card-text>
           </v-card>
         </div>
-        <v-divider vertical></v-divider>
+        <v-divider v-if="$vuetify.display.smAndUp" vertical></v-divider>
         <v-card variant="flat" class="ml-3 w-100">
           <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0 px-0" style="height: calc(100vh - 176px);">
             <v-container v-if="formBuilder.loading && !formBuilder.dynamicFields.bulletin.length" height="130px" class="d-flex justify-center align-center">

@@ -41,6 +41,7 @@
 
                                 <!-- Actions -->
                                 <div class="d-flex ga-4">
+                                    <template v-if="$vuetify.display.smAndUp">
                                     <v-btn class="outlined-btn" color="primary" prepend-icon="mdi-restore" @click="loadDefaults"
                                         variant="outlined">
                                         {{ _('Restore default settings') }}
@@ -49,6 +50,7 @@
                                         variant="outlined">
                                         {{ _('Revision history') }}
                                     </v-btn>
+                                    </template>
                                     <v-btn @click.stop="showConfigDiff()" variant="elevated" color="primary" prepend-icon="mdi-check"
                                         :disabled="!hasChanges">{{ _('Save changes') }}</v-btn>
                                 </div>
