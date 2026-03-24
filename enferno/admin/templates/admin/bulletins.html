@@ -561,6 +561,7 @@
 
 
                     actorDialog: false,
+                    bulletinMobilePane: 'form',
                     dialog: dialog,
                     saving: false,
                     eventDialog: false,
@@ -808,6 +809,17 @@
 
 
                 watch: {
+                    '$vuetify.display.smAndDown': {
+                        immediate: true,
+                        handler() {
+                            this.syncBulletinDialogViewportProps();
+                        },
+                    },
+                    dialog(val) {
+                        if (!val) return;
+                        this.bulletinMobilePane = 'form';
+                        this.syncBulletinDialogViewportProps();
+                    },
 
                     bulletinDrawer: function (val) {
                         if (val === false) {
@@ -857,6 +869,8 @@
 
                 },
                 mounted: function () {
+                    this.syncBulletinDialogViewportProps();
+
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
                         api.get('/admin/api/roles/').then(res => {
@@ -885,6 +899,57 @@
                 },
 
                 methods: {
+                    buildLeftDialogProps(isMobile) {
+                        return {
+                            'retain-focus': false,
+                            'content-props': {
+                                style: { width: isMobile ? '100%' : '60%' },
+                            },
+                            ...(isMobile ? {} : { 'content-class': 'absolute left-0' }),
+                            fullscreen: true,
+                            persistent: true,
+                            'no-click-animation': true,
+                            scrim: isMobile,
+                        };
+                    },
+                    buildRightDialogProps(isMobile) {
+                        return {
+                            'retain-focus': false,
+                            'content-props': {
+                                style: { width: isMobile ? '100%' : '60%', contain: 'none' },
+                            },
+                            ...(isMobile ? {} : { 'content-class': 'absolute right-0 left-auto' }),
+                            fullscreen: true,
+                            persistent: true,
+                            'no-click-animation': true,
+                            scrim: isMobile,
+                        };
+                    },
+                    buildRightContainedDialogProps(isMobile) {
+                        if (isMobile) {
+                            return {
+                                'retain-focus': false,
+                                fullscreen: true,
+                                persistent: true,
+                                'no-click-animation': true,
+                                scrim: true,
+                            };
+                        }
+
+                        return {
+                            'retain-focus': false,
+                            contained: true,
+                            persistent: true,
+                            'no-click-animation': true,
+                            scrim: false,
+                        };
+                    },
+                    syncBulletinDialogViewportProps() {
+                        const isMobile = this.$vuetify.display.smAndDown;
+                        this.leftDialogProps = this.buildLeftDialogProps(isMobile);
+                        this.rightDialogProps = this.buildRightDialogProps(isMobile);
+                        this.rightContainedDialogProps = this.buildRightContainedDialogProps(isMobile);
+                    },
                     refreshEditedMedia(mediaId) {
                         if (!this.editedItem?.medias) return;
                         api.get(`/admin/api/media/${mediaId}`).then(response => {
@@ -1592,6 +1657,7 @@
                     close() {
                         this.dialog = false;
                         this.actorDialog = false;
+                        this.bulletinMobilePane = 'form';
                         this.closeExpandedMedia();
                         this.closeMediaDialog();
                         this.closeSnapshotDialog();
