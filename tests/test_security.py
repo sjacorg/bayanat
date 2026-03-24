@@ -533,7 +533,7 @@ class TestValidationModels:
             "BABEL_DEFAULT_LOCALE": "en",
             "OCR_ENABLED": False,
             "LOCATIONS_INCLUDE_POSTAL_CODE": False,
-            "GOOGLE_MAPS_API_KEY": "lorem ipsum dolor sit amet.",
+            "GOOGLE_MAPS_API_KEY": "AIzaSyA_fake_test_key_1234567890ab",
             "DISABLE_MULTIPLE_SESSIONS": False,
             "RECAPTCHA_ENABLED": False,
             "GOOGLE_OAUTH_ENABLED": False,

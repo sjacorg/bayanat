@@ -468,10 +468,15 @@ class TestForceReset:
         ],
     )
     def test_force_reset(self, request, session, client_fixture, expected):
+        from enferno.extensions import rds
+
         target = UserFactory()
         target.fs_uniquifier = uuid4().hex
         session.add(target)
         session.commit()
+
+        # Clear any stale security reset keys for this user
+        rds.delete(f"security:user:{target.id}")
 
         client = request.getfixturevalue(client_fixture)
         resp = client.post(

@@ -61,8 +61,7 @@ def app():
     app = create_app(cfg)
     app.test_client_class = FlaskLoginClient
     with app.app_context():
-        with patch("enferno.setup.views.check_installation", return_value=False):
-            yield app
+        yield app
 
 
 @pytest.fixture(scope="session")
@@ -75,8 +74,7 @@ def uninitialized_app():
         app = create_app(cfg)
         app.test_client_class = FlaskLoginClient
         with app.app_context():
-            with patch("enferno.setup.views.check_installation", return_value=True):
-                yield app
+            yield app
 
 
 @pytest.fixture(scope="session")
@@ -316,19 +314,23 @@ def uninitialized_users(session_uninitialized):
 @pytest.fixture(scope="function")
 def uninitialized_admin_client(uninitialized_app, session_uninitialized, uninitialized_users):
     """Test client for a user logged in as Admin role."""
+    import fakeredis
+
+    uninitialized_app.session_interface.client = fakeredis.FakeStrictRedis()
     with uninitialized_app.app_context():
         admin_user = uninitialized_users
         with uninitialized_app.test_client(user=admin_user) as client:
-            client.follow_redirects = False
             yield client
 
 
 @pytest.fixture(scope="function")
 def uninitialized_anonymous_client(uninitialized_app):
     """Test client for an unauthenticated user."""
+    import fakeredis
+
+    uninitialized_app.session_interface.client = fakeredis.FakeStrictRedis()
     with uninitialized_app.app_context():
         with uninitialized_app.test_client() as client:
-            client.follow_redirects = False
             yield client
 
 
