@@ -14,6 +14,7 @@ from flask_mail import Mail
 from flask_talisman import Talisman
 
 from enferno.utils.rate_limit_utils import get_real_ip
+from enferno.settings import Config
 
 db = SQLAlchemy()
 session = Session()
@@ -23,9 +24,9 @@ debug_toolbar = DebugToolbarExtension()
 mail = Mail()
 talisman = Talisman()
 
-# Initialize limiter without storage_uri - it will be set during app initialization
 limiter = Limiter(
     key_func=get_real_ip,
+    storage_uri=Config.REDIS_URL,
     strategy="moving-window",
     headers_enabled=True,
     retry_after="delta-seconds",

@@ -63,7 +63,10 @@ def clear_failed_export(export_request: Export) -> None:
     Returns:
         None
     """
-    shutil.rmtree(f"{Export.export_dir}/{export_request.file_id}")
+    if export_request.file_id:
+        export_dir = f"{Export.export_dir}/{export_request.file_id}"
+        if os.path.exists(export_dir):
+            shutil.rmtree(export_dir)
     export_request.status = "Failed"
     export_request.file_id = None
     export_request.save()
