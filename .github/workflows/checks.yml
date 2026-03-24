@@ -51,6 +51,7 @@ jobs:
 
       - name: Run tests
         env:
+          SECRET_KEY: test-secret-key-ci
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
           POSTGRES_HOST: localhost
