@@ -629,9 +629,10 @@
         app.component('SearchField', SearchField);
         app.component('LocationSearchField', LocationSearchField);
 
-        app.use(vuetify).mount('#app');
-
-
-        window.app = app;
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
     </script>
 {% endblock %}
