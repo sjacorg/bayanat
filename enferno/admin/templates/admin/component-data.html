@@ -28,7 +28,7 @@
                 <v-card elevation="2" class="w-100 h-100 d-flex flex-column">
                     <div class="h-100 d-flex flex-column" style="min-height: 0;">
                         <div v-if="tabState.main === 'location'" class="h-100 d-flex flex-column">
-                            <v-tabs mandatory height="64" v-model="tabState.child">
+                            <v-tabs mandatory height="64" class="flex-shrink-0" v-model="tabState.child">
                                 <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
                                     :value="key">
                                     ${childTab.text}
@@ -107,7 +107,7 @@
                         </div>
 
                         <div v-if="tabState.main === 'countries'" class="h-100 d-flex flex-column">
-                            <v-tabs mandatory height="64" v-model="tabState.child">
+                            <v-tabs mandatory height="64" class="flex-shrink-0" v-model="tabState.child">
                                 <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
                                     :value="key">
                                     ${childTab.text}
@@ -143,7 +143,7 @@
                         </div>
 
                         <div v-if="tabState.main === 'relations'" class="h-100 d-flex flex-column">
-                            <v-tabs mandatory height="64" v-model="tabState.child">
+                            <v-tabs mandatory height="64" class="flex-shrink-0" v-model="tabState.child">
                                 <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
                                     :value="key">
                                     ${childTab.text}
@@ -221,7 +221,7 @@
                             </div>
                         </div>
                         <div v-if="tabState.main === 'identification'" class="h-100 d-flex flex-column">
-                            <v-tabs mandatory height="64" v-model="tabState.child">
+                            <v-tabs mandatory height="64" class="flex-shrink-0" v-model="tabState.child">
                                 <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
                                     ${childTab.text}
                                 </v-tab>
@@ -238,7 +238,7 @@
                             </div>
                         </div>
                         <div v-if="tabState.main === 'violation'" class="h-100 d-flex flex-column">
-                            <v-tabs mandatory height="64" v-model="tabState.child">
+                            <v-tabs mandatory height="64" class="flex-shrink-0" v-model="tabState.child">
                                 <v-tab class="px-7" value="potential-violation">
                                     {{ _('Potential Violation') }}
                                 </v-tab>
@@ -303,14 +303,7 @@
             this.setInitialTabStateKey()
 
             this.$router.afterEach((to) => {
-                const [main, child] = to.hash.slice(1).split('/');
-
-                const mainKey = main && main in this.tabsMap ? main : Object.keys(this.tabsMap)[0];
-                const nested = this.tabsMap[mainKey]?.nestedTabsMap || {};
-                const childKey = child && child in nested ? child : Object.keys(nested)[0] || null;
-
-                this.tabState.main = mainKey;
-                this.tabState.child = Object.keys(nested).length ? childKey : null;
+                this.applyHashToTabState(to.hash);
             });
         },
         data() {
@@ -432,22 +425,39 @@
 
                 return [...base, ...(fieldMaps[type] || customFields), { title: "{{ _('Actions') }}", value: 'actions', align: 'end' }];
             },
+            normalizeHash(rawHash = '') {
+                return (rawHash || '').replace(/^#\/?/, '');
+            },
+            applyHashToTabState(rawHash = '') {
+                const normalizedHash = this.normalizeHash(rawHash);
+                const [main, child] = normalizedHash.split('/');
+
+                const mainKey = main && main in this.tabsMap ? main : Object.keys(this.tabsMap)[0];
+                const nested = this.tabsMap[mainKey]?.nestedTabsMap || {};
+                const childKey = child && child in nested ? child : Object.keys(nested)[0] || null;
+
+                this.tabState.main = mainKey;
+                this.tabState.child = Object.keys(nested).length ? childKey : null;
+            },
             updateHash() {
                 const { main, child } = this.tabState;
                 const hash = [main, child].filter(Boolean).join('/');
-                this.$router.push({ name: 'component-data', hash: `#${hash}` });
+                const nextHash = `#${hash}`;
+
+                if (this.$route?.hash === nextHash) return;
+
+                const fullPath = `${this.$route?.path || window.location.pathname}${window.location.search}`;
+                this.$router.push(`${fullPath}${nextHash}`);
             },
             setInitialTabStateKey() {
-                const main = this.tabState.main || Object.keys(this.tabsMap)[0];
-                const nested = this.tabsMap[main]?.nestedTabsMap || {};
-                const child = this.tabState.child || Object.keys(nested)[0] || null;
+                const currentHash = this.$route?.hash || window.location.hash;
 
-                const hash = [main, child].filter(Boolean).join('/');
+                if (currentHash) {
+                    this.applyHashToTabState(currentHash);
+                    return;
+                }
 
-                this.$router.replace({
-                    name: 'component-data',
-                    hash: `#${hash}` 
-                });
+                this.updateHash();
             },
             onDragEnd() {
                 if (this.isOrderChanged) {
