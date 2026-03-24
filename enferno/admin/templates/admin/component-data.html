@@ -7,8 +7,18 @@
             <h1 class="text-h6 mb-5">{{ _('Component Data Management') }}</h1>
 
             <div class="d-flex flex-column flex-md-row ga-4">
-                <v-card class="py-5 overflow-y-auto h-fit" elevation="2" style="min-width: 255px;">
-                    <v-tabs mandatory height="40" v-model="tabState.main" selected-class="bg-surface-light" direction="vertical">
+                <v-card
+                    :class="$vuetify.display.smAndDown ? 'w-100 h-fit' : 'py-5 overflow-y-auto h-fit'"
+                    elevation="2"
+                    :style="$vuetify.display.smAndDown ? '' : 'min-width: 255px;'"
+                >
+                    <v-tabs
+                        mandatory
+                        height="40"
+                        v-model="tabState.main"
+                        :direction="$vuetify.display.smAndDown ? 'horizontal' : 'vertical'"
+                        align-tabs="start"
+                    >
                         <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
                             class="px-7 justify-start text-none text-subtitle-2">
                             ${tab.text}
