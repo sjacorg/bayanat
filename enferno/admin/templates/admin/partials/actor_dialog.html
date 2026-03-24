@@ -35,7 +35,7 @@
                     style="height: calc(100vh - 64px);"
                     class="overflow-y-auto">
 
-                <v-card-text>
+                <v-card-text :class="{ 'pa-0': $vuetify.display.smAndDown }">
                     <v-container fluid>
                         <v-btn-toggle v-model="editedItem.type" tile mandatory>
                             <v-btn
