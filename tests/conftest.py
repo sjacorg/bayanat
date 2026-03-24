@@ -319,6 +319,8 @@ def uninitialized_admin_client(uninitialized_app, session_uninitialized, uniniti
     uninitialized_app.session_interface.client = fakeredis.FakeStrictRedis()
     with uninitialized_app.app_context():
         admin_user = uninitialized_users
+        # Clear any security reset keys that may have leaked from other tests
+        admin_user.unset_security_reset_key()
         with uninitialized_app.test_client(user=admin_user) as client:
             yield client
 

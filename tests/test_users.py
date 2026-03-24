@@ -468,15 +468,13 @@ class TestForceReset:
         ],
     )
     def test_force_reset(self, request, session, client_fixture, expected):
-        from enferno.extensions import rds
-
         target = UserFactory()
         target.fs_uniquifier = uuid4().hex
         session.add(target)
         session.commit()
 
         # Clear any stale security reset keys for this user
-        rds.delete(f"security:user:{target.id}")
+        target.unset_security_reset_key()
 
         client = request.getfixturevalue(client_fixture)
         resp = client.post(
@@ -485,6 +483,9 @@ class TestForceReset:
             headers=HEADERS,
         )
         assert resp.status_code == expected
+
+        # Clean up so subsequent tests aren't redirected to /change
+        target.unset_security_reset_key()
 
 
 # =========================================================================
@@ -503,6 +504,8 @@ class TestForceResetAll:
         ],
     )
     def test_force_reset_all(self, request, session, client_fixture, expected):
+        from enferno.user.models import User
+
         client = request.getfixturevalue(client_fixture)
         resp = client.post(
             "/admin/api/user/force-reset-all",
@@ -510,6 +513,12 @@ class TestForceResetAll:
             follow_redirects=True,
         )
         assert resp.status_code == expected
+
+        # Clean up security reset keys so subsequent tests aren't redirected to /change
+        from enferno.extensions import rds
+
+        for key in rds.keys("security:user:*"):
+            rds.delete(key)
 
 
 # =========================================================================
