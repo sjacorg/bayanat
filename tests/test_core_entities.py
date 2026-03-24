@@ -9,11 +9,6 @@ from unittest.mock import patch
 import pytest
 from flask import current_app
 
-from enferno.admin.models import (
-    Actor,
-    Bulletin,
-    Incident,
-)
 from enferno.user.models import User
 from tests.factories import (
     ActorFactory,

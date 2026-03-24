@@ -9,7 +9,6 @@ from enferno.data_import.models import DataImport, Mapping
 from geoalchemy2.shape import WKTElement
 
 import datetime
-from datetime import datetime as dt
 import pytest
 from faker import Faker
 

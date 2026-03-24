@@ -582,11 +582,10 @@ class TestDynamicFieldSearch:
     @staticmethod
     def _mock_db(fields, monkeypatch):
         from types import SimpleNamespace
-        import enferno.utils.search_utils as search_utils_module
 
         query_result = SimpleNamespace(filter=lambda *a, **k: SimpleNamespace(all=lambda: fields))
         sess = SimpleNamespace(query=lambda *a, **k: query_result)
-        monkeypatch.setattr(search_utils_module, "db", SimpleNamespace(session=sess))
+        monkeypatch.setattr("enferno.utils.search_utils.db", SimpleNamespace(session=sess))
 
     @staticmethod
     def _make_field(name, field_type):

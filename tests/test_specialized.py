@@ -17,28 +17,17 @@ import pytest
 from flask import current_app
 
 from enferno.admin.models import (
-    Activity,
-    Actor,
-    ActorHistory,
-    AppConfig,
     AtoaInfo,
     AtobInfo,
     BtobInfo,
-    Bulletin,
-    BulletinHistory,
     ClaimedViolation,
     Eventtype,
-    Incident,
-    IncidentHistory,
     ItoaInfo,
     ItobInfo,
     ItoiInfo,
     Label,
-    Location,
     LocationAdminLevel,
-    LocationHistory,
     PotentialViolation,
-    Query,
     Source,
 )
 from enferno.user.models import User
@@ -53,7 +42,6 @@ from tests.factories import (
     BulletinFactory,
     BulletinHistoryFactory,
     ClaimedViolationFactory,
-    DataImportFactory,
     EventtypeFactory,
     IncidentFactory,
     IncidentHistoryFactory,
@@ -1611,7 +1599,6 @@ class TestMappingDeleteOtherUser:
     def test_delete_other_user_mapping(self, request, session, client_fixture, expected):
         from uuid import uuid4
 
-        from enferno.data_import.models import Mapping
         from enferno.user.models import Role
 
         from sqlalchemy import select

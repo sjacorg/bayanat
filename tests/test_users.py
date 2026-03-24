@@ -504,7 +504,6 @@ class TestForceResetAll:
         ],
     )
     def test_force_reset_all(self, request, session, client_fixture, expected):
-        from enferno.user.models import User
 
         client = request.getfixturevalue(client_fixture)
         resp = client.post(

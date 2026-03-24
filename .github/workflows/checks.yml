@@ -8,6 +8,9 @@ on:
       - main
       - stable
 
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-22.04
