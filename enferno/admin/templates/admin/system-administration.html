@@ -1,16 +1,16 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-    <v-main class="system-admin">
-        <div class="pa-4">
-            <v-card class="pa-4" elevation="2" height="calc(100dvh - 96px)">
+    <v-main class="system-admin overflow-hidden">
+        <v-container fluid class="pa-4" style="height: calc(100vh - 64px);">
+            <v-card class="pa-4 h-100 d-flex flex-column" elevation="2">
                 <h1 class="text-h6 mb-5">{{ _('Administration Dashboard') }}</h1>
 
-                <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px);">
+                <div class="d-flex flex-column flex-md-row ga-4 flex-grow-1" style="min-height: 0;">
 
                     <!-- Left navigation menu -->
                     <v-card
-                        :class="$vuetify.display.smAndDown ? 'w-100' : 'py-5 h-100 overflow-y-auto'"
+                        :class="$vuetify.display.smAndDown ? 'w-100 flex-shrink-0' : 'py-5 h-100 overflow-y-auto'"
                         elevation="2"
                         :style="$vuetify.display.smAndDown ? '' : 'min-width: 255px; max-height: fit-content;'"
                     >
@@ -29,7 +29,7 @@
 
 
                     <!-- Main content -->
-                    <v-card elevation="2" class="w-100 overflow-y-auto">
+                    <v-card elevation="2" class="w-100 h-100 overflow-y-auto">
 
                         <!-- Main content header -->
                         <v-card-title class="d-flex flex-column pa-0 px-4 position-sticky top-0 z-1 bg-surface">
@@ -992,7 +992,7 @@
                     </v-card>
                 </div>
             </v-card>
-        </div>
+        </v-container>
     </v-main>
 
 
