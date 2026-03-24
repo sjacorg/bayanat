@@ -443,6 +443,7 @@ const routes = [
     {path: '/import/media/', name: 'import-media', component: Vue.defineComponent({})},
     {path: '/import/sheets/', name: 'import-sheets', component: Vue.defineComponent({})},
     {path: '/deduplication/dashboard/', name: 'deduplication-dashboard', component: Vue.defineComponent({})},
+    {path: '/dashboard/', name: 'dashboard', component: Vue.defineComponent({})},
 
 ];
 
