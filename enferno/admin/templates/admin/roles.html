@@ -50,7 +50,7 @@
                                                                 label="{{ _('Description') }}"
                                                     ></v-textarea>
                                                     <div>
-                                                        <div class="text-body-2 mb-2">{{ _('Group Colors') }}</div>
+                                                        <div class="text-body-2 mb-2 d-flex align-center">{{ _('Group Colors') }} <v-btn density="compact" variant="text" size="small" class="text-decoration-underline text-medium-emphasis" @click="editedItem.color = null">{{ _('clear selection') }}</v-btn></div>
                                                         <div class="d-flex align-center ga-3">
                                                             <v-btn v-for="predefinedColor in predefinedColors" :key="predefinedColor" icon tile density="comfortable" @click="editedItem.color = predefinedColor">
                                                                 <v-avatar size="30" rounded="0" :color="predefinedColor">
@@ -62,11 +62,18 @@
                                                                     <v-icon v-if="editedItem.color === customColor">mdi-check</v-icon>
                                                                 </v-avatar>
                                                             </v-btn>
-                                                            <v-menu :close-on-content-click="false" @update:model-value="onCloseColorPicker">
+                                                            <v-menu v-model="colorMenuOpen" :close-on-content-click="false">
                                                                 <template v-slot:activator="{ props }">
                                                                     <v-btn v-bind="props" icon="mdi-plus" density="compact" variant="tonal"></v-btn>
                                                                 </template>
-                                                                <v-color-picker v-model="editedItem.color"></v-color-picker>
+                                                                <v-card>
+                                                                    <v-color-picker v-model="customColorPreview" elevation="0" mode="hex"></v-color-picker>
+                                                                    <v-card-actions class="pt-0">
+                                                                        <v-spacer></v-spacer>
+                                                                        <v-btn variant="outlined" size="small" @click="cancelColorPicker">{{ _('Cancel') }}</v-btn>
+                                                                        <v-btn color="primary" variant="elevated" size="small" @click="confirmCustomColor">{{ _('Apply') }}</v-btn>
+                                                                    </v-card-actions>
+                                                                </v-card>
                                                             </v-menu>
                                                         </div>
                                                         <span class="text-caption text-medium-emphasis">{{ _('Useful to easily identify groups in data tables') }}</span>
@@ -139,18 +146,14 @@
                                     <v-chip
                                         v-if="item.color"
                                         label
-                                        size="default"
+                                        size="small"
+                                        rounded="pill"
                                         class="font-weight-medium"
                                         :style="{
                                             backgroundColor: item.color,
-                                            color: 'white',
-                                            textShadow: 'black 0px 0px 2px',
-                                            minWidth: '120px',
-                                            justifyContent: 'center'
+                                            width: '60px',
                                         }"
-                                    >
-                                        ${ item.name }
-                                    </v-chip>
+                                    ></v-chip>
                                 </template>
 
                                 <template v-slot:item.action="{ item }">
@@ -214,6 +217,8 @@
                 },
                 predefinedColors: ['#A61C00', '#CC0000', '#E69138', '#F1C232', '#6AA84F', '#45818E', '#3C78D8', '#3D85C6', '#674EA7', '#A64D79'],
                 customColor: null,
+                customColorPreview: null,
+                colorMenuOpen: false,
             }),
 
             computed: {
@@ -231,13 +236,24 @@
                         this.setCustomColor(this.editedItem.color);
                     }
                 },
+                colorMenuOpen(isOpen) {
+                    if (isOpen) {
+                        this.customColorPreview = this.customColor ?? this.editedItem.color ?? null;
+                    }
+                },
             },
 
             methods: {
-                onCloseColorPicker(isOpen) {
-                    if (!isOpen) {
-                        this.setCustomColor(this.editedItem.color);
+                cancelColorPicker() {
+                    this.colorMenuOpen = false;
+                },
+
+                confirmCustomColor() {
+                    if (this.customColorPreview) {
+                        this.setCustomColor(this.customColorPreview);
+                        this.editedItem.color = this.customColorPreview;
                     }
+                    this.colorMenuOpen = false;
                 },
 
                 setCustomColor(color) {
@@ -269,6 +285,7 @@
 
                 newItem() {
                     this.editedItem = Object.assign({}, this.defaultItem);
+                    this.setCustomColor(this.defaultItem.color);
                     this.dialog = true;
                 },
 
