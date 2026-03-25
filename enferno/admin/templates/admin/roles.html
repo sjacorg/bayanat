@@ -331,7 +331,7 @@
                                 this.close();
                             });
                     } else {
-                        axios
+                        api
                             .post("/admin/api/role/", {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
