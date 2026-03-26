@@ -60,13 +60,19 @@ CREATE INDEX IF NOT EXISTS ix_extraction_search_text_trgm
     ON extraction USING GIN(search_text gin_trgm_ops);
 
 -- Foreign key constraints
-ALTER TABLE extraction
-ADD CONSTRAINT fk_extraction_media_id
-FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE extraction
+    ADD CONSTRAINT fk_extraction_media_id
+    FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-ALTER TABLE extraction
-ADD CONSTRAINT fk_extraction_reviewed_by
-FOREIGN KEY (reviewed_by) REFERENCES "user"(id);
+DO $$ BEGIN
+    ALTER TABLE extraction
+    ADD CONSTRAINT fk_extraction_reviewed_by
+    FOREIGN KEY (reviewed_by) REFERENCES "user"(id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Rollback script:
 /*

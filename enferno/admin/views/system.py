@@ -110,13 +110,16 @@ def api_config_write(
 @roles_required("Admin")
 def api_app_reload() -> Response:
     """
-    Reloads Flask and Celery.
+    Reloads Flask via uWSGI touch-reload and restarts Celery via systemd.
+    In dev mode, config is saved but reload must be done manually.
     """
-    from enferno.tasks import reload_app, reload_celery
+    from enferno.tasks.maintenance import reload_app, restart_celery
 
-    reload_app()
-    reload_celery.delay()
-    return HTTPResponse.success(message="Reloaded Bayanat")
+    reloaded = reload_app()
+    restart_celery()
+    if reloaded:
+        return HTTPResponse.success(message="Reloading Bayanat")
+    return HTTPResponse.success(message="Configuration saved. Please restart Bayanat manually.")
 
 
 @admin.app_template_filter("to_config")

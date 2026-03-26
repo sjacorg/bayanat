@@ -1,5 +1,5 @@
-DROP INDEX ix_actor_profile_originid;
-DROP INDEX ix_bulletin_originid;
+DROP INDEX IF EXISTS ix_actor_profile_originid;
+DROP INDEX IF EXISTS ix_bulletin_originid;
 
 CREATE INDEX IF NOT EXISTS ix_bulletin_originid_gin 
 ON bulletin 
