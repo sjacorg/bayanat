@@ -52,6 +52,7 @@ dependencies = [
     "Flask-Babel>=4.0.0",
     "Flask-Limiter>=3.0",
     "Flask-Login>=0.6.3",
+    "Flask-Migrate>=4.1.0",
     "Flask-Mail>=0.10.0",
     "Flask-Principal>=0.4.0",
     "flask-redis>=0.4.0",
