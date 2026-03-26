@@ -570,20 +570,23 @@ def _create_extraction_table(op):
         )
     """
     )
-    op.execute("CREATE INDEX IF NOT EXISTS ix_extraction_media_id ON extraction (media_id)")
+    # ix_extraction_media_id omitted: media_id has UNIQUE constraint which creates an index
     op.execute("CREATE INDEX IF NOT EXISTS ix_extraction_status ON extraction (status)")
     op.execute("CREATE INDEX IF NOT EXISTS ix_extraction_confidence ON extraction (confidence)")
 
-    # Arabic text normalization function
+    # Arabic text normalization function (with newline collapsing)
     op.execute(
         r"""
         CREATE OR REPLACE FUNCTION normalize_arabic_text(input text) RETURNS text AS $$
         BEGIN
             IF input IS NULL THEN RETURN NULL; END IF;
-            RETURN translate(
-                input,
-                E'\u0623\u0625\u0622\u0671\u0649\u0629\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652\u0640',
-                E'\u0627\u0627\u0627\u0627\u064A\u06470123456789'
+            RETURN regexp_replace(
+                translate(
+                    input,
+                    E'\u0623\u0625\u0622\u0671\u0649\u0629\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652\u0640',
+                    E'\u0627\u0627\u0627\u0627\u064A\u06470123456789'
+                ),
+                E'[\r\n]+', ' ', 'g'
             );
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT
