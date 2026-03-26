@@ -166,9 +166,7 @@ cmd_install() {
     log "Initializing database..."
     flask_run "$tag" create-db --create-exts
     flask_run "$tag" import-data
-    # apply-migrations is safe to skip on fresh install (create-db builds full schema)
-    # It becomes essential during updates when schema changes between versions
-    flask_run "$tag" apply-migrations 2>/dev/null || log "apply-migrations not available in this release, skipping"
+    flask_run "$tag" db stamp head
 
     # Set current symlink
     swap_symlink "$RELEASES_DIR/$tag"

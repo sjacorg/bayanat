@@ -410,39 +410,6 @@ def check_db_alignment() -> None:
     logger.info("Database schema alignment check completed.")
 
 
-# Migration management
-@click.command()
-@click.option("--dry-run", is_flag=True, help="Show pending migrations without applying")
-@click.option(
-    "--backfill", is_flag=True, help="Mark all migrations as applied without running them"
-)
-@with_appcontext
-def apply_migrations(dry_run, backfill):
-    """Apply pending SQL migrations."""
-    from enferno.utils.migration_utils import run_migrations
-
-    run_migrations(dry_run=dry_run, backfill=backfill)
-
-
-@click.command()
-@click.argument("name")
-def create_migration(name):
-    """Create a new empty migration file with timestamped name."""
-    import re
-    from enferno.utils.migration_utils import MIGRATIONS_DIR
-
-    # Sanitize name to safe filename characters
-    safe_name = re.sub(r"[^a-zA-Z0-9_]", "_", name).strip("_")
-    if not safe_name:
-        click.echo("Error: name must contain at least one alphanumeric character.")
-        return
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{timestamp}_{safe_name}.sql"
-    filepath = MIGRATIONS_DIR / filename
-    filepath.write_text(f"-- Migration: {name}\n\n")
-    click.echo(f"Created {filepath}")
-
-
 @click.command()
 @with_appcontext
 def generate_config() -> None:
