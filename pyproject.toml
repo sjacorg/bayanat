@@ -37,6 +37,7 @@ dependencies = [
     "blinker>=1.9.0",
     "boto3>=1.38.0",
     "botocore>=1.38.0",
+    "cbor2>=5.9.0",
     "celery>=5.5.0",
     "certifi>=2025.4.0",
     "cffi>=1.17.0",
@@ -51,6 +52,7 @@ dependencies = [
     "Flask-Babel>=4.0.0",
     "Flask-Limiter>=3.0",
     "Flask-Login>=0.6.3",
+    "Flask-Migrate>=4.1.0",
     "Flask-Mail>=0.10.0",
     "Flask-Principal>=0.4.0",
     "flask-redis>=0.4.0",
@@ -95,7 +97,7 @@ dependencies = [
     "Pygments>=2.19.0",
     "pyparsing>=3.2.0",
     "pyOpenSSL>=26.0.0",
-    "pypdf>=6.8.0",
+    "pypdf>=6.9.2",
     "PyQRCode>=1.2.0",
     "python-dateutil>=2.9.0",
     "python-docx>=1.1.0",
@@ -104,7 +106,7 @@ dependencies = [
     "pytz>=2025.2",
     "qrcode>=8.2",
     "redis>=6.2.0",
-    "requests>=2.32.0",
+    "requests>=2.33.0",
     "s3transfer>=0.13.0",
     "Shapely>=2.1.0",
     "shortuuid>=1.0.0",
@@ -168,4 +170,9 @@ color = true
 dev = [
     "fakeredis>=2.31.0",
     "pip-audit>=2.9.0",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    "pip>=26.0",
 ]
