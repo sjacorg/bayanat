@@ -1,5 +1,7 @@
 """Text extraction results from OCR processing."""
 
+from sqlalchemy import Index, text
+
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
@@ -9,9 +11,24 @@ class Extraction(db.Model, BaseMixin):
     """OCR extraction result linked 1:1 with Media."""
 
     __tablename__ = "extraction"
+    __table_args__ = (
+        Index("ix_extraction_status", "status"),
+        Index("ix_extraction_confidence", "confidence"),
+        Index(
+            "ix_extraction_search_text_trgm",
+            "search_text",
+            postgresql_using="gin",
+            postgresql_ops={"search_text": "gin_trgm_ops"},
+        ),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
-    media_id = db.Column(db.Integer, db.ForeignKey("media.id"), unique=True, nullable=False)
+    media_id = db.Column(
+        db.Integer,
+        db.ForeignKey("media.id", name="fk_extraction_media_id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
 
     text = db.Column(db.Text)
     original_text = db.Column(db.Text)
