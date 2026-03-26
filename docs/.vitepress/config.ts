@@ -71,6 +71,8 @@ export default withMermaid(
             items: [
               { text: "Installation", link: "/deployment/installation" },
               { text: "Configuration", link: "/deployment/configuration" },
+              { text: "Upgrading", link: "/deployment/upgrading" },
+              { text: "Database Migrations", link: "/deployment/migrations" },
               { text: "Docker", link: "/deployment/docker" },
               { text: "Backups", link: "/deployment/backups" },
             ],
