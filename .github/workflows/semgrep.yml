@@ -12,6 +12,9 @@ on:
   schedule:
     - cron: "18 18 * * *"
 
+permissions:
+  contents: read
+
 jobs:
   semgrep:
     runs-on: ubuntu-latest
