@@ -24,6 +24,7 @@ const notificationMixin = {
         initialLoading: false,
         loadingMore: false,
         markingImportantAsRead: false,
+        markingAllAsRead: false,
         loadError: false
       },
       ui: {
@@ -69,9 +70,7 @@ const notificationMixin = {
     async markAsReadImportantNotifications() {
       try {
         this.notifications.status.markingImportantAsRead = true;
-        await Promise.all(this.notifications.importantItems.map(async notification => {
-          await this.readNotification(notification)
-        }))
+        await Promise.all(this.notifications.importantItems.map(notification => this.readNotification(notification)))
       } catch (error) {
         console.error(error);
         this.showSnack(handleRequestError(error))
@@ -228,6 +227,35 @@ const notificationMixin = {
         this.notifications.unreadCount = previousUnreadCount;
       }
     },    
+    async markAllAsRead() {
+      if (this.notifications.status.markingAllAsRead) return; // Prevent duplicate calls
+      
+      const previousUnreadCount = this.notifications.unreadCount;
+      const previousNotifications = [...this.notifications.items];
+      const previousImportantNotifications = [...this.notifications.importantItems];
+
+      const readNotification = (notification) => { notification.read_status = true };
+
+      this.notifications.status.markingAllAsRead = true; // Add this flag
+      this.notifications.unreadCount = 0;
+      this.notifications.items.forEach(readNotification);
+      this.notifications.importantItems.forEach(readNotification);
+
+      try {
+        await axios.post(`/admin/api/notifications/mark-all-read`);
+        this.notifications.unreadCount = data.unreadCount;
+      } catch (error) {
+        console.error(error);
+        this.showSnack(handleRequestError(error));
+
+        // Revert state if request failed
+        this.notifications.unreadCount = previousUnreadCount;
+        this.notifications.items = previousNotifications;
+        this.notifications.importantItems = previousImportantNotifications;
+      } finally {
+        this.notifications.status.markingAllAsRead = false;
+      }
+    },
     async refetchNotifications() {
       this.loadNotifications({ page: 1 });
     },
