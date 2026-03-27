@@ -1,12 +1,7 @@
-name: Tests
+name: Tests (Full Docker)
 
 on:
-  pull_request: {}
   workflow_dispatch: {}
-  push:
-    branches:
-      - main
-      - stable
 
 permissions:
   contents: read
