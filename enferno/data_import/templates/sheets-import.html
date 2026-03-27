@@ -174,6 +174,9 @@
                                         </v-select>
 
                                         <v-spacer></v-spacer>
+                                        {% with help_url='https://docs.bayanat.org/guide/data-import.html', help_title='Data Import' %}
+                                        {% include 'admin/partials/contextual_help_fab.html' %}
+                                        {% endwith %}
                                         <v-btn v-if="mapid" @click="deleteMap" prepend-icon="mdi-delete" color="error" variant="outlined"
                                            class="mx-2">{{ _('Delete') }}</v-btn>
                                         <v-btn v-if="mapid" :disabled="!isMapPopulated" @click="updateMap" prepend-icon="mdi-pencil" variant="outlined"

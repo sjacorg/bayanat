@@ -123,6 +123,9 @@
                                 </div>
 
                                 <v-spacer></v-spacer>
+                                {% with help_url='https://docs.bayanat.org/guide/ocr.html', help_title='OCR & Text Extraction' %}
+                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                {% endwith %}
                             </v-toolbar>
 
                             <!-- Bulk Actions Bar -->
