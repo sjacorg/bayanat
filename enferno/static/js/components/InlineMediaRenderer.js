@@ -81,6 +81,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                 :icon="iconMap[mediaType]"
                 :color="mediaType === 'pdf' ? 'red' : 'primary'"
               ></v-icon>
+              <template v-if="$vuetify.display.smAndUp">
               <v-divider vertical class="mx-2"></v-divider>
               <v-chip prepend-icon="mdi-identifier" variant="text" class="font-weight-bold"
                 >{{ media.id }}</v-chip
@@ -146,6 +147,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                   </v-tooltip>
                 </v-list-item>
               </div>
+              </template>
             </div>
           </div>
           <v-spacer></v-spacer>

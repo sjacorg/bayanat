@@ -2,16 +2,14 @@
 {% block content %}
 
             <v-main>
-                <v-container fluid>
-                    <v-row>
-                        <v-col cols="12">
-                            <v-card>
+                <v-container fluid style="height: calc(100vh - 64px);">
+                            <v-card class="h-100">
                                 <v-tabs v-model="tab" color="primary">
                                     <v-tab value="labels">{{ _('Labels') }}</v-tab>
                                     <v-tab value="verified">{{ _('Verified Labels') }}</v-tab>
                                 </v-tabs>
 
-                                <v-card-text>
+                                <v-card-text class="d-flex flex-column" style="height: calc(100% - 48px);">
                                     <!-- Toolbar -->
                                     <v-toolbar flat density="compact" class="mb-2">
                                         <v-text-field
@@ -43,6 +41,7 @@
 
                                         {% if current_user.roles_in(['Admin']) %}
                                         <v-btn
+                                            v-if="$vuetify.display.smAndUp"
                                             variant="outlined"
                                             class="ma-2 border-thin"
                                             @click="imDialog = true">
@@ -51,10 +50,10 @@
                                         {% endif %}
                                     </v-toolbar>
 
+                                    <div class="flex-grow-1" style="min-height: 0;">
                                     <!-- Table view -->
                                     <v-data-table-server
                                         v-if="viewMode === 'table'"
-                                        height="calc(100vh - 295px)"
                                         fixed-header
                                         @update:options="refresh"
                                         :page="options.page"
@@ -62,7 +61,7 @@
                                         :items="items"
                                         :loading="loading"
                                         :items-length="itemsLength"
-                                        class="elevation-1"
+                                        class="elevation-1 h-100"
                                     >
                                         <template v-slot:item.parent="{ item }">
                                             ${ item.parent ? item.parent.title : '' }
@@ -86,7 +85,7 @@
                                     </v-data-table-server>
 
                                     <!-- Tree view -->
-                                    <div v-if="viewMode === 'tree'" style="height: calc(100vh - 235px); overflow-y: auto;">
+                                    <div v-if="viewMode === 'tree'" class="h-100 overflow-y-auto">
                                         <v-treeview
                                             v-if="treeItems.length"
                                             :items="treeItems"
@@ -113,10 +112,9 @@
                                         </div>
                                         <div v-else class="text-center pa-4 text-grey">{{ _('No labels found') }}</div>
                                     </div>
+                                    </div>
                                 </v-card-text>
                             </v-card>
-                        </v-col>
-                    </v-row>
                 </v-container>
 
                 <!-- Create/Edit dialog -->

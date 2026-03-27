@@ -1,6 +1,16 @@
-<snapshot-dialog v-model="snapshotDialog" v-bind="leftDialogProps || { 'max-width': '500px' }"></snapshot-dialog>
+<snapshot-dialog
+  v-model="snapshotDialog"
+  v-bind="$vuetify.display.smAndDown
+    ? { 'retain-focus': false, fullscreen: true, persistent: true, 'no-click-animation': true, scrim: true }
+    : (leftDialogProps || { 'max-width': '500px' })"
+></snapshot-dialog>
 
-<v-dialog v-model="mediaDialog" v-bind="leftDialogProps || { 'max-width': '500px' }">
+<v-dialog
+  v-model="mediaDialog"
+  v-bind="$vuetify.display.smAndDown
+    ? { 'retain-focus': false, fullscreen: true, persistent: true, 'no-click-animation': true, scrim: true }
+    : (leftDialogProps || { 'max-width': '500px' })"
+>
   <template #activator="{props}">
     <v-card>
       <v-toolbar class="handle">

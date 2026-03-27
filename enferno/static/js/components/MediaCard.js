@@ -34,7 +34,7 @@ const toolbarContent = `
           {{ translations.ocrStatus_ }}: {{ $root.getStatusText($root.getEffectiveStatus(media)) }}
         </v-tooltip>
 
-        <v-tooltip v-if="ocrButtonState?.visible" location="bottom">
+        <v-tooltip v-if="$vuetify.display.smAndUp && ocrButtonState?.visible" location="bottom">
           <template v-slot:activator="{ props }">
             <div v-bind="props">
               <v-btn size="small" variant="text" icon="mdi-text-recognition" @click="expansionPanel = null; $root.showOcrDialog(media.id)" :disabled="ocrButtonState.disabled"></v-btn>

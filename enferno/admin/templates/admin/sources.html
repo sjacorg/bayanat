@@ -2,16 +2,14 @@
 
 
             <v-main>
-                <v-container  fluid>
-
-                            <v-card>
+                <v-container fluid style="height: calc(100vh - 64px);">
+                            <v-card class="h-100">
                                 <v-card-title>
                                     <div class="flex-grow-1"></div>
                                 </v-card-title>
 
-                                <v-card-text>
+                                <v-card-text class="h-100">
                                     <v-data-table-server
-                                            height="calc(100vh - 260px)"
                                             fixed-header
                                             :headers="headers"
                                             :items="items"
@@ -19,15 +17,15 @@
                                             :page="options.page"
                                             :loading="loading"
                                             :items-length="itemsLength"
-                                            class="elevation-1"
+                                            class="elevation-1 h-100"
                                     >
                                         <template v-slot:top>
                                             <v-toolbar flat color="white">
-                                                <v-toolbar-title>{{ _('Sources') }}</v-toolbar-title>
+                                                <v-toolbar-title v-if="$vuetify.display.smAndUp">{{ _('Sources') }}</v-toolbar-title>
 
                                             <v-text-field
                                             variant="outlined"
-                                            class="mt-6"
+                                            class="mt-6 px-4"
                                             density="compact"
                                             clearable
                                             @click:clear="resetSearch"
@@ -36,7 +34,7 @@
                                             @keydown.enter="refresh()"
                                             ></v-text-field>
 
-                                                <v-spacer></v-spacer>
+                                                <v-spacer v-if="$vuetify.display.smAndUp"></v-spacer>
 
                                                 <v-btn
                                                     color="primary"
@@ -120,6 +118,7 @@
                                                     {% if current_user.roles_in(['Admin']) %}
                                                     <template v-slot:activator="{ props }">
                                                         <v-btn
+                                                            v-if="$vuetify.display.smAndUp"
                                                             color="secondary"
                                                             variant="elevated"
                                                             class="ma-2"
