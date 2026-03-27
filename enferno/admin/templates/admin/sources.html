@@ -37,6 +37,9 @@
                                             ></v-text-field>
 
                                                 <v-spacer></v-spacer>
+                                                {% with help_url='https://docs.bayanat.org/guide/sources.html', help_title='Sources' %}
+                                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                                {% endwith %}
 
                                                 <v-btn
                                                     color="primary"

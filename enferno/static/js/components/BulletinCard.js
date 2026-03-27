@@ -414,6 +414,21 @@ const BulletinCard = Vue.defineComponent({
             {{ translations.logHistory_ }}
             
           </v-btn>
+          <v-tooltip location="bottom">
+            <template #activator="{ props }">
+              <v-btn
+                v-bind="props"
+                icon="mdi-help-circle-outline"
+                variant="plain"
+                size="small"
+                class="ml-1"
+                href="https://docs.bayanat.org/guide/revision-history.html"
+                target="_blank"
+                rel="noopener noreferrer"
+              ></v-btn>
+            </template>
+            {{ translations.learnAbout_(translations.revisionHistory_) }}
+          </v-tooltip>
             </v-toolbar-title>
         </v-toolbar>
         

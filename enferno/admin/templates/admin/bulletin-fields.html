@@ -72,6 +72,9 @@
           hide-details v-model="ui.search" clearable></v-text-field>
       
         <div class="d-flex ga-4 align-center">
+          {% with help_url='https://docs.bayanat.org/guide/dynamic-fields.html', help_title='Dynamic Fields' %}
+          {% include 'admin/partials/contextual_help_fab.html' %}
+          {% endwith %}
           <v-btn
             class="outlined-btn"
             prepend-icon="mdi-history"

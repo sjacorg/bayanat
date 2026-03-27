@@ -24,6 +24,9 @@
                                         <v-toolbar-title>{{ _('User Groups') }}</v-toolbar-title>
 
                                         <v-spacer></v-spacer>
+                                        {% with help_url='https://docs.bayanat.org/guide/permissions.html', help_title='Permissions' %}
+                                        {% include 'admin/partials/contextual_help_fab.html' %}
+                                        {% endwith %}
 
                                         <v-btn
                                                 @click="newItem"
