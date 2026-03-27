@@ -20,7 +20,7 @@
                                     :items-length="itemsLength"
                             >
                                 <template v-slot:top>
-                                    <v-toolbar flat color="white">
+                                    <v-toolbar flat>
                                         <v-toolbar-title>{{ _('User Groups') }}</v-toolbar-title>
 
                                         <v-spacer></v-spacer>
@@ -33,79 +33,57 @@
 
                                         >{{ _('New Group') }}</v-btn>
 
-                                        <v-dialog v-model="dialog" max-width="700px">
+                                        <v-dialog v-model="dialog" max-width="770px" @after-leave="resetState()">
                                             <v-card>
-                                                <v-card-title>
+                                                <v-card-title class="px-5 py-7">
                                                     <span class="headline">${ formTitle }</span>
                                                 </v-card-title>
 
-                                                <v-card-text>
-                                                    <v-container>
-                                                        <v-row>
-                                                            <v-col cols="12" md="6">
-                                                                <v-text-field
-                                                                        v-model="editedItem.name"
-                                                                        label="{{ _('Group Name') }}"
-                                                                ></v-text-field>
-                                                            </v-col>
-                                                            <v-col cols="12" md="6">
-                                                                <v-text-field 
-                                                                    label="{{ _('Group Color') }}"
-                                                                    v-model="editedItem.color" 
-                                                                    persistent-hint
-                                                                    hint="{{ _('Useful to easily identify groups in data tables.') }}"
-                                                                    v-mask="mask"
-                                                                >
-                                                                    <template v-slot:append>
-                                                                        <v-menu v-model="menu" top
-                                                                                nudge-bottom="105"
-                                                                                nudge-left="16"
-                                                                                :close-on-content-click="false">
-                                                                            <template v-slot:activator="{ props }">
-                                                                                <div :style="swatchStyle"
-                                                                                v-bind="props"></div>
-                                                                            </template>
-                                                                            <v-card>
-                                                                                <v-card-text class="pa-0">
-                                                                                    <v-color-picker
-                                                                                            v-model="editedItem.color"></v-color-picker>
-                                                                                </v-card-text>
-                                                                            </v-card>
-                                                                        </v-menu>
-                                                                    </template>
-                                                                </v-text-field>
-
-                                                            </v-col>
-                                                        </v-row>
-
-                                                        <v-row>
-                                                            <v-col cols="12" md="12">
-                                                                <v-textarea outlined
-                                                                            v-model="editedItem.description"
-                                                                            label="{{ _('Description') }}"
-                                                                ></v-textarea>
-                                                            </v-col>
-                                                        </v-row>
-
-                                                    </v-container>
+                                                <v-card-text class="px-7 py-0">
+                                                    <v-text-field
+                                                            v-model="editedItem.name"
+                                                    >
+                                                        <template v-slot:label>{{ _('Group Name') }} <span class="text-error">*</span></template>
+                                                    </v-text-field>
+                                                    <v-textarea
+                                                                v-model="editedItem.description"
+                                                                label="{{ _('Description') }}"
+                                                    ></v-textarea>
+                                                    <div>
+                                                        <div class="text-body-2 mb-2 d-flex align-center">{{ _('Group Colors') }} <v-btn density="compact" variant="text" size="small" class="text-decoration-underline text-medium-emphasis" @click="editedItem.color = null">{{ _('clear selection') }}</v-btn></div>
+                                                        <div class="d-flex align-center ga-3">
+                                                            <v-btn v-for="predefinedColor in predefinedColors" :key="predefinedColor" icon tile density="comfortable" @click="editedItem.color = predefinedColor">
+                                                                <v-avatar size="30" rounded="0" :color="predefinedColor">
+                                                                    <v-icon v-if="editedItem.color === predefinedColor">mdi-check</v-icon>
+                                                                </v-avatar>
+                                                            </v-btn>
+                                                            <v-btn v-if="customColor" icon tile density="comfortable" @click="editedItem.color = customColor">
+                                                                <v-avatar size="30" rounded="0" :color="customColor">
+                                                                    <v-icon v-if="editedItem.color === customColor">mdi-check</v-icon>
+                                                                </v-avatar>
+                                                            </v-btn>
+                                                            <v-menu v-model="colorMenuOpen" :close-on-content-click="false">
+                                                                <template v-slot:activator="{ props }">
+                                                                    <v-btn v-bind="props" icon="mdi-plus" density="compact" variant="tonal"></v-btn>
+                                                                </template>
+                                                                <v-card>
+                                                                    <v-color-picker v-model="customColorPreview" elevation="0" mode="hex"></v-color-picker>
+                                                                    <v-card-actions class="pt-0">
+                                                                        <v-spacer></v-spacer>
+                                                                        <v-btn variant="outlined" size="small" @click="cancelColorPicker">{{ _('Cancel') }}</v-btn>
+                                                                        <v-btn color="primary" variant="elevated" size="small" @click="confirmCustomColor">{{ _('Apply') }}</v-btn>
+                                                                    </v-card-actions>
+                                                                </v-card>
+                                                            </v-menu>
+                                                        </div>
+                                                        <span class="text-caption text-medium-emphasis">{{ _('Useful to easily identify groups in data tables') }}</span>
+                                                    </div>
                                                 </v-card-text>
 
-                                                <v-card-actions class="pa-4">
+                                                <v-card-actions class="px-6 py-5">
                                                     <v-spacer></v-spacer>
-                                                    <v-btn
-                                                            variant="text"
-                                                            @click="close"
-                                                    >{{ _('Cancel') }}
-                                                    </v-btn
-                                                    >
-                                                    <v-btn
-                                                            color="primary"
-
-                                                            variant="elevated"
-                                                            @click="save"
-                                                    >{{ _('Save') }}
-                                                    </v-btn
-                                                    >
+                                                    <v-btn variant="outlined" @click="close">{{ _('Cancel') }}</v-btn>
+                                                    <v-btn color="primary" variant="elevated" @click="save">{{ _('Save') }}</v-btn>
                                                 </v-card-actions>
                                             </v-card>
                                         </v-dialog>
@@ -165,10 +143,19 @@
                                 </template>
 
                                 <template v-slot:item.color="{item}">
-                                    <v-avatar size="24" v-if="item.color"  :style="'background:' + item.color"></v-avatar>
-
-
+                                    <v-chip
+                                        v-if="item.color"
+                                        label
+                                        size="small"
+                                        rounded="pill"
+                                        class="font-weight-medium"
+                                        :style="{
+                                            backgroundColor: item.color,
+                                            width: '60px',
+                                        }"
+                                    ></v-chip>
                                 </template>
+
                                 <template v-slot:item.action="{ item }">
                                     <template v-if="!['Admin','Mod','DA'].includes(item.name)">
                                         <v-icon small class="mr-2" @click="editItem(item)">
@@ -203,8 +190,6 @@
 
             data: () => ({
 
-                mask: '!#XXXXXXXX',
-                menu: false,
                 dialog: dialog,
                 imDialog: false,
                 drawer: drawer,
@@ -217,8 +202,6 @@
                     {title: "{{_('Name')}}", value: "name"},
                     {title: "{{_('Color')}}", value: "color"},
                     {title: "{{_('Description')}}", value: "description"},
-
-
                     {title: "{{_('Actions')}}", value: "action", sortable: false}
                 ],
 
@@ -226,43 +209,58 @@
                 itemsLength: 10,
                 editedIndex: -1,
                 editedItem: {
-                    title: ""
+                    name: ""
                 },
                 defaultItem: {
-                    title: "",
+                    name: "",
                     color: '#439d92',
-
-                }
+                },
+                predefinedColors: ['#A61C00', '#CC0000', '#E69138', '#F1C232', '#6AA84F', '#45818E', '#3C78D8', '#3D85C6', '#674EA7', '#A64D79'],
+                customColor: null,
+                customColorPreview: null,
+                colorMenuOpen: false,
             }),
 
             computed: {
-                swatchStyle() {
-                    const {color, menu} = this
-                    return {
-                        backgroundColor: this.editedItem.color,
-                        cursor: 'pointer',
-                        height: '24px',
-                        width: '24px',
-                        margin: '2px',
-                        border: '1px dotted #ddd',
-                        borderRadius: menu ? '50%' : '4px',
-                        transition: 'border-radius 200ms ease-in-out'
-                    }
-                },
                 formTitle() {
-                    return this.editedIndex === -1 ? "{{_('New Group')}}" : "{{_('Edit Group')}}";
-                }
+                    return this.isNewRecord ? "{{_('New Group')}}" : "{{_('Edit Group')}}";
+                },
+                isNewRecord() {
+                    return this.editedIndex === -1;
+                },
             },
 
             watch: {
-                dialog(val) {
-                    val || this.close();
+                dialog(open) {
+                    if (open && !this.isNewRecord && this.editedItem.color) {
+                        this.setCustomColor(this.editedItem.color);
+                    }
                 },
-
-
+                colorMenuOpen(isOpen) {
+                    if (isOpen) {
+                        this.customColorPreview = this.customColor ?? this.editedItem.color ?? null;
+                    }
+                },
             },
 
             methods: {
+                cancelColorPicker() {
+                    this.colorMenuOpen = false;
+                },
+
+                confirmCustomColor() {
+                    if (this.customColorPreview) {
+                        this.setCustomColor(this.customColorPreview);
+                        this.editedItem.color = this.customColorPreview;
+                    }
+                    this.colorMenuOpen = false;
+                },
+
+                setCustomColor(color) {
+                    if (!color || this.predefinedColors.includes(color)) return;
+                    this.customColor = color;
+                },
+
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
@@ -283,13 +281,12 @@
                         this.refresh();
                         this.showSnack(response.data);
                     })
-
                 },
+
                 newItem() {
-
                     this.editedItem = Object.assign({}, this.defaultItem);
+                    this.setCustomColor(this.defaultItem.color);
                     this.dialog = true;
-
                 },
 
                 editItem(item) {
@@ -315,14 +312,17 @@
 
                 close() {
                     this.dialog = false;
-                    setTimeout(() => {
-                        this.editedItem = Object.assign({}, this.defaultItem);
-                        this.editedIndex = -1;
-                    }, 300);
+                },
+
+                resetState() {
+                    this.dialog = false;
+                    this.editedItem = Object.assign({}, this.defaultItem);
+                    this.editedIndex = -1;
+                    this.customColor = null;
                 },
 
                 save() {
-                    if (this.editedIndex > -1) {
+                    if (!this.isNewRecord) {
                         Object.assign(this.items[this.editedIndex], this.editedItem);
                         api.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
@@ -331,7 +331,7 @@
                                 this.close();
                             });
                     } else {
-                        axios
+                        api
                             .post("/admin/api/role/", {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
