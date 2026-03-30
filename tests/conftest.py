@@ -41,6 +41,18 @@ def flush_redis_after_tests():
         r.flushdb()
 
 
+@pytest.fixture(autouse=True)
+def isolated_session_store(app, monkeypatch):
+    """Give each test its own FakeRedis so FlaskLoginClient sessions never collide.
+
+    Named without underscore prefix so client fixtures can depend on it
+    explicitly to guarantee ordering (swap happens BEFORE client creation).
+    """
+    import fakeredis
+
+    monkeypatch.setattr(app.session_interface, "client", fakeredis.FakeStrictRedis())
+
+
 @pytest.fixture(scope="session")
 def app():
     """Create a Flask app context for testing."""
@@ -49,8 +61,7 @@ def app():
     app = create_app(cfg)
     app.test_client_class = FlaskLoginClient
     with app.app_context():
-        with patch("enferno.setup.views.check_installation", return_value=False):
-            yield app
+        yield app
 
 
 @pytest.fixture(scope="session")
@@ -63,8 +74,7 @@ def uninitialized_app():
         app = create_app(cfg)
         app.test_client_class = FlaskLoginClient
         with app.app_context():
-            with patch("enferno.setup.views.check_installation", return_value=True):
-                yield app
+            yield app
 
 
 @pytest.fixture(scope="session")
@@ -150,13 +160,14 @@ def setup_db_uninitialized(uninitialized_app):
             conn.execute(text("INSERT INTO id_number_types (id, title) VALUES (1, 'National ID');"))
             conn.commit()
     except Exception as e:
-        pass
+        pytest.fail(f"Uninitialized DB setup failed: {e}")
+
     yield _db
     from enferno.admin.models.IDNumberType import IDNumberType
 
     try:
         _db.session.query(IDNumberType).delete()
-    except Exception as e:
+    except Exception:
         pass
     try:
         _db.session.remove()
@@ -167,44 +178,54 @@ def setup_db_uninitialized(uninitialized_app):
 
 @pytest.fixture(scope="function")
 def session(setup_db, app):
-    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
+    """Database session with nested transaction rollback for test isolation.
+
+    Structure:
+        connection.begin()          <-- outer transaction
+            connection.begin_nested()   <-- savepoint (test runs here)
+            savepoint auto-rolls-back on exit
+        transaction.rollback()      <-- explicit rollback so nothing leaks
+
+    Every ORM write inside the test is undone. The DB returns to
+    the state setup_db left it in.
+    """
     from enferno.extensions import db
 
     with app.app_context():
-        # Create connection and transaction with context managers for automatic cleanup
         with db.engine.connect() as connection:
-            with connection.begin() as transaction:
-                # Configure session to use this connection
-                db.session.configure(bind=connection)
+            transaction = connection.begin()
+            db.session.configure(bind=connection)
 
-                # Create nested transaction (savepoint) for test isolation
-                with connection.begin_nested() as savepoint:
-                    try:
-                        yield db.session
-                    finally:
-                        # Explicit rollback and session cleanup
-                        db.session.remove()
+            nested = connection.begin_nested()
+            try:
+                yield db.session
+            finally:
+                # Roll back savepoint if still active
+                if nested.is_active:
+                    nested.rollback()
+                db.session.remove()
+                # Roll back outer transaction so nothing persists
+                transaction.rollback()
 
 
 @pytest.fixture(scope="function")
 def session_uninitialized(setup_db_uninitialized, uninitialized_app):
-    """Database session with nested transaction rollback for test isolation (SQLAlchemy 2.x best practice)."""
+    """Same isolation pattern as session(), for setup wizard tests."""
     from enferno.extensions import db
 
     with uninitialized_app.app_context():
-        # Create connection and transaction with context managers for automatic cleanup
         with db.engine.connect() as connection:
-            with connection.begin() as transaction:
-                # Configure session to use this connection
-                db.session.configure(bind=connection)
+            transaction = connection.begin()
+            db.session.configure(bind=connection)
 
-                # Create nested transaction (savepoint) for test isolation
-                with connection.begin_nested() as savepoint:
-                    try:
-                        yield db.session
-                    finally:
-                        # Explicit rollback and session cleanup
-                        db.session.remove()
+            nested = connection.begin_nested()
+            try:
+                yield db.session
+            finally:
+                if nested.is_active:
+                    nested.rollback()
+                db.session.remove()
+                transaction.rollback()
 
 
 @pytest.fixture(scope="function")
@@ -293,95 +314,85 @@ def uninitialized_users(session_uninitialized):
 @pytest.fixture(scope="function")
 def uninitialized_admin_client(uninitialized_app, session_uninitialized, uninitialized_users):
     """Test client for a user logged in as Admin role."""
+    import fakeredis
+
+    uninitialized_app.session_interface.client = fakeredis.FakeStrictRedis()
     with uninitialized_app.app_context():
         admin_user = uninitialized_users
+        # Clear any security reset keys that may have leaked from other tests
+        admin_user.unset_security_reset_key()
         with uninitialized_app.test_client(user=admin_user) as client:
-            client.follow_redirects = False
             yield client
 
 
 @pytest.fixture(scope="function")
 def uninitialized_anonymous_client(uninitialized_app):
     """Test client for an unauthenticated user."""
+    import fakeredis
+
+    uninitialized_app.session_interface.client = fakeredis.FakeStrictRedis()
     with uninitialized_app.app_context():
         with uninitialized_app.test_client() as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for a user logged in as Admin role
+# Client fixtures: use FlaskLoginClient with app.app_context() to keep
+# User objects attached to the session. The isolated_session_store fixture
+# dependency ensures FakeRedis is swapped BEFORE the client writes its session.
+
+
 @pytest.fixture(scope="function")
-def admin_client(app, session, users):
-    """Test client for a user logged in as Admin role."""
+def admin_client(app, session, users, isolated_session_store):
+    admin_user, _, _, _ = users
     with app.app_context():
-        admin_user, _, _, _ = users
         with app.test_client(user=admin_user) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for a user logged in as DA role
 @pytest.fixture(scope="function")
-def da_client(app, session, users):
-    """Test client for a user logged in as DA role."""
+def da_client(app, session, users, isolated_session_store):
+    _, da_user, _, _ = users
     with app.app_context():
-        _, da_user, _, _ = users
         with app.test_client(user=da_user) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for a user logged in as Mod role
 @pytest.fixture(scope="function")
-def mod_client(app, session, users):
-    """Test client for a user logged in as Mod role."""
+def mod_client(app, session, users, isolated_session_store):
+    _, _, mod_user, _ = users
     with app.app_context():
-        _, _, mod_user, _ = users
         with app.test_client(user=mod_user) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for an unauthenticated user
 @pytest.fixture(scope="function")
-def anonymous_client(app, session):
-    """Test client for an unauthenticated user."""
+def anonymous_client(app, session, isolated_session_store):
     with app.app_context():
         with app.test_client() as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for admin that can self-assign
 @pytest.fixture(scope="function")
-def admin_sa_client(app, session, users):
-    """Test client for admin that can self-assign."""
+def admin_sa_client(app, session, users, isolated_session_store):
+    _, _, _, sa_dict = users
     with app.app_context():
-        _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["admin"]) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for da that can self-assign
 @pytest.fixture(scope="function")
-def da_sa_client(app, session, users):
-    """Test client for da that can self-assign."""
+def da_sa_client(app, session, users, isolated_session_store):
+    _, _, _, sa_dict = users
     with app.app_context():
-        _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["da"]) as client:
-            client.follow_redirects = False
             yield client
 
 
-# test client for mod that can self-assign
 @pytest.fixture(scope="function")
-def mod_sa_client(app, session, users):
-    """Test client for mod that can self-assign."""
+def mod_sa_client(app, session, users, isolated_session_store):
+    _, _, _, sa_dict = users
     with app.app_context():
-        _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["mod"]) as client:
-            client.follow_redirects = False
             yield client
 
 
@@ -402,7 +413,7 @@ def create_test_role(app, session):
 
 
 @pytest.fixture(scope="function")
-def roled_client(app, session, create_test_role):
+def roled_client(app, session, create_test_role, isolated_session_store):
     from enferno.user.models import User
     from enferno.admin.models import Activity
 
@@ -413,7 +424,6 @@ def roled_client(app, session, create_test_role):
     session.commit()
     with app.app_context():
         with app.test_client(user=new_user) as client:
-            client.follow_redirects = False
             yield client
     new_user.roles = []
     session.query(Activity).filter(Activity.user_id == new_user.id).delete(
