@@ -207,6 +207,7 @@ class User(UserMixin, db.Model, BaseMixin):
     can_edit_locations = db.Column(db.Boolean, default=False)
     can_export = db.Column(db.Boolean, default=False)
     can_import_web = db.Column(db.Boolean, default=False)
+    can_access_media = db.Column(db.Boolean, default=False)
 
     # oauth
     google_id = db.Column(db.String(255))
@@ -376,6 +377,7 @@ class User(UserMixin, db.Model, BaseMixin):
         self.can_edit_locations = item.get("can_edit_locations", False)
         self.can_export = item.get("can_export", False)
         self.can_import_web = item.get("can_import_web", False)
+        self.can_access_media = item.get("can_access_media", False)
         self.active = item.get("active")
         return self
 
@@ -449,6 +451,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "can_edit_locations": self.can_edit_locations,
             "can_export": self.can_export,
             "can_import_web": self.can_import_web,
+            "can_access_media": self.can_access_media,
             "force_reset": self.security_reset_key,
             "two_factor_devices": self.two_factor_devices,
         }

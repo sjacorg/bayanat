@@ -37,12 +37,13 @@ dependencies = [
     "blinker>=1.9.0",
     "boto3>=1.38.0",
     "botocore>=1.38.0",
+    "cbor2>=5.9.0",
     "celery>=5.5.0",
     "certifi>=2025.4.0",
     "cffi>=1.17.0",
     "chardet>=5.2.0",
     "click>=8.2.0",
-    "cryptography>=45.0.0",
+    "cryptography>=46.0.6",
     "decorator>=5.2.0",
     "dnspython>=2.7.0",
     "docx2python>=2.0.0",
@@ -51,6 +52,7 @@ dependencies = [
     "Flask-Babel>=4.0.0",
     "Flask-Limiter>=3.0",
     "Flask-Login>=0.6.3",
+    "Flask-Migrate>=4.1.0",
     "Flask-Mail>=0.10.0",
     "Flask-Principal>=0.4.0",
     "flask-redis>=0.4.0",
@@ -92,9 +94,10 @@ dependencies = [
     "pycparser>=2.22",
     "pydantic>=2.11.0",
     "pyexifinfo>=0.4.0",
-    "Pygments>=2.19.0",
+    "Pygments>=2.20.0",
     "pyparsing>=3.2.0",
-    "pypdf>=6.0.0",
+    "pyOpenSSL>=26.0.0",
+    "pypdf>=6.9.2",
     "PyQRCode>=1.2.0",
     "python-dateutil>=2.9.0",
     "python-docx>=1.1.0",
@@ -103,7 +106,7 @@ dependencies = [
     "pytz>=2025.2",
     "qrcode>=8.2",
     "redis>=6.2.0",
-    "requests>=2.32.0",
+    "requests>=2.33.0",
     "s3transfer>=0.13.0",
     "Shapely>=2.1.0",
     "shortuuid>=1.0.0",
@@ -126,6 +129,7 @@ dependencies = [
     "zxcvbn>=4.5.0",
     "flask-talisman>=1.1.0",
     "tinycss2>=1.5.1",
+    "weasyprint>=65.0",
 ]
 
 [project.optional-dependencies]
@@ -134,7 +138,7 @@ dev = [
     "flask_pydantic>=0.13.0",
     "SQLAlchemy-Utils>=0.41.0",
     "pre-commit>=4.2.0",
-    "black>=25.1.0",
+    "black>=26.3.1",
     "factory-boy>=3.3.0",
     "pytest-sugar>=1.0.0"
 ]
@@ -144,7 +148,6 @@ ai = [
     "pytesseract>=0.3.13",
     "torch>=2.8.0",
     "numba>=0.60.0",  # Required for Python 3.12+ compatibility (whisper dependency)
-    "weasyprint>=65.0",  # PDF export - requires system libs: brew install pango libffi
 ]
 
 [project.urls]
@@ -167,4 +170,9 @@ color = true
 dev = [
     "fakeredis>=2.31.0",
     "pip-audit>=2.9.0",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    "pip>=26.0",
 ]

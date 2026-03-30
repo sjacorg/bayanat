@@ -63,7 +63,7 @@ class Media(db.Model, BaseMixin):
         ),
     )
 
-    time = db.Column(db.Float(precision=2))
+    time = db.Column(db.Float())
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_medias", foreign_keys=[user_id])
