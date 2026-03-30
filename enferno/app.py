@@ -32,7 +32,17 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import db, session, babel, rds, debug_toolbar, mail, limiter, talisman
+from enferno.extensions import (
+    db,
+    migrate,
+    session,
+    babel,
+    rds,
+    debug_toolbar,
+    mail,
+    limiter,
+    talisman,
+)
 from enferno.public.views import bp_public
 from enferno.setup.views import bp_setup
 from enferno.settings import Config
@@ -97,6 +107,7 @@ def register_extensions(app):
         app: Flask application instance
     """
     db.init_app(app)
+    migrate.init_app(app, db)
     # Skip debug toolbar when CSP is enabled (they conflict)
     if not app.config.get("CSP_ENABLED", False):
         debug_toolbar.init_app(app)
@@ -144,7 +155,7 @@ def register_talisman(app):
         "font-src": ["'self'", "data:"],
         "connect-src": ["'self'"],
         "media-src": ["'self'", "blob:"],
-        "frame-ancestors": "'none'",
+        "frame-ancestors": "'self'",
         "form-action": "'self'",
         "base-uri": "'self'",
     }
