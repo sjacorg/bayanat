@@ -206,19 +206,26 @@ const ActorSearchBox = Vue.defineComponent({
     },
 
     updateIdNumber(field, value) {
-      this.id_number[field] = value;
+      const normalizedValue =
+        value == null ? null : String(value).trim() || null;
 
-      // Create a filtered copy of newVal omitting null values
+      this.id_number = {
+        ...this.id_number,
+        [field]: normalizedValue,
+      };
+
       const filteredIdNumber = Object.fromEntries(
-        Object.entries(this.id_number)
-          .filter(([_, v]) => v !== null)
-          .map(([key, value]) => [key, value.toString().trim()]),
+        Object.entries(this.id_number).filter(([, v]) => v != null && String(v).trim() !== '')
       );
 
-      this.q = {
-        ...this.q,
-        id_number: filteredIdNumber,
-      };
+      const nextQ = { ...this.q };
+      if (Object.keys(filteredIdNumber).length === 0) {
+        delete nextQ.id_number;
+      } else {
+        nextQ.id_number = filteredIdNumber;
+      }
+
+      this.q = nextQ;
     },
 
     updateDynamicField(value, field, operator) {
