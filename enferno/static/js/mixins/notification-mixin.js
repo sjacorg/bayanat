@@ -242,7 +242,7 @@ const notificationMixin = {
       this.notifications.importantItems.forEach(readNotification);
 
       try {
-        await axios.post(`/admin/api/notifications/mark-all-read`);
+        const { data } = await axios.post(`/admin/api/notifications/mark-all-read`);
         this.notifications.unreadCount = data.unreadCount;
       } catch (error) {
         console.error(error);
