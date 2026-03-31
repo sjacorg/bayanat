@@ -6,6 +6,7 @@ in app.py
 from flask_limiter.util import get_remote_address
 from flask_limiter import Limiter
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_session import Session
 from flask_redis import FlaskRedis
 from flask_babel import Babel
@@ -17,6 +18,7 @@ from enferno.utils.rate_limit_utils import get_real_ip
 from enferno.settings import Config
 
 db = SQLAlchemy()
+migrate = Migrate()
 session = Session()
 rds = FlaskRedis()
 babel = Babel()

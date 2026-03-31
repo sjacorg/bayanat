@@ -139,7 +139,13 @@ class DynamicField(db.Model, BaseMixin):
     sort_order = db.Column(db.Integer, default=0)  # Field display order within entity
     core = db.Column(db.Boolean, default=False)  # Whether this is a core (built-in) field
 
-    __table_args__ = (db.UniqueConstraint("name", "entity_type", name="uq_field_name_entity"),)
+    __table_args__ = (
+        db.UniqueConstraint("name", "entity_type", name="uq_field_name_entity"),
+        db.Index("ix_dynamic_fields_entity_type", "entity_type"),
+        db.Index("ix_dynamic_fields_entity_active", "entity_type", "active"),
+        db.Index("ix_dynamic_fields_entity_core", "entity_type", "core"),
+        db.Index("ix_dynamic_fields_entity_sort", "entity_type", "sort_order"),
+    )
 
     def __init__(self, *args, **kwargs):
         self._validated = False

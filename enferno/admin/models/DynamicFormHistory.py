@@ -20,6 +20,11 @@ class DynamicFormHistory(db.Model, BaseMixin):
     """
 
     __tablename__ = "dynamic_form_history"
+    __table_args__ = (
+        db.Index("ix_dynamic_form_history_entity_type", "entity_type"),
+        db.Index("ix_dynamic_form_history_created_at", db.desc("created_at")),
+        db.Index("ix_dynamic_form_history_entity_created", "entity_type", db.desc("created_at")),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     entity_type = db.Column(db.String(50), nullable=False)  # bulletin, actor, incident
