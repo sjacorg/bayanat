@@ -172,7 +172,6 @@ from enferno.tasks.maintenance import (  # noqa: E402
     daily_backup_cron,
     regenerate_locations,
     reload_app,
-    reload_celery,
     session_cleanup,
 )
 from enferno.tasks.media_download import download_media_from_web  # noqa: E402
@@ -222,7 +221,6 @@ __all__ = [
     "daily_backup_cron",
     "regenerate_locations",
     "reload_app",
-    "reload_celery",
     "session_cleanup",
     # media_download
     "download_media_from_web",

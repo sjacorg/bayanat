@@ -1,0 +1,391 @@
+#!/usr/bin/env bash
+#
+# bayanat - CLI for installing and managing Bayanat
+# Usage: bayanat <command> [options]
+#
+set -euo pipefail
+
+readonly VERSION="1.0.0"
+readonly BAYANAT_ROOT="/opt/bayanat"
+readonly RELEASES_DIR="$BAYANAT_ROOT/releases"
+readonly SHARED_DIR="$BAYANAT_ROOT/shared"
+readonly SYSTEM_DIR="$BAYANAT_ROOT/system"
+readonly LOGS_DIR="$BAYANAT_ROOT/logs"
+readonly CURRENT_LINK="$BAYANAT_ROOT/current"
+# LOCKFILE used by update command (PR 2)
+# readonly LOCKFILE="$BAYANAT_ROOT/.update.lock"
+readonly DEFAULT_REPO="sjacorg/bayanat"
+readonly GIT_URL="https://github.com/${BAYANAT_REPO:-$DEFAULT_REPO}.git"
+readonly APP_USER="bayanat"
+
+# --- Logging ---
+
+log()   { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1"; }
+warn()  { printf '[%s] WARN: %s\n' "$(date '+%H:%M:%S')" "$1" >&2; }
+die()   { printf '[%s] ERROR: %s\n' "$(date '+%H:%M:%S')" "$1" >&2; exit 1; }
+
+require_root() { [[ $EUID -eq 0 ]] || die "Must run as root"; }
+
+# --- Helpers ---
+
+latest_remote_tag() {
+    git ls-remote --tags --refs --sort=-version:refname "$GIT_URL" \
+        | head -1 | sed 's/.*refs\/tags\///'
+}
+
+current_version() {
+    [[ -L "$CURRENT_LINK" ]] || return 1
+    basename "$(readlink "$CURRENT_LINK")"
+}
+
+release_venv() { echo "$RELEASES_DIR/$1/.venv/bin"; }
+
+flask_run() {
+    local version="$1"; shift
+    local venv
+    venv="$(release_venv "$version")"
+    sudo -u "$APP_USER" \
+        FLASK_APP=run.py \
+        PATH="$venv:$PATH" \
+        bash -c "cd '$RELEASES_DIR/$version' && uv run flask $*"
+}
+
+# Atomic symlink swap (safe on Linux)
+swap_symlink() {
+    local target="$1"
+    ln -sfn "$target" "$CURRENT_LINK.tmp"
+    mv -Tf "$CURRENT_LINK.tmp" "$CURRENT_LINK"
+}
+
+health_check() {
+    local retries=10
+    local sock="$CURRENT_LINK/bayanat.sock"
+    log "Health check: $sock"
+    for _ in $(seq 1 $retries); do
+        if curl -sf -o /dev/null --unix-socket "$sock" http://localhost/ 2>/dev/null; then
+            log "Health check passed"
+            return 0
+        fi
+        sleep 2
+    done
+    warn "Health check failed after $retries attempts"
+    return 1
+}
+
+# --- Install ---
+
+cmd_install() {
+    local domain="${1:-localhost}"
+    require_root
+
+    log "Installing Bayanat for: $domain"
+    log "Repository: ${BAYANAT_REPO:-$DEFAULT_REPO}"
+
+    # System dependencies
+    log "Installing system packages..."
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -qq
+    apt-get install -y -qq \
+        git postgresql postgresql-contrib postgis redis-server \
+        python3 python3-dev build-essential \
+        libpq-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev \
+        libjpeg-dev libzip-dev libimage-exiftool-perl ffmpeg curl wget jq
+
+    # uv
+    log "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    cp "$HOME/.local/bin/uv" /usr/local/bin/ 2>/dev/null \
+        || cp "$HOME/.cargo/bin/uv" /usr/local/bin/
+    chmod 755 /usr/local/bin/uv
+
+    # Caddy
+    log "Installing Caddy..."
+    rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+        | gpg --batch --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+        > /etc/apt/sources.list.d/caddy-stable.list
+    apt-get update -qq && apt-get install -y -qq caddy
+
+    # Services
+    systemctl enable --now postgresql redis-server
+
+    # App user
+    id "$APP_USER" &>/dev/null || useradd -m "$APP_USER"
+    # Caddy needs to read the uWSGI socket
+    usermod -aG "$APP_USER" caddy 2>/dev/null || true
+
+    # Database
+    log "Setting up database..."
+    sudo -u postgres createuser -s "$APP_USER" 2>/dev/null || true
+    sudo -u postgres createdb bayanat -O "$APP_USER" 2>/dev/null || true
+
+    # PostgreSQL trust auth for app user
+    local pg_hba
+    pg_hba=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1)
+    if [[ -n "$pg_hba" ]] && ! grep -q "local.*$APP_USER.*trust" "$pg_hba" 2>/dev/null; then
+        sed -i "/^local.*all.*postgres.*peer/a local   all             $APP_USER                                 trust" "$pg_hba"
+        systemctl reload postgresql
+    fi
+
+    # Directory layout
+    log "Creating directory structure..."
+    mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/backups" \
+             "$SYSTEM_DIR" "$LOGS_DIR"
+
+    # Clone and checkout latest release
+    local tag
+    tag=$(latest_remote_tag)
+    [[ -n "$tag" ]] || die "No release tags found"
+    log "Latest release: $tag"
+
+    if [[ -d "$RELEASES_DIR/$tag" ]]; then
+        log "Release $tag already exists, skipping clone"
+    else
+        log "Cloning $tag..."
+        git clone --depth 1 --branch "$tag" "$GIT_URL" "$RELEASES_DIR/$tag"
+    fi
+
+    # Generate .env if missing (before linking so symlink picks it up)
+    if [[ ! -f "$SHARED_DIR/.env" ]]; then
+        log "Generating .env..."
+        _generate_env "$domain"
+    fi
+
+    # Own the release dir and shared dir
+    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
+
+    # Symlink shared resources into release
+    _link_shared "$tag"
+
+    # Install Python deps
+    log "Installing dependencies..."
+    sudo -u "$APP_USER" bash -c "cd '$RELEASES_DIR/$tag' && /usr/local/bin/uv sync --frozen"
+
+    # Initialize database
+    log "Initializing database..."
+    flask_run "$tag" create-db --create-exts
+    flask_run "$tag" import-data
+    flask_run "$tag" db stamp head
+
+    # Set current symlink
+    swap_symlink "$RELEASES_DIR/$tag"
+    log "Active release: $tag"
+
+    # Production uWSGI config
+    _install_uwsgi_config
+
+    # Systemd units
+    _install_systemd "$tag"
+
+    # Caddy config
+    _install_caddy "$domain"
+
+    # Sudoers for web-triggered updates
+    _install_sudoers
+
+    # Own everything
+    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
+
+    # Start
+    systemctl daemon-reload
+    systemctl enable --now bayanat bayanat-celery
+    systemctl restart caddy
+
+    log "Installation complete"
+    if [[ "$domain" == "localhost" ]]; then
+        log "Access: http://$(hostname -I | awk '{print $1}')"
+    else
+        log "Access: https://$domain"
+    fi
+}
+
+# --- Internal helpers ---
+
+_link_shared() {
+    local tag="$1"
+    local release="$RELEASES_DIR/$tag"
+
+    # .env
+    [[ -f "$SHARED_DIR/.env" ]] && ln -sfn "$SHARED_DIR/.env" "$release/.env"
+
+    # media directory
+    if [[ -d "$release/enferno/media" ]] && [[ ! -L "$release/enferno/media" ]]; then
+        rm -rf "$release/enferno/media"
+    fi
+    ln -sfn "$SHARED_DIR/media" "$release/enferno/media"
+}
+
+_generate_env() {
+    local domain="$1"
+    cat > "$SHARED_DIR/.env" << EOF
+FLASK_APP=run.py
+FLASK_DEBUG=0
+
+SECRET_KEY='$(openssl rand -base64 32)'
+SECURITY_PASSWORD_SALT='$(openssl rand -base64 32)'
+
+SECURITY_TOTP_SECRETS='$(openssl rand -base64 32)'
+SECURITY_TWO_FACTOR=True
+SECURITY_TWO_FACTOR_RESCUE_MAIL=''
+SECURITY_TWO_FACTOR_AUTHENTICATOR_VALIDITY=90
+EOF
+}
+
+_install_uwsgi_config() {
+    cat > "$SHARED_DIR/uwsgi-prod.ini" << EOF
+[uwsgi]
+virtualenv=.venv
+module=run:app
+master=true
+processes=1
+threads=2
+http-socket=$CURRENT_LINK/bayanat.sock
+chmod-socket=660
+vacuum=true
+buffer-size=8192
+touch-reload=reload.ini
+reload-mercy=5
+worker-reload-mercy=3
+EOF
+}
+
+_install_systemd() {
+    local tag="$1"
+
+    cat > /etc/systemd/system/bayanat.service << EOF
+[Unit]
+Description=Bayanat web application
+After=network.target postgresql.service redis.service
+
+[Service]
+User=$APP_USER
+Group=$APP_USER
+WorkingDirectory=$CURRENT_LINK
+EnvironmentFile=$SHARED_DIR/.env
+ExecStart=$CURRENT_LINK/.venv/bin/uwsgi --ini $SHARED_DIR/uwsgi-prod.ini
+Restart=always
+RestartSec=3
+KillMode=mixed
+KillSignal=SIGQUIT
+TimeoutStopSec=10
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    cat > /etc/systemd/system/bayanat-celery.service << EOF
+[Unit]
+Description=Bayanat Celery worker
+After=network.target postgresql.service redis.service
+
+[Service]
+User=$APP_USER
+Group=$APP_USER
+WorkingDirectory=$CURRENT_LINK
+EnvironmentFile=$SHARED_DIR/.env
+ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
+
+_install_caddy() {
+    local domain="$1"
+
+    if [[ "$domain" == "localhost" ]]; then
+        cat > /etc/caddy/Caddyfile << 'EOF'
+:80 {
+    reverse_proxy unix//opt/bayanat/current/bayanat.sock
+    handle_path /static/* {
+        root * /opt/bayanat/current/enferno/static
+        file_server
+    }
+    request_body {
+        max_size 100MB
+    }
+}
+EOF
+    else
+        cat > /etc/caddy/Caddyfile << EOF
+$domain {
+    reverse_proxy unix//opt/bayanat/current/bayanat.sock
+    handle_path /static/* {
+        root * /opt/bayanat/current/enferno/static
+        file_server
+    }
+    request_body {
+        max_size 100MB
+    }
+}
+EOF
+    fi
+}
+
+_install_sudoers() {
+    cat > /etc/sudoers.d/bayanat << 'EOF'
+bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
+bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat status
+bayanat ALL=(root) NOPASSWD: /usr/bin/systemctl restart bayanat-celery
+EOF
+    chmod 440 /etc/sudoers.d/bayanat
+}
+
+# --- Status ---
+
+cmd_status() {
+    local current
+    if current=$(current_version); then
+        echo "Current version: $current"
+    else
+        echo "Current version: not installed"
+        return 1
+    fi
+
+    local latest
+    latest=$(latest_remote_tag)
+    echo "Latest release:  $latest"
+
+    if [[ "$current" == "$latest" ]]; then
+        echo "Status: up to date"
+    else
+        echo "Status: update available"
+    fi
+
+    echo ""
+    echo "Services:"
+    for svc in bayanat bayanat-celery caddy; do
+        printf "  %-20s %s\n" "$svc" "$(systemctl is-active "$svc" 2>/dev/null || echo 'unknown')"
+    done
+}
+
+# --- Usage ---
+
+usage() {
+    cat << EOF
+bayanat $VERSION - Bayanat server management
+
+Usage: bayanat <command> [options]
+
+Commands:
+  install [domain]    Install Bayanat (default: localhost)
+  status              Show version and service status
+
+Environment:
+  BAYANAT_REPO        GitHub repo (default: sjacorg/bayanat)
+EOF
+}
+
+# --- Main ---
+
+case "${1:-}" in
+    install) shift; cmd_install "$@" ;;
+    status)  cmd_status ;;
+    -h|--help|help) usage ;;
+    *) usage; exit 1 ;;
+esac

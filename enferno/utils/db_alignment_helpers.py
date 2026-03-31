@@ -113,5 +113,33 @@ class DBAlignmentChecker:
                 f"Extra tables in database not present in models: {', '.join(extra_tables)}"
             )
 
+        # Check dynamic field columns
+        self._check_dynamic_fields()
+
         if aligned:
             logger.info("The database is aligned with the schema")
+
+    def _check_dynamic_fields(self) -> None:
+        """Check that active non-core dynamic field columns exist in their entity tables."""
+        try:
+            from enferno.admin.models.DynamicField import DynamicField
+
+            active_fields = DynamicField.query.filter(
+                DynamicField.active.is_(True), DynamicField.core.is_(False)
+            ).all()
+
+            for field in active_fields:
+                table_name = field.entity_type
+                if table_name not in self.db_tables:
+                    logger.warning(
+                        f"Dynamic field '{field.name}': entity table '{table_name}' not found"
+                    )
+                    continue
+
+                db_columns = {c["name"] for c in self.inspector.get_columns(table_name)}
+                if field.name not in db_columns:
+                    logger.warning(
+                        f"Dynamic field '{field.name}': column missing in table '{table_name}'"
+                    )
+        except Exception as e:
+            logger.warning(f"Could not check dynamic fields: {e}")

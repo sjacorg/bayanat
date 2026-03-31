@@ -88,12 +88,34 @@ def regenerate_locations() -> None:
 
 
 def reload_app():
-    import os
-    import signal
+    """Touch reload.ini to trigger uWSGI graceful reload.
+    Returns True if uWSGI reload was triggered, False in dev mode.
+    """
+    import pathlib
 
-    os.kill(os.getppid(), signal.SIGHUP)
+    reload_file = pathlib.Path(__file__).resolve().parents[2] / "reload.ini"
+    try:
+        import uwsgi  # noqa: F401
+
+        reload_file.touch()
+        return True
+    except ImportError:
+        # Dev mode (flask run), no uWSGI available
+        return False
 
 
-@celery.task
-def reload_celery():
-    reload_app()
+def restart_celery():
+    """Restart Celery worker via systemd. Requires sudoers entry.
+    Silently skips in dev mode (no systemd).
+    """
+    import subprocess
+
+    try:
+        subprocess.Popen(
+            ["sudo", "/usr/bin/systemctl", "restart", "bayanat-celery"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        # Dev mode or no systemd
+        pass
