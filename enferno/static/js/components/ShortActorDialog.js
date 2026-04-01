@@ -379,6 +379,17 @@ const ShortActorDialog = Vue.defineComponent({
                               v-bind="$root.serverErrorPropsForField(serverErrors, 'item.no_children')"
                             ></v-text-field>
                           </div>
+                           <div style="min-width: 0;">
+                              <search-field
+                                  v-model="editedItem.ethnographies"
+                                  api="/admin/api/ethnographies/"
+                                  item-title="title"
+                                  item-value="title"
+                                  :multiple="true"
+                                  clearable
+                                  :label="translations.ethnographicInformation_"
+                              ></search-field>
+                          </div>
                           <div style="min-width: 0;">
                             <search-field
                               v-model="editedItem.nationalities"
