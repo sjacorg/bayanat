@@ -109,13 +109,11 @@
                                     <p class="text-caption text-muted mb-4">{{ _('Set the default interface language for new sessions.') }}</p>
                                     <h4 class="subtitle-2 mb-1">{{ _('Default language') }}</h4>
                                     <p class="text-caption mb-1">{{ _('Changes default interface language for all users. Users can still choose their own interface language.') }}</p>
-                                    <div id="setting-default-language">
-                                        <v-btn-toggle divided variant="outlined" color="primary" mandatory v-model="eitem.BABEL_DEFAULT_LOCALE">
-                                            <v-btn size="small" v-for="(name, code) in languages" :value="code">
-                                                ${name}
-                                            </v-btn>
-                                        </v-btn-toggle>
-                                    </div>
+                                    <v-btn-toggle id="setting-default-language" divided variant="outlined" color="primary" mandatory v-model="eitem.BABEL_DEFAULT_LOCALE">
+                                        <v-btn size="small" v-for="(name, code) in languages" :value="code">
+                                            ${name}
+                                        </v-btn>
+                                    </v-btn-toggle>
                     
                                     <v-divider class="my-4"></v-divider>
                     
@@ -175,23 +173,21 @@
                                     <div style="max-width: 823px;">
                                         <h4 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Storage backend') }}</h4>
                                         <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
-                                        <div id="setting-storage-backend">
-                                            <v-btn-toggle divided variant="outlined" color="primary" mandatory v-model="eitem.FILESYSTEM_LOCAL"
-                                                class="my-3 mb-9">
-                                                <v-btn :value="true">{{ _('Local Filesystem') }}</v-btn>
-                                                <v-btn :value="false">{{ _('S3 Storage') }}</v-btn>
-                                            </v-btn-toggle>
-                                        </div>
+                                        <v-btn-toggle id="setting-storage-backend" divided variant="outlined" color="primary" mandatory v-model="eitem.FILESYSTEM_LOCAL"
+                                            class="my-3 mb-9">
+                                            <v-btn :value="true">{{ _('Local Filesystem') }}</v-btn>
+                                            <v-btn :value="false">{{ _('S3 Storage') }}</v-btn>
+                                        </v-btn-toggle>
                     
                                         <v-slide-y-transition>
                                             <v-sheet v-show="!eitem.FILESYSTEM_LOCAL" class="mb-9">
                                                 <h4 class="subtitle-2 mb-3">{{ _('S3 connection details') }}</h4>
                                                 <v-row>
-                                                    <v-col cols="6">
+                                                    <v-col cols="6" id="setting-aws-access-key-id">
                                                         <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('AWS Access Key ID') }}"
                                                             v-model="eitem.AWS_ACCESS_KEY_ID"></v-text-field>
                                                     </v-col>
-                                                    <v-col cols="6">
+                                                    <v-col cols="6" id="setting-aws-secret-access-key">
                                                         <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('AWS Access Key Secret') }}"
                                                             v-model="eitem.AWS_SECRET_ACCESS_KEY"></v-text-field>
                                                     </v-col>
@@ -199,7 +195,7 @@
                                                         <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('S3 Bucket Name') }}"
                                                             v-model="eitem.S3_BUCKET"></v-text-field>
                                                     </v-col>
-                                                    <v-col cols="6">
+                                                    <v-col cols="6" id="setting-aws-region">
                                                         <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('S3 Region') }}"
                                                             v-model="eitem.AWS_REGION"></v-text-field>
                                                     </v-col>
@@ -1276,6 +1272,9 @@
 
                     { id: 'storage_backend', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('Local Filesystem / S3 Storage') }}", anchorId: 'setting-storage-backend', keywords: ["{{ _('files') }}", "{{ _('s3') }}", "{{ _('bucket') }}"] },
                     { id: 's3_bucket', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('S3 Bucket Name') }}", anchorId: 'setting-s3-bucket', keywords: ["{{ _('aws') }}", "{{ _('storage') }}", "{{ _('bucket') }}"] },
+                    { id: 'aws_access_key_id', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Access Key ID') }}", anchorId: 'setting-aws-access-key-id', keywords: ["{{ _('aws') }}", "{{ _('storage') }}", "{{ _('access') }}", "{{ _('key') }}", "{{ _('id') }}"] },
+                    { id: 'aws_secret_access_key', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Secret Access Key') }}", anchorId: 'setting-aws-secret-access-key', keywords: ["{{ _('aws') }}", "{{ _('storage') }}", "{{ _('secret') }}", "{{ _('key') }}"] },
+                    { id: 'aws_region', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Region') }}", anchorId: 'setting-aws-region', keywords: ["{{ _('aws') }}", "{{ _('storage') }}", "{{ _('region') }}"] },
                     { id: 'media_extensions', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Allowed Media Extensions') }}", anchorId: 'setting-media-allowed-extensions', keywords: ["{{ _('upload') }}", "{{ _('extensions') }}", "{{ _('files') }}"] },
                     { id: 'media_size', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Media Max Upload Size') }}", anchorId: 'setting-media-max-upload-size', keywords: ["{{ _('upload') }}", "{{ _('size') }}", "{{ _('limit') }}"] },
 
