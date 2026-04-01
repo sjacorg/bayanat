@@ -43,7 +43,7 @@ sudo bayanat status
 ```
 
 ::: tip
-The quick installer uses a symlink-based release structure at `/opt/bayanat/` with shared configuration and media that persists across updates. See the [architecture documentation](/deployment/architecture) for details.
+The quick installer uses a symlink-based release structure at `/opt/bayanat/` with shared configuration and media that persists across updates.
 :::
 
 ## Manual Installation
