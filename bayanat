@@ -5,15 +5,12 @@
 #
 set -euo pipefail
 
-readonly VERSION="1.0.0"
+readonly SCRIPT_VERSION="1.1.0"
 readonly BAYANAT_ROOT="/opt/bayanat"
 readonly RELEASES_DIR="$BAYANAT_ROOT/releases"
 readonly SHARED_DIR="$BAYANAT_ROOT/shared"
-readonly SYSTEM_DIR="$BAYANAT_ROOT/system"
 readonly LOGS_DIR="$BAYANAT_ROOT/logs"
 readonly CURRENT_LINK="$BAYANAT_ROOT/current"
-# LOCKFILE used by update command (PR 2)
-# readonly LOCKFILE="$BAYANAT_ROOT/.update.lock"
 readonly DEFAULT_REPO="sjacorg/bayanat"
 readonly GIT_URL="https://github.com/${BAYANAT_REPO:-$DEFAULT_REPO}.git"
 readonly APP_USER="bayanat"
@@ -25,6 +22,37 @@ warn()  { printf '[%s] WARN: %s\n' "$(date '+%H:%M:%S')" "$1" >&2; }
 die()   { printf '[%s] ERROR: %s\n' "$(date '+%H:%M:%S')" "$1" >&2; exit 1; }
 
 require_root() { [[ $EUID -eq 0 ]] || die "Must run as root"; }
+
+# --- Preflight ---
+
+preflight_checks() {
+    # OS
+    [[ -f /etc/os-release ]] || die "Cannot detect OS (missing /etc/os-release)"
+    local os_id os_ver
+    os_id=$(grep '^ID=' /etc/os-release | cut -d= -f2)
+    os_ver=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    [[ "$os_id" == "ubuntu" ]] || die "Unsupported OS: $os_id (need Ubuntu)"
+    [[ "${os_ver%%.*}" -ge 22 ]] || die "Ubuntu $os_ver is too old (need 22.04+)"
+
+    # Architecture
+    local arch
+    arch=$(uname -m)
+    [[ "$arch" == "x86_64" || "$arch" == "aarch64" ]] \
+        || die "Unsupported architecture: $arch"
+    log "System: Ubuntu $os_ver ($arch)"
+
+    # Disk space (need 2GB free on /opt)
+    local free_kb
+    free_kb=$(df --output=avail /opt 2>/dev/null | tail -1 | tr -d ' ')
+    if [[ -n "$free_kb" ]] && [[ "$free_kb" -lt 2097152 ]]; then
+        die "Need at least 2GB free on /opt (have $((free_kb / 1024))MB)"
+    fi
+
+    # Network
+    if ! curl -sfSL --max-time 5 -o /dev/null https://github.com; then
+        die "Cannot reach github.com. Check your network."
+    fi
+}
 
 # --- Helpers ---
 
@@ -38,50 +66,24 @@ current_version() {
     basename "$(readlink "$CURRENT_LINK")"
 }
 
-release_venv() { echo "$RELEASES_DIR/$1/.venv/bin"; }
-
 flask_run() {
     local version="$1"; shift
-    local venv
-    venv="$(release_venv "$version")"
     sudo -u "$APP_USER" \
-        FLASK_APP=run.py \
-        PATH="$venv:$PATH" \
-        bash -c "cd '$RELEASES_DIR/$version' && uv run flask $*"
+        env FLASK_APP=run.py \
+        /usr/local/bin/uv run \
+        --directory "$RELEASES_DIR/$version" \
+        flask "$@"
 }
 
-# Atomic symlink swap (safe on Linux)
 swap_symlink() {
     local target="$1"
     ln -sfn "$target" "$CURRENT_LINK.tmp"
     mv -Tf "$CURRENT_LINK.tmp" "$CURRENT_LINK"
 }
 
-health_check() {
-    local retries=10
-    local sock="$CURRENT_LINK/bayanat.sock"
-    log "Health check: $sock"
-    for _ in $(seq 1 $retries); do
-        if curl -sf -o /dev/null --unix-socket "$sock" http://localhost/ 2>/dev/null; then
-            log "Health check passed"
-            return 0
-        fi
-        sleep 2
-    done
-    warn "Health check failed after $retries attempts"
-    return 1
-}
+# --- Step functions (each is idempotent) ---
 
-# --- Install ---
-
-cmd_install() {
-    local domain="${1:-localhost}"
-    require_root
-
-    log "Installing Bayanat for: $domain"
-    log "Repository: ${BAYANAT_REPO:-$DEFAULT_REPO}"
-
-    # System dependencies
+_install_system_packages() {
     log "Installing system packages..."
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq
@@ -90,134 +92,110 @@ cmd_install() {
         python3 python3-dev build-essential \
         libpq-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev \
         libjpeg-dev libzip-dev libimage-exiftool-perl ffmpeg curl wget jq
+}
 
-    # uv
+_install_uv() {
+    if command -v uv &>/dev/null; then
+        log "uv already installed: $(uv --version)"
+        return 0
+    fi
     log "Installing uv..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    cp "$HOME/.local/bin/uv" /usr/local/bin/ 2>/dev/null \
-        || cp "$HOME/.cargo/bin/uv" /usr/local/bin/
-    chmod 755 /usr/local/bin/uv
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+    # Verify
+    command -v uv &>/dev/null || die "uv installation failed"
+    log "Installed: $(uv --version)"
+}
 
-    # Caddy
+_install_caddy_repo() {
+    if dpkg -l caddy &>/dev/null; then
+        log "Caddy already installed"
+        return 0
+    fi
     log "Installing Caddy..."
-    rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    local keyring="/usr/share/keyrings/caddy-stable-archive-keyring.gpg"
+    local tmpkey
+    tmpkey=$(mktemp)
     curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
-        | gpg --batch --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+        | gpg --batch --dearmor -o "$tmpkey"
+    mv -f "$tmpkey" "$keyring"
     curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
         > /etc/apt/sources.list.d/caddy-stable.list
-    apt-get update -qq && apt-get install -y -qq caddy
+    apt-get update -qq
+    apt-get install -y -qq caddy
+}
 
-    # Services
+_setup_app_user() {
+    if id "$APP_USER" &>/dev/null; then
+        log "User $APP_USER already exists"
+    else
+        # Reuse existing group if left over from previous install
+        if getent group "$APP_USER" &>/dev/null; then
+            useradd -m -g "$APP_USER" "$APP_USER"
+        else
+            useradd -m "$APP_USER"
+        fi
+        log "Created user $APP_USER"
+    fi
+    usermod -aG "$APP_USER" caddy 2>/dev/null || true
+}
+
+_setup_database() {
     systemctl enable --now postgresql redis-server
 
-    # App user
-    id "$APP_USER" &>/dev/null || useradd -m "$APP_USER"
-    # Caddy needs to read the uWSGI socket
-    usermod -aG "$APP_USER" caddy 2>/dev/null || true
-
-    # Database
     log "Setting up database..."
     sudo -u postgres createuser -s "$APP_USER" 2>/dev/null || true
     sudo -u postgres createdb bayanat -O "$APP_USER" 2>/dev/null || true
 
-    # PostgreSQL trust auth for app user
+    # Configure pg_hba trust auth for app user
     local pg_hba
     pg_hba=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1)
-    if [[ -n "$pg_hba" ]] && ! grep -q "local.*$APP_USER.*trust" "$pg_hba" 2>/dev/null; then
-        sed -i "/^local.*all.*postgres.*peer/a local   all             $APP_USER                                 trust" "$pg_hba"
+    [[ -n "$pg_hba" ]] || die "Cannot find pg_hba.conf"
+
+    local rule="local   all             $APP_USER                                 trust"
+    if grep -qF "$rule" "$pg_hba"; then
+        log "pg_hba.conf already configured"
+    else
+        log "Configuring pg_hba.conf for $APP_USER"
+        # Insert before the "local all all" catch-all, or append
+        if grep -q "^local.*all.*all" "$pg_hba"; then
+            sed -i "/^local.*all.*all/i $rule" "$pg_hba"
+        else
+            echo "$rule" >> "$pg_hba"
+        fi
         systemctl reload postgresql
-    fi
-
-    # Directory layout
-    log "Creating directory structure..."
-    mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/backups" \
-             "$SYSTEM_DIR" "$LOGS_DIR"
-
-    # Clone and checkout latest release
-    local tag
-    tag=$(latest_remote_tag)
-    [[ -n "$tag" ]] || die "No release tags found"
-    log "Latest release: $tag"
-
-    if [[ -d "$RELEASES_DIR/$tag" ]]; then
-        log "Release $tag already exists, skipping clone"
-    else
-        log "Cloning $tag..."
-        git clone --depth 1 --branch "$tag" "$GIT_URL" "$RELEASES_DIR/$tag"
-    fi
-
-    # Generate .env if missing (before linking so symlink picks it up)
-    if [[ ! -f "$SHARED_DIR/.env" ]]; then
-        log "Generating .env..."
-        _generate_env "$domain"
-    fi
-
-    # Own the release dir and shared dir
-    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
-
-    # Symlink shared resources into release
-    _link_shared "$tag"
-
-    # Install Python deps
-    log "Installing dependencies..."
-    sudo -u "$APP_USER" bash -c "cd '$RELEASES_DIR/$tag' && /usr/local/bin/uv sync --frozen"
-
-    # Initialize database
-    log "Initializing database..."
-    flask_run "$tag" create-db --create-exts
-    flask_run "$tag" import-data
-    flask_run "$tag" db stamp head
-
-    # Set current symlink
-    swap_symlink "$RELEASES_DIR/$tag"
-    log "Active release: $tag"
-
-    # Production uWSGI config
-    _install_uwsgi_config
-
-    # Systemd units
-    _install_systemd "$tag"
-
-    # Caddy config
-    _install_caddy "$domain"
-
-    # Sudoers for web-triggered updates
-    _install_sudoers
-
-    # Own everything
-    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
-
-    # Start
-    systemctl daemon-reload
-    systemctl enable --now bayanat bayanat-celery
-    systemctl restart caddy
-
-    log "Installation complete"
-    if [[ "$domain" == "localhost" ]]; then
-        log "Access: http://$(hostname -I | awk '{print $1}')"
-    else
-        log "Access: https://$domain"
     fi
 }
 
-# --- Internal helpers ---
+_create_directories() {
+    mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/backups" \
+             "$LOGS_DIR"
+}
 
-_link_shared() {
+_clone_release() {
     local tag="$1"
-    local release="$RELEASES_DIR/$tag"
+    local dest="$RELEASES_DIR/$tag"
 
-    # .env
-    [[ -f "$SHARED_DIR/.env" ]] && ln -sfn "$SHARED_DIR/.env" "$release/.env"
-
-    # media directory
-    if [[ -d "$release/enferno/media" ]] && [[ ! -L "$release/enferno/media" ]]; then
-        rm -rf "$release/enferno/media"
+    if [[ -d "$dest/.git" ]]; then
+        if sudo -u "$APP_USER" git -C "$dest" rev-parse HEAD &>/dev/null; then
+            log "Release $tag already cloned"
+            return 0
+        fi
+        warn "Partial clone detected, removing $dest"
+        rm -rf "$dest"
+    elif [[ -d "$dest" ]]; then
+        warn "Invalid release directory, removing $dest"
+        rm -rf "$dest"
     fi
-    ln -sfn "$SHARED_DIR/media" "$release/enferno/media"
+
+    log "Cloning $tag..."
+    git clone --depth 1 --branch "$tag" "$GIT_URL" "$dest"
 }
 
 _generate_env() {
     local domain="$1"
+    local force_https="False"
+    [[ "$domain" != "localhost" ]] && force_https="True"
+
     cat > "$SHARED_DIR/.env" << EOF
 FLASK_APP=run.py
 FLASK_DEBUG=0
@@ -229,7 +207,48 @@ SECURITY_TOTP_SECRETS='$(openssl rand -base64 32)'
 SECURITY_TWO_FACTOR=True
 SECURITY_TWO_FACTOR_RESCUE_MAIL=''
 SECURITY_TWO_FACTOR_AUTHENTICATOR_VALIDITY=90
+
+SECURE_COOKIES=$force_https
+FORCE_HTTPS=$force_https
+
+LOG_DIR=$LOGS_DIR
+BACKUPS_LOCAL_PATH=$SHARED_DIR/backups
 EOF
+}
+
+_link_shared() {
+    local tag="$1"
+    local release="$RELEASES_DIR/$tag"
+
+    [[ -f "$SHARED_DIR/.env" ]] && ln -sfn "$SHARED_DIR/.env" "$release/.env"
+
+    if [[ -d "$release/enferno/media" ]] && [[ ! -L "$release/enferno/media" ]]; then
+        rm -rf "$release/enferno/media"
+    fi
+    ln -sfn "$SHARED_DIR/media" "$release/enferno/media"
+}
+
+_install_deps() {
+    local tag="$1"
+    log "Installing Python dependencies..."
+    sudo -u "$APP_USER" \
+        /usr/local/bin/uv sync --frozen \
+        --directory "$RELEASES_DIR/$tag"
+}
+
+_init_database() {
+    local tag="$1"
+    log "Initializing database..."
+    flask_run "$tag" create-db --create-exts
+    flask_run "$tag" import-data
+
+    # Stamp Alembic head only if this release has migrations
+    if [[ -d "$RELEASES_DIR/$tag/migrations/versions" ]]; then
+        log "Stamping Alembic baseline..."
+        flask_run "$tag" db stamp head
+    else
+        log "No Alembic migrations in $tag, skipping stamp"
+    fi
 }
 
 _install_uwsgi_config() {
@@ -251,8 +270,6 @@ EOF
 }
 
 _install_systemd() {
-    local tag="$1"
-
     cat > /etc/systemd/system/bayanat.service << EOF
 [Unit]
 Description=Bayanat web application
@@ -295,7 +312,7 @@ WantedBy=multi-user.target
 EOF
 }
 
-_install_caddy() {
+_configure_caddy() {
     local domain="$1"
 
     if [[ "$domain" == "localhost" ]]; then
@@ -336,6 +353,69 @@ EOF
     chmod 440 /etc/sudoers.d/bayanat
 }
 
+# --- Install ---
+
+cmd_install() {
+    local domain="${1:-localhost}"
+    require_root
+    preflight_checks
+
+    log "Installing Bayanat for: $domain"
+    log "Repository: ${BAYANAT_REPO:-$DEFAULT_REPO}"
+
+    # System setup
+    _install_system_packages
+    _install_uv
+    _install_caddy_repo
+
+    # Users and database
+    _setup_app_user
+    _setup_database
+
+    # Application
+    _create_directories
+
+    local tag
+    tag=$(latest_remote_tag)
+    [[ -n "$tag" ]] || die "No release tags found"
+    log "Latest release: $tag"
+
+    _clone_release "$tag"
+
+    if [[ ! -f "$SHARED_DIR/.env" ]]; then
+        log "Generating .env..."
+        _generate_env "$domain"
+    fi
+
+    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
+    _link_shared "$tag"
+
+    _install_deps "$tag"
+    _init_database "$tag"
+
+    # Activate release
+    swap_symlink "$RELEASES_DIR/$tag"
+    log "Active release: $tag"
+
+    # System integration
+    _install_uwsgi_config
+    _install_systemd
+    _configure_caddy "$domain"
+    _install_sudoers
+
+    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
+    systemctl daemon-reload
+    systemctl enable --now bayanat bayanat-celery
+    systemctl restart caddy
+
+    log "Installation complete"
+    if [[ "$domain" == "localhost" ]]; then
+        log "Access: http://$(hostname -I | awk '{print $1}')"
+    else
+        log "Access: https://$domain"
+    fi
+}
+
 # --- Status ---
 
 cmd_status() {
@@ -368,7 +448,7 @@ cmd_status() {
 
 usage() {
     cat << EOF
-bayanat $VERSION - Bayanat server management
+bayanat $SCRIPT_VERSION - Bayanat server management
 
 Usage: bayanat <command> [options]
 
