@@ -11,6 +11,12 @@ const ActorCard = Vue.defineComponent({
     closePosition: { type: String, default: 'append', validator: v => ['append', 'prepend'].includes(v) }
   },
   emits: ['edit', 'close'],
+  beforeUnmount() {
+    this.$root.closeExpandedMedia?.(this.mediaRendererId);
+    if (this.$root.renderers?.[this.mediaRendererId]) {
+      delete this.$root.renderers[this.mediaRendererId];
+    }
+  },
   mounted() {
     this.$root.fetchDynamicFields({ entityType: 'actor' });
     this.fetchData();
@@ -116,7 +122,16 @@ const ActorCard = Vue.defineComponent({
       hloading: false,
       mapLocations: [],
       mediasReady: 0,
+      mediaRendererId: `actor-card-${this.$.uid}`,
     };
+  },
+
+  watch: {
+    actor(val, old) {
+      if (old?.id !== val?.id) {
+        this.$root.closeExpandedMedia?.(this.mediaRendererId);
+      }
+    },
   },
 
   template: `
@@ -404,16 +419,16 @@ const ActorCard = Vue.defineComponent({
               </v-toolbar>
 
               <inline-media-renderer
-                renderer-id="actor-card"
-                :media="$root.expandedByRenderer?.['actor-card']?.media"
-                :media-type="$root.expandedByRenderer?.['actor-card']?.mediaType"
+                :renderer-id="mediaRendererId"
+                :media="$root.expandedByRenderer?.[mediaRendererId]?.media"
+                :media-type="$root.expandedByRenderer?.[mediaRendererId]?.mediaType"
                 @ready="$root.onMediaRendererReady"
-                @fullscreen="$root.handleFullscreen('actor-card')"
-                @close="$root.closeExpandedMedia('actor-card')"
+                @fullscreen="$root.handleFullscreen(mediaRendererId)"
+                @close="$root.closeExpandedMedia(mediaRendererId)"
               ></inline-media-renderer>
 
               <v-card-text>
-                <media-grid prioritize-videos :medias="actor.medias" @media-click="$root.handleExpandedMedia({ rendererId: 'actor-card', ...$event})"></media-grid>
+                <media-grid prioritize-videos :medias="actor.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event})"></media-grid>
               </v-card-text>
             </v-card>
           </div>

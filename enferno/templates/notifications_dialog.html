@@ -9,6 +9,12 @@
                 <template #append>
                     <v-btn v-if="notifications.ui.dialogFullscreen" icon="mdi-fullscreen-exit" @click="notifications.ui.dialogFullscreen = false"></v-btn>
                     <v-btn v-else icon="mdi-fullscreen" @click="notifications.ui.dialogFullscreen = true"></v-btn>
+                    <v-tooltip location="bottom" :style="{ zIndex: 3002 }">
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" icon="mdi-cog" href="/admin/system-administration/#notifications"></v-btn>
+                        </template>
+                        {{ _('Notification Settings') }}
+                    </v-tooltip>
                     <v-btn icon="mdi-close" @click="notifications.ui.dialogVisible=false"></v-btn>
                 </template>
             </v-toolbar>
@@ -42,6 +48,20 @@
                 <div class="w-100">
                     <v-window v-model="notifications.ui.currentTab" style="min-height: calc(100vh - 251px);">
                         <v-window-item v-for="tab in ['all', 'unread', 'read']" :key="tab" :value="tab">
+                            <v-divider class="border-opacity-25"></v-divider>
+
+                            <v-btn
+                                @click="markAllAsRead()"
+                                :loading="notifications.status.markingAllAsRead"
+                                :disabled="!notifications.unreadCount"
+                                color="primary"
+                                variant="text"
+                                class="font-weight-medium"
+                                block
+                                tile
+                                size="x-large"
+                            >{{ _('Mark All as Read') }}</v-btn>
+
                             <notifications-list
                                 :config="{ hideScrollFeedback: false, maxTitleLines: false, maxSubtitleLines: false }"
                                 :notifications="notifications.items"
