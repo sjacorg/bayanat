@@ -1047,22 +1047,22 @@
                                                         hint="{{ _('Port for SMTP server.') }}" v-model.number="eitem.MAIL_PORT"></v-text-field>
                                                 </v-col>
                                             
-                                                <v-col cols="12" lg="6">
+                                                <v-col cols="12" lg="6" id="setting-mail-tls">
                                                     <v-switch color="primary" class="my-2" label="{{ _('Use TLS') }}" v-model="eitem.MAIL_USE_TLS" persistent-hint
                                                     hint="{{ _('Use TLS for SMTP server.') }}"></v-switch>
                                                 </v-col>
 
-                                                <v-col cols="12" lg="6">
+                                                <v-col cols="12" lg="6" id="setting-mail-ssl">
                                                     <v-switch color="primary" class="my-2" label="{{ _('Use SSL') }}" v-model="eitem.MAIL_USE_SSL" persistent-hint
                                                         hint="{{ _('Use SSL for SMTP server.') }}"></v-switch>
                                                 </v-col>
 
-                                                <v-col cols="12" lg="6">
+                                                <v-col cols="12" lg="6" id="setting-mail-username">
                                                     <v-text-field v-bind="inputProps" label="{{ _('Mail Username') }}" persistent-hint hint="{{ _('Username for SMTP server.') }}"
                                                         v-model="eitem.MAIL_USERNAME"></v-text-field>
                                                 </v-col>
 
-                                                <v-col cols="12" lg="6">
+                                                <v-col cols="12" lg="6" id="setting-mail-password">
                                                     <v-text-field v-bind="inputProps" label="{{ _('Mail Password') }}" persistent-hint hint="{{ _('Password for SMTP server.') }}"
                                                         v-model="eitem.MAIL_PASSWORD"></v-text-field>
                                                 </v-col>
@@ -1323,6 +1323,10 @@
                     { id: 'mail_port', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Port') }}", anchorId: 'setting-mail-port', keywords: ["{{ _('smtp') }}", "{{ _('port') }}"] },
                     { id: 'mail_default_sender', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Default Sender') }}", anchorId: 'setting-mail-default-sender', keywords: ["{{ _('sender') }}", "{{ _('from') }}"] },
                     { id: 'mail_allowed_domains', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Allowed Email Domains') }}", anchorId: 'setting-mail-allowed-domains', keywords: ["{{ _('email') }}", "{{ _('domains') }}", "{{ _('allowlist') }}"] },
+                    { id: 'mail_tls', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Use TLS') }}", anchorId: 'setting-mail-tls', keywords: ["{{ _('tls') }}", "{{ _('transport') }}", "{{ _('layer') }}", "{{ _('security') }}"] },
+                    { id: 'mail_ssl', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Use SSL') }}", anchorId: 'setting-mail-ssl', keywords: ["{{ _('ssl') }}", "{{ _('secure') }}", "{{ _('sockets') }}", "{{ _('layer') }}"] },
+                    { id: 'mail_user', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail User') }}", anchorId: 'setting-mail-user', keywords: ["{{ _('user') }}", "{{ _('account') }}", "{{ _('credentials') }}"] },
+                    { id: 'mail_password', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Password') }}", anchorId: 'setting-mail-password', keywords: ["{{ _('password') }}", "{{ _('account') }}", "{{ _('credentials') }}"] },
                 ],
 
 
