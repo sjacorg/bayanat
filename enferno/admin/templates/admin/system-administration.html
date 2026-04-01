@@ -1511,12 +1511,7 @@
                     if (!target) return;
 
                     // Check if the target or any ancestor is hidden (e.g. behind a v-show)
-                    let isHidden = false;
-                    let node = target;
-                    while (node && node !== document.body) {
-                        if (window.getComputedStyle(node).display === 'none') { isHidden = true; break; }
-                        node = node.parentElement;
-                    }
+                    const isHidden = !target.offsetParent;
 
                     if (isHidden) {
                         if (setting.requires) {
