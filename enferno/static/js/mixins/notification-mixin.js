@@ -228,18 +228,16 @@ const notificationMixin = {
       }
     },    
     async markAllAsRead() {
-      if (this.notifications.status.markingAllAsRead) return; // Prevent duplicate calls
-      
+      if (this.notifications.status.markingAllAsRead) return;
+
       const previousUnreadCount = this.notifications.unreadCount;
-      const previousNotifications = [...this.notifications.items];
-      const previousImportantNotifications = [...this.notifications.importantItems];
+      const previousStatuses = this.notifications.items.map(n => n.read_status);
+      const previousImportantStatuses = this.notifications.importantItems.map(n => n.read_status);
 
-      const readNotification = (notification) => { notification.read_status = true };
-
-      this.notifications.status.markingAllAsRead = true; // Add this flag
+      this.notifications.status.markingAllAsRead = true;
       this.notifications.unreadCount = 0;
-      this.notifications.items.forEach(readNotification);
-      this.notifications.importantItems.forEach(readNotification);
+      this.notifications.items.forEach(n => { n.read_status = true });
+      this.notifications.importantItems.forEach(n => { n.read_status = true });
 
       try {
         const { data } = await axios.post(`/admin/api/notifications/mark-all-read`);
@@ -248,10 +246,10 @@ const notificationMixin = {
         console.error(error);
         this.showSnack(handleRequestError(error));
 
-        // Revert state if request failed
+        // Revert read_status on each notification individually
         this.notifications.unreadCount = previousUnreadCount;
-        this.notifications.items = previousNotifications;
-        this.notifications.importantItems = previousImportantNotifications;
+        this.notifications.items.forEach((n, i) => { n.read_status = previousStatuses[i] });
+        this.notifications.importantItems.forEach((n, i) => { n.read_status = previousImportantStatuses[i] });
       } finally {
         this.notifications.status.markingAllAsRead = false;
       }
