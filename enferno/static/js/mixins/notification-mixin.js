@@ -24,6 +24,7 @@ const notificationMixin = {
         initialLoading: false,
         loadingMore: false,
         markingImportantAsRead: false,
+        markingAllAsRead: false,
         loadError: false
       },
       ui: {
@@ -69,9 +70,7 @@ const notificationMixin = {
     async markAsReadImportantNotifications() {
       try {
         this.notifications.status.markingImportantAsRead = true;
-        await Promise.all(this.notifications.importantItems.map(async notification => {
-          await this.readNotification(notification)
-        }))
+        await Promise.all(this.notifications.importantItems.map(notification => this.readNotification(notification)))
       } catch (error) {
         console.error(error);
         this.showSnack(handleRequestError(error))
@@ -228,6 +227,33 @@ const notificationMixin = {
         this.notifications.unreadCount = previousUnreadCount;
       }
     },    
+    async markAllAsRead() {
+      if (this.notifications.status.markingAllAsRead) return;
+
+      const previousUnreadCount = this.notifications.unreadCount;
+      const previousStatuses = this.notifications.items.map(n => n.read_status);
+      const previousImportantStatuses = this.notifications.importantItems.map(n => n.read_status);
+
+      this.notifications.status.markingAllAsRead = true;
+      this.notifications.unreadCount = 0;
+      this.notifications.items.forEach(n => { n.read_status = true });
+      this.notifications.importantItems.forEach(n => { n.read_status = true });
+
+      try {
+        const { data } = await axios.post(`/admin/api/notifications/mark-all-read`);
+        this.notifications.unreadCount = data.unreadCount;
+      } catch (error) {
+        console.error(error);
+        this.showSnack(handleRequestError(error));
+
+        // Revert read_status on each notification individually
+        this.notifications.unreadCount = previousUnreadCount;
+        this.notifications.items.forEach((n, i) => { n.read_status = previousStatuses[i] });
+        this.notifications.importantItems.forEach((n, i) => { n.read_status = previousImportantStatuses[i] });
+      } finally {
+        this.notifications.status.markingAllAsRead = false;
+      }
+    },
     async refetchNotifications() {
       this.loadNotifications({ page: 1 });
     },
