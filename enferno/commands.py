@@ -9,7 +9,6 @@ from flask import current_app
 from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
 
-from enferno.settings import Config
 import json
 import shutil
 from pathlib import Path
@@ -27,11 +26,10 @@ from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from geoalchemy2.shape import to_shape
 from sqlalchemy import text
-from sqlalchemy.orm import joinedload, subqueryload
+from sqlalchemy.orm import subqueryload
 from enferno.admin.models import Bulletin, Label
 from enferno.admin.models.Media import Media
 from enferno.admin.models.tables import bulletin_labels
-from enferno.admin.models.DynamicField import DynamicField
 from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.form_history_utils import record_form_history
