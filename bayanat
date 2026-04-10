@@ -5,7 +5,7 @@
 #
 set -euo pipefail
 
-readonly SCRIPT_VERSION="1.1.0"
+readonly SCRIPT_VERSION="1.2.0"
 readonly BAYANAT_ROOT="/opt/bayanat"
 readonly RELEASES_DIR="$BAYANAT_ROOT/releases"
 readonly SHARED_DIR="$BAYANAT_ROOT/shared"
@@ -19,7 +19,11 @@ readonly APP_USER="bayanat"
 
 log()   { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1"; }
 warn()  { printf '[%s] WARN: %s\n' "$(date '+%H:%M:%S')" "$1" >&2; }
-die()   { printf '[%s] ERROR: %s\n' "$(date '+%H:%M:%S')" "$1" >&2; exit 1; }
+die()   {
+    printf '[%s] ERROR: %s\n' "$(date '+%H:%M:%S')" "$1" >&2
+    [[ -n "${2:-}" ]] && printf '[%s] FIX: %s\n' "$(date '+%H:%M:%S')" "$2" >&2
+    exit 1
+}
 
 require_root() { [[ $EUID -eq 0 ]] || die "Must run as root"; }
 
@@ -86,6 +90,7 @@ swap_symlink() {
 _install_system_packages() {
     log "Installing system packages..."
     export DEBIAN_FRONTEND=noninteractive
+    export NEEDRESTART_MODE=a
     apt-get update -qq
     apt-get install -y -qq \
         git postgresql postgresql-contrib postgis redis-server \
@@ -107,17 +112,14 @@ _install_uv() {
 }
 
 _install_caddy_repo() {
-    if dpkg -l caddy &>/dev/null; then
+    if command -v caddy &>/dev/null; then
         log "Caddy already installed"
         return 0
     fi
     log "Installing Caddy..."
     local keyring="/usr/share/keyrings/caddy-stable-archive-keyring.gpg"
-    local tmpkey
-    tmpkey=$(mktemp)
     curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
-        | gpg --batch --dearmor -o "$tmpkey"
-    mv -f "$tmpkey" "$keyring"
+        | gpg --batch --yes --dearmor -o "$keyring"
     curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
         > /etc/apt/sources.list.d/caddy-stable.list
     apt-get update -qq
@@ -408,12 +410,42 @@ cmd_install() {
     systemctl enable --now bayanat bayanat-celery
     systemctl restart caddy
 
+    _verify_service_health
+
     log "Installation complete"
     if [[ "$domain" == "localhost" ]]; then
         log "Access: http://$(hostname -I | awk '{print $1}')"
     else
         log "Access: https://$domain"
     fi
+}
+
+# --- Health check ---
+
+_verify_service_health() {
+    local retries=5
+    local delay=2
+    log "Verifying services are healthy..."
+
+    for svc in bayanat bayanat-celery caddy; do
+        if ! systemctl is-active --quiet "$svc"; then
+            warn "Service $svc failed to start"
+            journalctl -u "$svc" --no-pager -n 5 >&2
+            die "Service $svc is not running" "Check logs: journalctl -u $svc -f"
+        fi
+    done
+
+    # Wait for app to respond on socket
+    local sock="$CURRENT_LINK/bayanat.sock"
+    local i
+    for ((i=1; i<=retries; i++)); do
+        if curl -sf --unix-socket "$sock" http://localhost/ -o /dev/null 2>/dev/null; then
+            log "Application responding"
+            return 0
+        fi
+        sleep "$delay"
+    done
+    warn "Application not responding on socket after $((retries * delay))s (may still be starting)"
 }
 
 # --- Status ---
