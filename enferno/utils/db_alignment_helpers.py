@@ -2,7 +2,7 @@ import warnings
 from typing import Any
 
 import click
-from sqlalchemy import MetaData, inspect, create_engine, text
+from sqlalchemy import MetaData, inspect, create_engine
 from sqlalchemy.engine import Engine
 
 from enferno.extensions import db
