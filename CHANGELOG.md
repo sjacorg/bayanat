@@ -59,7 +59,7 @@ Bayanat now uses Alembic (Flask-Migrate) for all schema changes. This replaces t
 
 ### Deployment and Tooling
 
-- Bayanat CLI installer with symlink-based releases (`bayanat install`)
+- One-command installer with symlink-based releases (see [installation docs](docs/deployment/installation.md))
 - `flask doctor` command for installation diagnostics
 - Improved `flask check-db-alignment` with Alembic status and structured output
 - Docker entrypoint now runs Alembic migrations automatically
@@ -70,7 +70,7 @@ Bayanat now uses Alembic (Flask-Migrate) for all schema changes. This replaces t
 ### Data Model
 
 - ID number types: actor `id_number` converted from string to JSONB array with type tracking
-- Dynamic fields system for customizable entity schemas (foundation for future custom forms)
+- Dynamic fields: bug fixes and core field seeding for search dialogs
 - Notification table with email tracking
 - Extraction table for OCR results with history
 - Media orientation field for image rotation support
