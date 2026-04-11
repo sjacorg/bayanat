@@ -4,6 +4,8 @@ set -e
 if [ "$ROLE" = "flask" ]; then
   echo ":: Creating Bayanat Database ::"
   flask create-db --create-exts
+  echo ":: Running migrations ::"
+  flask db upgrade
   echo ":: Starting Bayanat ::"
   exec uwsgi --http 0.0.0.0:5000 --protocol uwsgi --master --processes 1 --wsgi run:app
 
