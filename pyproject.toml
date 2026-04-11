@@ -166,6 +166,17 @@ include = "\\.pyi?$"
 exclude = "/(\n    \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.nox\n  | \\.pants.d\n  | \\.pytype\n  | \\.ruff_cache\n  | \\.svn\n  | \\.tox\n  | \\.venv\n  | \\.env\n  | __pypackages__\n  | _build\n  | buck-out\n  | build\n  | dist\n  | node_modules\n  | venv\n)/\n"
 color = true
 
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F"]  # pyflakes: unused imports, undefined names, syntax errors
+
+[tool.ruff.lint.per-file-ignores]
+"enferno/app.py" = ["F841"]       # security = Security() assigned for side effects
+"enferno/commands.py" = ["F811"]  # extract() name reused across CLI groups
+
 [dependency-groups]
 dev = [
     "fakeredis>=2.31.0",
