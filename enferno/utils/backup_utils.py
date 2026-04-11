@@ -2,7 +2,6 @@ import os
 
 from subprocess import check_output
 import boto3
-from flask import current_app
 
 from enferno.settings import Config
 from enferno.utils.logging_utils import get_logger
@@ -13,20 +12,22 @@ logger = get_logger()
 def pg_dump(filepath):
     # localhost with no password set
     if Config.get("POSTGRES_HOST") == "localhost" and not Config.get("POSTGRES_PASSWORD"):
-        cmd = ["pg_dump", "-Fc", f"{Config.get("POSTGRES_DB")}", "-f", f"{filepath}"]
+        cmd = ["pg_dump", "-Fc", f"{Config.get('POSTGRES_DB')}", "-f", f"{filepath}"]
         return check_output(cmd)
     else:
         cmd = [
             "pg_dump",
             "-Fc",
-            f"{Config.get("POSTGRES_DB")}",
+            f"{Config.get('POSTGRES_DB')}",
             "-h",
-            f"{Config.get("POSTGRES_HOST")}",
+            f"{Config.get('POSTGRES_HOST')}",
             "-U",
-            f"{Config.get("POSTGRES_USER")}" "-f",
+            f"{Config.get('POSTGRES_USER')}",
+            "-f",
             f"{filepath}",
         ]
-        return check_output(cmd, env={"PGPASSWORD": Config.get("POSTGRES_PASSWORD")})
+        env = {**os.environ, "PGPASSWORD": Config.get("POSTGRES_PASSWORD")}
+        return check_output(cmd, env=env)
 
 
 def upload_to_s3(filepath):

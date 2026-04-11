@@ -1,9 +1,9 @@
 import json
-import os
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 
 import requests
 from flask import Blueprint, request, session, redirect, g, Response, current_app
+from flask_babel import gettext
 from flask.templating import render_template
 from flask_security import auth_required, login_user, current_user
 from flask_security.forms import LoginForm
@@ -84,12 +84,19 @@ def auth() -> Response:
     google_provider_cfg = get_google_provider_cfg()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
+    # Generate a random state parameter to prevent CSRF on the callback
+    import secrets
+
+    state = secrets.token_urlsafe(32)
+    session["oauth_state"] = state
+
     # Use library to construct the request for Google login and provide
     # scopes that let you retrieve user's profile from Google
     request_uri = get_oauth_client().prepare_request_uri(
         authorization_endpoint,
         redirect_uri=request.base_url + "/callback",
         scope=["openid", "email", "profile"],
+        state=state,
     )
     return redirect(request_uri)
 
@@ -101,6 +108,12 @@ def auth_callback() -> Response:
     """
     if not Config.get("GOOGLE_OAUTH_ENABLED") or not Config.get("GOOGLE_CLIENT_ALLOWED_DOMAIN"):
         return HTTPResponse.error("Google Auth is not enabled or configured properly", status=417)
+
+    # Validate OAuth state parameter to prevent CSRF
+    expected_state = session.pop("oauth_state", None)
+    received_state = request.args.get("state")
+    if not expected_state or expected_state != received_state:
+        return HTTPResponse.error("Invalid OAuth state. Please try again.", status=403)
 
     code = request.args.get("code")
     # Find out what URL to hit to get tokens that allow you to ask for
@@ -139,7 +152,7 @@ def auth_callback() -> Response:
         unique_id = userinfo_response.json()["sub"]
         users_email = userinfo_response.json()["email"]
         # picture = userinfo_response.json()["picture"]
-        users_name = userinfo_response.json()["name"]
+        users_name = userinfo_response.json()["name"]  # noqa: F841
     else:
         return HTTPResponse.error("User email not available or not verified by Google.")
 
@@ -161,7 +174,14 @@ def auth_callback() -> Response:
         u.google_id = unique_id
         u.save()
 
-    login_user(u)
+    # Check if 2FA is required before completing login
+    tf_plugin = current_app.extensions["security"]._tf_plugin
+    if tf_plugin:
+        response = tf_plugin.tf_enter(u, False, "oauth", Config.get("SECURITY_POST_LOGIN_VIEW"))
+        if response:
+            return response
+
+    login_user(u, authn_via=["oauth"])
     return redirect(Config.get("SECURITY_POST_LOGIN_VIEW"))
 
 
@@ -186,7 +206,7 @@ def settings() -> str:
 def account_security() -> str:
     change_password_form = ExtendedChangePasswordForm()
     active_password = current_user.password is not None
-    primary_method = current_user.tf_primary_method or 'none'
+    primary_method = current_user.tf_primary_method or "none"
 
     registered_credentials = []
     has_passkeys = False
@@ -194,16 +214,22 @@ def account_security() -> str:
         creds = current_user.webauthn or []
         registered_credentials = [
             {
-                'name': cred.name,
-                'lastuse': cred.lastuse_datetime.strftime('%b %d, %Y, %I:%M %p') if cred.lastuse_datetime else _('Never'),
+                "name": cred.name,
+                "lastuse": (
+                    cred.lastuse_datetime.strftime("%b %d, %Y, %I:%M %p")
+                    if cred.lastuse_datetime
+                    else gettext("Never")
+                ),
             }
             for cred in creds
         ]
         has_passkeys = len(registered_credentials) > 0
-    except Exception as e:
-        current_app.logger.exception("Failed to load WebAuthn credentials for account security page")
+    except Exception:
+        current_app.logger.exception(
+            "Failed to load WebAuthn credentials for account security page"
+        )
 
-    has_recovery_codes = bool(getattr(current_user, 'mf_recovery_codes', None))
+    has_recovery_codes = bool(getattr(current_user, "mf_recovery_codes", None))
 
     return render_template(
         "account-security.html",
@@ -309,7 +335,7 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
             Constants.NotificationEvent.LOGIN_NEW_IP,
             current_user,
             "Login from Different IP",
-            f"You have logged in from a different IP address than your last login. If this was you, please ignore this message. If this was not you, please change your password immediately.",
+            "You have logged in from a different IP address than your last login. If this was you, please ignore this message. If this was not you, please change your password immediately.",
         )
     # TODO: Check the login country and send notification to all admins if it's not the same as the user's country
 

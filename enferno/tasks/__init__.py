@@ -20,8 +20,14 @@ else:
     cfg = Config()
 
 celery = Celery("tasks", broker=cfg.celery_broker_url)
-# remove deprecated warning
-celery.conf.update({"accept_content": ["pickle", "json", "msgpack", "yaml"]})
+# Restrict to JSON only - pickle allows arbitrary code execution
+celery.conf.update(
+    {
+        "accept_content": ["json"],
+        "task_serializer": "json",
+        "result_serializer": "json",
+    }
+)
 celery.conf.update({"result_backend": os.environ.get("CELERY_RESULT_BACKEND", cfg.result_backend)})
 celery.conf.update(
     {

@@ -130,9 +130,11 @@ def api_medias_chunk() -> Response:
     """
     file = request.files["file"]
 
-    # to check if file is uploaded from media import tool
-    import_upload = "/import/media/" in request.referrer
-    # validate file extensions based on user and referrer
+    # Check if upload is from the media import tool (Admin-only extended extensions)
+    import_upload = request.form.get("source") == "import" or (
+        request.referrer and "/import/media/" in request.referrer
+    )
+    # validate file extensions based on user and source
     if import_upload:
         # uploads from media import tool
         # must be Admin user
@@ -178,6 +180,13 @@ def api_medias_chunk() -> Response:
         raise abort(400, body=f"Not all required fields supplied, missing {err}")
     except ValueError:
         raise abort(400, body="Values provided were not in expected format")
+
+    # Enforce server-side upload size limit (config value is in MB)
+    max_size_mb = current_app.config.get("MEDIA_UPLOAD_MAX_FILE_SIZE", 1000)
+    if total_size > max_size_mb * 1024 * 1024:
+        return HTTPResponse.error(
+            f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+        )
 
     # validate dz_uuid
     if not safe_join(str(Media.media_file), dz_uuid):
@@ -408,7 +417,16 @@ def api_local_serve_media(
 
     media = Media.query.filter(Media.media_file == filename).first()
 
-    if media and not current_user.can_access(media):
+    if media is None:
+        # Check if this is a recently uploaded file (grace period for upload flow)
+        filepath = safe_join("enferno/media", filename)
+        if filepath and os.path.exists(filepath):
+            mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
+            if datetime.now() - mtime <= GRACE_PERIOD:
+                return send_from_directory("media", filename)
+        return HTTPResponse.not_found("File not found")
+
+    if not current_user.can_access(media):
         Activity.create(
             current_user,
             Activity.ACTION_VIEW,
@@ -418,16 +436,15 @@ def api_local_serve_media(
             details="Unauthorized attempt to access restricted media file.",
         )
         return HTTPResponse.forbidden("Restricted Access")
-    else:
-        if media:
-            Activity.create(
-                current_user,
-                Activity.ACTION_VIEW,
-                Activity.STATUS_SUCCESS,
-                media.to_mini() if media else {"file": filename},
-                "media",
-            )
-        return send_from_directory("media", filename)
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_VIEW,
+        Activity.STATUS_SUCCESS,
+        media.to_mini(),
+        "media",
+    )
+    return send_from_directory("media", filename)
 
 
 @admin.route("/api/media/<int:id>/proxy")
@@ -465,6 +482,13 @@ def api_inline_medias_upload() -> Response:
     """
     try:
         f = request.files.get("file")
+        if not f:
+            return HTTPResponse.error("No file provided", status=400)
+
+        # Validate file extension against allowed media types
+        allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
+        if not Media.validate_file_extension(f.filename, allowed_extensions):
+            return HTTPResponse.error("This file type is not allowed", status=415)
 
         # final file
         filename = Media.generate_file_name(f.filename)
@@ -698,11 +722,18 @@ def api_ocr_stats():
 
 
 @admin.get("/api/extraction/<int:extraction_id>")
+@auth_required("session")
 def api_extraction_get(extraction_id: int):
     """Return full extraction data including text."""
     extraction = Extraction.query.get(extraction_id)
     if not extraction:
         return HTTPResponse.not_found()
+
+    # Check access via the parent media's bulletin/actor
+    media = Media.query.get(extraction.media_id)
+    if media and not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
     return HTTPResponse.success(data=extraction.to_dict())
 
 
