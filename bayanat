@@ -234,7 +234,7 @@ _install_deps() {
     local tag="$1"
     log "Installing Python dependencies..."
     sudo -u "$APP_USER" \
-        /usr/local/bin/uv sync --frozen \
+        /usr/local/bin/uv sync --frozen --python 3.12 \
         --directory "$RELEASES_DIR/$tag"
 }
 
