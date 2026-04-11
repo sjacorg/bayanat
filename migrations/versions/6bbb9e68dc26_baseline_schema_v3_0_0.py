@@ -615,7 +615,13 @@ def _create_extraction_table(op):
 
 
 def _fix_deleted_columns(op):
-    """Set deleted=FALSE where NULL, add NOT NULL + DEFAULT on all tables."""
+    """Set deleted=FALSE where NULL, add NOT NULL + DEFAULT on all tables.
+
+    Media is excluded: its partial unique index on etag (WHERE deleted = FALSE)
+    means bulk-updating NULLs to FALSE can violate uniqueness if duplicate etags
+    exist. Media cleanup requires deduplication first, handled in a dedicated
+    follow-up migration.
+    """
     tables = [
         "activity",
         "actor",
@@ -655,7 +661,6 @@ def _fix_deleted_columns(op):
         "location_admin_level",
         "location_history",
         "location_type",
-        "media",
         "media_categories",
         "notification",
         "potential_violation",
@@ -686,3 +691,7 @@ def _fix_deleted_columns(op):
             table_list=",".join(f"'{t}'" for t in tables)
         )
     )
+
+    # Media: only set default for new records. Existing NULLs and NOT NULL
+    # enforcement deferred until etag uniqueness constraint is reworked.
+    op.execute("ALTER TABLE media ALTER COLUMN deleted SET DEFAULT FALSE")
