@@ -22,16 +22,10 @@ from enferno.utils.http_response import HTTPResponse
 
 bp_user = Blueprint("users", __name__, static_folder="../static")
 
-# OAuth client - lazy initialization to handle config properly
-_oauth_client = None
 
-
-def get_oauth_client():
-    """Get OAuth client with proper config handling"""
-    global _oauth_client
-    if _oauth_client is None:
-        _oauth_client = WebApplicationClient(Config.get("GOOGLE_CLIENT_ID"))
-    return _oauth_client
+def build_oauth_client():
+    """Build a fresh OAuth client per request to avoid token state leakage."""
+    return WebApplicationClient(Config.get("GOOGLE_CLIENT_ID"))
 
 
 @bp_user.before_app_request
@@ -92,7 +86,7 @@ def auth() -> Response:
 
     # Use library to construct the request for Google login and provide
     # scopes that let you retrieve user's profile from Google
-    request_uri = get_oauth_client().prepare_request_uri(
+    request_uri = build_oauth_client().prepare_request_uri(
         authorization_endpoint,
         redirect_uri=request.base_url + "/callback",
         scope=["openid", "email", "profile"],
@@ -122,7 +116,7 @@ def auth_callback() -> Response:
     token_endpoint = google_provider_cfg["token_endpoint"]
 
     # Prepare and send request to get tokens! Yay tokens!
-    token_url, headers, body = get_oauth_client().prepare_token_request(
+    token_url, headers, body = build_oauth_client().prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
         redirect_url=request.base_url,
@@ -136,13 +130,13 @@ def auth_callback() -> Response:
     )
 
     # Parse the tokens!
-    get_oauth_client().parse_request_body_response(json.dumps(token_response.json()))
+    build_oauth_client().parse_request_body_response(json.dumps(token_response.json()))
 
     # Now that we have tokens (yay) let's find and hit URL
     # from Google that gives you user's profile information,
     # including their Google Profile Image and Email
     userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = get_oauth_client().add_token(userinfo_endpoint)
+    uri, headers, body = build_oauth_client().add_token(userinfo_endpoint)
     userinfo_response = requests.get(uri, headers=headers, data=body)
 
     # We want to make sure their email is verified.

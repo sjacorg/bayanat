@@ -419,7 +419,7 @@ def api_local_serve_media(
 
     if media is None:
         # Check if this is a recently uploaded file (grace period for upload flow)
-        filepath = safe_join("enferno/media", filename)
+        filepath = safe_join(str(Media.media_dir), filename)
         if filepath and os.path.exists(filepath):
             mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
             if datetime.now() - mtime <= GRACE_PERIOD:
@@ -489,6 +489,16 @@ def api_inline_medias_upload() -> Response:
         allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
         if not Media.validate_file_extension(f.filename, allowed_extensions):
             return HTTPResponse.error("This file type is not allowed", status=415)
+
+        # Enforce upload size limit
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.seek(0)
+        max_size_mb = current_app.config.get("MEDIA_UPLOAD_MAX_FILE_SIZE", 1000)
+        if size > max_size_mb * 1024 * 1024:
+            return HTTPResponse.error(
+                f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+            )
 
         # final file
         filename = Media.generate_file_name(f.filename)
@@ -731,7 +741,9 @@ def api_extraction_get(extraction_id: int):
 
     # Check access via the parent media's bulletin/actor
     media = Media.query.get(extraction.media_id)
-    if media and not current_user.can_access(media):
+    if not media:
+        return HTTPResponse.not_found("Parent media not found")
+    if not current_user.can_access(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     return HTTPResponse.success(data=extraction.to_dict())
