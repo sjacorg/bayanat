@@ -28,10 +28,18 @@ class Media(db.Model, BaseMixin):
 
     __table_args__ = (
         db.Index(
-            "ix_media_etag_unique_not_deleted",
+            "ix_media_etag_bulletin_unique",
             "etag",
+            "bulletin_id",
             unique=True,
-            postgresql_where=db.text("deleted = FALSE"),
+            postgresql_where=db.text("deleted = FALSE AND bulletin_id IS NOT NULL"),
+        ),
+        db.Index(
+            "ix_media_etag_actor_unique",
+            "etag",
+            "actor_id",
+            unique=True,
+            postgresql_where=db.text("deleted = FALSE AND actor_id IS NOT NULL"),
         ),
     )
 
