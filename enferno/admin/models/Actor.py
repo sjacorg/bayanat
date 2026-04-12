@@ -158,14 +158,12 @@ class Actor(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
          (id)::text || ' ' ||
          COALESCE(name, ''::character varying) || ' ' ||
          COALESCE(name_ar, ''::character varying) || ' ' ||
          COALESCE(comments, ''::text)
-        """
-        ),
+        """),
     )
 
     __table_args__ = (
@@ -1104,8 +1102,7 @@ class Actor(db.Model, BaseMixin):
 
 
 # DDL event to create the validation function for fresh installs
-create_validation_function = DDL(
-    """
+create_validation_function = DDL("""
 CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -1134,14 +1131,11 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
-"""
-)
+""")
 
-drop_validation_function = DDL(
-    """
+drop_validation_function = DDL("""
 DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
-"""
-)
+""")
 
 # Register DDL events to ensure function exists for both fresh installs and migrations
 event.listen(Actor.__table__, "before_create", create_validation_function)

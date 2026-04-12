@@ -59,15 +59,13 @@ class Media(db.Model, BaseMixin):
     comments_ar = db.Column(db.String)
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
             CAST(id AS TEXT) || ' ' ||
             COALESCE(title, '') || ' ' ||
             COALESCE(media_file, '') || ' ' ||
             COALESCE(media_file_type, '') || ' ' ||
             COALESCE(comments, '')
-            """
-        ),
+            """),
     )
 
     time = db.Column(db.Float())

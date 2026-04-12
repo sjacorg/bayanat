@@ -152,8 +152,7 @@ class Bulletin(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
             CAST(id AS TEXT) || ' ' ||
             COALESCE(title, '') || ' ' ||
             COALESCE(title_ar, '') || ' ' ||
@@ -163,8 +162,7 @@ class Bulletin(db.Model, BaseMixin):
             COALESCE(sjac_title_ar, '') || ' ' ||
             COALESCE(source_link, '') || ' ' ||
             COALESCE(comments, '')
-            """
-        ),
+            """),
     )
 
     __table_args__ = (

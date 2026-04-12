@@ -34,14 +34,12 @@ class ActorProfile(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
          (id)::text || ' ' ||
          COALESCE(originid, ''::character varying) || ' ' ||
          COALESCE(description, ''::character varying) || ' ' ||
          COALESCE(source_link, ''::text)
-        """
-        ),
+        """),
     )
 
     # Foreign key to reference the Actor

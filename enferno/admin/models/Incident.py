@@ -118,15 +118,13 @@ class Incident(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
             CAST(id AS TEXT) || ' ' ||
             COALESCE(title, '') || ' ' ||
             COALESCE(title_ar, '') || ' ' ||
             COALESCE(regexp_replace(regexp_replace(description, E'<.*?>', '', 'g'), E'&nbsp;', '', 'g'), '') || ' ' ||
             COALESCE(comments, '')
-            """
-        ),
+            """),
     )
 
     __table_args__ = (
