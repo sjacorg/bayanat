@@ -153,7 +153,6 @@ class ActorProfile(db.Model, BaseMixin):
         Returns:
             - the populated object.
         """
-        from enferno.admin.models import Source, Label
 
         if not self.id:
             db.session.add(self)

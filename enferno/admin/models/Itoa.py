@@ -7,7 +7,6 @@ from enferno.utils.base import BaseMixin
 from enferno.utils.logging_utils import get_logger
 from enferno.admin.models import ItoaInfo
 
-
 logger = get_logger()
 
 
