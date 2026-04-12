@@ -16,6 +16,7 @@ from unittest.mock import patch
 import pytest
 from flask import current_app
 
+from enferno.extensions import db
 from enferno.admin.models import (
     AtoaInfo,
     AtobInfo,
@@ -1551,7 +1552,7 @@ class TestMappingUpdate:
             follow_redirects=True,
         )
         assert resp.status_code == expected
-        found = Mapping.query.get(mapping.id)
+        found = db.session.get(Mapping, mapping.id)
         if expected == 200:
             assert found.name == "new_name"
         else:

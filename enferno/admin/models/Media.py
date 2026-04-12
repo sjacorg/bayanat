@@ -1,6 +1,5 @@
 import json
 import pathlib
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 from unidecode import unidecode
@@ -88,7 +87,7 @@ class Media(db.Model, BaseMixin):
     @check_roles
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the media."""
-        media_category = MediaCategory.query.get(self.category) if self.category else None
+        media_category = db.session.get(MediaCategory, self.category) if self.category else None
         return {
             "id": self.id,
             "title": self.title if self.title else None,
@@ -146,7 +145,7 @@ class Media(db.Model, BaseMixin):
             - the generated file name.
         """
         decoded = secure_filename(unidecode(filename)).lower()
-        return f"{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{decoded}"
+        return f"{DateHelper.utcnow().strftime('%Y%m%d-%H%M%S')}-{decoded}"
 
     @staticmethod
     def validate_file_extension(filepath: str, allowed_extensions: list[str]) -> bool:

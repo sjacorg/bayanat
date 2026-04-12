@@ -4,11 +4,10 @@ import os
 from typing import Optional
 
 import shortuuid
-from flask import jsonify, request, Response, Blueprint, current_app, json
+from flask import request, Response, Blueprint, current_app
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy.orm.attributes import flag_modified
-from unidecode import unidecode
 from werkzeug.utils import safe_join
 
 from enferno.extensions import db
@@ -72,7 +71,7 @@ def api_import_get(id: t.id) -> Response:
     Returns:
         - log in json format / success or error.
     """
-    data_import = DataImport.query.get(id)
+    data_import = db.session.get(DataImport, id)
 
     if data_import is None:
         return HTTPResponse.not_found("Data import not found")
@@ -355,7 +354,7 @@ def api_mapping_update(id: t.id) -> Response:
     Returns:
         - success if save is successful, error otherwise.
     """
-    map = Mapping.query.get(id)
+    map = db.session.get(Mapping, id)
     if map:
         data = request.json.get("data")
         m = data.get("map", None)
@@ -437,7 +436,7 @@ def api_process_sheet() -> Response:
             string = f"Added row {row_id} from file {filename}"
             if sheet:
                 string += f" sheet {sheet}"
-            string += f" to import queue."
+            string += " to import queue."
             data_import.add_to_log(string)
 
             process_row.delay(

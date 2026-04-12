@@ -65,7 +65,7 @@ class Itoi(db.Model, BaseMixin):
 
         # with our id constraint set, just check if there is relation from the lower id to the upper id
         f, t = (a_id, b_id) if a_id < b_id else (b_id, a_id)
-        relation = Itoi.query.get((f, t))
+        relation = db.session.get(Itoi, (f, t))
         if relation:
             return relation
         else:
@@ -88,7 +88,7 @@ class Itoi(db.Model, BaseMixin):
 
     # Create and return a relation between two bulletins making sure the relation goes from the lower id to the upper id
     @staticmethod
-    def relate(a: "Incident", b: "Incident") -> "Itoi":
+    def relate(a: "Incident", b: "Incident") -> "Itoi":  # noqa: F821
         """
         Create a relationship between two incidents.
 
@@ -104,7 +104,7 @@ class Itoi(db.Model, BaseMixin):
 
     # custom serialization method
     @check_relation_roles
-    def to_dict(self, exclude: Optional["Incident"] = None) -> dict[str, Any]:
+    def to_dict(self, exclude: Optional["Incident"] = None) -> dict[str, Any]:  # noqa: F821
         """
         Return a dictionary representation of the relation.
 

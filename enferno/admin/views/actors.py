@@ -255,7 +255,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    actor = Actor.query.get(id)
+    actor = db.session.get(Actor, id)
     if actor is not None:
         # check for restrictions
         if not current_user.can_access(actor):
@@ -329,7 +329,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    actor = Actor.query.get(id)
+    actor = db.session.get(Actor, id)
     if actor is not None:
         if not current_user.can_access(actor):
             Activity.create(
@@ -433,7 +433,7 @@ def api_actor_get(
     Returns:
         - actor data in json format / success or error in case of failure.
     """
-    actor = Actor.query.get(id)
+    actor = db.session.get(Actor, id)
     if not actor:
         return HTTPResponse.not_found("Actor not found")
     else:
@@ -478,7 +478,7 @@ def api_actor_profiles(actor_id: t.id) -> Response:
     Returns:
         - JSON array of actor profiles or an error message.
     """
-    actor = Actor.query.get(actor_id)
+    actor = db.session.get(Actor, actor_id)
     if not actor:
         return HTTPResponse.not_found("Actor not found")
 
@@ -522,7 +522,7 @@ def actor_relations(id: t.id) -> Response:
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
         return HTTPResponse.error("Invalid class")
-    actor = Actor.query.get(id)
+    actor = db.session.get(Actor, id)
     if not actor:
         return HTTPResponse.not_found("Actor not found")
     items = []
@@ -561,7 +561,7 @@ def api_actor_mp_get(id: t.id) -> Response:
     Returns:
         - actor profile data in json format / success or error in case of failure.
     """
-    profile = ActorProfile.query.get(id)
+    profile = db.session.get(ActorProfile, id)
     if not profile:
         return HTTPResponse.not_found("Actor profile not found")
 
@@ -598,7 +598,7 @@ def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
         return HTTPResponse.forbidden("User not allowed to self assign")
 
-    actor = Actor.query.get(id)
+    actor = db.session.get(Actor, id)
 
     if not current_user.can_access(actor):
         Activity.create(

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from enferno.admin.models import Activity, Location
 from enferno.extensions import db, rds
 from enferno.tasks import celery, cfg
 from enferno.user.models import Session
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger("celery.tasks.maintenance")
@@ -18,7 +19,7 @@ def activity_cleanup_cron() -> None:
     Periodic task to cleanup Activity Monitor logs.
     """
     expired_activities = Activity.query.filter(
-        datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
+        DateHelper.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
     )
     logger.info("Cleaning up Activities...")
     deleted = expired_activities.delete(synchronize_session=False)
@@ -40,7 +41,7 @@ def session_cleanup():
             logger.info("Session cleanup is disabled.")
             return
 
-        cutoff_date = datetime.utcnow() - timedelta(days=session_retention_days)
+        cutoff_date = DateHelper.utcnow() - timedelta(days=session_retention_days)
         expired_sessions = db.session.query(Session).filter(Session.created_at < cutoff_date)
 
         logger.info("Cleaning up expired sessions...")

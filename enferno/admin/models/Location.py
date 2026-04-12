@@ -9,10 +9,9 @@ import werkzeug
 from flask_login import current_user
 from geoalchemy2 import Geometry, Geography
 from geoalchemy2.shape import to_shape
-from sqlalchemy import ARRAY, text, func, text
+from sqlalchemy import ARRAY, func, text
 
 import enferno.utils.typing as t
-from enferno.admin.models import LocationAdminLevel, LocationType, LocationHistory
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
@@ -59,7 +58,9 @@ class Location(db.Model, BaseMixin):
             - user_id: the user id to associate with the revision.
             - created: the creation date of the revision.
         """
-        from enferno.admin.models import LocationHistory
+        # Local import: at package import time, LocationHistory in the module-level
+        # import above is bound to the submodule (not the class) due to circular imports.
+        from enferno.admin.models import LocationHistory  # noqa: F401, F811
 
         if not user_id:
             user_id = getattr(current_user, "id", 1)
@@ -205,7 +206,8 @@ class Location(db.Model, BaseMixin):
         Returns:
             - the location object.
         """
-        from enferno.admin.models import LocationType, LocationAdminLevel
+        # Local import: see note on create_revision. Avoids module/class shadowing.
+        from enferno.admin.models import LocationType, LocationAdminLevel  # noqa: F401, F811
 
         self.title = jsn.get("title")
         self.title_ar = jsn.get("title_ar")
@@ -224,11 +226,11 @@ class Location(db.Model, BaseMixin):
             and jsn.get("location_type").get("title") in allowed_location_types
         ):
             self.location_type_id = jsn.get("location_type").get("id")
-            self.location_type = LocationType.query.get(self.location_type_id)
+            self.location_type = db.session.get(LocationType, self.location_type_id)
 
             if self.location_type.title == "Administrative Location":
                 self.admin_level_id = jsn.get("admin_level").get("id")
-                self.admin_level = LocationAdminLevel.query.get(self.admin_level_id)
+                self.admin_level = db.session.get(LocationAdminLevel, self.admin_level_id)
             else:
                 self.admin_level_id = None
                 self.admin_level = None

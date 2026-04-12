@@ -45,7 +45,7 @@ class Source(db.Model, BaseMixin):
             parent_id = parent.get("id")
             # Prevent self-reference and circular parent assignment
             if parent_id and parent_id != self.id:
-                p_source = Source.query.get(parent_id)
+                p_source = db.session.get(Source, parent_id)
                 if p_source and (not p_source.parent_id or p_source.parent_id != self.id):
                     self.parent_id = parent_id
                 else:

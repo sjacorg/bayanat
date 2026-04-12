@@ -8,7 +8,6 @@ from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
-from enferno.admin.models import Source, Label
 from enferno.admin.models.tables import actor_sources, actor_labels, actor_verlabels
 
 logger = get_logger()
@@ -153,6 +152,9 @@ class ActorProfile(db.Model, BaseMixin):
         Returns:
             - the populated object.
         """
+        # Local import rebinds Source/Label to the classes. The top-level import
+        # resolves to the submodules due to circular imports during package init.
+        from enferno.admin.models import Source, Label  # noqa: F401, F811
 
         if not self.id:
             db.session.add(self)
