@@ -293,9 +293,12 @@ def api_medias_upload() -> Response:
         filename = Media.generate_file_name(file.filename)
         # filepath = (Media.media_dir/filename).as_posix()
 
-        response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
+        obj = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
 
-        etag = response.get()["ETag"].replace('"', "")
+        # obj is a boto3 s3.Object resource; .e_tag is populated from the PutObject
+        # response (wrapped in quotes per the S3 protocol). Reading it directly avoids
+        # an extra GetObject round trip that would otherwise stream the entire file back.
+        etag = obj.e_tag.strip('"')
 
         # check if file already exists
         if Media.query.filter(Media.etag == etag, Media.deleted == False).first():
