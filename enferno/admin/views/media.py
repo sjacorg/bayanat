@@ -131,9 +131,7 @@ def api_medias_chunk() -> Response:
     file = request.files["file"]
 
     # Check if upload is from the media import tool (Admin-only extended extensions)
-    import_upload = request.form.get("source") == "import" or (
-        request.referrer and "/import/media/" in request.referrer
-    )
+    import_upload = request.form.get("source") == "import"
     # validate file extensions based on user and source
     if import_upload:
         # uploads from media import tool
@@ -204,6 +202,14 @@ def api_medias_chunk() -> Response:
     # Save the individual chunk
     with open(save_dir / secure_filename(str(current_chunk)), "wb") as f:
         file.save(f)
+
+    # Enforce size cap against actual bytes on disk (dztotalfilesize is untrusted)
+    actual_bytes = sum(p.stat().st_size for p in save_dir.iterdir() if p.is_file())
+    if actual_bytes > max_size_mb * 1024 * 1024:
+        shutil.rmtree(save_dir, ignore_errors=True)
+        return HTTPResponse.error(
+            f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+        )
 
     # See if we have all the chunks downloaded
     completed = current_chunk == total_chunks - 1

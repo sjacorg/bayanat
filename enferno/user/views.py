@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 import requests
 from flask import Blueprint, request, session, redirect, g, Response, current_app
-from flask_babel import gettext
+from flask_babel import gettext, format_datetime
 from flask.templating import render_template
 from flask_security import auth_required, login_user, current_user
 from flask_security.forms import LoginForm
@@ -210,7 +210,7 @@ def account_security() -> str:
             {
                 "name": cred.name,
                 "lastuse": (
-                    cred.lastuse_datetime.strftime("%b %d, %Y, %I:%M %p")
+                    format_datetime(cred.lastuse_datetime, "medium")
                     if cred.lastuse_datetime
                     else gettext("Never")
                 ),
