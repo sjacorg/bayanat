@@ -91,12 +91,16 @@ def create_app(config_object=Config):
     register_errorhandlers(app)
     app.config.from_object(config_object)
 
-    # Abort if critical secrets are missing
+    # Abort if critical secrets are missing or whitespace-only
     if not app.config.get("TESTING"):
-        missing = [k for k in ("SECRET_KEY", "SECURITY_PASSWORD_SALT") if not app.config.get(k)]
+        missing = [
+            k
+            for k in ("SECRET_KEY", "SECURITY_PASSWORD_SALT")
+            if not (app.config.get(k) or "").strip()
+        ]
         if missing:
             raise RuntimeError(
-                f"Refusing to start: {', '.join(missing)} not set. " "Check your .env file."
+                f"Refusing to start: {', '.join(missing)} not set. Check your .env file."
             )
 
     register_constants(app)
