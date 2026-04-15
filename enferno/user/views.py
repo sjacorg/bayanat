@@ -115,8 +115,12 @@ def auth_callback() -> Response:
     google_provider_cfg = get_google_provider_cfg()
     token_endpoint = google_provider_cfg["token_endpoint"]
 
+    # Single client reused across prepare/parse/add_token so the parsed
+    # token state carries forward to the userinfo request.
+    client = build_oauth_client()
+
     # Prepare and send request to get tokens! Yay tokens!
-    token_url, headers, body = build_oauth_client().prepare_token_request(
+    token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
         redirect_url=request.base_url,
@@ -130,13 +134,13 @@ def auth_callback() -> Response:
     )
 
     # Parse the tokens!
-    build_oauth_client().parse_request_body_response(json.dumps(token_response.json()))
+    client.parse_request_body_response(json.dumps(token_response.json()))
 
     # Now that we have tokens (yay) let's find and hit URL
     # from Google that gives you user's profile information,
     # including their Google Profile Image and Email
     userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = build_oauth_client().add_token(userinfo_endpoint)
+    uri, headers, body = client.add_token(userinfo_endpoint)
     userinfo_response = requests.get(uri, headers=headers, data=body)
 
     # We want to make sure their email is verified.
