@@ -645,9 +645,6 @@
                                                 hint="{{ _('Enables advanced OCR (Vision) and text translation. Used across OCR extraction and translation features.') }}"
                                                 persistent-hint
                                                 v-model="eitem.GOOGLE_VISION_API_KEY"
-                                                :type="showVisionKey ? 'text' : 'password'"
-                                                :append-inner-icon="showVisionKey ? 'mdi-eye-off' : 'mdi-eye'"
-                                                @click:append-inner="showVisionKey = !showVisionKey"
                                             ></v-text-field>
                                         </v-slide-y-transition>
 
@@ -672,9 +669,6 @@
                                                     hint="{{ _('Required for hosted providers (OpenAI, OpenRouter, RunPod). Leave empty for unauthenticated local endpoints.') }}"
                                                     persistent-hint
                                                     v-model="eitem.LLM_OCR_API_KEY"
-                                                    :type="showLlmOcrKey ? 'text' : 'password'"
-                                                    :append-inner-icon="showLlmOcrKey ? 'mdi-eye-off' : 'mdi-eye'"
-                                                    @click:append-inner="showLlmOcrKey = !showLlmOcrKey"
                                                 ></v-text-field>
                                             </div>
                                         </v-slide-y-transition>
@@ -1166,8 +1160,6 @@
                     ACTIVITIES:{},
                 },
                 isCollapsed: true,
-                showVisionKey: false,
-                showLlmOcrKey: false,
                 infiniteScrollCallback: null,
                 DiffTool: DiffTool,
 
