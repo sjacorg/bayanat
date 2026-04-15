@@ -69,7 +69,7 @@ class Label(db.Model, BaseMixin):
             if cid in visited:
                 continue
             visited.add(cid)
-            child = Label.query.get(cid)
+            child = db.session.get(Label, cid)
             if child:
                 queue.extend(c.id for c in child.sub_label)
         return True
@@ -287,7 +287,7 @@ class Label(db.Model, BaseMixin):
         if parent_info and "id" in parent_info:
             parent_id = parent_info["id"]
             if self._is_valid_parent(parent_id):
-                p_label = Label.query.get(parent_id)
+                p_label = db.session.get(Label, parent_id)
                 if p_label:
                     self.parent_label_id = p_label.id
                 else:

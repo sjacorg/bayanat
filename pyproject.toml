@@ -138,7 +138,8 @@ dev = [
     "flask_pydantic>=0.13.0",
     "SQLAlchemy-Utils>=0.41.0",
     "pre-commit>=4.2.0",
-    "black>=26.3.1",
+    "black==26.3.1",
+    "ruff==0.11.6",
     "factory-boy>=3.3.0",
     "pytest-sugar>=1.0.0"
 ]

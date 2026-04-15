@@ -1,7 +1,7 @@
 import re
 import time
 from functools import cached_property
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Optional, Union
 
 import pandas as pd
 import gettext
@@ -95,7 +95,7 @@ class SheetImport:
         lang: str = "en",
     ):
         self.row = SheetImport.sheet_to_df(filepath, sheet).iloc[row_id]
-        self.data_import = DataImport.query.get(data_import_id)
+        self.data_import = db.session.get(DataImport, data_import_id)
         self.map = map
         self.batch_id = batch_id
         self.vmap = vmap
@@ -484,7 +484,7 @@ class SheetImport:
 
         if tags:
             self.actor.tags = tags
-            self.data_import.add_to_log(f"Processed tags")
+            self.data_import.add_to_log("Processed tags")
         else:
             self.handle_mismatch("tags", value)
 
@@ -557,7 +557,7 @@ class SheetImport:
             self.actor_profile.description = description
             if old_description:
                 self.actor_profile.description += old_description
-        self.data_import.add_to_log(f"Processed description")
+        self.data_import.add_to_log("Processed description")
 
     def set_events(self, map_item: Any) -> None:
         """
@@ -639,7 +639,7 @@ class SheetImport:
                     self.actor.events.append(e)
                 else:
                     self.data_import.add_to_log(
-                        f"Invalid event. Skipped due to missing or invalid from_date or missing location"
+                        "Invalid event. Skipped due to missing or invalid from_date or missing location"
                     )
                     self.data_import.add_to_log(f"Event: {event}")
                     self.handle_mismatch("event", event)
@@ -672,7 +672,7 @@ class SheetImport:
             idn = {"type": idn_type, "number": idn_number}
 
             self.actor.id_number.append(idn)
-            self.data_import.add_to_log(f"Processed idnumber")
+            self.data_import.add_to_log("Processed idnumber")
 
     def set_reporters(self, map_item: Any) -> None:
         """
@@ -871,7 +871,7 @@ class SheetImport:
         for col in [col.name for col in ActorProfile.__table__.columns if col.comment == "MP"]:
             if getattr(self.actor_profile, col):
                 self.actor_profile.mode = 3
-                self.data_import.add_to_log(f"Changed Actor Profile to MP.")
+                self.data_import.add_to_log("Changed Actor Profile to MP.")
                 break
 
         # set actor names
@@ -892,7 +892,7 @@ class SheetImport:
             self.actor.create_revision()
 
             # Creating Activity
-            user = User.query.get(self.data_import.user_id)
+            user = db.session.get(User, self.data_import.user_id)
             Activity.create(
                 user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, self.actor.to_mini(), "actor"
             )
@@ -902,5 +902,5 @@ class SheetImport:
             self.data_import.success()
 
         except DatabaseException as e:
-            self.data_import.add_to_log(f"Failed to create Actor from row.")
+            self.data_import.add_to_log("Failed to create Actor from row.")
             self.data_import.fail(e)

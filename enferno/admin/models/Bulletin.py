@@ -152,8 +152,7 @@ class Bulletin(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
             CAST(id AS TEXT) || ' ' ||
             COALESCE(title, '') || ' ' ||
             COALESCE(title_ar, '') || ' ' ||
@@ -163,8 +162,7 @@ class Bulletin(db.Model, BaseMixin):
             COALESCE(sjac_title_ar, '') || ' ' ||
             COALESCE(source_link, '') || ' ' ||
             COALESCE(comments, '')
-            """
-        ),
+            """),
     )
 
     __table_args__ = (
@@ -237,7 +235,7 @@ class Bulletin(db.Model, BaseMixin):
 
     # helper property returns all bulletin relations
     @property
-    def bulletin_relations(self) -> list["Btob"]:
+    def bulletin_relations(self) -> list["Btob"]:  # noqa: F821
         """Return all bulletin relations."""
         return self.bulletins_to + self.bulletins_from
 
@@ -336,7 +334,7 @@ class Bulletin(db.Model, BaseMixin):
                     g.save()
                 else:
                     # geolocation exists // update
-                    g = GeoLocation.query.get(geo["id"])
+                    g = db.session.get(GeoLocation, geo["id"])
                     g.from_json(geo)
                     g.save()
                 final_locations.append(g)
@@ -373,7 +371,7 @@ class Bulletin(db.Model, BaseMixin):
                     e.save()
                 else:
                     # event already exists, get a db instnace and update it with new data
-                    e = Event.query.get(event["id"])
+                    e = db.session.get(Event, event["id"])
                     e.from_json(event)
                     e.save()
                 new_events.append(e)
@@ -416,7 +414,7 @@ class Bulletin(db.Model, BaseMixin):
             # collect related bulletin ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["bulletin_relations"]:
-                bulletin = Bulletin.query.get(relation["bulletin"]["id"])
+                bulletin = db.session.get(Bulletin, relation["bulletin"]["id"])
                 # Extra (check those bulletins exit)
 
                 if bulletin:
@@ -434,14 +432,14 @@ class Bulletin(db.Model, BaseMixin):
                     r.delete()
 
                     # ------- create revision on the other side of the relationship
-                    Bulletin.query.get(rid).create_revision()
+                    db.session.get(Bulletin, rid).create_revision()
 
         # Related Actors (actors_relations)
         if "actor_relations" in json:
             # collect related bulletin ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["actor_relations"]:
-                actor = Actor.query.get(relation["actor"]["id"])
+                actor = db.session.get(Actor, relation["actor"]["id"])
                 if actor:
                     rel_ids.append(actor.id)
                     # helper method to update/create the relationship (will flush to db)
@@ -464,7 +462,7 @@ class Bulletin(db.Model, BaseMixin):
             # collect related incident ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["incident_relations"]:
-                incident = Incident.query.get(relation["incident"]["id"])
+                incident = db.session.get(Incident, relation["incident"]["id"])
                 if incident:
                     rel_ids.append(incident.id)
                     # helper method to update/create the relationship (will flush to db)
@@ -621,7 +619,10 @@ class Bulletin(db.Model, BaseMixin):
     # Helper method to handle logic of relating incidents (from a bulletin)
 
     def relate_incident(
-        self, incident: "Incident", relation: Optional[dict] = None, create_revision: bool = True
+        self,
+        incident: "Incident",  # noqa: F821
+        relation: Optional[dict] = None,
+        create_revision: bool = True,
     ):
         """
         Relate a bulletin to an incident.
@@ -636,7 +637,7 @@ class Bulletin(db.Model, BaseMixin):
             self.save()
 
         # query order : (incident_id,bulletin_id)
-        existing_relation = Itob.query.get((incident.id, self.id))
+        existing_relation = db.session.get(Itob, (incident.id, self.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes
@@ -656,7 +657,10 @@ class Bulletin(db.Model, BaseMixin):
 
     # helper method to relate actors
     def relate_actor(
-        self, actor: "Actor", relation: Optional[dict] = None, create_revision: bool = True
+        self,
+        actor: "Actor",  # noqa: F821
+        relation: Optional[dict] = None,
+        create_revision: bool = True,
     ) -> None:
         """
         Relate a bulletin to an actor.
@@ -671,7 +675,7 @@ class Bulletin(db.Model, BaseMixin):
             self.save()
 
         # query order : (bulletin_id,actor_id)
-        existing_relation = Atob.query.get((self.id, actor.id))
+        existing_relation = db.session.get(Atob, (self.id, actor.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes

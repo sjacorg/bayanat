@@ -10,7 +10,6 @@ from geoalchemy2 import Geography
 from sqlalchemy import ARRAY, func, event, DDL
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql import text
 
 import enferno.utils.typing as t
 from enferno.admin.models.Dialect import Dialect
@@ -159,14 +158,12 @@ class Actor(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
          (id)::text || ' ' ||
          COALESCE(name, ''::character varying) || ' ' ||
          COALESCE(name_ar, ''::character varying) || ' ' ||
          COALESCE(comments, ''::text)
-        """
-        ),
+        """),
     )
 
     __table_args__ = (
@@ -419,7 +416,7 @@ class Actor(db.Model, BaseMixin):
                     e.save()
                 else:
                     # event already exists, get a db instance and update it with new data
-                    e = Event.query.get(event["id"])
+                    e = db.session.get(Event, event["id"])
                     e.from_json(event)
                     e.save()
                 new_events.append(e)
@@ -462,7 +459,7 @@ class Actor(db.Model, BaseMixin):
             # collect related actors ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["actor_relations"]:
-                actor = Actor.query.get(relation["actor"]["id"])
+                actor = db.session.get(Actor, relation["actor"]["id"])
 
                 # Extra (check those actors exit)
 
@@ -481,14 +478,14 @@ class Actor(db.Model, BaseMixin):
                     r.delete()
 
                     # -revision related
-                    Actor.query.get(rid).create_revision()
+                    db.session.get(Actor, rid).create_revision()
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json:
             # collect related bulletin ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["bulletin_relations"]:
-                bulletin = Bulletin.query.get(relation["bulletin"]["id"])
+                bulletin = db.session.get(Bulletin, relation["bulletin"]["id"])
 
                 # Extra (check those bulletins exit)
                 if bulletin:
@@ -511,7 +508,7 @@ class Actor(db.Model, BaseMixin):
             # collect related incident ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["incident_relations"]:
-                incident = Incident.query.get(relation["incident"]["id"])
+                incident = db.session.get(Incident, relation["incident"]["id"])
                 if incident:
                     rel_ids.append(incident.id)
                     # helper method to update/create the relationship (will flush to db)
@@ -674,7 +671,7 @@ class Actor(db.Model, BaseMixin):
     # Helper method to handle logic of relating bulletin (from am actor)
     def relate_bulletin(
         self,
-        bulletin: "Bulletin",
+        bulletin: "Bulletin",  # noqa: F821
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
     ) -> None:
@@ -691,7 +688,7 @@ class Actor(db.Model, BaseMixin):
             self.save()
 
         # query order : (bulletin_id,actor_id)
-        existing_relation = Atob.query.get((bulletin.id, self.id))
+        existing_relation = db.session.get(Atob, (bulletin.id, self.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes
@@ -712,7 +709,7 @@ class Actor(db.Model, BaseMixin):
     # Helper method to handle logic of relating incidents (from an actor)
     def relate_incident(
         self,
-        incident: "Incident",
+        incident: "Incident",  # noqa: F821
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
     ) -> None:
@@ -729,7 +726,7 @@ class Actor(db.Model, BaseMixin):
             self.save()
 
         # query order : (actor_id,incident_id)
-        existing_relation = Itoa.query.get((self.id, incident.id))
+        existing_relation = db.session.get(Itoa, (self.id, incident.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes
@@ -1105,8 +1102,7 @@ class Actor(db.Model, BaseMixin):
 
 
 # DDL event to create the validation function for fresh installs
-create_validation_function = DDL(
-    """
+create_validation_function = DDL("""
 CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -1135,14 +1131,11 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
-"""
-)
+""")
 
-drop_validation_function = DDL(
-    """
+drop_validation_function = DDL("""
 DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
-"""
-)
+""")
 
 # Register DDL events to ensure function exists for both fresh installs and migrations
 event.listen(Actor.__table__, "before_create", create_validation_function)

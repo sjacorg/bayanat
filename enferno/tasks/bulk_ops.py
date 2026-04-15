@@ -39,7 +39,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
-    user = User.query.get(cur_user_id)
+    user = db.session.get(User, cur_user_id)
     chunks = chunk_list(ids, BULK_CHUNK_SIZE)
 
     # Assigned user
@@ -137,7 +137,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
-    assigner = User.query.get(cur_user_id)
+    assigner = db.session.get(User, cur_user_id)
     # Notify admin
     Notification.send_notification_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
@@ -150,7 +150,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     if assigned_to_id:
         Notification.send_notification_for_event(
             Constants.NotificationEvent.NEW_ASSIGNMENT,
-            User.query.get(assigned_to_id),
+            db.session.get(User, assigned_to_id),
             "New Assignment",
             f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for analysis.",
         )
@@ -158,7 +158,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     if first_peer_reviewer_id:
         Notification.send_notification_for_event(
             Constants.NotificationEvent.REVIEW_NEEDED,
-            User.query.get(first_peer_reviewer_id),
+            db.session.get(User, first_peer_reviewer_id),
             "Review Needed",
             f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for review.",
         )
@@ -181,7 +181,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
-    user = User.query.get(cur_user_id)
+    user = db.session.get(User, cur_user_id)
     chunks = chunk_list(ids, BULK_CHUNK_SIZE)
 
     # Assigned user
@@ -279,7 +279,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
-    assigner = User.query.get(cur_user_id)
+    assigner = db.session.get(User, cur_user_id)
     # Notify admin
     Notification.send_notification_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
@@ -292,7 +292,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     if assigned_to_id:
         Notification.send_notification_for_event(
             Constants.NotificationEvent.NEW_ASSIGNMENT,
-            User.query.get(assigned_to_id),
+            db.session.get(User, assigned_to_id),
             "New Assignment",
             f"{len(ids)} Actors have been assigned to you by {assigner.username} for analysis.",
         )
@@ -300,7 +300,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     if first_peer_reviewer_id:
         Notification.send_notification_for_event(
             Constants.NotificationEvent.REVIEW_NEEDED,
-            User.query.get(first_peer_reviewer_id),
+            db.session.get(User, first_peer_reviewer_id),
             "Review Needed",
             f"{len(ids)} Actors have been assigned to you by {assigner.username} for review.",
         )
@@ -323,7 +323,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
-    user = User.query.get(cur_user_id)
+    user = db.session.get(User, cur_user_id)
     chunks = chunk_list(ids, BULK_CHUNK_SIZE)
 
     # for ops on related items
@@ -447,7 +447,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
-    assigner = User.query.get(cur_user_id)
+    assigner = db.session.get(User, cur_user_id)
     # Notify admin
     Notification.send_notification_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
@@ -460,7 +460,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     if assigned_to_id:
         Notification.send_notification_for_event(
             Constants.NotificationEvent.NEW_ASSIGNMENT,
-            User.query.get(assigned_to_id),
+            db.session.get(User, assigned_to_id),
             "New Assignment",
             f"{len(ids)} Incidents have been assigned to you by {assigner.username} for analysis.",
         )
@@ -468,7 +468,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     if first_peer_reviewer_id:
         Notification.send_notification_for_event(
             Constants.NotificationEvent.REVIEW_NEEDED,
-            User.query.get(first_peer_reviewer_id),
+            db.session.get(User, first_peer_reviewer_id),
             "Review Needed",
             f"{len(ids)} Incidents have been assigned to you by {assigner.username} for review.",
         )

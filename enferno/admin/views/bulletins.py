@@ -241,7 +241,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
         - success/error string based on the operation result.
     """
 
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     if bulletin is not None:
         if not current_user.can_access(bulletin):
             Activity.create(
@@ -310,7 +310,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     if bulletin is not None:
         if not current_user.can_access(bulletin):
             Activity.create(
@@ -424,7 +424,7 @@ def api_bulletin_get(
     Returns:
         - bulletin in json format / success or error
     """
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     mode = request.args.get("mode", None)
     if not bulletin:
         return HTTPResponse.not_found("Bulletin not found")
@@ -478,7 +478,7 @@ def bulletin_relations(id: t.id) -> Response:
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
         return HTTPResponse.error("Invalid class", status=400)
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     if not bulletin:
         return HTTPResponse.not_found("Bulletin not found")
     items = []
@@ -542,7 +542,7 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
         return HTTPResponse.forbidden("User not allowed to self assign")
 
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
 
     if not current_user.can_access(bulletin):
         Activity.create(

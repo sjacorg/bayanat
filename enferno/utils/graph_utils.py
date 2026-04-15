@@ -54,7 +54,7 @@ class GraphUtils:
         # Restrict by default
         word_mask = "RESTRICTED"
         title = word_mask
-        instance = model.query.get(id)
+        instance = db.session.get(model, id)
 
         if instance and model.__tablename__ in ["actor", "incident", "bulletin"]:
             if self.user and self.user.can_access(instance):
@@ -90,11 +90,15 @@ class GraphUtils:
         if info_class and relation_ids:
             if isinstance(relation_ids, list):
                 return ", ".join(
-                    info_class.query.get(rid).title if info_class.query.get(rid) else str(rid)
+                    (
+                        db.session.get(info_class, rid).title
+                        if db.session.get(info_class, rid)
+                        else str(rid)
+                    )
                     for rid in relation_ids
                 )
             else:
-                info = info_class.query.get(relation_ids)
+                info = db.session.get(info_class, relation_ids)
                 return info.title if info else str(relation_ids)
         return str(relation_ids) if relation_ids else ""
 
@@ -391,7 +395,7 @@ class GraphUtils:
         if not entity_class:
             raise ValueError("Invalid entity type")
 
-        item = entity_class.query.get(entity_id)
+        item = db.session.get(entity_class, entity_id)
         if not item:
             raise ValueError("Entity not found")
 
