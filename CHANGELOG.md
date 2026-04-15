@@ -8,18 +8,18 @@ Bayanat now uses Alembic (Flask-Migrate) for all schema changes. This replaces t
 
 ### OCR and Text Extraction
 
-- Unified OCR into provider-agnostic LLM support, replacing the Google Vision-only pipeline
-- Added PDF and DOCX text extraction (non-OCR)
-- Parallelized bulk OCR processing
-- Added text map visualization for OCR results
-- Added search and translation for extracted text
-- S3 storage backend support for OCR
+- New provider-agnostic OCR pipeline supporting Google Vision and any OpenAI-compatible LLM endpoint, replacing the prior inline Tesseract helper used during PDF import
+- New `Extraction` table stores OCR results as first-class data with edit history
+- Administrators switch OCR providers from the system administration dashboard (no restart required)
+- Added PDF and DOCX text extraction (multi-page PDFs with configurable page cap)
+- Parallelized bulk OCR processing with per-task isolation
+- Text Map overlay: opt-in UI that draws per-word bounding boxes on document images (Google Vision only; falls back to plain text for LLM providers)
+- Added search over extracted text (trigram-indexed) and on-demand translation
+- S3 storage backend support throughout the OCR pipeline
 
 ### Notifications
 
-- Redesigned notification system with dedicated database table
-- Email notification support with delivery tracking
-- Read status, urgency flags, and categorization (Update, Alert, etc.)
+- Notification drawer usability tweaks: hover-only mark-as-read icon, new mark-all-as-read button, subtler urgent-notification styling, wider drawer (#248)
 
 ### Search and UI
 
@@ -69,12 +69,11 @@ Bayanat now uses Alembic (Flask-Migrate) for all schema changes. This replaces t
 
 ### Data Model
 
-- ID number types: actor `id_number` converted from string to JSONB array with type tracking
+- New `Extraction` table for OCR results with edit history
 - Dynamic fields: bug fixes and core field seeding for search dialogs
-- Notification table with email tracking
-- Extraction table for OCR results with history
 - Media orientation field for image rotation support
 - Label constraints: self-parent prevention, sibling title uniqueness
+- Media orphan cleanup and per-entity etag uniqueness
 
 ### Breaking Changes
 
