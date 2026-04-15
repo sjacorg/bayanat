@@ -16,7 +16,7 @@ from enferno.admin.validation.models import (
     LocationAdminLevelReorderRequestModel,
     LocationTypeRequestModel,
 )
-from enferno.extensions import rds
+from enferno.extensions import db, rds
 from enferno.tasks import regenerate_locations
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
@@ -135,7 +135,7 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
     if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
         return HTTPResponse.forbidden("User not allowed to create Locations")
 
-    location = Location.query.get(id)
+    location = db.session.get(Location, id)
     if location is not None:
         location = location.from_json(validated_data["item"])
         # we need to commit this change to db first, to utilize CTE
@@ -171,7 +171,7 @@ def api_location_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    location = Location.query.get(id)
+    location = db.session.get(Location, id)
     if location is None:
         return HTTPResponse.not_found("Location not found")
 
@@ -220,7 +220,7 @@ def api_location_get(id: t.id) -> Response:
     Returns:
         - location in json format / success or error.
     """
-    location = Location.query.get(id)
+    location = db.session.get(Location, id)
 
     if location is None:
         return HTTPResponse.not_found("Location not found")
@@ -340,7 +340,7 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    admin_level = LocationAdminLevel.query.get(id)
+    admin_level = db.session.get(LocationAdminLevel, id)
     if admin_level:
         if validated_data["item"]["code"] != admin_level.code:
             return HTTPResponse.error("Cannot change the code of a level", status=400)
@@ -374,7 +374,7 @@ def api_location_admin_level_delete(id: t.id) -> Response:
     """
     if id in [1, 2, 3] or LocationAdminLevel.query.count() <= 3:
         return HTTPResponse.error("Cannot delete the first 3 levels", status=400)
-    admin_level = LocationAdminLevel.query.get(id)
+    admin_level = db.session.get(LocationAdminLevel, id)
     if admin_level is None:
         return HTTPResponse.not_found("Location Admin Level not found")
     if Location.query.filter(Location.admin_level_id == id).count() > 0:
@@ -502,7 +502,7 @@ def api_location_type_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    location_type = LocationType.query.get(id)
+    location_type = db.session.get(LocationType, id)
 
     if location_type:
         location_type.from_json(validated_data.get("item"))
@@ -535,7 +535,7 @@ def api_location_type_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    location_type = LocationType.query.get(id)
+    location_type = db.session.get(LocationType, id)
     if location_type is None:
         return HTTPResponse.not_found("Location Type not found")
 

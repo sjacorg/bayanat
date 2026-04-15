@@ -1,6 +1,5 @@
 import json
 from typing import Any, Dict
-from datetime import datetime
 from uuid import uuid4
 
 from flask import current_app, session, has_app_context, has_request_context
@@ -227,7 +226,7 @@ class User(UserMixin, db.Model, BaseMixin):
     def set_security_reset_key(self) -> None:
         """Set the security reset key with a timestamp value"""
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(DateHelper.utcnow().timestamp())
         rds.set(key, timestamp)
 
     def unset_security_reset_key(self) -> None:

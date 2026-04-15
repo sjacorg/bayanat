@@ -6,6 +6,7 @@ from flask_security.decorators import current_user, roles_accepted, roles_requir
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Label, Activity
 from enferno.admin.models.Notification import Notification
@@ -160,7 +161,7 @@ def api_label_update(id: t.id, validated_data: dict) -> Response:
         - success/error string based on the operation result.
 
     """
-    label = Label.query.get(id)
+    label = db.session.get(Label, id)
     if label is not None:
         label = label.from_json(validated_data["item"])
         label.save()
@@ -186,7 +187,7 @@ def api_label_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    label = Label.query.get(id)
+    label = db.session.get(Label, id)
     if label is None:
         return HTTPResponse.not_found("Label not found")
 

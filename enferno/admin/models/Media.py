@@ -1,6 +1,5 @@
 import json
 import pathlib
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 from unidecode import unidecode
@@ -28,10 +27,18 @@ class Media(db.Model, BaseMixin):
 
     __table_args__ = (
         db.Index(
-            "ix_media_etag_unique_not_deleted",
+            "ix_media_etag_bulletin_unique",
             "etag",
+            "bulletin_id",
             unique=True,
-            postgresql_where=db.text("deleted = FALSE"),
+            postgresql_where=db.text("deleted = FALSE AND bulletin_id IS NOT NULL"),
+        ),
+        db.Index(
+            "ix_media_etag_actor_unique",
+            "etag",
+            "actor_id",
+            unique=True,
+            postgresql_where=db.text("deleted = FALSE AND actor_id IS NOT NULL"),
         ),
     )
 
@@ -52,15 +59,13 @@ class Media(db.Model, BaseMixin):
     comments_ar = db.Column(db.String)
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
             CAST(id AS TEXT) || ' ' ||
             COALESCE(title, '') || ' ' ||
             COALESCE(media_file, '') || ' ' ||
             COALESCE(media_file_type, '') || ' ' ||
             COALESCE(comments, '')
-            """
-        ),
+            """),
     )
 
     time = db.Column(db.Float())
@@ -80,7 +85,7 @@ class Media(db.Model, BaseMixin):
     @check_roles
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the media."""
-        media_category = MediaCategory.query.get(self.category) if self.category else None
+        media_category = db.session.get(MediaCategory, self.category) if self.category else None
         return {
             "id": self.id,
             "title": self.title if self.title else None,
@@ -138,7 +143,7 @@ class Media(db.Model, BaseMixin):
             - the generated file name.
         """
         decoded = secure_filename(unidecode(filename)).lower()
-        return f"{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{decoded}"
+        return f"{DateHelper.utcnow().strftime('%Y%m%d-%H%M%S')}-{decoded}"
 
     @staticmethod
     def validate_file_extension(filepath: str, allowed_extensions: list[str]) -> bool:

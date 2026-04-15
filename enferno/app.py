@@ -90,6 +90,19 @@ def create_app(config_object=Config):
     app = Flask(__name__)
     register_errorhandlers(app)
     app.config.from_object(config_object)
+
+    # Abort if critical secrets are missing or whitespace-only
+    if not app.config.get("TESTING"):
+        missing = [
+            k
+            for k in ("SECRET_KEY", "SECURITY_PASSWORD_SALT")
+            if not (app.config.get(k) or "").strip()
+        ]
+        if missing:
+            raise RuntimeError(
+                f"Refusing to start: {', '.join(missing)} not set. Check your .env file."
+            )
+
     register_constants(app)
     register_blueprints(app)
     register_extensions(app)
@@ -356,6 +369,7 @@ def register_commands(app):
     app.cli.add_command(commands.reset_all_passwords)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
+    app.cli.add_command(commands.doctor)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.ocr_cli)
 
@@ -391,7 +405,7 @@ def handle_uncaught_exception(e):
         error message
     """
     from werkzeug.exceptions import HTTPException
-    from flask import request, current_app
+    from flask import request
     from flask_security.decorators import current_user
 
     if isinstance(e, HTTPException) and e.code < 500:

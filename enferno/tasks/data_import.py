@@ -6,6 +6,7 @@ from celery import chord, group
 from werkzeug.utils import safe_join
 
 import enferno.utils.typing as t
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
 from enferno.data_import.models import DataImport
@@ -29,7 +30,7 @@ def etl_process_file(
         di.process(file)
         return "done"
     except Exception as e:
-        log = DataImport.query.get(data_import_id)
+        log = db.session.get(DataImport, data_import_id)
         log.fail(e)
         raise  # Re-raise for chord coordination
 
@@ -43,7 +44,7 @@ def batch_complete_notification(results: list, batch_id: str, user_id: int) -> N
     successful = [imp for imp in batch_imports if imp.status == "Ready"]
     failed = [imp for imp in batch_imports if imp.status == "Failed"]
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         logger.error(f"User {user_id} not found for batch completion notification")
         return
@@ -100,7 +101,7 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
         # Edge case: all files were duplicates or invalid
         Notification.send_notification_for_event(
             Constants.NotificationEvent.BATCH_STATUS,
-            User.query.get(user_id),
+            db.session.get(User, user_id),
             "Batch Import Complete",
             f"Batch {batch_id} had no valid files to process.",
         )

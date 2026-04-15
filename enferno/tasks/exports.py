@@ -2,7 +2,6 @@
 import os
 import shutil
 import time
-from datetime import datetime
 from typing import Any, Literal, Optional
 
 import boto3
@@ -11,10 +10,12 @@ from celery import chain
 from sqlalchemy import and_
 
 import enferno.utils.typing as t
+from enferno.extensions import db
 from enferno.admin.models import Actor, Bulletin, Incident
 from enferno.export.models import Export
 from enferno.tasks import BULK_CHUNK_SIZE, celery, cfg, chunk_list
 from enferno.utils.csv_utils import convert_list_attributes
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
 
@@ -34,7 +35,7 @@ def generate_export(export_id: t.id) -> Any:
     Returns:
         - chained tasks' result.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
 
     if export_request.file_format == "json":
         return chain(
@@ -83,7 +84,7 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
     Returns:
         - export_id if successful, False otherwise.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
 
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     dir_id = Export.generate_export_dir()
@@ -128,7 +129,7 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
     Returns:
         - export_id if successful, False otherwise.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
@@ -179,7 +180,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
     Returns:
         - export_id if successful, False otherwise.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
 
@@ -187,7 +188,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
         csv_df = pd.DataFrame()
         for id in export_request.items:
             if export_type == "bulletin":
-                bulletin = Bulletin.query.get(id)
+                bulletin = db.session.get(Bulletin, id)
                 # adjust list attributes to normal dicts
                 adjusted = convert_list_attributes(bulletin.to_csv_dict())
                 # normalize
@@ -198,7 +199,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
                     csv_df = pd.merge(csv_df, df, how="outer")
 
             elif export_type == "actor":
-                actor = Actor.query.get(id)
+                actor = db.session.get(Actor, id)
                 # adjust list attributes to normal dicts
                 actor_dict = convert_list_attributes(actor.to_csv_dict())
 
@@ -242,7 +243,7 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
     if previous_result is False:
         return False
 
-    export_request = Export.query.get(previous_result)
+    export_request = db.session.get(Export, previous_result)
 
     if not export_request:
         return False
@@ -315,7 +316,7 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     if previous_result is False:
         return False
 
-    export_request = Export.query.get(previous_result)
+    export_request = db.session.get(Export, previous_result)
     logger.info(f"Generating Export #{export_request.id} ZIP archive")
 
     shutil.make_archive(
@@ -342,7 +343,7 @@ def export_cleanup_cron() -> None:
     """
     expired_exports = Export.query.filter(
         and_(
-            Export.expires_on < datetime.utcnow(),  # expiry time before now
+            Export.expires_on < DateHelper.utcnow(),  # expiry time before now
             Export.status != "Expired",
         )
     ).all()  # status is not expired

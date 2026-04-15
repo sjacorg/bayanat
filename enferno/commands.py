@@ -412,6 +412,198 @@ def check_db_alignment() -> None:
 
 @click.command()
 @with_appcontext
+def doctor() -> None:
+    """Run diagnostics on the Bayanat installation."""
+    passed = 0
+    warnings = 0
+    failed = 0
+
+    def ok(msg):
+        nonlocal passed
+        click.echo(f"  + {msg}")
+        passed += 1
+
+    def warn(msg):
+        nonlocal warnings
+        click.echo(click.style(f"  ! {msg}", fg="yellow"))
+        warnings += 1
+
+    def fail(msg):
+        nonlocal failed
+        click.echo(click.style(f"  - {msg}", fg="red"))
+        failed += 1
+
+    # --- Database ---
+    click.echo("\nDatabase:")
+
+    try:
+        db.session.execute(text("SELECT 1"))
+        ok("PostgreSQL connected")
+    except Exception as e:
+        fail(f"PostgreSQL connection failed: {e}")
+
+    try:
+        result = db.session.execute(
+            text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")
+        ).scalar()
+        if result:
+            ok("PostGIS loaded")
+        else:
+            fail("PostGIS extension not installed")
+    except Exception:
+        fail("Could not check PostGIS")
+
+    try:
+        result = db.session.execute(
+            text("SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm'")
+        ).scalar()
+        if result:
+            ok("pg_trgm loaded")
+        else:
+            fail("pg_trgm extension not installed")
+    except Exception:
+        fail("Could not check pg_trgm")
+
+    # Alembic migration status
+    try:
+        import logging as _logging
+
+        from alembic.migration import MigrationContext
+        from alembic.script import ScriptDirectory
+        from enferno.extensions import migrate as migrate_ext
+
+        # Suppress Alembic's "Context impl" info lines
+        _logging.getLogger("alembic.runtime.migration").setLevel(_logging.WARNING)
+
+        config = migrate_ext.get_config()
+        script = ScriptDirectory.from_config(config)
+        head = script.get_current_head()
+
+        context = MigrationContext.configure(db.session.connection())
+        current = context.get_current_heads()
+        current_rev = current[0] if current else None
+
+        if current_rev is None:
+            warn("No Alembic revision stamped (run: flask db upgrade)")
+        elif current_rev == head:
+            ok("Migrations up to date")
+        else:
+            fail(f"Pending migrations (current: {current_rev[:8]}, head: {head[:8]})")
+    except Exception as e:
+        warn(f"Could not check migrations: {e}")
+
+    # Schema alignment (lightweight check)
+    try:
+        import warnings as _warnings
+
+        _warnings.filterwarnings("ignore", message="Did not recognize type")
+        checker = DBAlignmentChecker()
+        issues = []
+        for model, table_name in checker.model_classes:
+            table = checker.metadata.tables.get(table_name)
+            if table is None:
+                issues.append(f"missing table '{table_name}'")
+                continue
+            model_cols = {c.name for c in model.__table__.columns}
+            table_cols = {c.name for c in table.columns}
+            missing = model_cols - table_cols
+            if missing:
+                issues.append(f"'{table_name}' missing: {', '.join(missing)}")
+        if issues:
+            fail(f"Schema mismatch: {'; '.join(issues[:3])}")
+        else:
+            ok("Schema aligned with models")
+    except Exception as e:
+        warn(f"Could not check schema: {e}")
+
+    # --- Services ---
+    click.echo("\nServices:")
+
+    try:
+        from enferno.extensions import rds
+
+        rds.ping()
+        ok("Redis connected")
+    except Exception:
+        fail("Redis not reachable")
+
+    try:
+        from celery import current_app as celery_app
+        from enferno.tasks import celery
+
+        inspector = celery.control.inspect(timeout=2)
+        ping = inspector.ping()
+        if ping:
+            worker_count = len(ping)
+            ok(f"Celery workers responding ({worker_count})")
+        else:
+            warn("No Celery workers responding")
+    except Exception:
+        warn("Could not reach Celery workers")
+
+    # --- Filesystem ---
+    click.echo("\nFilesystem:")
+
+    media_dir = os.path.join(current_app.config.get("APP_DIR", "enferno"), "media")
+    if os.path.isdir(media_dir) and os.access(media_dir, os.W_OK):
+        ok("Media directory OK")
+    elif os.path.isdir(media_dir):
+        warn("Media directory exists but not writable")
+    else:
+        fail("Media directory missing")
+
+    logs_dir = os.path.join(Config.PROJECT_ROOT, "logs")
+    if os.path.isdir(logs_dir) and os.access(logs_dir, os.W_OK):
+        ok("Logs directory OK")
+    elif os.path.isdir(logs_dir):
+        warn("Logs directory exists but not writable")
+    else:
+        warn("Logs directory missing")
+
+    env_path = os.path.join(Config.PROJECT_ROOT, ".env")
+    if os.path.isfile(env_path):
+        ok(".env file exists")
+    else:
+        fail(".env file missing")
+
+    # --- Config ---
+    click.echo("\nConfig:")
+
+    secret_key = current_app.config.get("SECRET_KEY")
+    if secret_key and secret_key != "test-secret-key-not-for-production":
+        ok("SECRET_KEY set")
+    elif secret_key:
+        warn("SECRET_KEY is using test default")
+    else:
+        fail("SECRET_KEY not set")
+
+    salt = current_app.config.get("SECURITY_PASSWORD_SALT")
+    if salt and salt != "test-salt":
+        ok("SECURITY_PASSWORD_SALT set")
+    elif salt:
+        warn("SECURITY_PASSWORD_SALT is using test default")
+    else:
+        fail("SECURITY_PASSWORD_SALT not set")
+
+    mail_server = current_app.config.get("MAIL_SERVER")
+    if mail_server:
+        ok(f"Mail configured ({mail_server})")
+    else:
+        warn("MAIL_SERVER not configured")
+
+    # --- Summary ---
+    click.echo(f"\n{passed} passed", nl=False)
+    if warnings:
+        click.echo(click.style(f", {warnings} warnings", fg="yellow"), nl=False)
+    if failed:
+        click.echo(click.style(f", {failed} failed", fg="red"), nl=False)
+    click.echo()
+
+    raise SystemExit(1 if failed else 0)
+
+
+@click.command()
+@with_appcontext
 def generate_config() -> None:
     """Restore the default configuration."""
     # Check if a config file exists

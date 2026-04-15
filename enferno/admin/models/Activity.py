@@ -57,7 +57,7 @@ class Activity(db.Model, BaseMixin):
         if isinstance(self.subject, dict) and self.subject.get("class") == "user":
             user_id = self.subject.get("id")
             if user_id:
-                user = User.query.get(user_id)
+                user = db.session.get(User, user_id)
                 if user:
                     # Directly add the username to the subject dictionary.
                     self.subject["username"] = user.username

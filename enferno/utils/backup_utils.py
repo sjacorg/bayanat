@@ -2,31 +2,42 @@ import os
 
 from subprocess import check_output
 import boto3
-from flask import current_app
 
 from enferno.settings import Config
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger()
 
+# Upper bound for pg_dump so a hung network / auth / lock can't block the
+# backup job forever. One hour is generous for large DBs but still bounded.
+PG_DUMP_TIMEOUT = 3600
+
 
 def pg_dump(filepath):
+    db = Config.get("POSTGRES_DB")
+    host = Config.get("POSTGRES_HOST")
+    password = Config.get("POSTGRES_PASSWORD")
+
     # localhost with no password set
-    if Config.get("POSTGRES_HOST") == "localhost" and not Config.get("POSTGRES_PASSWORD"):
-        cmd = ["pg_dump", "-Fc", f"{Config.get("POSTGRES_DB")}", "-f", f"{filepath}"]
-        return check_output(cmd)
-    else:
-        cmd = [
-            "pg_dump",
-            "-Fc",
-            f"{Config.get("POSTGRES_DB")}",
-            "-h",
-            f"{Config.get("POSTGRES_HOST")}",
-            "-U",
-            f"{Config.get("POSTGRES_USER")}" "-f",
-            f"{filepath}",
-        ]
-        return check_output(cmd, env={"PGPASSWORD": Config.get("POSTGRES_PASSWORD")})
+    if host == "localhost" and not password:
+        cmd = ["pg_dump", "-Fc", db, "-f", filepath]
+        return check_output(cmd, timeout=PG_DUMP_TIMEOUT)
+
+    cmd = [
+        "pg_dump",
+        "-Fc",
+        db,
+        "-h",
+        host,
+        "-U",
+        Config.get("POSTGRES_USER"),
+        "-f",
+        filepath,
+    ]
+    env = {**os.environ}
+    if password:
+        env["PGPASSWORD"] = password
+    return check_output(cmd, env=env, timeout=PG_DUMP_TIMEOUT)
 
 
 def upload_to_s3(filepath):

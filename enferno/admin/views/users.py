@@ -88,7 +88,7 @@ def api_user_get(id) -> Response:
     :param id: id of the user
     :return: user data in json format + success or error in case of failure
     """
-    user = User.query.get(id)
+    user = db.session.get(User, id)
     if not user:
         return HTTPResponse.not_found("User not found")
     else:
@@ -115,7 +115,7 @@ def api_user_sessions(id: int) -> Any:
 
     try:
         # Fetch the user to ensure they exist and to collect their session tokens
-        user = User.query.get(id)
+        user = db.session.get(User, id)
         if not user:
             return HTTPResponse.not_found("User not found")
         sessions_paginated = (
@@ -172,7 +172,7 @@ def logout_session() -> Response:
         return HTTPResponse.error("Invalid request. Please provide a session ID.")
     try:
         # Query the database to get the session token using the sessid
-        session_ = Session.query.get(sessid)
+        session_ = db.session.get(Session, sessid)
 
         if not session_:
             return HTTPResponse.not_found(f"Session ID {sessid} not found.")
@@ -213,7 +213,7 @@ def logout_all_sessions(user_id: int) -> Any:
         Tuple[Union[str, dict], int]: A response message and HTTP status code.
     """
     # Fetch the user to ensure they exist
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return HTTPResponse.not_found("User not found")
 
@@ -259,7 +259,7 @@ def revoke_2fa() -> Response:
     if not user_id:
         return HTTPResponse.error("User ID is required")
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return HTTPResponse.not_found("User not found")
 
@@ -368,7 +368,7 @@ def api_user_update(
         - success/error string based on the operation result.
     """
     item = validated_data.get("item")
-    user = User.query.get(item.get("id"))
+    user = db.session.get(User, item.get("id"))
     if user is not None:
         u = validated_data.get("item")
         username = u.get("username")
@@ -447,7 +447,7 @@ def api_user_force_reset(validated_data: dict) -> Response:
     item = validated_data.get("item")
     if not item or not (id := item.get("id")):
         return HTTPResponse.error("Bad Request")
-    user = User.query.get(id)
+    user = db.session.get(User, id)
     if not user:
         return HTTPResponse.not_found("User not found")
     if reset_key := user.security_reset_key:
@@ -488,7 +488,7 @@ def api_user_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    user = User.query.get(id)
+    user = db.session.get(User, id)
     if user is None:
         return HTTPResponse.not_found("User not found")
 
@@ -601,7 +601,7 @@ def api_role_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    role = Role.query.get(id)
+    role = db.session.get(Role, id)
     if role is None:
         return HTTPResponse.not_found("Role not found")
 
@@ -631,7 +631,7 @@ def api_role_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    role = Role.query.get(id)
+    role = db.session.get(Role, id)
 
     if role is None:
         return HTTPResponse.not_found("Role not found")
