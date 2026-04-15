@@ -22,6 +22,7 @@ class AppConfig(db.Model, BaseMixin):
         "YTDLP_COOKIES",
         "GOOGLE_MAPS_API_KEY",
         "GOOGLE_VISION_API_KEY",
+        "LLM_OCR_API_KEY",
     }
 
     id = db.Column(db.Integer, primary_key=True)
