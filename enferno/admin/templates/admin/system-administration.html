@@ -503,89 +503,6 @@
                                                     </v-slide-y-transition>
                                                 </v-col>
                                                 <v-col cols="12" lg="6">
-                                                    <h4 class="subtitle-2 mb-n1">{{ _('Tesseract OCR (Import)') }}</h4>
-                                                    <v-switch persistent-hint
-                                                        hint="{{ _('Basic OCR during data import using Tesseract. Extracts text from images and scanned PDFs (requires Tesseract system package).') }}"
-                                                        {% if not config.HAS_TESSERACT %}
-                                                        disabled
-                                                        :value="false"
-                                                        {% else %}
-                                                        v-model="eitem.OCR_ENABLED"
-                                                        {% endif %}
-                                                    ></v-switch>
-
-                                                    {% if not config.HAS_TESSERACT %}
-                                                    <v-alert type="warning" class="my-6" icon="mdi-alert">
-                                                        {{ _('Tesseract is not installed. Please install it to enable OCR.') }}
-                                                    </v-alert>
-                                                    {% endif %}
-
-                                                    <v-slide-y-transition>
-                                                        <v-sheet v-show="eitem.OCR_ENABLED && {% if config.HAS_TESSERACT %}true{% else %}false{% endif %}">
-                                                            <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
-                                                                hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}" :items="eitem.OCR_EXT"
-                                                                label="{{ _('OCR Extensions') }}" v-model="eitem.OCR_EXT"></v-combobox>
-                                                        </v-sheet>
-                                                    </v-slide-y-transition>
-
-                                                    <v-divider class="my-6"></v-divider>
-
-                                                    <h4 class="subtitle-2 mb-n1">{{ _('On-demand OCR Provider') }}</h4>
-                                                    <p class="text-caption text-medium-emphasis mb-3">
-                                                        {{ _('Backend used for on-demand OCR extraction (and translation when Google Vision is selected).') }}
-                                                    </p>
-
-                                                    <v-select v-bind="inputProps" class="mt-3"
-                                                        label="{{ _('Provider') }}"
-                                                        :items="[
-                                                            { title: '{{ _('Google Vision') }}', value: 'google_vision' },
-                                                            { title: '{{ _('LLM (OpenAI-compatible)') }}', value: 'llm' },
-                                                        ]"
-                                                        v-model="eitem.OCR_PROVIDER"
-                                                    ></v-select>
-
-                                                    <v-slide-y-transition>
-                                                        <v-text-field v-show="eitem.OCR_PROVIDER === 'google_vision'"
-                                                            v-bind="inputProps" class="mt-3"
-                                                            label="{{ _('Google Cloud API Key') }}"
-                                                            hint="{{ _('Enables advanced OCR (Vision) and text translation. Used across OCR extraction and translation features.') }}"
-                                                            persistent-hint
-                                                            v-model="eitem.GOOGLE_VISION_API_KEY"
-                                                            :type="showVisionKey ? 'text' : 'password'"
-                                                            :append-inner-icon="showVisionKey ? 'mdi-eye-off' : 'mdi-eye'"
-                                                            @click:append-inner="showVisionKey = !showVisionKey"
-                                                        ></v-text-field>
-                                                    </v-slide-y-transition>
-
-                                                    <v-slide-y-transition>
-                                                        <div v-show="eitem.OCR_PROVIDER === 'llm'">
-                                                            <v-text-field v-bind="inputProps" class="mt-3"
-                                                                label="{{ _('LLM Endpoint URL') }}"
-                                                                hint="{{ _('Any OpenAI-compatible /v1/chat/completions endpoint (Ollama, vLLM, RunPod, OpenAI, OpenRouter, etc).') }}"
-                                                                persistent-hint
-                                                                v-model="eitem.LLM_OCR_URL"
-                                                            ></v-text-field>
-
-                                                            <v-text-field v-bind="inputProps" class="mt-3"
-                                                                label="{{ _('LLM Model') }}"
-                                                                hint="{{ _('Model name, e.g. llava, gpt-4o, anthropic/claude-sonnet-4-20250514.') }}"
-                                                                persistent-hint
-                                                                v-model="eitem.LLM_OCR_MODEL"
-                                                            ></v-text-field>
-
-                                                            <v-text-field v-bind="inputProps" class="mt-3"
-                                                                label="{{ _('LLM API Key') }}"
-                                                                hint="{{ _('Required for hosted providers (OpenAI, OpenRouter, RunPod). Leave empty for unauthenticated local endpoints.') }}"
-                                                                persistent-hint
-                                                                v-model="eitem.LLM_OCR_API_KEY"
-                                                                :type="showLlmOcrKey ? 'text' : 'password'"
-                                                                :append-inner-icon="showLlmOcrKey ? 'mdi-eye-off' : 'mdi-eye'"
-                                                                @click:append-inner="showLlmOcrKey = !showLlmOcrKey"
-                                                            ></v-text-field>
-                                                        </div>
-                                                    </v-slide-y-transition>
-                                                </v-col>
-                                                <v-col cols="12" lg="6">
                                                     <h4 class="subtitle-2 mb-n1">{{ _('Enable transcription') }}</h4>
                                                     <v-switch persistent-hint
                                                         hint="{{ _('Enables transcription of audio and video files using OpenAI\'s Whisper during import. Bayanat will need to download the specified model below from OpenAI\'s servers. However, the transcription will run locally on the Bayanat server. For more information about the models\' performance, required resources and available language please check:') }} https://github.com/openai/whisper#available-models-and-languages"
@@ -673,6 +590,99 @@
                             </div>
                     
                     
+                            <!-- OCR tab -->
+                            <div v-if="tab === 'ocr'">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <h4 class="subtitle-2 mb-n1">{{ _('Import-time OCR (Tesseract)') }}</h4>
+                                    <p class="text-caption text-medium-emphasis mb-3">
+                                        {{ _('Extracts text from uploaded documents and images during data import. Runs locally via the Tesseract system package, no API key required.') }}
+                                    </p>
+                                    <v-switch persistent-hint
+                                        hint="{{ _('Enable Tesseract OCR on import for the file extensions listed below.') }}"
+                                        {% if not config.HAS_TESSERACT %}
+                                        disabled
+                                        :value="false"
+                                        {% else %}
+                                        v-model="eitem.OCR_ENABLED"
+                                        {% endif %}
+                                    ></v-switch>
+
+                                    {% if not config.HAS_TESSERACT %}
+                                    <v-alert type="warning" class="my-6" icon="mdi-alert">
+                                        {{ _('Tesseract is not installed. Please install it to enable import-time OCR.') }}
+                                    </v-alert>
+                                    {% endif %}
+
+                                    <v-slide-y-transition>
+                                        <v-sheet v-show="eitem.OCR_ENABLED && {% if config.HAS_TESSERACT %}true{% else %}false{% endif %}" style="max-width: 640px;">
+                                            <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
+                                                hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}" :items="eitem.OCR_EXT"
+                                                label="{{ _('OCR Extensions') }}" v-model="eitem.OCR_EXT"></v-combobox>
+                                        </v-sheet>
+                                    </v-slide-y-transition>
+
+                                    <v-divider class="my-8"></v-divider>
+
+                                    <h4 class="subtitle-2 mb-n1">{{ _('On-demand OCR Provider') }}</h4>
+                                    <p class="text-caption text-medium-emphasis mb-3">
+                                        {{ _('Backend used for on-demand OCR extraction from existing media items. Google Vision is also used for text translation features.') }}
+                                    </p>
+
+                                    <div style="max-width: 640px;">
+                                        <v-select v-bind="inputProps" class="mt-3"
+                                            label="{{ _('Provider') }}"
+                                            :items="[
+                                                { title: '{{ _('Google Vision') }}', value: 'google_vision' },
+                                                { title: '{{ _('LLM (OpenAI-compatible)') }}', value: 'llm' },
+                                            ]"
+                                            v-model="eitem.OCR_PROVIDER"
+                                        ></v-select>
+
+                                        <v-slide-y-transition>
+                                            <v-text-field v-show="eitem.OCR_PROVIDER === 'google_vision'"
+                                                v-bind="inputProps" class="mt-3"
+                                                label="{{ _('Google Cloud API Key') }}"
+                                                hint="{{ _('Enables advanced OCR (Vision) and text translation. Used across OCR extraction and translation features.') }}"
+                                                persistent-hint
+                                                v-model="eitem.GOOGLE_VISION_API_KEY"
+                                                :type="showVisionKey ? 'text' : 'password'"
+                                                :append-inner-icon="showVisionKey ? 'mdi-eye-off' : 'mdi-eye'"
+                                                @click:append-inner="showVisionKey = !showVisionKey"
+                                            ></v-text-field>
+                                        </v-slide-y-transition>
+
+                                        <v-slide-y-transition>
+                                            <div v-show="eitem.OCR_PROVIDER === 'llm'">
+                                                <v-text-field v-bind="inputProps" class="mt-3"
+                                                    label="{{ _('LLM Endpoint URL') }}"
+                                                    hint="{{ _('Any OpenAI-compatible /v1/chat/completions endpoint (Ollama, vLLM, RunPod, OpenAI, OpenRouter, etc).') }}"
+                                                    persistent-hint
+                                                    v-model="eitem.LLM_OCR_URL"
+                                                ></v-text-field>
+
+                                                <v-text-field v-bind="inputProps" class="mt-3"
+                                                    label="{{ _('LLM Model') }}"
+                                                    hint="{{ _('Model name, e.g. llava, gpt-4o, anthropic/claude-sonnet-4-20250514.') }}"
+                                                    persistent-hint
+                                                    v-model="eitem.LLM_OCR_MODEL"
+                                                ></v-text-field>
+
+                                                <v-text-field v-bind="inputProps" class="mt-3"
+                                                    label="{{ _('LLM API Key') }}"
+                                                    hint="{{ _('Required for hosted providers (OpenAI, OpenRouter, RunPod). Leave empty for unauthenticated local endpoints.') }}"
+                                                    persistent-hint
+                                                    v-model="eitem.LLM_OCR_API_KEY"
+                                                    :type="showLlmOcrKey ? 'text' : 'password'"
+                                                    :append-inner-icon="showLlmOcrKey ? 'mdi-eye-off' : 'mdi-eye'"
+                                                    @click:append-inner="showLlmOcrKey = !showLlmOcrKey"
+                                                ></v-text-field>
+                                            </div>
+                                        </v-slide-y-transition>
+                                    </div>
+                                </v-card>
+                            </div>
+
+
                             <!-- Export tools tab -->
                             <div v-if="tab === 'export'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
@@ -1202,6 +1212,7 @@
                     control: { text: "{{ _('Access control') }}" },
                     logging: { text: "{{ _('Activity monitor') }}" },
                     import: { text: "{{ _('Import tools') }}" },
+                    ocr: { text: "{{ _('OCR') }}" },
                     export: { text: "{{ _('Export') }}" },
                     maps: { text: "{{ _('Maps') }}" },
                     locations: { text: "{{ _('Location') }}" },
