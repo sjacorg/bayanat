@@ -738,11 +738,29 @@ EOF
 
 _install_sudoers() {
     cat > /etc/sudoers.d/bayanat << 'EOF'
-bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
+bayanat ALL=(root) NOPASSWD: /usr/local/sbin/bayanat-start-update
 bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat status
+bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat snapshots
 bayanat ALL=(root) NOPASSWD: /usr/bin/systemctl restart bayanat-celery
 EOF
     chmod 440 /etc/sudoers.d/bayanat
+    visudo -cf /etc/sudoers.d/bayanat >/dev/null || die "sudoers syntax invalid"
+}
+
+_install_update_wrapper() {
+    # Root-owned wrapper. Launches `bayanat update` as a transient systemd
+    # unit so the update outlives Flask restart, SSH disconnect, and
+    # browser close. Must be in sudoers at this exact path.
+    install -m 0755 -o root -g root /dev/stdin /usr/local/sbin/bayanat-start-update <<'EOF'
+#!/bin/bash
+# Installed root:root 0755 by `bayanat install`. Do not edit.
+set -euo pipefail
+exec /usr/bin/systemd-run \
+    --unit=bayanat-update \
+    --collect \
+    --property=Restart=no \
+    /usr/local/bin/bayanat update
+EOF
 }
 
 # --- Install ---
@@ -794,6 +812,7 @@ cmd_install() {
     _install_systemd
     _configure_caddy "$domain"
     _install_sudoers
+    _install_update_wrapper
 
     chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
     systemctl daemon-reload
