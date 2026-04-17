@@ -345,6 +345,61 @@ _wait_healthy() {
     return 1
 }
 
+# --- Update pipeline ---
+
+update_preflight() {
+    preflight_checks
+    _verify_service_health
+    command -v pg_dump >/dev/null || die "pg_dump not in PATH"
+    command -v pg_restore >/dev/null || die "pg_restore not in PATH"
+    # pg_dump major version must match Postgres server major version
+    local client_major server_major
+    client_major=$(pg_dump --version | awk '{print $3}' | cut -d. -f1)
+    server_major=$(
+        eval "$(_pg_env)"
+        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+            psql -h "${POSTGRES_HOST:-localhost}" \
+                 -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                 -c 'SHOW server_version_num' -t 2>/dev/null \
+                 | tr -d ' ' | cut -c1-2
+    )
+    [[ -n "$client_major" && -n "$server_major" ]] \
+        || die "could not determine pg_dump/server versions"
+    [[ "$client_major" == "$server_major" ]] \
+        || die "pg_dump major ($client_major) != server major ($server_major)"
+    # Disk in backups (need >= 2 GB for snapshot headroom)
+    local backups_free_kb
+    backups_free_kb=$(df --output=avail "$SHARED_DIR/backups" | tail -1 | tr -d ' ')
+    [[ "$backups_free_kb" -ge 2097152 ]] \
+        || die "need >= 2GB free in $SHARED_DIR/backups for snapshot"
+    # Schema aligned with models
+    flask_run "$(current_version)" check-db-alignment >/dev/null \
+        || die "schema drift detected; run 'flask check-db-alignment' for details"
+    # Flask doctor
+    flask_run "$(current_version)" doctor >/dev/null \
+        || die "flask doctor failed"
+}
+
+do_prepare() {
+    # $1 = target tag
+    local target="$1"
+    local current
+    current=$(current_version || echo 0)
+    [[ "$target" != "$current" ]] || die "already on $target"
+    log "PREPARE: fetching $target"
+    update_preflight
+    _clone_release "$target"
+    _install_deps "$target"
+    _link_shared "$target"
+    acquire_lock
+    export STATE_TARGET="$target"
+    export STATE_PREVIOUS="$current"
+    export STATE_STARTED_AT
+    STATE_STARTED_AT="$(_now_iso)"
+    export STATE_PROGRESS="Fetched $target, ready to migrate"
+    write_state PREPARE_DONE "Prepared $target, ready to migrate"
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
