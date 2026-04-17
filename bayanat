@@ -85,6 +85,104 @@ swap_symlink() {
     mv -Tf "$CURRENT_LINK.tmp" "$CURRENT_LINK"
 }
 
+# --- Snapshot helpers ---
+
+SNAPSHOT_RETENTION_DAYS="${BAYANAT_SNAPSHOT_RETENTION_DAYS:-30}"
+SNAPSHOT_RETENTION_COUNT=5
+
+_pg_env() {
+    # Emits pg_dump / pg_restore env from shared/.env. All callers must
+    # `eval "$(_pg_env)"` in a subshell.
+    local env_file="$SHARED_DIR/.env"
+    [[ -f "$env_file" ]] || die "missing $env_file"
+    grep -E '^(POSTGRES_HOST|POSTGRES_PORT|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB)=' \
+        "$env_file" | sed 's/^/export /'
+}
+
+snapshot_pg_dump() {
+    # $1 = previous tag, $2 = target tag
+    # Writes shared/backups/pre-<prev>-to-<target>-<ts>.dump via .partial rename.
+    local prev="$1" target="$2"
+    local ts name partial final
+    ts=$(date -u +%Y%m%d-%H%M)
+    name="pre-${prev}-to-${target}-${ts}.dump"
+    partial="$SHARED_DIR/backups/${name}.partial"
+    final="$SHARED_DIR/backups/${name}"
+    log "Taking pre-update snapshot: $name"
+    (
+        eval "$(_pg_env)"
+        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+            pg_dump -Fc \
+                -h "${POSTGRES_HOST:-localhost}" \
+                -p "${POSTGRES_PORT:-5432}" \
+                -U "$POSTGRES_USER" \
+                -f "$partial" \
+                "$POSTGRES_DB"
+    )
+    mv -Tf "$partial" "$final"
+    echo "$name"
+}
+
+prune_snapshots() {
+    # Keep last $SNAPSHOT_RETENTION_COUNT snapshots OR last
+    # $SNAPSHOT_RETENTION_DAYS days, whichever is greater.
+    local backups="$SHARED_DIR/backups"
+    [[ -d "$backups" ]] || return 0
+    local cutoff_epoch
+    cutoff_epoch=$(date -d "-${SNAPSHOT_RETENTION_DAYS} days" +%s 2>/dev/null \
+        || date -v-"${SNAPSHOT_RETENTION_DAYS}"d +%s)
+    local idx=0 name path mtime
+    while IFS= read -r path; do
+        idx=$((idx + 1))
+        name=$(basename "$path")
+        mtime=$(stat -c %Y "$path" 2>/dev/null || stat -f %m "$path")
+        if [[ "$idx" -le "$SNAPSHOT_RETENTION_COUNT" ]]; then
+            continue
+        fi
+        if [[ "$mtime" -lt "$cutoff_epoch" ]]; then
+            log "Pruning snapshot: $name"
+            rm -f "$path"
+        fi
+    done < <(ls -1t "$backups"/pre-*.dump 2>/dev/null || true)
+}
+
+list_snapshots() {
+    local backups="$SHARED_DIR/backups"
+    [[ -d "$backups" ]] || { echo "No snapshots directory."; return; }
+    printf '%-60s %10s %20s\n' "NAME" "SIZE" "AGE"
+    local name size mtime age
+    for path in $(ls -1t "$backups"/pre-*.dump 2>/dev/null); do
+        name=$(basename "$path")
+        size=$(du -h "$path" | cut -f1)
+        mtime=$(stat -c %Y "$path" 2>/dev/null || stat -f %m "$path")
+        age="$(( ($(date +%s) - mtime) / 3600 ))h"
+        printf '%-60s %10s %20s\n' "$name" "$size" "$age"
+    done
+}
+
+restore_pg() {
+    # $1 = snapshot basename (no path). Stops services, restores, starts services.
+    local name="$1"
+    local path="$SHARED_DIR/backups/$name"
+    [[ -f "$path" ]] || die "snapshot not found: $path"
+    log "Restoring $name (this will DROP and RECREATE tables)"
+    read -r -p "Type 'yes' to confirm: " reply
+    [[ "$reply" == "yes" ]] || die "aborted"
+    systemctl stop bayanat bayanat-celery
+    (
+        eval "$(_pg_env)"
+        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+            pg_restore --clean --if-exists \
+                -h "${POSTGRES_HOST:-localhost}" \
+                -p "${POSTGRES_PORT:-5432}" \
+                -U "$POSTGRES_USER" \
+                -d "$POSTGRES_DB" \
+                "$path"
+    )
+    systemctl start bayanat bayanat-celery
+    log "Restore complete"
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
