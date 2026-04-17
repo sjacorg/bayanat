@@ -188,9 +188,9 @@ restore_pg() {
 
 # --- Update state + lock ---
 
-STATE_DIR="$BAYANAT_ROOT/state"
-STATE_FILE="$STATE_DIR/update.json"
-LOCK_FILE="$STATE_DIR/update.lock"
+readonly STATE_DIR="$BAYANAT_ROOT/state"
+readonly STATE_FILE="$STATE_DIR/update.json"
+readonly LOCK_FILE="$STATE_DIR/update.lock"
 
 _now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
