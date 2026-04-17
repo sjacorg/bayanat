@@ -166,6 +166,7 @@ class ConfigManager:
                 "twitter.com",
             ],
             "YTDLP_COOKIES": "",
+            "AUTO_APPLY_PATCH_UPDATES": False,
             "NOTIFICATIONS": NOTIFICATIONS_DEFAULT_CONFIG,  # Import from notification_config.py
         }
     )
@@ -240,6 +241,7 @@ class ConfigManager:
             "YTDLP_PROXY": "Proxy URL to use with Web Import",
             "YTDLP_ALLOWED_DOMAINS": "Allowed Domains for Web Import",
             "YTDLP_COOKIES": "Cookies to use with Web Import",
+            "AUTO_APPLY_PATCH_UPDATES": "Auto-apply patch releases",
             "NOTIFICATIONS": "Notifications",
         }
     )
