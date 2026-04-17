@@ -302,6 +302,20 @@ recover_state() {
             prev=$(read_field previous || true)
             die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: sudo -u $APP_USER bayanat snapshots"
             ;;
+        MIGRATE|SWITCH|ROLLBACK)
+            log "Recovery: $phase — attempting to restart services"
+            systemctl start bayanat bayanat-celery 2>/dev/null || true
+            if _wait_healthy 60; then
+                warn "Services healthy but update was interrupted mid-$phase"
+                warn "DB schema state is uncertain; re-run 'bayanat update' to finish"
+                clear_state
+                release_lock
+            else
+                export STATE_ERROR_JSON="\"interrupted during $phase; services unhealthy\""
+                write_state NEEDS_INTERVENTION "Update interrupted mid-$phase; manual recovery required"
+                exit 2
+            fi
+            ;;
         *)
             warn "Unknown phase '$phase' — clearing and starting fresh"
             clear_state
@@ -412,7 +426,13 @@ do_migrate() {
     export STATE_PROGRESS="Taking pre-update snapshot"
     write_state MIGRATE "Taking pre-update snapshot"
     export STATE_SNAPSHOT
-    STATE_SNAPSHOT=$(snapshot_pg_dump "$prev" "$target")
+    if ! STATE_SNAPSHOT=$(snapshot_pg_dump "$prev" "$target"); then
+        export STATE_ERROR_JSON='"snapshot failed"'
+        write_state NEEDS_INTERVENTION "Pre-update snapshot failed; check backups disk and pg_dump"
+        systemctl start bayanat bayanat-celery || true
+        release_lock
+        exit 2
+    fi
     log "MIGRATE: running migrations"
     export STATE_PROGRESS="Running migrations"
     write_state MIGRATE "Running migrations"
