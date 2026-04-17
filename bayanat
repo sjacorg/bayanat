@@ -186,6 +186,76 @@ restore_pg() {
     log "Restore complete"
 }
 
+# --- Update state + lock ---
+
+STATE_DIR="$BAYANAT_ROOT/state"
+STATE_FILE="$STATE_DIR/update.json"
+LOCK_FILE="$STATE_DIR/update.lock"
+
+_now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+
+write_state() {
+    # write_state <phase> <phase_label>
+    # Reads STATE_TARGET / STATE_PREVIOUS / STATE_SNAPSHOT /
+    # STATE_STARTED_AT / STATE_PROGRESS / STATE_ERROR_JSON from environment.
+    local phase="$1" label="$2"
+    mkdir -p "$STATE_DIR"
+    chown "$APP_USER:$APP_USER" "$STATE_DIR" 2>/dev/null || true
+    local tmp="$STATE_FILE.tmp"
+    cat > "$tmp" <<EOF
+{
+  "phase": "$phase",
+  "phase_label": "$label",
+  "target": "${STATE_TARGET:-}",
+  "previous": "${STATE_PREVIOUS:-}",
+  "snapshot": "${STATE_SNAPSHOT:-}",
+  "started_at": "${STATE_STARTED_AT:-$(_now_iso)}",
+  "updated_at": "$(_now_iso)",
+  "progress_text": "${STATE_PROGRESS:-}",
+  "error": ${STATE_ERROR_JSON:-null},
+  "pid": $$,
+  "unit": "${BAYANAT_UPDATE_UNIT:-bayanat-update.service}"
+}
+EOF
+    mv -Tf "$tmp" "$STATE_FILE"
+    chown "$APP_USER:$APP_USER" "$STATE_FILE" 2>/dev/null || true
+}
+
+clear_state() {
+    rm -f "$STATE_FILE"
+}
+
+read_phase() {
+    [[ -f "$STATE_FILE" ]] || { echo IDLE; return; }
+    python3 -c "import json,sys; print(json.load(open('$STATE_FILE')).get('phase','IDLE'))" \
+        2>/dev/null || echo IDLE
+}
+
+read_field() {
+    # $1 = field name
+    [[ -f "$STATE_FILE" ]] || return 1
+    python3 -c "import json,sys; print(json.load(open('$STATE_FILE')).get('$1',''))" 2>/dev/null
+}
+
+acquire_lock() {
+    mkdir -p "$STATE_DIR"
+    if [[ -f "$LOCK_FILE" ]]; then
+        local pid
+        pid=$(cat "$LOCK_FILE" 2>/dev/null || echo 0)
+        if [[ "$pid" -gt 0 ]] && kill -0 "$pid" 2>/dev/null; then
+            die "another update is running (pid $pid)"
+        fi
+        log "Removing stale lock (pid $pid)"
+        rm -f "$LOCK_FILE"
+    fi
+    echo $$ > "$LOCK_FILE"
+    chown "$APP_USER:$APP_USER" "$LOCK_FILE" 2>/dev/null || true
+}
+
+release_lock() {
+    rm -f "$LOCK_FILE"
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
