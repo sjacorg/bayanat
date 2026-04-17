@@ -169,7 +169,7 @@ restore_pg() {
     read -r -p "Type 'yes' to confirm: " reply
     [[ "$reply" == "yes" ]] || die "aborted"
     systemctl stop bayanat bayanat-celery
-    (
+    if ! (
         eval "$(_pg_env)"
         PGPASSWORD="${POSTGRES_PASSWORD:-}" \
             pg_restore --clean --if-exists \
@@ -178,7 +178,10 @@ restore_pg() {
                 -U "$POSTGRES_USER" \
                 -d "$POSTGRES_DB" \
                 "$path"
-    )
+    ); then
+        systemctl start bayanat bayanat-celery
+        die "pg_restore failed; services restarted on existing DB"
+    fi
     systemctl start bayanat bayanat-celery
     log "Restore complete"
 }
