@@ -250,6 +250,38 @@ def api_updates_start() -> Response:
     return HTTPResponse.success(data={"status": "started"})
 
 
+@admin.get("/snapshots/")
+@auth_required(within=15, grace=0)
+@roles_required("Admin")
+def snapshots_page() -> str:
+    """Render the snapshots list page."""
+    return render_template("admin/snapshots.html")
+
+
+@admin.get("/api/snapshots/")
+@roles_required("Admin")
+def api_snapshots() -> Response:
+    """List pre-update snapshots by shelling `bayanat snapshots`."""
+    try:
+        out = subprocess.run(
+            ["sudo", "-n", "/usr/local/bin/bayanat", "snapshots"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+    except subprocess.TimeoutExpired:
+        return HTTPResponse.error("Listing snapshots timed out", status=504)
+    except subprocess.CalledProcessError as e:
+        return HTTPResponse.error(f"Failed to list snapshots: {e}", status=500)
+    items = []
+    for line in out.strip().splitlines()[1:]:  # skip header row
+        parts = line.split()
+        if len(parts) >= 3:
+            items.append({"name": parts[0], "size": parts[1], "age": parts[2]})
+    return HTTPResponse.success(data=items)
+
+
 @admin.get("/api/updates/status")
 @roles_required("Admin")
 def api_updates_status() -> Response:
