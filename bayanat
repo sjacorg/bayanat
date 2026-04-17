@@ -151,13 +151,13 @@ list_snapshots() {
     [[ -d "$backups" ]] || { echo "No snapshots directory."; return; }
     printf '%-60s %10s %20s\n' "NAME" "SIZE" "AGE"
     local name size mtime age
-    for path in $(ls -1t "$backups"/pre-*.dump 2>/dev/null); do
+    while IFS= read -r path; do
         name=$(basename "$path")
         size=$(du -h "$path" | cut -f1)
         mtime=$(stat -c %Y "$path" 2>/dev/null || stat -f %m "$path")
         age="$(( ($(date +%s) - mtime) / 3600 ))h"
         printf '%-60s %10s %20s\n' "$name" "$size" "$age"
-    done
+    done < <(ls -1t "$backups"/pre-*.dump 2>/dev/null || true)
 }
 
 restore_pg() {
