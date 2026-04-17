@@ -837,6 +837,43 @@ _verify_service_health() {
     warn "Application not responding on socket after $((retries * delay))s (may still be starting)"
 }
 
+# --- Update ---
+
+cmd_update() {
+    local flag="${1:-}"
+    case "$flag" in
+        --check)
+            local cur latest
+            cur=$(current_version || echo "not installed")
+            latest=$(latest_remote_tag | sed 's/^v//')
+            echo "current: $cur"
+            echo "latest:  $latest"
+            if [[ "$cur" == "$latest" ]]; then
+                echo "up to date"
+            else
+                echo "update available"
+            fi
+            return 0
+            ;;
+        --recover)
+            require_root
+            recover_state
+            return 0
+            ;;
+    esac
+    require_root
+    recover_state
+    local target="${1:-}"
+    if [[ -z "$target" ]]; then
+        target=$(latest_remote_tag | sed 's/^v//')
+    else
+        target="${target#v}"
+    fi
+    do_prepare "$target"
+    do_migrate
+    do_switch_verify
+}
+
 # --- Status ---
 
 cmd_status() {
@@ -863,6 +900,17 @@ cmd_status() {
     for svc in bayanat bayanat-celery caddy; do
         printf "  %-20s %s\n" "$svc" "$(systemctl is-active "$svc" 2>/dev/null || echo 'unknown')"
     done
+
+    echo ""
+    local phase
+    phase=$(read_phase)
+    echo "Update state: $phase"
+    if [[ "$phase" != "IDLE" ]]; then
+        echo "  target:     $(read_field target || echo '')"
+        echo "  previous:   $(read_field previous || echo '')"
+        echo "  snapshot:   $(read_field snapshot || echo '')"
+        echo "  updated_at: $(read_field updated_at || echo '')"
+    fi
 }
 
 # --- Usage ---
@@ -875,18 +923,27 @@ Usage: bayanat <command> [options]
 
 Commands:
   install [domain]    Install Bayanat (default: localhost)
-  status              Show version and service status
+  update [<tag>]      Update Bayanat to <tag> (default: latest release)
+  update --check      Show current vs latest; no changes
+  update --recover    Recover from a stuck update state file
+  snapshots           List pre-update snapshots
+  restore <name>      Restore a pre-update snapshot (prompts confirmation)
+  status              Show version, services, and update state
 
 Environment:
-  BAYANAT_REPO        GitHub repo (default: sjacorg/bayanat)
+  BAYANAT_REPO                        GitHub repo (default: sjacorg/bayanat)
+  BAYANAT_SNAPSHOT_RETENTION_DAYS     Snapshot retention floor (default: 30)
 EOF
 }
 
 # --- Main ---
 
 case "${1:-}" in
-    install) shift; cmd_install "$@" ;;
-    status)  cmd_status ;;
+    install)    shift; cmd_install "$@" ;;
+    update)     shift; cmd_update "$@" ;;
+    snapshots)  require_root; list_snapshots ;;
+    restore)    require_root; [[ -n "${2:-}" ]] || die "usage: bayanat restore <snapshot-name>"; restore_pg "$2" ;;
+    status)     cmd_status ;;
     -h|--help|help) usage ;;
     *) usage; exit 1 ;;
 esac
