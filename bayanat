@@ -256,6 +256,60 @@ release_lock() {
     rm -f "$LOCK_FILE"
 }
 
+# --- Recovery dispatch ---
+
+recover_state() {
+    local phase
+    phase=$(read_phase)
+    case "$phase" in
+        IDLE)
+            return 0
+            ;;
+        PREPARE_DONE)
+            log "Recovery: PREPARE_DONE — cleaning partial release and clearing state"
+            local target
+            target=$(read_field target || true)
+            if [[ -n "$target" ]]; then
+                rm -rf "$RELEASES_DIR/$target.partial" "$RELEASES_DIR/$target"
+            fi
+            clear_state
+            release_lock
+            ;;
+        MIGRATE_DONE)
+            log "Recovery: MIGRATE_DONE — starting services on previous release"
+            systemctl start bayanat bayanat-celery
+            if _wait_healthy 60; then
+                log "Recovery OK; operator should re-run update to finish"
+                clear_state
+                release_lock
+            else
+                STATE_ERROR_JSON='"MIGRATE_DONE recovery: previous release unhealthy"'
+                write_state NEEDS_INTERVENTION "Services unhealthy after recovery; restore snapshot manually"
+                exit 2
+            fi
+            ;;
+        SWITCH_DONE)
+            log "Recovery: SWITCH_DONE — running code rollback"
+            rollback_code
+            ;;
+        SUCCESS|ROLLED_BACK)
+            clear_state
+            release_lock
+            ;;
+        NEEDS_INTERVENTION)
+            local snap prev
+            snap=$(read_field snapshot || true)
+            prev=$(read_field previous || true)
+            die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: sudo -u $APP_USER bayanat snapshots"
+            ;;
+        *)
+            warn "Unknown phase '$phase' — clearing and starting fresh"
+            clear_state
+            release_lock
+            ;;
+    esac
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
