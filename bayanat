@@ -427,6 +427,53 @@ do_migrate() {
     write_state MIGRATE_DONE "Migration complete, switching to new release"
 }
 
+do_switch_verify() {
+    local target="$STATE_TARGET"
+    export STATE_PROGRESS="Swapping to $target"
+    write_state SWITCH "Swapping current -> $target"
+    swap_symlink "$RELEASES_DIR/$target"
+    systemctl start bayanat bayanat-celery
+    write_state SWITCH_DONE "Verifying new release"
+    export STATE_PROGRESS="Waiting for health probe"
+    if _wait_healthy 60; then
+        export STATE_PROGRESS="Update successful"
+        write_state SUCCESS "Update to $target complete"
+        clear_state
+        release_lock
+        log "SUCCESS: running $target"
+        return 0
+    else
+        warn "Health probe failed; rolling back code"
+        rollback_code
+        return 1
+    fi
+}
+
+rollback_code() {
+    local prev="$STATE_PREVIOUS"
+    if [[ -z "$prev" ]]; then
+        export STATE_ERROR_JSON='"cannot roll back: no previous tag recorded"'
+        write_state NEEDS_INTERVENTION "Cannot roll back: no previous tag recorded"
+        exit 2
+    fi
+    write_state ROLLBACK "Reverting symlink to $prev"
+    systemctl stop bayanat bayanat-celery || true
+    swap_symlink "$RELEASES_DIR/$prev"
+    systemctl start bayanat bayanat-celery
+    if _wait_healthy 60; then
+        export STATE_PROGRESS="Rolled back to $prev"
+        write_state ROLLED_BACK "Rolled back to $prev; snapshot retained"
+        clear_state
+        release_lock
+        log "ROLLED_BACK: on $prev; snapshot: ${STATE_SNAPSHOT:-none}"
+        exit 1
+    else
+        export STATE_ERROR_JSON='"code rollback failed health probe"'
+        write_state NEEDS_INTERVENTION "Rollback to $prev unhealthy; restore snapshot ${STATE_SNAPSHOT:-} manually"
+        exit 2
+    fi
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
