@@ -1,16 +1,117 @@
 # -*- coding: utf-8 -*-
+import json
 import os
-from datetime import date, timedelta
+import subprocess
+from datetime import date, datetime, timedelta, timezone
 
+import requests
+from packaging.version import Version
+
+from enferno.admin.constants import Constants
 from enferno.admin.models import Activity, Location
+from enferno.admin.models.Notification import Notification
 from enferno.extensions import db, rds
 from enferno.tasks import celery, cfg
 from enferno.user.models import Session
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
+from enferno.utils.config_utils import ConfigManager
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger("celery.tasks.maintenance")
+
+GITHUB_LATEST_URL = "https://api.github.com/repos/sjacorg/bayanat/releases/latest"
+UPDATE_CACHE_KEY = "bayanat:update:available"
+UPDATE_NOTIFIED_KEY = "bayanat:update:available:notified"
+
+
+def _strip_v(tag: str) -> str:
+    return tag[1:] if tag.startswith("v") else tag
+
+
+def _redis_get_str(key: str):
+    val = rds.get(key)
+    if val is None:
+        return None
+    return val.decode() if isinstance(val, (bytes, bytearray)) else val
+
+
+def _current_version() -> str:
+    try:
+        import tomllib
+
+        with open("pyproject.toml", "rb") as fh:
+            return tomllib.load(fh).get("project", {}).get("version", "0.0.0")
+    except Exception:
+        return "0.0.0"
+
+
+def _is_patch_bump(current: str, target: str) -> bool:
+    try:
+        c, t = Version(current), Version(target)
+    except Exception:
+        return False
+    if t <= c:
+        return False
+    return c.major == t.major and c.minor == t.minor
+
+
+@celery.task
+def check_for_updates():
+    """Poll GitHub releases. Cache latest. Notify admins on new tag. Optionally auto-apply patch."""
+    try:
+        resp = requests.get(GITHUB_LATEST_URL, timeout=10)
+        resp.raise_for_status()
+        release = resp.json()
+    except Exception as e:
+        logger.warning(f"update check failed: {e}")
+        return
+
+    latest_tag = _strip_v(release.get("tag_name", ""))
+    if not latest_tag:
+        return
+
+    rds.set(
+        UPDATE_CACHE_KEY,
+        json.dumps(
+            {
+                "latest": latest_tag,
+                "release_notes_url": release.get("html_url"),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ),
+    )
+
+    current = _current_version()
+    if latest_tag == current:
+        return
+    if _redis_get_str(UPDATE_NOTIFIED_KEY) == latest_tag:
+        return
+
+    try:
+        auto_apply = ConfigManager.get_config("AUTO_APPLY_PATCH_UPDATES", False)
+    except Exception:
+        auto_apply = False
+
+    if auto_apply and _is_patch_bump(current, latest_tag):
+        logger.info(f"auto-applying patch update {current} -> {latest_tag}")
+        try:
+            subprocess.run(
+                ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"],
+                check=True,
+                timeout=10,
+            )
+            rds.set(UPDATE_NOTIFIED_KEY, latest_tag)
+            return
+        except Exception as e:
+            logger.warning(f"auto-apply failed, falling back to notification: {e}")
+
+    Notification.create_for_admins(
+        title=f"Update available: {latest_tag}",
+        message=f"A new Bayanat release is available. {release.get('html_url', '')}",
+        category=Constants.NotificationCategories.UPDATE.value,
+    )
+    rds.set(UPDATE_NOTIFIED_KEY, latest_tag)
 
 
 @celery.task
