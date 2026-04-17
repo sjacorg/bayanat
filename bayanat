@@ -88,7 +88,7 @@ swap_symlink() {
 # --- Snapshot helpers ---
 
 SNAPSHOT_RETENTION_DAYS="${BAYANAT_SNAPSHOT_RETENTION_DAYS:-30}"
-SNAPSHOT_RETENTION_COUNT=5
+readonly SNAPSHOT_RETENTION_COUNT=5
 
 _pg_env() {
     # Emits pg_dump / pg_restore env from shared/.env. All callers must
