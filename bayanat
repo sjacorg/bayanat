@@ -128,6 +128,8 @@ prune_snapshots() {
     # $SNAPSHOT_RETENTION_DAYS days, whichever is greater.
     local backups="$SHARED_DIR/backups"
     [[ -d "$backups" ]] || return 0
+    # Sweep any leaked .partial snapshot files from interrupted dumps
+    rm -f "$backups"/*.dump.partial 2>/dev/null || true
     local cutoff_epoch
     cutoff_epoch=$(date -d "-${SNAPSHOT_RETENTION_DAYS} days" +%s 2>/dev/null \
         || date -v-"${SNAPSHOT_RETENTION_DAYS}"d +%s)
