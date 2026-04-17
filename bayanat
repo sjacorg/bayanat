@@ -400,6 +400,33 @@ do_prepare() {
     write_state PREPARE_DONE "Prepared $target, ready to migrate"
 }
 
+do_migrate() {
+    local target="$STATE_TARGET"
+    local prev="$STATE_PREVIOUS"
+    log "MIGRATE: stopping services"
+    export STATE_PROGRESS="Stopping services"
+    write_state MIGRATE "Stopping services for maintenance window"
+    systemctl stop bayanat bayanat-celery
+    log "MIGRATE: pruning old snapshots"
+    prune_snapshots
+    export STATE_PROGRESS="Taking pre-update snapshot"
+    write_state MIGRATE "Taking pre-update snapshot"
+    export STATE_SNAPSHOT
+    STATE_SNAPSHOT=$(snapshot_pg_dump "$prev" "$target")
+    log "MIGRATE: running migrations"
+    export STATE_PROGRESS="Running migrations"
+    write_state MIGRATE "Running migrations"
+    if ! flask_run "$target" db upgrade; then
+        export STATE_ERROR_JSON='"db upgrade failed"'
+        write_state NEEDS_INTERVENTION "Migration failed; previous release remains linked"
+        systemctl start bayanat bayanat-celery || true
+        release_lock
+        exit 2
+    fi
+    export STATE_PROGRESS="Migration complete"
+    write_state MIGRATE_DONE "Migration complete, switching to new release"
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
