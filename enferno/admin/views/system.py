@@ -184,3 +184,84 @@ def get_data(table: str) -> list[dict[str, Any]] | list[dict[str, dict[str, Any 
         return [{"en": item.title, "tr": item.title_tr or ""} for item in items]
 
     return None
+
+
+import json
+import subprocess
+from pathlib import Path
+
+from enferno.extensions import rds
+from enferno.tasks.maintenance import UPDATE_CACHE_KEY, _current_version
+
+UPDATE_STATE_FILE = "/opt/bayanat/state/update.json"
+TERMINAL_PHASES = {"SUCCESS", "ROLLED_BACK", "NEEDS_INTERVENTION", "IDLE"}
+
+
+def _idle_status(current):
+    return {
+        "phase": "IDLE",
+        "phase_label": "No update in progress",
+        "running": False,
+        "target": None,
+        "previous": None,
+        "snapshot": None,
+        "started_at": None,
+        "updated_at": None,
+        "progress_text": None,
+        "error": None,
+        "current": current,
+    }
+
+
+@admin.get("/api/updates/available")
+@roles_required("Admin")
+def api_updates_available() -> Response:
+    """Return the latest cached GitHub release info."""
+    raw = rds.get(UPDATE_CACHE_KEY)
+    cached = {}
+    if raw:
+        try:
+            cached = json.loads(raw.decode() if isinstance(raw, (bytes, bytearray)) else raw)
+        except Exception:
+            cached = {}
+    payload = {
+        "current": _current_version(),
+        "latest": cached.get("latest"),
+        "release_notes_url": cached.get("release_notes_url"),
+        "checked_at": cached.get("checked_at"),
+    }
+    return HTTPResponse.success(data=payload)
+
+
+@admin.post("/api/updates/start")
+@roles_required("Admin")
+def api_updates_start() -> Response:
+    """Launch `bayanat update` out-of-process via the sudoers-granted wrapper."""
+    try:
+        subprocess.run(
+            ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"],
+            check=True,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        return HTTPResponse.error("Update start timed out", status=504)
+    except subprocess.CalledProcessError as e:
+        return HTTPResponse.error(f"Failed to start update: {e}", status=500)
+    return HTTPResponse.success(data={"status": "started"})
+
+
+@admin.get("/api/updates/status")
+@roles_required("Admin")
+def api_updates_status() -> Response:
+    """Return the current update state (from the CLI-written JSON file)."""
+    current = _current_version()
+    path = Path(UPDATE_STATE_FILE)
+    if not path.exists():
+        return HTTPResponse.success(data=_idle_status(current))
+    try:
+        state = json.loads(path.read_text())
+    except Exception:
+        return HTTPResponse.success(data=_idle_status(current))
+    state["running"] = state.get("phase") not in TERMINAL_PHASES
+    state["current"] = current
+    return HTTPResponse.success(data=state)
