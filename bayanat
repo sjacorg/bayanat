@@ -310,6 +310,41 @@ recover_state() {
     esac
 }
 
+# --- Health probe ---
+
+_socket_health() {
+    # curl the Flask /health over the unix socket. Returns 0 on HTTP 200.
+    curl -s --unix-socket "$CURRENT_LINK/bayanat.sock" \
+        --max-time 3 -o /dev/null -w '%{http_code}' \
+        http://localhost/health 2>/dev/null | grep -q '^200$'
+}
+
+_db_ping() {
+    (
+        eval "$(_pg_env)"
+        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+            psql -h "${POSTGRES_HOST:-localhost}" \
+                 -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                 -c 'SELECT 1' -t >/dev/null 2>&1
+    )
+}
+
+_redis_ping() {
+    redis-cli ping 2>/dev/null | grep -q '^PONG$'
+}
+
+_wait_healthy() {
+    # $1 = deadline in seconds (default 60)
+    local deadline=$(( $(date +%s) + ${1:-60} ))
+    while (( $(date +%s) < deadline )); do
+        if _socket_health && _db_ping && _redis_ping; then
+            return 0
+        fi
+        sleep 1
+    done
+    return 1
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
