@@ -559,7 +559,8 @@ _setup_database() {
 
 _create_directories() {
     mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/backups" \
-             "$LOGS_DIR"
+             "$LOGS_DIR" "$STATE_DIR"
+    chown -R "$APP_USER:$APP_USER" "$STATE_DIR"
 }
 
 _clone_release() {
