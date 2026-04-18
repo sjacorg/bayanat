@@ -887,10 +887,10 @@ cmd_update() {
         --check)
             local cur latest
             cur=$(current_version || echo "not installed")
-            latest=$(latest_remote_tag | sed 's/^v//')
+            latest=$(latest_remote_tag)
             echo "current: $cur"
             echo "latest:  $latest"
-            if [[ "$cur" == "$latest" ]]; then
+            if [[ "${cur#v}" == "${latest#v}" ]]; then
                 echo "up to date"
             else
                 echo "update available"
@@ -907,10 +907,11 @@ cmd_update() {
     recover_state
     local target="${1:-}"
     if [[ -z "$target" ]]; then
-        target=$(latest_remote_tag | sed 's/^v//')
-    else
-        target="${target#v}"
+        target=$(latest_remote_tag)
     fi
+    # Keep $target verbatim. Tags and release dir names use the v-prefix form
+    # (e.g. v4.0.0), matching the installer's convention in _clone_release and
+    # _link_shared. Stripping is only for display / comparison.
     do_prepare "$target"
     do_migrate
     do_switch_verify
