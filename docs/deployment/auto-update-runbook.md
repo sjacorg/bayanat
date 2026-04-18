@@ -7,9 +7,10 @@ in the development spec (not shipped with the repo).
 
 - **One-click from UI:** an admin-role user clicks "Update now" from the
   "Update available: X.Y.Z" banner in the nav bar.
-- **From the shell:** `sudo -u bayanat bayanat update [<tag>]`
-  (defaults to the latest GitHub release).
-- **Check only (no changes):** `sudo -u bayanat bayanat update --check`.
+- **From the shell (as root):** `sudo bayanat update [<tag>]`
+  (defaults to the latest GitHub release). The CLI requires root to stop
+  / start services, write `/opt/bayanat`, and take snapshots.
+- **Check only (no changes, no root):** `sudo -u bayanat bayanat update --check`.
 
 The update runs as `bayanat-update.service`, a transient systemd unit
 that outlives Flask restarts, SSH disconnects, and browser closes. Tail
@@ -64,9 +65,9 @@ maintenance flag stays up so users see a 502 instead of raw errors.
 Recover:
 
 ```
-sudo -u bayanat bayanat status                   # confirm state
-sudo -u bayanat bayanat snapshots                # list snapshots
-sudo -u bayanat bayanat restore pre-<ts>.dump    # restores DB
+sudo -u bayanat bayanat status            # read-only; confirm state
+sudo bayanat snapshots                    # list snapshots (needs root)
+sudo bayanat restore pre-<ts>.dump        # restores DB (needs root)
 sudo systemctl start bayanat bayanat-celery
 ```
 
@@ -75,7 +76,7 @@ Then file a bug with journal logs from `journalctl -u bayanat-update`.
 ### Stuck state (process died, state file orphaned)
 
 ```
-sudo -u bayanat bayanat update --recover
+sudo bayanat update --recover
 ```
 
 ## Snapshots
@@ -84,11 +85,11 @@ sudo -u bayanat bayanat update --recover
 - Format: `pg_dump -Fc` (PostgreSQL custom format)
 - Retention: last 5 snapshots OR last 30 days, whichever is greater
 - Override retention: `export BAYANAT_SNAPSHOT_RETENTION_DAYS=60`
-- List: `sudo -u bayanat bayanat snapshots` or visit
-  `/admin/snapshots/` in the UI (read-only)
-- Restore: `sudo -u bayanat bayanat restore <name>` (prompts for
-  confirmation; stops services; pipes through `pg_restore --clean
-  --if-exists`; restarts services). Not available from the web UI by
+- List: `sudo bayanat snapshots` or visit `/admin/snapshots/` in the UI
+  (read-only)
+- Restore: `sudo bayanat restore <name>` (prompts for confirmation;
+  stops services; pipes through `pg_restore --clean --if-exists`;
+  restarts services). Requires root. Not available from the web UI by
   design.
 
 ## Files
@@ -114,11 +115,14 @@ sudo -u bayanat bayanat update --recover
 
 ## Manual CLI reference
 
+Commands marked `(root)` require `sudo bayanat ...`; the others can run
+as the app user via `sudo -u bayanat bayanat ...`.
+
 ```
-bayanat update [<tag>]       # default: latest GitHub release
-bayanat update --check       # show current vs latest; no changes
-bayanat update --recover     # recover a stuck state file
-bayanat snapshots            # list pre-update snapshots
-bayanat restore <name>       # interactive restore from a snapshot
-bayanat status               # version + services + update state
+bayanat update [<tag>]       (root)  default: latest GitHub release
+bayanat update --check               show current vs latest; no changes
+bayanat update --recover     (root)  recover a stuck state file
+bayanat snapshots            (root)  list pre-update snapshots
+bayanat restore <name>       (root)  interactive restore from a snapshot
+bayanat status                       version + services + update state
 ```
