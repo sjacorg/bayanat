@@ -631,6 +631,7 @@ _clone_release() {
 
     log "Cloning $tag..."
     git clone --depth 1 --branch "$tag" "$GIT_URL" "$dest"
+    chown -R "$APP_USER:$APP_USER" "$dest"
 }
 
 _generate_env() {
