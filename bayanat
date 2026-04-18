@@ -102,6 +102,8 @@ _pg_env() {
 snapshot_pg_dump() {
     # $1 = previous tag, $2 = target tag
     # Writes shared/backups/pre-<prev>-to-<target>-<ts>.dump via .partial rename.
+    # Mirrors enferno/utils/backup_utils.py:pg_dump logic: localhost + no
+    # password -> socket peer auth; else TCP with PGPASSWORD.
     local prev="$1" target="$2"
     local ts name partial final
     ts=$(date -u +%Y%m%d-%H%M)
@@ -111,13 +113,20 @@ snapshot_pg_dump() {
     log "Taking pre-update snapshot: $name"
     (
         eval "$(_pg_env)"
-        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
-            pg_dump -Fc \
-                -h "${POSTGRES_HOST:-/var/run/postgresql}" \
-                -p "${POSTGRES_PORT:-5432}" \
-                -U "${POSTGRES_USER:-$APP_USER}" \
-                -f "$partial" \
-                "${POSTGRES_DB:-$APP_USER}"
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" pg_dump -Fc -f "$partial" "$db"
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                pg_dump -Fc \
+                    -h "$host" \
+                    -p "${POSTGRES_PORT:-5432}" \
+                    -U "$user" \
+                    -f "$partial" \
+                    "$db"
+        fi
     )
     mv -Tf "$partial" "$final"
     echo "$name"
@@ -173,13 +182,20 @@ restore_pg() {
     systemctl stop bayanat bayanat-celery
     if ! (
         eval "$(_pg_env)"
-        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
-            pg_restore --clean --if-exists \
-                -h "${POSTGRES_HOST:-/var/run/postgresql}" \
-                -p "${POSTGRES_PORT:-5432}" \
-                -U "${POSTGRES_USER:-$APP_USER}" \
-                -d "${POSTGRES_DB:-$APP_USER}" \
-                "$path"
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" pg_restore --clean --if-exists -d "$db" "$path"
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                pg_restore --clean --if-exists \
+                    -h "$host" \
+                    -p "${POSTGRES_PORT:-5432}" \
+                    -U "$user" \
+                    -d "$db" \
+                    "$path"
+        fi
     ); then
         systemctl start bayanat bayanat-celery
         die "pg_restore failed; services restarted on existing DB"
@@ -338,10 +354,16 @@ _socket_health() {
 _db_ping() {
     (
         eval "$(_pg_env)"
-        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
-            psql -h "${POSTGRES_HOST:-/var/run/postgresql}" \
-                 -U "${POSTGRES_USER:-$APP_USER}" -d "${POSTGRES_DB:-$APP_USER}" \
-                 -c 'SELECT 1' -t >/dev/null 2>&1
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" psql -d "$db" -c 'SELECT 1' -t >/dev/null 2>&1
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                psql -h "$host" -U "$user" -d "$db" \
+                     -c 'SELECT 1' -t >/dev/null 2>&1
+        fi
     )
 }
 
@@ -373,11 +395,17 @@ update_preflight() {
     client_major=$(pg_dump --version | awk '{print $3}' | cut -d. -f1)
     server_major=$(
         eval "$(_pg_env)"
-        PGPASSWORD="${POSTGRES_PASSWORD:-}" \
-            psql -h "${POSTGRES_HOST:-/var/run/postgresql}" \
-                 -U "${POSTGRES_USER:-$APP_USER}" -d "${POSTGRES_DB:-$APP_USER}" \
-                 -c 'SHOW server_version_num' -t 2>/dev/null \
-                 | tr -d ' ' | cut -c1-2
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" psql -d "$db" \
+                -c 'SHOW server_version_num' -t 2>/dev/null
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                psql -h "$host" -U "$user" -d "$db" \
+                     -c 'SHOW server_version_num' -t 2>/dev/null
+        fi | tr -d ' ' | cut -c1-2
     )
     [[ -n "$client_major" && -n "$server_major" ]] \
         || die "could not determine pg_dump/server versions"
@@ -628,7 +656,7 @@ FORCE_HTTPS=$force_https
 LOG_DIR=$LOGS_DIR
 BACKUPS_LOCAL_PATH=$SHARED_DIR/backups
 
-POSTGRES_HOST=/var/run/postgresql
+POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_USER=$APP_USER
 POSTGRES_PASSWORD=
