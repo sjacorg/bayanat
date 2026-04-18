@@ -31,7 +31,8 @@ const SnapshotsList = Vue.defineComponent({
       <v-card-text>
         <v-alert type="info" variant="tonal" density="compact" class="mb-3">
           Restore is CLI-only for safety. SSH to the server and run
-          <code>sudo -u bayanat bayanat restore &lt;name&gt;</code>.
+          <code>sudo bayanat restore &lt;name&gt;</code> (needs root; it stops
+          services, runs <code>pg_restore</code>, and starts services again).
         </v-alert>
         <v-data-table
           :items="items"

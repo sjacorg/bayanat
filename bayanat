@@ -90,13 +90,31 @@ swap_symlink() {
 SNAPSHOT_RETENTION_DAYS="${BAYANAT_SNAPSHOT_RETENTION_DAYS:-30}"
 readonly SNAPSHOT_RETENTION_COUNT=5
 
-_pg_env() {
-    # Emits pg_dump / pg_restore env from shared/.env. All callers must
-    # `eval "$(_pg_env)"` in a subshell.
+_pg_load() {
+    # Loads POSTGRES_* from shared/.env into the current shell env WITHOUT
+    # eval. Must be invoked inside a subshell so the exports do not leak.
+    #
+    # Why no eval: a malicious .env value (writable by the bayanat user)
+    # could smuggle shell commands that would run as root under `bayanat
+    # update`. `export "$key=$val"` treats $val as a literal string, no
+    # interpretation.
     local env_file="$SHARED_DIR/.env"
     [[ -f "$env_file" ]] || die "missing $env_file"
-    grep -E '^(POSTGRES_HOST|POSTGRES_PORT|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB)=' \
-        "$env_file" | sed 's/^/export /'
+    local key val
+    while IFS='=' read -r key val; do
+        case "$key" in
+            POSTGRES_HOST|POSTGRES_PORT|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB)
+                # Strip matching surrounding quotes (common .env convention).
+                if [[ ${#val} -ge 2 ]]; then
+                    if [[ "${val:0:1}" == '"' && "${val: -1}" == '"' ]] \
+                        || [[ "${val:0:1}" == "'" && "${val: -1}" == "'" ]]; then
+                        val="${val:1:${#val}-2}"
+                    fi
+                fi
+                export "$key=$val"
+                ;;
+        esac
+    done < "$env_file"
 }
 
 snapshot_pg_dump() {
@@ -114,7 +132,7 @@ snapshot_pg_dump() {
     # basename from the trailing `echo "$name"`.
     log "Taking pre-update snapshot: $name" >&2
     (
-        eval "$(_pg_env)"
+        _pg_load
         local user="${POSTGRES_USER:-$APP_USER}"
         local db="${POSTGRES_DB:-$APP_USER}"
         local host="${POSTGRES_HOST:-localhost}"
@@ -183,7 +201,7 @@ restore_pg() {
     [[ "$reply" == "yes" ]] || die "aborted"
     systemctl stop bayanat bayanat-celery
     if ! (
-        eval "$(_pg_env)"
+        _pg_load
         local user="${POSTGRES_USER:-$APP_USER}"
         local db="${POSTGRES_DB:-$APP_USER}"
         local host="${POSTGRES_HOST:-localhost}"
@@ -355,7 +373,7 @@ _socket_health() {
 
 _db_ping() {
     (
-        eval "$(_pg_env)"
+        _pg_load
         local user="${POSTGRES_USER:-$APP_USER}"
         local db="${POSTGRES_DB:-$APP_USER}"
         local host="${POSTGRES_HOST:-localhost}"
@@ -396,7 +414,7 @@ update_preflight() {
     local client_major server_major
     client_major=$(pg_dump --version | awk '{print $3}' | cut -d. -f1)
     server_major=$(
-        eval "$(_pg_env)"
+        _pg_load
         local user="${POSTGRES_USER:-$APP_USER}"
         local db="${POSTGRES_DB:-$APP_USER}"
         local host="${POSTGRES_HOST:-localhost}"
