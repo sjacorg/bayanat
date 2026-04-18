@@ -234,9 +234,15 @@ def api_updates_available() -> Response:
 
 
 @admin.post("/api/updates/start")
+@auth_required(within=15, grace=0)
 @roles_required("Admin")
 def api_updates_start() -> Response:
-    """Launch `bayanat update` out-of-process via the sudoers-granted wrapper."""
+    """Launch `bayanat update` out-of-process via the sudoers-granted wrapper.
+
+    Fresh-auth required (within 15 min) to limit stale-cookie exposure: a
+    compromised admin session cannot trigger a privileged update without a
+    recent password prompt.
+    """
     try:
         subprocess.run(
             ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"],

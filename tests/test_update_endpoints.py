@@ -1,5 +1,15 @@
 import json
+import time
 from unittest.mock import patch
+
+
+def _fresh_session(client):
+    """Mark the test-client session as freshly authenticated so
+    `@auth_required(within=15)` passes. Flask-Security stores the primary
+    auth timestamp in session key 'fs_paa'.
+    """
+    with client.session_transaction() as sess:
+        sess["fs_paa"] = time.time()
 
 
 def test_available_returns_cached(admin_client):
@@ -64,6 +74,7 @@ def test_status_terminal_when_success(admin_client, tmp_path, monkeypatch):
 
 
 def test_start_calls_wrapper(admin_client):
+    _fresh_session(admin_client)
     with patch("enferno.admin.views.system.subprocess.run") as run:
         resp = admin_client.post("/admin/api/updates/start")
         assert resp.status_code == 200
@@ -72,7 +83,17 @@ def test_start_calls_wrapper(admin_client):
         assert args == ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"]
 
 
+def test_start_requires_fresh_auth(admin_client):
+    # No _fresh_session call -> session is stale -> auth_required(within=15)
+    # should reject with redirect/401/403.
+    with patch("enferno.admin.views.system.subprocess.run") as run:
+        resp = admin_client.post("/admin/api/updates/start")
+        assert resp.status_code in (302, 401, 403)
+        run.assert_not_called()
+
+
 def test_non_admin_cannot_start(da_client):
+    _fresh_session(da_client)
     resp = da_client.post("/admin/api/updates/start")
     # roles_required returns 403 (Forbidden) for wrong-role users
     assert resp.status_code in (401, 403)

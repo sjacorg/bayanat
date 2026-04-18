@@ -488,6 +488,10 @@ do_switch_verify() {
     write_state SWITCH_DONE "Verifying new release"
     export STATE_PROGRESS="Waiting for health probe"
     if _wait_healthy 60; then
+        # Refresh /usr/local/bin/bayanat from the now-active release so the
+        # system CLI stays in lockstep with the deployed code. Done AFTER the
+        # health probe so a bad release never overwrites a working CLI.
+        _install_self "$target"
         export STATE_PROGRESS="Update successful"
         write_state SUCCESS "Update to $target complete"
         clear_state
@@ -823,12 +827,13 @@ EOF
 }
 
 _install_self() {
-    # Copy this script to /usr/local/bin/bayanat so sudoers grants +
-    # bayanat-start-update can invoke it by absolute path. Safe to re-run:
-    # `install -m 0755` replaces atomically.
-    local src
-    src=$(readlink -f "$0")
-    [[ -f "$src" ]] || die "cannot resolve installer source path"
+    # Copy the bayanat CLI from the given release directory to
+    # /usr/local/bin/bayanat. Source is $RELEASES_DIR/$tag/bayanat, NOT $0 —
+    # under `curl ... | sudo bash -s install`, $0 is "bash" and readlink
+    # resolves to the shell binary. $1 = tag.
+    local tag="${1:?_install_self requires a tag arg}"
+    local src="$RELEASES_DIR/$tag/bayanat"
+    [[ -f "$src" ]] || die "cannot find CLI source at $src"
     install -m 0755 -o root -g root "$src" /usr/local/bin/bayanat
     log "Installed CLI at /usr/local/bin/bayanat"
 }
@@ -883,7 +888,7 @@ cmd_install() {
     _configure_caddy "$domain"
     _install_sudoers
     _install_update_wrapper
-    _install_self
+    _install_self "$tag"
 
     chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
     systemctl daemon-reload
