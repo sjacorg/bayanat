@@ -14,7 +14,6 @@ from enferno.extensions import db, rds
 from enferno.tasks import celery, cfg
 from enferno.user.models import Session
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
-from enferno.utils.config_utils import ConfigManager
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
@@ -88,10 +87,7 @@ def check_for_updates():
     if _redis_get_str(UPDATE_NOTIFIED_KEY) == latest_tag:
         return
 
-    try:
-        auto_apply = ConfigManager.get_config("AUTO_APPLY_PATCH_UPDATES", False)
-    except Exception:
-        auto_apply = False
+    auto_apply = bool(getattr(cfg, "AUTO_APPLY_PATCH_UPDATES", False))
 
     if auto_apply and _is_patch_bump(current, latest_tag):
         logger.info(f"auto-applying patch update {current} -> {latest_tag}")
