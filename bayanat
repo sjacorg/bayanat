@@ -110,7 +110,9 @@ snapshot_pg_dump() {
     name="pre-${prev}-to-${target}-${ts}.dump"
     partial="$SHARED_DIR/backups/${name}.partial"
     final="$SHARED_DIR/backups/${name}"
-    log "Taking pre-update snapshot: $name"
+    # Log goes to stderr so `$(snapshot_pg_dump ...)` captures only the
+    # basename from the trailing `echo "$name"`.
+    log "Taking pre-update snapshot: $name" >&2
     (
         eval "$(_pg_env)"
         local user="${POSTGRES_USER:-$APP_USER}"
