@@ -113,7 +113,7 @@ snapshot_pg_dump() {
         eval "$(_pg_env)"
         PGPASSWORD="${POSTGRES_PASSWORD:-}" \
             pg_dump -Fc \
-                -h "${POSTGRES_HOST:-localhost}" \
+                -h "${POSTGRES_HOST:-/var/run/postgresql}" \
                 -p "${POSTGRES_PORT:-5432}" \
                 -U "${POSTGRES_USER:-$APP_USER}" \
                 -f "$partial" \
@@ -175,7 +175,7 @@ restore_pg() {
         eval "$(_pg_env)"
         PGPASSWORD="${POSTGRES_PASSWORD:-}" \
             pg_restore --clean --if-exists \
-                -h "${POSTGRES_HOST:-localhost}" \
+                -h "${POSTGRES_HOST:-/var/run/postgresql}" \
                 -p "${POSTGRES_PORT:-5432}" \
                 -U "${POSTGRES_USER:-$APP_USER}" \
                 -d "${POSTGRES_DB:-$APP_USER}" \
@@ -339,7 +339,7 @@ _db_ping() {
     (
         eval "$(_pg_env)"
         PGPASSWORD="${POSTGRES_PASSWORD:-}" \
-            psql -h "${POSTGRES_HOST:-localhost}" \
+            psql -h "${POSTGRES_HOST:-/var/run/postgresql}" \
                  -U "${POSTGRES_USER:-$APP_USER}" -d "${POSTGRES_DB:-$APP_USER}" \
                  -c 'SELECT 1' -t >/dev/null 2>&1
     )
@@ -374,7 +374,7 @@ update_preflight() {
     server_major=$(
         eval "$(_pg_env)"
         PGPASSWORD="${POSTGRES_PASSWORD:-}" \
-            psql -h "${POSTGRES_HOST:-localhost}" \
+            psql -h "${POSTGRES_HOST:-/var/run/postgresql}" \
                  -U "${POSTGRES_USER:-$APP_USER}" -d "${POSTGRES_DB:-$APP_USER}" \
                  -c 'SHOW server_version_num' -t 2>/dev/null \
                  | tr -d ' ' | cut -c1-2
@@ -628,7 +628,7 @@ FORCE_HTTPS=$force_https
 LOG_DIR=$LOGS_DIR
 BACKUPS_LOCAL_PATH=$SHARED_DIR/backups
 
-POSTGRES_HOST=localhost
+POSTGRES_HOST=/var/run/postgresql
 POSTGRES_PORT=5432
 POSTGRES_USER=$APP_USER
 POSTGRES_PASSWORD=
@@ -791,6 +791,17 @@ exec /usr/bin/systemd-run \
 EOF
 }
 
+_install_self() {
+    # Copy this script to /usr/local/bin/bayanat so sudoers grants +
+    # bayanat-start-update can invoke it by absolute path. Safe to re-run:
+    # `install -m 0755` replaces atomically.
+    local src
+    src=$(readlink -f "$0")
+    [[ -f "$src" ]] || die "cannot resolve installer source path"
+    install -m 0755 -o root -g root "$src" /usr/local/bin/bayanat
+    log "Installed CLI at /usr/local/bin/bayanat"
+}
+
 # --- Install ---
 
 cmd_install() {
@@ -841,6 +852,7 @@ cmd_install() {
     _configure_caddy "$domain"
     _install_sudoers
     _install_update_wrapper
+    _install_self
 
     chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
     systemctl daemon-reload
