@@ -115,9 +115,9 @@ snapshot_pg_dump() {
             pg_dump -Fc \
                 -h "${POSTGRES_HOST:-localhost}" \
                 -p "${POSTGRES_PORT:-5432}" \
-                -U "$POSTGRES_USER" \
+                -U "${POSTGRES_USER:-$APP_USER}" \
                 -f "$partial" \
-                "$POSTGRES_DB"
+                "${POSTGRES_DB:-$APP_USER}"
     )
     mv -Tf "$partial" "$final"
     echo "$name"
@@ -177,8 +177,8 @@ restore_pg() {
             pg_restore --clean --if-exists \
                 -h "${POSTGRES_HOST:-localhost}" \
                 -p "${POSTGRES_PORT:-5432}" \
-                -U "$POSTGRES_USER" \
-                -d "$POSTGRES_DB" \
+                -U "${POSTGRES_USER:-$APP_USER}" \
+                -d "${POSTGRES_DB:-$APP_USER}" \
                 "$path"
     ); then
         systemctl start bayanat bayanat-celery
@@ -340,7 +340,7 @@ _db_ping() {
         eval "$(_pg_env)"
         PGPASSWORD="${POSTGRES_PASSWORD:-}" \
             psql -h "${POSTGRES_HOST:-localhost}" \
-                 -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                 -U "${POSTGRES_USER:-$APP_USER}" -d "${POSTGRES_DB:-$APP_USER}" \
                  -c 'SELECT 1' -t >/dev/null 2>&1
     )
 }
@@ -375,7 +375,7 @@ update_preflight() {
         eval "$(_pg_env)"
         PGPASSWORD="${POSTGRES_PASSWORD:-}" \
             psql -h "${POSTGRES_HOST:-localhost}" \
-                 -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                 -U "${POSTGRES_USER:-$APP_USER}" -d "${POSTGRES_DB:-$APP_USER}" \
                  -c 'SHOW server_version_num' -t 2>/dev/null \
                  | tr -d ' ' | cut -c1-2
     )
@@ -627,6 +627,12 @@ FORCE_HTTPS=$force_https
 
 LOG_DIR=$LOGS_DIR
 BACKUPS_LOCAL_PATH=$SHARED_DIR/backups
+
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=$APP_USER
+POSTGRES_PASSWORD=
+POSTGRES_DB=$APP_USER
 EOF
 }
 
