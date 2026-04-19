@@ -611,6 +611,9 @@ class TestConfig:
     # Notifications
     NOTIFICATIONS = NOTIFICATIONS_DEFAULT_CONFIG
 
+    # Auto-update
+    AUTO_APPLY_PATCH_UPDATES = False
+
     # Dependencies (from dep_utils)
     HAS_WHISPER = dep_utils.has_whisper  # Use actual dependency detection
     HAS_TESSERACT = dep_utils.has_tesseract  # Use actual dependency detection
