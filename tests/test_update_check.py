@@ -51,7 +51,7 @@ def test_auto_apply_patch_triggers_wrapper_when_flag_on():
         patch.object(maintenance, "Notification") as notif,
     ):
         req.get.return_value = _github_response("v4.1.1")
-        maintenance.check_for_updates()
+        maintenance.check_for_updates.run()
         sp.run.assert_called_once()
         args = sp.run.call_args.args[0]
         assert args == ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"]
@@ -72,7 +72,7 @@ def test_auto_apply_off_falls_back_to_notification():
         patch.object(maintenance, "Notification") as notif,
     ):
         req.get.return_value = _github_response("v4.1.1")
-        maintenance.check_for_updates()
+        maintenance.check_for_updates.run()
         sp.run.assert_not_called()
         notif.create_for_admins.assert_called_once()
 
@@ -91,6 +91,6 @@ def test_auto_apply_on_but_minor_bump_still_notifies():
         patch.object(maintenance, "Notification") as notif,
     ):
         req.get.return_value = _github_response("v4.2.0")
-        maintenance.check_for_updates()
+        maintenance.check_for_updates.run()
         sp.run.assert_not_called()
         notif.create_for_admins.assert_called_once()
