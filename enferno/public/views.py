@@ -40,9 +40,9 @@ def health() -> Response:
     try:
         db.session.execute(text("SELECT 1"))
         rds.ping()
-    except Exception as e:
-        logger.error(f"health check failed: {e}")
-        return jsonify({"status": "error", "error": str(e)[:120]}), 503
+    except Exception:
+        logger.error("health check failed", exc_info=True)
+        return jsonify({"status": "error", "error": "Service unavailable"}), 503
     version = os.environ.get("BAYANAT_VERSION") or _read_version_from_pyproject()
     return jsonify({"status": "ok", "version": version})
 
