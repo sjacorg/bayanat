@@ -127,9 +127,9 @@ services:
       - /opt/bitnami/nginx/logs/
       - /opt/bitnami/nginx/conf/bitnami/certs/
     healthcheck:
-      test: [ "CMD", "service", "nginx", "status" ]
-      interval: 3s
-      retries: 10
+      test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/80" ]
+      interval: 10s
+      retries: 5
 
 volumes:
   redis_data:
