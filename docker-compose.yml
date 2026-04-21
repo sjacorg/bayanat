@@ -44,14 +44,14 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=flask
-        - ENV_FILE=${ENV_FILE:-.env}
+        - ENV_FILE=${ENV_FILE:-.env.docker}
     volumes:
       - '${PWD}/backups:/app/backups/:rw'
       - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media/:rw'
       - '${PWD}/enferno/imports:/app/enferno/imports/:rw'
       - '${PWD}/logs/:/app/logs/:rw'
       - '${PWD}/config.json:/app/config.json:rw'
-      - '${PWD}/${ENV_FILE:-.env}:/app/.env:ro'
+      - '${PWD}/${ENV_FILE:-.env.docker}:/app/.env:ro'
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,7 +72,7 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=celery
-        - ENV_FILE=${ENV_FILE:-.env}
+        - ENV_FILE=${ENV_FILE:-.env.docker}
     volumes_from:
       - bayanat
     read_only: true
@@ -93,7 +93,7 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=celery-ocr
-        - ENV_FILE=${ENV_FILE:-.env}
+        - ENV_FILE=${ENV_FILE:-.env.docker}
     volumes_from:
       - bayanat
     read_only: true
