@@ -1,67 +1,78 @@
-# ---- use a base image to compile requirements / save image size -----
-FROM ubuntu:24.04 as base
-ENV DEBIAN_FRONTEND=noninteractive
+# ---- builder stage: compile python deps with uv -----------------
+FROM ghcr.io/astral-sh/uv:0.5.11-python3.12-bookworm-slim AS builder
 
-RUN apt-get update -y && \
-    apt-get install -yq python3.12 python3.12-dev python3.12-venv python3-pip curl \
-    libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev \
-    libmysqlclient-dev libncurses5-dev libpq-dev \
-    libimage-exiftool-perl
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=0 \
+    UV_NO_DEV=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
-# Sets utf-8 encoding for Python
-ENV LANG=C.UTF-8
-# Turns off writing .pyc files
-ENV PYTHONDONTWRITEBYTECODE=1
-# Seems to speed things up
-ENV PYTHONUNBUFFERED=1
-# Install UV
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
+# Build-time headers only; runtime libs installed in the final stage.
+# libimage-exiftool-perl is needed at build time because pyexifinfo's
+# setup.py probes for the exiftool binary during wheel install.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    libffi-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libopenjp2-7-dev \
+    libimage-exiftool-perl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock /app/
-
 RUN uv sync --frozen --no-install-project
 
-# ----------------- main container -------------------------
+# ---- runtime stage -----------------------------------------------
+FROM python:3.12-slim-bookworm AS runtime
 
-FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    XDG_CACHE_HOME=/tmp/.cache
 
-ENV DEBIAN_FRONTEND=noninteractive
 ARG ROLE
 ENV ROLE=${ROLE}
-RUN echo "Building ${ROLE} container."
-RUN if [ "$ROLE" = "flask" ]; then \
-    apt-get update -y && apt-get install -yq python3.12 python3.12-dev python3.12-venv \
-    postgis libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libffi-dev \
-    libjpeg-dev libopenjp2-7-dev; \
-    elif [ "$ROLE" = "celery" ] || [ "$ROLE" = "celery-ocr" ]; then \
-    apt-get update -y && apt-get install -yq python3.12 python3.12-dev python3.12-venv \
-    postgis libimage-exiftool-perl ffmpeg libpango-1.0-0 libharfbuzz0b \
-    libpangoft2-1.0-0 libffi-dev libjpeg-dev libopenjp2-7-dev; \
-    fi
-RUN apt clean
-RUN apt autoremove
+
+# Shared runtime libs: psycopg2 (libpq5), weasyprint (pango/cairo/harfbuzz),
+# pillow (libjpeg, libopenjp2), lxml (libxml2, libxslt).
+# Celery roles also need exiftool + ffmpeg for media processing.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz0b \
+    libcairo2 \
+    libxml2 \
+    libxslt1.1 \
+    libjpeg62-turbo \
+    libopenjp2-7 \
+    zlib1g \
+    libffi8 \
+    fonts-dejavu-core \
+    && if [ "$ROLE" = "celery" ] || [ "$ROLE" = "celery-ocr" ]; then \
+         apt-get install -y --no-install-recommends \
+           libimage-exiftool-perl \
+           ffmpeg; \
+       fi \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Sets utf-8 encoding for Python
-ENV LANG=C.UTF-8
-# Turns off writing .pyc files
-ENV PYTHONDONTWRITEBYTECODE=1
-# Seems to speed things up
-ENV PYTHONUNBUFFERED=1
+RUN useradd --system --create-home --uid 1000 ubuntu
 
 COPY --chown=ubuntu:ubuntu . /app
-# copy UV-built virtualenv
-COPY --from=base /app/.venv /app/.venv
+COPY --from=builder --chown=ubuntu:ubuntu /app/.venv /app/.venv
 
 COPY --chown=ubuntu:ubuntu ./flask/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-
 RUN chmod 550 /usr/local/bin/entrypoint.sh
-
-ENV PATH="/app/.venv/bin:$PATH"
 
 USER ubuntu
 
