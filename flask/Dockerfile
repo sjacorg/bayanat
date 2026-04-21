@@ -36,7 +36,7 @@ RUN if [ "$ROLE" = "flask" ]; then \
     apt-get update -y && apt-get install -yq python3.12 python3.12-dev python3.12-venv \
     postgis libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libffi-dev \
     libjpeg-dev libopenjp2-7-dev; \
-    elif [ "$ROLE" = "celery" ]; then \
+    elif [ "$ROLE" = "celery" ] || [ "$ROLE" = "celery-ocr" ]; then \
     apt-get update -y && apt-get install -yq python3.12 python3.12-dev python3.12-venv \
     postgis libimage-exiftool-perl ffmpeg libpango-1.0-0 libharfbuzz0b \
     libpangoft2-1.0-0 libffi-dev libjpeg-dev libopenjp2-7-dev; \
