@@ -1902,6 +1902,7 @@ class FullConfigValidationModel(ConfigValidationModel):
     SECURITY_FRESHNESS: int = Field(gt=0)
     SECURITY_FRESHNESS_GRACE_PERIOD: int = Field(ge=0)
     DISABLE_MULTIPLE_SESSIONS: bool
+    AUTO_APPLY_PATCH_UPDATES: bool = False
     RECAPTCHA_ENABLED: bool
     RECAPTCHA_PUBLIC_KEY: Optional[str] = None
     RECAPTCHA_PRIVATE_KEY: Optional[str] = None
