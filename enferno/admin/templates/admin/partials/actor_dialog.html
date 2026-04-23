@@ -18,7 +18,10 @@
                 <v-spacer></v-spacer>
 
                 <template #append>
-                     <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2" >
+                    {% with help_url='https://docs.bayanat.org/guide/actors.html', help_title='Actors' %}
+                    {% include 'admin/partials/contextual_help_fab.html' %}
+                    {% endwith %}
+                    <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2" >
                     {{ _('Save Actor') }}
                 </v-btn>
                 <v-btn icon="mdi-close" @click="confirmClose">

@@ -1,0 +1,20 @@
+{% if help_url %}
+<v-tooltip location="bottom">
+    <template #activator="{ props }">
+        <v-btn
+            v-bind="props"
+            icon="mdi-help-circle-outline"
+            variant="plain"
+            href="{{ help_url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mr-2"
+        ></v-btn>
+    </template>
+    {% if help_title %}
+        {{ _('Learn about') }} {{ _(help_title) }}
+    {% else %}
+        {{ _('User Guides') }}
+    {% endif %}
+</v-tooltip>
+{% endif %}
