@@ -9,7 +9,10 @@ from flask import current_app
 from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
 
-from enferno.settings import Config
+import json
+import shutil
+from pathlib import Path
+
 from enferno.extensions import db
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
@@ -21,9 +24,12 @@ from enferno.utils.data_helpers import (
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
+from geoalchemy2.shape import to_shape
 from sqlalchemy import text
-from enferno.admin.models import Bulletin
-from enferno.admin.models.DynamicField import DynamicField
+from sqlalchemy.orm import subqueryload
+from enferno.admin.models import Bulletin, Label
+from enferno.admin.models.Media import Media
+from enferno.admin.models.tables import bulletin_labels
 from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.form_history_utils import record_form_history
@@ -786,3 +792,246 @@ def status() -> None:
 
     click.echo(f"{'─' * 40}")
     click.echo(f"Total extracted:      {total_extracted:,}\n")
+
+
+# Public archive export commands
+export_cli = AppGroup("export", short_help="Export commands for public archive")
+
+MEDIA_DIR = Media.media_dir
+
+
+def serialize_bulletin(bulletin):
+    """Serialize a bulletin for the public archive export.
+
+    Includes only public-facing fields. Strips workflow, assignment,
+    review, and internal metadata.
+    """
+    labels = [
+        {"id": l.id, "title": l.title, "title_ar": l.title_ar, "verified": l.verified}
+        for l in bulletin.labels
+    ]
+
+    ver_labels = [
+        {"id": l.id, "title": l.title, "title_ar": l.title_ar} for l in bulletin.ver_labels
+    ]
+
+    sources = [{"id": s.id, "title": s.title} for s in bulletin.sources]
+
+    locations = [
+        {
+            "id": loc.id,
+            "title": loc.title,
+            "title_ar": loc.title_ar,
+            "lat": to_shape(loc.latlng).y if loc.latlng else None,
+            "lng": to_shape(loc.latlng).x if loc.latlng else None,
+            "location_type": loc.location_type.title if loc.location_type else None,
+            "country": loc.country.title if loc.country else None,
+            "full_location": loc.full_location,
+        }
+        for loc in bulletin.locations
+    ]
+
+    geo_locations = [
+        {
+            "id": geo.id,
+            "title": geo.title,
+            "lat": to_shape(geo.latlng).y if geo.latlng else None,
+            "lng": to_shape(geo.latlng).x if geo.latlng else None,
+            "type": geo.type.title if geo.type else None,
+        }
+        for geo in bulletin.geo_locations
+    ]
+
+    events = [
+        {
+            "id": e.id,
+            "title": e.title,
+            "title_ar": e.title_ar,
+            "type": e.eventtype.title if e.eventtype else None,
+            "from_date": DateHelper.serialize_datetime(e.from_date),
+            "to_date": DateHelper.serialize_datetime(e.to_date),
+            "location": e.location.title if e.location else None,
+        }
+        for e in bulletin.events
+    ]
+
+    medias = []
+    for media in bulletin.medias:
+        if media.deleted:
+            continue
+        entry = {
+            "id": media.id,
+            "filename": media.media_file,
+            "type": media.media_file_type,
+            "title": media.title,
+            "title_ar": media.title_ar,
+        }
+        if media.extraction:
+            entry["extraction"] = {
+                "text": media.extraction.text,
+                "original_text": media.extraction.original_text,
+                "confidence": media.extraction.confidence,
+                "language": media.extraction.language,
+            }
+        medias.append(entry)
+
+    related_bulletins = []
+    for rel in bulletin.bulletin_relations:
+        other = rel.bulletin_to if bulletin.id == rel.bulletin_id else rel.bulletin_from
+        related_bulletins.append(
+            {
+                "id": other.id,
+                "title": other.title,
+                "title_ar": other.title_ar,
+                "related_as": rel.related_as,
+            }
+        )
+
+    related_actors = [
+        {
+            "id": rel.actor.id,
+            "name": rel.actor.name,
+            "type": rel.actor.type,
+            "related_as": rel.related_as or [],
+        }
+        for rel in bulletin.related_actors
+    ]
+
+    related_incidents = [
+        {
+            "id": rel.incident.id,
+            "title": rel.incident.title,
+            "title_ar": rel.incident.title_ar,
+            "related_as": rel.related_as,
+        }
+        for rel in bulletin.related_incidents
+    ]
+
+    return {
+        "id": bulletin.id,
+        "title": bulletin.title,
+        "title_ar": bulletin.title_ar,
+        "description": bulletin.description,
+        "source_link": bulletin.source_link,
+        "publish_date": DateHelper.serialize_datetime(bulletin.publish_date),
+        "documentation_date": DateHelper.serialize_datetime(bulletin.documentation_date),
+        "labels": labels,
+        "verified_labels": ver_labels,
+        "sources": sources,
+        "locations": locations,
+        "geo_locations": geo_locations,
+        "events": events,
+        "media": medias,
+        "related_bulletins": related_bulletins,
+        "related_actors": related_actors,
+        "related_incidents": related_incidents,
+    }
+
+
+def copy_media_files(bulletins, output_dir):
+    """Copy media files for exported bulletins to the output directory.
+
+    Reads FILESYSTEM_LOCAL from app config to decide between local copy and S3 download.
+    """
+    import boto3
+
+    cfg = current_app.config
+    use_s3 = not cfg.get("FILESYSTEM_LOCAL")
+    dest_dir = output_dir / "media"
+    dest_dir.mkdir(exist_ok=True)
+
+    s3 = None
+    if use_s3:
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=cfg["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=cfg["AWS_SECRET_ACCESS_KEY"],
+            region_name=cfg["AWS_REGION"],
+        )
+
+    copied = 0
+    missing = 0
+    for bulletin in bulletins:
+        for media in bulletin.medias:
+            if media.deleted or not media.media_file:
+                continue
+            dest = dest_dir / media.media_file
+            if use_s3:
+                try:
+                    s3.download_file(cfg["S3_BUCKET"], media.media_file, str(dest))
+                    copied += 1
+                except Exception:
+                    logger.warning(
+                        "S3 download failed: %s (bulletin %d)", media.media_file, bulletin.id
+                    )
+                    missing += 1
+            else:
+                src = MEDIA_DIR / media.media_file
+                if src.exists():
+                    shutil.copy2(src, dest)
+                    copied += 1
+                else:
+                    logger.warning("Media file not found: %s (bulletin %d)", src, bulletin.id)
+                    missing += 1
+
+    return copied, missing
+
+
+@export_cli.command("public")
+@click.option("--label", required=True, help="Label title to filter bulletins for export.")
+@click.option("--output", required=True, type=click.Path(), help="Output directory for the export.")
+@click.option("--copy-media/--no-copy-media", default=True, help="Copy media files to output.")
+@with_appcontext
+def export_public(label, output, copy_media):
+    """Export labeled bulletins as denormalized JSON for the public archive.
+
+    Usage:
+        flask export public --label "public-archive" --output ./export/
+    """
+    output_dir = Path(output)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    target_label = Label.query.filter(Label.title == label).first()
+    if not target_label:
+        click.echo(f'Label "{label}" not found.')
+        raise SystemExit(1)
+
+    bulletins = (
+        Bulletin.query.join(bulletin_labels)
+        .filter(bulletin_labels.c.label_id == target_label.id)
+        .filter(Bulletin.deleted == False)
+        .options(
+            subqueryload(Bulletin.labels),
+            subqueryload(Bulletin.ver_labels),
+            subqueryload(Bulletin.sources),
+            subqueryload(Bulletin.locations),
+            subqueryload(Bulletin.geo_locations),
+            subqueryload(Bulletin.events),
+            subqueryload(Bulletin.medias).joinedload(Media.extraction),
+            subqueryload(Bulletin.bulletins_to),
+            subqueryload(Bulletin.bulletins_from),
+            subqueryload(Bulletin.related_actors),
+            subqueryload(Bulletin.related_incidents),
+        )
+        .order_by(Bulletin.id)
+        .all()
+    )
+
+    if not bulletins:
+        click.echo(f'No bulletins found with label "{label}".')
+        raise SystemExit(1)
+
+    click.echo(f"Exporting {len(bulletins)} bulletins...")
+
+    documents = [serialize_bulletin(b) for b in bulletins]
+
+    out_file = output_dir / "documents.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(documents, f, ensure_ascii=False, indent=2)
+    click.echo(f"Wrote {len(documents)} documents to {out_file}")
+
+    if copy_media:
+        copied, missing = copy_media_files(bulletins, output_dir)
+        click.echo(f"Copied {copied} media files ({missing} missing)")
+
+    click.echo("Export complete.")
