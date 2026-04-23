@@ -2,18 +2,15 @@
 
 
             <v-main>
-                <v-container fluid>
-                    <v-row>
-                        <v-col cols="12">
-                            <v-card>
+                <v-container fluid style="height: calc(100vh - 64px);">
+                            <v-card class="h-100">
                                 <v-card-title>
                                     <div class="flex-grow-1"></div>
                                 </v-card-title>
 
-                                <v-card-text>
+                                <v-card-text class="h-100">
 
                                     <v-data-table-server
-                                            height="calc(100vh - 260px)"
                                             id="locations-dt"
                                             fixed-header
                                             :headers="headers"
@@ -23,16 +20,16 @@
                                             @update:options="refresh"
                                             :page="options.page"
                                             :items-length="itemsLength"
-                                            class="elevation-1"
+                                            class="elevation-1 h-100"
                                     >
                                         <template v-slot:top>
                                             <v-toolbar color="white" >
-                                                <v-toolbar-title>{{ _('Locations') }}</v-toolbar-title>
+                                                <v-toolbar-title v-if="$vuetify.display.smAndUp">{{ _('Locations') }}</v-toolbar-title>
 
                                                 <v-text-field
                                                     variant="outlined"
                                                     density="compact"
-                                                    class="mt-6"
+                                                    class="mt-6 px-4"
                                                     v-model="q.title"
                                                     clearable
                                                     @keydown.enter="refresh()"
@@ -42,7 +39,7 @@
                                                     label="{{ _('Search') }}">
                                                 </v-text-field>
 
-                                                <v-spacer></v-spacer>
+                                                <v-spacer v-if="$vuetify.display.smAndUp"></v-spacer>
 
                                                 <v-btn 
                                                     @click="newItem"
@@ -55,6 +52,7 @@
 
                                                 {% if current_user.has_role('Admin') %}
                                                         <v-btn
+                                                            v-if="$vuetify.display.smAndUp"
                                                             @click="imDialog=true"
                                                             variant="elevated"
 
@@ -135,8 +133,6 @@
 
                                 </v-card-text>
                             </v-card>
-                        </v-col>
-                    </v-row>
 
                 </v-container>
             </v-main>

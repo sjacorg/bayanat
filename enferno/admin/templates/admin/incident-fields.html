@@ -64,14 +64,14 @@
 <v-main>
   <div class="pa-4">
     <v-card>
-      <v-card-text class="d-flex justify-space-between ga-12 pt-6">
+      <v-card-text class="d-flex justify-space-between pt-6" :class="{ 'flex-column ga-4': $vuetify.display.smAndDown, 'ga-12': $vuetify.display.smAndUp }">
         <div class="text-h6 text-no-wrap">{{ _('Incident Dynamic From Builder') }}
         </div>
       
         <v-text-field density="compact" class="flex-grow-1" placeholder="{{ _('Search') }}" prepend-inner-icon="mdi-magnify"
           hide-details v-model="ui.search" clearable></v-text-field>
       
-        <div class="d-flex ga-4 align-center">
+        <div v-if="$vuetify.display.smAndUp" class="d-flex ga-4 align-center">
           <v-btn
             class="outlined-btn"
             prepend-icon="mdi-history"
