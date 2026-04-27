@@ -41,6 +41,7 @@ class ConfigManager:
             "AWS_SECRET_ACCESS_KEY": "",
             "S3_BUCKET": "",
             "AWS_REGION": "",
+            "S3_ENDPOINT": "",  
             "ACCESS_CONTROL_RESTRICTIVE": False,
             "AC_USERS_CAN_RESTRICT_NEW": False,
             "MEDIA_ALLOWED_EXTENSIONS": [
@@ -190,6 +191,7 @@ class ConfigManager:
             "AWS_SECRET_ACCESS_KEY": "AWS Secret Access Key",
             "S3_BUCKET": "S3 Bucket",
             "AWS_REGION": "AWS Region",
+            "S3_ENDPOINT": "S3 Endpoint URL",
             "ACCESS_CONTROL_RESTRICTIVE": "Restrictive Access Control",
             "AC_USERS_CAN_RESTRICT_NEW": "Users Can Restrict New Items",
             "MEDIA_ALLOWED_EXTENSIONS": "Media Upload Allowed File Extensions",
@@ -299,6 +301,7 @@ class ConfigManager:
             "AWS_SECRET_ACCESS_KEY": ConfigManager.MASK_STRING if cfg.AWS_SECRET_ACCESS_KEY else "",
             "S3_BUCKET": cfg.S3_BUCKET,
             "AWS_REGION": cfg.AWS_REGION,
+            "S3_ENDPOINT": cfg.S3_ENDPOINT,  
             "ACCESS_CONTROL_RESTRICTIVE": cfg.ACCESS_CONTROL_RESTRICTIVE,
             "AC_USERS_CAN_RESTRICT_NEW": cfg.AC_USERS_CAN_RESTRICT_NEW,
             "MEDIA_ALLOWED_EXTENSIONS": cfg.MEDIA_ALLOWED_EXTENSIONS,
