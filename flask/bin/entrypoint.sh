@@ -10,7 +10,7 @@ if [ "$ROLE" = "flask" ]; then
     # /api/create-admin route exists). On a fresh DB the wizard would
     # otherwise be unreachable. flask install with --username and no
     # --password generates a random password and prints it to stdout;
-    # operator retrieves it via `docker-compose logs flask`.
+    # the operator retrieves it via `docker-compose logs bayanat`.
     echo ":: Bootstrapping initial admin user ::"
     flask install --username admin
   else
