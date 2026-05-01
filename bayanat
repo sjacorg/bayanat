@@ -955,20 +955,30 @@ cmd_install() {
 
     _verify_service_health
 
-    log "Installation complete"
+    local access_url
     if [[ "$domain" == "localhost" ]]; then
-        log "Access: http://$(hostname -I | awk '{print $1}')"
+        access_url="http://$(hostname -I | awk '{print $1}')"
     else
-        log "Access: https://$domain"
+        access_url="https://$domain"
     fi
+
+    log "Installation complete"
+    log "Access: $access_url"
 
     if [[ -n "$ADMIN_PASSWORD" ]]; then
         log ""
         log "============================================================"
-        log "Admin login   : $ADMIN_USERNAME"
-        log "Admin password: $ADMIN_PASSWORD"
-        log "Save this now - it is not stored in plaintext anywhere."
-        log "Change it after first login via account settings."
+        log " Bayanat is ready. Sign in to finish setup:"
+        log ""
+        log "   URL      : $access_url/login"
+        log "   Username : $ADMIN_USERNAME"
+        log "   Password : $ADMIN_PASSWORD"
+        log ""
+        log " Save these credentials now - the password is not stored"
+        log " in plaintext anywhere. After signing in, the setup wizard"
+        log " will walk you through language, default data, and other"
+        log " configuration. Change the password from your account"
+        log " settings."
         log "============================================================"
     fi
 }
