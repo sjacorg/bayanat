@@ -6,6 +6,13 @@ if [ "$ROLE" = "flask" ]; then
     echo ":: Fresh DB, creating schema ::"
     flask create-db --create-exts
     flask db stamp head
+    # BAY-01-005: bootstrap admin out-of-band (no network-reachable
+    # /api/create-admin route exists). On a fresh DB the wizard would
+    # otherwise be unreachable. flask install with --username and no
+    # --password generates a random password and prints it to stdout;
+    # operator retrieves it via `docker-compose logs flask`.
+    echo ":: Bootstrapping initial admin user ::"
+    flask install --username admin
   else
     echo ":: Existing DB, running migrations ::"
     flask db upgrade
