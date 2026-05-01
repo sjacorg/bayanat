@@ -1,12 +1,37 @@
 from __future__ import annotations
 
 from flask import Response
+from flask_security.decorators import current_user
 from sqlalchemy import desc
 
-from enferno.admin.models import BulletinHistory, ActorHistory, IncidentHistory, LocationHistory
+from enferno.admin.models import (
+    Activity,
+    Actor,
+    ActorHistory,
+    Bulletin,
+    BulletinHistory,
+    Incident,
+    IncidentHistory,
+    LocationHistory,
+)
+from enferno.extensions import db
 from enferno.utils.http_response import HTTPResponse
 import enferno.utils.typing as t
 from . import admin, require_view_history
+
+
+def _deny_history(parent_label: str, parent_id: int) -> Response:
+    """Log a denied history view and return a forbidden response."""
+    Activity.create(
+        current_user,
+        Activity.ACTION_VIEW,
+        Activity.STATUS_DENIED,
+        {"id": parent_id},
+        parent_label,
+        details=f"Unauthorized attempt to view history of restricted {parent_label} {parent_id}.",
+    )
+    return HTTPResponse.forbidden("Restricted Access")
+
 
 # Bulletin History Helpers
 
@@ -23,6 +48,12 @@ def api_bulletinhistory(bulletinid: t.id) -> Response:
     Returns:
         - json feed of item's history / error.
     """
+    bulletin = db.session.get(Bulletin, bulletinid)
+    if not bulletin:
+        return HTTPResponse.not_found("Bulletin not found")
+    if not current_user.can_access(bulletin):
+        return _deny_history("bulletin", bulletinid)
+
     result = (
         BulletinHistory.query.filter_by(bulletin_id=bulletinid)
         .order_by(desc(BulletinHistory.created_at))
@@ -49,6 +80,12 @@ def api_actorhistory(actorid: t.id) -> Response:
     Returns:
         - json feed of item's history / error.
     """
+    actor = db.session.get(Actor, actorid)
+    if not actor:
+        return HTTPResponse.not_found("Actor not found")
+    if not current_user.can_access(actor):
+        return _deny_history("actor", actorid)
+
     result = (
         ActorHistory.query.filter_by(actor_id=actorid).order_by(desc(ActorHistory.created_at)).all()
     )
@@ -72,6 +109,12 @@ def api_incidenthistory(incidentid: t.id) -> Response:
     Returns:
         - json feed of item's history / error.
     """
+    incident = db.session.get(Incident, incidentid)
+    if not incident:
+        return HTTPResponse.not_found("Incident not found")
+    if not current_user.can_access(incident):
+        return _deny_history("incident", incidentid)
+
     result = (
         IncidentHistory.query.filter_by(incident_id=incidentid)
         .order_by(desc(IncidentHistory.created_at))

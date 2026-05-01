@@ -2,10 +2,21 @@
 set -e
 
 if [ "$ROLE" = "flask" ]; then
-  echo ":: Creating Bayanat Database ::"
-  flask create-db --create-exts
-  echo ":: Running migrations ::"
-  flask db upgrade
+  if [ -z "$(flask db current 2>/dev/null | grep -oE '[0-9a-f]{12}')" ]; then
+    echo ":: Fresh DB, creating schema ::"
+    flask create-db --create-exts
+    flask db stamp head
+    # BAY-01-005: bootstrap admin out-of-band (no network-reachable
+    # /api/create-admin route exists). On a fresh DB the wizard would
+    # otherwise be unreachable. flask install with --username and no
+    # --password generates a random password and prints it to stdout;
+    # the operator retrieves it via `docker-compose logs bayanat`.
+    echo ":: Bootstrapping initial admin user ::"
+    flask install --username admin
+  else
+    echo ":: Existing DB, running migrations ::"
+    flask db upgrade
+  fi
   echo ":: Starting Bayanat ::"
   exec uwsgi --http 0.0.0.0:5000 --protocol uwsgi --master --processes 1 --wsgi run:app
 

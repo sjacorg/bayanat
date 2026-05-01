@@ -249,8 +249,13 @@ After [configuring](/deployment/configuration) and generating a `.env` file:
 docker-compose up -d
 ```
 
-Install the admin user:
+The first startup creates an `admin` user and prints a generated
+password to the container logs. Retrieve it with:
 
 ```bash
-docker-compose exec bayanat uv run flask install
+docker-compose logs bayanat | grep -A4 "Generated password"
 ```
+
+If the auto-bootstrap was missed or the admin was deleted, run
+`docker-compose exec bayanat uv run flask install -u admin` to mint a
+fresh credential.

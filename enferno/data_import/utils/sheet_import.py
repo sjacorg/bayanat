@@ -27,6 +27,7 @@ from enferno.extensions import db
 
 from enferno.utils.base import DatabaseException
 from enferno.utils.date_helper import DateHelper
+from enferno.utils.validation_utils import sanitize_string
 from enferno.user.models import Role, User
 import enferno.utils.typing as t
 
@@ -554,7 +555,7 @@ class SheetImport:
             description += "\n"
 
         if description:
-            self.actor_profile.description = description
+            self.actor_profile.description = sanitize_string(description)
             if old_description:
                 self.actor_profile.description += old_description
         self.data_import.add_to_log("Processed description")

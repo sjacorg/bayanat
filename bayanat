@@ -608,19 +608,31 @@ _setup_database() {
     systemctl enable --now postgresql redis-server
 
     log "Setting up database..."
-    sudo -u postgres createuser -s "$APP_USER" 2>/dev/null || true
+    # Role is a plain owner, not a superuser. Extensions are created by the
+    # postgres superuser below so the app role doesn't need that privilege.
+    sudo -u postgres createuser "$APP_USER" 2>/dev/null || true
+    # Idempotent for upgrades: drop superuser if a previous install granted it.
+    sudo -u postgres psql -c "ALTER USER \"$APP_USER\" NOSUPERUSER;" 2>/dev/null || true
     sudo -u postgres createdb bayanat -O "$APP_USER" 2>/dev/null || true
+    sudo -u postgres psql -d bayanat \
+        -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" \
+        -c "CREATE EXTENSION IF NOT EXISTS postgis;" >/dev/null
 
-    # Configure pg_hba trust auth for app user
+    # Configure pg_hba peer auth for app user. Peer auth maps the OS user to
+    # the PG role over the local socket, so only processes running as
+    # $APP_USER can connect as $APP_USER. Replaces the previous 'trust' rule
+    # which let any local OS user connect as the app role.
     local pg_hba
     pg_hba=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1)
     [[ -n "$pg_hba" ]] || die "Cannot find pg_hba.conf"
 
-    local rule="local   all             $APP_USER                                 trust"
+    local rule="local   all             $APP_USER                                 peer"
     if grep -qF "$rule" "$pg_hba"; then
         log "pg_hba.conf already configured"
     else
         log "Configuring pg_hba.conf for $APP_USER"
+        # Remove any prior trust rule for this user from a previous install
+        sed -i "/^local[[:space:]]\+all[[:space:]]\+$APP_USER[[:space:]]\+.*trust/d" "$pg_hba"
         # Insert before the "local all all" catch-all, or append
         if grep -q "^local.*all.*all" "$pg_hba"; then
             sed -i "/^local.*all.*all/i $rule" "$pg_hba"
@@ -724,6 +736,36 @@ _init_database() {
     fi
 }
 
+ADMIN_USERNAME=""
+ADMIN_PASSWORD=""
+
+_bootstrap_admin() {
+    # Provision the initial admin out-of-band. Replaces the deleted
+    # /api/create-admin wizard endpoint, which was unauthenticated and
+    # claimable by the first network client during the install window.
+    # The password is fed to flask install over stdin (--password-stdin)
+    # so it is never visible in /proc/<pid>/cmdline or `ps`.
+    local tag="$1"
+    local pw
+    pw=$(python3 -c "import secrets; print(secrets.token_urlsafe(20))" 2>/dev/null) || \
+        pw=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)
+
+    log "Bootstrapping initial admin user..."
+    local out
+    out=$(printf '%s\n' "$pw" \
+        | flask_run "$tag" install --username admin --password-stdin 2>&1) || true
+
+    if echo "$out" | grep -q "already installed"; then
+        log "Admin user already exists, skipping bootstrap"
+    elif echo "$out" | grep -q "installed successfully"; then
+        ADMIN_USERNAME="admin"
+        ADMIN_PASSWORD="$pw"
+    else
+        warn "Admin bootstrap unexpected output:"
+        warn "$out"
+    fi
+}
+
 _install_uwsgi_config() {
     cat > "$SHARED_DIR/uwsgi-prod.ini" << EOF
 [uwsgi]
@@ -776,7 +818,7 @@ User=$APP_USER
 Group=$APP_USER
 WorkingDirectory=$CURRENT_LINK
 EnvironmentFile=$SHARED_DIR/.env
-ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B
+ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B -Q celery,ocr
 Restart=always
 RestartSec=3
 
@@ -895,6 +937,7 @@ cmd_install() {
 
     _install_deps "$tag"
     _init_database "$tag"
+    _bootstrap_admin "$tag"
 
     # Activate release
     swap_symlink "$RELEASES_DIR/$tag"
@@ -915,11 +958,31 @@ cmd_install() {
 
     _verify_service_health
 
-    log "Installation complete"
+    local access_url
     if [[ "$domain" == "localhost" ]]; then
-        log "Access: http://$(hostname -I | awk '{print $1}')"
+        access_url="http://$(hostname -I | awk '{print $1}')"
     else
-        log "Access: https://$domain"
+        access_url="https://$domain"
+    fi
+
+    log "Installation complete"
+    log "Access: $access_url"
+
+    if [[ -n "$ADMIN_PASSWORD" ]]; then
+        log ""
+        log "============================================================"
+        log " Bayanat is ready. Sign in to finish setup:"
+        log ""
+        log "   URL      : $access_url/login"
+        log "   Username : $ADMIN_USERNAME"
+        log "   Password : $ADMIN_PASSWORD"
+        log ""
+        log " Save these credentials now - the password is not stored"
+        log " in plaintext anywhere. After signing in, the setup wizard"
+        log " will walk you through language, default data, and other"
+        log " configuration. Change the password from your account"
+        log " settings."
+        log "============================================================"
     fi
 }
 

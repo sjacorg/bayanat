@@ -66,42 +66,6 @@
                                     </v-stepper-vertical-item>
 
                                     <v-stepper-vertical-item
-                                            :complete="step > 2"
-                                            title="First Admin User"
-                                            value="2"
-                                            :disabled="adminCreated">
-
-                                        <v-card variant="flat" :disabled="adminCreated" class="pa-4">
-                                            <v-form @submit.prevent="createSuperAdmin">
-                                                <div class="mb-5">
-                                                    {{ _('Create your first admin account. This account will have unrestricted
-                                                    access to all features and settings in Bayanat.') }}
-                                                </div>
-
-                                                <v-text-field
-                                                        v-model="username"
-                                                        label="Username"
-                                                        required
-                                                ></v-text-field>
-                                                <v-text-field
-                                                        v-model="password"
-                                                        label="Password"
-                                                        type="password"
-                                                        required
-                                                ></v-text-field>
-                                                <v-btn :loading="loading" :disabled="loading" color="primary" variant="flat" type="submit">
-                                                    {{ _('Create Admin Account') }}
-                                                </v-btn>
-                                            </v-form>
-                                        </v-card>
-
-                                        <template v-slot:next></template>
-                                        <template v-slot:prev="{ prev }">
-                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
-                                        </template>
-                                    </v-stepper-vertical-item>
-
-                                    <v-stepper-vertical-item
                                             :complete="step > 3"
                                             title="{{ _('Language') }}"
                                             value="3">
@@ -507,8 +471,6 @@
                     loading: false,
                     overlay: false,
                     finished: false,
-                    username: '',
-                    password: '',
                     importData: false,
                     dataImported: false,
                     cfg: {
@@ -518,7 +480,7 @@
                         BABEL_DEFAULT_LOCALE: '{{ config.BABEL_DEFAULT_LOCALE }}',
                         GEO_MAP_DEFAULT_CENTER: null
                     },
-                    adminCreated: false,
+                    adminCreated: true,
                     defaultSettings: {},
 
                     alHeaders: [
@@ -544,22 +506,24 @@
 
                 checkProgress() {
                     this.loading = true;
-                    Promise.all([
-                        api.get('/api/check-admin'),
-                        api.get('/api/check-data-imported')
-                    ]).then(([adminResponse, dataResponse]) => {
-                        this.adminCreated = adminResponse.data.status === 'exists';
-                        this.dataImported = dataResponse.data.status === 'imported';
-                    }).catch(error => {
-                        console.error('Error checking progress:', error);
-                        if (error.response && error.response.status === 403) {
-                            window.location.href = '/login'; // Redirect to login on 403 error
-                        } else {
-                            this.showSnack('Error checking progress. Please try again.');
-                        }
-                    }).finally(() => {
-                        this.loading = false;
-                    });
+                    // Admin always exists at this point (created by the installer
+                    // CLI bootstrap; the wizard requires session auth).
+                    this.adminCreated = true;
+                    api.get('/api/check-data-imported')
+                        .then(dataResponse => {
+                            this.dataImported = dataResponse.data.status === 'imported';
+                        })
+                        .catch(error => {
+                            console.error('Error checking progress:', error);
+                            if (error.response && error.response.status === 403) {
+                                window.location.href = '/login';
+                            } else {
+                                this.showSnack('Error checking progress. Please try again.');
+                            }
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
                 },
 
                 fetchDefaultSettings() {
@@ -586,32 +550,6 @@
                                 window.location.href = '/login'; // Redirect to login on 403 error
                             } else {
                                 this.showSnack('Error importing data. Please try again.');
-                            }
-                        })
-                        .finally(() => {
-                            this.loading = false;
-                        });
-                },
-
-                createSuperAdmin() {
-                    this.loading = true;
-                    this.error = '';
-
-                    api.post('/api/create-admin', {
-                        username: this.username,
-                        password: this.password
-                    })
-                        .then(response => {
-                            console.log(response.data);
-                            this.adminCreated = true;
-                            this.step = 3;
-                        })
-                        .catch(error => {
-                            console.error('Error creating admin:', error);
-                            if (error.response && error.response.data && error.response.data.description) {
-                                this.error = error.response.data.description;
-                            } else {
-                                this.error = 'Error creating admin. Please try again.';
                             }
                         })
                         .finally(() => {

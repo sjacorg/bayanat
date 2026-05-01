@@ -772,6 +772,12 @@ def api_extraction_update(extraction_id: int):
     if not extraction:
         return HTTPResponse.not_found("Extraction not found")
 
+    media = Media.query.get(extraction.media_id)
+    if not media:
+        return HTTPResponse.not_found("Parent media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
     data = request.json or {}
     action = data.get("action")
 
@@ -820,7 +826,7 @@ def api_extraction_update(extraction_id: int):
         details=detail_map.get(action),
     )
 
-    return jsonify(extraction.to_dict())
+    return jsonify(extraction.to_compact_dict())
 
 
 @admin.put("/api/media/<int:id>/orientation")
