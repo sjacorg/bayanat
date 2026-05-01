@@ -736,6 +736,33 @@ _init_database() {
     fi
 }
 
+ADMIN_USERNAME=""
+ADMIN_PASSWORD=""
+
+_bootstrap_admin() {
+    # Provision the initial admin out-of-band. Replaces the deleted
+    # /api/create-admin wizard endpoint, which was unauthenticated and
+    # claimable by the first network client during the install window.
+    local tag="$1"
+    local pw
+    pw=$(python3 -c "import secrets; print(secrets.token_urlsafe(20))" 2>/dev/null) || \
+        pw=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)
+
+    log "Bootstrapping initial admin user..."
+    local out
+    out=$(flask_run "$tag" install --username admin --password "$pw" 2>&1) || true
+
+    if echo "$out" | grep -q "already installed"; then
+        log "Admin user already exists, skipping bootstrap"
+    elif echo "$out" | grep -q "installed successfully"; then
+        ADMIN_USERNAME="admin"
+        ADMIN_PASSWORD="$pw"
+    else
+        warn "Admin bootstrap unexpected output:"
+        warn "$out"
+    fi
+}
+
 _install_uwsgi_config() {
     cat > "$SHARED_DIR/uwsgi-prod.ini" << EOF
 [uwsgi]
@@ -907,6 +934,7 @@ cmd_install() {
 
     _install_deps "$tag"
     _init_database "$tag"
+    _bootstrap_admin "$tag"
 
     # Activate release
     swap_symlink "$RELEASES_DIR/$tag"
@@ -932,6 +960,16 @@ cmd_install() {
         log "Access: http://$(hostname -I | awk '{print $1}')"
     else
         log "Access: https://$domain"
+    fi
+
+    if [[ -n "$ADMIN_PASSWORD" ]]; then
+        log ""
+        log "============================================================"
+        log "Admin login   : $ADMIN_USERNAME"
+        log "Admin password: $ADMIN_PASSWORD"
+        log "Save this now - it is not stored in plaintext anywhere."
+        log "Change it after first login via account settings."
+        log "============================================================"
     fi
 }
 
