@@ -102,6 +102,12 @@ class Config(object):
     security_freshness_grace_period = manager.get_config("SECURITY_FRESHNESS_GRACE_PERIOD")
     SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=security_freshness_grace_period)
 
+    # Login brute-force throttle (Flask-Limiter, applied per-method=POST on /login).
+    LOGIN_RATE_LIMIT_PER_USERNAME = os.environ.get(
+        "LOGIN_RATE_LIMIT_PER_USERNAME", "10 per 15 minutes"
+    )
+    LOGIN_RATE_LIMIT_PER_IP = os.environ.get("LOGIN_RATE_LIMIT_PER_IP", "30 per 15 minutes")
+
     SECURITY_TWO_FACTOR_REQUIRED = manager.get_config("SECURITY_TWO_FACTOR_REQUIRED")
 
     SECURITY_PASSWORD_LENGTH_MIN = manager.get_config("SECURITY_PASSWORD_LENGTH_MIN")
@@ -416,6 +422,10 @@ class TestConfig:
     SECURITY_MULTI_FACTOR_RECOVERY_CODES_N = 3
     SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS = None
     SECURITY_MULTI_FACTOR_RECOVERY_CODE_TTL = None
+
+    # Login throttle (Flask-Limiter, applied to security.login). Tighter in tests.
+    LOGIN_RATE_LIMIT_PER_USERNAME = "5 per 15 minutes"
+    LOGIN_RATE_LIMIT_PER_IP = "10 per 15 minutes"
     SECURITY_TWO_FACTOR_ENABLED_METHODS = ["authenticator"]
     SECURITY_TWO_FACTOR = True
     SECURITY_TWO_FACTOR_RESCUE_MAIL = "test@example.com"

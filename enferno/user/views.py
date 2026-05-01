@@ -11,7 +11,6 @@ from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.admin.constants import Constants
-from enferno.extensions import rds
 from enferno.settings import Config
 from enferno.user.forms import ExtendedLoginForm, ExtendedChangePasswordForm
 from enferno.user.models import User, Session
@@ -20,15 +19,6 @@ from flask_security.signals import password_changed, user_authenticated, tf_prof
 from flask_login import user_logged_out
 
 from enferno.utils.http_response import HTTPResponse
-from enferno.utils.logging_utils import get_logger
-from enferno.utils.rate_limit_utils import (
-    clear_login_failures,
-    get_real_ip,
-    is_login_throttled,
-    record_login_failure,
-)
-
-logger = get_logger()
 
 bp_user = Blueprint("users", __name__, static_folder="../static")
 
@@ -39,10 +29,9 @@ def build_oauth_client():
 
 
 @bp_user.before_app_request
-def before_request() -> Optional[Response]:
+def before_request() -> None:
     """
-    Attach user object to global context, display custom captcha form after certain
-    failed attempts, and reject login POSTs once throttle limits have been crossed.
+    Attach user object to global context, display custom captcha form after certain failed attempts
     """
     g.user = current_user
 
@@ -51,35 +40,16 @@ def before_request() -> Optional[Response]:
     else:
         current_app.extensions["security"].login_form = LoginForm
 
-    if request.method == "POST" and request.path == "/login":
-        ip = get_real_ip()
-        username = (request.form.get("username") or "").strip()
-        if is_login_throttled(rds, username, ip):
-            logger.warning("Login throttled username=%r ip=%s", username, ip)
-            return HTTPResponse.error(
-                "Too many failed login attempts. Please try again later.",
-                status=429,
-            )
-    return None
-
 
 @bp_user.after_app_request
 def after_app_request(response) -> Response:
     """
-    Record failed login attempts into the session and into the Redis-backed
-    login throttle. Clear per-username counters on successful authentication.
+    Record failed login attempts into the session
     """
     if request.path == "/login" and request.method == "POST":
-        ip = get_real_ip()
-        username = (request.form.get("username") or "").strip()
         # failed login
         if not g.identity.id:
             session["failed"] = session.get("failed", 0) + 1
-            record_login_failure(rds, username, ip)
-            logger.warning("Failed login attempt username=%r ip=%s", username, ip)
-        else:
-            if current_user.is_authenticated:
-                clear_login_failures(rds, current_user.username)
 
     return response
 
