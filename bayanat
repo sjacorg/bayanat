@@ -743,6 +743,8 @@ _bootstrap_admin() {
     # Provision the initial admin out-of-band. Replaces the deleted
     # /api/create-admin wizard endpoint, which was unauthenticated and
     # claimable by the first network client during the install window.
+    # The password is fed to flask install over stdin (--password-stdin)
+    # so it is never visible in /proc/<pid>/cmdline or `ps`.
     local tag="$1"
     local pw
     pw=$(python3 -c "import secrets; print(secrets.token_urlsafe(20))" 2>/dev/null) || \
@@ -750,7 +752,8 @@ _bootstrap_admin() {
 
     log "Bootstrapping initial admin user..."
     local out
-    out=$(flask_run "$tag" install --username admin --password "$pw" 2>&1) || true
+    out=$(printf '%s\n' "$pw" \
+        | flask_run "$tag" install --username admin --password-stdin 2>&1) || true
 
     if echo "$out" | grep -q "already installed"; then
         log "Admin user already exists, skipping bootstrap"

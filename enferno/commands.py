@@ -114,15 +114,33 @@ def import_data() -> None:
 @click.command()
 @click.option("-u", "--username", default=None, help="Admin username (prompted if not provided)")
 @click.option("-p", "--password", default=None, help="Admin password (generated if not provided)")
+@click.option(
+    "--password-stdin",
+    "password_stdin",
+    is_flag=True,
+    default=False,
+    help="Read admin password from stdin (avoids argv exposure)",
+)
 @with_appcontext
-def install(username: Optional[str], password: Optional[str]) -> None:
+def install(username: Optional[str], password: Optional[str], password_stdin: bool = False) -> None:
     """Install a default Admin user and add an Admin role to it.
 
     Non-interactive use:
-        flask install -u admin                  # generates a random password
-        flask install -u admin -p '<password>'  # uses the supplied password
+        flask install -u admin                          # generate a password
+        flask install -u admin -p '<password>'          # supply via flag
+        echo '<password>' | flask install -u admin --password-stdin
     """
     import secrets
+    import sys
+
+    if password_stdin:
+        if password:
+            click.echo("Cannot combine --password and --password-stdin.")
+            return
+        password = sys.stdin.readline().rstrip("\n")
+        if not password:
+            click.echo("Empty password on stdin.")
+            return
 
     logger.info("Installing admin user.")
     admin_role = Role.query.filter(Role.name == "Admin").first()
