@@ -608,19 +608,31 @@ _setup_database() {
     systemctl enable --now postgresql redis-server
 
     log "Setting up database..."
-    sudo -u postgres createuser -s "$APP_USER" 2>/dev/null || true
+    # Role is a plain owner, not a superuser. Extensions are created by the
+    # postgres superuser below so the app role doesn't need that privilege.
+    sudo -u postgres createuser "$APP_USER" 2>/dev/null || true
+    # Idempotent for upgrades: drop superuser if a previous install granted it.
+    sudo -u postgres psql -c "ALTER USER \"$APP_USER\" NOSUPERUSER;" 2>/dev/null || true
     sudo -u postgres createdb bayanat -O "$APP_USER" 2>/dev/null || true
+    sudo -u postgres psql -d bayanat \
+        -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" \
+        -c "CREATE EXTENSION IF NOT EXISTS postgis;" >/dev/null
 
-    # Configure pg_hba trust auth for app user
+    # Configure pg_hba peer auth for app user. Peer auth maps the OS user to
+    # the PG role over the local socket, so only processes running as
+    # $APP_USER can connect as $APP_USER. Replaces the previous 'trust' rule
+    # which let any local OS user connect as the app role.
     local pg_hba
     pg_hba=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1)
     [[ -n "$pg_hba" ]] || die "Cannot find pg_hba.conf"
 
-    local rule="local   all             $APP_USER                                 trust"
+    local rule="local   all             $APP_USER                                 peer"
     if grep -qF "$rule" "$pg_hba"; then
         log "pg_hba.conf already configured"
     else
         log "Configuring pg_hba.conf for $APP_USER"
+        # Remove any prior trust rule for this user from a previous install
+        sed -i "/^local[[:space:]]\+all[[:space:]]\+$APP_USER[[:space:]]\+.*trust/d" "$pg_hba"
         # Insert before the "local all all" catch-all, or append
         if grep -q "^local.*all.*all" "$pg_hba"; then
             sed -i "/^local.*all.*all/i $rule" "$pg_hba"
