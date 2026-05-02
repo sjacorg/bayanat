@@ -206,6 +206,7 @@ class Config(object):
     AWS_SECRET_ACCESS_KEY = manager.get_config("AWS_SECRET_ACCESS_KEY")
     S3_BUCKET = manager.get_config("S3_BUCKET")
     AWS_REGION = manager.get_config("AWS_REGION")
+    S3_ENDPOINT = manager.get_config("S3_ENDPOINT")
 
     # i18n
     LANGUAGES = {

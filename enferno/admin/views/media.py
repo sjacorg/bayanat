@@ -103,6 +103,7 @@ def _media_url(media_file):
         aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
         aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
         region_name=current_app.config["AWS_REGION"],
+        endpoint_url=current_app.config.get("S3_ENDPOINT"),
     )
     return s3.generate_presigned_url(
         "get_object",
@@ -237,6 +238,7 @@ def api_medias_chunk() -> Response:
                 aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
                 aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
                 region_name=current_app.config["AWS_REGION"],
+                endpoint_url=current_app.config.get("S3_ENDPOINT"),
             )
             s3.Bucket(current_app.config["S3_BUCKET"]).upload_file(filepath, filename)
             # Clean up file if s3 mode is selected
@@ -302,6 +304,7 @@ def api_medias_upload() -> Response:
             "s3",
             aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
             aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+            endpoint_url=current_app.config.get("S3_ENDPOINT"),
         )
 
         # final file
@@ -355,6 +358,7 @@ def serve_media(
             aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
             aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
             region_name=current_app.config["AWS_REGION"],
+            endpoint_url=current_app.config.get("S3_ENDPOINT"),
         )
 
         # allow generation of s3 urls for a short period while the media is not created
