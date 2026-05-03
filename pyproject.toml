@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bayanat"
-version = "3.0.0"
+version = "4.0.1"
 description = "Open source data management solution for processing human rights violations and war crimes data"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -43,7 +43,7 @@ dependencies = [
     "cffi>=1.17.0",
     "chardet>=5.2.0",
     "click>=8.2.0",
-    "cryptography>=46.0.6",
+    "cryptography>=46.0.7",
     "decorator>=5.2.0",
     "dnspython>=2.7.0",
     "docx2python>=2.0.0",
@@ -97,7 +97,7 @@ dependencies = [
     "Pygments>=2.20.0",
     "pyparsing>=3.2.0",
     "pyOpenSSL>=26.0.0",
-    "pypdf>=6.9.2",
+    "pypdf>=6.10.0",
     "PyQRCode>=1.2.0",
     "python-dateutil>=2.9.0",
     "python-docx>=1.1.0",
@@ -138,7 +138,8 @@ dev = [
     "flask_pydantic>=0.13.0",
     "SQLAlchemy-Utils>=0.41.0",
     "pre-commit>=4.2.0",
-    "black>=26.3.1",
+    "black==26.3.1",
+    "ruff==0.11.6",
     "factory-boy>=3.3.0",
     "pytest-sugar>=1.0.0"
 ]
@@ -165,6 +166,17 @@ target-version = ["py312", "py313"]
 include = "\\.pyi?$"
 exclude = "/(\n    \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.nox\n  | \\.pants.d\n  | \\.pytype\n  | \\.ruff_cache\n  | \\.svn\n  | \\.tox\n  | \\.venv\n  | \\.env\n  | __pypackages__\n  | _build\n  | buck-out\n  | build\n  | dist\n  | node_modules\n  | venv\n)/\n"
 color = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F"]  # pyflakes: unused imports, undefined names, syntax errors
+
+[tool.ruff.lint.per-file-ignores]
+"enferno/app.py" = ["F841"]       # security = Security() assigned for side effects
+"enferno/commands.py" = ["F811"]  # extract() name reused across CLI groups
 
 [dependency-groups]
 dev = [

@@ -388,6 +388,9 @@
                     thumbnailHeight: 80,
                     parallelUploads: 1,
                     maxFilesize: mediaUploadMaxFileSize,
+                    // Signals the chunk endpoint to apply the Admin-only
+                    // extended extension list (ETL_VID_EXT).
+                    params: { source: 'import' },
                 },
 
 

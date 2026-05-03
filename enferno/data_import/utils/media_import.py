@@ -72,7 +72,7 @@ class MediaImport:
         self.meta = meta
         self.batch_id = batch_id
         self.user_id = user_id
-        self.data_import = DataImport.query.get(data_import_id)
+        self.data_import = db.session.get(DataImport, data_import_id)
 
     def upload(self, filepath: str, target: str) -> bool:
         """
@@ -106,7 +106,7 @@ class MediaImport:
             )
             try:
                 s3.Bucket(Config.get("S3_BUCKET")).put_object(Key=target, Body=open(filepath, "rb"))
-                self.data_import.add_to_log(f"File uploaded to S3 bucket.")
+                self.data_import.add_to_log("File uploaded to S3 bucket.")
                 return True
             except Exception as e:
                 self.data_import.add_to_log("Failed to upload to S3 bucket.")
@@ -328,7 +328,7 @@ class MediaImport:
         try:
             from whisper.tokenizer import TO_LANGUAGE_CODE
 
-            self.data_import.add_to_log(f"Transcribing video...")
+            self.data_import.add_to_log("Transcribing video...")
 
             # Configure Whisper's logger to use our logging system
             whisper_logger = logging.getLogger("whisper")
@@ -341,7 +341,7 @@ class MediaImport:
                     filepath, language=language, word_timestamps=True, verbose=True
                 )
             else:
-                self.data_import.add_to_log(f"Language: Auto-detect")
+                self.data_import.add_to_log("Language: Auto-detect")
                 result = whisper_model.transcribe(filepath, word_timestamps=True, verbose=True)
 
             if result and result.get("segments"):
@@ -768,7 +768,7 @@ class MediaImport:
             bulletin.roles = []
             bulletin.roles.extend(bulletin_roles)
 
-        user = User.query.get(self.user_id)
+        user = db.session.get(User, self.user_id)
 
         bulletin.meta = info
 
@@ -793,5 +793,5 @@ class MediaImport:
             self.data_import.add_item(bulletin.id)
             self.data_import.success()
         except DatabaseException as e:
-            self.data_import.add_to_log(f"Failed to create Bulletin.")
+            self.data_import.add_to_log("Failed to create Bulletin.")
             self.data_import.fail(e)

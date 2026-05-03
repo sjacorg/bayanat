@@ -35,7 +35,7 @@ def process_media_extraction_task(
 ) -> dict:
     """Extract text from a media file using the configured OCR provider."""
     try:
-        media = Media.query.get(media_id)
+        media = db.session.get(Media, media_id)
         if not media:
             return {"success": False, "media_id": media_id, "error": "Media not found"}
 

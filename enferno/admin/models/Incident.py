@@ -118,15 +118,13 @@ class Incident(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
             CAST(id AS TEXT) || ' ' ||
             COALESCE(title, '') || ' ' ||
             COALESCE(title_ar, '') || ' ' ||
             COALESCE(regexp_replace(regexp_replace(description, E'<.*?>', '', 'g'), E'&nbsp;', '', 'g'), '') || ' ' ||
             COALESCE(comments, '')
-            """
-        ),
+            """),
     )
 
     __table_args__ = (
@@ -277,7 +275,7 @@ class Incident(db.Model, BaseMixin):
                     e.save()
                 else:
                     # event already exists, get a db instnace and update it with new data
-                    e = Event.query.get(event["id"])
+                    e = db.session.get(Event, event["id"])
                     e.from_json(event)
                     e.save()
                 new_events.append(e)
@@ -288,7 +286,7 @@ class Incident(db.Model, BaseMixin):
             # collect related actors ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["actor_relations"]:
-                actor = Actor.query.get(relation["actor"]["id"])
+                actor = db.session.get(Actor, relation["actor"]["id"])
 
                 # Extra (check those actors exit)
 
@@ -313,7 +311,7 @@ class Incident(db.Model, BaseMixin):
             # collect related bulletin ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["bulletin_relations"]:
-                bulletin = Bulletin.query.get(relation["bulletin"]["id"])
+                bulletin = db.session.get(Bulletin, relation["bulletin"]["id"])
 
                 # Extra (check those bulletins exit)
                 if bulletin:
@@ -336,7 +334,7 @@ class Incident(db.Model, BaseMixin):
             # collect related incident ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["incident_relations"]:
-                incident = Incident.query.get(relation["incident"]["id"])
+                incident = db.session.get(Incident, relation["incident"]["id"])
                 # Extra (check those incidents exit)
 
                 if incident:
@@ -354,7 +352,7 @@ class Incident(db.Model, BaseMixin):
                     r.delete()
 
                     # - revision related incident
-                    Incident.query.get(rid).create_revision()
+                    db.session.get(Incident, rid).create_revision()
 
         if "comments" in json:
             self.comments = json["comments"]
@@ -431,7 +429,7 @@ class Incident(db.Model, BaseMixin):
     # Helper method to handle logic of relating actors
     def relate_actor(
         self,
-        actor: "Actor",
+        actor: "Actor",  # noqa: F821
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
     ) -> None:
@@ -448,7 +446,7 @@ class Incident(db.Model, BaseMixin):
             self.save()
 
         # query order : (actor_id, incident_id)
-        existing_relation = Itoa.query.get((actor.id, self.id))
+        existing_relation = db.session.get(Itoa, (actor.id, self.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes
@@ -469,7 +467,7 @@ class Incident(db.Model, BaseMixin):
     # Helper method to handle logic of relating bulletins
     def relate_bulletin(
         self,
-        bulletin: "Bulletin",
+        bulletin: "Bulletin",  # noqa: F821
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
     ) -> None:
@@ -486,7 +484,7 @@ class Incident(db.Model, BaseMixin):
             self.save()
 
         # query order : (incident_id,bulletin_id)
-        existing_relation = Itob.query.get((self.id, bulletin.id))
+        existing_relation = db.session.get(Itob, (self.id, bulletin.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes

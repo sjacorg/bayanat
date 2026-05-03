@@ -266,7 +266,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
 
     if incident is not None:
         if not current_user.can_access(incident):
@@ -342,7 +342,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
     if incident is not None:
         if not current_user.can_access(incident):
             Activity.create(
@@ -445,7 +445,7 @@ def api_incident_get(
     Returns:
         - incident data in json format / success or error in case of failure.
     """
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
     if not incident:
         return HTTPResponse.not_found("Incident not found")
     else:
@@ -496,7 +496,7 @@ def incident_relations(id: t.id) -> Response:
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
         return HTTPResponse.error("Invalid class")
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
     if not incident:
         return HTTPResponse.not_found("Incident not found")
     items = []
@@ -568,7 +568,7 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
         return HTTPResponse.forbidden("User not allowed to self assign")
 
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
 
     if not current_user.can_access(incident):
         Activity.create(

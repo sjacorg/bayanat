@@ -4,6 +4,7 @@ from flask import Response, request
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Eventtype, Activity
 from enferno.admin.models.Notification import Notification
@@ -106,7 +107,7 @@ def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    eventtype = Eventtype.query.get(id)
+    eventtype = db.session.get(Eventtype, id)
     if eventtype is None:
         return HTTPResponse.not_found("Event type not found")
 
@@ -138,7 +139,7 @@ def api_eventtype_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    eventtype = Eventtype.query.get(id)
+    eventtype = db.session.get(Eventtype, id)
     if eventtype is None:
         return HTTPResponse.not_found("Event type not found")
 

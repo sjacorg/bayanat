@@ -21,6 +21,7 @@ We will acknowledge receipt within 72 hours and provide an initial assessment wi
 
 | Version | Supported |
 |---------|-----------|
+| 4.x     | Yes       |
 | 3.x     | Yes       |
 | < 3.0   | No        |
 

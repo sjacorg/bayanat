@@ -5,6 +5,7 @@ from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
 from sqlalchemy import desc
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Source, Activity
 from enferno.admin.models.Notification import Notification
@@ -110,7 +111,7 @@ def api_source_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    source = Source.query.get(id)
+    source = db.session.get(Source, id)
     if source is None:
         return HTTPResponse.not_found("Source not found")
 
@@ -142,7 +143,7 @@ def api_source_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    source = Source.query.get(id)
+    source = db.session.get(Source, id)
     if source is None:
         return HTTPResponse.not_found("Source not found")
 

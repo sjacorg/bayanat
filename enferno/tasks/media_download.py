@@ -7,6 +7,7 @@ import yt_dlp
 from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Media
 from enferno.admin.models.Notification import Notification
@@ -22,7 +23,7 @@ logger = get_logger("celery.tasks.media_download")
 @celery.task
 def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: int) -> None:
     """Download and process media from web URL."""
-    data_import = DataImport.query.get(import_id)
+    data_import = db.session.get(DataImport, import_id)
     if not data_import:
         logger.error(f"Invalid import_id: {import_id}")
         return
@@ -43,7 +44,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         # Notify user
         Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
-            User.query.get(user_id),
+            db.session.get(User, user_id),
             "Web Import Status",
             f"Web import of {url} has been completed successfully.",
         )
@@ -56,7 +57,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         # Notify user
         Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
-            User.query.get(user_id),
+            db.session.get(User, user_id),
             "Web Import Status",
             f"Web import of {url} has failed.",
         )
@@ -69,7 +70,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         # Notify user
         Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
-            User.query.get(user_id),
+            db.session.get(User, user_id),
             "Web Import Status",
             f"Web import of {url} has failed.",
         )

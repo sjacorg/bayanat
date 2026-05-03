@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import Response, request
 from flask_security.decorators import current_user, roles_accepted, roles_required
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import PotentialViolation, ClaimedViolation, Activity
 from enferno.admin.models.Notification import Notification
@@ -92,7 +93,7 @@ def api_potentialviolation_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    potentialviolation = PotentialViolation.query.get(id)
+    potentialviolation = db.session.get(PotentialViolation, id)
     if potentialviolation is None:
         return HTTPResponse.not_found("Potential Violation not found")
 
@@ -124,7 +125,7 @@ def api_potentialviolation_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    potentialviolation = PotentialViolation.query.get(id)
+    potentialviolation = db.session.get(PotentialViolation, id)
     if potentialviolation is None:
         return HTTPResponse.not_found("Potential Violation not found")
 
@@ -239,7 +240,7 @@ def api_claimedviolation_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    claimedviolation = ClaimedViolation.query.get(id)
+    claimedviolation = db.session.get(ClaimedViolation, id)
     if claimedviolation is None:
         return HTTPResponse.not_found("Claimed Violation not found")
 
@@ -271,7 +272,7 @@ def api_claimedviolation_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    claimedviolation = ClaimedViolation.query.get(id)
+    claimedviolation = db.session.get(ClaimedViolation, id)
     if claimedviolation is None:
         return HTTPResponse.not_found("Claimed Violation not found")
 

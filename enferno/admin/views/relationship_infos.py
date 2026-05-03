@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import Response, request
 from flask_security.decorators import current_user, roles_required
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import (
     AtoaInfo,
@@ -103,7 +104,7 @@ def api_atoainfo_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    atoainfo = AtoaInfo.query.get(id)
+    atoainfo = db.session.get(AtoaInfo, id)
 
     if atoainfo:
         atoainfo.from_json(validated_data.get("item"))
@@ -136,7 +137,7 @@ def api_atoainfo_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    atoainfo = AtoaInfo.query.get(id)
+    atoainfo = db.session.get(AtoaInfo, id)
     if atoainfo is None:
         return HTTPResponse.not_found("AtoaInfo not found")
 
@@ -227,7 +228,7 @@ def api_atobinfo_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    atobinfo = AtobInfo.query.get(id)
+    atobinfo = db.session.get(AtobInfo, id)
 
     if atobinfo:
         atobinfo.from_json(validated_data.get("item"))
@@ -260,7 +261,7 @@ def api_atobinfo_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    atobinfo = AtobInfo.query.get(id)
+    atobinfo = db.session.get(AtobInfo, id)
     if atobinfo is None:
         return HTTPResponse.not_found("AtobInfo not found")
 
@@ -351,7 +352,7 @@ def api_btobinfo_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    btobinfo = BtobInfo.query.get(id)
+    btobinfo = db.session.get(BtobInfo, id)
 
     if btobinfo:
         btobinfo.from_json(validated_data.get("item"))
@@ -384,7 +385,7 @@ def api_btobinfo_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    btobinfo = BtobInfo.query.get(id)
+    btobinfo = db.session.get(BtobInfo, id)
     if btobinfo is None:
         return HTTPResponse.not_found("BtobInfo not found")
 
@@ -475,7 +476,7 @@ def api_itoainfo_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    itoainfo = ItoaInfo.query.get(id)
+    itoainfo = db.session.get(ItoaInfo, id)
 
     if itoainfo:
         itoainfo.from_json(validated_data.get("item"))
@@ -508,7 +509,7 @@ def api_itoainfo_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    itoainfo = ItoaInfo.query.get(id)
+    itoainfo = db.session.get(ItoaInfo, id)
     if itoainfo is None:
         return HTTPResponse.not_found("ItoaInfo not found")
 
@@ -599,7 +600,7 @@ def api_itobinfo_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    itobinfo = ItobInfo.query.get(id)
+    itobinfo = db.session.get(ItobInfo, id)
 
     if itobinfo:
         itobinfo.from_json(validated_data.get("item"))
@@ -628,7 +629,7 @@ def api_itobinfo_delete(
     :param id: id of the ItobInfo to be deleted
     :return: success/error
     """
-    itobinfo = ItobInfo.query.get(id)
+    itobinfo = db.session.get(ItobInfo, id)
     if itobinfo is None:
         return HTTPResponse.not_found("ItobInfo not found")
 
@@ -719,7 +720,7 @@ def api_itoiinfo_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    itoiinfo = ItoiInfo.query.get(id)
+    itoiinfo = db.session.get(ItoiInfo, id)
 
     if itoiinfo:
         itoiinfo.from_json(validated_data.get("item"))
@@ -752,7 +753,7 @@ def api_itoiinfo_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    itoiinfo = ItoiInfo.query.get(id)
+    itoiinfo = db.session.get(ItoiInfo, id)
     if itoiinfo is None:
         return HTTPResponse.not_found("ItoiInfo not found")
 
@@ -842,7 +843,7 @@ def api_mediacategory_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    mediacategory = MediaCategory.query.get(id)
+    mediacategory = db.session.get(MediaCategory, id)
 
     if mediacategory:
         mediacategory.from_json(validated_data.get("item"))
@@ -875,7 +876,7 @@ def api_mediacategory_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    mediacategory = MediaCategory.query.get(id)
+    mediacategory = db.session.get(MediaCategory, id)
     if mediacategory is None:
         return HTTPResponse.not_found("MediaCategory not found")
 
@@ -966,7 +967,7 @@ def api_geolocationtype_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    geolocationtype = GeoLocationType.query.get(id)
+    geolocationtype = db.session.get(GeoLocationType, id)
 
     if geolocationtype:
         geolocationtype.from_json(validated_data.get("item"))
@@ -999,7 +1000,7 @@ def api_geolocationtype_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    geolocationtype = GeoLocationType.query.get(id)
+    geolocationtype = db.session.get(GeoLocationType, id)
     if geolocationtype is None:
         return HTTPResponse.not_found("GeoLocationType not found")
 

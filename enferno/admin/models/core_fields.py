@@ -3,7 +3,6 @@
 
 from enferno.admin.models.DynamicField import DynamicField
 
-
 # Format: (name, title, field_type, sort_order, **kwargs)
 # kwargs can include: ui_config, schema_config, html_template
 BULLETIN_CORE_FIELDS = [

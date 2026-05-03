@@ -1,10 +1,11 @@
 from typing import Any, Optional, Union
 
 import enferno.utils.typing as t
+from enferno.admin.models.AtoaInfo import AtoaInfo
+from enferno.admin.models.utils import check_relation_roles
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.logging_utils import get_logger
-from enferno.admin.models.utils import check_relation_roles
 
 logger = get_logger()
 
@@ -59,7 +60,7 @@ class Atoa(db.Model, BaseMixin):
 
         # with our id constraint set, just check if there is relation from the lower id to the upper id
         f, t = (a_id, b_id) if a_id < b_id else (b_id, a_id)
-        relation = Atoa.query.get((f, t))
+        relation = db.session.get(Atoa, (f, t))
         if relation:
             return relation
         else:
@@ -92,7 +93,7 @@ class Atoa(db.Model, BaseMixin):
 
     # custom serialization method
     @check_relation_roles
-    def to_dict(self, exclude: Optional["Actor"] = None) -> dict[str, Any]:
+    def to_dict(self, exclude: Optional["Actor"] = None) -> dict[str, Any]:  # noqa: F821
         """
         Return a dictionary representation of the relation.
 

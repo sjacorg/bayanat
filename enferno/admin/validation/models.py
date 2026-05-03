@@ -14,7 +14,7 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.admin.models import Activity, AppConfig
+from enferno.admin.models import Activity
 from enferno.settings import Config
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
@@ -1916,6 +1916,10 @@ class FullConfigValidationModel(ConfigValidationModel):
     ETL_VID_EXT: list[str] = Field(default_factory=list)
     OCR_ENABLED: bool
     OCR_EXT: list[str] = Field(default_factory=list)
+    OCR_PROVIDER: str = "google_vision"
+    LLM_OCR_URL: Optional[str] = None
+    LLM_OCR_MODEL: Optional[str] = None
+    LLM_OCR_API_KEY: Optional[str] = None
     DEDUP_TOOL: bool
     MAPS_API_ENDPOINT: str
     DEDUP_LOW_DISTANCE: Optional[float] = Field(default=None, ge=0, le=1)

@@ -7,14 +7,14 @@ _ARABIC_NORMALIZE = str.maketrans(
         "\u0625": "\u0627",  # إ → ا
         "\u0622": "\u0627",  # آ → ا
         "\u0671": "\u0627",  # ٱ → ا
-        "\u0649": "\u064A",  # ى → ي
+        "\u0649": "\u064a",  # ى → ي
         "\u0629": "\u0647",  # ة → ه
         # Strip diacritics (tashkeel)
-        "\u064B": None,  # fathatan
-        "\u064C": None,  # dammatan
-        "\u064D": None,  # kasratan
-        "\u064E": None,  # fatha
-        "\u064F": None,  # damma
+        "\u064b": None,  # fathatan
+        "\u064c": None,  # dammatan
+        "\u064d": None,  # kasratan
+        "\u064e": None,  # fatha
+        "\u064f": None,  # damma
         "\u0650": None,  # kasra
         "\u0651": None,  # shadda
         "\u0652": None,  # sukun

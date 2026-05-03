@@ -51,7 +51,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
             raise ValueError("Not all location admin levels exist")
 
         for i, id in enumerate(ids):
-            lal = LocationAdminLevel.query.get(id)
+            lal = db.session.get(LocationAdminLevel, id)
             lal.display_order = i + 1
             if not lal.save(raise_exception=True):
                 raise ValueError("Error updating location admin level display order")

@@ -16,7 +16,7 @@ from enferno.admin.models import (
     WorkflowStatus,
 )
 from enferno.admin.validation.models import ActivityQueryRequestModel, GraphVisualizeRequestModel
-from enferno.extensions import rds
+from enferno.extensions import db, rds
 from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
@@ -206,7 +206,7 @@ def api_query_update(
     if not (q := request.json.get("q")):
         return HTTPResponse.error("q parameter not provided", status=400)
 
-    query = Query.query.get(id)
+    query = db.session.get(Query, id)
 
     if not query:
         return HTTPResponse.not_found("Query not found")
@@ -235,7 +235,7 @@ def api_query_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    query = Query.query.get(id)
+    query = db.session.get(Query, id)
 
     if not query:
         return HTTPResponse.not_found("Query not found")

@@ -16,6 +16,7 @@ from unittest.mock import patch
 import pytest
 from flask import current_app
 
+from enferno.extensions import db
 from enferno.admin.models import (
     AtoaInfo,
     AtobInfo,
@@ -1041,6 +1042,84 @@ class TestConfiguration:
 
 
 # =========================================================================
+# OCR CONFIGURATION (PR #315)
+# =========================================================================
+
+
+class TestOCRConfiguration:
+    """Tests for the OCR provider config fields exposed via PR #315."""
+
+    def test_serialized_ocr_fields_validate(self):
+        """serialize() must expose all OCR keys and the result must validate.
+
+        FullConfigValidationModel uses extra='forbid', so a field added to
+        serialize() without being declared on the model breaks every PUT
+        roundtrip. This test catches both directions of drift.
+        """
+        from enferno.admin.validation.models import ConfigRequestModel
+        from enferno.settings import TestConfig
+        from enferno.utils.config_utils import ConfigManager
+
+        with patch("enferno.settings.Config", TestConfig):
+            conf = ConfigManager.serialize()
+            for key in ("OCR_PROVIDER", "LLM_OCR_URL", "LLM_OCR_MODEL", "LLM_OCR_API_KEY"):
+                assert key in conf, f"{key} missing from serialized config"
+            conf.pop("LANGUAGES", None)
+            ConfigRequestModel(conf=conf)
+
+    def test_llm_api_key_masked_when_set(self):
+        from enferno.settings import TestConfig
+        from enferno.utils.config_utils import ConfigManager
+
+        with (
+            patch.object(TestConfig, "LLM_OCR_API_KEY", "sk-secret-value"),
+            patch("enferno.settings.Config", TestConfig),
+        ):
+            conf = ConfigManager.serialize()
+            assert conf["LLM_OCR_API_KEY"] == ConfigManager.MASK_STRING
+
+    def test_llm_api_key_empty_when_unset(self):
+        from enferno.settings import TestConfig
+        from enferno.utils.config_utils import ConfigManager
+
+        with (
+            patch.object(TestConfig, "LLM_OCR_API_KEY", ""),
+            patch("enferno.settings.Config", TestConfig),
+        ):
+            conf = ConfigManager.serialize()
+            assert conf["LLM_OCR_API_KEY"] == ""
+
+    def test_put_masked_llm_key_preserves_secret(self, request, session):
+        """Sending the masked LLM_OCR_API_KEY back must not overwrite the real secret."""
+        import json as json_mod
+
+        from enferno.settings import Config
+        from enferno.utils.config_utils import ConfigManager
+
+        client = request.getfixturevalue("admin_client")
+        temp = tempfile.NamedTemporaryFile(mode="w", delete=False)
+        try:
+            json_mod.dump({"LLM_OCR_API_KEY": "sk-real-secret"}, temp)
+            temp.close()
+            with (
+                patch("enferno.utils.config_utils.ConfigManager.CONFIG_FILE_PATH", temp.name),
+                patch.object(Config, "LLM_OCR_API_KEY", "sk-real-secret", create=True),
+            ):
+                resp = client.get("/admin/api/configuration/")
+                current_config = resp.json["data"]["config"]
+                assert current_config["LLM_OCR_API_KEY"] == ConfigManager.MASK_STRING
+
+                resp = client.put("/admin/api/configuration/", json={"conf": current_config})
+                assert resp.status_code == 200
+
+                with open(temp.name, "r") as f:
+                    saved = json_mod.load(f)
+                assert saved["LLM_OCR_API_KEY"] == "sk-real-secret"
+        finally:
+            os.unlink(temp.name)
+
+
+# =========================================================================
 # NOTIFICATION SETTINGS
 # =========================================================================
 
@@ -1551,7 +1630,7 @@ class TestMappingUpdate:
             follow_redirects=True,
         )
         assert resp.status_code == expected
-        found = Mapping.query.get(mapping.id)
+        found = db.session.get(Mapping, mapping.id)
         if expected == 200:
             assert found.name == "new_name"
         else:

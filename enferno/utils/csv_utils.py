@@ -56,12 +56,12 @@ def convert_complex_relation(relation: Iterable, table_name: str) -> Optional[di
     if relation:
         for i, v in enumerate(relation):
             if table_name in ["bulletin", "incident"]:
-                output[
-                    f"{table_name}-{i + 1}"
-                ] = f'{v.get(f"{table_name}").get("id")}-{v.get(f"{table_name}").get("title")}'
+                output[f"{table_name}-{i + 1}"] = (
+                    f'{v.get(f"{table_name}").get("id")}-{v.get(f"{table_name}").get("title")}'
+                )
             elif table_name == "actor":
-                output[
-                    f"{table_name}-{i + 1}"
-                ] = f'{v.get(f"{table_name}").get("id")}-{v.get(f"{table_name}").get("name")}'
+                output[f"{table_name}-{i + 1}"] = (
+                    f'{v.get(f"{table_name}").get("id")}-{v.get(f"{table_name}").get("name")}'
+                )
         return output
     return None
