@@ -242,7 +242,7 @@ def register_talisman(app):
         # Other security headers
         force_https=app.config.get("FORCE_HTTPS", False),  # Don't force in dev
         force_https_permanent=False,
-        frame_options="DENY",
+        frame_options="SAMEORIGIN",
         strict_transport_security=app.config.get("FORCE_HTTPS", False),
         strict_transport_security_max_age=31536000,  # 1 year
         strict_transport_security_include_subdomains=True,
