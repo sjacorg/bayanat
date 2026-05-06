@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bayanat"
-version = "4.0.1"
+version = "4.0.2"
 description = "Open source data management solution for processing human rights violations and war crimes data"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -97,11 +97,11 @@ dependencies = [
     "Pygments>=2.20.0",
     "pyparsing>=3.2.0",
     "pyOpenSSL>=26.0.0",
-    "pypdf>=6.10.0",
+    "pypdf>=6.10.2",
     "PyQRCode>=1.2.0",
     "python-dateutil>=2.9.0",
     "python-docx>=1.1.0",
-    "python-dotenv>=1.1.0",
+    "python-dotenv>=1.2.2",
     "python-editor>=1.0.4",
     "pytz>=2025.2",
     "qrcode>=8.2",
@@ -134,7 +134,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3.0",
+    "pytest>=9.0.3",
     "flask_pydantic>=0.13.0",
     "SQLAlchemy-Utils>=0.41.0",
     "pre-commit>=4.2.0",

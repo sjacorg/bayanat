@@ -1,5 +1,17 @@
 # Changelog
 
+## v4.0.2
+
+### Security
+
+- Bumped vulnerable dependencies in `uv.lock`:
+  - `lxml` 6.0.2 → 6.1.0 ([GHSA-pp7h-53gx-mx7r](https://github.com/advisories/GHSA-pp7h-53gx-mx7r), high — XXE in `iterparse`/`ETCompatXMLParser`)
+  - `pillow` 12.1.1 → 12.2.0 ([GHSA-2vfv-wwj6-7q47](https://github.com/advisories/GHSA-2vfv-wwj6-7q47), high — FITS GZIP decompression bomb)
+  - `pypdf` 6.10.0 → 6.10.2 (medium — three RAM-exhaustion advisories)
+  - `python-dotenv` 1.2.1 → 1.2.2 (medium — symlink-following in `set_key`)
+  - `Mako` 1.3.10 → 1.3.11 (medium — path traversal in `TemplateLookup`)
+  - `pytest` 9.0.2 → 9.0.3 (dev, medium — vulnerable `tmpdir` handling)
+
 ## v4.0.1
 
 ### Fixed
