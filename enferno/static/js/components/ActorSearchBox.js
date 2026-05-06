@@ -18,6 +18,10 @@ const ActorSearchBox = Vue.defineComponent({
     roles: {
       type: Array,
     },
+    expandActivePanels: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['update:modelValue', 'search'],
 
@@ -68,6 +72,7 @@ const ActorSearchBox = Vue.defineComponent({
         } else {
           this.dyn = new Map();
         }
+        this.setActivePanels();
       },
       immediate: true
     }
@@ -88,6 +93,8 @@ const ActorSearchBox = Vue.defineComponent({
     (this.q?.dyn || []).forEach(field => {
       this.dyn.set(field.name, field)
     });
+
+    this.setActivePanels();
   },
 
   computed: {
@@ -191,6 +198,26 @@ const ActorSearchBox = Vue.defineComponent({
 
   
   methods: {
+    setActivePanels() {
+      if (!this.expandActivePanels) {
+        return;
+      }
+
+      this.$nextTick(() => {
+        const panels = [];
+        if (this.textSearchCount) panels.push('0');
+        if (this.dateCount) panels.push('1');
+        if (this.eventCount) panels.push('2');
+        if (this.personalInfoCount) panels.push('3');
+        if (this.classificationCount) panels.push('4');
+        if (this.workflowCount) panels.push('5');
+        if (this.locationCount) panels.push('6');
+        if (this.dynamicFieldCount) panels.push('7');
+
+        this.openPanels = panels.length ? panels : ['0'];
+      });
+    },
+
     fetchIdNumberTypes() {
       // If already loaded then exit
       if (this.idNumberTypes.length) return

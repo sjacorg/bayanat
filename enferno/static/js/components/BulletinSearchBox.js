@@ -22,6 +22,10 @@ const BulletinSearchBox = Vue.defineComponent({
       type: Boolean,
       default: false,
     },
+    expandActivePanels: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   emits: ['update:modelValue', 'search'],
@@ -46,6 +50,8 @@ const BulletinSearchBox = Vue.defineComponent({
     (this.q?.dyn || []).forEach(field => {
       this.dyn.set(field.name, field)
     });
+
+    this.setActivePanels();
   },
 
   watch: {
@@ -75,6 +81,7 @@ const BulletinSearchBox = Vue.defineComponent({
         } else {
           this.dyn = new Map();
         }
+        this.setActivePanels();
       },
       immediate: true
     }
@@ -158,6 +165,25 @@ const BulletinSearchBox = Vue.defineComponent({
   },
 
   methods: {
+    setActivePanels() {
+      if (!this.expandActivePanels) {
+        return;
+      }
+
+      this.$nextTick(() => {
+        const panels = [];
+        if (this.textSearchCount) panels.push('0');
+        if (this.dateCount) panels.push('1');
+        if (this.eventCount) panels.push('2');
+        if (this.classificationCount) panels.push('3');
+        if (this.workflowCount) panels.push('4');
+        if (this.locationCount) panels.push('5');
+        if (this.dynamicFieldCount) panels.push('6');
+
+        this.openPanels = panels.length ? panels : ['0'];
+      });
+    },
+
     updateDynamicField(value, field, operator) {
       const normalized = Array.isArray(value)
         ? value.filter((item) => item !== undefined && item !== null && item !== '')
