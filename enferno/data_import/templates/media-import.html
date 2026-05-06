@@ -388,9 +388,22 @@
                     thumbnailHeight: 80,
                     parallelUploads: 1,
                     maxFilesize: mediaUploadMaxFileSize,
-                    // Signals the chunk endpoint to apply the Admin-only
-                    // extended extension list (ETL_VID_EXT).
-                    params: { source: 'import' },
+                    params(files, xhr, chunk) {
+                        // Signals the chunk endpoint to apply the Admin-only
+                        // extended extension list (ETL_VID_EXT).
+                        const params = { source: 'import' };
+
+                        if (chunk) {
+                            params.dzuuid = chunk.file.upload.uuid;
+                            params.dzchunkindex = chunk.index;
+                            params.dztotalfilesize = chunk.file.size;
+                            params.dzchunksize = this.options.chunkSize;
+                            params.dztotalchunkcount = chunk.file.upload.totalChunkCount;
+                            params.dzchunkbyteoffset = chunk.index * this.options.chunkSize;
+                        }
+
+                        return params;
+                    },
                 },
 
 
