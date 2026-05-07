@@ -34,7 +34,7 @@ This will:
 - Set up systemd services for Bayanat and Celery
 - Start everything
 
-Once complete, open your domain in a browser. The setup wizard will guide you through creating an admin account and configuring the application.
+Once complete, the installer prints the initial `admin` username and a one-time generated password to the terminal. Open your domain in a browser, sign in with those credentials, then the setup wizard will guide you through configuring the application. Change the admin password from your account settings after first login.
 
 **Check status:**
 
@@ -150,7 +150,7 @@ uv run flask install
 uv run flask run
 ```
 
-Access at [http://127.0.0.1:5000](http://127.0.0.1:5000). The setup wizard will guide further configuration.
+Access at [http://127.0.0.1:5000](http://127.0.0.1:5000). Sign in with the credentials printed by `flask install`, then the setup wizard will guide further configuration.
 
 ::: warning
 `flask run` is development mode only. Continue with the steps below for production.
@@ -243,19 +243,19 @@ sudo systemctl enable --now bayanat-celery
 Docker deployment is still in beta. For production, native deployment is recommended.
 :::
 
-After [configuring](/deployment/configuration) and generating a `.env` file:
+After [configuring](/deployment/configuration) and generating a `.env.docker` file:
 
 ```bash
-docker-compose up -d
+docker compose --env-file .env.docker up -d
 ```
 
 The first startup creates an `admin` user and prints a generated
 password to the container logs. Retrieve it with:
 
 ```bash
-docker-compose logs bayanat | grep -A4 "Generated password"
+docker compose --env-file .env.docker logs bayanat | grep -A4 "Generated password"
 ```
 
 If the auto-bootstrap was missed or the admin was deleted, run
-`docker-compose exec bayanat uv run flask install -u admin` to mint a
-fresh credential.
+`docker compose --env-file .env.docker exec bayanat uv run flask install -u admin`
+to mint a fresh credential.
