@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from datetime import timedelta
+from urllib.parse import quote
 
 import bleach
 import redis
@@ -46,7 +47,8 @@ class Config(object):
 
     if (POSTGRES_USER and POSTGRES_PASSWORD) or POSTGRES_HOST != "localhost":
         SQLALCHEMY_DATABASE_URI = (
-            f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}"
+            f"postgresql://{quote(POSTGRES_USER, safe='')}:{quote(POSTGRES_PASSWORD, safe='')}"
+            f"@{POSTGRES_HOST}/{POSTGRES_DB}"
         )
     else:
         SQLALCHEMY_DATABASE_URI = f"postgresql:///{POSTGRES_DB}"
@@ -57,12 +59,13 @@ class Config(object):
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
-    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+    _redis_pw_quoted = quote(REDIS_PASSWORD, safe="")
+    REDIS_URL = f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/0"
 
     # Celery
     # Has to be in small case
-    celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/2"
-    result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/3"
+    celery_broker_url = f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/2"
+    result_backend = f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/3"
 
     # Security
     SECURITY_REGISTERABLE = manager.get_config("SECURITY_REGISTERABLE")
@@ -102,6 +105,12 @@ class Config(object):
     security_freshness_grace_period = manager.get_config("SECURITY_FRESHNESS_GRACE_PERIOD")
     SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=security_freshness_grace_period)
 
+    # Login brute-force throttle (Flask-Limiter, applied per-method=POST on /login).
+    LOGIN_RATE_LIMIT_PER_USERNAME = os.environ.get(
+        "LOGIN_RATE_LIMIT_PER_USERNAME", "10 per 15 minutes"
+    )
+    LOGIN_RATE_LIMIT_PER_IP = os.environ.get("LOGIN_RATE_LIMIT_PER_IP", "30 per 15 minutes")
+
     SECURITY_TWO_FACTOR_REQUIRED = manager.get_config("SECURITY_TWO_FACTOR_REQUIRED")
 
     SECURITY_PASSWORD_LENGTH_MIN = manager.get_config("SECURITY_PASSWORD_LENGTH_MIN")
@@ -137,7 +146,7 @@ class Config(object):
 
     # Session
     SESSION_TYPE = "redis"
-    SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/1")
+    SESSION_REDIS = redis.from_url(f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/1")
     PERMANENT_SESSION_LIFETIME = 3600
 
     # Google 0Auth
@@ -384,7 +393,7 @@ class TestConfig:
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
-    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+    REDIS_URL = f"redis://:{quote(REDIS_PASSWORD, safe='')}@{REDIS_HOST}:{REDIS_PORT}/0"
 
     # Celery - use in-memory for tests to avoid Redis dependency
     celery_broker_url = "memory://"
@@ -416,6 +425,10 @@ class TestConfig:
     SECURITY_MULTI_FACTOR_RECOVERY_CODES_N = 3
     SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS = None
     SECURITY_MULTI_FACTOR_RECOVERY_CODE_TTL = None
+
+    # Login throttle (Flask-Limiter, applied to security.login). Tighter in tests.
+    LOGIN_RATE_LIMIT_PER_USERNAME = "5 per 15 minutes"
+    LOGIN_RATE_LIMIT_PER_IP = "10 per 15 minutes"
     SECURITY_TWO_FACTOR_ENABLED_METHODS = ["authenticator"]
     SECURITY_TWO_FACTOR = True
     SECURITY_TWO_FACTOR_RESCUE_MAIL = "test@example.com"

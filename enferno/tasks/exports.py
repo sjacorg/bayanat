@@ -54,6 +54,29 @@ def generate_export(export_id: t.id) -> Any:
         raise NotImplementedError(f"Unsupported export file format: {export_request.file_format!r}")
 
 
+def _accessible_items(requester, query_iter, export_id: t.id):
+    """Yield only the items the export requester is authorised to access.
+
+    Filters here mirror the per-record group check enforced on direct
+    GET endpoints. Without it the Celery export pipeline would happily
+    serialise restricted items the requester cannot open in the UI.
+    """
+    if not requester:
+        logger.warning("Export #%s has no requester; skipping all items", export_id)
+        return
+    for item in query_iter:
+        if requester.can_access(item):
+            yield item
+        else:
+            logger.warning(
+                "Export #%s skipped restricted %s id=%s for requester %s",
+                export_id,
+                item.__tablename__,
+                item.id,
+                requester.id,
+            )
+
+
 def clear_failed_export(export_request: Export) -> None:
     """
     Clear failed export task.
@@ -85,23 +108,27 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
         - export_id if successful, False otherwise.
     """
     export_request = db.session.get(Export, export_id)
+    requester = export_request.requester
 
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     dir_id = Export.generate_export_dir()
     try:
         for group in chunks:
             if export_request.table == "bulletin":
-                for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)):
+                rows = Bulletin.query.filter(Bulletin.id.in_(group))
+                for bulletin in _accessible_items(requester, rows, export_id):
                     pdf = PDFUtil(bulletin)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "actor":
-                for actor in Actor.query.filter(Actor.id.in_(group)):
+                rows = Actor.query.filter(Actor.id.in_(group))
+                for actor in _accessible_items(requester, rows, export_id):
                     pdf = PDFUtil(actor)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "incident":
-                for incident in Incident.query.filter(Incident.id.in_(group)):
+                rows = Incident.query.filter(Incident.id.in_(group))
+                for incident in _accessible_items(requester, rows, export_id):
                     pdf = PDFUtil(incident)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
@@ -130,6 +157,7 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
         - export_id if successful, False otherwise.
     """
     export_request = db.session.get(Export, export_id)
+    requester = export_request.requester
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
@@ -139,21 +167,17 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
             file.write(f'"{export_type}s": [ \n')
             for group in chunks:
                 if export_type == "bulletin":
-                    batch = ",".join(
-                        bulletin.to_json()
-                        for bulletin in Bulletin.query.filter(Bulletin.id.in_(group))
-                    )
-                    file.write(f"{batch}\n")
+                    rows = Bulletin.query.filter(Bulletin.id.in_(group))
                 elif export_type == "actor":
-                    batch = ",".join(
-                        actor.to_json() for actor in Actor.query.filter(Actor.id.in_(group))
-                    )
-                    file.write(f"{batch}\n")
+                    rows = Actor.query.filter(Actor.id.in_(group))
                 elif export_type == "incident":
-                    batch = ",".join(
-                        incident.to_json()
-                        for incident in Incident.query.filter(Incident.id.in_(group))
-                    )
+                    rows = Incident.query.filter(Incident.id.in_(group))
+                else:
+                    rows = []
+                batch = ",".join(
+                    item.to_json() for item in _accessible_items(requester, rows, export_id)
+                )
+                if batch:
                     file.write(f"{batch}\n")
                 # less db overhead
                 time.sleep(0.2)
@@ -181,6 +205,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
         - export_id if successful, False otherwise.
     """
     export_request = db.session.get(Export, export_id)
+    requester = export_request.requester
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
 
@@ -189,6 +214,14 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
         for id in export_request.items:
             if export_type == "bulletin":
                 bulletin = db.session.get(Bulletin, id)
+                if not bulletin or not requester or not requester.can_access(bulletin):
+                    if bulletin:
+                        logger.warning(
+                            "Export #%s skipped restricted bulletin id=%s",
+                            export_id,
+                            bulletin.id,
+                        )
+                    continue
                 # adjust list attributes to normal dicts
                 adjusted = convert_list_attributes(bulletin.to_csv_dict())
                 # normalize
@@ -200,6 +233,14 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
 
             elif export_type == "actor":
                 actor = db.session.get(Actor, id)
+                if not actor or not requester or not requester.can_access(actor):
+                    if actor:
+                        logger.warning(
+                            "Export #%s skipped restricted actor id=%s",
+                            export_id,
+                            actor.id,
+                        )
+                    continue
                 # adjust list attributes to normal dicts
                 actor_dict = convert_list_attributes(actor.to_csv_dict())
 
@@ -264,7 +305,7 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
         # UI switch disabled, but just in case...
         return False
 
-    for item in items:
+    for item in _accessible_items(export_request.requester, items, export_request.id):
         if item.medias:
             media = item.medias[0]
             target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"

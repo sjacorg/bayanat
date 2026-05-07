@@ -2,7 +2,7 @@
 
 import pandas as pd
 from urllib.parse import urlparse
-from flask import Flask, render_template, current_app
+from flask import Flask, render_template, current_app, request
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security import current_user
@@ -57,7 +57,7 @@ from enferno.user.models import User, Role
 from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.rate_limit_utils import ratelimit_handler
+from enferno.utils.rate_limit_utils import get_real_ip, ratelimit_handler
 
 logger = get_logger()
 
@@ -147,9 +147,36 @@ def register_extensions(app):
     mail.init_app(app)
 
     limiter.init_app(app)
+    _apply_login_rate_limit(app)
 
     # Initialize Talisman with security headers
     register_talisman(app)
+
+
+def _apply_login_rate_limit(app):
+    """Stack per-username and per-IP Flask-Limiter limits on POST /login.
+
+    The /login view is owned by Flask-Security; we wrap it post-registration
+    so the same limiter / Redis storage / 429 handler used elsewhere applies.
+    """
+    login_view = app.view_functions.get("security.login")
+    if login_view is None:
+        return
+
+    def _username_key():
+        return f"login:user:{(request.form.get('username') or '').lower().strip()}"
+
+    wrapped = limiter.limit(
+        app.config["LOGIN_RATE_LIMIT_PER_USERNAME"],
+        key_func=_username_key,
+        methods=["POST"],
+    )(login_view)
+    wrapped = limiter.limit(
+        app.config["LOGIN_RATE_LIMIT_PER_IP"],
+        key_func=get_real_ip,
+        methods=["POST"],
+    )(wrapped)
+    app.view_functions["security.login"] = wrapped
 
 
 def register_talisman(app):

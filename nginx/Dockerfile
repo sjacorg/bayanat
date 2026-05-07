@@ -1,4 +1,4 @@
-FROM bitnami/nginx:1.24 as base
+FROM bitnamilegacy/nginx:1.24 as base
 VOLUME /opt/bitnami/nginx/conf
 COPY --chown=1001 nginx.conf /opt/bitnami/nginx/conf/
 

@@ -249,15 +249,38 @@ def api_local_csv_delete() -> str:
     return ""
 
 
+def _resolve_import_path(filename: Optional[str]) -> Optional[str]:
+    """
+    Resolve a user-supplied filename to a path inside IMPORT_DIR.
+
+    Returns the resolved POSIX path string, or None if the filename is
+    missing or escapes the import directory (traversal attempt).
+    """
+    if not filename:
+        return None
+    import_dir = Path(current_app.config.get("IMPORT_DIR")).resolve()
+    joined = safe_join(str(import_dir), filename)
+    if joined is None:
+        return None
+    candidate = Path(joined).resolve()
+    try:
+        candidate.relative_to(import_dir)
+    except ValueError:
+        return None
+    return candidate.as_posix()
+
+
 @imports.post("/api/csv/analyze")
 @roles_required("Admin")
 def api_csv_analyze() -> Response:
     """API endpoint to analyze a csv file."""
     # locate file
     filename = request.json.get("file").get("filename")
-    import_dir = Path(current_app.config.get("IMPORT_DIR"))
+    filepath = _resolve_import_path(filename)
+    if filepath is None:
+        logger.warning("Rejected CSV analyze for invalid path: %r", filename)
+        return HTTPResponse.error("Invalid file path", status=400)
 
-    filepath = (import_dir / filename).as_posix()
     result = SheetImport.parse_csv(filepath)
 
     if result:
@@ -272,9 +295,11 @@ def api_csv_analyze() -> Response:
 def api_xls_sheet() -> Response:
     """API endpoint to get sheets from an excel file."""
     filename = request.json.get("file").get("filename")
-    import_dir = Path(current_app.config.get("IMPORT_DIR"))
+    filepath = _resolve_import_path(filename)
+    if filepath is None:
+        logger.warning("Rejected XLS sheets for invalid path: %r", filename)
+        return HTTPResponse.error("Invalid file path", status=400)
 
-    filepath = (import_dir / filename).as_posix()
     sheets = SheetImport.get_sheets(filepath)
 
     return HTTPResponse.success(data=sheets)
@@ -286,9 +311,11 @@ def api_xls_analyze() -> Response:
     """API endpoint to analyze an excel file."""
     # locate file
     filename = request.json.get("file").get("filename")
-    import_dir = Path(current_app.config.get("IMPORT_DIR"))
+    filepath = _resolve_import_path(filename)
+    if filepath is None:
+        logger.warning("Rejected XLS analyze for invalid path: %r", filename)
+        return HTTPResponse.error("Invalid file path", status=400)
 
-    filepath = (import_dir / filename).as_posix()
     sheet = request.json.get("sheet")
 
     result = SheetImport.parse_excel(filepath, sheet)

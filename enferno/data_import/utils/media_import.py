@@ -9,6 +9,7 @@ from pdf2image import convert_from_path
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
+from enferno.utils.validation_utils import sanitize_string
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
@@ -568,6 +569,7 @@ class MediaImport:
         db.session.add(bulletin)
 
         def update_description(description):
+            description = sanitize_string(description or "")
             if bulletin.description:
                 bulletin.description += f"<br />{description}"
             else:
@@ -665,12 +667,12 @@ class MediaImport:
                 bulletin.publish_date = upload_date
 
             if description := info.get("description"):
-                bulletin.description = description
+                bulletin.description = sanitize_string(description)
         else:
             bulletin.source_link = info.get("old_path")
 
         if info.get("text_content"):
-            bulletin.description = info.get("text_content")
+            bulletin.description = sanitize_string(info.get("text_content"))
 
         if info.get("transcription"):
             update_description(info.get("transcription"))
