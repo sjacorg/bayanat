@@ -22,10 +22,7 @@ from enferno.utils.data_helpers import (
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
-from enferno.admin.models import Bulletin
-from enferno.admin.models.DynamicField import DynamicField
 from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
-from enferno.utils.date_helper import DateHelper
 from enferno.utils.form_history_utils import record_form_history
 
 from enferno.utils.validation_utils import validate_password_policy
@@ -255,7 +252,7 @@ def reset(username: str, password: str) -> None:
         except ValueError as e:
             click.echo(str(e))
             return
-        user.password = hash_password(password)
+        user.set_password(password)
         user.save()
         click.echo("User password has been reset successfully.")
         logger.info("User password has been reset successfully.")
@@ -303,7 +300,7 @@ def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool, active_on
         results.append((user.username, user.email, new_password))
 
         if not dry_run:
-            user.password = hash_password(new_password)
+            user.set_password(new_password)
             user.set_security_reset_key()
             user.save()
 
@@ -528,7 +525,6 @@ def doctor() -> None:
         fail("Redis not reachable")
 
     try:
-        from celery import current_app as celery_app
         from enferno.tasks import celery
 
         inspector = celery.control.inspect(timeout=2)
@@ -771,7 +767,7 @@ def status() -> None:
     total_extracted = sum(s["count"] for s in status_map.values())
     pending = total_media - total_extracted
 
-    click.echo(f"\nOCR Status Summary")
+    click.echo("\nOCR Status Summary")
     click.echo(f"{'─' * 40}")
     click.echo(f"Total media:          {total_media:,}")
     click.echo(f"Pending (no OCR):     {pending:,}")
