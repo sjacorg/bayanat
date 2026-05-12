@@ -1704,7 +1704,7 @@ class ConfigValidationModel(StrictValidationModel):
                     raise ValueError(
                         "MEDIA_ALLOWED_EXTENSIONS and SHEETS_ALLOWED_EXTENSIONS must be lists of strings"
                     )
-                if len(ext) < 2 or len(ext) > 4:
+                if len(ext) < 2 or len(ext) > 5:
                     raise ValueError(
                         "Invalid value for MEDIA_ALLOWED_EXTENSIONS or SHEETS_ALLOWED_EXTENSIONS"
                     )
