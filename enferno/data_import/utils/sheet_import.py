@@ -170,7 +170,9 @@ class SheetImport:
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
 
-        columns = df.columns.to_list()
+        # XLSX preserves numeric header cells as numeric column labels; coerce so the
+        # API contract (list[str]) holds regardless of header cell types.
+        columns = [str(c) for c in df.columns]
         # drop nan values before generating head rows
         df.fillna("", inplace=True)
         head = df.head().to_dict()
