@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Literal, Optional
 
 from celery import chord, group
+from celery.exceptions import SoftTimeLimitExceeded
 from werkzeug.utils import safe_join
 
 import enferno.utils.typing as t
@@ -20,7 +21,7 @@ from enferno.utils.logging_utils import get_logger
 logger = get_logger("celery.tasks.data_import")
 
 
-@celery.task(rate_limit=10)
+@celery.task(rate_limit=10, soft_time_limit=600, time_limit=660)
 def etl_process_file(
     batch_id: t.id, file: str, meta: Any, user_id: t.id, data_import_id: t.id
 ) -> Optional[Literal["done"]]:
@@ -29,6 +30,10 @@ def etl_process_file(
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
         return "done"
+    except SoftTimeLimitExceeded:
+        log = db.session.get(DataImport, data_import_id)
+        log.fail(TimeoutError(f"etl_process_file exceeded soft_time_limit on {file}"))
+        raise
     except Exception as e:
         log = db.session.get(DataImport, data_import_id)
         log.fail(e)
