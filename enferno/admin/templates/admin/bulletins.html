@@ -18,7 +18,7 @@
 
 
         {% include'admin/partials/export_drawer.html' %}
-        <v-container fluid>
+        <v-container fluid style="height: calc(100vh - 64px);">
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
@@ -37,12 +37,10 @@
                 </template>
             </v-tooltip>
 
-            <v-card>
-
-                <v-card-text>
+            <v-card class="h-100">
+                <v-card-text class="h-100">
                     <v-data-table-server
                             fixed-header
-                            height="calc(100vh - 331px)"
                             id="bulletins-dt"
                             v-model="selected"
                             hover
@@ -56,22 +54,18 @@
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
-                            class="elevation-1"
+                            class="elevation-1 h-100"
                             hide-default-footer
                     >
                         <template #top>
                             <v-sheet class="ma-3 d-flex align-center">
-                                <v-btn variant="text" class="hidden-sm-and-down" @click="allBulletins"
-                                >{{ _('All Bulletins') }}</v-btn
-                                >
-                                <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn variant="text" class="hidden-sm-and-down" @click="myAssigned"
-                                >{{ _('Assigned to me') }}</v-btn
-                                >
-                                <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn variant="text" @click="myReview" class="mr-2 hidden-sm-and-down"
-                                >{{ _('My Review List') }}</v-btn
-                                >
+                                <template v-if="this.$vuetify.display.smAndUp">
+                                    <v-btn variant="text" @click="allBulletins">{{ _('All Bulletins') }}</v-btn>
+                                    <v-divider class="mx-1" inset vertical></v-divider>
+                                    <v-btn variant="text" @click="myAssigned">{{ _('Assigned to me') }}</v-btn>
+                                    <v-divider class="mx-1" inset vertical></v-divider>
+                                    <v-btn variant="text" @click="myReview" class="mr-2">{{ _('My Review List') }}</v-btn>
+                                </template>
 
                                 <v-text-field
                                         class="mx-1"
@@ -88,12 +82,9 @@
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                         :bg-color="searchBg"
-                                        
-                                        
-
                                 ></v-text-field>
 
-                                <v-spacer></v-spacer>
+                                <v-spacer v-if="this.$vuetify.display.smAndUp"></v-spacer>
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn
                                             @click="editItem"
@@ -104,6 +95,7 @@
                                     >
                                     {% if config.WEB_IMPORT and (current_user.can_import_web or current_user.has_role("Admin")) %}
                                     <v-btn
+                                        v-if="this.$vuetify.display.smAndUp"
                                             @click="webImportDlg = true"
                                             color="primary"
                                             variant="elevated"
@@ -118,7 +110,7 @@
                                 {% include'admin/partials/review_dialog.html' %}
                             </v-sheet>
 
-                            <v-toolbar class="px-3" v-if="bulkAllowed() || exportAllowed()">
+                            <v-toolbar class="px-3" v-if="selected.length && (bulkAllowed() || exportAllowed())">
                                 <template v-if="bulkIcons">
                                     <v-tooltip location="top" text="{{ _('Unselect all') }}">
                                         <template #activator="{props}">
@@ -180,12 +172,12 @@
 
                         <template #bottom>
                             <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
-                                <div>{{ _('Search time: ') }}
+                                <div v-if="this.$vuetify.display.smAndUp">{{ _('Search time: ') }}
                                     ${searchTime} {{ _('seconds') }}</div>
                                 <div>
                                 
                                 <div class="d-flex flex-row align-center ga-2">
-                                    <div class="d-flex flex-row align-center ga-2">
+                                    <div v-if="this.$vuetify.display.smAndUp" class="d-flex flex-row align-center ga-2">
                                         {{ _('Items per page:') }}
                                         <v-select :model-value="perPage" @update:model-value="setNextPerPageValue" hide-details density="compact" :items="itemsPerPageOptions"
                                             variant="outlined"></v-select>
@@ -571,6 +563,7 @@
 
 
                     actorDialog: false,
+                    bulletinMobilePane: 'form',
                     dialog: dialog,
                     saving: false,
                     eventDialog: false,
@@ -818,6 +811,17 @@
 
 
                 watch: {
+                    '$vuetify.display.smAndDown': {
+                        immediate: true,
+                        handler() {
+                            this.syncBulletinDialogViewportProps();
+                        },
+                    },
+                    dialog(val) {
+                        if (!val) return;
+                        this.bulletinMobilePane = 'form';
+                        this.syncBulletinDialogViewportProps();
+                    },
 
                     bulletinDrawer: function (val) {
                         if (val === false) {
@@ -867,6 +871,8 @@
 
                 },
                 mounted: function () {
+                    this.syncBulletinDialogViewportProps();
+
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
                         api.get('/admin/api/roles/').then(res => {
@@ -895,6 +901,57 @@
                 },
 
                 methods: {
+                    buildLeftDialogProps(isMobile) {
+                        return {
+                            'retain-focus': false,
+                            'content-props': {
+                                style: { width: isMobile ? '100%' : '60%' },
+                            },
+                            ...(isMobile ? {} : { 'content-class': 'absolute left-0' }),
+                            fullscreen: true,
+                            persistent: true,
+                            'no-click-animation': true,
+                            scrim: isMobile,
+                        };
+                    },
+                    buildRightDialogProps(isMobile) {
+                        return {
+                            'retain-focus': false,
+                            'content-props': {
+                                style: { width: isMobile ? '100%' : '60%', contain: 'none' },
+                            },
+                            ...(isMobile ? {} : { 'content-class': 'absolute right-0 left-auto' }),
+                            fullscreen: true,
+                            persistent: true,
+                            'no-click-animation': true,
+                            scrim: isMobile,
+                        };
+                    },
+                    buildRightContainedDialogProps(isMobile) {
+                        if (isMobile) {
+                            return {
+                                'retain-focus': false,
+                                fullscreen: true,
+                                persistent: true,
+                                'no-click-animation': true,
+                                scrim: true,
+                            };
+                        }
+
+                        return {
+                            'retain-focus': false,
+                            contained: true,
+                            persistent: true,
+                            'no-click-animation': true,
+                            scrim: false,
+                        };
+                    },
+                    syncBulletinDialogViewportProps() {
+                        const isMobile = this.$vuetify.display.smAndDown;
+                        this.leftDialogProps = this.buildLeftDialogProps(isMobile);
+                        this.rightDialogProps = this.buildRightDialogProps(isMobile);
+                        this.rightContainedDialogProps = this.buildRightContainedDialogProps(isMobile);
+                    },
                     refreshEditedMedia(mediaId) {
                         if (!this.editedItem?.medias) return;
                         api.get(`/admin/api/media/${mediaId}`).then(response => {
@@ -1602,6 +1659,7 @@
                     close() {
                         this.dialog = false;
                         this.actorDialog = false;
+                        this.bulletinMobilePane = 'form';
                         this.closeExpandedMedia();
                         this.closeMediaDialog();
                         this.closeSnapshotDialog();

@@ -59,10 +59,10 @@
                             :loading="loading"
                             :items-length="itemsLength"
                             class="elevation-1"
-                            :show-select="hasOcrProvider"
+                            :show-select="$vuetify.display.smAndUp && hasOcrProvider"
                             item-value="id"
                             select-strategy="page"
-                            :item-selectable="canRunOCRProcess"
+                            :item-selectable="$vuetify.display.smAndUp && canRunOCRProcess"
                             :items-per-page-options="itemsPerPageOptions"
                             @click:row="rowClick"
                     >
@@ -73,7 +73,7 @@
                                 </v-toolbar-title>
 
                                 <!-- Filters -->
-                                <div class="d-flex align-center ga-2">
+                                <div v-if="$vuetify.display.smAndUp" class="d-flex align-center ga-2">
                                     <v-select
                                         v-model="filters.ocr_status"
                                         :items="statusOptions"
@@ -405,6 +405,7 @@
                     if (this.$route.params.id) this.showOcrDialog(this.$route.params.id);
                 },
                 rowClick(e, row) {
+                    if (this.$vuetify.display.smAndDown) return; // Disable row click on mobile devices
                     const item = row.item;
                     const path = `/admin/media/${item.id}`;
                     if (this.$route.path !== path) this.$router.push(path);

@@ -3,7 +3,7 @@
     <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
   </template>
 
-  <v-toolbar-title class="ml-0 pl-2 flex-fill">
+  <v-toolbar-title class="ml-0 pl-0 flex-fill">
     <a href="/">
       <img src="/static/img/bayanat-h-w-v2.svg" class="mt-1" height="42" cover loading="lazy" />
     </a>
@@ -11,21 +11,23 @@
   <v-spacer></v-spacer>
 
   <template v-slot:append>
-    {% if config.OCR_PROVIDER == 'google_vision' %}
-    <v-tooltip location="bottom">
-      <template v-slot:activator="{ props }">
-        <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-google" size="small" class="mr-2" href="/admin/media/">Vision API</v-chip>
-      </template>
-      {{ _('OCR powered by Google Vision') }}
-    </v-tooltip>
-    {% elif config.OCR_PROVIDER %}
-    <v-tooltip location="bottom">
-      <template v-slot:activator="{ props }">
-        <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-creation" size="small" class="mr-2" href="/admin/media/">AI Powered</v-chip>
-      </template>
-      {{ _('OCR powered by AI') }}
-    </v-tooltip>
-    {% endif %}
+    <template v-if="this.$vuetify.display.smAndUp">
+      {% if config.OCR_PROVIDER == 'google_vision' %}
+      <v-tooltip location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-google" size="small" class="mr-2" href="/admin/media/">Vision API</v-chip>
+        </template>
+        {{ _('OCR powered by Google Vision') }}
+      </v-tooltip>
+      {% elif config.OCR_PROVIDER %}
+      <v-tooltip location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-creation" size="small" class="mr-2" href="/admin/media/">AI Powered</v-chip>
+        </template>
+        {{ _('OCR powered by AI') }}
+      </v-tooltip>
+      {% endif %}
+    </template>
 
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">

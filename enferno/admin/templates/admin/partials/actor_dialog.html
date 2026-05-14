@@ -35,7 +35,7 @@
                     style="height: calc(100vh - 64px);"
                     class="overflow-y-auto">
 
-                <v-card-text>
+                <v-card-text :class="{ 'pa-0': $vuetify.display.smAndDown }">
                     <v-container fluid>
                         <v-btn-toggle v-model="editedItem.type" tile mandatory>
                             <v-btn
@@ -344,7 +344,7 @@
                                                                 ></v-text-field>
                                                             </v-col>
 
-                                                            <v-col md="8">
+                                                            <v-col cols="12" md="8">
                                                                 <v-text-field class="mx-2"
                                                                                 variant="outlined"
                                                                                 v-model="profile.source_link"
@@ -354,7 +354,7 @@
                                                                 ></v-text-field>
                                                             </v-col>
 
-                                                            <v-col md="2">
+                                                            <v-col cols="12" md="2">
                                                                 <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
                                                                             v-model="profile.source_link_type"
                                                                 >
@@ -420,7 +420,7 @@
 
                                                     <v-container fluid>
                                                         <v-row>
-                                                            <v-col md="6">
+                                                            <v-col cols="12" sm="6">
                                                                 <!-- Publish Date -->
 
                                                                 <pop-date-time-field
@@ -430,7 +430,7 @@
                                                                 </pop-date-time-field>
 
                                                             </v-col>
-                                                            <v-col md="6">
+                                                            <v-col cols="12" sm="6">
                                                                 <!-- Documentation Date -->
                                                                 <pop-date-time-field
                                                                         label="{{ _('Documentation Date')}}"
@@ -457,7 +457,7 @@
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.last_address`)"
                                                                                 ></v-text-field>
                                                                             </v-col>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-text-field label="{{ _('Marriage History') }}"
                                                                                             v-model="profile.marriage_history"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.marriage_history`)"
@@ -465,7 +465,7 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-select
                                                                                         label="{{ _('Pregnant at Disappearance') }}"
                                                                                         clearable
@@ -476,7 +476,7 @@
 
                                                                                 </v-select>
                                                                             </v-col>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-text-field
                                                                                     label="{{ _('Months Pregnant at time of disappearance') }}"
                                                                                     v-model="profile.months_pregnant" :rules="[validationRules.integer()]"
@@ -484,7 +484,7 @@
                                                                                 ></v-text-field>
 
                                                                             </v-col>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-switch label="{{ _('Missing Relatives') }}"
                                                                                         v-model="profile.missing_relatives"></v-switch>
                                                                             </v-col>
@@ -494,7 +494,7 @@
                                                                         <v-row>
 
 
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-card class="pa-3">
                                                                                     <v-card-title class="subtitle-2">
                                                                                         {{ _('Details of the person who saw them last') }}
@@ -521,13 +521,13 @@
                                                                                     </v-card-text>
                                                                                 </v-card>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <mix-yes-no-field title="{{ _('Seen in a detention center?') }}"
                                                                                     v-model="profile.seen_in_detention"
                                                                                     :server-errors="serverErrors" :error-key="`item.actor_profiles.${index}.seen_in_detention.details`"
                                                                                 ></mix-yes-no-field>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <mix-yes-no-field v-model="profile.injured"
                                                                                     title="{{ _('Injured around time of disappearance?') }}"
                                                                                     :server-errors="serverErrors"
@@ -536,7 +536,7 @@
                                                                             </v-col>
 
 
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <mix-yes-no-field v-model="profile.known_dead"
                                                                                     title="{{ _('Known to be dead?') }}"
                                                                                     :server-errors="serverErrors"
@@ -545,7 +545,7 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Details about circumstances of death') }}"
                                                                                             v-model="profile.death_details"
@@ -553,7 +553,7 @@
                                                                                 ></v-textarea>
                                                                             </v-col>
 
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Personal Items (watch,ring,chains etc)') }}"
                                                                                             v-model="profile.personal_items"
@@ -563,7 +563,7 @@
 
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="2">
+                                                                            <v-col cols="12" md="2">
                                                                                 <v-text-field v-model="profile.height"
                                                                                             label="{{ _('Height') }}"
                                                                                             suffix="cm"
@@ -573,7 +573,7 @@
 
 
                                                                             </v-col>
-                                                                            <v-col md="2">
+                                                                            <v-col cols="12" md="2">
                                                                                 <v-text-field v-model="profile.weight"
                                                                                             label="{{ _('Weight') }}"
                                                                                             suffix="kg"
@@ -583,7 +583,7 @@
 
 
                                                                             </v-col>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-select label="{{ _('Physique') }}"
                                                                                         clearable
                                                                                         item-title="tr"
@@ -593,7 +593,7 @@
                                                                                 ></v-select>
 
                                                                             </v-col>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-select label="{{ _('Hair loss') }}"
                                                                                         clearable
                                                                                         v-model="profile.hair_loss"
@@ -606,7 +606,7 @@
                                                                         </v-row>
 
                                                                         <v-row>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-select label="{{ _('Hair type') }}"
                                                                                         clearable
                                                                                         v-model="profile.hair_type"
@@ -615,7 +615,7 @@
                                                                                         :items="translations.hairType"
                                                                                 ></v-select>
                                                                             </v-col>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-select label="{{ _('Hair length') }}"
                                                                                         clearable
                                                                                         v-model="profile.hair_length"
@@ -624,7 +624,7 @@
                                                                                         :items="translations.hairLength"
                                                                                 ></v-select>
                                                                             </v-col>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-select label="{{ _('Hair color') }}"
                                                                                         clearable
                                                                                         v-model="profile.hair_color"
@@ -633,7 +633,7 @@
                                                                                         :items="translations.hairColor"
                                                                                 ></v-select>
                                                                             </v-col>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-select label="{{ _('Facial hair') }}"
                                                                                         clearable
                                                                                         v-model="profile.facial_hair"
@@ -646,7 +646,7 @@
                                                                         </v-row>
 
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             v-model="profile.posture"
                                                                                             label="{{ _('Notes on posture and walking style') }}"
@@ -671,7 +671,7 @@
                                                                                         item-value="en"
                                                                                         v-model="profile.eye_color"></v-select>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <mix-select-field title="{{ _('Skin Markings') }}"
                                                                                         :items="translations.skinMarkings"
                                                                                         item-title="tr"
@@ -687,14 +687,14 @@
 
 
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Distinctive characteristics (congenital)') }}"
                                                                                             v-model="profile.dist_char_con"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dist_char_con`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Distinctive characteristics (acquired)') }}"
                                                                                             v-model="profile.dist_char_acq"
@@ -703,14 +703,14 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Physical habits') }}"
                                                                                             v-model="profile.physical_habits"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.physical_habits`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Other comments') }}"
                                                                                             v-model="profile.other"
@@ -720,14 +720,14 @@
                                                                         </v-row>
 
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Physician’s name and contact') }}"
                                                                                             v-model="profile.phys_name_contact"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.phys_name_contact`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)') }}"
                                                                                             v-model="profile.injuries"
@@ -736,14 +736,14 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age') }}"
                                                                                             v-model="profile.implants"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.implants`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Congenital malformations (indicate type and whether there is more than one relative with the same pathology)') }}"
                                                                                             v-model="profile.malforms"
@@ -752,14 +752,14 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Pain and/or ailments') }}"
                                                                                             v-model="profile.pain"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.pain`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Other medical conditions (specify type and age of occurrence)') }}"
                                                                                             v-model="profile.other_conditions"
@@ -768,14 +768,14 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Accidents (indicate age of occurrence)') }}"
                                                                                             v-model="profile.accidents"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.accidents`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="6">
+                                                                            <v-col cols="12" md="6">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Prescription drugs taken (indicate at what age and reason)') }}"
                                                                                             v-model="profile.pres_drugs"
@@ -784,7 +784,7 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col cols="3">
+                                                                            <v-col cols="12" sm="3">
                                                                                 <v-select
                                                                                         clearable
                                                                                         item-title="tr"
@@ -795,19 +795,19 @@
 
                                                                                 </v-select>
                                                                             </v-col>
-                                                                            <v-col cols="3">
+                                                                            <v-col cols="12" sm="3">
                                                                                 <v-switch
                                                                                         label="{{ _('Is there a Dental Record?') }}"
                                                                                         v-model="profile.dental_record"></v-switch>
                                                                             </v-col>
-                                                                            <v-col cols="3">
+                                                                            <v-col cols="12" sm="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dentist\'s name and contact') }}"
                                                                                             v-model="profile.dentist_info"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dentist_info`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col cols="3">
+                                                                            <v-col cols="12" sm="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)') }}"
                                                                                             v-model="profile.teeth_features"
@@ -818,28 +818,28 @@
                                                                         </v-row>
 
                                                                         <v-row>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dental problems (absences, infections, bleeding, etc...)') }}"
                                                                                             v-model="profile.dental_problems"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_problems`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dental treatments (extractions, fillings, etc...) with dates') }}"
                                                                                             v-model="profile.dental_treatments"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_treatments`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Dental habits (toothpicks, smoking, etc...)') }}"
                                                                                             v-model="profile.dental_habits"
                                                                                             v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.dental_habits`)"
                                                                                 ></v-textarea>
                                                                             </v-col>
-                                                                            <v-col md="3">
+                                                                            <v-col cols="12" md="3">
                                                                                 <v-select label="{{ _('Case status') }}"
                                                                                         v-model="profile.case_status"
                                                                                         clearable
@@ -859,20 +859,20 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-text-field
                                                                                         label="{{ _('Identified by (responsible institution)') }}"
                                                                                         v-model="profile.identified_by"
                                                                                         v-bind="serverErrorPropsForField(serverErrors, `item.actor_profiles.${index}.identified_by`)"
                                                                                 ></v-text-field>
                                                                             </v-col>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-switch
                                                                                         label="{{ _('Was the family notified?') }}"
                                                                                         v-model="profile.family_notified"></v-switch>
 
                                                                             </v-col>
-                                                                            <v-col md="4">
+                                                                            <v-col cols="12" md="4">
                                                                                 <v-textarea rows="1"
                                                                                             label="{{ _('Location of reburial (full address)') }}"
                                                                                             v-model="profile.reburial_location"

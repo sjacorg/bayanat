@@ -1,16 +1,25 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-    <v-main class="system-admin">
-        <div class="pa-4">
-            <v-card class="pa-4" elevation="2" height="calc(100dvh - 96px)">
+    <v-main class="system-admin overflow-hidden">
+        <v-container fluid class="pa-4" style="height: calc(100vh - 64px);">
+            <v-card class="pa-4 h-100 d-flex flex-column" elevation="2">
                 <h1 class="text-h6 mb-5">{{ _('Administration Dashboard') }}</h1>
 
-                <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px);">
+                <div class="d-flex flex-column flex-md-row ga-4 flex-grow-1" style="min-height: 0;">
 
                     <!-- Left navigation menu -->
-                    <v-card class="py-5 h-100 overflow-y-auto" elevation="2" style="min-width: 255px; max-height: fit-content;">
-                        <v-tabs height="40" v-model="tab" selected-class="text-primary" direction="vertical">
+                    <v-card
+                        :class="$vuetify.display.smAndDown ? 'w-100 flex-shrink-0' : 'py-5 h-100 overflow-y-auto'"
+                        elevation="2"
+                        :style="$vuetify.display.smAndDown ? '' : 'min-width: 255px; max-height: fit-content;'"
+                    >
+                        <v-tabs
+                            height="40"
+                            v-model="tab"
+                            :direction="$vuetify.display.smAndDown ? 'horizontal' : 'vertical'"
+                            align-tabs="start"
+                        >
                             <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
                                 class="px-7 justify-start text-none text-subtitle-2">
                                 ${tab.text}
@@ -20,7 +29,7 @@
 
 
                     <!-- Main content -->
-                    <v-card elevation="2" class="w-100 overflow-y-auto">
+                    <v-card elevation="2" class="w-100 h-100 overflow-y-auto">
 
                         <!-- Main content header -->
                         <v-card-title class="d-flex flex-column pa-0 px-4 position-sticky top-0 z-1 bg-surface">
@@ -32,6 +41,7 @@
 
                                 <!-- Actions -->
                                 <div class="d-flex ga-4">
+                                    <template v-if="$vuetify.display.smAndUp">
                                     <v-btn class="outlined-btn" color="primary" prepend-icon="mdi-restore" @click="loadDefaults"
                                         variant="outlined">
                                         {{ _('Restore default settings') }}
@@ -40,6 +50,7 @@
                                         variant="outlined">
                                         {{ _('Revision history') }}
                                     </v-btn>
+                                    </template>
                                     <v-btn @click.stop="showConfigDiff()" variant="elevated" color="primary" prepend-icon="mdi-check"
                                         :disabled="!hasChanges">{{ _('Save changes') }}</v-btn>
                                 </div>
@@ -1034,7 +1045,7 @@
                     </v-card>
                 </div>
             </v-card>
-        </div>
+        </v-container>
     </v-main>
 
 
