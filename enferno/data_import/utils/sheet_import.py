@@ -166,7 +166,7 @@ class SheetImport:
         Returns:
             - A dictionary containing the columns and the head of the file.
         """
-        df = pd.read_excel(filepath, sheet_name=sheet)
+        df = pd.read_excel(filepath, sheet_name=sheet, engine="openpyxl")
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
 
@@ -190,7 +190,7 @@ class SheetImport:
         Returns:
             - A list of the sheet names in the Excel file.
         """
-        xls = pd.ExcelFile(filepath)
+        xls = pd.ExcelFile(filepath, engine="openpyxl")
         return xls.sheet_names
 
     @staticmethod
@@ -206,7 +206,7 @@ class SheetImport:
             - A DataFrame containing the parsed data.
         """
         if sheet:
-            df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False)
+            df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False, engine="openpyxl")
         else:
             df = pd.read_csv(filepath, keep_default_na=False)
 
