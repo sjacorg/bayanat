@@ -14,6 +14,10 @@ const IncidentSearchBox = Vue.defineComponent({
     roles: {
       type: Array,
     },
+    expandActivePanels: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   emits: ['update:modelValue', 'search'],
@@ -54,6 +58,7 @@ const IncidentSearchBox = Vue.defineComponent({
         } else {
           this.dyn = new Map();
         }
+        this.setActivePanels();
       },
       immediate: true
     }
@@ -141,9 +146,30 @@ const IncidentSearchBox = Vue.defineComponent({
     (this.q?.dyn || []).forEach(field => {
       this.dyn.set(field.name, field)
     });
+    this.setActivePanels();
   },
 
   methods: {
+    setActivePanels() {
+      if (!this.expandActivePanels) {
+        return;
+      }
+
+      this.$nextTick(() => {
+        const panels = [];
+        if (this.textSearchCount) panels.push('0');
+        if (this.dateCount) panels.push('1');
+        if (this.eventCount) panels.push('2');
+        if (this.violationsCount) panels.push('3');
+        if (this.classificationCount) panels.push('4');
+        if (this.workflowCount) panels.push('5');
+        if (this.locationCount) panels.push('6');
+        if (this.dynamicFieldCount) panels.push('7');
+
+        this.openPanels = panels.length ? panels : ['0'];
+      });
+    },
+
     fetchViolationCategories(endpointSuffix, categoryVarName) {
       axios
         .get(`/admin/api/${endpointSuffix}/`)
