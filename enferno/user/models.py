@@ -234,6 +234,17 @@ class User(UserMixin, db.Model, BaseMixin):
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         rds.delete(key)
 
+    def set_password(self, password: str) -> None:
+        """Hash and set the user password, clearing any active force-reset flag.
+
+        Centralizing this on the model keeps the force-reset Redis flag in sync
+        with the stored hash, regardless of whether the password is written via
+        a CLI command or the admin UI. The web /change flow continues to clear
+        the flag via the `password_changed` signal.
+        """
+        self.password = hash_password(password)
+        self.unset_security_reset_key()
+
     def roles_in(self, roles: list) -> bool:
         chk = [self.has_role(r) for r in roles]
         return any(chk)
@@ -354,7 +365,7 @@ class User(UserMixin, db.Model, BaseMixin):
         # check password is not empty
         password = item.get("password")
         if password:
-            self.password = hash_password(password)
+            self.set_password(password)
 
         self.name = item.get("name")
 
