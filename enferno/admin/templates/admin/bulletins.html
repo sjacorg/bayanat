@@ -94,6 +94,9 @@
                                 ></v-text-field>
 
                                 <v-spacer></v-spacer>
+                                {% with help_url='https://docs.bayanat.org/guide/bulletins.html', help_title='Bulletins' %}
+                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                {% endwith %}
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn
                                             @click="editItem"

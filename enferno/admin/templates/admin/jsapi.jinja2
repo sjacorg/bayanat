@@ -23,6 +23,7 @@ tfaAuthentication_ : "{{ _('2FA Authentication') }}",
 recoveryCodes_ : "{{ _('Recovery Codes') }}",
 securityKeys_ : "{{ _('Security Keys') }}",
 userGuides_ : "{{ _('User Guides') }}",
+learnAbout_: (topic) => "{{ _('Learn about {topic}') }}".replace("{topic}", topic),
 support_ : "{{ _('Support') }}",
 reportABug_ : "{{ _('Report a Bug') }}",
 logout_ : "{{ _('Logout') }}",
@@ -76,6 +77,7 @@ clickRetryOCR_: "{{ _('Click retry to attempt OCR processing again') }}",
 ocrProcessingFailed_: "{{ _('OCR Processing Failed') }}",
 retryOCR_: "{{ _('Retry OCR') }}",
 ocrStatus_: "{{ _('OCR Status') }}",
+ocrAndTextExtraction_: "{{ _('OCR & Text Extraction') }}",
 thisMediaHasBeenMarkedAsUnreadableByAReviewer_: "{{ _('This media has been marked as unreadable by a reviewer') }}",
 thisMediaWasManuallyTranscribedByAReviewer_: "{{ _('This media was manually transcribed by a reviewer') }}",
 thisMediaHasBeenReviewedAndAccepted_: "{{ _('This media has been reviewed and accepted') }}",
@@ -380,6 +382,7 @@ documentationDate_: "{{ _('Documentation Date') }}",
 sourceLink_: "{{ _('Source Link') }}",
 comments_ : "{{ _('Comments') }}",
 logHistory_: "{{ _('Log History') }}",
+revisionHistory_: "{{ _('Revision History') }}",
 
 // actors
 fullName_: "{{ _('Full Name') }}",
@@ -842,4 +845,3 @@ translations['whisperModels'] = [
         {"en": "{{ model['model_label'] }}", "tr": "{{ _(model['model_label']) }}"},
     {% endfor %}
 ];
-

@@ -31,6 +31,9 @@
                                             <v-toolbar flat color="white">
                                                 <v-toolbar-title>{{ _('Import Log') }}</v-toolbar-title>
                                                 <v-spacer></v-spacer>
+                                                {% with help_url='https://docs.bayanat.org/guide/data-import.html', help_title='Data Import' %}
+                                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                                {% endwith %}
                                             </v-toolbar>
                                         </template>
 
