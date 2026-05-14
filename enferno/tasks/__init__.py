@@ -140,6 +140,16 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
             f"Backup periodic task is set up. Backups will run at 3:00 every {cfg.BACKUP_INTERVAL} day(s)."
         )
 
+    # Update-check periodic task (every 6 hours)
+    from enferno.tasks.maintenance import check_for_updates
+
+    sender.add_periodic_task(
+        6 * 60 * 60,
+        check_for_updates.s(),
+        name="Check for Updates",
+    )
+    logger.info("Update-check periodic task is set up (every 6h).")
+
     # session cleanup task
     sender.add_periodic_task(24 * 60 * 60, session_cleanup.s(), name="Session Cleanup Cron")
 
@@ -175,6 +185,7 @@ from enferno.tasks.flowmap import generate_actor_flowmap  # noqa: E402
 from enferno.tasks.graph import generate_graph  # noqa: E402
 from enferno.tasks.maintenance import (  # noqa: E402
     activity_cleanup_cron,
+    check_for_updates,
     daily_backup_cron,
     regenerate_locations,
     reload_app,
@@ -224,6 +235,7 @@ __all__ = [
     "generate_graph",
     # maintenance
     "activity_cleanup_cron",
+    "check_for_updates",
     "daily_backup_cron",
     "regenerate_locations",
     "reload_app",
