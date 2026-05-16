@@ -21,7 +21,6 @@ from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
 from enferno.extensions import db
 from sqlalchemy import any_
-from urllib.parse import urlparse
 
 logger = get_logger()
 
@@ -595,20 +594,19 @@ class MediaImport:
             channel_url = info.get("channel_url")
             channel = info.get("channel")
 
-            domain = info.get("extractor_key")
+            domain = info.get("extractor_key") or info.get("extractor")
             if not domain:
-                url = urlparse(info.get("source_url")).netloc.lower()
-                url = domain[4:] if domain.startswith("www.") else domain
-                domain = url.split(".")[0].first()
-
-            main_source = Source.query.filter(Source.title == domain).first()
-
-            if not main_source:
-                main_source = Source()
-                main_source.title = domain
-                main_source.etl_id = info.get("webpage_url_domain") or url
-                main_source.save()
-            bulletin.sources.append(main_source)
+                self.data_import.add_to_log(
+                    "yt-dlp metadata missing extractor_key; skipping Source linkage."
+                )
+            else:
+                main_source = Source.query.filter(Source.title == domain).first()
+                if not main_source:
+                    main_source = Source()
+                    main_source.title = domain
+                    main_source.etl_id = info.get("webpage_url_domain")
+                    main_source.save()
+                bulletin.sources.append(main_source)
 
             source = None
 
