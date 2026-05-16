@@ -145,7 +145,7 @@ class SheetImport:
             - A dictionary containing the columns and the head of the file.
         """
         # read the file partially only for parsing purposes
-        df = pd.read_csv(filepath, keep_default_na=False)
+        df = pd.read_csv(filepath, keep_default_na=False, on_bad_lines="skip", index_col=False)
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
 
