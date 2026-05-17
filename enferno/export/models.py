@@ -1,11 +1,8 @@
-import os
-
 from datetime import datetime as dt
 from pathlib import Path
 from typing import Any, Union
 
 import arrow
-from flask import current_app
 from sqlalchemy import ARRAY
 from flask_security.decorators import current_user
 
@@ -78,13 +75,16 @@ class Export(db.Model, BaseMixin):
         Returns:
             - Export object
         """
+        if not isinstance(json, dict):
+            json = {}
         cfg = json.get("config")
-        items = json.get("items")
+        if not isinstance(cfg, dict):
+            cfg = {}
 
         self.requester = current_user
         self.table = table
-        self.items = items
-        self.tags = cfg.get("tags") if "tags" in cfg else []
+        self.items = json.get("items")
+        self.tags = cfg.get("tags", [])
         self.comment = cfg.get("comment")
         self.file_format = cfg.get("format")
         self.include_media = cfg.get("includeMedia")
