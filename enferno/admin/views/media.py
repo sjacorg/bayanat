@@ -586,14 +586,14 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
     if media is None:
         return HTTPResponse.not_found("Media not found")
 
-    if not current_user.can_access(media):
+    if not current_user.can_edit(media):
         Activity.create(
             current_user,
             Activity.ACTION_VIEW,
             Activity.STATUS_DENIED,
             validated_data,
             "media",
-            details="Unauthorized attempt to update restricted media.",
+            details="Unauthorized attempt to update media outside edit boundary.",
         )
         return HTTPResponse.forbidden("Restricted Access")
 
