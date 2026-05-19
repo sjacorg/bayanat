@@ -91,7 +91,7 @@ def api_imports() -> Response:
     per_page = request.args.get("per_page", PER_PAGE, int)
     q = request.json.get("q", None)
 
-    if q and (batch_id := q.get("batch_id")):
+    if isinstance(q, dict) and (batch_id := q.get("batch_id")):
         result = (
             DataImport.query.filter(DataImport.batch_id == batch_id)
             .order_by(-DataImport.id)
@@ -179,8 +179,11 @@ def etl_process() -> Response:
         - response contains the processing result
     """
 
-    files = request.json.pop("files")
-    meta = request.json
+    body = request.json or {}
+    files = body.pop("files", None)
+    if not isinstance(files, list) or not files:
+        return HTTPResponse.error("Missing `files` array", status=417)
+    meta = body
     batch_id = shortuuid.uuid()[:9]
 
     process_files.delay(files=files, meta=meta, user_id=current_user.id, batch_id=batch_id)
@@ -275,7 +278,12 @@ def _resolve_import_path(filename: Optional[str]) -> Optional[str]:
 def api_csv_analyze() -> Response:
     """API endpoint to analyze a csv file."""
     # locate file
-    filename = request.json.get("file").get("filename")
+    file_obj = request.json.get("file")
+    if not isinstance(file_obj, dict):
+        return HTTPResponse.error("Missing or malformed `file` field", status=417)
+    filename = file_obj.get("filename")
+    if not isinstance(filename, str) or not filename:
+        return HTTPResponse.error("Missing `file.filename`", status=417)
     filepath = _resolve_import_path(filename)
     if filepath is None:
         logger.warning("Rejected CSV analyze for invalid path: %r", filename)
@@ -294,7 +302,12 @@ def api_csv_analyze() -> Response:
 @roles_required("Admin")
 def api_xls_sheet() -> Response:
     """API endpoint to get sheets from an excel file."""
-    filename = request.json.get("file").get("filename")
+    file_obj = request.json.get("file")
+    if not isinstance(file_obj, dict):
+        return HTTPResponse.error("Missing or malformed `file` field", status=417)
+    filename = file_obj.get("filename")
+    if not isinstance(filename, str) or not filename:
+        return HTTPResponse.error("Missing `file.filename`", status=417)
     filepath = _resolve_import_path(filename)
     if filepath is None:
         logger.warning("Rejected XLS sheets for invalid path: %r", filename)
@@ -310,7 +323,12 @@ def api_xls_sheet() -> Response:
 def api_xls_analyze() -> Response:
     """API endpoint to analyze an excel file."""
     # locate file
-    filename = request.json.get("file").get("filename")
+    file_obj = request.json.get("file")
+    if not isinstance(file_obj, dict):
+        return HTTPResponse.error("Missing or malformed `file` field", status=417)
+    filename = file_obj.get("filename")
+    if not isinstance(filename, str) or not filename:
+        return HTTPResponse.error("Missing `file.filename`", status=417)
     filepath = _resolve_import_path(filename)
     if filepath is None:
         logger.warning("Rejected XLS analyze for invalid path: %r", filename)
@@ -384,6 +402,8 @@ def api_mapping_update(id: t.id) -> Response:
     map = db.session.get(Mapping, id)
     if map:
         data = request.json.get("data")
+        if not isinstance(data, dict):
+            return HTTPResponse.error("Update request missing parameters data", status=417)
         m = data.get("map", None)
         name = request.json.get("name", None)
         if m and name:
