@@ -324,6 +324,7 @@ def api_medias_upload() -> Response:
 
 # return signed url from s3 valid for some time
 @admin.route("/api/media/<filename>")
+@_require_media_access
 def serve_media(
     filename: str,
 ) -> Response:
@@ -411,6 +412,7 @@ def serve_media(
 
 
 @admin.route("/api/serve/media/<filename>")
+@_require_media_access
 def api_local_serve_media(
     filename: str,
 ) -> Response:
@@ -458,6 +460,7 @@ def api_local_serve_media(
 
 @admin.route("/api/media/<int:id>/proxy")
 @auth_required()
+@_require_media_access
 def api_media_proxy(id: int) -> Response:
     """Proxy media file through Flask -- ensures same-origin inline display for PDFs."""
     media = Media.query.get(id)
@@ -540,6 +543,7 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 @admin.get("/api/media/<int:id>")
 @auth_required("session")
+@_require_media_access
 def api_media_get(id: int):
     """Get a single media item by ID with extraction and bulletin info."""
     media = Media.query.get(id)
@@ -742,6 +746,7 @@ def api_ocr_stats():
 
 @admin.get("/api/extraction/<int:extraction_id>")
 @auth_required("session")
+@_require_media_access
 def api_extraction_get(extraction_id: int):
     """Return full extraction data including text."""
     extraction = Extraction.query.get(extraction_id)
