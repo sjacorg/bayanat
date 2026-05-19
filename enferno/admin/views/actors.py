@@ -404,6 +404,7 @@ def api_actor_bulk_update(
     if not current_user.has_role("Admin"):
         # silently discard access roles
         bulk.pop("roles", None)
+        bulk.pop("rolesReplace", None)
 
     if ids and len(bulk):
         job = bulk_update_actors.delay(ids, bulk, current_user.id)
