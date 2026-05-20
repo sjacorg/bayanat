@@ -134,6 +134,43 @@ class BaseMixin(object):
         data.update(self.get_dynamic_fields())
         return data
 
+    @staticmethod
+    def sync_relations(submitted, model, key, relate, existing, other_id):
+        """
+        Reconcile a set of nested relations against a submitted payload, enforcing
+        per-target access control. Only links to targets the current user can access
+        are created, updated, or deleted; relations to inaccessible items are left
+        untouched in both directions. Single authorization boundary for all
+        Actor/Bulletin/Incident relation paths.
+
+        Args:
+            - submitted: list of relation dicts from the request payload.
+            - model: the target ORM model class (Actor/Bulletin/Incident).
+            - key: nested dict key holding the target item ("actor"/"bulletin"/"incident").
+            - relate: bound relate_* helper used to create/update each link.
+            - existing: iterable of the entity's current relation rows.
+            - other_id: callable mapping a relation row to its target id.
+        """
+        from flask_login import current_user
+
+        seen = []
+        for relation in submitted:
+            target = db.session.get(model, relation[key]["id"])
+            if not target or not current_user.can_access(target):
+                continue
+            seen.append(target.id)
+            relate(target, relation=relation)
+
+        for r in existing:
+            rid = other_id(r)
+            if rid in seen:
+                continue
+            target = db.session.get(model, rid)
+            if not target or not current_user.can_access(target):
+                continue
+            r.delete()
+            target.create_revision()
+
 
 class ComponentDataMixin(BaseMixin):
     __abstract__ = True
