@@ -205,7 +205,7 @@ class SheetImport:
         Returns:
             - A DataFrame containing the parsed data.
         """
-        if sheet:
+        if isinstance(sheet, (str, int)):
             df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False, engine="openpyxl")
         else:
             df = pd.read_csv(filepath, keep_default_na=False)

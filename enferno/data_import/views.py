@@ -335,6 +335,8 @@ def api_xls_analyze() -> Response:
         return HTTPResponse.error("Invalid file path", status=400)
 
     sheet = request.json.get("sheet")
+    if not isinstance(sheet, (str, int)):
+        return HTTPResponse.error("Missing or invalid `sheet` value", status=417)
 
     result = SheetImport.parse_excel(filepath, sheet)
 
