@@ -710,7 +710,10 @@ class SheetImport:
             None
         """
         self.data_import.add_to_log(f"Field value mismatch {field}.\n Appending to description.")
-        self.actor_profile.description += f"</p>\n<p>{field}: {str(value)}"
+        # Sanitize untrusted field/value before the v-html sink (BAY-01-039).
+        self.actor_profile.description += (
+            f"</p>\n<p>{sanitize_string(str(field))}: {sanitize_string(str(value))}"
+        )
 
     def gen_value(self, field: str) -> None:
         """
