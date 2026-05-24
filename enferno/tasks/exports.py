@@ -14,7 +14,7 @@ from enferno.extensions import db
 from enferno.admin.models import Actor, Bulletin, Incident
 from enferno.export.models import Export
 from enferno.tasks import BULK_CHUNK_SIZE, celery, cfg, chunk_list
-from enferno.utils.csv_utils import convert_list_attributes
+from enferno.utils.csv_utils import convert_list_attributes, escape_csv_formula_cell
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
@@ -257,6 +257,8 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
                 else:
                     csv_df = pd.concat([csv_df, df], ignore_index=True)
 
+        # Neutralize spreadsheet formula injection before writing (BAY-01-024).
+        csv_df = csv_df.map(escape_csv_formula_cell)
         csv_df.to_csv(f"{file_path}.csv")
 
         export_request.file_id = dir_id
