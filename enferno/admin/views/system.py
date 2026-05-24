@@ -5,7 +5,7 @@ from typing import Any
 from flask import Response, request
 from flask.templating import render_template
 from flask_babel import gettext
-from flask_security.decorators import auth_required, current_user, roles_required
+from flask_security.decorators import current_user, roles_required
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import (
@@ -23,11 +23,11 @@ from enferno.admin.validation.models import ConfigRequestModel
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.validation_utils import validate_with
-from . import admin, PER_PAGE
+from . import admin, PER_PAGE, fresh_auth
 
 
 @admin.get("/system-administration/")
-@auth_required(within=15, grace=0)
+@fresh_auth
 @roles_required("Admin")
 def system_admin() -> str:
     """Endpoint for system administration."""
@@ -76,6 +76,7 @@ def api_config() -> str:
 
 
 @admin.put("/api/configuration/")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(ConfigRequestModel)
 def api_config_write(
@@ -107,6 +108,7 @@ def api_config_write(
 
 
 @admin.post("/api/reload/")
+@fresh_auth
 @roles_required("Admin")
 def api_app_reload() -> Response:
     """
@@ -234,7 +236,7 @@ def api_updates_available() -> Response:
 
 
 @admin.get("/snapshots/")
-@auth_required(within=15, grace=0)
+@fresh_auth
 @roles_required("Admin")
 def snapshots_page() -> str:
     """Render the snapshots list page."""

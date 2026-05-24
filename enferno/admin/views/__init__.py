@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from functools import wraps
 
-from flask import Blueprint, g, request
+from flask import Blueprint, current_app, g, request
 from flask_security.decorators import auth_required, current_user
 
 from enferno.admin.models import Activity
@@ -100,6 +100,20 @@ def has_role_assignment_permission(roles: list) -> bool:
     return True
 
 
+def fresh_auth(func):
+    """Require a freshly-authenticated session for privileged mutations.
+
+    The freshness window is taken from the operator-configured
+    SECURITY_FRESHNESS / SECURITY_FRESHNESS_GRACE_PERIOD settings rather than a
+    hardcoded value (BAY-01-016), so admins re-authenticate before sensitive
+    state changes even on an otherwise-valid but stale session.
+    """
+    return auth_required(
+        within=lambda: current_app.config["SECURITY_FRESHNESS"],
+        grace=lambda: current_app.config["SECURITY_FRESHNESS_GRACE_PERIOD"],
+    )(func)
+
+
 @admin.before_request
 @auth_required("session")
 def before_request() -> None:
@@ -119,7 +133,7 @@ def ctx() -> dict:
     Returns:
         - dict of users
     """
-    users = User.query.order_by(User.username).all()
+    users = User.query.order_by(User.username).all()  # noqa: F811
     if current_user and current_user.is_authenticated:
         users = [u.to_compact() for u in users]
         return {"users": users}
