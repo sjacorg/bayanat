@@ -139,15 +139,9 @@ def api_bulletins(validated_data: dict) -> Response:
                     "sjac_title": item.sjac_title,
                     "sjac_title_ar": item.sjac_title_ar,
                     "status": item.status,
-                    "assigned_to": (
-                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                        if item.assigned_to
-                        else None
-                    ),
+                    "assigned_to": (item.assigned_to.to_compact() if item.assigned_to else None),
                     "first_peer_reviewer": (
-                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
-                        if item.first_peer_reviewer
-                        else None
+                        item.first_peer_reviewer.to_compact() if item.first_peer_reviewer else None
                     ),
                     "roles": (
                         [
