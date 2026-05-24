@@ -233,29 +233,6 @@ def api_updates_available() -> Response:
     return HTTPResponse.success(data=payload)
 
 
-@admin.post("/api/updates/start")
-@auth_required(within=15, grace=0)
-@roles_required("Admin")
-def api_updates_start() -> Response:
-    """Launch `bayanat update` out-of-process via the sudoers-granted wrapper.
-
-    Fresh-auth required (within 15 min) to limit stale-cookie exposure: a
-    compromised admin session cannot trigger a privileged update without a
-    recent password prompt.
-    """
-    try:
-        subprocess.run(
-            ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"],
-            check=True,
-            timeout=10,
-        )
-    except subprocess.TimeoutExpired:
-        return HTTPResponse.error("Update start timed out", status=504)
-    except subprocess.CalledProcessError as e:
-        return HTTPResponse.error(f"Failed to start update: {e}", status=500)
-    return HTTPResponse.success(data={"status": "started"})
-
-
 @admin.get("/snapshots/")
 @auth_required(within=15, grace=0)
 @roles_required("Admin")

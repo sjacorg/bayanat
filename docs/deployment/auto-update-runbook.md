@@ -97,7 +97,6 @@ sudo bayanat update --recover
 | Path | Purpose |
 |---|---|
 | `/usr/local/bin/bayanat` | The CLI script |
-| `/usr/local/sbin/bayanat-start-update` | Root wrapper the UI invokes via sudo |
 | `/etc/sudoers.d/bayanat` | Granted commands for the `bayanat` user |
 | `/opt/bayanat/state/update.json` | Current update state (sanitized JSON) |
 | `/opt/bayanat/state/update.lock` | PID lock file |
@@ -106,10 +105,12 @@ sudo bayanat update --recover
 
 ## Admin UI surface
 
-- Nav-bar banner chip: shows when `latest != current`
-- Progress dialog: polls `/admin/api/updates/status` every 2 s during an
-  active update
-- Settings toggle: System Administration -> "Auto-apply patch releases"
+The UI is read-only for updates: it surfaces availability but never applies
+an update. Updates run from the CLI as root (`sudo bayanat update`).
+
+- Nav-bar banner chip: shows when `latest != current`, with the CLI command
+  to run on the server
+- Status: `/admin/api/updates/status` reflects a CLI-initiated update's state
 - Snapshots page: `/admin/snapshots/` (read-only list; restore stays on
   the CLI)
 
