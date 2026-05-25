@@ -64,6 +64,20 @@ class Export(db.Model, BaseMixin):
         else:
             return True
 
+    @staticmethod
+    def _accessible_item_ids(table: str, items: Any) -> list:
+        """Filter requested export item IDs to those the current user may access
+        (BAY-01-026). Admins keep everything; others keep only in-scope items.
+        """
+        from enferno.admin.models import Actor, Bulletin, Incident
+
+        model = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}.get(table)
+        if not model or not isinstance(items, list):
+            return []
+        rows = model.query.filter(model.id.in_(items)).all()
+        allowed = {r.id for r in rows if current_user and current_user.can_access(r)}
+        return [i for i in items if i in allowed]
+
     def from_json(self, table: str, json: dict) -> "Export":
         """
         Export Deserializer.
@@ -83,7 +97,10 @@ class Export(db.Model, BaseMixin):
 
         self.requester = current_user
         self.table = table
-        self.items = json.get("items")
+        # Store only items the requester can access (BAY-01-026): keep crafted /
+        # out-of-scope IDs from ever being persisted, approved, or exported. The
+        # worker re-validates access at generation time too (BAY-01-003).
+        self.items = self._accessible_item_ids(table, json.get("items"))
         self.tags = cfg.get("tags", [])
         self.comment = cfg.get("comment")
         self.file_format = cfg.get("format")
