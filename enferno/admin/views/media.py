@@ -512,8 +512,9 @@ def api_inline_medias_upload() -> Response:
                 f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
             )
 
-        # final file
-        filename = Media.generate_file_name(f.filename)
+        # final file: opaque, unguessable name so inline media can't be
+        # enumerated/reconstructed by other users (BAY-01-020)
+        filename = Media.generate_inline_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
         response = {"location": filename}
