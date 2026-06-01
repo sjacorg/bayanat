@@ -62,6 +62,7 @@ BULLETIN_CORE_FIELDS = [
         19,
         {"schema_config": {"allow_multiple": False}, "ui_config": {"width": "w-50"}},
     ),
+    ("public_description", "Public Description", "long_text", 20),
 ]
 
 INCIDENT_CORE_FIELDS = [
