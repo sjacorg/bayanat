@@ -36,7 +36,12 @@ def upgrade():
         SELECT
             'public_description', 'Public Description', 'bulletin', 'long_text', false,
             'textarea', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
-            '[]'::jsonb, true, 20, true
+            '[]'::jsonb, true, COALESCE((
+                SELECT sort_order + 1
+                FROM dynamic_fields
+                WHERE name = 'description' AND entity_type = 'bulletin' AND core = true
+                LIMIT 1
+            ), 6), true
         WHERE NOT EXISTS (
             SELECT 1 FROM dynamic_fields
             WHERE name = 'public_description' AND entity_type = 'bulletin' AND core = true
