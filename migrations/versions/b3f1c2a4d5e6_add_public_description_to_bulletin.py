@@ -37,7 +37,7 @@ def upgrade():
             'public_description', 'Public Description', 'bulletin', 'long_text', false,
             'textarea', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
             '[]'::jsonb, true, COALESCE((
-                SELECT sort_order + 1
+                SELECT sort_order
                 FROM dynamic_fields
                 WHERE name = 'description' AND entity_type = 'bulletin' AND core = true
                 LIMIT 1
