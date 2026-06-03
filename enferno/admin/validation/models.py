@@ -246,6 +246,7 @@ class BulletinValidationModel(StrictValidationModel):
     assigned_to: Optional[PartialUserModel] = None
     first_peer_reviewer: Optional[PartialUserModel] = None
     description: Optional[SanitizedField] = None
+    public_description: Optional[SanitizedField] = None
     comments: str = Field(min_length=1)
     source_link: str = Field(min_length=1)
     source_link_type: Optional[bool] = None
