@@ -4,6 +4,7 @@ import os
 import shutil
 from datetime import datetime, timedelta
 from functools import wraps
+from hashlib import md5
 from typing import Optional
 
 import boto3
@@ -24,13 +25,14 @@ from flask_security.decorators import current_user, roles_accepted
 from sqlalchemy import func, desc
 from werkzeug.utils import safe_join, secure_filename
 
-from enferno.admin.models import Media, Activity, Extraction
+from enferno.admin.models import Media, Activity, Extraction, MediaRedaction
 from enferno.admin.models.tables import bulletin_roles, actor_roles
 from enferno.extensions import db, rds
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, redact_pdf_bytes
 from enferno.utils.text_utils import normalize_arabic
 from enferno.utils.validation_utils import validate_with
 from enferno.admin.validation.models import MediaRequestModel
@@ -109,6 +111,61 @@ def _media_url(media_file):
         Params={"Bucket": current_app.config["S3_BUCKET"], "Key": media_file},
         ExpiresIn=S3_URL_EXPIRY,
     )
+
+
+def _read_media_bytes(media: Media) -> bytes:
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        filepath = safe_join(str(Media.media_dir), media.media_file)
+        if not filepath or not os.path.exists(filepath):
+            raise FileNotFoundError(media.media_file)
+        with open(filepath, "rb") as f:
+            return f.read()
+
+    s3 = boto3.client(
+        "s3",
+        config=BotoConfig(signature_version="s3v4"),
+        aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+        region_name=current_app.config["AWS_REGION"],
+    )
+    return s3.get_object(Bucket=current_app.config["S3_BUCKET"], Key=media.media_file)[
+        "Body"
+    ].read()
+
+
+def _write_media_bytes(filename: str, data: bytes, content_type: str) -> None:
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        filepath = safe_join(str(Media.media_dir), filename)
+        if not filepath:
+            raise ValueError("Invalid media filename")
+        with open(filepath, "wb") as f:
+            f.write(data)
+        return
+
+    s3 = boto3.resource(
+        "s3",
+        aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+        region_name=current_app.config["AWS_REGION"],
+    )
+    s3.Bucket(current_app.config["S3_BUCKET"]).put_object(
+        Key=filename,
+        Body=data,
+        ContentType=content_type,
+    )
+
+
+def _file_extension(media: Media) -> str:
+    return os.path.splitext(media.media_file)[1].lower().lstrip(".")
+
+
+def _duplicate_redacted_media(etag: str, source: Media) -> Media | None:
+    query = Media.query.filter(Media.etag == etag, Media.deleted == False)
+    if source.bulletin_id is not None:
+        query = query.filter(Media.bulletin_id == source.bulletin_id)
+    elif source.actor_id is not None:
+        query = query.filter(Media.actor_id == source.actor_id)
+    return query.first()
 
 
 # Media dashboard page route
@@ -609,6 +666,78 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
         return HTTPResponse.success(message=f"Media {id} updated")
     else:
         return HTTPResponse.error("Error updating Media", status=500)
+
+
+@admin.post("/api/media/<int:id>/redact")
+@roles_accepted("Admin", "DA")
+def api_media_redact(id: int) -> Response:
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.not_found("Media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    pages = (request.get_json(silent=True) or {}).get("pages", [])
+    ext = _file_extension(media)
+
+    try:
+        src = _read_media_bytes(media)
+        if ext == "pdf":
+            out = redact_pdf_bytes(src, pages)
+            out_ext = "pdf"
+            out_type = "application/pdf"
+        elif ext in {"jpg", "jpeg", "png"} or (media.media_file_type or "").startswith("image/"):
+            rects = [rect for page in pages for rect in page.get("rects", [])]
+            out = redact_image_bytes(src, rects)
+            out_ext = "jpg"
+            out_type = "image/jpeg"
+        else:
+            return HTTPResponse.error("This file type cannot be redacted", status=415)
+    except RedactionError as e:
+        return HTTPResponse.error(str(e), status=400)
+    except FileNotFoundError:
+        return HTTPResponse.not_found("Media file not found")
+
+    etag = md5(out).hexdigest()
+    if _duplicate_redacted_media(etag, media):
+        return HTTPResponse.error("Redacted media already exists", status=409)
+
+    filename = Media.generate_file_name(f"redacted.{out_ext}")
+    _write_media_bytes(filename, out, out_type)
+
+    redacted = Media(
+        media_file=filename,
+        media_file_type=out_type,
+        etag=etag,
+        title=f"{media.title or media.media_file} (redacted)",
+        title_ar=media.title_ar,
+        comments=media.comments,
+        comments_ar=media.comments_ar,
+        category=media.category,
+        time=media.time,
+        user_id=current_user.id,
+        bulletin_id=media.bulletin_id,
+        actor_id=media.actor_id,
+    )
+    audit = MediaRedaction(
+        source_media_id=media.id,
+        result_media=redacted,
+        regions=pages,
+        user_id=current_user.id,
+    )
+    db.session.add(redacted)
+    db.session.add(audit)
+    db.session.commit()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_CREATE,
+        Activity.STATUS_SUCCESS,
+        redacted.to_mini(),
+        "media",
+        details=f"Redacted copy created from media {media.id}",
+    )
+    return HTTPResponse.success(data=redacted.to_dict())
 
 
 # OCR Extraction endpoints

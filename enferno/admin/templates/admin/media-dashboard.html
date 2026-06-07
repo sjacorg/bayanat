@@ -48,6 +48,12 @@
 
                 <!-- Data Table -->
                 <v-card-text>
+                    <media-redactor
+                        v-model="redaction.dialog"
+                        :media="redaction.media"
+                        @redacted="onMediaRedacted"
+                    ></media-redactor>
+
                     <v-data-table-server
                             :height="tableHeight"
                             fixed-header
@@ -219,6 +225,22 @@
                         <template #item.updated_at="{ item }">
                             ${formatDate(item.updated_at)}
                         </template>
+
+                        <template #item.actions="{ item }">
+                            <v-tooltip location="top">
+                                <template v-slot:activator="{ props }">
+                                    <v-btn
+                                        v-bind="props"
+                                        icon="mdi-marker"
+                                        size="small"
+                                        variant="text"
+                                        :disabled="!canRedact(item)"
+                                        @click.stop="openRedactor(item)"
+                                    ></v-btn>
+                                </template>
+                                {{ _('Redact') }}
+                            </v-tooltip>
+                        </template>
                     </v-data-table-server>
 
                 </v-card-text>
@@ -234,6 +256,7 @@
     <script src="/static/js/components/OcrTextLayer.js"></script>
     <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/MediaRedactor.js"></script>
     <script src="/static/js/components/NativePdfViewer.js"></script>
     <script src="/static/js/components/DocxViewer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
@@ -256,6 +279,8 @@
                 drawer: drawer,
                 loading: true,
                 bulkLoading: false,
+                isCurrentUserAdmin: window.__isAdmin__ || false,
+                isCurrentUserDA: window.__isDA__ || false,
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 hasOcrProvider: Boolean('{{ config.OCR_PROVIDER }}'),
                 processingIds: new Set(), // Track media IDs being processed
@@ -271,7 +296,8 @@
                     { title: "{{_('Filename')}}", value: "filename" },
                     { title: "{{_('Bulletin')}}", value: "bulletin", sortable: false },
                     { title: "{{_('OCR Status')}}", value: "ocr_status" },
-                    { title: "{{_('Date')}}", value: "updated_at" }
+                    { title: "{{_('Date')}}", value: "updated_at" },
+                    { title: "{{_('Actions')}}", value: "actions", sortable: false, align: "end" }
                 ],
 
                 selected: [],
@@ -289,6 +315,10 @@
                     q: '',
                     bulletin_id: null,
                     dateRange: null
+                },
+                redaction: {
+                    dialog: false,
+                    media: null
                 },
                 lowWordCount: 20
             }),
@@ -498,6 +528,24 @@
                     // Also fetch processing IDs in case this item just finished
                     this.fetchProcessingIds();
                 },
+                canRedact(item) {
+                    if (!this.isCurrentUserAdmin && !this.isCurrentUserDA) return false;
+                    const fileType = item.fileType || '';
+                    const filename = item.filename || '';
+                    return fileType.includes('pdf')
+                        || fileType.includes('image')
+                        || /\.(pdf|jpe?g|png)$/i.test(filename);
+                },
+                openRedactor(item) {
+                    if (!this.canRedact(item)) return;
+                    this.redaction.media = item;
+                    this.redaction.dialog = true;
+                },
+                onMediaRedacted() {
+                    this.showSnack("{{ _('Redacted copy created') }}");
+                    this.refresh(this.options);
+                    this.loadOCRStats();
+                },
                 loadOCRStats() {
                     api.get('/admin/api/ocr/stats').then(res => {
                         this.ocrStats = res?.data;
@@ -538,6 +586,7 @@
         app.component('OcrTextLayer', OcrTextLayer);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
         app.component('PdfViewer', PdfViewer);
+        app.component('MediaRedactor', MediaRedactor);
         app.component('NativePdfViewer', NativePdfViewer);
         app.component('DocxViewer', DocxViewer);
         app.component('ImageViewer', ImageViewer);
