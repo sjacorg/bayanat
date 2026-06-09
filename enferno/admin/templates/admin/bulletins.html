@@ -430,6 +430,7 @@
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/NativePdfViewer.js"></script>
     <script src="/static/js/components/DocxViewer.js"></script>
     <script src="/static/js/components/SnapshotDialog.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
@@ -674,6 +675,7 @@
                     editedIndex: -1,
                     editedItem: {
                         title: "",
+                        public_description: "",
                         events: [],
                         medias: [],
                         bulletin_relations: [],
@@ -683,6 +685,7 @@
                     defaultItem: {
                         title: "",
                         description: "",
+                        public_description: "",
 
                         // related events
                         events: [],
@@ -1793,6 +1796,7 @@
         app.component('MediaThumbnail', MediaThumbnail);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('NativePdfViewer', NativePdfViewer);
         app.component('DocxViewer', DocxViewer);
         app.component('SnapshotDialog', SnapshotDialog);
         app.component('PreviewCard', PreviewCard);
