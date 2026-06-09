@@ -130,8 +130,10 @@ def api_medias_chunk() -> Response:
     """
     file = request.files["file"]
 
-    # Check if upload is from the media import tool (Admin-only extended extensions)
-    import_upload = request.form.get("source") == "import"
+    # Check if upload is from the media import tool (Admin-only extended extensions).
+    # The source param lives in the query string because Dropzone drops `params`
+    # on chunked POSTs, so a form-body check returns None on every chunk.
+    import_upload = request.args.get("source") == "import"
     # validate file extensions based on user and source
     if import_upload:
         # uploads from media import tool
