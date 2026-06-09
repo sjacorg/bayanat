@@ -42,6 +42,15 @@ const toolbarContent = `
           </template>
           <span>{{ ocrButtonState.text }}</span>
         </v-tooltip>
+
+        <v-tooltip v-if="redactButtonState?.visible" location="bottom">
+          <template v-slot:activator="{ props }">
+            <div v-bind="props">
+              <v-btn size="small" variant="text" icon="mdi-marker" @click="expansionPanel = null; $root.openRedactor(media)" :disabled="redactButtonState.disabled"></v-btn>
+            </div>
+          </template>
+          <span>{{ redactButtonState.text }}</span>
+        </v-tooltip>
       </div>
     </div>
 
@@ -164,6 +173,17 @@ const MediaCard = Vue.defineComponent({
         text,
         visible,
         disabled
+      };
+    },
+    redactButtonState() {
+      // Only on pages that mounted the redactor, for redactable types, Admin/DA
+      if (typeof this.$root?.openRedactor !== 'function') return;
+      const isRedactable = this.mediaType === 'pdf' || this.mediaType === 'image';
+      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && isRedactable;
+      return {
+        text: this.translations.redact_ || 'Redact',
+        visible,
+        disabled: !this.media?.id,
       };
     }
   },

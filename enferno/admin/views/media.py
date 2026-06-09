@@ -25,7 +25,7 @@ from flask_security.decorators import current_user, roles_accepted
 from sqlalchemy import func, desc
 from werkzeug.utils import safe_join, secure_filename
 
-from enferno.admin.models import Media, Activity, Extraction, MediaRedaction
+from enferno.admin.models import Media, Activity, Extraction, MediaRedaction, MediaCategory
 from enferno.admin.models.tables import bulletin_roles, actor_roles
 from enferno.extensions import db, rds
 from enferno.utils.date_helper import DateHelper
@@ -668,6 +668,19 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
         return HTTPResponse.error("Error updating Media", status=500)
 
 
+REDACTION_CATEGORY = "Redaction"
+
+
+def _redaction_category_id() -> int:
+    """Resolve (creating once if missing) the category that tags redacted copies."""
+    category = MediaCategory.find_by_title(REDACTION_CATEGORY)
+    if category is None:
+        category = MediaCategory(title=REDACTION_CATEGORY)
+        db.session.add(category)
+        db.session.flush()
+    return category.id
+
+
 @admin.post("/api/media/<int:id>/redact")
 @roles_accepted("Admin", "DA")
 def api_media_redact(id: int) -> Response:
@@ -677,7 +690,9 @@ def api_media_redact(id: int) -> Response:
     if not current_user.can_access(media):
         return HTTPResponse.forbidden("Restricted Access")
 
-    pages = (request.get_json(silent=True) or {}).get("pages", [])
+    payload = request.get_json(silent=True) or {}
+    pages = payload.get("pages", [])
+    title = (payload.get("title") or "").strip()
     ext = _file_extension(media)
 
     try:
@@ -709,11 +724,11 @@ def api_media_redact(id: int) -> Response:
         media_file=filename,
         media_file_type=out_type,
         etag=etag,
-        title=f"{media.title or media.media_file} (redacted)",
+        title=title or f"{media.title or media.media_file} (redacted)",
         title_ar=media.title_ar,
         comments=media.comments,
         comments_ar=media.comments_ar,
-        category=media.category,
+        category=_redaction_category_id(),
         time=media.time,
         user_id=current_user.id,
         bulletin_id=media.bulletin_id,
@@ -808,8 +823,6 @@ def api_media_dashboard():
 def _media_dashboard_item(media):
     """Serialize a media item for the dashboard. Bypasses @check_roles since
     access is already enforced at the query level."""
-    from enferno.admin.models import MediaCategory
-
     media_category = MediaCategory.query.get(media.category) if media.category else None
     item = {
         "id": media.id,

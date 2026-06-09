@@ -10,6 +10,7 @@ const MediaRedactor = Vue.defineComponent({
       loading: false,
       saving: false,
       error: null,
+      label: '',
       pages: [],
       boxes: {},
       draft: null,
@@ -65,6 +66,7 @@ const MediaRedactor = Vue.defineComponent({
       this.loading = false;
       this.saving = false;
       this.error = null;
+      this.label = '';
       this.pages = [];
       this.boxes = {};
       this.draft = null;
@@ -181,7 +183,7 @@ const MediaRedactor = Vue.defineComponent({
         .filter(([, rects]) => rects.length)
         .map(([page, rects]) => ({ page: Number(page), rects }));
       try {
-        const response = await api.post(`/admin/api/media/${this.media.id}/redact`, { pages });
+        const response = await api.post(`/admin/api/media/${this.media.id}/redact`, { pages, title: this.label.trim() });
         this.$emit('redacted', response.data.data);
         this.show = false;
       } catch (e) {
@@ -199,6 +201,15 @@ const MediaRedactor = Vue.defineComponent({
           <v-btn icon="mdi-close" variant="text" @click="show = false"></v-btn>
           <v-toolbar-title>{{ media?.title || media?.filename || 'Redact document' }}</v-toolbar-title>
           <v-spacer></v-spacer>
+          <v-text-field
+            v-model="label"
+            density="compact"
+            variant="outlined"
+            hide-details
+            placeholder="Label this copy (e.g. detainee name)"
+            style="max-width: 320px;"
+            class="mr-3"
+          ></v-text-field>
           <v-btn
             color="primary"
             variant="flat"

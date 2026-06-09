@@ -7,14 +7,29 @@ const MediaGrid = Vue.defineComponent({
     miniMode: Boolean,
   },
   emits: ['remove-media', 'media-click'],
+  data() {
+    return { showRedactions: false };
+  },
   computed: {
-    sortedMedia() {
-      if (this.prioritizeVideos) return this.sortMediaByFileType(this.medias);
-
-      return this.medias;
-    }
+    primaryMedia() {
+      const list = this.prioritizeVideos ? this.sortMediaByFileType(this.medias) : (this.medias || []);
+      return list.filter(media => !this.isRedaction(media));
+    },
+    redactionMedia() {
+      return (this.medias || []).filter(media => this.isRedaction(media));
+    },
+    visibleMedia() {
+      return this.showRedactions ? [...this.primaryMedia, ...this.redactionMedia] : this.primaryMedia;
+    },
   },
   methods: {
+    isRedaction(media) {
+      return media?.category?.title === 'Redaction';
+    },
+    mediaIndex(media) {
+      // Index into the unfiltered list so deletion stays correct regardless of sort/filter
+      return this.medias.indexOf(media);
+    },
     sortMediaByFileType(mediaList) {
       if (!mediaList) return [];
       // Sort media list by fileType (video first)
@@ -31,17 +46,25 @@ const MediaGrid = Vue.defineComponent({
       <div>
         <v-sheet :class="horizontal ? 'd-flex ga-2 flex-row overflow-x-auto' : 'media-grid'">
           <media-card
-            v-for="(media,index) in sortedMedia" :key="media.id || media.uuid"
+            v-for="media in visibleMedia" :key="media.id || media.uuid"
             @media-click="$emit('media-click', $event)"
             :media="media"
             :mini-mode="miniMode"
             class="flex-shrink-0"
           >
             <template #actions v-if="enableDelete">
-              <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
+              <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', mediaIndex(media))"  color="red"></v-btn>
             </template>
           </media-card>
         </v-sheet>
+        <v-btn
+          v-if="redactionMedia.length"
+          variant="text" size="small" class="mt-1"
+          :prepend-icon="showRedactions ? 'mdi-eye-off-outline' : 'mdi-marker'"
+          @click="showRedactions = !showRedactions"
+        >
+          {{ showRedactions ? 'Hide' : 'Show' }} {{ redactionMedia.length }} redaction{{ redactionMedia.length > 1 ? 's' : '' }}
+        </v-btn>
       </div>
   `,
 });
