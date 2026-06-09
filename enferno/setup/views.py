@@ -4,7 +4,6 @@ from flask import (
     request,
     redirect,
     Blueprint,
-    send_from_directory,
     render_template,
     Response,
     current_app,
@@ -49,6 +48,7 @@ def handle_installation_check() -> Optional[Response]:
         "/api/complete-setup",
         "/admin/api/reload",
         "/fs-static",
+        "/health",
     ]
     login_flow_paths = [
         "/login",
@@ -101,7 +101,7 @@ def create_admin() -> Any:
             message="Admin user installed successfully",
             data={"item": new_admin.to_dict()},
         )
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return HTTPResponse.error("Failed to create admin user", status=500)
 
@@ -123,7 +123,7 @@ def import_data() -> Response:
     try:
         import_default_data()
         return HTTPResponse.success(message="Default data imported successfully")
-    except Exception as e:
+    except Exception:
         return HTTPResponse.error("Failed to import default data", status=500)
 
 

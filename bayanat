@@ -85,6 +85,469 @@ swap_symlink() {
     mv -Tf "$CURRENT_LINK.tmp" "$CURRENT_LINK"
 }
 
+# --- Snapshot helpers ---
+
+SNAPSHOT_RETENTION_DAYS="${BAYANAT_SNAPSHOT_RETENTION_DAYS:-30}"
+readonly SNAPSHOT_RETENTION_COUNT=5
+
+_pg_load() {
+    # Loads POSTGRES_* from shared/.env into the current shell env WITHOUT
+    # eval. Must be invoked inside a subshell so the exports do not leak.
+    #
+    # Why no eval: a malicious .env value (writable by the bayanat user)
+    # could smuggle shell commands that would run as root under `bayanat
+    # update`. `export "$key=$val"` treats $val as a literal string, no
+    # interpretation.
+    local env_file="$SHARED_DIR/.env"
+    [[ -f "$env_file" ]] || die "missing $env_file"
+    local key val
+    while IFS='=' read -r key val; do
+        case "$key" in
+            POSTGRES_HOST|POSTGRES_PORT|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB)
+                # Strip matching surrounding quotes (common .env convention).
+                if [[ ${#val} -ge 2 ]]; then
+                    if [[ "${val:0:1}" == '"' && "${val: -1}" == '"' ]] \
+                        || [[ "${val:0:1}" == "'" && "${val: -1}" == "'" ]]; then
+                        val="${val:1:${#val}-2}"
+                    fi
+                fi
+                export "$key=$val"
+                ;;
+        esac
+    done < "$env_file"
+}
+
+snapshot_pg_dump() {
+    # $1 = previous tag, $2 = target tag
+    # Writes shared/backups/pre-<prev>-to-<target>-<ts>.dump via .partial rename.
+    # Mirrors enferno/utils/backup_utils.py:pg_dump logic: localhost + no
+    # password -> socket peer auth; else TCP with PGPASSWORD.
+    local prev="$1" target="$2"
+    local ts name partial final
+    ts=$(date -u +%Y%m%d-%H%M)
+    name="pre-${prev}-to-${target}-${ts}.dump"
+    partial="$SHARED_DIR/backups/${name}.partial"
+    final="$SHARED_DIR/backups/${name}"
+    # Log goes to stderr so `$(snapshot_pg_dump ...)` captures only the
+    # basename from the trailing `echo "$name"`.
+    log "Taking pre-update snapshot: $name" >&2
+    (
+        _pg_load
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" pg_dump -Fc -f "$partial" "$db"
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                pg_dump -Fc \
+                    -h "$host" \
+                    -p "${POSTGRES_PORT:-5432}" \
+                    -U "$user" \
+                    -f "$partial" \
+                    "$db"
+        fi
+    )
+    mv -Tf "$partial" "$final"
+    echo "$name"
+}
+
+prune_snapshots() {
+    # Keep last $SNAPSHOT_RETENTION_COUNT snapshots OR last
+    # $SNAPSHOT_RETENTION_DAYS days, whichever is greater.
+    local backups="$SHARED_DIR/backups"
+    [[ -d "$backups" ]] || return 0
+    # Sweep any leaked .partial snapshot files from interrupted dumps
+    rm -f "$backups"/*.dump.partial 2>/dev/null || true
+    local cutoff_epoch
+    cutoff_epoch=$(date -d "-${SNAPSHOT_RETENTION_DAYS} days" +%s 2>/dev/null \
+        || date -v-"${SNAPSHOT_RETENTION_DAYS}"d +%s)
+    local idx=0 name path mtime
+    while IFS= read -r path; do
+        idx=$((idx + 1))
+        name=$(basename "$path")
+        mtime=$(stat -c %Y "$path" 2>/dev/null || stat -f %m "$path")
+        if [[ "$idx" -le "$SNAPSHOT_RETENTION_COUNT" ]]; then
+            continue
+        fi
+        if [[ "$mtime" -lt "$cutoff_epoch" ]]; then
+            log "Pruning snapshot: $name"
+            rm -f "$path"
+        fi
+    done < <(ls -1t "$backups"/pre-*.dump 2>/dev/null || true)
+}
+
+list_snapshots() {
+    local backups="$SHARED_DIR/backups"
+    [[ -d "$backups" ]] || { echo "No snapshots directory."; return; }
+    printf '%-60s %10s %20s\n' "NAME" "SIZE" "AGE"
+    local name size mtime age
+    while IFS= read -r path; do
+        name=$(basename "$path")
+        size=$(du -h "$path" | cut -f1)
+        mtime=$(stat -c %Y "$path" 2>/dev/null || stat -f %m "$path")
+        age="$(( ($(date +%s) - mtime) / 3600 ))h"
+        printf '%-60s %10s %20s\n' "$name" "$size" "$age"
+    done < <(ls -1t "$backups"/pre-*.dump 2>/dev/null || true)
+}
+
+restore_pg() {
+    # $1 = snapshot basename (no path). Stops services, restores, starts services.
+    local name="$1"
+    local path="$SHARED_DIR/backups/$name"
+    [[ -f "$path" ]] || die "snapshot not found: $path"
+    log "Restoring $name (this will DROP and RECREATE tables)"
+    read -r -p "Type 'yes' to confirm: " reply
+    [[ "$reply" == "yes" ]] || die "aborted"
+    systemctl stop bayanat bayanat-celery
+    if ! (
+        _pg_load
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" pg_restore --clean --if-exists -d "$db" "$path"
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                pg_restore --clean --if-exists \
+                    -h "$host" \
+                    -p "${POSTGRES_PORT:-5432}" \
+                    -U "$user" \
+                    -d "$db" \
+                    "$path"
+        fi
+    ); then
+        systemctl start bayanat bayanat-celery
+        die "pg_restore failed; services restarted on existing DB"
+    fi
+    systemctl start bayanat bayanat-celery
+    log "Restore complete"
+}
+
+# --- Update state + lock ---
+
+readonly STATE_DIR="$BAYANAT_ROOT/state"
+readonly STATE_FILE="$STATE_DIR/update.json"
+readonly LOCK_FILE="$STATE_DIR/update.lock"
+
+_now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+
+write_state() {
+    # write_state <phase> <phase_label>
+    # Reads STATE_TARGET / STATE_PREVIOUS / STATE_SNAPSHOT /
+    # STATE_STARTED_AT / STATE_PROGRESS / STATE_ERROR_JSON from environment.
+    local phase="$1" label="$2"
+    mkdir -p "$STATE_DIR"
+    chown "$APP_USER:$APP_USER" "$STATE_DIR" 2>/dev/null || true
+    local tmp="$STATE_FILE.tmp"
+    cat > "$tmp" <<EOF
+{
+  "phase": "$phase",
+  "phase_label": "$label",
+  "target": "${STATE_TARGET:-}",
+  "previous": "${STATE_PREVIOUS:-}",
+  "snapshot": "${STATE_SNAPSHOT:-}",
+  "started_at": "${STATE_STARTED_AT:-$(_now_iso)}",
+  "updated_at": "$(_now_iso)",
+  "progress_text": "${STATE_PROGRESS:-}",
+  "error": ${STATE_ERROR_JSON:-null},
+  "pid": $$,
+  "unit": "${BAYANAT_UPDATE_UNIT:-bayanat-update.service}"
+}
+EOF
+    mv -Tf "$tmp" "$STATE_FILE"
+    chown "$APP_USER:$APP_USER" "$STATE_FILE" 2>/dev/null || true
+}
+
+clear_state() {
+    rm -f "$STATE_FILE"
+}
+
+read_phase() {
+    [[ -f "$STATE_FILE" ]] || { echo IDLE; return; }
+    python3 -c "import json,sys; print(json.load(open('$STATE_FILE')).get('phase','IDLE'))" \
+        2>/dev/null || echo IDLE
+}
+
+read_field() {
+    # $1 = field name
+    [[ -f "$STATE_FILE" ]] || return 1
+    python3 -c "import json,sys; print(json.load(open('$STATE_FILE')).get('$1',''))" 2>/dev/null
+}
+
+acquire_lock() {
+    mkdir -p "$STATE_DIR"
+    if [[ -f "$LOCK_FILE" ]]; then
+        local pid
+        pid=$(cat "$LOCK_FILE" 2>/dev/null || echo 0)
+        if [[ "$pid" -gt 0 ]] && kill -0 "$pid" 2>/dev/null; then
+            die "another update is running (pid $pid)"
+        fi
+        log "Removing stale lock (pid $pid)"
+        rm -f "$LOCK_FILE"
+    fi
+    echo $$ > "$LOCK_FILE"
+    chown "$APP_USER:$APP_USER" "$LOCK_FILE" 2>/dev/null || true
+}
+
+release_lock() {
+    rm -f "$LOCK_FILE"
+}
+
+# --- Recovery dispatch ---
+
+recover_state() {
+    local phase
+    phase=$(read_phase)
+    case "$phase" in
+        IDLE)
+            return 0
+            ;;
+        PREPARE_DONE)
+            log "Recovery: PREPARE_DONE — cleaning partial release and clearing state"
+            local target
+            target=$(read_field target || true)
+            if [[ -n "$target" ]]; then
+                rm -rf "$RELEASES_DIR/$target.partial" "$RELEASES_DIR/$target"
+            fi
+            clear_state
+            release_lock
+            ;;
+        MIGRATE_DONE)
+            log "Recovery: MIGRATE_DONE — starting services on previous release"
+            systemctl start bayanat bayanat-celery
+            if _wait_healthy 60; then
+                log "Recovery OK; operator should re-run update to finish"
+                clear_state
+                release_lock
+            else
+                STATE_ERROR_JSON='"MIGRATE_DONE recovery: previous release unhealthy"'
+                write_state NEEDS_INTERVENTION "Services unhealthy after recovery; restore snapshot manually"
+                exit 2
+            fi
+            ;;
+        SWITCH_DONE)
+            log "Recovery: SWITCH_DONE — running code rollback"
+            rollback_code
+            ;;
+        SUCCESS|ROLLED_BACK)
+            clear_state
+            release_lock
+            ;;
+        NEEDS_INTERVENTION)
+            local snap prev
+            snap=$(read_field snapshot || true)
+            prev=$(read_field previous || true)
+            die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: sudo -u $APP_USER bayanat snapshots"
+            ;;
+        MIGRATE|SWITCH|ROLLBACK)
+            log "Recovery: $phase — attempting to restart services"
+            systemctl start bayanat bayanat-celery 2>/dev/null || true
+            if _wait_healthy 60; then
+                warn "Services healthy but update was interrupted mid-$phase"
+                warn "DB schema state is uncertain; re-run 'bayanat update' to finish"
+                clear_state
+                release_lock
+            else
+                export STATE_ERROR_JSON="\"interrupted during $phase; services unhealthy\""
+                write_state NEEDS_INTERVENTION "Update interrupted mid-$phase; manual recovery required"
+                exit 2
+            fi
+            ;;
+        *)
+            warn "Unknown phase '$phase' — clearing and starting fresh"
+            clear_state
+            release_lock
+            ;;
+    esac
+}
+
+# --- Health probe ---
+
+_socket_health() {
+    # curl the Flask /health over the unix socket. Returns 0 on HTTP 200.
+    curl -s --unix-socket "$CURRENT_LINK/bayanat.sock" \
+        --max-time 3 -o /dev/null -w '%{http_code}' \
+        http://localhost/health 2>/dev/null | grep -q '^200$'
+}
+
+_db_ping() {
+    (
+        _pg_load
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" psql -d "$db" -c 'SELECT 1' -t >/dev/null 2>&1
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                psql -h "$host" -U "$user" -d "$db" \
+                     -c 'SELECT 1' -t >/dev/null 2>&1
+        fi
+    )
+}
+
+_redis_ping() {
+    redis-cli ping 2>/dev/null | grep -q '^PONG$'
+}
+
+_wait_healthy() {
+    # $1 = deadline in seconds (default 60)
+    local deadline=$(( $(date +%s) + ${1:-60} ))
+    while (( $(date +%s) < deadline )); do
+        if _socket_health && _db_ping && _redis_ping; then
+            return 0
+        fi
+        sleep 1
+    done
+    return 1
+}
+
+# --- Update pipeline ---
+
+update_preflight() {
+    preflight_checks
+    _verify_service_health
+    command -v pg_dump >/dev/null || die "pg_dump not in PATH"
+    command -v pg_restore >/dev/null || die "pg_restore not in PATH"
+    # pg_dump major version must match Postgres server major version
+    local client_major server_major
+    client_major=$(pg_dump --version | awk '{print $3}' | cut -d. -f1)
+    server_major=$(
+        _pg_load
+        local user="${POSTGRES_USER:-$APP_USER}"
+        local db="${POSTGRES_DB:-$APP_USER}"
+        local host="${POSTGRES_HOST:-localhost}"
+        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+            sudo -u "$user" psql -d "$db" \
+                -c 'SHOW server_version_num' -t 2>/dev/null
+        else
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" \
+                psql -h "$host" -U "$user" -d "$db" \
+                     -c 'SHOW server_version_num' -t 2>/dev/null
+        fi | tr -d ' ' | cut -c1-2
+    )
+    [[ -n "$client_major" && -n "$server_major" ]] \
+        || die "could not determine pg_dump/server versions"
+    [[ "$client_major" == "$server_major" ]] \
+        || die "pg_dump major ($client_major) != server major ($server_major)"
+    # Disk in backups (need >= 2 GB for snapshot headroom)
+    local backups_free_kb
+    backups_free_kb=$(df --output=avail "$SHARED_DIR/backups" | tail -1 | tr -d ' ')
+    [[ "$backups_free_kb" -ge 2097152 ]] \
+        || die "need >= 2GB free in $SHARED_DIR/backups for snapshot"
+    # Schema aligned with models
+    flask_run "$(current_version)" check-db-alignment >/dev/null \
+        || die "schema drift detected; run 'flask check-db-alignment' for details"
+    # Flask doctor
+    flask_run "$(current_version)" doctor >/dev/null \
+        || die "flask doctor failed"
+}
+
+do_prepare() {
+    # $1 = target tag
+    local target="$1"
+    local current
+    current=$(current_version || echo 0)
+    [[ "$target" != "$current" ]] || die "already on $target"
+    log "PREPARE: fetching $target"
+    update_preflight
+    _clone_release "$target"
+    _install_deps "$target"
+    _link_shared "$target"
+    acquire_lock
+    export STATE_TARGET="$target"
+    export STATE_PREVIOUS="$current"
+    export STATE_STARTED_AT
+    STATE_STARTED_AT="$(_now_iso)"
+    export STATE_PROGRESS="Fetched $target, ready to migrate"
+    write_state PREPARE_DONE "Prepared $target, ready to migrate"
+}
+
+do_migrate() {
+    local target="$STATE_TARGET"
+    local prev="$STATE_PREVIOUS"
+    log "MIGRATE: stopping services"
+    export STATE_PROGRESS="Stopping services"
+    write_state MIGRATE "Stopping services for maintenance window"
+    systemctl stop bayanat bayanat-celery
+    log "MIGRATE: pruning old snapshots"
+    prune_snapshots
+    export STATE_PROGRESS="Taking pre-update snapshot"
+    write_state MIGRATE "Taking pre-update snapshot"
+    export STATE_SNAPSHOT
+    if ! STATE_SNAPSHOT=$(snapshot_pg_dump "$prev" "$target"); then
+        export STATE_ERROR_JSON='"snapshot failed"'
+        write_state NEEDS_INTERVENTION "Pre-update snapshot failed; check backups disk and pg_dump"
+        systemctl start bayanat bayanat-celery || true
+        release_lock
+        exit 2
+    fi
+    log "MIGRATE: running migrations"
+    export STATE_PROGRESS="Running migrations"
+    write_state MIGRATE "Running migrations"
+    if ! flask_run "$target" db upgrade; then
+        export STATE_ERROR_JSON='"db upgrade failed"'
+        write_state NEEDS_INTERVENTION "Migration failed; previous release remains linked"
+        systemctl start bayanat bayanat-celery || true
+        release_lock
+        exit 2
+    fi
+    export STATE_PROGRESS="Migration complete"
+    write_state MIGRATE_DONE "Migration complete, switching to new release"
+}
+
+do_switch_verify() {
+    local target="$STATE_TARGET"
+    export STATE_PROGRESS="Swapping to $target"
+    write_state SWITCH "Swapping current -> $target"
+    swap_symlink "$RELEASES_DIR/$target"
+    systemctl start bayanat bayanat-celery
+    write_state SWITCH_DONE "Verifying new release"
+    export STATE_PROGRESS="Waiting for health probe"
+    if _wait_healthy 60; then
+        # Refresh /usr/local/bin/bayanat from the now-active release so the
+        # system CLI stays in lockstep with the deployed code. Done AFTER the
+        # health probe so a bad release never overwrites a working CLI.
+        _install_self "$target"
+        export STATE_PROGRESS="Update successful"
+        write_state SUCCESS "Update to $target complete"
+        clear_state
+        release_lock
+        log "SUCCESS: running $target"
+        return 0
+    else
+        warn "Health probe failed; rolling back code"
+        rollback_code
+        return 1
+    fi
+}
+
+rollback_code() {
+    local prev="$STATE_PREVIOUS"
+    if [[ -z "$prev" ]]; then
+        export STATE_ERROR_JSON='"cannot roll back: no previous tag recorded"'
+        write_state NEEDS_INTERVENTION "Cannot roll back: no previous tag recorded"
+        exit 2
+    fi
+    write_state ROLLBACK "Reverting symlink to $prev"
+    systemctl stop bayanat bayanat-celery || true
+    swap_symlink "$RELEASES_DIR/$prev"
+    systemctl start bayanat bayanat-celery
+    if _wait_healthy 60; then
+        export STATE_PROGRESS="Rolled back to $prev"
+        write_state ROLLED_BACK "Rolled back to $prev; snapshot retained"
+        clear_state
+        release_lock
+        log "ROLLED_BACK: on $prev; snapshot: ${STATE_SNAPSHOT:-none}"
+        exit 1
+    else
+        export STATE_ERROR_JSON='"code rollback failed health probe"'
+        write_state NEEDS_INTERVENTION "Rollback to $prev unhealthy; restore snapshot ${STATE_SNAPSHOT:-} manually"
+        exit 2
+    fi
+}
+
 # --- Step functions (each is idempotent) ---
 
 _install_system_packages() {
@@ -170,7 +633,8 @@ _setup_database() {
 
 _create_directories() {
     mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/backups" \
-             "$LOGS_DIR"
+             "$LOGS_DIR" "$STATE_DIR"
+    chown -R "$APP_USER:$APP_USER" "$STATE_DIR"
 }
 
 _clone_release() {
@@ -191,6 +655,7 @@ _clone_release() {
 
     log "Cloning $tag..."
     git clone --depth 1 --branch "$tag" "$GIT_URL" "$dest"
+    chown -R "$APP_USER:$APP_USER" "$dest"
 }
 
 _generate_env() {
@@ -215,6 +680,12 @@ FORCE_HTTPS=$force_https
 
 LOG_DIR=$LOGS_DIR
 BACKUPS_LOCAL_PATH=$SHARED_DIR/backups
+
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=$APP_USER
+POSTGRES_PASSWORD=
+POSTGRES_DB=$APP_USER
 EOF
 }
 
@@ -348,11 +819,41 @@ EOF
 
 _install_sudoers() {
     cat > /etc/sudoers.d/bayanat << 'EOF'
-bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat update
+bayanat ALL=(root) NOPASSWD: /usr/local/sbin/bayanat-start-update
 bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat status
+bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat snapshots
 bayanat ALL=(root) NOPASSWD: /usr/bin/systemctl restart bayanat-celery
 EOF
     chmod 440 /etc/sudoers.d/bayanat
+    visudo -cf /etc/sudoers.d/bayanat >/dev/null || die "sudoers syntax invalid"
+}
+
+_install_update_wrapper() {
+    # Root-owned wrapper. Launches `bayanat update` as a transient systemd
+    # unit so the update outlives Flask restart, SSH disconnect, and
+    # browser close. Must be in sudoers at this exact path.
+    install -m 0755 -o root -g root /dev/stdin /usr/local/sbin/bayanat-start-update <<'EOF'
+#!/bin/bash
+# Installed root:root 0755 by `bayanat install`. Do not edit.
+set -euo pipefail
+exec /usr/bin/systemd-run \
+    --unit=bayanat-update \
+    --collect \
+    --property=Restart=no \
+    /usr/local/bin/bayanat update
+EOF
+}
+
+_install_self() {
+    # Copy the bayanat CLI from the given release directory to
+    # /usr/local/bin/bayanat. Source is $RELEASES_DIR/$tag/bayanat, NOT $0 —
+    # under `curl ... | sudo bash -s install`, $0 is "bash" and readlink
+    # resolves to the shell binary. $1 = tag.
+    local tag="${1:?_install_self requires a tag arg}"
+    local src="$RELEASES_DIR/$tag/bayanat"
+    [[ -f "$src" ]] || die "cannot find CLI source at $src"
+    install -m 0755 -o root -g root "$src" /usr/local/bin/bayanat
+    log "Installed CLI at /usr/local/bin/bayanat"
 }
 
 # --- Install ---
@@ -404,6 +905,8 @@ cmd_install() {
     _install_systemd
     _configure_caddy "$domain"
     _install_sudoers
+    _install_update_wrapper
+    _install_self "$tag"
 
     chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
     systemctl daemon-reload
@@ -448,6 +951,44 @@ _verify_service_health() {
     warn "Application not responding on socket after $((retries * delay))s (may still be starting)"
 }
 
+# --- Update ---
+
+cmd_update() {
+    local flag="${1:-}"
+    case "$flag" in
+        --check)
+            local cur latest
+            cur=$(current_version || echo "not installed")
+            latest=$(latest_remote_tag)
+            echo "current: $cur"
+            echo "latest:  $latest"
+            if [[ "${cur#v}" == "${latest#v}" ]]; then
+                echo "up to date"
+            else
+                echo "update available"
+            fi
+            return 0
+            ;;
+        --recover)
+            require_root
+            recover_state
+            return 0
+            ;;
+    esac
+    require_root
+    recover_state
+    local target="${1:-}"
+    if [[ -z "$target" ]]; then
+        target=$(latest_remote_tag)
+    fi
+    # Keep $target verbatim. Tags and release dir names use the v-prefix form
+    # (e.g. v4.0.0), matching the installer's convention in _clone_release and
+    # _link_shared. Stripping is only for display / comparison.
+    do_prepare "$target"
+    do_migrate
+    do_switch_verify
+}
+
 # --- Status ---
 
 cmd_status() {
@@ -474,6 +1015,17 @@ cmd_status() {
     for svc in bayanat bayanat-celery caddy; do
         printf "  %-20s %s\n" "$svc" "$(systemctl is-active "$svc" 2>/dev/null || echo 'unknown')"
     done
+
+    echo ""
+    local phase
+    phase=$(read_phase)
+    echo "Update state: $phase"
+    if [[ "$phase" != "IDLE" ]]; then
+        echo "  target:     $(read_field target || echo '')"
+        echo "  previous:   $(read_field previous || echo '')"
+        echo "  snapshot:   $(read_field snapshot || echo '')"
+        echo "  updated_at: $(read_field updated_at || echo '')"
+    fi
 }
 
 # --- Usage ---
@@ -486,18 +1038,27 @@ Usage: bayanat <command> [options]
 
 Commands:
   install [domain]    Install Bayanat (default: localhost)
-  status              Show version and service status
+  update [<tag>]      Update Bayanat to <tag> (default: latest release)
+  update --check      Show current vs latest; no changes
+  update --recover    Recover from a stuck update state file
+  snapshots           List pre-update snapshots
+  restore <name>      Restore a pre-update snapshot (prompts confirmation)
+  status              Show version, services, and update state
 
 Environment:
-  BAYANAT_REPO        GitHub repo (default: sjacorg/bayanat)
+  BAYANAT_REPO                        GitHub repo (default: sjacorg/bayanat)
+  BAYANAT_SNAPSHOT_RETENTION_DAYS     Snapshot retention floor (default: 30)
 EOF
 }
 
 # --- Main ---
 
 case "${1:-}" in
-    install) shift; cmd_install "$@" ;;
-    status)  cmd_status ;;
+    install)    shift; cmd_install "$@" ;;
+    update)     shift; cmd_update "$@" ;;
+    snapshots)  require_root; list_snapshots ;;
+    restore)    require_root; [[ -n "${2:-}" ]] || die "usage: bayanat restore <snapshot-name>"; restore_pg "$2" ;;
+    status)     cmd_status ;;
     -h|--help|help) usage ;;
     *) usage; exit 1 ;;
 esac

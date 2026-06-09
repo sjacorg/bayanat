@@ -126,6 +126,10 @@ class Config(object):
     DISABLE_MULTIPLE_SESSIONS = manager.get_config("DISABLE_MULTIPLE_SESSIONS")
     SESSION_RETENTION_PERIOD = manager.get_config("SESSION_RETENTION_PERIOD")
 
+    # Auto-apply patch releases (e.g. 4.1.0 -> 4.1.1) in the background.
+    # Minor and major bumps always require manual approval regardless.
+    AUTO_APPLY_PATCH_UPDATES = manager.get_config("AUTO_APPLY_PATCH_UPDATES")
+
     # Recaptcha
     RECAPTCHA_ENABLED = manager.get_config("RECAPTCHA_ENABLED")
     RECAPTCHA_PUBLIC_KEY = manager.get_config("RECAPTCHA_PUBLIC_KEY")
@@ -606,6 +610,9 @@ class TestConfig:
 
     # Notifications
     NOTIFICATIONS = NOTIFICATIONS_DEFAULT_CONFIG
+
+    # Auto-update
+    AUTO_APPLY_PATCH_UPDATES = False
 
     # Dependencies (from dep_utils)
     HAS_WHISPER = dep_utils.has_whisper  # Use actual dependency detection

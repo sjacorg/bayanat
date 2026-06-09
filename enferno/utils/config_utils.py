@@ -166,6 +166,7 @@ class ConfigManager:
                 "twitter.com",
             ],
             "YTDLP_COOKIES": "",
+            "AUTO_APPLY_PATCH_UPDATES": False,
             "NOTIFICATIONS": NOTIFICATIONS_DEFAULT_CONFIG,  # Import from notification_config.py
         }
     )
@@ -240,6 +241,7 @@ class ConfigManager:
             "YTDLP_PROXY": "Proxy URL to use with Web Import",
             "YTDLP_ALLOWED_DOMAINS": "Allowed Domains for Web Import",
             "YTDLP_COOKIES": "Cookies to use with Web Import",
+            "AUTO_APPLY_PATCH_UPDATES": "Auto-apply patch releases",
             "NOTIFICATIONS": "Notifications",
         }
     )
@@ -287,6 +289,7 @@ class ConfigManager:
             "SECURITY_ZXCVBN_MINIMUM_SCORE": cfg.SECURITY_ZXCVBN_MINIMUM_SCORE,
             "DISABLE_MULTIPLE_SESSIONS": cfg.DISABLE_MULTIPLE_SESSIONS,
             "SESSION_RETENTION_PERIOD": cfg.SESSION_RETENTION_PERIOD,
+            "AUTO_APPLY_PATCH_UPDATES": cfg.AUTO_APPLY_PATCH_UPDATES,
             "RECAPTCHA_ENABLED": cfg.RECAPTCHA_ENABLED,
             "RECAPTCHA_PUBLIC_KEY": cfg.RECAPTCHA_PUBLIC_KEY,
             "RECAPTCHA_PRIVATE_KEY": ConfigManager.MASK_STRING if cfg.RECAPTCHA_PRIVATE_KEY else "",
