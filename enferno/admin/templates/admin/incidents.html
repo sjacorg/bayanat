@@ -85,6 +85,9 @@
 
 
                                 <v-spacer></v-spacer>
+                                {% with help_url='https://docs.bayanat.org/guide/incidents.html', help_title='Incidents' %}
+                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                {% endwith %}
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn @click="editItem" color="primary" variant="elevated" class="ma-2"
                                     >{{ _('New Incident') }}</v-btn

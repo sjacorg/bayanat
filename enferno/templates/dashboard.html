@@ -8,8 +8,10 @@
 
                 <v-card-title>
                     {{ _('Welcome') }}, {{ g.user.username }}!
-
                     <v-spacer></v-spacer>
+                    {% with help_url='https://docs.bayanat.org/guide/workflow.html', help_title='Workflow' %}
+                    {% include 'admin/partials/contextual_help_fab.html' %}
+                    {% endwith %}
                     {% include "security/_messages.html" %}
                 </v-card-title>
 

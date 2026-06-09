@@ -276,6 +276,19 @@ const MediaTranscriptionDialog = Vue.defineComponent({
           <v-toolbar-title>{{ translations.transcriptionReview_ }}</v-toolbar-title>
           <v-spacer></v-spacer>
           <template #append>
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-help-circle-outline"
+                  variant="plain"
+                  href="https://docs.bayanat.org/guide/ocr.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                ></v-btn>
+              </template>
+              {{ translations.learnAbout_(translations.ocrAndTextExtraction_) }}
+            </v-tooltip>
             <v-btn icon="mdi-close" @click="closeDialog()"></v-btn>
           </template>
         </v-toolbar>

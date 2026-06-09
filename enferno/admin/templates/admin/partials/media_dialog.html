@@ -49,6 +49,9 @@
       <v-spacer></v-spacer>
 
       <template #append>
+        {% with help_url='https://docs.bayanat.org/guide/media.html', help_title='Media' %}
+        {% include 'admin/partials/contextual_help_fab.html' %}
+        {% endwith %}
         <v-btn variant="elevated" class="mx-2" :disabled="!enableAttach" @click="attachMedia"
           >{{ _('Attach Media') }}</v-btn
         >

@@ -43,6 +43,9 @@
                                                 </v-text-field>
 
                                                 <v-spacer></v-spacer>
+                                                {% with help_url='https://docs.bayanat.org/guide/locations.html', help_title='Locations' %}
+                                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                                {% endwith %}
 
                                                 <v-btn 
                                                     @click="newItem"

@@ -8,6 +8,9 @@
                 <v-toolbar-title>${formTitle} <span v-if="editedItem.id"> ${editedItem.id}</span>
                 </v-toolbar-title>
                 <template #append>
+                    {% with help_url='https://docs.bayanat.org/guide/incidents.html', help_title='Incidents' %}
+                    {% include 'admin/partials/contextual_help_fab.html' %}
+                    {% endwith %}
 
                     <v-btn variant="elevated" @click="validateForm" :disabled="saving" :loading="saving" class="mx-2"
                     >{{ _('Save Incident') }}

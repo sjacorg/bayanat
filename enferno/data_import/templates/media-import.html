@@ -97,6 +97,9 @@
                                                     </v-tooltip>
 
                                                     <v-spacer></v-spacer>
+                                                    {% with help_url='https://docs.bayanat.org/guide/data-import.html', help_title='Data Import' %}
+                                                    {% include 'admin/partials/contextual_help_fab.html' %}
+                                                    {% endwith %}
 
                                                     <v-btn size="small" class="mx-2 hidden-sm-and-down"
                                                            @click="toStepTwo"

@@ -152,6 +152,21 @@ const LocationCard = Vue.defineComponent({
             <v-btn icon="mdi-history" class="ml-1" variant="flat" size="small" :loading="hloading" @click="loadRevisions">
               
             </v-btn>
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-help-circle-outline"
+                  class="ml-1"
+                  variant="plain"
+                  size="small"
+                  href="https://docs.bayanat.org/guide/revision-history.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                ></v-btn>
+              </template>
+              {{ translations.learnAbout_(translations.revisionHistory_) }}
+            </v-tooltip>
           </h3>
           <template v-for="(revision,index) in revisions">
             <v-card  dense flat class="my-1 pa-3 d-flex align-center">

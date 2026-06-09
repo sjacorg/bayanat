@@ -310,6 +310,23 @@ const IncidentCard = Vue.defineComponent({
               <v-btn fab :loading="hloading" @click="loadRevisions" class="elevation-0 align-content-center">
                 <v-icon>mdi-history</v-icon>
               </v-btn>
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon
+                    variant="plain"
+                    size="small"
+                    class="ml-1"
+                    href="https://docs.bayanat.org/guide/revision-history.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <v-icon>mdi-help-circle-outline</v-icon>
+                  </v-btn>
+                </template>
+                {{ translations.learnAbout_(translations.revisionHistory_) }}
+              </v-tooltip>
             </h3>
 
             <template v-for="(revision,index) in revisions">
