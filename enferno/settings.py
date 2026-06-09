@@ -134,7 +134,7 @@ class Config(object):
     # Session
     SESSION_TYPE = "redis"
     SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/1")
-    PERMANENT_SESSION_LIFETIME = 3600
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("SESSION_LIFETIME", 3600))
 
     # Google 0Auth
     GOOGLE_OAUTH_ENABLED = manager.get_config("GOOGLE_OAUTH_ENABLED")
