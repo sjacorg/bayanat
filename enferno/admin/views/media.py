@@ -734,8 +734,10 @@ def api_media_redact(id: int) -> Response:
         bulletin_id=media.bulletin_id,
         actor_id=media.actor_id,
     )
+    original_id = media.redaction.original_media_id if media.redaction and media.redaction.original_media_id else media.id
     audit = MediaRedaction(
         source_media_id=media.id,
+        original_media_id=original_id,
         result_media=redacted,
         regions=pages,
         user_id=current_user.id,
