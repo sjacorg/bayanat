@@ -46,7 +46,7 @@ const MediaGrid = Vue.defineComponent({
       <div>
         <v-sheet :class="horizontal ? 'd-flex ga-2 flex-row overflow-x-auto' : 'media-grid'">
           <media-card
-            v-for="media in visibleMedia" :key="media.id || media.uuid"
+            v-for="media in primaryMedia" :key="media.id || media.uuid"
             @media-click="$emit('media-click', $event)"
             :media="media"
             :mini-mode="miniMode"
@@ -57,14 +57,37 @@ const MediaGrid = Vue.defineComponent({
             </template>
           </media-card>
         </v-sheet>
-        <v-btn
-          v-if="redactionMedia.length"
-          variant="text" size="small" class="mt-1"
-          :prepend-icon="showRedactions ? 'mdi-eye-off-outline' : 'mdi-marker'"
-          @click="showRedactions = !showRedactions"
-        >
-          {{ showRedactions ? 'Hide' : 'Show' }} {{ redactionMedia.length }} redaction{{ redactionMedia.length > 1 ? 's' : '' }}
-        </v-btn>
+
+        <template v-if="redactionMedia.length">
+          <v-btn
+            variant="text" size="small" class="mt-2"
+            :prepend-icon="showRedactions ? 'mdi-eye-off-outline' : 'mdi-marker'"
+            @click="showRedactions = !showRedactions"
+          >
+            {{ showRedactions ? 'Hide' : 'Show' }} {{ redactionMedia.length }} redacted cop{{ redactionMedia.length > 1 ? 'ies' : 'y' }}
+          </v-btn>
+
+          <template v-if="showRedactions">
+            <v-divider class="my-2">
+              <v-chip size="x-small" color="warning" variant="tonal" prepend-icon="mdi-marker">
+                Redacted copies
+              </v-chip>
+            </v-divider>
+            <v-sheet :class="horizontal ? 'd-flex ga-2 flex-row overflow-x-auto' : 'media-grid'">
+              <media-card
+                v-for="media in redactionMedia" :key="media.id || media.uuid"
+                @media-click="$emit('media-click', $event)"
+                :media="media"
+                :mini-mode="miniMode"
+                class="flex-shrink-0"
+              >
+                <template #actions v-if="enableDelete">
+                  <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', mediaIndex(media))" color="red"></v-btn>
+                </template>
+              </media-card>
+            </v-sheet>
+          </template>
+        </template>
       </div>
   `,
 });

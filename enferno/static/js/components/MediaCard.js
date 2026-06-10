@@ -49,7 +49,10 @@ const toolbarContent = `
               <v-btn size="small" variant="text" icon="mdi-marker" @click="expansionPanel = null; $root.openRedactor(media)" :disabled="redactButtonState.disabled"></v-btn>
             </div>
           </template>
-          <span>{{ redactButtonState.text }}</span>
+          <div class="d-flex flex-column align-center">
+            <span class="font-weight-bold">Redact document</span>
+            <span class="text-caption opacity-80">Draw black boxes to censor sensitive areas,<br>then save a new redacted copy</span>
+          </div>
         </v-tooltip>
       </div>
     </div>

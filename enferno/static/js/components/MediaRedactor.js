@@ -379,39 +379,55 @@ const MediaRedactor = Vue.defineComponent({
   },
 
   template: /*html*/`
-    <v-dialog v-model="show" fullscreen scrollable  persistent @keydown.esc.prevent no-click-animation>
+    <v-dialog v-model="show" fullscreen scrollable persistent @keydown.esc.prevent no-click-animation>
       <v-card>
         <v-toolbar color="dark-primary">
-          <v-toolbar-title>{{ media?.title || media?.filename || 'Redact document' }}</v-toolbar-title>
+          <v-icon icon="mdi-marker" class="ml-3 mr-2" size="20"></v-icon>
+          <v-toolbar-title class="font-weight-medium">
+            Redaction Tool
+            <span class="text-body-2 font-weight-regular opacity-70 ml-2">— {{ media?.title || media?.filename || 'document' }}</span>
+          </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-text-field
             v-model="label"
             density="comfortable"
             variant="solo"
             hide-details
-            label="Label this copy (e.g. detainee name)"
-            style="max-width: 320px;"
+            label="Copy name (e.g. detainee name)"
+            prepend-inner-icon="mdi-tag-outline"
+            style="max-width: 300px;"
             class="mx-3"
           ></v-text-field>
-          <v-btn
-            prepend-icon="mdi-marker"
-            variant="elevated"
-            :disabled="!canSubmit"
-            :loading="saving"
-            @click="submit"
-            class="mr-2"
-          >Create redacted copy</v-btn>
+          <v-tooltip location="bottom" :disabled="canSubmit">
+            <template #activator="{ props }">
+              <div v-bind="props">
+                <v-btn
+                  prepend-icon="mdi-content-save-outline"
+                  variant="elevated"
+                  :disabled="!canSubmit"
+                  :loading="saving"
+                  @click="submit"
+                  class="mr-2"
+                >Save redacted copy</v-btn>
+              </div>
+            </template>
+            <span>Draw at least one black box on the document to save</span>
+          </v-tooltip>
           <template #append>
-            <v-btn icon="mdi-close" @click="show = false"></v-btn>
+            <v-btn icon="mdi-close" variant="text" @click="show = false"></v-btn>
           </template>
         </v-toolbar>
-        <v-toolbar density="compact">
+
+        <v-toolbar density="compact" class="border-b">
+          <v-chip size="small" variant="text" prepend-icon="mdi-cursor-default-click-outline" class="ml-2 text-caption opacity-70">Click &amp; drag to draw a black box</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-arrow-all" class="text-caption opacity-70">Drag box to reposition</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-delete-outline" class="text-caption opacity-70">Click box then Delete to remove</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-hand-back-right-outline" class="text-caption opacity-70">Hold Space + drag to pan</v-chip>
           <v-spacer></v-spacer>
           <v-btn icon="mdi-minus" variant="tonal" density="compact" :disabled="zoom <= 1" @click="zoomOut"></v-btn>
           <span class="text-body-2 mx-1" style="min-width: 44px; text-align: center;">{{ Math.round(zoom * 100) }}%</span>
           <v-btn icon="mdi-plus" variant="tonal" density="compact" :disabled="zoom >= 3" @click="zoomIn"></v-btn>
-          <v-btn variant="tonal" density="compact" size="large" class="mx-1" @click="zoomFit">Fit</v-btn>
-          <v-spacer></v-spacer>
+          <v-btn variant="tonal" density="compact" size="large" class="mx-2" @click="zoomFit">Fit</v-btn>
         </v-toolbar>
 
         <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
@@ -468,8 +484,8 @@ const MediaRedactor = Vue.defineComponent({
                   top: (box.y * 100) + '%',
                   width: (box.w * 100) + '%',
                   height: (box.h * 100) + '%',
-                  padding: '9px',
-                  margin: '-9px',
+                  padding: '7px',
+                  margin: '-7px',
                   boxSizing: 'content-box',
                   pointerEvents: draft && boxIndex === visibleBoxes(page.index).length - 1 ? 'none' : 'auto',
                   zIndex: 5,
@@ -494,14 +510,14 @@ const MediaRedactor = Vue.defineComponent({
                       :key="corner"
                       class="position-absolute bg-white"
                       :style="{
-                        width: '10px', height: '10px',
-                        top: corner.includes('t') ? '-5px' : 'auto',
-                        bottom: corner.includes('b') ? '-5px' : 'auto',
-                        left: corner.includes('l') ? '-5px' : 'auto',
-                        right: corner.includes('r') ? '-5px' : 'auto',
+                        width: '7px', height: '7px',
+                        top: corner.includes('t') ? '-4px' : 'auto',
+                        bottom: corner.includes('b') ? '-4px' : 'auto',
+                        left: corner.includes('l') ? '-4px' : 'auto',
+                        right: corner.includes('r') ? '-4px' : 'auto',
                         cursor: corner === 'tl' || corner === 'br' ? 'nwse-resize' : 'nesw-resize',
-                        border: '2px solid #333',
-                        borderRadius: '2px',
+                        border: '1.5px solid #333',
+                        borderRadius: '1px',
                         zIndex: 20,
                       }"
                       @mousedown.prevent.stop="startResize(page.index, boxIndex, corner, $event)"
