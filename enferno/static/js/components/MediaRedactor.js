@@ -9,6 +9,7 @@ const MediaRedactor = Vue.defineComponent({
 
   data() {
     return {
+      REDACTOR_MAX_ZOOM,
       loading: false,
       saving: false,
       error: null,
@@ -84,6 +85,7 @@ const MediaRedactor = Vue.defineComponent({
 
   created() {
     this._pdf = null;
+    this._loadId = 0;
     this._touchMoveHandler = (e) => this.onTouchMove(e);
     this._wheelHandler = (e) => this.onWheel(e);
     this._keydownHandler = (e) => this.onKeydown(e);
@@ -100,6 +102,7 @@ const MediaRedactor = Vue.defineComponent({
 
   methods: {
     reset() {
+      this._loadId++;
       this.loading = false;
       this.saving = false;
       this.error = null;
@@ -132,27 +135,35 @@ const MediaRedactor = Vue.defineComponent({
       this.error = 'Unsupported file type';
     },
     async loadPdf() {
+      const loadId = this._loadId;
       this.loading = true;
       try {
         await loadScript('/static/js/pdf.js/pdf.min.mjs');
         pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdf.js/pdf.worker.min.mjs';
-        const pdf = await pdfjsLib.getDocument(this.src).promise;
+        const pdf = await pdfjsLib.getDocument({ url: this.src, disableStream: true, disableRange: true }).promise;
+        if (loadId !== this._loadId) { pdf.destroy(); return; }
         this._pdf = pdf;
         const pages = [];
         for (let index = 0; index < pdf.numPages; index++) {
           const page = await pdf.getPage(index + 1);
+          if (loadId !== this._loadId) return;
           const viewport = page.getViewport({ scale: 1 });
-          pages.push({ index, width: viewport.width, height: viewport.height, rendered: false });
+          pages.push({ index, width: viewport.width, height: viewport.height });
           this.boxes[index] = [];
           await page.cleanup();
         }
+        if (loadId !== this._loadId) return;
         this.pages = pages;
+        this.loading = false;
         await this.$nextTick();
-        for (const page of pages) await this.renderPdfPage(page.index);
+        for (const page of pages) {
+          if (loadId !== this._loadId) return;
+          await this.renderPdfPage(page.index);
+        }
       } catch (e) {
+        if (loadId !== this._loadId) return;
         console.error('PDF redactor load failed:', e);
         this.error = 'Failed to load document';
-      } finally {
         this.loading = false;
       }
     },
@@ -177,7 +188,7 @@ const MediaRedactor = Vue.defineComponent({
       await pdfPage.render({ canvasContext: ctx, viewport }).promise;
       await pdfPage.cleanup();
       this.pages = this.pages.map(page =>
-        page.index === index ? { ...page, width: viewport.width, height: viewport.height, rendered: true } : page
+        page.index === index ? { ...page, width: viewport.width, height: viewport.height } : page
       );
     },
     pageRect(index) {
@@ -211,7 +222,7 @@ const MediaRedactor = Vue.defineComponent({
       const box = this.boxes[pageIndex][boxIndex];
       const anchorX = corner.includes('l') ? box.x + box.w : box.x;
       const anchorY = corner.includes('t') ? box.y + box.h : box.y;
-      this.resize = { page: pageIndex, boxIndex, corner, anchorX, anchorY };
+      this.resize = { page: pageIndex, boxIndex, anchorX, anchorY };
     },
     moveBox(index, event) {
       if (this.resize && this.resize.page === index) {
