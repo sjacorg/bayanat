@@ -25,7 +25,7 @@ class MediaRedaction(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"), index=True)
 
     source_media = db.relationship("Media", foreign_keys=[source_media_id])
-    result_media = db.relationship("Media", foreign_keys=[result_media_id])
+    result_media = db.relationship("Media", foreign_keys=[result_media_id], backref=db.backref("redaction", uselist=False))
 
     def to_dict(self) -> dict[str, Any]:
         return {

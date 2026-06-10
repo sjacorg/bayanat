@@ -102,6 +102,7 @@ class Media(db.Model, BaseMixin):
                 DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
             ),
             "extraction": self.extraction.to_compact_dict() if self.extraction else None,
+            "sourceMediaId": self.redaction.source_media_id if self.redaction else None,
         }
 
     def to_json(self) -> str:
