@@ -1,3 +1,5 @@
+const REDACTOR_MAX_ZOOM = 6;
+
 const MediaRedactor = Vue.defineComponent({
   props: {
     modelValue: { type: Boolean, default: false },
@@ -21,6 +23,7 @@ const MediaRedactor = Vue.defineComponent({
       spaceDown: false,
       panning: null,
       zoom: 1,
+      baseWidth: 0,
       pinchStartDistance: null,
       pinchStartZoom: 1,
     };
@@ -111,6 +114,7 @@ const MediaRedactor = Vue.defineComponent({
       this.spaceDown = false;
       this.panning = null;
       this.zoom = 1;
+      this.baseWidth = 0;
       this.pinchStartDistance = null;
       this.pinchStartZoom = 1;
       this._pdf?.destroy?.();
@@ -306,7 +310,7 @@ const MediaRedactor = Vue.defineComponent({
       return boxes;
     },
     zoomIn() {
-      this.zoom = Math.min(+(this.zoom + 0.25).toFixed(2), 3);
+      this.zoom = Math.min(+(this.zoom + 0.25).toFixed(2), REDACTOR_MAX_ZOOM);
     },
     zoomOut() {
       this.zoom = Math.max(+(this.zoom - 0.25).toFixed(2), 1);
@@ -329,7 +333,7 @@ const MediaRedactor = Vue.defineComponent({
       if (event.touches.length === 2 && this.pinchStartDistance) {
         event.preventDefault();
         const scale = this.pinchDistance(event.touches) / this.pinchStartDistance;
-        const next = Math.min(Math.max(this.pinchStartZoom * scale, 1), 3);
+        const next = Math.min(Math.max(this.pinchStartZoom * scale, 1), REDACTOR_MAX_ZOOM);
         const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
         const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
         this.applyZoom(next, midX, midY);
@@ -341,6 +345,10 @@ const MediaRedactor = Vue.defineComponent({
     applyZoom(nextZoom, anchorX, anchorY) {
       const pane = this._scrollPane;
       if (!pane) { this.zoom = nextZoom; return; }
+      if (!this.baseWidth) {
+        const wrapper = pane.querySelector('.redactor-pages');
+        this.baseWidth = wrapper ? wrapper.getBoundingClientRect().width : pane.clientWidth;
+      }
       const rect = pane.getBoundingClientRect();
       const localX = anchorX !== undefined ? anchorX - rect.left : pane.clientWidth / 2;
       const localY = anchorY !== undefined ? anchorY - rect.top : pane.clientHeight / 2;
@@ -357,7 +365,7 @@ const MediaRedactor = Vue.defineComponent({
       if (!event.ctrlKey) return;
       event.preventDefault();
       const factor = Math.exp(-event.deltaY * 0.005);
-      const next = Math.min(Math.max(this.zoom * factor, 1), 3);
+      const next = Math.min(Math.max(this.zoom * factor, 1), REDACTOR_MAX_ZOOM);
       this.applyZoom(next, event.clientX, event.clientY);
     },
     async submit() {
@@ -426,7 +434,7 @@ const MediaRedactor = Vue.defineComponent({
           <v-spacer></v-spacer>
           <v-btn icon="mdi-minus" variant="tonal" density="compact" :disabled="zoom <= 1" @click="zoomOut"></v-btn>
           <span class="text-body-2 mx-1" style="min-width: 44px; text-align: center;">{{ Math.round(zoom * 100) }}%</span>
-          <v-btn icon="mdi-plus" variant="tonal" density="compact" :disabled="zoom >= 3" @click="zoomIn"></v-btn>
+          <v-btn icon="mdi-plus" variant="tonal" density="compact" :disabled="zoom >= REDACTOR_MAX_ZOOM" @click="zoomIn"></v-btn>
           <v-btn variant="tonal" density="compact" size="large" class="mx-2" @click="zoomFit">Fit</v-btn>
         </v-toolbar>
 
@@ -448,14 +456,14 @@ const MediaRedactor = Vue.defineComponent({
             <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
           </div>
           <div v-else
-            class="d-flex flex-column align-center ga-4 pa-4"
-            :style="{ width: zoom > 1 ? (zoom * 960) + 'px' : '100%', minWidth: '100%' }"
+            class="d-flex flex-column align-center ga-4 pa-4 redactor-pages"
+            :style="{ width: zoom > 1 ? (zoom * baseWidth) + 'px' : '100%', minWidth: '100%' }"
           >
             <div
               v-for="page in pages"
               :key="page.index"
               class="position-relative bg-white elevation-2"
-              :style="{ width: zoom !== 1 ? '100%' : 'min(100%, 960px)', lineHeight: 0, userSelect: 'none', aspectRatio: page.width + ' / ' + page.height }"
+              :style="{ width: '100%', lineHeight: 0, userSelect: 'none', aspectRatio: page.width + ' / ' + page.height }"
               :ref="'page-' + page.index"
               @mousedown.prevent="activeBox = null; startBox(page.index, $event)"
               @mousemove.prevent="moveBox(page.index, $event)"
