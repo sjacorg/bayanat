@@ -494,8 +494,9 @@ const MediaRedactor = Vue.defineComponent({
                 @load="page.width = $event.target.naturalWidth; page.height = $event.target.naturalHeight"
               >
 
+              <template v-for="(pageBoxes, _) in [visibleBoxes(page.index)]" :key="0">
               <div
-                v-for="(box, boxIndex) in visibleBoxes(page.index)"
+                v-for="(box, boxIndex) in pageBoxes"
                 :key="boxIndex"
                 class="position-absolute"
                 :style="{
@@ -506,7 +507,7 @@ const MediaRedactor = Vue.defineComponent({
                   padding: '7px',
                   margin: '-7px',
                   boxSizing: 'content-box',
-                  pointerEvents: draft && boxIndex === visibleBoxes(page.index).length - 1 ? 'none' : 'auto',
+                  pointerEvents: draft && boxIndex === pageBoxes.length - 1 ? 'none' : 'auto',
                   zIndex: 5,
                 }"
                 @mousedown.prevent="startDrag(page.index, boxIndex, $event)"
@@ -523,7 +524,7 @@ const MediaRedactor = Vue.defineComponent({
                     cursor: 'move',
                   }"
                 >
-                  <template v-if="!(draft && boxIndex === visibleBoxes(page.index).length - 1) && ((hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex))">
+                  <template v-if="!(draft && boxIndex === pageBoxes.length - 1) && ((hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex))">
                     <div
                       v-for="corner in ['tl','tr','bl','br']"
                       :key="corner"
@@ -545,7 +546,7 @@ const MediaRedactor = Vue.defineComponent({
                 </div>
                 <v-fade-transition>
                   <v-btn
-                    v-if="!(draft && boxIndex === visibleBoxes(page.index).length - 1) && ((hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex))"
+                    v-if="!(draft && boxIndex === pageBoxes.length - 1) && ((hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex))"
                     size="18"
                     color="error"
                     variant="flat"
@@ -557,6 +558,7 @@ const MediaRedactor = Vue.defineComponent({
                   </v-btn>
                 </v-fade-transition>
               </div>
+              </template>
             </div>
           </div>
         </v-card-text>
