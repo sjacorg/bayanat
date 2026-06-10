@@ -15,6 +15,12 @@ class MediaRedaction(db.Model, BaseMixin):
         nullable=False,
         index=True,
     )
+    original_media_id = db.Column(
+        db.Integer,
+        db.ForeignKey("media.id"),
+        nullable=True,
+        index=True,
+    )
     result_media_id = db.Column(
         db.Integer,
         db.ForeignKey("media.id"),
@@ -25,12 +31,14 @@ class MediaRedaction(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"), index=True)
 
     source_media = db.relationship("Media", foreign_keys=[source_media_id])
+    original_media = db.relationship("Media", foreign_keys=[original_media_id])
     result_media = db.relationship("Media", foreign_keys=[result_media_id], backref=db.backref("redaction", uselist=False))
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "source_media_id": self.source_media_id,
+            "original_media_id": self.original_media_id,
             "result_media_id": self.result_media_id,
             "regions": self.regions,
             "user_id": self.user_id,
