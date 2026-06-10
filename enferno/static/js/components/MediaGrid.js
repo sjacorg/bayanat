@@ -16,7 +16,7 @@ const MediaGrid = Vue.defineComponent({
       const map = {};
       for (const media of (this.medias || [])) {
         if (!this.isRedaction(media)) continue;
-        const srcId = media.sourceMediaId;
+        const srcId = media.originalMediaId;
         if (srcId == null) continue;
         if (!map[srcId]) map[srcId] = [];
         map[srcId].push(media);
@@ -26,7 +26,7 @@ const MediaGrid = Vue.defineComponent({
   },
   methods: {
     isRedaction(media) {
-      return media?.sourceMediaId != null;
+      return media?.originalMediaId != null;
     },
     mediaIndex(media) {
       return this.medias.indexOf(media);
