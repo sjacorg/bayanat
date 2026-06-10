@@ -125,7 +125,11 @@ const MediaCard = Vue.defineComponent({
     miniMode: {
       type: Boolean,
       default: false,
-    }
+    },
+    redactions: {
+      type: Array,
+      default: () => [],
+    },
   },
   emits: ['media-click'],
   data() {
@@ -146,6 +150,7 @@ const MediaCard = Vue.defineComponent({
       ocrDetails: null,
       ocrLoading: false,
       expansionPanel: null,
+      showRedactions: false,
     };
   },
   computed: {
@@ -306,6 +311,53 @@ const MediaCard = Vue.defineComponent({
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
+      </template>
+
+      <template v-if="redactions.length">
+        <v-divider></v-divider>
+        <div
+          class="d-flex align-center justify-space-between px-3 py-2 cursor-pointer"
+          style="min-height: 36px;"
+          @click="showRedactions = !showRedactions"
+        >
+          <div class="d-flex align-center ga-2">
+            <v-icon icon="mdi-marker" size="14" color="warning"></v-icon>
+            <span class="text-caption font-weight-medium">{{ redactions.length }} redacted cop{{ redactions.length > 1 ? 'ies' : 'y' }}</span>
+          </div>
+          <v-icon :icon="showRedactions ? 'mdi-chevron-up' : 'mdi-chevron-down'" size="16" class="opacity-60"></v-icon>
+        </div>
+        <v-expand-transition>
+          <div v-if="showRedactions">
+            <v-divider></v-divider>
+            <div class="pa-2 bg-grey-lighten-4 d-flex flex-row flex-wrap ga-2">
+              <v-hover v-slot="{ isHovering, props: hoverProps }" v-for="copy in redactions" :key="copy.id">
+              <div
+                v-bind="hoverProps"
+                class="d-flex flex-column rounded bg-white overflow-hidden"
+                style="width: 96px; border: 1px solid rgba(0,0,0,0.08);"
+              >
+                <div class="position-relative" style="height: 64px;" @click.stop="$emit('media-click', { media: copy, mediaType: $root.getFileTypeFromMimeType(copy.fileType) })">
+                  <media-thumbnail :media="copy" :show-hover-icon="isHovering" :compact="true" clickable></media-thumbnail>
+                </div>
+                <div class="d-flex align-center px-1" style="min-height: 24px;">
+                  <v-tooltip location="top" :text="copy.title || copy.filename">
+                    <template #activator="{ props: ttProps }">
+                      <span v-bind="ttProps" class="text-truncate flex-grow-1" style="font-size: 10px; min-width: 0; opacity: 0.7;">{{ copy.title || copy.filename }}</span>
+                    </template>
+                  </v-tooltip>
+                  <v-btn
+                    v-if="typeof $root?.openRedactor === 'function'"
+                    icon="mdi-marker"
+                    variant="text"
+                    density="compact"
+                    @click.stop="$root.openRedactor(copy)"
+                  ></v-btn>
+                </div>
+              </div>
+              </v-hover>
+            </div>
+          </div>
+        </v-expand-transition>
       </template>
 
       <v-divider></v-divider>
