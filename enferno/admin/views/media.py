@@ -693,6 +693,8 @@ def api_media_redact(id: int) -> Response:
     payload = request.get_json(silent=True) or {}
     pages = payload.get("pages", [])
     title = (payload.get("title") or "").strip()
+    # Overwrite is only allowed on an existing redacted copy (never the immutable original).
+    overwrite = bool(payload.get("overwrite")) and media.redaction is not None
     ext = _file_extension(media)
 
     try:
@@ -714,6 +716,29 @@ def api_media_redact(id: int) -> Response:
         return HTTPResponse.not_found("Media file not found")
 
     etag = md5(out).hexdigest()
+
+    # Edit in place: re-burn onto the same redacted copy, overwriting its file and row.
+    # The original stays untouched, so this is always safe and reversible from the original.
+    if overwrite:
+        _write_media_bytes(media.media_file, out, out_type)
+        media.etag = etag
+        media.media_file_type = out_type
+        if title:
+            media.title = title
+        media.redaction.source_media_id = media.id
+        media.redaction.regions = pages
+        media.redaction.user_id = current_user.id
+        db.session.commit()
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            media.to_mini(),
+            "media",
+            details=f"Redacted copy {media.id} updated in place",
+        )
+        return HTTPResponse.success(data=media.to_dict())
+
     if _duplicate_redacted_media(etag, media):
         return HTTPResponse.error("Redacted media already exists", status=409)
 
@@ -734,7 +759,11 @@ def api_media_redact(id: int) -> Response:
         bulletin_id=media.bulletin_id,
         actor_id=media.actor_id,
     )
-    original_id = media.redaction.original_media_id if media.redaction and media.redaction.original_media_id else media.id
+    original_id = (
+        media.redaction.original_media_id
+        if media.redaction and media.redaction.original_media_id
+        else media.id
+    )
     audit = MediaRedaction(
         source_media_id=media.id,
         original_media_id=original_id,
