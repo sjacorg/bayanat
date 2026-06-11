@@ -25,7 +25,7 @@ from enferno.utils.http_response import HTTPResponse
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
-from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles
+from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles, reject_if_review_locked
 
 
 # Bulletin fields routes
@@ -272,6 +272,16 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
+
+        review_locked = reject_if_review_locked(bulletin, "bulletin", id)
+        if review_locked:
+            return review_locked
+
+        # Non-Admin owners cannot reassign or set reviewers via the normal update
+        # (BAY-01-022); assignment goes through the assign endpoint.
+        if not current_user.has_role("Admin"):
+            for field in ("assigned_to", "first_peer_reviewer", "second_peer_reviewer"):
+                validated_data["item"].pop(field, None)
 
         bulletin = bulletin.from_json(validated_data["item"])
 

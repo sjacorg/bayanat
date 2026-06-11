@@ -114,6 +114,31 @@ def fresh_auth(func):
     )(func)
 
 
+PEER_REVIEW_LOCKED_STATUS = "Peer Review Assigned"
+
+
+def reject_if_review_locked(item, entity: str, item_id):
+    """Block non-Admin edits to an item frozen for peer review (BAY-01-022).
+
+    Once an item enters "Peer Review Assigned" the owner must not modify it via
+    the normal update API; the reviewer acts through the review endpoint and an
+    Admin can override. Returns a forbidden Response when locked, else None.
+    """
+    if getattr(item, "status", None) == PEER_REVIEW_LOCKED_STATUS and not current_user.has_role(
+        "Admin"
+    ):
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_DENIED,
+            request.json,
+            entity,
+            details=f"Attempt to edit {entity} {item_id} locked for peer review.",
+        )
+        return HTTPResponse.forbidden("Item is locked for peer review")
+    return None
+
+
 @admin.before_request
 @auth_required("session")
 def before_request() -> None:

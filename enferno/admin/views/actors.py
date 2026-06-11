@@ -25,7 +25,7 @@ from enferno.utils.http_response import HTTPResponse
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
-from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles
+from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles, reject_if_review_locked
 
 
 # Actor fields routes
@@ -287,6 +287,11 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
+
+        review_locked = reject_if_review_locked(actor, "actor", id)
+        if review_locked:
+            return review_locked
+
         actor = actor.from_json(validated_data["item"])
         # Create a revision using latest values
         # this method automatically commits
