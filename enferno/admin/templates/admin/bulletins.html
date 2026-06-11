@@ -11,6 +11,7 @@
 
 
     <v-main>
+        <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onMediaRedacted"></media-redactor>
         {% include 'admin/partials/media_transcription_dialog.html' %}
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
@@ -423,6 +424,7 @@
     <script src="/static/js/components/GeoLocations.js"></script>
     <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/MediaRedactor.js"></script>
     <script src="/static/js/components/MediaThumbnail.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
@@ -478,6 +480,7 @@
                 data: () => ({
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
+                    redaction: { dialog: false, media: null },
 
                     valid: false,
                     leftDialogProps: {
@@ -914,6 +917,14 @@
                     onMediaProcessed({ media }) {
                         this.showOcrDialog(media.id);
                         this.refreshEditedMedia(media.id);
+                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
+                    },
+                    openRedactor(media) {
+                        this.redaction.media = media;
+                        this.redaction.dialog = true;
+                    },
+                    onMediaRedacted() {
+                        this.showSnack("{{ _('Redaction saved') }}");
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                     },
                     handleRoute({ initialLoad = false } = {}) {
@@ -1817,6 +1828,7 @@
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
         app.component('OcrTextLayer', OcrTextLayer);
+        app.component('MediaRedactor', MediaRedactor);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.use(router).use(vuetify);

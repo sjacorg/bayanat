@@ -8,40 +8,54 @@ const MediaGrid = Vue.defineComponent({
   },
   emits: ['remove-media', 'media-click'],
   computed: {
-    sortedMedia() {
-      if (this.prioritizeVideos) return this.sortMediaByFileType(this.medias);
-
-      return this.medias;
-    }
+    primaryMedia() {
+      const list = this.prioritizeVideos ? this.sortMediaByFileType(this.medias) : (this.medias || []);
+      return list.filter(media => !this.isRedaction(media));
+    },
+    redactionsBySource() {
+      const map = {};
+      for (const media of (this.medias || [])) {
+        if (!this.isRedaction(media)) continue;
+        const srcId = media.originalMediaId;
+        if (srcId == null) continue;
+        if (!map[srcId]) map[srcId] = [];
+        map[srcId].push(media);
+      }
+      return map;
+    },
   },
   methods: {
+    isRedaction(media) {
+      return media?.originalMediaId != null;
+    },
+    mediaIndex(media) {
+      return this.medias.indexOf(media);
+    },
     sortMediaByFileType(mediaList) {
       if (!mediaList) return [];
-      // Sort media list by fileType (video first)
-      const sortedMediaList = [...mediaList].sort((a, b) => {
-        if (a?.fileType?.includes('video')) return -1; // Video should come first
-        if (b?.fileType?.includes('video')) return 1; // Then images
-        return 0; // Leave unchanged if neither is a video
+      return [...mediaList].sort((a, b) => {
+        if (a?.fileType?.includes('video')) return -1;
+        if (b?.fileType?.includes('video')) return 1;
+        return 0;
       });
-
-      return sortedMediaList;
     },
   },
   template: /*html*/`
-      <div>
-        <v-sheet :class="horizontal ? 'd-flex ga-2 flex-row overflow-x-auto' : 'media-grid'">
-          <media-card
-            v-for="(media,index) in sortedMedia" :key="media.id || media.uuid"
-            @media-click="$emit('media-click', $event)"
-            :media="media"
-            :mini-mode="miniMode"
-            class="flex-shrink-0"
-          >
-            <template #actions v-if="enableDelete">
-              <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
-            </template>
-          </media-card>
-        </v-sheet>
-      </div>
+    <div>
+      <v-sheet :class="horizontal ? 'd-flex ga-2 flex-row overflow-x-auto' : 'media-grid'">
+        <media-card
+          v-for="media in primaryMedia" :key="media.id || media.uuid"
+          @media-click="$emit('media-click', $event)"
+          :media="media"
+          :mini-mode="miniMode"
+          :redactions="redactionsBySource[media.id] || []"
+          class="flex-shrink-0"
+        >
+          <template #actions v-if="enableDelete">
+            <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', mediaIndex(media))" color="red"></v-btn>
+          </template>
+        </media-card>
+      </v-sheet>
+    </div>
   `,
 });
