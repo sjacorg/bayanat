@@ -46,7 +46,7 @@ const MediaRedactor = Vue.defineComponent({
       return `/admin/api/media/${this.media.id}/proxy${v}`;
     },
     isRedactedCopy() {
-      return !!this.media?.originalMediaId;
+      return !!(this.media?.isRedaction || this.media?.originalMediaId);
     },
     mediaKind() {
       const fileType = this.media?.fileType || '';
