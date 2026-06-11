@@ -238,7 +238,6 @@ write_state() {
     # STATE_STARTED_AT / STATE_PROGRESS / STATE_ERROR_JSON from environment.
     local phase="$1" label="$2"
     mkdir -p "$STATE_DIR"
-    chown "$APP_USER:$APP_USER" "$STATE_DIR" 2>/dev/null || true
     local tmp="$STATE_FILE.tmp"
     cat > "$tmp" <<EOF
 {
@@ -256,7 +255,6 @@ write_state() {
 }
 EOF
     mv -Tf "$tmp" "$STATE_FILE"
-    chown "$APP_USER:$APP_USER" "$STATE_FILE" 2>/dev/null || true
 }
 
 clear_state() {
@@ -287,7 +285,6 @@ acquire_lock() {
         rm -f "$LOCK_FILE"
     fi
     echo $$ > "$LOCK_FILE"
-    chown "$APP_USER:$APP_USER" "$LOCK_FILE" 2>/dev/null || true
 }
 
 release_lock() {
@@ -646,7 +643,20 @@ _setup_database() {
 _create_directories() {
     mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/backups" \
              "$LOGS_DIR" "$STATE_DIR"
-    chown -R "$APP_USER:$APP_USER" "$STATE_DIR"
+    # STATE_DIR stays root-owned (BAY-01-013): the updater writes it as root and
+    # the app only reads it. Keeping it out of the service user's reach removes
+    # the symlink-race chown primitive into root-owned files.
+    _secure_state_dir
+}
+
+_secure_state_dir() {
+    # Re-assert root ownership of the updater state dir after any recursive
+    # chown of BAYANAT_ROOT. World-readable so the app (service user) can read
+    # update.json for the status display, but not writable by it.
+    chown -R root:root "$STATE_DIR"
+    chmod 755 "$STATE_DIR"
+    [[ -f "$STATE_FILE" ]] && chmod 644 "$STATE_FILE"
+    return 0
 }
 
 _clone_release() {
@@ -934,6 +944,7 @@ cmd_install() {
     _install_self "$tag"
 
     chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
+    _secure_state_dir
     systemctl daemon-reload
     systemctl enable --now bayanat bayanat-celery
     systemctl restart caddy
