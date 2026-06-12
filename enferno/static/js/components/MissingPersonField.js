@@ -6,7 +6,7 @@ const MissingPersonField = Vue.defineComponent({
   },
   data: function () {
     return {
-      translations: translations,
+      translations: window.translations,
     };
   },
   computed: {
