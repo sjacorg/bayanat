@@ -128,13 +128,13 @@ const NotificationsList = Vue.defineComponent({
                                 :class="{ 'font-weight-bold': (!notification?.read_status || notification?.is_urgent) }"
                                 class="text-body-1"
                                 :style="getLineClampStyles(config.maxTitleLines)"
-                                v-html="notification?.title"
+                                v-text="notification?.title"
                             />
                             <v-list-item-subtitle class="mt-1" opacity="100">
                                 <div
                                 class="text-caption text-high-emphasis"
                                 :style="getLineClampStyles(config.maxSubtitleLines)"
-                                v-html="notification?.message"
+                                v-text="notification?.message"
                                 />
                                 <div class="d-flex justify-space-between align-center mt-2">
                                     <span class="text-caption text-high-emphasis">{{ getDateFromNotification(notification) }}</span>
