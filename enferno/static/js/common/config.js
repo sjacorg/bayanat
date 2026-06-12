@@ -118,6 +118,18 @@ function isValidLength(value, limit, type) {
     return type === "max" ? length <= limit : length >= limit;
 }
 
+function escapeHtml(value) {
+  const entityMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+
+  return String(value ?? '').replace(/[&<>"']/g, char => entityMap[char]);
+}
+
 function scrollToFirstError() {
   const wrapper = document.querySelector(".v-input--error");
   if (!wrapper) return;
