@@ -644,15 +644,25 @@ _setup_database() {
     systemctl enable --now postgresql redis-server
 
     log "Setting up database..."
-    # Role is a plain owner, not a superuser. Extensions are created by the
-    # postgres superuser below so the app role doesn't need that privilege.
+    # Role is a plain owner with no instance-level privileges (BAY-01-031).
+    # Extensions are created by the postgres superuser below so the app role
+    # doesn't need that privilege. The role keeps table ownership because the
+    # dynamic-fields feature issues ALTER TABLE at runtime; a DML-only
+    # runtime role would break that product feature.
     sudo -u postgres createuser "$APP_USER" 2>/dev/null || true
-    # Idempotent for upgrades: drop superuser if a previous install granted it.
-    sudo -u postgres psql -c "ALTER USER \"$APP_USER\" NOSUPERUSER;" 2>/dev/null || true
+    # Idempotent for upgrades: strip any instance-level privilege a previous
+    # install may have granted.
+    sudo -u postgres psql -c \
+        "ALTER ROLE \"$APP_USER\" NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;" \
+        2>/dev/null || true
     sudo -u postgres createdb bayanat -O "$APP_USER" 2>/dev/null || true
     sudo -u postgres psql -d bayanat \
         -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" \
         -c "CREATE EXTENSION IF NOT EXISTS postgis;" >/dev/null
+    # Only the app role (and superuser) may connect to the app database.
+    sudo -u postgres psql \
+        -c "REVOKE CONNECT ON DATABASE bayanat FROM PUBLIC;" \
+        -c "GRANT CONNECT ON DATABASE bayanat TO \"$APP_USER\";" >/dev/null
 
     # Configure pg_hba peer auth for app user. Peer auth maps the OS user to
     # the PG role over the local socket, so only mapped processes can connect
