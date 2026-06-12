@@ -108,8 +108,9 @@ SNAPSHOT_RETENTION_DAYS="${BAYANAT_SNAPSHOT_RETENTION_DAYS:-30}"
 readonly SNAPSHOT_RETENTION_COUNT=5
 
 _pg_load() {
-    # Loads POSTGRES_* from shared/.env into the current shell env WITHOUT
-    # eval. Must be invoked inside a subshell so the exports do not leak.
+    # Loads POSTGRES_* / REDIS_PASSWORD from shared/.env into the current
+    # shell env WITHOUT eval. Must be invoked inside a subshell so the
+    # exports do not leak.
     #
     # Why no eval: a malicious .env value (writable by the bayanat user)
     # could smuggle shell commands that would run as root under `bayanat
@@ -120,7 +121,7 @@ _pg_load() {
     local key val
     while IFS='=' read -r key val; do
         case "$key" in
-            POSTGRES_HOST|POSTGRES_PORT|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB)
+            POSTGRES_HOST|POSTGRES_PORT|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB|REDIS_PASSWORD)
                 # Strip matching surrounding quotes (common .env convention).
                 if [[ ${#val} -ge 2 ]]; then
                     if [[ "${val:0:1}" == '"' && "${val: -1}" == '"' ]] \
@@ -413,7 +414,16 @@ _db_ping() {
 }
 
 _redis_ping() {
-    redis-cli ping 2>/dev/null | grep -q '^PONG$'
+    # Redis requires auth on hardened installs (BAY-01-027). REDISCLI_AUTH
+    # keeps the password out of the process list, unlike -a.
+    (
+        _pg_load
+        if [[ -n "${REDIS_PASSWORD:-}" ]]; then
+            REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping 2>/dev/null | grep -q '^PONG$'
+        else
+            redis-cli ping 2>/dev/null | grep -q '^PONG$'
+        fi
+    )
 }
 
 _wait_healthy() {
@@ -695,8 +705,37 @@ _setup_database() {
         else
             echo "$rule" >> "$pg_hba"
         fi
-        systemctl reload postgresql
     fi
+    systemctl reload postgresql
+}
+
+REDIS_PW=""
+
+_setup_redis() {
+    # Require password auth on the loopback Redis listener (BAY-01-027).
+    # The password is generated once, stored in shared/.env (read by the app
+    # via REDIS_PASSWORD), and asserted into redis.conf on every run.
+    local pw=""
+    if [[ -f "$SHARED_DIR/.env" ]]; then
+        pw=$(grep -E '^REDIS_PASSWORD=' "$SHARED_DIR/.env" | head -1 \
+            | cut -d= -f2- | tr -d "'\"") || true
+    fi
+    if [[ -z "$pw" ]]; then
+        pw=$(openssl rand -hex 24)
+        if [[ -f "$SHARED_DIR/.env" ]]; then
+            printf "REDIS_PASSWORD='%s'\n" "$pw" >> "$SHARED_DIR/.env"
+        fi
+    fi
+    REDIS_PW="$pw"
+
+    local conf="/etc/redis/redis.conf"
+    [[ -f "$conf" ]] || die "Cannot find $conf"
+    if grep -qE '^[[:space:]]*requirepass ' "$conf"; then
+        sed -i -E "s|^[[:space:]]*requirepass .*|requirepass $pw|" "$conf"
+    else
+        printf '\n# Managed by bayanat installer (BAY-01-027)\nrequirepass %s\n' "$pw" >> "$conf"
+    fi
+    systemctl restart redis-server
 }
 
 _create_directories() {
@@ -806,6 +845,8 @@ POSTGRES_PORT=5432
 POSTGRES_USER=$APP_USER
 POSTGRES_PASSWORD=
 POSTGRES_DB=$APP_USER
+
+REDIS_PASSWORD='$REDIS_PW'
 EOF
 }
 
@@ -1053,6 +1094,7 @@ cmd_install() {
     # Users and database
     _setup_app_user
     _setup_database
+    _setup_redis
 
     # Application
     _create_directories
