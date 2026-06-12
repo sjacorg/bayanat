@@ -6,7 +6,7 @@ const MissingPersonField = Vue.defineComponent({
   },
   data: function () {
     return {
-      translations: window.translations,
+      translations: translations,
     };
   },
   computed: {
@@ -15,7 +15,7 @@ const MissingPersonField = Vue.defineComponent({
         // type 1 = options + details
         if (!this.field) return '';
         const { opts = '', details = '-' } = this.field;
-        return `${opts}: ${details}`;
+        return `${escapeHtml(opts)}: ${escapeHtml(details)}`;
       }
 
       if (this.type === 2) {
@@ -25,7 +25,7 @@ const MissingPersonField = Vue.defineComponent({
       }
 
       // final case: simple field
-      return this.field;
+      return escapeHtml(this.field);
     },
     show() {
       if (this.type == 2) {
@@ -38,9 +38,9 @@ const MissingPersonField = Vue.defineComponent({
     formatReporter(rep) {
       const { name, contact, relationship } = rep;
       const output = [
-        name && `${this.translations.name_}: ${name}`,
-        contact && `${this.translations.contact_}: ${contact}`,
-        relationship && `${this.translations.relationship_}: ${relationship}`,
+        name && `${this.translations.name_}: ${escapeHtml(name)}`,
+        contact && `${this.translations.contact_}: ${escapeHtml(contact)}`,
+        relationship && `${this.translations.relationship_}: ${escapeHtml(relationship)}`,
       ]
         .filter(Boolean)
         .join('<br>');
