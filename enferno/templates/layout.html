@@ -64,7 +64,7 @@
             {% endblock %}
 
         <v-snackbar v-model="snackbar" multi-line>
-                <span v-html="snackMessage"></span>
+                <span style="white-space: pre-line;" v-text="snackMessage"></span>
             <template #actions>
                 <v-btn icon="mdi-close" variant="text" @click="snackbar = false"></v-btn>
             </template>
