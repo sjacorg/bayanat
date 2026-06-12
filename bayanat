@@ -690,7 +690,8 @@ _setup_database() {
 }
 
 _create_directories() {
-    mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/backups" \
+    mkdir -p "$RELEASES_DIR" "$SHARED_DIR/media" "$SHARED_DIR/exports" \
+             "$SHARED_DIR/imports" "$SHARED_DIR/backups" "$RUNTIME_DIR" \
              "$LOGS_DIR" "$STATE_DIR"
     # STATE_DIR stays root-owned (BAY-01-013): the updater writes it as root and
     # the app only reads it. Keeping it out of the service user's reach removes
@@ -699,13 +700,46 @@ _create_directories() {
 }
 
 _secure_state_dir() {
-    # Re-assert root ownership of the updater state dir after any recursive
-    # chown of BAYANAT_ROOT. World-readable so the app (service user) can read
-    # update.json for the status display, but not writable by it.
+    # Root-owned updater state dir. World-readable so the app (service user)
+    # can read update.json for the status display, but not writable by it.
     chown -R root:root "$STATE_DIR"
     chmod 755 "$STATE_DIR"
     [[ -f "$STATE_FILE" ]] && chmod 644 "$STATE_FILE"
     return 0
+}
+
+_set_permissions() {
+    # Least-privilege install layout (BAY-01-030/032). Root owns the tree;
+    # service users reach it only through $APP_GROUP, and "other" is locked
+    # out everywhere. Top-level dirs deny traversal, so files inside need no
+    # recursive sweep (kept non-recursive for media, which can be large).
+    chown root:"$APP_GROUP" "$BAYANAT_ROOT" "$RELEASES_DIR" "$SHARED_DIR"
+    chmod 750 "$BAYANAT_ROOT" "$RELEASES_DIR" "$SHARED_DIR"
+
+    # App-writable shared areas: setgid keeps new files in $APP_GROUP so the
+    # web and worker accounts can read each other's output.
+    local d
+    for d in "$SHARED_DIR/media" "$SHARED_DIR/exports" "$SHARED_DIR/imports" \
+             "$SHARED_DIR/backups" "$RUNTIME_DIR" "$LOGS_DIR"; do
+        chown root:"$APP_GROUP" "$d"
+        chmod 2770 "$d"
+    done
+
+    # Secrets: group-readable only (the services read them), never writable
+    # by the services and never world-readable.
+    local f
+    for f in "$SHARED_DIR/.env" "$SHARED_DIR/uwsgi-prod.ini"; do
+        if [[ -f "$f" ]]; then
+            chown root:"$APP_GROUP" "$f"
+            chmod 640 "$f"
+        fi
+    done
+
+    # Log files created by admin CLI runs (umask 022) must stay appendable
+    # by both service accounts.
+    find "$LOGS_DIR" -type f -exec chgrp "$APP_GROUP" {} + -exec chmod 660 {} + 2>/dev/null || true
+
+    _secure_state_dir
 }
 
 _clone_release() {
@@ -726,7 +760,11 @@ _clone_release() {
 
     log "Cloning $tag..."
     git clone --depth 1 --branch "$tag" "$GIT_URL" "$dest"
-    chown -R "$APP_USER:$APP_USER" "$dest"
+    # Releases are root-owned and read-only for the service accounts
+    # (BAY-01-030/032): group gets read+exec via $APP_GROUP, no write, and
+    # "other" is locked out.
+    chown -R root:"$APP_GROUP" "$dest"
+    chmod -R o-rwx,g-w "$dest"
 }
 
 _generate_env() {
@@ -797,6 +835,10 @@ _install_deps() {
     log "Installing Python dependencies..."
     /usr/local/bin/uv sync --frozen --python 3.12 \
         --directory "$RELEASES_DIR/$tag"
+    # The venv is created after _clone_release's ownership pass, so it needs
+    # its own: group-readable for the service accounts, not writable.
+    chown -R root:"$APP_GROUP" "$RELEASES_DIR/$tag/.venv"
+    chmod -R o-rwx,g-w "$RELEASES_DIR/$tag/.venv"
 }
 
 _init_database() {
@@ -1017,7 +1059,7 @@ cmd_install() {
         _generate_env "$domain"
     fi
 
-    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
+    _set_permissions
     _link_shared "$tag"
 
     _install_deps "$tag"
