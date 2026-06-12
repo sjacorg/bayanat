@@ -14,18 +14,22 @@ const MissingPersonField = Vue.defineComponent({
       if (this.type === 1) {
         // type 1 = options + details
         if (!this.field) return '';
-        const { opts = '', details = '-' } = this.field;
-        return `${escapeHtml(opts)}: ${escapeHtml(details)}`;
+        const { opts = '', details = '' } = this.field;
+        const optsText = Array.isArray(opts) ? opts.join(', ') : opts;
+
+        if (!optsText) return details;
+        if (!details) return optsText;
+
+        return `${optsText}: ${details}`;
       }
 
       if (this.type === 2) {
         // type 2 = Reporters: list of objects
-        if (!Array.isArray(this.field) || !this.field.length) return '-';
-        return this.field.map(this.formatReporter).join('');
+        return '';
       }
 
       // final case: simple field
-      return escapeHtml(this.field);
+      return this.field;
     },
     show() {
       if (this.type == 2) {
@@ -33,25 +37,26 @@ const MissingPersonField = Vue.defineComponent({
       }
       return !!this.field;      
     },
-  },
-  methods: {
-    formatReporter(rep) {
-      const { name, contact, relationship } = rep;
-      const output = [
-        name && `${this.translations.name_}: ${escapeHtml(name)}`,
-        contact && `${this.translations.contact_}: ${escapeHtml(contact)}`,
-        relationship && `${this.translations.relationship_}: ${escapeHtml(relationship)}`,
-      ]
-        .filter(Boolean)
-        .join('<br>');
-
-      return output ? `<div class="elevation-1 my-3 pa-2 yellow lighten-5">${output}</div>` : '';
+    reporters() {
+      if (this.type !== 2 || !Array.isArray(this.field)) return [];
+      return this.field.filter(rep => rep && Object.keys(rep).length);
     },
   },
   template: `
     <v-sheet v-if="show" class="pa-1 pb-2 mb-2" color="transparent">
       <div class="caption grey--text text--darken-1">{{ title }}</div>
-      <span v-html="output"></span>
+      <template v-if="type === 2">
+        <div
+          v-for="(rep, index) in reporters"
+          :key="index"
+          class="elevation-1 my-3 pa-2 yellow lighten-5"
+        >
+          <div v-if="rep.name">{{ translations.name_ }}: {{ rep.name }}</div>
+          <div v-if="rep.contact">{{ translations.contact_ }}: {{ rep.contact }}</div>
+          <div v-if="rep.relationship">{{ translations.relationship_ }}: {{ rep.relationship }}</div>
+        </div>
+      </template>
+      <span v-else v-text="output"></span>
     </v-sheet>
   `,
 });
