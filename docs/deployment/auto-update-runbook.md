@@ -97,7 +97,6 @@ sudo bayanat update --recover
 | Path | Purpose |
 |---|---|
 | `/usr/local/bin/bayanat` | The CLI script |
-| `/etc/sudoers.d/bayanat` | Granted commands for the `bayanat` user |
 | `/opt/bayanat/state/update.json` | Current update state (sanitized JSON) |
 | `/opt/bayanat/state/update.lock` | PID lock file |
 | `/opt/bayanat/shared/backups/` | Pre-update snapshots |

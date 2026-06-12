@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Response, request
+from flask import Response, current_app, request
 from flask.templating import render_template
 from flask_babel import gettext
 from flask_security.decorators import current_user, roles_required
@@ -189,7 +189,7 @@ def get_data(table: str) -> list[dict[str, Any]] | list[dict[str, dict[str, Any 
 
 
 import json
-import subprocess
+import time
 from pathlib import Path
 
 from enferno.extensions import rds
@@ -246,24 +246,30 @@ def snapshots_page() -> str:
 @admin.get("/api/snapshots/")
 @roles_required("Admin")
 def api_snapshots() -> Response:
-    """List pre-update snapshots by shelling `bayanat snapshots`."""
-    try:
-        out = subprocess.run(
-            ["sudo", "-n", "/usr/local/bin/bayanat", "snapshots"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        ).stdout
-    except subprocess.TimeoutExpired:
-        return HTTPResponse.error("Listing snapshots timed out", status=504)
-    except subprocess.CalledProcessError as e:
-        return HTTPResponse.error(f"Failed to list snapshots: {e}", status=500)
+    """List pre-update snapshots from the backups directory.
+
+    Reads the directory the updater writes snapshots into instead of shelling
+    `sudo bayanat snapshots`, so the service account needs no sudo grant
+    (BAY-01-032).
+    """
+    backups = Path(current_app.config.get("BACKUPS_LOCAL_PATH", ""))
     items = []
-    for line in out.strip().splitlines()[1:]:  # skip header row
-        parts = line.split()
-        if len(parts) >= 3:
-            items.append({"name": parts[0], "size": parts[1], "age": parts[2]})
+    if backups.is_dir():
+        now = time.time()
+        for p in sorted(backups.glob("pre-*.dump"), key=lambda p: p.stat().st_mtime, reverse=True):
+            st = p.stat()
+            size = st.st_size
+            for unit in ("B", "K", "M", "G", "T"):
+                if size < 1024:
+                    break
+                size /= 1024
+            items.append(
+                {
+                    "name": p.name,
+                    "size": f"{size:.0f}{unit}",
+                    "age": f"{int((now - st.st_mtime) // 3600)}h",
+                }
+            )
     return HTTPResponse.success(data=items)
 
 

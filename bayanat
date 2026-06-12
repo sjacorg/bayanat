@@ -5,7 +5,7 @@
 #
 set -euo pipefail
 
-readonly SCRIPT_VERSION="1.2.0"
+readonly SCRIPT_VERSION="1.3.0"
 readonly BAYANAT_ROOT="/opt/bayanat"
 readonly RELEASES_DIR="$BAYANAT_ROOT/releases"
 readonly SHARED_DIR="$BAYANAT_ROOT/shared"
@@ -13,7 +13,21 @@ readonly LOGS_DIR="$BAYANAT_ROOT/logs"
 readonly CURRENT_LINK="$BAYANAT_ROOT/current"
 readonly DEFAULT_REPO="sjacorg/bayanat"
 readonly GIT_URL="https://github.com/${BAYANAT_REPO:-$DEFAULT_REPO}.git"
+# Service accounts (BAY-01-032): web and worker run as separate system users.
+# $APP_USER remains the deploy/database identity (PG role name, peer auth for
+# admin operations) and the shared group that grants read access to releases.
 readonly APP_USER="bayanat"
+readonly APP_GROUP="bayanat"
+readonly WEB_USER="bayanat-web"
+readonly CELERY_USER="bayanat-celery"
+# App-writable runtime state shared between web and worker (config.json,
+# reload/restart sentinels, celery beat schedule). Kept separate from
+# $SHARED_DIR itself so .env never lives in a service-writable directory.
+readonly RUNTIME_DIR="$SHARED_DIR/runtime"
+# uv-managed Python interpreters go in a root-owned, world-readable location
+# instead of /root, so the venv stays usable by the service accounts
+# (releases are built by root, BAY-01-032).
+export UV_PYTHON_INSTALL_DIR="/usr/local/share/uv/python"
 
 # --- Logging ---
 
@@ -71,10 +85,13 @@ current_version() {
 }
 
 flask_run() {
+    # --no-sync: releases and their .venv are root-owned (BAY-01-032); deps
+    # are installed by _install_deps as root, so uv must not try to re-sync
+    # the environment while running as $APP_USER.
     local version="$1"; shift
     sudo -u "$APP_USER" \
-        env FLASK_APP=run.py \
-        /usr/local/bin/uv run \
+        env FLASK_APP=run.py UV_PYTHON_INSTALL_DIR="$UV_PYTHON_INSTALL_DIR" \
+        /usr/local/bin/uv run --no-sync \
         --directory "$RELEASES_DIR/$version" \
         flask "$@"
 }
@@ -335,7 +352,7 @@ recover_state() {
             local snap prev
             snap=$(read_field snapshot || true)
             prev=$(read_field previous || true)
-            die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: sudo -u $APP_USER bayanat snapshots"
+            die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: bayanat snapshots"
             ;;
         MIGRATE|SWITCH|ROLLBACK)
             log "Recovery: $phase — attempting to restart services"
@@ -361,9 +378,20 @@ recover_state() {
 
 # --- Health probe ---
 
+_socket_path() {
+    # Hardened layout binds in /run/bayanat (releases are read-only,
+    # BAY-01-032); fall back to the legacy in-release socket for installs
+    # that predate it.
+    if [[ -S /run/bayanat/bayanat.sock ]]; then
+        echo /run/bayanat/bayanat.sock
+    else
+        echo "$CURRENT_LINK/bayanat.sock"
+    fi
+}
+
 _socket_health() {
     # curl the Flask /health over the unix socket. Returns 0 on HTTP 200.
-    curl -s --unix-socket "$CURRENT_LINK/bayanat.sock" \
+    curl -s --unix-socket "$(_socket_path)" \
         --max-time 3 -o /dev/null -w '%{http_code}' \
         http://localhost/health 2>/dev/null | grep -q '^200$'
 }
@@ -598,7 +626,18 @@ _setup_app_user() {
         fi
         log "Created user $APP_USER"
     fi
-    usermod -aG "$APP_USER" caddy 2>/dev/null || true
+    # Per-service accounts (BAY-01-032): uWSGI and Celery run as separate
+    # nologin users so a compromised worker cannot act as the web app. Both
+    # share $APP_GROUP for read access to releases and shared dirs.
+    local svc_user
+    for svc_user in "$WEB_USER" "$CELERY_USER"; do
+        if ! id "$svc_user" &>/dev/null; then
+            useradd --system --no-create-home -g "$APP_GROUP" \
+                -s /usr/sbin/nologin "$svc_user"
+            log "Created service user $svc_user"
+        fi
+    done
+    usermod -aG "$APP_GROUP" caddy 2>/dev/null || true
 }
 
 _setup_database() {
@@ -616,20 +655,30 @@ _setup_database() {
         -c "CREATE EXTENSION IF NOT EXISTS postgis;" >/dev/null
 
     # Configure pg_hba peer auth for app user. Peer auth maps the OS user to
-    # the PG role over the local socket, so only processes running as
-    # $APP_USER can connect as $APP_USER. Replaces the previous 'trust' rule
-    # which let any local OS user connect as the app role.
-    local pg_hba
+    # the PG role over the local socket, so only mapped processes can connect
+    # as $APP_USER. Replaces the previous 'trust' rule which let any local OS
+    # user connect as the app role. The ident map admits the per-service
+    # accounts (BAY-01-032) plus $APP_USER itself for admin operations.
+    local pg_hba pg_ident
     pg_hba=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1)
     [[ -n "$pg_hba" ]] || die "Cannot find pg_hba.conf"
+    pg_ident=$(find /etc/postgresql -name pg_ident.conf 2>/dev/null | head -1)
+    [[ -n "$pg_ident" ]] || die "Cannot find pg_ident.conf"
 
-    local rule="local   all             $APP_USER                                 peer"
+    local os_user
+    for os_user in "$APP_USER" "$WEB_USER" "$CELERY_USER"; do
+        if ! grep -qE "^bayanat[[:space:]]+${os_user}[[:space:]]" "$pg_ident"; then
+            printf '%-15s %-23s %s\n' "bayanat" "$os_user" "$APP_USER" >> "$pg_ident"
+        fi
+    done
+
+    local rule="local   all             $APP_USER                                 peer map=bayanat"
     if grep -qF "$rule" "$pg_hba"; then
         log "pg_hba.conf already configured"
     else
         log "Configuring pg_hba.conf for $APP_USER"
-        # Remove any prior trust rule for this user from a previous install
-        sed -i "/^local[[:space:]]\+all[[:space:]]\+$APP_USER[[:space:]]\+.*trust/d" "$pg_hba"
+        # Remove any prior rule for this user from a previous install
+        sed -i "/^local[[:space:]]\+all[[:space:]]\+${APP_USER}[[:space:]]/d" "$pg_hba"
         # Insert before the "local all all" catch-all, or append
         if grep -q "^local.*all.*all" "$pg_hba"; then
             sed -i "/^local.*all.*all/i $rule" "$pg_hba"
@@ -664,7 +713,7 @@ _clone_release() {
     local dest="$RELEASES_DIR/$tag"
 
     if [[ -d "$dest/.git" ]]; then
-        if sudo -u "$APP_USER" git -C "$dest" rev-parse HEAD &>/dev/null; then
+        if git -C "$dest" rev-parse HEAD &>/dev/null; then
             log "Release $tag already cloned"
             return 0
         fi
@@ -702,6 +751,7 @@ FORCE_HTTPS=$force_https
 
 LOG_DIR=$LOGS_DIR
 BACKUPS_LOCAL_PATH=$SHARED_DIR/backups
+BAYANAT_CONFIG_FILE=$RUNTIME_DIR/config.json
 
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
@@ -717,17 +767,35 @@ _link_shared() {
 
     [[ -f "$SHARED_DIR/.env" ]] && ln -sfn "$SHARED_DIR/.env" "$release/.env"
 
-    if [[ -d "$release/enferno/media" ]] && [[ ! -L "$release/enferno/media" ]]; then
-        rm -rf "$release/enferno/media"
-    fi
-    ln -sfn "$SHARED_DIR/media" "$release/enferno/media"
+    # Releases are read-only for the services (BAY-01-032), so every
+    # app-written path is redirected into shared/.
+    local d
+    for d in media exports imports; do
+        if [[ -d "$release/enferno/$d" ]] && [[ ! -L "$release/enferno/$d" ]]; then
+            rm -rf "$release/enferno/$d"
+        fi
+        ln -sfn "$SHARED_DIR/$d" "$release/enferno/$d"
+    done
+
+    # Sentinels the app touches to request a web reload / worker restart.
+    # uWSGI watches reload.ini (touch-reload); a systemd path unit watches
+    # restart-celery. Both live in the app-writable runtime dir.
+    mkdir -p "$RUNTIME_DIR"
+    local s
+    for s in reload.ini restart-celery; do
+        touch "$RUNTIME_DIR/$s"
+        chown root:"$APP_GROUP" "$RUNTIME_DIR/$s"
+        chmod 660 "$RUNTIME_DIR/$s"
+        ln -sfn "$RUNTIME_DIR/$s" "$release/$s"
+    done
 }
 
 _install_deps() {
+    # Runs as root: releases (including .venv) are read-only for the service
+    # accounts (BAY-01-032).
     local tag="$1"
     log "Installing Python dependencies..."
-    sudo -u "$APP_USER" \
-        /usr/local/bin/uv sync --frozen --python 3.12 \
+    /usr/local/bin/uv sync --frozen --python 3.12 \
         --directory "$RELEASES_DIR/$tag"
 }
 
@@ -777,6 +845,9 @@ _bootstrap_admin() {
 }
 
 _install_uwsgi_config() {
+    # Socket lives in /run/bayanat (systemd RuntimeDirectory): the release
+    # dir is read-only for the service user (BAY-01-032). touch-reload
+    # watches the shared runtime sentinel the app can write.
     cat > "$SHARED_DIR/uwsgi-prod.ini" << EOF
 [uwsgi]
 virtualenv=.venv
@@ -784,11 +855,11 @@ module=run:app
 master=true
 processes=1
 threads=2
-http-socket=$CURRENT_LINK/bayanat.sock
+http-socket=/run/bayanat/bayanat.sock
 chmod-socket=660
 vacuum=true
 buffer-size=8192
-touch-reload=reload.ini
+touch-reload=$RUNTIME_DIR/reload.ini
 reload-mercy=5
 worker-reload-mercy=3
 EOF
@@ -801,10 +872,15 @@ Description=Bayanat web application
 After=network.target postgresql.service redis.service
 
 [Service]
-User=$APP_USER
-Group=$APP_USER
+User=$WEB_USER
+Group=$APP_GROUP
+UMask=0007
 WorkingDirectory=$CURRENT_LINK
 EnvironmentFile=$SHARED_DIR/.env
+Environment=HOME=/var/cache/bayanat-web
+CacheDirectory=bayanat-web
+RuntimeDirectory=bayanat
+RuntimeDirectoryMode=0750
 ExecStart=$CURRENT_LINK/.venv/bin/uwsgi --ini $SHARED_DIR/uwsgi-prod.ini
 Restart=always
 RestartSec=3
@@ -824,16 +900,42 @@ Description=Bayanat Celery worker
 After=network.target postgresql.service redis.service
 
 [Service]
-User=$APP_USER
-Group=$APP_USER
+User=$CELERY_USER
+Group=$APP_GROUP
+UMask=0007
 WorkingDirectory=$CURRENT_LINK
 EnvironmentFile=$SHARED_DIR/.env
-ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B -Q celery,ocr
+Environment=HOME=/var/cache/bayanat-celery
+CacheDirectory=bayanat-celery
+ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B -Q celery,ocr -s $RUNTIME_DIR/celerybeat-schedule
 Restart=always
 RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+    # Celery restart requests (BAY-01-032): the web app cannot (and must not)
+    # sudo; it touches the runtime sentinel instead and this path unit
+    # performs the restart as root.
+    cat > /etc/systemd/system/bayanat-celery-restart.path << EOF
+[Unit]
+Description=Watch for Bayanat Celery restart requests
+
+[Path]
+PathChanged=$RUNTIME_DIR/restart-celery
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    cat > /etc/systemd/system/bayanat-celery-restart.service << 'EOF'
+[Unit]
+Description=Restart Bayanat Celery worker on request
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl restart bayanat-celery.service
 EOF
 }
 
@@ -843,7 +945,7 @@ _configure_caddy() {
     if [[ "$domain" == "localhost" ]]; then
         cat > /etc/caddy/Caddyfile << 'EOF'
 :80 {
-    reverse_proxy unix//opt/bayanat/current/bayanat.sock
+    reverse_proxy unix//run/bayanat/bayanat.sock
     handle_path /static/* {
         root * /opt/bayanat/current/enferno/static
         file_server
@@ -856,7 +958,7 @@ EOF
     else
         cat > /etc/caddy/Caddyfile << EOF
 $domain {
-    reverse_proxy unix//opt/bayanat/current/bayanat.sock
+    reverse_proxy unix//run/bayanat/bayanat.sock
     handle_path /static/* {
         root * /opt/bayanat/current/enferno/static
         file_server
@@ -867,16 +969,6 @@ $domain {
 }
 EOF
     fi
-}
-
-_install_sudoers() {
-    cat > /etc/sudoers.d/bayanat << 'EOF'
-bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat status
-bayanat ALL=(root) NOPASSWD: /usr/local/bin/bayanat snapshots
-bayanat ALL=(root) NOPASSWD: /usr/bin/systemctl restart bayanat-celery
-EOF
-    chmod 440 /etc/sudoers.d/bayanat
-    visudo -cf /etc/sudoers.d/bayanat >/dev/null || die "sudoers syntax invalid"
 }
 
 _install_self() {
@@ -938,15 +1030,17 @@ cmd_install() {
 
     # System integration
     _install_uwsgi_config
-    _install_systemd
     _configure_caddy "$domain"
-    _install_sudoers
+    _install_systemd
     _install_self "$tag"
 
-    chown -R "$APP_USER:$APP_USER" "$BAYANAT_ROOT"
-    _secure_state_dir
+    # Services no longer get any sudo grant (BAY-01-032); drop the file a
+    # previous install may have written.
+    rm -f /etc/sudoers.d/bayanat
+
+    _set_permissions
     systemctl daemon-reload
-    systemctl enable --now bayanat bayanat-celery
+    systemctl enable --now bayanat bayanat-celery bayanat-celery-restart.path
     systemctl restart caddy
 
     _verify_service_health
@@ -994,11 +1088,11 @@ _verify_service_health() {
         fi
     done
 
-    # Wait for app to respond on socket
-    local sock="$CURRENT_LINK/bayanat.sock"
+    # Wait for the app's /health (DB + Redis) to go green; a bare / would
+    # pass on a redirect even when the app cannot reach its backends.
     local i
     for ((i=1; i<=retries; i++)); do
-        if curl -sf --unix-socket "$sock" http://localhost/ -o /dev/null 2>/dev/null; then
+        if _socket_health; then
             log "Application responding"
             return 0
         fi
@@ -1008,6 +1102,24 @@ _verify_service_health() {
 }
 
 # --- Update ---
+
+_ensure_runtime_layout() {
+    # Layout migration for installs that predate shared/runtime
+    # (BAY-01-030/032). New releases are root-owned, so config.json must move
+    # out of the release dir before the app loses write access to it.
+    mkdir -p "$RUNTIME_DIR" "$SHARED_DIR/exports" "$SHARED_DIR/imports"
+    local d
+    for d in "$RUNTIME_DIR" "$SHARED_DIR/exports" "$SHARED_DIR/imports"; do
+        chown root:"$APP_GROUP" "$d"
+        chmod 2770 "$d"
+    done
+    if ! grep -q '^BAYANAT_CONFIG_FILE=' "$SHARED_DIR/.env" 2>/dev/null; then
+        if [[ -f "$CURRENT_LINK/config.json" ]]; then
+            cp -p "$CURRENT_LINK/config.json" "$RUNTIME_DIR/config.json"
+        fi
+        echo "BAYANAT_CONFIG_FILE=$RUNTIME_DIR/config.json" >> "$SHARED_DIR/.env"
+    fi
+}
 
 cmd_update() {
     local flag="${1:-}"
@@ -1033,6 +1145,7 @@ cmd_update() {
     esac
     require_root
     recover_state
+    _ensure_runtime_layout
     local target="${1:-}"
     if [[ -z "$target" ]]; then
         target=$(latest_remote_tag)

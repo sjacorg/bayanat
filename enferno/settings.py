@@ -50,6 +50,11 @@ class Config(object):
             f"postgresql://{quote(POSTGRES_USER, safe='')}:{quote(POSTGRES_PASSWORD, safe='')}"
             f"@{POSTGRES_HOST}/{POSTGRES_DB}"
         )
+    elif POSTGRES_USER:
+        # Socket connection as an explicit role: peer auth plus a pg_ident
+        # map lets the per-service OS users connect as the shared app role
+        # (BAY-01-032).
+        SQLALCHEMY_DATABASE_URI = f"postgresql://{quote(POSTGRES_USER, safe='')}@/{POSTGRES_DB}"
     else:
         SQLALCHEMY_DATABASE_URI = f"postgresql:///{POSTGRES_DB}"
 

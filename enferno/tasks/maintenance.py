@@ -176,14 +176,26 @@ def reload_app():
 
 
 def restart_celery():
-    """Restart Celery worker via systemd. Requires sudoers entry.
-    Silently skips in dev mode (no systemd).
+    """Request a Celery worker restart.
+
+    Hardened deployments (BAY-01-032/033) run the services without any sudo
+    grant: the app touches a deploy-layout sentinel and a systemd path unit
+    watching it performs the restart as root. Legacy layouts without the
+    sentinel fall back to the old sudoers-based restart. Dev mode is a no-op.
     """
+    import pathlib
     import subprocess
 
+    sentinel = pathlib.Path(__file__).resolve().parents[2] / "restart-celery"
+    try:
+        if sentinel.exists():
+            sentinel.touch()
+            return
+    except OSError:
+        pass
     try:
         subprocess.Popen(
-            ["sudo", "/usr/bin/systemctl", "restart", "bayanat-celery"],
+            ["sudo", "-n", "/usr/bin/systemctl", "restart", "bayanat-celery"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
