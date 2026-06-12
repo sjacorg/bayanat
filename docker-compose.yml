@@ -1,7 +1,11 @@
 services:
   postgres:
     container_name: postgres
-    image: 'postgis/postgis:15-3.3'
+    # PG major upgrades (15 -> 16) require a dump/restore of postgres_data
+    image: 'postgis/postgis:16-3.5@sha256:a780ff6331b384e4c6d1033d5c42f4fe1270721b3e19260448241fa1b64a7637'
+    # postgis/postgis publishes amd64 only; runs emulated on ARM hosts
+    platform: linux/amd64
+    user: postgres
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -22,29 +26,34 @@ services:
 
   redis:
     container_name: redis
-    image: 'redis:latest'
+    image: 'redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99'
+    user: redis
     expose:
       - '6379'
-    command: redis-server --requirepass '${REDIS_PASSWORD}'
+    # password is read from the mounted secret, never passed via argv
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    # password is written to a config file in-container, never passed via argv
+    command: sh -c 'echo "requirepass $$REDIS_PASSWORD" > /tmp/redis.conf && exec redis-server /tmp/redis.conf'
     read_only: true
     security_opt:
       - no-new-privileges:true
+    tmpfs:
+      - /tmp
     volumes:
-      - 'redis_data:/var/lib/redis/data:rw'
+      - 'redis_data:/data:rw'
     healthcheck:
-      test: [ "CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping" ]
+      test: [ "CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG" ]
       interval: 3s
       retries: 10
 
   bayanat:
     container_name: bayanat
-    image: 'bayanat/bayanat:latest'
     build:
       context: .
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=flask
-        - ENV_FILE=${ENV_FILE:-.env.docker}
     volumes:
       - '${PWD}/backups:/app/backups/:rw'
       - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media/:rw'
@@ -72,7 +81,6 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=celery
-        - ENV_FILE=${ENV_FILE:-.env.docker}
     volumes_from:
       - bayanat
     read_only: true
@@ -93,7 +101,6 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=celery-ocr
-        - ENV_FILE=${ENV_FILE:-.env.docker}
     volumes_from:
       - bayanat
     read_only: true
@@ -112,9 +119,8 @@ services:
     restart: always
     build:
       context: ./nginx
-      target: prod
     ports:
-      - '80:80'
+      - '80:8080'
     volumes:
       - './enferno/static/:/app/static/:ro'
     depends_on:
@@ -123,11 +129,9 @@ services:
     security_opt:
       - no-new-privileges:true
     tmpfs:
-      - /opt/bitnami/nginx/tmp/
-      - /opt/bitnami/nginx/logs/
-      - /opt/bitnami/nginx/conf/bitnami/certs/
+      - /tmp
     healthcheck:
-      test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/80" ]
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz" ]
       interval: 10s
       retries: 5
 

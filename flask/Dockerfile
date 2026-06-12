@@ -1,5 +1,5 @@
 # ---- builder stage: compile python deps with uv -----------------
-FROM ghcr.io/astral-sh/uv:0.5.11-python3.12-bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:0.5.11-python3.12-bookworm-slim@sha256:096c3761e41782bdb2818381a8202153d39e0618a9e12c757a2c46327c1aa83c AS builder
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -28,7 +28,7 @@ COPY pyproject.toml uv.lock /app/
 RUN uv sync --frozen --no-install-project
 
 # ---- runtime stage -----------------------------------------------
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.12-slim-bookworm@sha256:76d4b7b6305788c6b4c6a19d6a22a3921bf802e9af4d5e1e5bd771208dba74bf AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
