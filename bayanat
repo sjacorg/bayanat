@@ -959,6 +959,34 @@ EOF
 }
 
 _install_systemd() {
+    # Sandboxing directives (BAY-01-033): no privilege escalation, read-only
+    # host filesystem outside the explicit shared/log paths, isolated tmp and
+    # devices, restricted /proc and kernel interfaces, no retained
+    # capabilities. HOME points at the per-service cache dir for libraries
+    # that write font/model caches.
+    local hardening
+    hardening="NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=$SHARED_DIR $LOGS_DIR
+PrivateTmp=true
+PrivateDevices=true
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+CapabilityBoundingSet="
+
     cat > /etc/systemd/system/bayanat.service << EOF
 [Unit]
 Description=Bayanat web application
@@ -982,6 +1010,7 @@ KillSignal=SIGQUIT
 TimeoutStopSec=10
 Type=notify
 NotifyAccess=all
+$hardening
 
 [Install]
 WantedBy=multi-user.target
@@ -1003,6 +1032,7 @@ CacheDirectory=bayanat-celery
 ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B -Q celery,ocr -s $RUNTIME_DIR/celerybeat-schedule
 Restart=always
 RestartSec=3
+$hardening
 
 [Install]
 WantedBy=multi-user.target
