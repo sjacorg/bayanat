@@ -498,7 +498,8 @@ class TestConfig:
     # Media & File Upload
     MEDIA_ALLOWED_EXTENSIONS = ["mp4", "webm", "jpg", "gif", "png", "pdf", "doc", "txt"]
     MEDIA_UPLOAD_MAX_FILE_SIZE = 1000
-    SHEETS_ALLOWED_EXTENSIONS = ["csv", "xls", "xlsx"]
+    # legacy binary .xls is unreadable by the pinned openpyxl engine; only xlsx/csv
+    SHEETS_ALLOWED_EXTENSIONS = ["csv", "xlsx"]
 
     # Data Tools
     ETL_TOOL = True
