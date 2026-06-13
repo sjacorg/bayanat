@@ -1,4 +1,3 @@
-import os
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -51,6 +50,19 @@ def isolated_session_store(app, monkeypatch):
     import fakeredis
 
     monkeypatch.setattr(app.session_interface, "client", fakeredis.FakeStrictRedis())
+
+
+@pytest.fixture(autouse=True)
+def _bypass_session_freshness(monkeypatch):
+    """Treat every test session as 'fresh'. FlaskLoginClient can't populate the
+    Flask-Security primary-auth timestamp the freshness check reads, so the
+    @fresh_auth gates (BAY-01-016) would otherwise block all privileged-endpoint
+    tests. Tests that assert freshness behaviour re-patch this to return False.
+    """
+    monkeypatch.setattr(
+        "flask_security.decorators.check_and_update_authn_fresh",
+        lambda *a, **k: True,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -172,7 +184,7 @@ def setup_db_uninitialized(uninitialized_app):
     try:
         _db.session.remove()
         _db.drop_all()
-    except Exception as e:
+    except Exception:
         pass
 
 

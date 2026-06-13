@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.0.1
+
+### Fixed
+
+- Bulk OCR: celery worker now consumes the `ocr` queue. The systemd unit written by the installer was only subscribing to the default `celery` queue, so tasks dispatched by bulk OCR (UI and `flask ocr process`) silently piled up in Redis. Single-media OCR was not affected. Existing installs can fix in place by adding `-Q celery,ocr` to `ExecStart` in `/etc/systemd/system/bayanat-celery.service`, then `systemctl daemon-reload && systemctl restart bayanat-celery`.
+
 ## v4.0.0
 
 ### Database Migrations (Alembic)

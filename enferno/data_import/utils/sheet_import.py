@@ -27,6 +27,7 @@ from enferno.extensions import db
 
 from enferno.utils.base import DatabaseException
 from enferno.utils.date_helper import DateHelper
+from enferno.utils.validation_utils import sanitize_string
 from enferno.user.models import Role, User
 import enferno.utils.typing as t
 
@@ -144,7 +145,7 @@ class SheetImport:
             - A dictionary containing the columns and the head of the file.
         """
         # read the file partially only for parsing purposes
-        df = pd.read_csv(filepath, keep_default_na=False)
+        df = pd.read_csv(filepath, keep_default_na=False, on_bad_lines="skip", index_col=False)
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
 
@@ -165,11 +166,13 @@ class SheetImport:
         Returns:
             - A dictionary containing the columns and the head of the file.
         """
-        df = pd.read_excel(filepath, sheet_name=sheet)
+        df = pd.read_excel(filepath, sheet_name=sheet, engine="openpyxl")
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
 
-        columns = df.columns.to_list()
+        # XLSX preserves numeric header cells as numeric column labels; coerce so the
+        # API contract (list[str]) holds regardless of header cell types.
+        columns = [str(c) for c in df.columns]
         # drop nan values before generating head rows
         df.fillna("", inplace=True)
         head = df.head().to_dict()
@@ -187,7 +190,7 @@ class SheetImport:
         Returns:
             - A list of the sheet names in the Excel file.
         """
-        xls = pd.ExcelFile(filepath)
+        xls = pd.ExcelFile(filepath, engine="openpyxl")
         return xls.sheet_names
 
     @staticmethod
@@ -202,8 +205,8 @@ class SheetImport:
         Returns:
             - A DataFrame containing the parsed data.
         """
-        if sheet:
-            df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False)
+        if isinstance(sheet, (str, int)):
+            df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False, engine="openpyxl")
         else:
             df = pd.read_csv(filepath, keep_default_na=False)
 
@@ -554,7 +557,7 @@ class SheetImport:
             description += "\n"
 
         if description:
-            self.actor_profile.description = description
+            self.actor_profile.description = sanitize_string(description)
             if old_description:
                 self.actor_profile.description += old_description
         self.data_import.add_to_log("Processed description")
@@ -707,7 +710,10 @@ class SheetImport:
             None
         """
         self.data_import.add_to_log(f"Field value mismatch {field}.\n Appending to description.")
-        self.actor_profile.description += f"</p>\n<p>{field}: {str(value)}"
+        # Sanitize untrusted field/value before the v-html sink (BAY-01-039).
+        self.actor_profile.description += (
+            f"</p>\n<p>{sanitize_string(str(field))}: {sanitize_string(str(value))}"
+        )
 
     def gen_value(self, field: str) -> None:
         """

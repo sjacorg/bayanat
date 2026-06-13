@@ -18,9 +18,14 @@ def pg_dump(filepath):
     host = Config.get("POSTGRES_HOST")
     password = Config.get("POSTGRES_PASSWORD")
 
-    # localhost with no password set
+    # localhost with no password set: socket connection with peer auth. Pass
+    # the role explicitly; the service OS user maps to it via pg_ident
+    # (BAY-01-032).
     if host == "localhost" and not password:
         cmd = ["pg_dump", "-Fc", db, "-f", filepath]
+        user = Config.get("POSTGRES_USER")
+        if user:
+            cmd += ["-U", user]
         return check_output(cmd, timeout=PG_DUMP_TIMEOUT)
 
     cmd = [

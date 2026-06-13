@@ -64,16 +64,13 @@ def process_media_extraction_task(
                 _save_failed_extraction(media_id, "DOCX extraction failed")
                 return {"success": False, "media_id": media_id, "error": "DOCX extraction failed"}
         elif ext == "pdf":
-            page_images = pdf_to_images(file_bytes)
+            # Cap rasterization at the OCR page limit so a crafted high-page-count
+            # PDF can't exhaust resources before the limit applies (BAY-01-023).
+            max_pages = current_app.config.get("PDF_OCR_MAX_PAGES", 20)
+            page_images = pdf_to_images(file_bytes, max_pages=max_pages)
             if not page_images:
                 _save_failed_extraction(media_id, "PDF conversion failed")
                 return {"success": False, "media_id": media_id, "error": "PDF conversion failed"}
-
-            max_pages = current_app.config.get("PDF_OCR_MAX_PAGES", 20)
-            total_pages = len(page_images)
-            if total_pages > max_pages:
-                logger.warning(f"PDF {media_id} has {total_pages} pages, truncating to {max_pages}")
-                page_images = page_images[:max_pages]
 
             page_results = [extract_text(img, hints) for img in page_images]
             page_results = [r for r in page_results if r is not None]

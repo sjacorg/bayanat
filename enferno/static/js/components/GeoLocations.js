@@ -129,7 +129,7 @@ const GeoLocations = Vue.defineComponent({
                         {{ loc.lat.toFixed(4) }} , {{ loc.lng.toFixed(4) }}
                       </div>
 
-                      <div v-if="loc.comment" class="comments pa-3 mt-2" v-html="loc.comment">
+                      <div v-if="loc.comment" class="comments pa-3 mt-2" v-text="loc.comment">
 
                       </div>
 

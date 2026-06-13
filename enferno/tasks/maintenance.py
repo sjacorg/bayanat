@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-import subprocess
 from datetime import date, datetime, timedelta, timezone
 
 import requests
-from packaging.version import Version
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import Activity, Location
@@ -45,16 +43,6 @@ def _current_version() -> str:
         return "0.0.0"
 
 
-def _is_patch_bump(current: str, target: str) -> bool:
-    try:
-        c, t = Version(current), Version(target)
-    except Exception:
-        return False
-    if t <= c:
-        return False
-    return c.major == t.major and c.minor == t.minor
-
-
 @celery.task
 def check_for_updates():
     """Poll GitHub releases. Cache latest. Notify admins on new tag. Optionally auto-apply patch."""
@@ -86,21 +74,6 @@ def check_for_updates():
         return
     if _redis_get_str(UPDATE_NOTIFIED_KEY) == latest_tag:
         return
-
-    auto_apply = bool(getattr(cfg, "AUTO_APPLY_PATCH_UPDATES", False))
-
-    if auto_apply and _is_patch_bump(current, latest_tag):
-        logger.info(f"auto-applying patch update {current} -> {latest_tag}")
-        try:
-            subprocess.run(
-                ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"],
-                check=True,
-                timeout=10,
-            )
-            rds.set(UPDATE_NOTIFIED_KEY, latest_tag)
-            return
-        except Exception as e:
-            logger.warning(f"auto-apply failed, falling back to notification: {e}")
 
     Notification.create_for_admins(
         title=f"Update available: {latest_tag}",
@@ -203,14 +176,26 @@ def reload_app():
 
 
 def restart_celery():
-    """Restart Celery worker via systemd. Requires sudoers entry.
-    Silently skips in dev mode (no systemd).
+    """Request a Celery worker restart.
+
+    Hardened deployments (BAY-01-032/033) run the services without any sudo
+    grant: the app touches a deploy-layout sentinel and a systemd path unit
+    watching it performs the restart as root. Legacy layouts without the
+    sentinel fall back to the old sudoers-based restart. Dev mode is a no-op.
     """
+    import pathlib
     import subprocess
 
+    sentinel = pathlib.Path(__file__).resolve().parents[2] / "restart-celery"
+    try:
+        if sentinel.exists():
+            sentinel.touch()
+            return
+    except OSError:
+        pass
     try:
         subprocess.Popen(
-            ["sudo", "/usr/bin/systemctl", "restart", "bayanat-celery"],
+            ["sudo", "-n", "/usr/bin/systemctl", "restart", "bayanat-celery"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

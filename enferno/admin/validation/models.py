@@ -1902,7 +1902,6 @@ class FullConfigValidationModel(ConfigValidationModel):
     SECURITY_FRESHNESS: int = Field(gt=0)
     SECURITY_FRESHNESS_GRACE_PERIOD: int = Field(ge=0)
     DISABLE_MULTIPLE_SESSIONS: bool
-    AUTO_APPLY_PATCH_UPDATES: bool = False
     RECAPTCHA_ENABLED: bool
     RECAPTCHA_PUBLIC_KEY: Optional[str] = None
     RECAPTCHA_PRIVATE_KEY: Optional[str] = None
@@ -2086,7 +2085,11 @@ class WebImportValidationModel(StrictValidationModel):
         if domain.startswith("www."):
             domain = domain[4:]
         allowed_domains = Config.get("YTDLP_ALLOWED_DOMAINS")
-        if not any(domain.endswith(allowed) for allowed in allowed_domains):
+        # Match the registered domain or a real subdomain, not any suffix
+        # (BAY-01-014): plain endswith let "evilyoutube.com" pass "youtube.com".
+        if not any(
+            domain == allowed or domain.endswith("." + allowed) for allowed in allowed_domains
+        ):
             raise ValueError(f"Imports not allowed from {domain}")
 
         return str(v)

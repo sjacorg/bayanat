@@ -5,7 +5,6 @@ const UpdateBanner = Vue.defineComponent({
       latest: null,
       releaseNotesUrl: null,
       dialog: false,
-      starting: false,
     };
   },
   computed: {
@@ -32,23 +31,6 @@ const UpdateBanner = Vue.defineComponent({
         // silent: background poll should never spam the UI
       }
     },
-    async startUpdate() {
-      this.starting = true;
-      try {
-        await axios.post('/admin/api/updates/start');
-        this.dialog = false;
-        this.$emit('update-started');
-      } catch (e) {
-        const msg = (e?.response?.data?.message) || 'Failed to start update';
-        if (this.$root && typeof this.$root.showSnack === 'function') {
-          this.$root.showSnack(msg, 'error');
-        } else {
-          console.error(msg);
-        }
-      } finally {
-        this.starting = false;
-      }
-    },
   },
   template: `
     <v-chip
@@ -70,17 +52,13 @@ const UpdateBanner = Vue.defineComponent({
               <a :href="releaseNotesUrl" target="_blank" rel="noopener">Release notes</a>
             </p>
             <v-alert type="info" variant="tonal" density="compact" class="mt-3">
-              The update will take about 60 seconds. The app will be briefly
-              unavailable. A pre-update database snapshot will be taken
-              automatically.
+              To update, run this on the server as an administrator:
+              <pre class="mt-2 mb-0"><code>sudo bayanat update {{ latest }}</code></pre>
             </v-alert>
           </v-card-text>
           <v-card-actions>
             <v-spacer />
-            <v-btn variant="text" @click="dialog = false">Cancel</v-btn>
-            <v-btn color="primary" :loading="starting" @click="startUpdate">
-              Update now
-            </v-btn>
+            <v-btn variant="text" @click="dialog = false">Close</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

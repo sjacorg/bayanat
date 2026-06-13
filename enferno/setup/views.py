@@ -8,11 +8,10 @@ from flask import (
     Response,
     current_app,
 )
-from flask_security import hash_password, login_user, roles_required, current_user
+from flask_security import auth_required, roles_required, current_user
 
 from enferno.admin.models import Eventtype, PotentialViolation, ClaimedViolation
-from enferno.extensions import db
-from enferno.user.models import User, Role
+from enferno.user.models import User
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import import_default_data
 from enferno.utils.http_response import HTTPResponse
@@ -30,15 +29,19 @@ def check_installation() -> bool:
 
 @bp_setup.before_app_request
 def handle_installation_check() -> Optional[Response]:
-    """Redirect to setup wizard if the app is not installed."""
+    """Redirect to setup wizard if the app is not installed.
+
+    The admin user is created out-of-band by the installer's CLI
+    bootstrap (`flask install`), not by this blueprint, so the wizard
+    requires authentication. Pre-auth flow paths are exempted so the
+    operator can sign in.
+    """
     excluded_paths = [
         "/setup_wizard",
         "/static",
         "/assets",
         "/_debug_toolbar",
         "/favicon.ico",
-        "/api/create-admin",
-        "/api/check-admin",
         "/api/default-config",
         "/api/import-data",
         "/api/check-data-imported",
@@ -49,17 +52,13 @@ def handle_installation_check() -> Optional[Response]:
         "/admin/api/reload",
         "/fs-static",
         "/health",
-    ]
-    login_flow_paths = [
         "/login",
         "/wan-signin",
         "/tf-validate",
         "/tf-select",
+        "/auth",
+        "/logout",
     ]
-
-    # Add /login to excluded paths if users exist
-    if User.query.first() is not None:
-        excluded_paths.extend(login_flow_paths)
 
     if not any(request.path.startswith(path) for path in excluded_paths):
         if check_installation():
@@ -67,53 +66,12 @@ def handle_installation_check() -> Optional[Response]:
 
 
 @bp_setup.route("/setup_wizard")
+@auth_required("session")
 def setup_wizard() -> str:
-    """Render the setup wizard template."""
+    """Render the setup wizard template (admin-only post-install)."""
+    if not current_user.has_role("Admin"):
+        return redirect("/")
     return render_template("setup_wizard.html")
-
-
-@bp_setup.post("/api/create-admin")
-def create_admin() -> Any:
-    """Create an admin user if one doesn't exist."""
-    admin_role = Role.query.filter(Role.name == "Admin").first()
-
-    if admin_role.users.all():
-        return HTTPResponse.error("Admin user already exists")
-
-    data = request.json
-    username = data.get("username")
-    password = data.get("password")
-
-    if not username or not password:
-        return HTTPResponse.error("Username and password are required")
-
-    if User.query.filter(User.username == username.lower()).first():
-        return HTTPResponse.error("Username already exists")
-
-    new_admin = User(username=username, password=hash_password(password), active=1, name="Admin")
-    new_admin.roles.append(admin_role)
-
-    db.session.add(new_admin)
-    try:
-        db.session.commit()
-        login_user(new_admin)
-        return HTTPResponse.created(
-            message="Admin user installed successfully",
-            data={"item": new_admin.to_dict()},
-        )
-    except Exception:
-        db.session.rollback()
-        return HTTPResponse.error("Failed to create admin user", status=500)
-
-
-@bp_setup.get("/api/check-admin")
-def check_admin() -> Dict[str, str]:
-    """Check if an admin user exists."""
-    admin_role = Role.query.filter(Role.name == "Admin").first()
-    if admin_role and admin_role.users.first():
-        return HTTPResponse.success(data={"status": "exists"}, message="Admin user already exists")
-    else:
-        return HTTPResponse.success(data={"status": "not_found"}, message="No admin user found")
 
 
 @bp_setup.post("/api/import-data")

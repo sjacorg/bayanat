@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Response, request
+from flask import Response, current_app, request
 from flask.templating import render_template
 from flask_babel import gettext
-from flask_security.decorators import auth_required, current_user, roles_required
+from flask_security.decorators import current_user, roles_required
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import (
@@ -23,11 +23,11 @@ from enferno.admin.validation.models import ConfigRequestModel
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.validation_utils import validate_with
-from . import admin, PER_PAGE
+from . import admin, PER_PAGE, fresh_auth
 
 
 @admin.get("/system-administration/")
-@auth_required(within=15, grace=0)
+@fresh_auth
 @roles_required("Admin")
 def system_admin() -> str:
     """Endpoint for system administration."""
@@ -76,6 +76,7 @@ def api_config() -> str:
 
 
 @admin.put("/api/configuration/")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(ConfigRequestModel)
 def api_config_write(
@@ -107,6 +108,7 @@ def api_config_write(
 
 
 @admin.post("/api/reload/")
+@fresh_auth
 @roles_required("Admin")
 def api_app_reload() -> Response:
     """
@@ -187,7 +189,7 @@ def get_data(table: str) -> list[dict[str, Any]] | list[dict[str, dict[str, Any 
 
 
 import json
-import subprocess
+import time
 from pathlib import Path
 
 from enferno.extensions import rds
@@ -233,31 +235,8 @@ def api_updates_available() -> Response:
     return HTTPResponse.success(data=payload)
 
 
-@admin.post("/api/updates/start")
-@auth_required(within=15, grace=0)
-@roles_required("Admin")
-def api_updates_start() -> Response:
-    """Launch `bayanat update` out-of-process via the sudoers-granted wrapper.
-
-    Fresh-auth required (within 15 min) to limit stale-cookie exposure: a
-    compromised admin session cannot trigger a privileged update without a
-    recent password prompt.
-    """
-    try:
-        subprocess.run(
-            ["sudo", "-n", "/usr/local/sbin/bayanat-start-update"],
-            check=True,
-            timeout=10,
-        )
-    except subprocess.TimeoutExpired:
-        return HTTPResponse.error("Update start timed out", status=504)
-    except subprocess.CalledProcessError as e:
-        return HTTPResponse.error(f"Failed to start update: {e}", status=500)
-    return HTTPResponse.success(data={"status": "started"})
-
-
 @admin.get("/snapshots/")
-@auth_required(within=15, grace=0)
+@fresh_auth
 @roles_required("Admin")
 def snapshots_page() -> str:
     """Render the snapshots list page."""
@@ -267,24 +246,30 @@ def snapshots_page() -> str:
 @admin.get("/api/snapshots/")
 @roles_required("Admin")
 def api_snapshots() -> Response:
-    """List pre-update snapshots by shelling `bayanat snapshots`."""
-    try:
-        out = subprocess.run(
-            ["sudo", "-n", "/usr/local/bin/bayanat", "snapshots"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        ).stdout
-    except subprocess.TimeoutExpired:
-        return HTTPResponse.error("Listing snapshots timed out", status=504)
-    except subprocess.CalledProcessError as e:
-        return HTTPResponse.error(f"Failed to list snapshots: {e}", status=500)
+    """List pre-update snapshots from the backups directory.
+
+    Reads the directory the updater writes snapshots into instead of shelling
+    `sudo bayanat snapshots`, so the service account needs no sudo grant
+    (BAY-01-032).
+    """
+    backups = Path(current_app.config.get("BACKUPS_LOCAL_PATH", ""))
     items = []
-    for line in out.strip().splitlines()[1:]:  # skip header row
-        parts = line.split()
-        if len(parts) >= 3:
-            items.append({"name": parts[0], "size": parts[1], "age": parts[2]})
+    if backups.is_dir():
+        now = time.time()
+        for p in sorted(backups.glob("pre-*.dump"), key=lambda p: p.stat().st_mtime, reverse=True):
+            st = p.stat()
+            size = st.st_size
+            for unit in ("B", "K", "M", "G", "T"):
+                if size < 1024:
+                    break
+                size /= 1024
+            items.append(
+                {
+                    "name": p.name,
+                    "size": f"{size:.0f}{unit}",
+                    "age": f"{int((now - st.st_mtime) // 3600)}h",
+                }
+            )
     return HTTPResponse.success(data=items)
 
 
