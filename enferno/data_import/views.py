@@ -335,7 +335,8 @@ def api_xls_analyze() -> Response:
         return HTTPResponse.error("Invalid file path", status=400)
 
     sheet = request.json.get("sheet")
-    if not isinstance(sheet, (str, int)):
+    # bool is an int subclass, so exclude it explicitly
+    if isinstance(sheet, bool) or not isinstance(sheet, (str, int)):
         return HTTPResponse.error("Missing or invalid `sheet` value", status=417)
 
     result = SheetImport.parse_excel(filepath, sheet)
@@ -458,6 +459,9 @@ def api_process_sheet() -> Response:
     map = request.json.get("map")
     vmap = request.json.get("vmap")
     sheet = request.json.get("sheet")
+    # sheet is optional (CSV has none), but bool/list/etc. would crash the parser
+    if sheet is not None and (isinstance(sheet, bool) or not isinstance(sheet, (str, int))):
+        return HTTPResponse.error("Invalid `sheet` value", status=417)
     lang = request.json.get("lang", "en")
     actor_config = request.json.get("actorConfig")
     roles = request.json.get("roles")
