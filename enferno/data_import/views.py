@@ -455,6 +455,8 @@ def api_process_sheet() -> Response:
         - success if save is successful, error otherwise.
     """
     files = request.json.get("files")
+    if not isinstance(files, list) or not files:
+        return HTTPResponse.error("Missing `files` array", status=417)
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
     map = request.json.get("map")
     vmap = request.json.get("vmap")
