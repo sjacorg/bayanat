@@ -951,12 +951,13 @@ def api_ocr_bulk():
     ocr_ext = current_app.config.get("OCR_EXT", [])
     ext_filters = [Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext] if ocr_ext else []
 
-    # Build media ID list
+    # Build media ID list. Every path is scoped to the caller's access via
+    # _apply_media_access_filter so a non-admin can't OCR restricted items.
     if process_all and not media_ids:
         stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None))
         if ext_filters:
             stmt = stmt.where(or_(*ext_filters))
-        stmt = stmt.limit(limit)
+        stmt = _apply_media_access_filter(stmt).limit(limit)
         media_ids = list(db.session.scalars(stmt))
     elif bulletin_id and not media_ids:
         stmt = (
@@ -967,7 +968,11 @@ def api_ocr_bulk():
         )
         if ext_filters:
             stmt = stmt.where(or_(*ext_filters))
-        stmt = stmt.limit(limit)
+        stmt = _apply_media_access_filter(stmt).limit(limit)
+        media_ids = list(db.session.scalars(stmt))
+    elif media_ids:
+        # explicit list: drop any the caller can't access
+        stmt = _apply_media_access_filter(select(Media.id).where(Media.id.in_(media_ids)))
         media_ids = list(db.session.scalars(stmt))
 
     if not media_ids:
