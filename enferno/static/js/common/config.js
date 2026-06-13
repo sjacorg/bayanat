@@ -118,6 +118,18 @@ function isValidLength(value, limit, type) {
     return type === "max" ? length <= limit : length >= limit;
 }
 
+function escapeHtml(value) {
+  const entityMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+
+  return String(value ?? '').replace(/[&<>"']/g, char => entityMap[char]);
+}
+
 function scrollToFirstError() {
   const wrapper = document.querySelector(".v-input--error");
   if (!wrapper) return;
@@ -365,8 +377,8 @@ function getInfraMessage(status) {
       return Object.entries(errors).map(([field, message]) => {
         const fieldName = field.startsWith('item.') ? field.slice(5) : field;
         const label = fieldName.includes('__root__') ? 'Validation Error' : fieldName;
-        return `<span class="font-weight-bold text-red">[${label}]</span>: ${message}`;
-      }).join('<br />') || 'An error occurred.';
+        return `[${label}]: ${message}`;
+      }).join('\n') || 'An error occurred.';
     }
 
     if (response?.data?.message) {

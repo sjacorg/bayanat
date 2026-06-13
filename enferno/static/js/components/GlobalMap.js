@@ -75,38 +75,38 @@ const GlobalMap = Vue.defineComponent({
 
       // Dates
       const dates = [];
-      if (loc.from_date) dates.push(`<span class="chip">${this.$root.formatDate(loc.from_date, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime)}</span>`);
+      if (loc.from_date) dates.push(`<span class="chip">${escapeHtml(this.$root.formatDate(loc.from_date, loc.from_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime))}</span>`);
       if (loc.from_date && loc.to_date) dates.push(`<i class="mdi mdi-arrow-right mr-1">`);
-      if (loc.to_date) dates.push(`<span></i>${this.$root.formatDate(loc.to_date, loc.to_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime)}</span>`);
+      if (loc.to_date) dates.push(`<span></i>${escapeHtml(this.$root.formatDate(loc.to_date, loc.to_date.includes('T00:00') ? this.$root.dateFormats.standardDate : this.$root.dateFormats.standardDatetime))}</span>`);
 
       const estimated = loc.estimated
-        ? `<i class="mdi mdi-calendar-question mr-1" title="${t.timingForThisEventIsEstimated_}"></i>`
+        ? `<i class="mdi mdi-calendar-question mr-1" title="${escapeHtml(t.timingForThisEventIsEstimated_)}"></i>`
         : '<i class="mdi mdi-calendar-clock mr-1"></i>';
 
       const dateRange = dates.length ? `<div class="d-flex">${estimated} ${dates.join(' ')}</div>` : '';
 
-      const parentId = loc?.parentId && loc?.show_parent_id ? `<div><i class="mdi mdi-link mr-1"></i>${loc.parentId}</div>` : '';
+      const parentId = loc?.parentId && loc?.show_parent_id ? `<div><i class="mdi mdi-link mr-1"></i>${escapeHtml(loc.parentId)}</div>` : '';
 
       // Copy button using data-copy instead of onclick
       const copyCoordsBtn = (Number.isFinite(loc.lat) && Number.isFinite(loc.lng))
-        ? `<button type="button" class="ml-1" title="${t.copyCoordinates_}" data-copy="${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}">
+        ? `<button type="button" class="ml-1" title="${escapeHtml(t.copyCoordinates_)}" data-copy="${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}">
             <i class="mdi mdi-content-copy" aria-hidden="true"></i>
           </button>`
         : '';
 
-      const eventType = loc.eventtype ? `<div class="d-flex align-center"><i class="mdi mdi-calendar-range mr-1"></i>${loc.eventtype || ''}</div>` : '';
+      const eventType = loc.eventtype ? `<div class="d-flex align-center"><i class="mdi mdi-calendar-range mr-1"></i>${escapeHtml(loc.eventtype)}</div>` : '';
 
-      const locNumber = loc.number ? `<div class="d-flex align-center">#${loc.number || ''}</div>` : '';
+      const locNumber = loc.number ? `<div class="d-flex align-center">#${escapeHtml(loc.number)}</div>` : '';
 
       const html = `<div class="popup-content d-flex flex-column ga-1">
         <div class="d-flex ga-2">${locNumber} ${parentId} ${eventType}</div>
-        <h4>${loc.title || ''}</h4>
+        <h4>${escapeHtml(loc.title)}</h4>
         <div class="d-flex align-center">
           <i class="mdi mdi-map-marker-outline mr-1"></i>
-          ${loc.full_string || ''}
+          ${escapeHtml(loc.full_string)}
           ${copyCoordsBtn}
         </div>
-        ${loc.main ? `<div>${t.mainIncident_}</div>` : ''}
+        ${loc.main ? `<div>${escapeHtml(t.mainIncident_)}</div>` : ''}
         ${dateRange}
       </div>`;
 
