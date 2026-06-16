@@ -781,7 +781,9 @@ def api_extraction_update(extraction_id: int):
     media = Media.query.get(extraction.media_id)
     if not media:
         return HTTPResponse.not_found("Parent media not found")
-    if not current_user.can_access(media):
+    # Editing extracted text mutates the item: require the assignment edit
+    # boundary, not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     data = request.json or {}
@@ -844,7 +846,9 @@ def api_media_orientation(id: int):
     if not media:
         return HTTPResponse.not_found("Media not found")
 
-    if not current_user.can_access(media):
+    # Rotating media mutates the item: require the assignment edit boundary,
+    # not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     data = request.json or {}
@@ -907,7 +911,9 @@ def api_ocr_process(media_id: int):
     media = db.session.get(Media, media_id)
     if not media:
         return HTTPResponse.not_found("Media not found")
-    if not current_user.can_access(media):
+    # Running OCR writes the item's extraction: require the assignment edit
+    # boundary, not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     result = process_media_extraction_task(media_id, force=True)
