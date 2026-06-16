@@ -43,6 +43,15 @@ and wait for a manual click.
 Caddy returns `502 Bad Gateway` during the maintenance window. Browsers
 retry automatically; partners see a brief "service unavailable" view.
 
+## Release verification
+
+The updater downloads each release as a signed tarball and verifies it against
+SJAC's pinned minisign key before installing (BAY-01-017). An unsigned or
+tampered release is refused during PREPARE with `Release <tag> is unsigned` or
+`Signature verification FAILED`, and nothing is installed. If you hit this on a
+legitimate release, the release is missing its `.minisig` asset; see
+[release-signing.md](release-signing.md).
+
 ## If something goes wrong
 
 ### Migration failed (Alembic transaction rolled back)

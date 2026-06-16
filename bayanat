@@ -13,6 +13,12 @@ readonly LOGS_DIR="$BAYANAT_ROOT/logs"
 readonly CURRENT_LINK="$BAYANAT_ROOT/current"
 readonly DEFAULT_REPO="sjacorg/bayanat"
 readonly GIT_URL="https://github.com/${BAYANAT_REPO:-$DEFAULT_REPO}.git"
+# Pinned SJAC release-signing key (BAY-01-017). Release tarballs are verified
+# against this minisign public key before install; an unsigned or mismatched
+# tarball is refused. Baked into this root-owned script so it cannot be swapped
+# at update time. Rotation needs a fresh install or a documented manual swap
+# (minisign has no revocation); see docs/deployment/release-signing.md.
+readonly RELEASE_PUBKEY="RWS7XvDVF0InHWTCh/86K8sXGcHU/PmzCl4uH9GUDjNnNzHhcX1BvGqZ"
 # Service accounts (BAY-01-032): web and worker run as separate system users.
 # $APP_USER remains the deploy/database identity (PG role name, peer auth for
 # admin operations) and the shared group that grants read access to releases.
@@ -487,7 +493,7 @@ do_prepare() {
     [[ "$target" != "$current" ]] || die "already on $target"
     log "PREPARE: fetching $target"
     update_preflight
-    _clone_release "$target"
+    _fetch_release "$target"
     _install_deps "$target"
     _link_shared "$target"
     acquire_lock
@@ -594,7 +600,8 @@ _install_system_packages() {
         git postgresql postgresql-contrib postgis redis-server \
         python3 python3-dev build-essential \
         libpq-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev \
-        libjpeg-dev libzip-dev libimage-exiftool-perl ffmpeg curl wget jq
+        libjpeg-dev libzip-dev libimage-exiftool-perl ffmpeg curl wget jq \
+        minisign
 }
 
 _install_uv() {
@@ -791,24 +798,47 @@ _set_permissions() {
     _secure_state_dir
 }
 
-_clone_release() {
+# Fetch a release as a signed tarball and verify it before install (BAY-01-017).
+# Replaces the old unsigned `git clone`: an unsigned or tampered release is
+# refused, so a reachable update trigger can at worst install authentic SJAC
+# code. SJAC attaches `bayanat-<tag>.tar.gz` + `.minisig` to each GitHub
+# release; the signing procedure is in docs/deployment/release-signing.md.
+_fetch_release() {
     local tag="$1"
     local dest="$RELEASES_DIR/$tag"
+    local asset="bayanat-$tag.tar.gz"
+    local url="https://github.com/${BAYANAT_REPO:-$DEFAULT_REPO}/releases/download/$tag/$asset"
 
-    if [[ -d "$dest/.git" ]]; then
-        if git -C "$dest" rev-parse HEAD &>/dev/null; then
-            log "Release $tag already cloned"
-            return 0
-        fi
-        warn "Partial clone detected, removing $dest"
-        rm -rf "$dest"
-    elif [[ -d "$dest" ]]; then
-        warn "Invalid release directory, removing $dest"
-        rm -rf "$dest"
+    # A complete release is marked done; anything else is a partial fetch.
+    if [[ -f "$dest/.bayanat-release" ]]; then
+        log "Release $tag already fetched"
+        return 0
     fi
+    rm -rf "$dest"
 
-    log "Cloning $tag..."
-    git clone --depth 1 --branch "$tag" "$GIT_URL" "$dest"
+    local tmp
+    tmp=$(mktemp -d)
+
+    log "Downloading $tag..."
+    curl -fsSL --max-time 300 -o "$tmp/$asset" "$url" \
+        || die "Could not download $asset from the $tag release" \
+               "Confirm the release exists and ships a signed tarball asset."
+    curl -fsSL --max-time 60 -o "$tmp/$asset.minisig" "$url.minisig" \
+        || die "Release $tag is unsigned (no $asset.minisig)" \
+               "Refusing to install unverified code. Update manually only if you trust this release."
+
+    log "Verifying signature against the SJAC release key..."
+    minisign -Vm "$tmp/$asset" -P "$RELEASE_PUBKEY" \
+        || die "Signature verification FAILED for $tag" \
+               "The tarball does not match SJAC's signing key. Refusing to install."
+
+    log "Extracting $tag..."
+    mkdir -p "$dest"
+    tar -xzf "$tmp/$asset" --strip-components=1 -C "$dest" \
+        || die "Failed to extract $asset"
+    touch "$dest/.bayanat-release"
+    rm -rf "$tmp"
+
     # Releases are root-owned and read-only for the service accounts
     # (BAY-01-030/032): group gets read+exec via $APP_GROUP, no write, and
     # "other" is locked out.
@@ -886,7 +916,7 @@ _install_deps() {
     log "Installing Python dependencies..."
     /usr/local/bin/uv sync --frozen --python 3.12 \
         --directory "$RELEASES_DIR/$tag"
-    # The venv is created after _clone_release's ownership pass, so it needs
+    # The venv is created after _fetch_release's ownership pass, so it needs
     # its own: group-readable for the service accounts, not writable.
     chown -R root:"$APP_GROUP" "$RELEASES_DIR/$tag/.venv"
     chmod -R o-rwx,g-w "$RELEASES_DIR/$tag/.venv"
@@ -1134,7 +1164,7 @@ cmd_install() {
     [[ -n "$tag" ]] || die "No release tags found"
     log "Latest release: $tag"
 
-    _clone_release "$tag"
+    _fetch_release "$tag"
 
     if [[ ! -f "$SHARED_DIR/.env" ]]; then
         log "Generating .env..."
@@ -1275,7 +1305,7 @@ cmd_update() {
         target=$(latest_remote_tag)
     fi
     # Keep $target verbatim. Tags and release dir names use the v-prefix form
-    # (e.g. v4.0.0), matching the installer's convention in _clone_release and
+    # (e.g. v4.0.0), matching the installer's convention in _fetch_release and
     # _link_shared. Stripping is only for display / comparison.
     do_prepare "$target"
     do_migrate
