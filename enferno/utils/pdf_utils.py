@@ -26,8 +26,11 @@ def _safe_url_fetcher(url: str):
             return default_url_fetcher(url)
         raise ValueError(f"PDF export: blocked file URL outside app root: {url}")
     if parsed.scheme in ("http", "https"):
-        base = current_app.config.get("BASE_URL") or ""
-        if base and url.startswith(base):
+        # Match scheme + host exactly. A startswith() prefix check would let
+        # https://<base-host>.evil/ through when BASE_URL has no trailing
+        # slash (BAY-01-025).
+        base = urlparse(current_app.config.get("BASE_URL") or "")
+        if base.netloc and parsed.scheme == base.scheme and parsed.netloc == base.netloc:
             return default_url_fetcher(url)
         raise ValueError(f"PDF export: blocked external URL: {url}")
     raise ValueError(f"PDF export: blocked URL scheme: {url}")
