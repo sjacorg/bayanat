@@ -54,6 +54,30 @@ const MediaRedactor = Vue.defineComponent({
     canSubmit() {
       return Object.values(this.boxes).some(pageBoxes => pageBoxes.length);
     },
+    orientation() {
+      return this.media?.orientation || 0;
+    },
+    imageStyle() {
+      return (page) => {
+        const o = this.orientation;
+        if ((o === 90 || o === 270) && page.width && page.height) {
+          // Container: width=CW, height=CW*(W/H) (swapped aspect-ratio H/W).
+          // Image pre-rotation must be W×H to visually fill CW×(CW*W/H) after rotating.
+          // width as % of CW: W/H * 100%
+          // height as % of containerHeight (CW*W/H): need CW → CW/(CW*W/H) = H/W → (H/W)*100%
+          return {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: `${(page.width / page.height) * 100}%`,
+            height: `${(page.height / page.width) * 100}%`,
+            objectFit: 'fill',
+            transform: `translate(-50%, -50%) rotate(${o}deg)`,
+          };
+        }
+        return { transform: `rotate(${o}deg)`, width: '100%' };
+      };
+    },
   },
 
   watch: {
@@ -474,7 +498,7 @@ const MediaRedactor = Vue.defineComponent({
               v-for="page in pages"
               :key="page.index"
               class="position-relative bg-white elevation-2"
-              :style="{ width: '100%', lineHeight: 0, userSelect: 'none', aspectRatio: page.width + ' / ' + page.height }"
+              :style="{ width: '100%', lineHeight: 0, userSelect: 'none', aspectRatio: (orientation === 90 || orientation === 270) ? page.height + ' / ' + page.width : page.width + ' / ' + page.height }"
               :ref="'page-' + page.index"
               @mousedown.prevent="activeBox = null; startBox(page.index, $event)"
               @mousemove.prevent="moveBox(page.index, $event)"
@@ -489,8 +513,9 @@ const MediaRedactor = Vue.defineComponent({
               <img
                 v-else
                 :src="src"
-                class="w-100 d-block"
+                class="d-block"
                 draggable="false"
+                :style="imageStyle(page)"
                 @load="page.width = $event.target.naturalWidth; page.height = $event.target.naturalHeight"
               >
 
