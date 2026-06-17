@@ -32,7 +32,7 @@ from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, redact_pdf_bytes
+from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, redact_pdf_bytes, rotate_rect_to_original
 from enferno.utils.text_utils import normalize_arabic
 from enferno.utils.validation_utils import validate_with
 from enferno.admin.validation.models import MediaRequestModel
@@ -704,7 +704,12 @@ def api_media_redact(id: int) -> Response:
             out_ext = "pdf"
             out_type = "application/pdf"
         elif ext in {"jpg", "jpeg", "png"} or (media.media_file_type or "").startswith("image/"):
-            rects = [rect for page in pages for rect in page.get("rects", [])]
+            orientation = media.orientation or 0
+            rects = [
+                rotate_rect_to_original(rect, orientation)
+                for page in pages
+                for rect in page.get("rects", [])
+            ]
             out = redact_image_bytes(src, rects)
             out_ext = "jpg"
             out_type = "image/jpeg"
@@ -755,6 +760,7 @@ def api_media_redact(id: int) -> Response:
         comments_ar=media.comments_ar,
         category=_redaction_category_id(),
         time=media.time,
+        orientation=media.orientation,
         user_id=current_user.id,
         bulletin_id=media.bulletin_id,
         actor_id=media.actor_id,

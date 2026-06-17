@@ -66,6 +66,18 @@ def redact_pdf_bytes(src: bytes, pages: list[dict]) -> bytes:
         doc.close()
 
 
+def rotate_rect_to_original(rect: dict, orientation: int) -> dict:
+    """Map a normalized rect drawn on a rotated image back to the original image's coordinate space."""
+    x, y, w, h = rect["x"], rect["y"], rect["w"], rect["h"]
+    if orientation == 90:
+        return {"x": y, "y": 1 - x - w, "w": h, "h": w}
+    if orientation == 180:
+        return {"x": 1 - x - w, "y": 1 - y - h, "w": w, "h": h}
+    if orientation == 270:
+        return {"x": 1 - y - h, "y": x, "w": h, "h": w}
+    return rect
+
+
 def redact_image_bytes(src: bytes, rects: list[dict]) -> bytes:
     if not rects:
         raise RedactionError("No redaction regions provided")
