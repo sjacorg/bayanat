@@ -925,7 +925,8 @@
                     },
                     onMediaRedacted() {
                         this.showSnack("{{ _('Redaction saved') }}");
-                        if (this.$route.params.id) this.showBulletin(this.$route.params.id);
+                        const id = this.$route.params.id || this.bulletin?.id;
+                        if (id) this.showBulletin(id);
                     },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
@@ -1357,29 +1358,9 @@
 
                     showBulletin(id) {
                         this.bulletinLoader = true
-                        
-                        // Save current s3urls before reload
-                        const s3urlCache = {};
-                        if (this.bulletin?.medias) {
-                            this.bulletin.medias.forEach(media => {
-                                if (media.s3url) {
-                                    s3urlCache[media.id] = media.s3url;
-                                }
-                            });
-                        }
-                        
                         api.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
                             this.bulletin = response.data;
                             this.bulletinDrawer = true;
-                            
-                            // Restore s3urls after reload
-                            if (this.bulletin?.medias) {
-                                this.bulletin.medias.forEach(media => {
-                                    if (s3urlCache[media.id]) {
-                                        media.s3url = s3urlCache[media.id];
-                                    }
-                                });
-                            }
                         }).catch(error => {
                             this.bulletinDrawer = false;
                         }).finally(() => {

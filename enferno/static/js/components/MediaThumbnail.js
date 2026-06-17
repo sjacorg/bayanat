@@ -62,15 +62,24 @@ const MediaThumbnail = Vue.defineComponent({
       immediate: true,
       handler(newUrl) {
         if (!newUrl) return;
-        
+
         const hasExistingThumbnail = this.thumbnailUrl || this.imageLoaded;
         const isGenerating = this.isGeneratingThumbnail;
-        
+
         if (!hasExistingThumbnail && !isGenerating) {
           this.initThumbnail();
         }
       }
-    }
+    },
+    media(newMedia, oldMedia) {
+      if (newMedia?.etag && newMedia.etag !== oldMedia?.etag) {
+        this.s3url = '';
+        this.imageLoaded = false;
+        this.thumbnailUrl = null;
+        this.hasError = false;
+        this.init().catch(() => {});
+      }
+    },
   },
   methods: {
     setupIntersectionObserver() {
@@ -99,8 +108,9 @@ const MediaThumbnail = Vue.defineComponent({
 
       try {
         const response = await api.get(`/admin/api/media/${this.media.filename}`);
-        this.s3url = response.data.url;
-        this.media.s3url = response.data.url;
+        const etag = this.media.etag;
+        this.s3url = etag ? `${response.data.url}?v=${etag}` : response.data.url;
+        this.media.s3url = this.s3url;
         this.initThumbnail();
       } catch (error) {
         console.error('Error fetching media:', error);
