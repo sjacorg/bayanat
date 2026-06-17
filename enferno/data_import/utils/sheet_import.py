@@ -372,7 +372,9 @@ class SheetImport:
                 setattr(self.actor_profile, field, {"opts": [], "details": ""})
             else:
                 setattr(self.actor_profile, field, {"opts": "", "details": ""})
-        getattr(self.actor_profile, field)["details"] = str(value)
+        # Sanitize before persist: these MP detail fields are rendered as HTML
+        # downstream, same stored-XSS sink the report flagged (BAY-01-008/039).
+        getattr(self.actor_profile, field)["details"] = sanitize_string(str(value))
         flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")
 
