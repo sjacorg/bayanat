@@ -924,7 +924,7 @@
                         this.redaction.dialog = true;
                     },
                     onMediaRedacted() {
-                        this.showSnack("{{ _('Redacted copy created') }}");
+                        this.showSnack("{{ _('Redaction saved') }}");
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                     },
                     handleRoute({ initialLoad = false } = {}) {

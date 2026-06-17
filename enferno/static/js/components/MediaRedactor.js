@@ -40,7 +40,13 @@ const MediaRedactor = Vue.defineComponent({
       },
     },
     src() {
-      return this.media?.id ? `/admin/api/media/${this.media.id}/proxy` : null;
+      if (!this.media?.id) return null;
+      // Bust the browser cache when a copy is re-edited in place (filename stays, bytes change).
+      const v = this.media.etag ? `?v=${this.media.etag}` : '';
+      return `/admin/api/media/${this.media.id}/proxy${v}`;
+    },
+    isRedactedCopy() {
+      return !!(this.media?.isRedaction || this.media?.originalMediaId);
     },
     mediaKind() {
       const fileType = this.media?.fileType || '';
@@ -403,18 +409,18 @@ const MediaRedactor = Vue.defineComponent({
       const next = Math.min(Math.max(this.zoom * factor, 1), REDACTOR_MAX_ZOOM);
       this.applyZoom(next, event.clientX, event.clientY);
     },
-    async submit() {
+    async submit(overwrite = false) {
       if (!this.canSubmit) return;
       this.saving = true;
       const pages = Object.entries(this.boxes)
         .filter(([, rects]) => rects.length)
         .map(([page, rects]) => ({ page: Number(page), rects }));
       try {
-        const response = await api.post(`/admin/api/media/${this.media.id}/redact`, { pages, title: this.label.trim() });
+        const response = await api.post(`/admin/api/media/${this.media.id}/redact`, { pages, title: this.label.trim(), overwrite });
         this.$emit('redacted', response.data.data);
         this.show = false;
       } catch (e) {
-        this.error = e.response?.data?.message || 'Failed to create redacted copy';
+        this.error = e.response?.data?.message || 'Failed to save redaction';
       } finally {
         this.saving = false;
       }
@@ -443,15 +449,24 @@ const MediaRedactor = Vue.defineComponent({
           ></v-text-field>
           <v-tooltip location="bottom" :disabled="canSubmit">
             <template #activator="{ props }">
-              <div v-bind="props">
+              <div v-bind="props" class="d-flex align-center">
                 <v-btn
-                  prepend-icon="mdi-content-save-outline"
+                  v-if="isRedactedCopy"
+                  prepend-icon="mdi-content-save-edit-outline"
                   variant="elevated"
                   :disabled="!canSubmit"
                   :loading="saving"
-                  @click="submit"
+                  @click="submit(true)"
                   class="mr-2"
-                >Save redacted copy</v-btn>
+                >Save changes</v-btn>
+                <v-btn
+                  :prepend-icon="isRedactedCopy ? 'mdi-content-save-plus-outline' : 'mdi-content-save-outline'"
+                  :variant="isRedactedCopy ? 'tonal' : 'elevated'"
+                  :disabled="!canSubmit"
+                  :loading="saving"
+                  @click="submit(false)"
+                  class="mr-2"
+                >{{ isRedactedCopy ? 'Save as new copy' : 'Save redacted copy' }}</v-btn>
               </div>
             </template>
             <span>Draw at least one black box on the document to save</span>
