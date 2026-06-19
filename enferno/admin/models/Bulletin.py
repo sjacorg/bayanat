@@ -31,7 +31,7 @@ from enferno.admin.models.tables import (
     bulletin_verlabels,
     bulletin_events,
 )
-from enferno.admin.models.utils import check_roles
+from enferno.admin.models.utils import check_roles, can_view_media
 
 logger = get_logger()
 
@@ -712,9 +712,9 @@ class Bulletin(db.Model, BaseMixin):
             for event in self.events:
                 events_json.append(event.to_dict())
 
-        # medias json
+        # medias json (hidden from users without media access, BAY-01-012)
         medias_json = []
-        if self.medias and len(self.medias):
+        if can_view_media() and self.medias and len(self.medias):
             for media in self.medias:
                 medias_json.append(media.to_dict())
 

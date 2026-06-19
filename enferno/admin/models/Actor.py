@@ -28,7 +28,7 @@ from enferno.admin.models.tables import (
 )
 from enferno.admin.models.Country import Country
 from enferno.admin.models.Ethnography import Ethnography
-from enferno.admin.models.utils import check_roles
+from enferno.admin.models.utils import check_roles, can_view_media
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.csv_utils import convert_simple_relation, convert_complex_relation
@@ -728,9 +728,9 @@ class Actor(db.Model, BaseMixin):
             for event in self.events:
                 events_json.append(event.to_dict())
 
-        # medias json
+        # medias json (hidden from users without media access, BAY-01-012)
         medias_json = []
-        if self.medias and len(self.medias):
+        if can_view_media() and self.medias and len(self.medias):
             for media in self.medias:
                 medias_json.append(media.to_dict())
 
