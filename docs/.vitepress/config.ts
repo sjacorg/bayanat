@@ -57,6 +57,7 @@ export default withMermaid(
               { text: "Video Deduplication", link: "/guide/deduplication" },
               { text: "OCR & Text Extraction", link: "/guide/ocr" },
               { text: "Data Import", link: "/guide/data-import" },
+              { text: "Web Import", link: "/guide/web-import" },
               { text: "Bulk Operations", link: "/guide/bulk-operations" },
               { text: "Media Management", link: "/guide/media" },
               { text: "Notifications", link: "/guide/notifications" },
