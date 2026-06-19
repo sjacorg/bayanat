@@ -981,6 +981,14 @@ def api_ocr_bulk():
         stmt = _apply_media_access_filter(select(Media.id).where(Media.id.in_(media_ids)))
         media_ids = list(db.session.scalars(stmt))
 
+    # OCR writes an extraction, so enforce the assignment edit boundary per
+    # item, matching the single-OCR endpoint (BAY-01-009). The query filter
+    # above only expresses visibility (can_access); can_edit needs the parent's
+    # assignment + status, so post-filter here. Admins always pass.
+    if media_ids and not current_user.has_role("Admin"):
+        candidates = db.session.scalars(select(Media).where(Media.id.in_(media_ids)))
+        media_ids = [m.id for m in candidates if current_user.can_edit(m)]
+
     if not media_ids:
         return HTTPResponse.error("No media to process")
 
