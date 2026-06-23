@@ -52,6 +52,13 @@ class Config(object):
         SQLALCHEMY_DATABASE_URI = f"postgresql:///{POSTGRES_DB}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Validate pooled connections before use and recycle them periodically so
+    # workers don't hand out a dropped connection (Postgres idle timeouts,
+    # NAT/conntrack drops, restarts).
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": int(os.environ.get("SQLALCHEMY_POOL_RECYCLE", 300)),
+    }
 
     # Redis
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
