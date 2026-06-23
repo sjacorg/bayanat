@@ -246,6 +246,7 @@ class BulletinValidationModel(StrictValidationModel):
     assigned_to: Optional[PartialUserModel] = None
     first_peer_reviewer: Optional[PartialUserModel] = None
     description: Optional[SanitizedField] = None
+    public_description: Optional[SanitizedField] = None
     comments: str = Field(min_length=1)
     source_link: str = Field(min_length=1)
     source_link_type: Optional[bool] = None
@@ -1704,7 +1705,7 @@ class ConfigValidationModel(StrictValidationModel):
                     raise ValueError(
                         "MEDIA_ALLOWED_EXTENSIONS and SHEETS_ALLOWED_EXTENSIONS must be lists of strings"
                     )
-                if len(ext) < 2 or len(ext) > 4:
+                if len(ext) < 2 or len(ext) > 5:
                     raise ValueError(
                         "Invalid value for MEDIA_ALLOWED_EXTENSIONS or SHEETS_ALLOWED_EXTENSIONS"
                     )

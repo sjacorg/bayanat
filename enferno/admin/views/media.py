@@ -515,9 +515,9 @@ def api_inline_medias_upload() -> Response:
         filename = Media.generate_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
-        response = {"location": filename}
 
-        return HTTPResponse.success(data=response)
+        # TinyMCE requires a flat {"location": "..."} response, not wrapped in {"data": ...}
+        return jsonify({"location": filename})
     except Exception as e:
         logger.error(e, exc_info=True)
         return HTTPResponse.error("Request Failed", status=500)
