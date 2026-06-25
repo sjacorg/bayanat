@@ -357,8 +357,9 @@ const MediaCard = Vue.defineComponent({
                     </template>
                   </v-tooltip>
                   <v-fade-transition>
-                    <div v-if="isHovering" class="d-flex ga-1">
+                    <div v-if="isHovering && (isCurrentUserAdmin || isCurrentUserDA)" class="d-flex ga-1">
                       <v-icon
+                        v-if="typeof $root?.openRedactor === 'function'"
                         icon="mdi-marker"
                         size="18"
                         class="cursor-pointer"
