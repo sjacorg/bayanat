@@ -320,7 +320,10 @@ const mediaMixin = {
       }
     },
     removeRedaction(redaction) {
-      if (!redaction.isRedaction) return;
+      if (!redaction.isRedaction) {
+        this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
+        return;
+      }
       const index = this.editedItem.medias.findIndex(m => m.id === redaction.id);
       if (index !== -1) this.editedItem.medias.splice(index, 1);
       axios.delete(`/admin/api/media/redaction/${redaction.id}`)
