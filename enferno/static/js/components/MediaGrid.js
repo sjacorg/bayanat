@@ -6,7 +6,7 @@ const MediaGrid = Vue.defineComponent({
     prioritizeVideos: Boolean,
     miniMode: Boolean,
   },
-  emits: ['remove-media', 'media-click'],
+  emits: ['remove-media', 'remove-redaction', 'media-click'],
   computed: {
     primaryMedia() {
       const list = this.prioritizeVideos ? this.sortMediaByFileType(this.medias) : (this.medias || []);
@@ -46,6 +46,7 @@ const MediaGrid = Vue.defineComponent({
         <media-card
           v-for="media in primaryMedia" :key="media.id || media.uuid"
           @media-click="$emit('media-click', $event)"
+          @remove-redaction="$emit('remove-redaction', $event)"
           :media="media"
           :mini-mode="miniMode"
           :redactions="redactionsBySource[media.id] || []"
