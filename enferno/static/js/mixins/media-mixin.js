@@ -326,7 +326,7 @@ const mediaMixin = {
       }
       const index = this.editedItem.medias.findIndex(m => m.id === redaction.id);
       if (index !== -1) this.editedItem.medias.splice(index, 1);
-      axios.delete(`/admin/api/media/redaction/${redaction.id}`)
+      api.delete(`/admin/api/media/redaction/${redaction.id}`)
         .catch(err => {
           this.editedItem.medias.splice(index, 0, redaction);
           this.showSnack(handleRequestError(err));
