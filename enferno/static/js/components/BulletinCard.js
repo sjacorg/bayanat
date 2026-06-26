@@ -269,7 +269,7 @@ const BulletinCard = Vue.defineComponent({
         
         <v-card-text>
           
-          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event })"></media-grid>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event })" @remove-redaction="$root.removeRedaction($event)"></media-grid>
         </v-card-text>
       </v-card>
 

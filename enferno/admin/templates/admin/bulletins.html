@@ -926,7 +926,15 @@
                     onMediaRedacted() {
                         this.showSnack("{{ _('Redaction saved') }}");
                         const id = this.$route.params.id || this.bulletin?.id;
-                        if (id) this.showBulletin(id);
+                        if (id) {
+                            // Media redacted on bulletin drawer, refresh the bulletin to get the updated media list
+                            this.showBulletin(id);
+                        } else if (this.editedItem?.id) {
+                            // Media redacted on bulletin editor dialog, refresh the bulletin to get the updated media list
+                            api.get(`/admin/api/bulletin/${this.editedItem.id}`).then(response => {
+                                this.editedItem.medias = response.data?.medias;
+                            }).catch(err => this.showSnack(handleRequestError(err)));
+                        }
                     },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
