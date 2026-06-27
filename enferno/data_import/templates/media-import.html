@@ -377,7 +377,9 @@
                 batch_id: '',
 
                 dzOpts: {
-                    url: '/admin/api/media/chunk',
+                    // source=import goes in the URL so it survives every chunk POST.
+                    // Dropzone's `params` option is dropped on chunked requests.
+                    url: '/admin/api/media/chunk?source=import',
                     // accept any file
                     acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
                     addRemoveLinks: true,
@@ -388,9 +390,6 @@
                     thumbnailHeight: 80,
                     parallelUploads: 1,
                     maxFilesize: mediaUploadMaxFileSize,
-                    // Signals the chunk endpoint to apply the Admin-only
-                    // extended extension list (ETL_VID_EXT).
-                    params: { source: 'import' },
                 },
 
 
