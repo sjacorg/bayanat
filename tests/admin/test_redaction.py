@@ -162,3 +162,33 @@ def test_delete_endpoint_soft_deletes_redacted_copy_only(admin_client, session):
             synchronize_session=False
         )
         session.commit()
+
+
+def test_bulletin_to_dict_excludes_deleted_media(session):
+    bulletin = Bulletin(title="Deleted media exclusion")
+    session.add(bulletin)
+    session.flush()
+    live = Media(
+        media_file="live.pdf",
+        media_file_type="application/pdf",
+        etag="live",
+        bulletin_id=bulletin.id,
+    )
+    gone = Media(
+        media_file="gone.pdf",
+        media_file_type="application/pdf",
+        etag="gone",
+        bulletin_id=bulletin.id,
+        deleted=True,
+    )
+    session.add_all([live, gone])
+    session.commit()
+    live_id, gone_id = live.id, gone.id
+
+    try:
+        media_ids = {m["id"] for m in bulletin.to_dict()["medias"]}
+        assert live_id in media_ids
+        assert gone_id not in media_ids
+    finally:
+        Media.query.filter(Media.id.in_([live_id, gone_id])).delete(synchronize_session=False)
+        session.commit()

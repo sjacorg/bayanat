@@ -759,6 +759,8 @@ class Bulletin(db.Model, BaseMixin):
         medias_json = []
         if self.medias and len(self.medias):
             for media in self.medias:
+                if media.deleted:
+                    continue
                 medias_json.append(media.to_dict())
 
         # Related bulletins json (actually the associated relationships)
