@@ -32,7 +32,12 @@ from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, redact_pdf_bytes, rotate_rect_to_original
+from enferno.utils.redaction_utils import (
+    RedactionError,
+    redact_image_bytes,
+    redact_pdf_bytes,
+    rotate_rect_to_original,
+)
 from enferno.utils.text_utils import normalize_arabic
 from enferno.utils.validation_utils import validate_with
 from enferno.admin.validation.models import MediaRequestModel
@@ -792,6 +797,32 @@ def api_media_redact(id: int) -> Response:
         details=f"Redacted copy created from media {media.id}",
     )
     return HTTPResponse.success(data=redacted.to_dict())
+
+
+@admin.delete("/api/media/<int:id>/redact")
+@roles_accepted("Admin", "DA")
+def api_media_redact_delete(id: int) -> Response:
+    # Soft-delete a redacted copy only. The immutable original is never touched here.
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.not_found("Media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+    if media.redaction is None:
+        return HTTPResponse.error("Not a redacted copy", status=400)
+
+    media.deleted = True
+    db.session.commit()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_DELETE,
+        Activity.STATUS_SUCCESS,
+        media.to_mini(),
+        "media",
+        details=f"Redacted copy {media.id} deleted",
+    )
+    return HTTPResponse.success(data={"id": media.id, "deleted": True})
 
 
 # OCR Extraction endpoints
