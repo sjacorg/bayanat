@@ -116,3 +116,49 @@ def test_redact_endpoint_creates_new_media_and_audit_row(admin_client, session):
         path.unlink(missing_ok=True)
         if redacted:
             (Media.media_dir / redacted["filename"]).unlink(missing_ok=True)
+
+
+def test_delete_endpoint_soft_deletes_redacted_copy_only(admin_client, session):
+    from enferno.admin.models import MediaRedaction
+
+    bulletin = Bulletin(title="Soft-delete test")
+    session.add(bulletin)
+    session.flush()
+    original = Media(
+        media_file="orig.pdf",
+        media_file_type="application/pdf",
+        etag="orig",
+        bulletin_id=bulletin.id,
+    )
+    redacted = Media(
+        media_file="red.pdf", media_file_type="application/pdf", etag="red", bulletin_id=bulletin.id
+    )
+    session.add_all([original, redacted])
+    session.flush()
+    audit = MediaRedaction(
+        source_media_id=original.id,
+        original_media_id=original.id,
+        result_media_id=redacted.id,
+        regions=[],
+    )
+    session.add(audit)
+    session.commit()
+    original_id, redacted_id = original.id, redacted.id
+
+    try:
+        # Original (no redaction backref) is rejected.
+        resp = admin_client.delete(f"/admin/api/media/{original_id}/redact")
+        assert resp.status_code == 400
+        assert Media.query.get(original_id).deleted is False
+
+        # Redacted copy is soft-deleted, file untouched.
+        resp = admin_client.delete(f"/admin/api/media/{redacted_id}/redact")
+        assert resp.status_code == 200
+        assert resp.get_json()["data"] == {"id": redacted_id, "deleted": True}
+        assert Media.query.get(redacted_id).deleted is True
+    finally:
+        MediaRedaction.query.filter_by(source_media_id=original_id).delete()
+        Media.query.filter(Media.id.in_([original_id, redacted_id])).delete(
+            synchronize_session=False
+        )
+        session.commit()
