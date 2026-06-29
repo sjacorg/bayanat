@@ -232,7 +232,9 @@ const MediaCard = Vue.defineComponent({
     },
     confirmRemoveRedaction(redaction) {
       this.$root.$confirm({
-        acceptProps: { color: 'error' },
+        title: this.translations.youreAboutToDeleteARedactedCopy_,
+        message: `${this.translations.deletingTheRedactedCopyWillNotDeleteTheOriginalMedia_}\r\n\r\n${this.translations.doYouWantToContinue_}`,
+        acceptProps: { text: this.translations.deleteRedaction_, color: 'error' },
         dialogProps: { width: 780 },
         onAccept: () => {
           this.$emit('remove-redaction', redaction);
