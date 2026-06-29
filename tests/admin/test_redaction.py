@@ -151,11 +151,14 @@ def test_delete_endpoint_soft_deletes_redacted_copy_only(admin_client, session):
         assert resp.status_code == 400
         assert Media.query.get(original_id).deleted is False
 
-        # Redacted copy is soft-deleted, file untouched.
+        # Redacted copy is soft-deleted: hidden from normal queries, still
+        # reachable via the include_deleted opt-out with deleted set.
         resp = admin_client.delete(f"/admin/api/media/{redacted_id}/redact")
         assert resp.status_code == 200
         assert resp.get_json()["data"] == {"id": redacted_id, "deleted": True}
-        assert Media.query.get(redacted_id).deleted is True
+        assert Media.query.get(redacted_id) is None
+        row = Media.query.execution_options(include_deleted=True).get(redacted_id)
+        assert row.deleted is True
     finally:
         MediaRedaction.query.filter_by(source_media_id=original_id).delete()
         Media.query.filter(Media.id.in_([original_id, redacted_id])).delete(

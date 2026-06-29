@@ -771,8 +771,6 @@ class Actor(db.Model, BaseMixin):
         medias_json = []
         if self.medias and len(self.medias):
             for media in self.medias:
-                if media.deleted:
-                    continue
                 medias_json.append(media.to_dict())
 
         bulletin_relations_dict = []
