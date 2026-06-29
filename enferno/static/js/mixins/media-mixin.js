@@ -324,11 +324,13 @@ const mediaMixin = {
         this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
         return;
       }
-      const index = this.editedItem.medias.findIndex(m => m.id === redaction.id);
-      if (index !== -1) this.editedItem.medias.splice(index, 1);
       api.delete(`/admin/api/media/${redaction.id}/redact`)
+        .then(() => {
+          if (typeof this.onRedactionChanged === 'function') {
+            this.onRedactionChanged();
+          }
+        })
         .catch(err => {
-          this.editedItem.medias.splice(index, 0, redaction);
           this.showSnack(handleRequestError(err));
         });
     },

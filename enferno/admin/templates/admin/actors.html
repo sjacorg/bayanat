@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 {% endblock %} {% block content %}
 
-    <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onMediaRedacted"></media-redactor>
+    <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionChanged"></media-redactor>
     {% include 'admin/partials/media_transcription_dialog.html' %}
     {% include  'admin/partials/actor_drawer.html' %}
     {% include 'admin/partials/bulk_actor_drawer.html' %}
@@ -841,7 +841,7 @@
                     this.redaction.media = media;
                     this.redaction.dialog = true;
                 },
-                onMediaRedacted() {
+                onRedactionChanged() {
                     this.showSnack("{{ _('Redaction saved') }}");
                     const id = this.$route.params.id || this.actor?.id;
                     if (id) {

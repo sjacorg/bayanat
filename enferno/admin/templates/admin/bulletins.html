@@ -11,7 +11,7 @@
 
 
     <v-main>
-        <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onMediaRedacted"></media-redactor>
+        <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionChanged"></media-redactor>
         {% include 'admin/partials/media_transcription_dialog.html' %}
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
@@ -923,7 +923,7 @@
                         this.redaction.media = media;
                         this.redaction.dialog = true;
                     },
-                    onMediaRedacted() {
+                    onRedactionChanged() {
                         this.showSnack("{{ _('Redaction saved') }}");
                         const id = this.$route.params.id || this.bulletin?.id;
                         if (id) {
