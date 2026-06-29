@@ -192,3 +192,35 @@ def test_bulletin_to_dict_excludes_deleted_media(session):
     finally:
         Media.query.filter(Media.id.in_([live_id, gone_id])).delete(synchronize_session=False)
         session.commit()
+
+
+def test_media_dashboard_excludes_deleted(admin_client, session):
+    bulletin = Bulletin(title="Dashboard exclusion")
+    session.add(bulletin)
+    session.flush()
+    live = Media(
+        media_file="dlive.pdf",
+        media_file_type="application/pdf",
+        etag="dlive",
+        bulletin_id=bulletin.id,
+    )
+    gone = Media(
+        media_file="dgone.pdf",
+        media_file_type="application/pdf",
+        etag="dgone",
+        bulletin_id=bulletin.id,
+        deleted=True,
+    )
+    session.add_all([live, gone])
+    session.commit()
+    live_id, gone_id = live.id, gone.id
+
+    try:
+        resp = admin_client.get(f"/admin/api/media/dashboard?bulletin_id={bulletin.id}")
+        assert resp.status_code == 200
+        ids = {m["id"] for m in resp.get_json()["items"]}
+        assert live_id in ids
+        assert gone_id not in ids
+    finally:
+        Media.query.filter(Media.id.in_([live_id, gone_id])).delete(synchronize_session=False)
+        session.commit()

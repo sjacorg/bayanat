@@ -847,7 +847,7 @@ def api_media_dashboard():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    query = Media.query.outerjoin(Extraction)
+    query = Media.query.outerjoin(Extraction).filter(Media.deleted == False)
     query = _apply_media_access_filter(query)
 
     # Filter by bulletin
