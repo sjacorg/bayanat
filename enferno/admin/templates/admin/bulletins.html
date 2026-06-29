@@ -11,7 +11,7 @@
 
 
     <v-main>
-        <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionChanged"></media-redactor>
+        <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionSaved"></media-redactor>
         {% include 'admin/partials/media_transcription_dialog.html' %}
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
@@ -923,8 +923,20 @@
                         this.redaction.media = media;
                         this.redaction.dialog = true;
                     },
-                    onRedactionChanged() {
-                        this.showSnack("{{ _('Redaction saved') }}");
+                    removeRedaction(redaction) {
+                        if (!redaction.isRedaction) {
+                            this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
+                            return;
+                        }
+                        api.delete(`/admin/api/media/${redaction.id}/redact`)
+                            .then(() => {
+                                this.onRedactionDeleted(redaction);
+                            })
+                            .catch(err => {
+                                this.showSnack(handleRequestError(err));
+                            });
+                    },
+                    refreshRedactionState() {
                         const id = this.$route.params.id || this.bulletin?.id;
                         if (id) {
                             // Media redacted on bulletin drawer, refresh the bulletin to get the updated media list
@@ -935,6 +947,14 @@
                                 this.editedItem.medias = response.data?.medias;
                             }).catch(err => this.showSnack(handleRequestError(err)));
                         }
+                    },
+                    onRedactionSaved() {
+                        this.showSnack("{{ _('Redaction saved') }}");
+                        this.refreshRedactionState();
+                    },
+                    onRedactionDeleted() {
+                        this.showSnack("{{ _('Redaction deleted') }}");
+                        this.refreshRedactionState();
                     },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);

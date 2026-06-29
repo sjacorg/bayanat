@@ -366,6 +366,7 @@ const MediaCard = Vue.defineComponent({
                         @click.stop="$root.openRedactor(redaction)"
                       ></v-icon>
                       <v-icon
+                        v-if="typeof $root?.removeRedaction === 'function'"
                         icon="mdi-delete-outline"
                         size="18"
                         color="error"

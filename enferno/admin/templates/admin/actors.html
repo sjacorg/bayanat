@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 {% endblock %} {% block content %}
 
-    <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionChanged"></media-redactor>
+    <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionSaved"></media-redactor>
     {% include 'admin/partials/media_transcription_dialog.html' %}
     {% include  'admin/partials/actor_drawer.html' %}
     {% include 'admin/partials/bulk_actor_drawer.html' %}
@@ -841,8 +841,20 @@
                     this.redaction.media = media;
                     this.redaction.dialog = true;
                 },
-                onRedactionChanged() {
-                    this.showSnack("{{ _('Redaction saved') }}");
+                removeRedaction(redaction) {
+                    if (!redaction.isRedaction) {
+                        this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
+                        return;
+                    }
+                    api.delete(`/admin/api/media/${redaction.id}/redact`)
+                        .then(() => {
+                            this.onRedactionDeleted(redaction);
+                        })
+                        .catch(err => {
+                            this.showSnack(handleRequestError(err));
+                        });
+                },
+                refreshRedactionState() {
                     const id = this.$route.params.id || this.actor?.id;
                     if (id) {
                         this.showActor(id);
@@ -851,6 +863,14 @@
                             this.editedItem.medias = response.data?.medias;
                         }).catch(err => this.showSnack(handleRequestError(err)));
                     }
+                },
+                onRedactionSaved() {
+                    this.showSnack("{{ _('Redaction saved') }}");
+                    this.refreshRedactionState();
+                },
+                onRedactionDeleted() {
+                    this.showSnack("{{ _('Redaction deleted') }}");
+                    this.refreshRedactionState();
                 },
                 handleRoute({ initialLoad = false } = {}) {
                     if (this.$route.params.id) this.showActor(this.$route.params.id);

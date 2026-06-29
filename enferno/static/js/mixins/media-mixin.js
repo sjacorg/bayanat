@@ -319,22 +319,6 @@ const mediaMixin = {
         this.editedItem.medias.splice(index, 1);
       }
     },
-    removeRedaction(redaction) {
-      if (!redaction.isRedaction) {
-        this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
-        return;
-      }
-      api.delete(`/admin/api/media/${redaction.id}/redact`)
-        .then(() => {
-          if (typeof this.onRedactionChanged === 'function') {
-            this.onRedactionChanged();
-          }
-        })
-        .catch(err => {
-          this.showSnack(handleRequestError(err));
-        });
-    },
-
     closeMediaDialog() {
       this.destroyCrop();
       this.editedMedia.files = [];
