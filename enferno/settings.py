@@ -59,6 +59,13 @@ class Config(object):
         SQLALCHEMY_DATABASE_URI = f"postgresql:///{POSTGRES_DB}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Validate pooled connections before use and recycle them periodically so
+    # workers don't hand out a dropped connection (Postgres idle timeouts,
+    # NAT/conntrack drops, restarts).
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": int(os.environ.get("SQLALCHEMY_POOL_RECYCLE", 300)),
+    }
 
     # Redis
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
@@ -148,7 +155,7 @@ class Config(object):
     # Session
     SESSION_TYPE = "redis"
     SESSION_REDIS = redis.from_url(f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/1")
-    PERMANENT_SESSION_LIFETIME = 3600
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("SESSION_LIFETIME", 3600))
 
     # Google 0Auth
     GOOGLE_OAUTH_ENABLED = manager.get_config("GOOGLE_OAUTH_ENABLED")

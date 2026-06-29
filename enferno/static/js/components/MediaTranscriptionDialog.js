@@ -295,6 +295,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     <div v-else class="position-relative">
                       <div>
                         <inline-media-renderer
+                          use-pdf-canvas-renderer
                           renderer-id="ocr-dialog"
                           :initial-orientation="media?.orientation || 0"
                           :media="$root.expandedByRenderer?.['ocr-dialog']?.media"
