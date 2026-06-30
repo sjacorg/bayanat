@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 {% endblock %} {% block content %}
 
+    <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionSaved"></media-redactor>
     {% include 'admin/partials/media_transcription_dialog.html' %}
     {% include  'admin/partials/actor_drawer.html' %}
     {% include 'admin/partials/bulk_actor_drawer.html' %}
@@ -402,6 +403,7 @@
     <script src="/static/js/components/FieldRenderer.js"></script>
     <script src="/static/js/components/OcrTextLayer.js"></script>
     <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
+    <script src="/static/js/components/MediaRedactor.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/NativePdfViewer.js"></script>
@@ -449,6 +451,7 @@
                 valid: false,
                 leftDialogProps: null,
                 rightDialogProps: null,
+                redaction: { dialog: false, media: null },
                 translations: window.translations,
                 validationRules: validationRules,
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
@@ -833,6 +836,41 @@
                     this.showOcrDialog(media.id);
                     this.refreshEditedMedia(media.id);
                     if (this.$route.params.id) this.showActor(this.$route.params.id);
+                },
+                openRedactor(media) {
+                    this.redaction.media = media;
+                    this.redaction.dialog = true;
+                },
+                removeRedaction(redaction) {
+                    if (!redaction.isRedaction) {
+                        this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
+                        return;
+                    }
+                    api.delete(`/admin/api/media/${redaction.id}/redact`)
+                        .then(() => {
+                            this.onRedactionDeleted(redaction);
+                        })
+                        .catch(err => {
+                            this.showSnack(handleRequestError(err));
+                        });
+                },
+                refreshRedactionState() {
+                    const id = this.$route.params.id || this.actor?.id;
+                    if (id) {
+                        this.showActor(id);
+                    } else if (this.editedItem?.id) {
+                        api.get(`/admin/api/actor/${this.editedItem.id}`).then(response => {
+                            this.editedItem.medias = response.data?.medias;
+                        }).catch(err => this.showSnack(handleRequestError(err)));
+                    }
+                },
+                onRedactionSaved() {
+                    this.showSnack("{{ _('Redaction saved') }}");
+                    this.refreshRedactionState();
+                },
+                onRedactionDeleted() {
+                    this.showSnack("{{ _('Redaction deleted') }}");
+                    this.refreshRedactionState();
                 },
                 handleRoute({ initialLoad = false } = {}) {
                     if (this.$route.params.id) this.showActor(this.$route.params.id);
@@ -1816,6 +1854,7 @@
         app.component('FieldRenderer', FieldRenderer);
         app.component('OcrTextLayer', OcrTextLayer);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
+        app.component('MediaRedactor', MediaRedactor);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);
