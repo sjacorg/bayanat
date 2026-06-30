@@ -59,6 +59,7 @@ export default withMermaid(
               { text: "Data Import", link: "/guide/data-import" },
               { text: "Bulk Operations", link: "/guide/bulk-operations" },
               { text: "Media Management", link: "/guide/media" },
+              { text: "Redaction", link: "/guide/redaction" },
               { text: "Notifications", link: "/guide/notifications" },
               { text: "Map Visualization", link: "/guide/map-visualization" },
               { text: "Dynamic Fields", link: "/guide/dynamic-fields" },

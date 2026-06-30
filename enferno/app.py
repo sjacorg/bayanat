@@ -32,6 +32,7 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
+from enferno.utils.soft_delete import register_soft_delete
 from enferno.extensions import (
     db,
     migrate,
@@ -121,6 +122,7 @@ def register_extensions(app):
     """
     db.init_app(app)
     migrate.init_app(app, db)
+    register_soft_delete(db)
     # Skip debug toolbar when CSP is enabled (they conflict)
     if not app.config.get("CSP_ENABLED", False):
         debug_toolbar.init_app(app)
@@ -372,6 +374,7 @@ def register_commands(app):
     app.cli.add_command(commands.doctor)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.ocr_cli)
+    app.cli.add_command(commands.export_cli)
 
 
 def register_errorhandlers(app):

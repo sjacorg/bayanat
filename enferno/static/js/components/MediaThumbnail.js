@@ -62,15 +62,24 @@ const MediaThumbnail = Vue.defineComponent({
       immediate: true,
       handler(newUrl) {
         if (!newUrl) return;
-        
+
         const hasExistingThumbnail = this.thumbnailUrl || this.imageLoaded;
         const isGenerating = this.isGeneratingThumbnail;
-        
+
         if (!hasExistingThumbnail && !isGenerating) {
           this.initThumbnail();
         }
       }
-    }
+    },
+    media(newMedia, oldMedia) {
+      if (newMedia?.etag && newMedia.etag !== oldMedia?.etag) {
+        this.s3url = '';
+        this.imageLoaded = false;
+        this.thumbnailUrl = null;
+        this.hasError = false;
+        this.init().catch(() => {});
+      }
+    },
   },
   methods: {
     setupIntersectionObserver() {
@@ -99,8 +108,9 @@ const MediaThumbnail = Vue.defineComponent({
 
       try {
         const response = await api.get(`/admin/api/media/${this.media.filename}`);
-        this.s3url = response.data.url;
-        this.media.s3url = response.data.url;
+        const etag = this.media.etag;
+        this.s3url = etag ? `${response.data.url}?v=${etag}` : response.data.url;
+        this.media.s3url = this.s3url;
         this.initThumbnail();
       } catch (error) {
         console.error('Error fetching media:', error);
@@ -263,28 +273,23 @@ const MediaThumbnail = Vue.defineComponent({
       return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     },
     getImageStyle(orientation) {
-      const baseStyle = {
+      const base = {
         objectFit: 'cover',
-        transform: `rotate(${orientation}deg)`,
-        maxWidth: '100%',
-        maxHeight: '100%',
-        transition: 'opacity 0.4s ease-in-out'
+        transition: 'opacity 0.4s ease-in-out',
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: `translate(-50%, -50%) rotate(${orientation}deg)`,
       };
-      
-      // For 90 or 270 degree rotations, we need to swap dimensions
       if (orientation === 90 || orientation === 270) {
-        return {
-          ...baseStyle,
-          width: 'auto',
-          height: '100%'
-        };
+        // Pre-rotation width becomes visual height after 90°/270° rotation, and vice versa.
+        // To fill a W×H container: pre-rotation box must be H×W (swapped).
+        // CSS can express this with container query units: 100cqw = containerW, 100cqh = containerH.
+        // So: pre-rotation width = containerH (100cqh), pre-rotation height = containerW (100cqw).
+        // The parent needs container-type set; the root div already has overflow:hidden.
+        return { ...base, width: '100cqh', height: '100cqw' };
       }
-      
-      return {
-        ...baseStyle,
-        width: '100%',
-        height: 'auto'
-      };
+      return { ...base, width: '100%', height: '100%' };
     },
     getRandomGradient() {
       if (this.randomGradient) return this.randomGradient;
@@ -334,7 +339,7 @@ const MediaThumbnail = Vue.defineComponent({
     },
   },
   template: /*html*/`
-    <div @click="handleClick" :class="['h-100 w-100 position-relative overflow-hidden', { 'cursor-pointer': clickable }]">
+    <div @click="handleClick" :class="['h-100 w-100 position-relative overflow-hidden', { 'cursor-pointer': clickable }]" style="container-type: size;">
       <!-- Hover icon overlay -->
       <div v-if="showHoverIcon && clickable && (mediaType === 'pdf' || mediaType === 'image')" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2 position-absolute top-0 left-0 w-100" style="z-index: 10;">
         <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
@@ -360,12 +365,11 @@ const MediaThumbnail = Vue.defineComponent({
           style="z-index: 2;">
 
           <!-- Actual image (always exists) -->
-          <img 
-            loading="lazy" 
-            :src="s3url" 
+          <img
+            loading="lazy"
+            :src="s3url"
             @load="imageLoaded = true"
             @error="handleImageError"
-            class="w-100 h-100" 
             :style="{
               ...getImageStyle(media?.orientation || 0),
               opacity: hasError ? 0 : (imageLoaded ? 1 : 0),
