@@ -130,8 +130,10 @@ def api_medias_chunk() -> Response:
     """
     file = request.files["file"]
 
-    # Check if upload is from the media import tool (Admin-only extended extensions)
-    import_upload = request.form.get("source") == "import"
+    # Check if upload is from the media import tool (Admin-only extended extensions).
+    # The source param lives in the query string because Dropzone drops `params`
+    # on chunked POSTs, so a form-body check returns None on every chunk.
+    import_upload = request.args.get("source") == "import"
     # validate file extensions based on user and source
     if import_upload:
         # uploads from media import tool
@@ -513,9 +515,9 @@ def api_inline_medias_upload() -> Response:
         filename = Media.generate_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
-        response = {"location": filename}
 
-        return HTTPResponse.success(data=response)
+        # TinyMCE requires a flat {"location": "..."} response, not wrapped in {"data": ...}
+        return jsonify({"location": filename})
     except Exception as e:
         logger.error(e, exc_info=True)
         return HTTPResponse.error("Request Failed", status=500)

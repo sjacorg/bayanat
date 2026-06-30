@@ -803,8 +803,9 @@ MEDIA_DIR = Media.media_dir
 def serialize_bulletin(bulletin):
     """Serialize a bulletin for the public archive export.
 
-    Includes only public-facing fields. Strips workflow, assignment,
-    review, and internal metadata.
+    Includes only public-facing fields. The internal ``description`` is
+    never exported; only the SJAC-authored ``public_description`` goes out.
+    Strips workflow, assignment, review, and internal metadata.
     """
     labels = [
         {"id": l.id, "title": l.title, "title_ar": l.title_ar, "verified": l.verified}
@@ -911,7 +912,6 @@ def serialize_bulletin(bulletin):
         "id": bulletin.id,
         "title": bulletin.title,
         "title_ar": bulletin.title_ar,
-        "description": bulletin.description,
         "public_description": bulletin.public_description,
         "source_link": bulletin.source_link,
         "publish_date": DateHelper.serialize_datetime(bulletin.publish_date),
