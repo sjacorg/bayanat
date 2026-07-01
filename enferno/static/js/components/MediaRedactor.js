@@ -113,12 +113,16 @@ const MediaRedactor = Vue.defineComponent({
         }
         window.addEventListener('keydown', this._keydownHandler);
         window.addEventListener('keyup', this._keyupHandler);
+        window.addEventListener('resize', this._resizeHandler);
+        this._resizeObserver?.observe?.(this._scrollPane || document.body);
       } else {
         this._scrollPane?.removeEventListener('touchmove', this._touchMoveHandler);
         this._scrollPane?.removeEventListener('wheel', this._wheelHandler);
         this._scrollPane = null;
         window.removeEventListener('keydown', this._keydownHandler);
         window.removeEventListener('keyup', this._keyupHandler);
+        window.removeEventListener('resize', this._resizeHandler);
+        this._resizeObserver?.disconnect?.();
         this.reset();
       }
     },
@@ -134,6 +138,10 @@ const MediaRedactor = Vue.defineComponent({
     this._wheelHandler = (e) => this.onWheel(e);
     this._keydownHandler = (e) => this.onKeydown(e);
     this._keyupHandler = (e) => this.onKeyup(e);
+    this._resizeHandler = () => this.onViewportResize();
+    this._resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => this.onViewportResize())
+      : null;
   },
 
   beforeUnmount() {
@@ -141,6 +149,8 @@ const MediaRedactor = Vue.defineComponent({
     this._scrollPane?.removeEventListener('wheel', this._wheelHandler);
     window.removeEventListener('keydown', this._keydownHandler);
     window.removeEventListener('keyup', this._keyupHandler);
+    window.removeEventListener('resize', this._resizeHandler);
+    this._resizeObserver?.disconnect?.();
     this._pdf?.destroy?.();
   },
 
@@ -167,6 +177,9 @@ const MediaRedactor = Vue.defineComponent({
       this.pinchStartZoom = 1;
       this._pdf?.destroy?.();
       this._pdf = null;
+    },
+    onViewportResize() {
+      this.baseWidth = 0;
     },
     async load() {
       this.reset();
