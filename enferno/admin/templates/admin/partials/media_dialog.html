@@ -39,6 +39,7 @@
           :medias="editedItem.medias"
           @media-click="handleExpandedMedia({ rendererId: 'media-dialog', ...$event }); this.$refs.bulletinDialogSplitViewRef?.resetToCenter()"
           @remove-media="removeMedia"
+          @remove-redaction="removeRedaction($event)"
         ></media-grid>
       </v-card-text>
     </v-card>

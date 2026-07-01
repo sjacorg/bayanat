@@ -11,6 +11,7 @@
 
 
     <v-main>
+        <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionSaved"></media-redactor>
         {% include 'admin/partials/media_transcription_dialog.html' %}
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
@@ -423,6 +424,7 @@
     <script src="/static/js/components/GeoLocations.js"></script>
     <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/MediaRedactor.js"></script>
     <script src="/static/js/components/MediaThumbnail.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
@@ -478,6 +480,7 @@
                 data: () => ({
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
+                    redaction: { dialog: false, media: null },
 
                     valid: false,
                     leftDialogProps: {
@@ -916,6 +919,43 @@
                         this.refreshEditedMedia(media.id);
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                     },
+                    openRedactor(media) {
+                        this.redaction.media = media;
+                        this.redaction.dialog = true;
+                    },
+                    removeRedaction(redaction) {
+                        if (!redaction.isRedaction) {
+                            this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
+                            return;
+                        }
+                        api.delete(`/admin/api/media/${redaction.id}/redact`)
+                            .then(() => {
+                                this.onRedactionDeleted(redaction);
+                            })
+                            .catch(err => {
+                                this.showSnack(handleRequestError(err));
+                            });
+                    },
+                    refreshRedactionState() {
+                        const id = this.$route.params.id || this.bulletin?.id;
+                        if (id) {
+                            // Media redacted on bulletin drawer, refresh the bulletin to get the updated media list
+                            this.showBulletin(id);
+                        } else if (this.editedItem?.id) {
+                            // Media redacted on bulletin editor dialog, refresh the bulletin to get the updated media list
+                            api.get(`/admin/api/bulletin/${this.editedItem.id}`).then(response => {
+                                this.editedItem.medias = response.data?.medias;
+                            }).catch(err => this.showSnack(handleRequestError(err)));
+                        }
+                    },
+                    onRedactionSaved() {
+                        this.showSnack("{{ _('Redaction saved') }}");
+                        this.refreshRedactionState();
+                    },
+                    onRedactionDeleted() {
+                        this.showSnack("{{ _('Redaction deleted') }}");
+                        this.refreshRedactionState();
+                    },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
                         if (this.$route.query.reltob) return this.filter_related_to_bulletin(this.$route.query.reltob);
@@ -1346,29 +1386,9 @@
 
                     showBulletin(id) {
                         this.bulletinLoader = true
-                        
-                        // Save current s3urls before reload
-                        const s3urlCache = {};
-                        if (this.bulletin?.medias) {
-                            this.bulletin.medias.forEach(media => {
-                                if (media.s3url) {
-                                    s3urlCache[media.id] = media.s3url;
-                                }
-                            });
-                        }
-                        
                         api.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
                             this.bulletin = response.data;
                             this.bulletinDrawer = true;
-                            
-                            // Restore s3urls after reload
-                            if (this.bulletin?.medias) {
-                                this.bulletin.medias.forEach(media => {
-                                    if (s3urlCache[media.id]) {
-                                        media.s3url = s3urlCache[media.id];
-                                    }
-                                });
-                            }
                         }).catch(error => {
                             this.bulletinDrawer = false;
                         }).finally(() => {
@@ -1817,6 +1837,7 @@
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
         app.component('OcrTextLayer', OcrTextLayer);
+        app.component('MediaRedactor', MediaRedactor);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.use(router).use(vuetify);
