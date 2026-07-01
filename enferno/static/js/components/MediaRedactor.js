@@ -772,6 +772,7 @@ const MediaRedactor = Vue.defineComponent({
                     variant="flat"
                     class="position-absolute"
                     style="top: -18px; left: 50%; transform: translateX(-50%);"
+                    @pointerdown.stop
                     @click.stop="deleteBox(page.index, boxIndex)"
                   >
                     <v-icon size="10">mdi-close</v-icon>
