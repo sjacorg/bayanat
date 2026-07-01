@@ -65,6 +65,12 @@ const MediaRedactor = Vue.defineComponent({
     isMobileView() {
       return !!this.$vuetify?.display?.mobile;
     },
+    isDarkTheme() {
+      return !!this.$vuetify?.theme?.current?.dark;
+    },
+    scrollPaneClasses() {
+      return this.isDarkTheme ? 'bg-grey-darken-4' : 'bg-grey-lighten-3';
+    },
     modeMeta() {
       return this.maskMode === 'reveal'
         ? {
@@ -584,8 +590,8 @@ const MediaRedactor = Vue.defineComponent({
             hide-details
             :label="translations.copyName_"
             prepend-inner-icon="mdi-tag-outline"
-            style="max-width: 300px;"
             class="mx-3"
+            max-width="300"
           ></v-text-field>
           <v-tooltip location="bottom" :disabled="canSubmit">
             <template #activator="{ props }">
@@ -641,9 +647,13 @@ const MediaRedactor = Vue.defineComponent({
         <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
         <v-card-text
           ref="scrollPane"
-          class="pa-0 bg-grey-lighten-3"
+          class="pa-0"
+          :class="scrollPaneClasses"
           style="overflow: auto;"
-          :style="{ touchAction: zoom > 1 ? 'pan-x pan-y' : 'pan-y', cursor: panning ? 'grabbing' : spaceDown ? 'grab' : 'default' }"
+          :style="{
+            touchAction: zoom > 1 ? 'pan-x pan-y' : 'pan-y',
+            cursor: panning ? 'grabbing' : spaceDown ? 'grab' : 'default',
+          }"
           @mousedown="onPanStart"
           @mousemove="onPanMove"
           @mouseup="onPanEnd"
@@ -656,14 +666,13 @@ const MediaRedactor = Vue.defineComponent({
             v-if="isMobileView"
             class="px-3 pt-3"
           >
-            <v-sheet
-              color="info"
-              rounded="pill"
-              class="d-flex align-center px-4 py-2 text-white elevation-3"
-            >
-              <v-icon icon="mdi-information-outline" size="18" class="mr-2"></v-icon>
-              <span class="text-body-2">{{ translations.redactionEditingIsAvailableOnDesktopOnly_ }}</span>
-            </v-sheet>
+            <v-alert
+              type="info"
+              variant="tonal"
+              density="compact"
+              rounded="lg"
+              class="mb-0"
+            >{{ translations.redactionEditingIsAvailableOnDesktopOnly_ }}</v-alert>
           </div>
           <div v-if="loading" class="d-flex align-center justify-center" style="height: 70vh;">
             <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
