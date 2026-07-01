@@ -13,6 +13,8 @@ const MediaRedactor = Vue.defineComponent({
       loading: false,
       saving: false,
       error: null,
+      translations: window.translations,
+      maskMode: 'redact',
       label: '',
       pages: [],
       boxes: {},
@@ -59,6 +61,15 @@ const MediaRedactor = Vue.defineComponent({
     },
     canSubmit() {
       return Object.values(this.boxes).some(pageBoxes => pageBoxes.length);
+    },
+    modeMeta() {
+      return this.maskMode === 'reveal'
+        ? {
+            boxHint: this.translations.clickDragToDrawAVisibleWindow_,
+          }
+        : {
+            boxHint: this.translations.clickDragToDrawABlackBox_,
+          };
     },
     orientation() {
       return this.media?.orientation || 0;
@@ -136,6 +147,7 @@ const MediaRedactor = Vue.defineComponent({
       this.loading = false;
       this.saving = false;
       this.error = null;
+      this.maskMode = 'redact';
       this.label = '';
       this.pages = [];
       this.boxes = {};
@@ -162,7 +174,7 @@ const MediaRedactor = Vue.defineComponent({
         this.boxes = { 0: [] };
         return;
       }
-      this.error = 'Unsupported file type';
+      this.error = this.translations.unsupportedFileType_;
     },
     async loadPdf() {
       const loadId = this._loadId;
@@ -193,7 +205,7 @@ const MediaRedactor = Vue.defineComponent({
       } catch (e) {
         if (loadId !== this._loadId) return;
         console.error('PDF redactor load failed:', e);
-        this.error = 'Failed to load document';
+        this.error = this.translations.failedToLoadDocument_;
         this.loading = false;
       }
     },
@@ -227,17 +239,19 @@ const MediaRedactor = Vue.defineComponent({
     },
     normalizedPoint(index, event) {
       const rect = this.pageRect(index);
-      const x = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
-      const y = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+      const source = event.changedTouches?.[0] || event.touches?.[0] || event;
+      const x = Math.min(Math.max((source.clientX - rect.left) / rect.width, 0), 1);
+      const y = Math.min(Math.max((source.clientY - rect.top) / rect.height, 0), 1);
       return { x, y };
     },
     startBox(index, event) {
-      if (event.button !== 0 || this.spaceDown) return;
+      if ((event.button !== undefined && event.button !== 0) || this.spaceDown) return;
       const point = this.normalizedPoint(index, event);
       this.draft = { page: index, startX: point.x, startY: point.y, x: point.x, y: point.y, w: 0, h: 0 };
     },
     startDrag(pageIndex, boxIndex, event) {
-      if (event.button !== 0) return;
+      if (event.pointerType === 'touch') return;
+      if (event.button !== undefined && event.button !== 0) return;
       event.stopPropagation();
       this.activeBox = { page: pageIndex, box: boxIndex };
       const point = this.normalizedPoint(pageIndex, event);
@@ -246,7 +260,8 @@ const MediaRedactor = Vue.defineComponent({
     },
     // corner: 'tl' | 'tr' | 'bl' | 'br' — the corner being dragged; opposite corner is the anchor
     startResize(pageIndex, boxIndex, corner, event) {
-      if (event.button !== 0) return;
+      if (event.pointerType === 'touch') return;
+      if (event.button !== undefined && event.button !== 0) return;
       event.stopPropagation();
       this.activeBox = { page: pageIndex, box: boxIndex };
       const box = this.boxes[pageIndex][boxIndex];
@@ -327,7 +342,7 @@ const MediaRedactor = Vue.defineComponent({
       }
     },
     onPanStart(event) {
-      if (!this.spaceDown || event.button !== 0) return;
+      if (!this.spaceDown || (event.button !== undefined && event.button !== 0)) return;
       event.preventDefault();
       event.stopPropagation();
       const pane = this._scrollPane;
@@ -349,6 +364,88 @@ const MediaRedactor = Vue.defineComponent({
       const boxes = [...(this.boxes[pageIndex] || [])];
       if (this.draft?.page === pageIndex) boxes.push(this.draft);
       return boxes;
+    },
+    inverseOverlayPath(pageIndex) {
+      const boxes = this.visibleBoxes(pageIndex);
+      const path = ['M 0 0 H 100 V 100 H 0 Z'];
+      for (const box of boxes) {
+        const left = +(box.x * 100).toFixed(4);
+        const top = +(box.y * 100).toFixed(4);
+        const right = +((box.x + box.w) * 100).toFixed(4);
+        const bottom = +((box.y + box.h) * 100).toFixed(4);
+        path.push(`M ${left} ${top} H ${right} V ${bottom} H ${left} Z`);
+      }
+      return path.join(' ');
+    },
+    normalizeRect(rect) {
+      const x0 = Math.max(0, Math.min(rect.x, 1));
+      const y0 = Math.max(0, Math.min(rect.y, 1));
+      const x1 = Math.max(x0, Math.min(rect.x + rect.w, 1));
+      const y1 = Math.max(y0, Math.min(rect.y + rect.h, 1));
+      return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    },
+    mergeRects(rects) {
+      const epsilon = 0.000001;
+      let current = rects.map(rect => this.normalizeRect(rect)).filter(rect => rect.w > epsilon && rect.h > epsilon);
+      let changed = true;
+      while (changed) {
+        current.sort((a, b) => (a.y - b.y) || (a.x - b.x) || (a.h - b.h) || (a.w - b.w));
+        changed = false;
+        const next = [];
+        const used = new Array(current.length).fill(false);
+        for (let i = 0; i < current.length; i++) {
+          if (used[i]) continue;
+          let rect = current[i];
+          for (let j = i + 1; j < current.length; j++) {
+            if (used[j]) continue;
+            const other = current[j];
+            const sameRow = Math.abs(rect.y - other.y) < epsilon && Math.abs(rect.h - other.h) < epsilon;
+            const touchesHorizontally = sameRow && Math.abs(rect.x + rect.w - other.x) < epsilon;
+            const sameColumn = Math.abs(rect.x - other.x) < epsilon && Math.abs(rect.w - other.w) < epsilon;
+            const touchesVertically = sameColumn && Math.abs(rect.y + rect.h - other.y) < epsilon;
+            if (touchesHorizontally) {
+              rect = { x: rect.x, y: rect.y, w: rect.w + other.w, h: rect.h };
+              used[j] = true;
+              changed = true;
+            } else if (touchesVertically) {
+              rect = { x: rect.x, y: rect.y, w: rect.w, h: rect.h + other.h };
+              used[j] = true;
+              changed = true;
+            }
+          }
+          used[i] = true;
+          next.push(rect);
+        }
+        current = next;
+      }
+      return current;
+    },
+    inverseRects(rects) {
+      if (!rects.length) return [];
+      const normalizedRects = this.mergeRects(rects);
+      const xEdges = Array.from(new Set([0, 1, ...normalizedRects.flatMap(rect => [rect.x, rect.x + rect.w])])).sort((a, b) => a - b);
+      const yEdges = Array.from(new Set([0, 1, ...normalizedRects.flatMap(rect => [rect.y, rect.y + rect.h])])).sort((a, b) => a - b);
+      const maskedRects = [];
+
+      for (let yi = 0; yi < yEdges.length - 1; yi++) {
+        for (let xi = 0; xi < xEdges.length - 1; xi++) {
+          const x0 = xEdges[xi];
+          const x1 = xEdges[xi + 1];
+          const y0 = yEdges[yi];
+          const y1 = yEdges[yi + 1];
+          if (x1 <= x0 || y1 <= y0) continue;
+          const midX = (x0 + x1) / 2;
+          const midY = (y0 + y1) / 2;
+          const insideReveal = normalizedRects.some(rect =>
+            midX >= rect.x && midX <= rect.x + rect.w && midY >= rect.y && midY <= rect.y + rect.h
+          );
+          if (!insideReveal) {
+            maskedRects.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+          }
+        }
+      }
+
+      return this.mergeRects(maskedRects);
     },
     zoomIn() {
       this.zoom = Math.min(+(this.zoom + 0.25).toFixed(2), REDACTOR_MAX_ZOOM);
@@ -414,13 +511,26 @@ const MediaRedactor = Vue.defineComponent({
       this.saving = true;
       const pages = Object.entries(this.boxes)
         .filter(([, rects]) => rects.length)
-        .map(([page, rects]) => ({ page: Number(page), rects }));
+        .map(([page, rects]) => {
+          const sourceRects = this.mergeRects(rects);
+          return {
+            page: Number(page),
+            mode: this.maskMode,
+            rects: this.maskMode === 'reveal' ? this.inverseRects(sourceRects) : sourceRects,
+            revealRects: this.maskMode === 'reveal' ? sourceRects : undefined,
+          };
+        });
       try {
-        const response = await api.post(`/admin/api/media/${this.media.id}/redact`, { pages, title: this.label.trim(), overwrite });
+        const response = await api.post(`/admin/api/media/${this.media.id}/redact`, {
+          mode: this.maskMode,
+          pages,
+          title: this.label.trim(),
+          overwrite,
+        });
         this.$emit('redacted', response.data.data);
         this.show = false;
       } catch (e) {
-        this.error = e.response?.data?.message || 'Failed to save redaction';
+        this.error = e.response?.data?.message || this.translations.failedToSaveRedaction_;
       } finally {
         this.saving = false;
       }
@@ -430,19 +540,20 @@ const MediaRedactor = Vue.defineComponent({
   template: /*html*/`
     <v-dialog v-model="show" fullscreen scrollable persistent @keydown.esc.prevent no-click-animation>
       <v-card>
-        <v-toolbar color="dark-primary">
+        <v-toolbar color="dark-primary" :density="$vuetify.display.mobile ? 'comfortable' : 'default'">
           <v-icon icon="mdi-marker" class="ml-3 mr-2" size="20"></v-icon>
-          <v-toolbar-title class="font-weight-medium">
-            Redaction Tool
-            <span class="text-body-2 font-weight-regular opacity-70 ml-2">— {{ media?.title || media?.filename || 'document' }}</span>
+          <v-toolbar-title style="min-width: 0;" :class="$vuetify.display.mobile ? 'me-2' : ''">
+            <div :class="$vuetify.display.mobile ? 'text-subtitle-1' : 'font-weight-medium'" class="text-truncate">{{ translations.redactionTool_ }}</div>
+            <div class="font-weight-regular opacity-70 text-truncate" :class="$vuetify.display.mobile ? 'text-caption' : 'text-body-2'">{{ media?.title || media?.filename || translations.document_ }}</div>
           </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-text-field
+            v-if="!$vuetify.display.mobile"
             v-model="label"
             density="comfortable"
             variant="solo"
             hide-details
-            label="Copy name (e.g. detainee name)"
+            :label="translations.copyName_"
             prepend-inner-icon="mdi-tag-outline"
             style="max-width: 300px;"
             class="mx-3"
@@ -458,7 +569,7 @@ const MediaRedactor = Vue.defineComponent({
                   :loading="saving"
                   @click="submit(true)"
                   class="mr-2"
-                >Save changes</v-btn>
+                >{{ translations.saveChanges_ }}</v-btn>
                 <v-btn
                   :prepend-icon="isRedactedCopy ? 'mdi-content-save-plus-outline' : 'mdi-content-save-outline'"
                   :variant="isRedactedCopy ? 'tonal' : 'elevated'"
@@ -466,26 +577,35 @@ const MediaRedactor = Vue.defineComponent({
                   :loading="saving"
                   @click="submit(false)"
                   class="mr-2"
-                >{{ isRedactedCopy ? 'Save as new copy' : 'Save redacted copy' }}</v-btn>
+                >{{ $vuetify.display.mobile ? translations.save_ : (isRedactedCopy ? translations.saveAsNewCopy_ : translations.saveCopy_) }}</v-btn>
               </div>
             </template>
-            <span>Draw at least one black box on the document to save</span>
+            <span>{{ maskMode === 'reveal' ? translations.drawAtLeastOneRevealWindowOnTheDocumentToSave_ : translations.drawAtLeastOneBlackBoxOnTheDocumentToSave_ }}</span>
           </v-tooltip>
           <template #append>
             <v-btn icon="mdi-close" variant="text" @click="show = false"></v-btn>
           </template>
         </v-toolbar>
 
-        <v-toolbar density="compact" class="border-b">
-          <v-chip size="small" variant="text" prepend-icon="mdi-cursor-default-click-outline" class="ml-2 text-caption opacity-70">Click &amp; drag to draw a black box</v-chip>
-          <v-chip size="small" variant="text" prepend-icon="mdi-arrow-all" class="text-caption opacity-70">Drag box to reposition</v-chip>
-          <v-chip size="small" variant="text" prepend-icon="mdi-delete-outline" class="text-caption opacity-70">Click box then Delete to remove</v-chip>
-          <v-chip size="small" variant="text" prepend-icon="mdi-hand-back-right-outline" class="text-caption opacity-70">Hold Space + drag to pan</v-chip>
+        <v-toolbar density="compact" class="border-b" :class="$vuetify.display.mobile ? 'px-2 py-2' : ''">
+          <div class="d-flex align-center w-100" :class="$vuetify.display.mobile ? 'flex-wrap ga-2' : 'ga-1'">
+          <v-btn
+            :color="maskMode === 'reveal' ? 'success' : 'default'"
+            :variant="maskMode === 'reveal' ? 'flat' : 'outlined'"
+            :prepend-icon="maskMode === 'reveal' ? 'mdi-check' : 'mdi-selection-search'"
+            class="ml-4"
+            @click="maskMode = maskMode === 'reveal' ? 'redact' : 'reveal'"
+          >{{ translations.revealMode_ }}</v-btn>
+          <v-chip v-if="!$vuetify.display.mobile" size="small" variant="text" class="text-caption opacity-70">{{ modeMeta.boxHint }}</v-chip>
+          <v-chip v-if="!$vuetify.display.mobile" size="small" variant="text" prepend-icon="mdi-arrow-all" class="text-caption opacity-70">{{ translations.dragBoxToReposition_ }}</v-chip>
+          <v-chip v-if="!$vuetify.display.mobile" size="small" variant="text" prepend-icon="mdi-delete-outline" class="text-caption opacity-70">{{ translations.clickBoxThenDeleteToRemove_ }}</v-chip>
+          <v-chip v-if="!$vuetify.display.mobile" size="small" variant="text" prepend-icon="mdi-hand-back-right-outline" class="text-caption opacity-70">{{ translations.holdSpaceAndDragToPan_ }}</v-chip>
           <v-spacer></v-spacer>
           <v-btn icon="mdi-minus" variant="tonal" density="compact" :disabled="zoom <= 1" @click="zoomOut"></v-btn>
           <span class="text-body-2 mx-1" style="min-width: 44px; text-align: center;">{{ Math.round(zoom * 100) }}%</span>
           <v-btn icon="mdi-plus" variant="tonal" density="compact" :disabled="zoom >= REDACTOR_MAX_ZOOM" @click="zoomIn"></v-btn>
-          <v-btn variant="tonal" density="compact" size="large" class="mx-2" @click="zoomFit">Fit</v-btn>
+          <v-btn variant="tonal" density="compact" size="large" :class="$vuetify.display.mobile ? '' : 'mx-2'" @click="zoomFit">{{ translations.fit_ }}</v-btn>
+          </div>
         </v-toolbar>
 
         <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
@@ -506,7 +626,8 @@ const MediaRedactor = Vue.defineComponent({
             <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
           </div>
           <div v-else
-            class="d-flex flex-column align-center ga-4 pa-4 redactor-pages"
+            class="d-flex flex-column align-center ga-4 redactor-pages"
+            :class="$vuetify.display.mobile ? 'pa-2' : 'pa-4'"
             :style="{ width: zoom > 1 ? (zoom * baseWidth) + 'px' : '100%', minWidth: '100%' }"
           >
             <div
@@ -515,10 +636,12 @@ const MediaRedactor = Vue.defineComponent({
               class="position-relative bg-white elevation-2"
               :style="{ width: '100%', lineHeight: 0, userSelect: 'none', aspectRatio: (orientation === 90 || orientation === 270) ? page.height + ' / ' + page.width : page.width + ' / ' + page.height }"
               :ref="'page-' + page.index"
-              @mousedown.prevent="activeBox = null; startBox(page.index, $event)"
-              @mousemove.prevent="moveBox(page.index, $event)"
-              @mouseup.prevent="finishBox"
-              @mouseleave="finishBox"
+              style="touch-action: none;"
+              @pointerdown.prevent="activeBox = null; startBox(page.index, $event)"
+              @pointermove.prevent="moveBox(page.index, $event)"
+              @pointerup.prevent="finishBox"
+              @pointercancel="finishBox"
+              @pointerleave="finishBox"
             >
               <canvas
                 v-if="mediaKind === 'pdf'"
@@ -533,6 +656,20 @@ const MediaRedactor = Vue.defineComponent({
                 :style="imageStyle(page)"
                 @load="page.width = $event.target.naturalWidth; page.height = $event.target.naturalHeight"
               >
+
+              <svg
+                v-if="maskMode === 'reveal'"
+                class="position-absolute"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                style="inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"
+              >
+                <path
+                  :d="inverseOverlayPath(page.index)"
+                  fill="rgba(0,0,0,0.76)"
+                  fill-rule="evenodd"
+                ></path>
+              </svg>
 
               <template v-for="(pageBoxes, _) in [visibleBoxes(page.index)]" :key="0">
               <div
@@ -550,7 +687,7 @@ const MediaRedactor = Vue.defineComponent({
                   pointerEvents: draft && boxIndex === pageBoxes.length - 1 ? 'none' : 'auto',
                   zIndex: 5,
                 }"
-                @mousedown.prevent="startDrag(page.index, boxIndex, $event)"
+                @pointerdown.prevent="startDrag(page.index, boxIndex, $event)"
                 @mouseenter="hoveredBox = { page: page.index, box: boxIndex }"
                 @mouseleave="hoveredBox = null"
               >
@@ -559,9 +696,10 @@ const MediaRedactor = Vue.defineComponent({
                   :style="{
                     width: '100%',
                     height: '100%',
-                    background: 'rgba(0,0,0,0.82)',
+                    background: maskMode === 'reveal' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.82)',
                     border: (hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex) ? '2px solid rgb(var(--v-theme-primary))' : '1px solid #111',
                     cursor: 'move',
+                    boxShadow: maskMode === 'reveal' ? '0 0 0 1px rgba(255,255,255,0.9) inset' : 'none',
                   }"
                 >
                   <template v-if="!(draft && boxIndex === pageBoxes.length - 1) && ((hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex))">
@@ -580,7 +718,7 @@ const MediaRedactor = Vue.defineComponent({
                         borderRadius: '1px',
                         zIndex: 20,
                       }"
-                      @mousedown.prevent.stop="startResize(page.index, boxIndex, corner, $event)"
+                      @pointerdown.prevent.stop="startResize(page.index, boxIndex, corner, $event)"
                     ></div>
                   </template>
                 </div>
