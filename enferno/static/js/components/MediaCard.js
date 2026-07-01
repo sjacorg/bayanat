@@ -42,6 +42,18 @@ const toolbarContent = `
           </template>
           <span>{{ ocrButtonState.text }}</span>
         </v-tooltip>
+
+        <v-tooltip v-if="redactButtonState?.visible" location="bottom">
+          <template v-slot:activator="{ props }">
+            <div v-bind="props">
+              <v-btn size="small" variant="text" icon="mdi-marker" @click="expansionPanel = null; $root.openRedactor(media)" :disabled="redactButtonState.disabled"></v-btn>
+            </div>
+          </template>
+          <div class="d-flex flex-column align-center">
+            <span class="font-weight-bold">Redact document</span>
+            <span class="text-caption opacity-80">Draw black boxes to censor sensitive areas,<br>then save a new redacted copy</span>
+          </div>
+        </v-tooltip>
       </div>
     </div>
 
@@ -113,9 +125,13 @@ const MediaCard = Vue.defineComponent({
     miniMode: {
       type: Boolean,
       default: false,
-    }
+    },
+    redactions: {
+      type: Array,
+      default: () => [],
+    },
   },
-  emits: ['media-click'],
+  emits: ['media-click', 'remove-redaction'],
   data() {
     return {
       s3url: '',
@@ -134,6 +150,7 @@ const MediaCard = Vue.defineComponent({
       ocrDetails: null,
       ocrLoading: false,
       expansionPanel: null,
+      showRedactions: false,
     };
   },
   computed: {
@@ -164,6 +181,17 @@ const MediaCard = Vue.defineComponent({
         text,
         visible,
         disabled
+      };
+    },
+    redactButtonState() {
+      // Only on pages that mounted the redactor, for redactable types, Admin/DA
+      if (typeof this.$root?.openRedactor !== 'function') return;
+      const isRedactable = this.mediaType === 'pdf' || this.mediaType === 'image';
+      const visible = (this.isCurrentUserAdmin || this.isCurrentUserDA) && isRedactable;
+      return {
+        text: this.translations.redact_,
+        visible,
+        disabled: !this.media?.id,
       };
     }
   },
@@ -201,6 +229,17 @@ const MediaCard = Vue.defineComponent({
         })
         .catch(() => this.$root.showSnack('Failed to load OCR text'))
         .finally(() => this.ocrLoading = false);
+    },
+    confirmRemoveRedaction(redaction) {
+      this.$root.$confirm({
+        title: this.translations.youreAboutToDeleteARedactedCopy_,
+        message: `${this.translations.deletingTheRedactedCopyWillNotDeleteTheOriginalMedia_}\r\n\r\n${this.translations.doYouWantToContinue_}`,
+        acceptProps: { text: this.translations.deleteRedaction_, color: 'error' },
+        dialogProps: { width: 780 },
+        onAccept: () => {
+          this.$emit('remove-redaction', redaction);
+        },
+      });
     },
     copyToClipboard(text) {
       navigator.clipboard.writeText(text)
@@ -270,8 +309,8 @@ const MediaCard = Vue.defineComponent({
           <v-expansion-panel @group:selected="loadOcrText">
             <v-expansion-panel-title class="py-1 text-caption" style="min-height: 36px;">
               <v-icon icon="mdi-text-recognition" size="small" class="mr-2"></v-icon>
-              {{ translations.extractedText_ || 'Extracted Text' }}
-              <v-chip size="x-small" class="ml-2" variant="text">{{ media.extraction?.word_count }} {{ translations.words_ || 'words' }}</v-chip>
+              {{ translations.extractedText_ }}
+              <v-chip size="x-small" class="ml-2" variant="text">{{ media.extraction?.word_count }} {{ translations.words_ }}</v-chip>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <v-progress-linear v-if="ocrLoading" indeterminate color="primary" class="mb-2"></v-progress-linear>
@@ -283,6 +322,68 @@ const MediaCard = Vue.defineComponent({
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
+      </template>
+
+      <template v-if="redactions.length">
+        <v-divider></v-divider>
+        <div
+          class="d-flex align-center justify-space-between px-3 py-2 cursor-pointer ga-2"
+          style="min-height: 36px;"
+          @click="showRedactions = !showRedactions"
+        >
+          <div class="d-flex align-center ga-2">
+            <v-icon icon="mdi-marker" size="18" color="warning"></v-icon>
+            <span class="text-caption font-weight-medium">{{ redactions.length }} redacted cop{{ redactions.length > 1 ? 'ies' : 'y' }}</span>
+          </div>
+          <v-icon :icon="showRedactions ? 'mdi-chevron-up' : 'mdi-chevron-down'" size="18" class="opacity-60"></v-icon>
+        </div>
+        <v-expand-transition>
+          <div v-if="showRedactions">
+            <v-divider></v-divider>
+            <v-row no-gutters class="pa-2 bg-grey-lighten-4">
+              <v-col cols="6" v-for="redaction in redactions" :key="redaction.id" class="pa-1">
+              <v-hover v-slot="{ isHovering, props: hoverProps }">
+              <v-card
+                v-bind="hoverProps"
+                rounded
+                elevation="1"
+                class="overflow-hidden"
+              >
+                <div class="position-relative" style="height: 80px;" @click.stop="$emit('media-click', { media: redaction, mediaType: $root.getFileTypeFromMimeType(redaction.fileType) })">
+                  <media-thumbnail :media="redaction" :show-hover-icon="isHovering" :compact="true" clickable></media-thumbnail>
+                </div>
+                <div class="d-flex align-center px-1 ga-1" style="min-height: 28px;">
+                  <v-tooltip location="top" :text="redaction.title || redaction.filename">
+                    <template #activator="{ props: ttProps }">
+                      <span v-bind="ttProps" class="text-truncate flex-grow-1 text-caption opacity-70">{{ redaction.title || redaction.filename }}</span>
+                    </template>
+                  </v-tooltip>
+                  <v-fade-transition>
+                    <div v-if="isHovering && (isCurrentUserAdmin || isCurrentUserDA)" class="d-flex ga-1">
+                      <v-icon
+                        v-if="typeof $root?.openRedactor === 'function'"
+                        icon="mdi-marker"
+                        size="18"
+                        class="cursor-pointer"
+                        @click.stop="$root.openRedactor(redaction)"
+                      ></v-icon>
+                      <v-icon
+                        v-if="typeof $root?.removeRedaction === 'function'"
+                        icon="mdi-delete-outline"
+                        size="18"
+                        color="error"
+                        class="cursor-pointer"
+                        @click.stop="confirmRemoveRedaction(redaction)"
+                      ></v-icon>
+                    </div>
+                  </v-fade-transition>
+                </div>
+              </v-card>
+              </v-hover>
+              </v-col>
+            </v-row>
+          </div>
+        </v-expand-transition>
       </template>
 
       <v-divider></v-divider>
