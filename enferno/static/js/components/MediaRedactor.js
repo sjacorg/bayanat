@@ -14,7 +14,7 @@ const MediaRedactor = Vue.defineComponent({
       saving: false,
       error: null,
       translations: window.translations,
-      maskMode: 'redact',
+      redactionMode: 'redact',
       label: '',
       pages: [],
       boxes: {},
@@ -71,8 +71,8 @@ const MediaRedactor = Vue.defineComponent({
     scrollPaneClasses() {
       return this.isDarkTheme ? 'bg-grey-darken-4' : 'bg-grey-lighten-3';
     },
-    modeMeta() {
-      return this.maskMode === 'reveal'
+    modeHint() {
+      return this.redactionMode === 'reveal'
         ? {
             boxHint: this.translations.clickDragToDrawAVisibleWindow_,
           }
@@ -166,7 +166,7 @@ const MediaRedactor = Vue.defineComponent({
       this.loading = false;
       this.saving = false;
       this.error = null;
-      this.maskMode = 'redact';
+      this.redactionMode = 'redact';
       this.label = '';
       this.pages = [];
       this.boxes = {};
@@ -400,7 +400,7 @@ const MediaRedactor = Vue.defineComponent({
       if (this.draft?.page === pageIndex) boxes.push(this.draft);
       return boxes;
     },
-    inverseOverlayPath(pageIndex) {
+    revealOverlayPath(pageIndex) {
       const boxes = this.visibleBoxes(pageIndex);
       const path = ['M 0 0 H 100 V 100 H 0 Z'];
       for (const box of boxes) {
@@ -455,7 +455,7 @@ const MediaRedactor = Vue.defineComponent({
       }
       return current;
     },
-    inverseRects(rects) {
+    revealRectsToRedactionRects(rects) {
       if (!rects.length) return [];
       const normalizedRects = this.mergeRects(rects);
       const xEdges = Array.from(new Set([0, 1, ...normalizedRects.flatMap(rect => [rect.x, rect.x + rect.w])])).sort((a, b) => a - b);
@@ -481,6 +481,9 @@ const MediaRedactor = Vue.defineComponent({
       }
 
       return this.mergeRects(maskedRects);
+    },
+    toggleRevealMode() {
+      this.redactionMode = this.redactionMode === 'reveal' ? 'redact' : 'reveal';
     },
     zoomIn() {
       this.zoom = Math.min(+(this.zoom + 0.25).toFixed(2), REDACTOR_MAX_ZOOM);
@@ -548,16 +551,18 @@ const MediaRedactor = Vue.defineComponent({
         .filter(([, rects]) => rects.length)
         .map(([page, rects]) => {
           const sourceRects = this.mergeRects(rects);
+          // Reveal mode is a client-side UX layer: users draw visible windows,
+          // then we convert them into standard blackout rects before saving.
           return {
             page: Number(page),
-            mode: this.maskMode,
-            rects: this.maskMode === 'reveal' ? this.inverseRects(sourceRects) : sourceRects,
-            revealRects: this.maskMode === 'reveal' ? sourceRects : undefined,
+            mode: this.redactionMode,
+            rects: this.redactionMode === 'reveal' ? this.revealRectsToRedactionRects(sourceRects) : sourceRects,
+            revealRects: this.redactionMode === 'reveal' ? sourceRects : undefined,
           };
         });
       try {
         const response = await api.post(`/admin/api/media/${this.media.id}/redact`, {
-          mode: this.maskMode,
+          mode: this.redactionMode,
           pages,
           title: this.label.trim(),
           overwrite,
@@ -615,7 +620,7 @@ const MediaRedactor = Vue.defineComponent({
                 >{{ isRedactedCopy ? translations.saveAsNewCopy_ : translations.saveCopy_ }}</v-btn>
               </div>
             </template>
-            <span v-if="!isMobileView">{{ maskMode === 'reveal' ? translations.drawAtLeastOneRevealWindowOnTheDocumentToSave_ : translations.drawAtLeastOneBlackBoxOnTheDocumentToSave_ }}</span>
+            <span v-if="!isMobileView">{{ redactionMode === 'reveal' ? translations.drawAtLeastOneRevealWindowOnTheDocumentToSave_ : translations.drawAtLeastOneBlackBoxOnTheDocumentToSave_ }}</span>
           </v-tooltip>
           <template #append>
             <v-btn icon="mdi-close" variant="text" @click="show = false"></v-btn>
@@ -626,13 +631,13 @@ const MediaRedactor = Vue.defineComponent({
           <div class="d-flex align-center w-100" :class="$vuetify.display.mobile ? 'flex-wrap ga-2' : 'ga-1'">
           <v-btn
             v-if="!isMobileView"
-            :color="maskMode === 'reveal' ? 'success' : 'default'"
-            :variant="maskMode === 'reveal' ? 'flat' : 'outlined'"
-            :prepend-icon="maskMode === 'reveal' ? 'mdi-check' : 'mdi-selection-search'"
+            :color="redactionMode === 'reveal' ? 'success' : 'default'"
+            :variant="redactionMode === 'reveal' ? 'flat' : 'outlined'"
+            :prepend-icon="redactionMode === 'reveal' ? 'mdi-check' : 'mdi-selection-search'"
             class="ml-4"
-            @click="maskMode = maskMode === 'reveal' ? 'redact' : 'reveal'"
+            @click="toggleRevealMode"
           >{{ translations.revealMode_ }}</v-btn>
-          <v-chip v-if="!isMobileView" size="small" variant="text" class="text-caption opacity-70">{{ modeMeta.boxHint }}</v-chip>
+          <v-chip v-if="!isMobileView" size="small" variant="text" class="text-caption opacity-70">{{ modeHint.boxHint }}</v-chip>
           <v-chip v-if="!isMobileView" size="small" variant="text" prepend-icon="mdi-arrow-all" class="text-caption opacity-70">{{ translations.dragBoxToReposition_ }}</v-chip>
           <v-chip v-if="!isMobileView" size="small" variant="text" prepend-icon="mdi-delete-outline" class="text-caption opacity-70">{{ translations.clickBoxThenDeleteToRemove_ }}</v-chip>
           <v-chip v-if="!isMobileView" size="small" variant="text" prepend-icon="mdi-hand-back-right-outline" class="text-caption opacity-70">{{ translations.holdSpaceAndDragToPan_ }}</v-chip>
@@ -709,14 +714,14 @@ const MediaRedactor = Vue.defineComponent({
               >
 
               <svg
-                v-if="maskMode === 'reveal'"
+                v-if="redactionMode === 'reveal'"
                 class="position-absolute"
                 viewBox="0 0 100 100"
                 preserveAspectRatio="none"
                 style="inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"
               >
                 <path
-                  :d="inverseOverlayPath(page.index)"
+                  :d="revealOverlayPath(page.index)"
                   fill="rgba(0,0,0,0.76)"
                   fill-rule="evenodd"
                 ></path>
@@ -747,10 +752,10 @@ const MediaRedactor = Vue.defineComponent({
                   :style="{
                     width: '100%',
                     height: '100%',
-                    background: maskMode === 'reveal' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.82)',
+                    background: redactionMode === 'reveal' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.82)',
                     border: (hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex) ? '2px solid rgb(var(--v-theme-primary))' : '1px solid #111',
                     cursor: 'move',
-                    boxShadow: maskMode === 'reveal' ? '0 0 0 1px rgba(255,255,255,0.9) inset' : 'none',
+                    boxShadow: redactionMode === 'reveal' ? '0 0 0 1px rgba(255,255,255,0.9) inset' : 'none',
                   }"
                 >
                   <template v-if="!(draft && boxIndex === pageBoxes.length - 1) && ((hoveredBox?.page === page.index && hoveredBox?.box === boxIndex) || (activeBox?.page === page.index && activeBox?.box === boxIndex))">
