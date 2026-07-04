@@ -22,6 +22,7 @@
           renderer-id="media-dialog"
           :media="expandedByRenderer?.['media-dialog']?.media"
           :media-type="expandedByRenderer?.['media-dialog']?.mediaType"
+          :initial-orientation="expandedByRenderer?.['media-dialog']?.media?.orientation || 0"
           :use-metadata="true"
           class="mb-4"
           content-style="height: calc(100vh - 450px);"

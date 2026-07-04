@@ -427,6 +427,7 @@ const ActorCard = Vue.defineComponent({
                 :renderer-id="mediaRendererId"
                 :media="$root.expandedByRenderer?.[mediaRendererId]?.media"
                 :media-type="$root.expandedByRenderer?.[mediaRendererId]?.mediaType"
+                :initial-orientation="$root.expandedByRenderer?.[mediaRendererId]?.media?.orientation || 0"
                 @ready="$root.onMediaRendererReady"
                 @fullscreen="$root.handleFullscreen(mediaRendererId)"
                 @close="$root.closeExpandedMedia(mediaRendererId)"

@@ -1,7 +1,7 @@
 import io
 
 import fitz
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 
 class RedactionError(ValueError):
@@ -82,7 +82,11 @@ def redact_image_bytes(src: bytes, rects: list[dict]) -> bytes:
     if not rects:
         raise RedactionError("No redaction regions provided")
 
-    img = Image.open(io.BytesIO(src)).convert("RGB")
+    # Bake in EXIF orientation so we draw on the same pixels the browser displayed
+    # (browsers honor EXIF; PIL does not). Otherwise boxes land in the wrong place and
+    # the saved copy comes back at 0deg. The DB orientation axis is handled separately
+    # by rotate_rect_to_original in the caller.
+    img = ImageOps.exif_transpose(Image.open(io.BytesIO(src))).convert("RGB")
     draw = ImageDraw.Draw(img)
     width, height = img.size
     for rect in rects:
