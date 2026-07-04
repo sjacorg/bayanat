@@ -57,6 +57,11 @@ const BulletinCard = Vue.defineComponent({
       return false;
 
     },
+    removeRedaction(redaction) {
+      if (typeof this.$root.removeRedaction === 'function') {
+        this.$root.removeRedaction(redaction);
+      }
+    },
 
     loadRevisions() {
       this.hloading = true;
@@ -261,6 +266,7 @@ const BulletinCard = Vue.defineComponent({
           :renderer-id="mediaRendererId"
           :media="$root.expandedByRenderer?.[mediaRendererId]?.media"
           :media-type="$root.expandedByRenderer?.[mediaRendererId]?.mediaType"
+          :initial-orientation="$root.expandedByRenderer?.[mediaRendererId]?.media?.orientation || 0"
           @ready="$root.onMediaRendererReady"
           @fullscreen="$root.handleFullscreen(mediaRendererId)"
           @close="$root.closeExpandedMedia(mediaRendererId)"
@@ -268,7 +274,7 @@ const BulletinCard = Vue.defineComponent({
         
         <v-card-text>
           
-          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event })"></media-grid>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event })" @remove-redaction="removeRedaction"></media-grid>
         </v-card-text>
       </v-card>
 
