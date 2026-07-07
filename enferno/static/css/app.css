@@ -1004,3 +1004,7 @@ div.jsondiffpatch-child-node-type-array:after {
     margin-top: 1em;
     margin-bottom: 1em;
 }
+
+.v-input--disabled .field-action-enabled {
+    pointer-events: auto;
+}
