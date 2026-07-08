@@ -88,10 +88,13 @@
                 _('Add New') }}</v-btn>
         </div>
       </v-card-text>
+      <v-card-text class="text-caption text-medium-emphasis pt-0 pb-4">
+        {{ _('DEFAULT fields are built into Bayanat and can\'t be renamed or removed. CUSTOM fields are added by admins and can be fully edited.') }}
+      </v-card-text>
 
       <div class="d-flex">
         <v-card variant="flat" class="w-100">
-          <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0 px-0" style="height: calc(100vh - 176px);">
+          <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll pt-0 px-0" style="height: calc(100vh - 209px);">
             <v-container v-if="formBuilder.loading && !formBuilder.dynamicFields.incident.length" height="130px" class="d-flex justify-center align-center">
               <v-progress-circular indeterminate ></v-progress-circular>
             </v-container>

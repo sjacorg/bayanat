@@ -165,7 +165,7 @@ const FieldListItem = Vue.defineComponent({
                         </v-btn-toggle>
                     </div>
 
-                    <v-icon v-if="!hideDragHandle" class="drag-handle cursor-grab" size="large">mdi-drag-horizontal</v-icon>
+                    <v-icon v-if="!hideDragHandle" class="drag-handle cursor-grab" size="large">mdi-arrow-all</v-icon>
 
                     <div class="d-flex ga-4">
                         <v-tooltip location="top">
@@ -197,7 +197,7 @@ const FieldListItem = Vue.defineComponent({
                     </div>
                 </div>
 
-                <div v-if="!editingMode" :class="['h-100', {'cursor-pointer': !dragging }]" @click="openEditMode">
+                <div v-if="!editingMode" :class="['h-100', {'cursor-pointer': !dragging, 'newly-added-field': field.justAdded }]" @click="openEditMode">
                     <div class="h-100 pointer-events-none">
                         <component :is="componentProps.component" v-bind="componentProps">
                             <template #append-inner>
@@ -263,12 +263,16 @@ const FieldListItem = Vue.defineComponent({
                         <div class="w-100 w-md-50" style="flex: 1 1 calc(50% - 16px)">
                             <div class="text-subtitle-1 font-weight-medium text-primary">{{ translations.fieldProperties_ }}</div>
                             <div class="mt-2 ga-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-                                <v-text-field
-                                    variant="filled"
-                                    :label="translations.helpText_"
-                                    v-model="field.ui_config.help_text"
-                                    clearable
-                                ></v-text-field>
+                                <div>
+                                    <v-text-field
+                                        variant="filled"
+                                        :label="translations.helpText_"
+                                        v-model="field.ui_config.help_text"
+                                        hide-details
+                                        clearable
+                                    ></v-text-field>
+                                    <div class="text-caption text-medium-emphasis mt-1">{{ translations.helpTextDescription_ }}</div>
+                                </div>
                                 <v-number-input
                                     v-if="field.ui_component === 'input'"
                                     variant="filled"

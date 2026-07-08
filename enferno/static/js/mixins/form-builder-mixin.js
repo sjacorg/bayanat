@@ -123,11 +123,15 @@ const formBuilderMixin = {
         this.formBuilder.dynamicFields[entityType][idx] = { ...event };
       } else {
         // Add new field
+        event.justAdded = true;
         this.formBuilder.dynamicFields[entityType].push(event);
         this.$nextTick(() => {
           const el = document.querySelector(`[data-field-id="${event.id}"]`);
           el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+        setTimeout(() => {
+          event.justAdded = false;
+        }, 4000);
       }
 
       this.formBuilder.dynamicFields[entityType] = this.sortFields(this.formBuilder.dynamicFields[entityType]);
