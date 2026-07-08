@@ -63,6 +63,13 @@
                     <v-btn @click="validateFormAndSave" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>
+                    {% if current_user.has_role("Admin") %}
+                    <v-tooltip location="bottom" text="{{ _('Open Bulletin Form Builder') }}">
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" icon="mdi-tune" @click="confirmNavigateToFormBuilder"></v-btn>
+                        </template>
+                    </v-tooltip>
+                    {% endif %}
                     <v-btn icon="mdi-close" @click="confirmClose"></v-btn>
                 </template>
 

@@ -1643,6 +1643,12 @@
                         }
                     },
 
+                    confirmNavigateToFormBuilder() {
+                        if (confirm(translations.unsavedChangesWillBeLost_)) {
+                            window.location.href = '/admin/bulletin-fields/';
+                        }
+                    },
+
                     save() {
                         this.saving = true;
                         if (this.editedItem.id) {

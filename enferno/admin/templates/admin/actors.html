@@ -1670,6 +1670,12 @@
                         this.close();
                     }
                 },
+
+                confirmNavigateToFormBuilder() {
+                    if (confirm(translations.unsavedChangesWillBeLost_)) {
+                        window.location.href = '/admin/actor-fields/';
+                    }
+                },
                 close() {
 
                     this.dialog = false;
