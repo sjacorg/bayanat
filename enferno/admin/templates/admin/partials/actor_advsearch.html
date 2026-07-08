@@ -28,7 +28,7 @@
                           v-model="savedSearchSelection"
                 >
                     <template v-slot:item="{ props, item }">
-                        <v-list-item :subtitle="item.name" v-bind="props" @click="loadSearch(item.raw)">
+                        <v-list-item :subtitle="countSavedSearchFilters(item.raw.data) ? translations.activeFiltersCount_(countSavedSearchFilters(item.raw.data)) : ''" v-bind="props" @click="loadSearch(item.raw)">
                             <template #append>
                                 <v-icon
                                     color="warning"
