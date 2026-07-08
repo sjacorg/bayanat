@@ -1,13 +1,16 @@
 <v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
-    <v-sheet>
-    <v-card class="rounded-0">
-        <v-toolbar>
-            <v-spacer></v-spacer>
-            <v-btn icon="mdi-close"  @click="advSearchExpand=false">
-            </v-btn>
-        </v-toolbar>
 
-        <v-card-text>
+    <v-card class="rounded-0 overflow-hidden">
+        <v-toolbar
+            color="primary"
+            class="card-header"
+        >
+            <div class="w-sm-33 ml-4 d-none d-sm-flex">
+                <v-toolbar-title>
+                    {{ _('Advanced Search') }}
+                </v-toolbar-title>
+            </div>
+
             <v-select ref="savedSearchDropdown"
                       small
                       :label="translations.loadExistingSearch_"
@@ -17,7 +20,10 @@
                       return-object
                       @click="loadSearchesFromAPI"
                       @click:clear="resetQuery"
-                      outlined
+                        class="w-sm-33 flex-grow-1 mx-4"
+                        variant="solo"
+                        density="comfortable"
+                        hide-details="auto"
                       clearable
                       v-model="savedSearchSelection"
             >
@@ -33,10 +39,14 @@
                 </template>
             </v-select>
 
-        </v-card-text>
+            <div class="w-sm-33 mr-4 d-flex">
+                <v-spacer></v-spacer>
+                <v-btn icon="mdi-close" variant="text" @click="advSearchExpand=false"></v-btn>
+            </div>
 
+        </v-toolbar>
 
-        <v-card-text>
+        <v-card-text class="overflow-y-auto" style="height: calc(100vh - 187px);">
             <incident-search-box
                     @close="advSearchExpand=false"
                     close-btn="true"
@@ -50,10 +60,15 @@
         </v-card-text>
 
     </v-card>
-      <v-card  class="text-center pa-4 sticky-bottom-bar  rounded-0">
-        <v-card-actions class="justify-end">
+
+    <v-card class="text-center rounded-0 sticky-bottom-bar">
+        <v-divider></v-divider>
+
+        <v-card-actions class="pa-4 ga-2">
+            <v-spacer></v-spacer>
             <v-btn @click="search={}" text>{{ _('Clear Search') }}</v-btn>
-            <v-btn v-if="!savedSearchSelection" @click="saveQueryDialog=true" class="mx-2" color="grey lighten-2" depressed>{{ _('Save Search') }}</v-btn>
+            <v-btn v-if="!savedSearchSelection" @click="saveQueryDialog=true" color="grey"
+                   depressed>{{ _('Save Search') }}</v-btn>
              <v-btn
                 v-if="savedSearchSelection"
                 @click="updateSearch"
@@ -66,7 +81,7 @@
                 color="warning"
                 depressed
             >{{ _('Save As New') }}</v-btn>
-            <v-btn variant="elevated" @click="doSearch" color="primary">{{ _('Search') }}</v-btn>
+            <v-btn @click="doSearch" color="primary" variant="elevated">{{ _('Search') }}</v-btn>
         </v-card-actions>
     </v-card>
 
@@ -89,7 +104,4 @@
                 </v-card-actions>
         </v-card>
     </v-dialog>
-        </v-sheet>
 </v-dialog>
-
-

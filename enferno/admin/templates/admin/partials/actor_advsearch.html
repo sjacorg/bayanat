@@ -1,11 +1,16 @@
 <v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
-    <v-sheet>
-        <v-card class="rounded-0">
-            <v-card-title>
-                <v-btn class="float-right" variant="text" icon="mdi-close" @click="advSearchExpand=false"></v-btn>
-            </v-card-title>
 
-            <v-card-text>
+        <v-card class="rounded-0 overflow-hidden">
+            <v-toolbar
+                color="primary"
+                class="card-header"
+            >
+                <div class="w-sm-33 ml-4 d-none d-sm-flex">
+                    <v-toolbar-title>
+                        {{ _('Advanced Search') }}
+                    </v-toolbar-title>
+                </div>
+
                 <v-select ref="savedSearchDropdown"
                           small
                           :label="translations.loadExistingSearch_"
@@ -15,7 +20,10 @@
                           return-object
                           @click="loadSearchesFromAPI"
                           @click:clear="resetQuery"
-                          outlined
+                            class="w-sm-33 flex-grow-1 mx-4"
+                            variant="solo"
+                            density="comfortable"
+                            hide-details="auto"
                           clearable
                           v-model="savedSearchSelection"
                 >
@@ -31,6 +39,14 @@
                     </template>
                 </v-select>
 
+                <div class="w-sm-33 mr-4 d-flex">
+                    <v-spacer></v-spacer>
+                    <v-btn class="float-right" variant="text" icon="mdi-close" @click="advSearchExpand=false"></v-btn>
+                </div>
+
+            </v-toolbar>
+
+            <v-card-text class="overflow-y-auto" style="height: calc(100vh - 187px);">
                 <v-expansion-panels accordion v-model="searchPanels">
                     <v-expansion-panel v-for="(q,i) in search">
                         <v-expansion-panel-title>${translations.query_} ${i+1} <span v-if="!i==0" class="mx-3"><v-icon
@@ -60,15 +76,16 @@
 
         <v-card  class="text-center rounded-0 sticky-bottom-bar">
             <v-divider></v-divider>
-            <v-card-text>
-                <v-btn prepend-icon="mdi-link-plus" class="ma-3"  @click="addQuery">
+
+            <v-card-actions class="pa-4 ga-2">
+                <v-btn prepend-icon="mdi-link-plus" class="my-1 mx-3" @click="addQuery">
 
                     ${translations.refineExtendSearch_}
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn @click="search=[{}]" text>{{ _('Clear Search') }}</v-btn>
-                <v-btn class="mx-3" v-if="!savedSearchSelection" @click="saveQueryDialog=true" 
-                       >{{ _('Save Search') }}</v-btn>
+                <v-btn v-if="!savedSearchSelection" @click="saveQueryDialog=true" color="grey"
+                       depressed>{{ _('Save Search') }}</v-btn>
                 <v-btn
                         v-if="savedSearchSelection"
                         @click="updateSearch"
@@ -81,8 +98,8 @@
                         color="warning"
                         depressed
                 >{{ _('Save As New') }}</v-btn>
-                <v-btn @click="doSearch" color="primary">{{ _('Search') }}</v-btn>
-            </v-card-text>
+                <v-btn @click="doSearch" color="primary" variant="elevated">{{ _('Search') }}</v-btn>
+            </v-card-actions>
         </v-card>
 
         <v-dialog width="300" v-model="saveQueryDialog">
@@ -105,7 +122,4 @@
             </v-card>
         </v-dialog>
 
-    </v-sheet>
 </v-dialog>
-
-
