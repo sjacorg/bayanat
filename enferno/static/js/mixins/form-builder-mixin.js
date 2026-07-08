@@ -608,7 +608,7 @@ const formBuilderMixin = {
       try {
         this.formBuilder.loading = true;
         const response = await api.get(
-          `/admin/api/dynamic-fields/?entity_type=${entityType}&active=true&searchable=true`,
+          `/admin/api/dynamic-fields/?entity_type=${entityType}&searchable=true`,
         );
         const fields = response?.data?.data ?? [];
         this.formBuilder.searchableDynamicFields[entityType] = this.sortFields(fields);
