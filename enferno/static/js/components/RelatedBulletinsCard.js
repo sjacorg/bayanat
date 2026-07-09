@@ -14,7 +14,6 @@ const RelatedBulletinsCard = Vue.defineComponent({
       translations: window.translations,
       bulletinPage: 1,
       bulletinLM: false,
-      extractValuesById: extractValuesById,
     };
   },
   watch: {

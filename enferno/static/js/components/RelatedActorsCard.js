@@ -14,7 +14,6 @@ const RelatedActorsCard = Vue.defineComponent({
       translations: window.translations,
       actorPage: 1, // Now managed internally for actor relations pagination
       actorLM: false, // Initially false, updated based on API response for actor relations
-      extractValuesById: extractValuesById, // Reuse the existing method for extracting values by ID
     };
   },
   watch: {

@@ -14,7 +14,6 @@ const RelatedIncidentsCard = Vue.defineComponent({
       translations: window.translations,
       incidentPage: 1, // Pagination for incident relations
       incidentLM: false, // Load more flag for incidents
-      extractValuesById: extractValuesById, // Reuse the existing method for extracting values by ID
     };
   },
   watch: {

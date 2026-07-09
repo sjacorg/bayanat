@@ -518,18 +518,6 @@ function translate_status(str) {
 
 // relationship information helper
 
-const extractValuesById = function(dataList, idList, valueKey)
-{
-    if (!idList || !dataList ) { // better check for null or undefined ..
-        return [];
-    }
-    if (!Array.isArray(idList)) {
-        idList = [idList];
-    }
-
-    return dataList.filter((item) => idList.includes(item.id)).map((item) => item[valueKey]);
-}
-
 // Same-type relations (A2A/B2B/I2I) are stored once in id order (lower_id -> higher_id).
 // From the higher-id entity's side, show each type's reverse_title so the relationship
 // reads correctly from both profiles. Falls back to title when a type has no reverse
