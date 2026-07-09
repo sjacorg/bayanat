@@ -545,9 +545,12 @@ const reciprocalTypeId = (relationInfo, id) => {
 };
 
 // Convert a picked type (editor perspective) to the canonical id(s) to store.
-// Only flips when viewedEntityId belongs to the higher-id entity of a same-type relation;
-// no-ops when relationInfo/pickedId/viewedEntityId/relatedEntityId aren't available (e.g.
-// cross-type relations, which never pass a same-type catalog in the first place).
+// Only flips when viewedEntityId is the higher-id side of a same-type relation. Callers
+// represent an unsaved entity as Infinity (it will get the highest id once created), so
+// that case always flips. No-ops when relationInfo/pickedId/viewedEntityId/relatedEntityId
+// aren't available (e.g. cross-type relations, which never pass a same-type catalog in the
+// first place) - this also guards against a caller forgetting to resolve viewedEntityId,
+// which would otherwise silently fall through to "flip" (undefined <= n is false in JS).
 const canonicalRelationId = ({ relationInfo, pickedId, viewedEntityId, relatedEntityId } = {}) => {
   if (!relationInfo || pickedId == null || viewedEntityId == null || relatedEntityId == null) {
     return pickedId;

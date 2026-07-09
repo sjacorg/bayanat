@@ -69,13 +69,10 @@ const relationsMixin = {
         ref?.reSearch();
       });
     },
-    // sameTypeInfo: pass the relation-type catalog (e.g. this.atoaInfo) when relating two
-    // entities of the same type (actor-actor, bulletin-bulletin, incident-incident). Those
-    // relations are stored once, canonically keyed lower_id -> higher_id, so when relating
-    // from the higher-id entity's profile, the picked type is in that entity's perspective
-    // and must be converted to its reciprocal before being stored against the canonical
-    // record. Omit for cross-type relations (e.g. actor-bulletin), which never mirror.
-    addItemToRelation({ type, relationList = [], item = {}, relationData = {}, editedItem = {}, sameTypeInfo = null } = {}) {
+    // Every relation picked in the dialog (create or edit-in-place) is a plain value in the
+    // currently-edited entity's own perspective while the dialog is open. No conversion here
+    // - applySameTypePerspective at load/save time handles the flip.
+    addItemToRelation({ type, relationList = [], item = {}, relationData = {} } = {}) {
       this.closeConfirmRelationDialog();
       // get list of existing attached actors
       let existingIds = relationList.map((relation) => relation[type].id);
@@ -84,12 +81,6 @@ const relationsMixin = {
         const relation = {
           [type]: item,
           ...relationData,
-          related_as: canonicalRelationId({
-            relationInfo: sameTypeInfo,
-            pickedId: relationData.related_as,
-            viewedEntityId: editedItem?.id,
-            relatedEntityId: item.id,
-          }),
         };
         relationList.push(relation);
 
@@ -103,43 +94,23 @@ const relationsMixin = {
       }
     },
 
-    // Wraps a stored same-type relation so the type editor reads/writes it from the
-    // currently-edited entity's perspective instead of the raw canonical value. The
-    // canonical record is stored once (lower_id -> higher_id); canonicalRelationId is its
-    // own inverse, so the same call both displays and saves the perspective-correct type.
-    relationEditorProxy({ relation, type, editedItem = {}, sameTypeInfo = null } = {}) {
-      const relatedId = relation[type]?.id;
-      return {
-        [type]: relation[type],
-        get related_as() {
-          return canonicalRelationId({
-            relationInfo: sameTypeInfo,
-            pickedId: relation.related_as,
-            viewedEntityId: editedItem?.id,
-            relatedEntityId: relatedId,
-          });
-        },
-        set related_as(pickedId) {
-          relation.related_as = canonicalRelationId({
-            relationInfo: sameTypeInfo,
-            pickedId,
-            viewedEntityId: editedItem?.id,
-            relatedEntityId: relatedId,
-          });
-        },
-        get probability() {
-          return relation.probability;
-        },
-        set probability(value) {
-          relation.probability = value;
-        },
-        get comment() {
-          return relation.comment;
-        },
-        set comment(value) {
-          relation.comment = value;
-        },
-      };
+    // Same-type relations (actor-actor, bulletin-bulletin, incident-incident) are stored
+    // once, canonically keyed lower_id -> higher_id. A new (unsaved) entity always ends up
+    // with the highest id once created, so it's treated as the higher-id side here.
+    // canonicalRelationId is its own inverse, so this same helper both converts a freshly
+    // loaded/created entity's relations into its own perspective (call after editItem sets
+    // editedItem) and converts them back to canonical right before the save payload is sent
+    // (call in save(), before posting/putting). Mutates relationList in place.
+    applySameTypePerspective({ relationList = [], type, editedItemId = null, sameTypeInfo = null } = {}) {
+      const viewedEntityId = editedItemId ?? Infinity;
+      relationList.forEach((relation) => {
+        relation.related_as = canonicalRelationId({
+          relationInfo: sameTypeInfo,
+          pickedId: relation.related_as,
+          viewedEntityId,
+          relatedEntityId: relation[type]?.id,
+        });
+      });
     },
   },
 };

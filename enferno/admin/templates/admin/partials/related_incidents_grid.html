@@ -10,7 +10,7 @@
                 <template #header>
                     <relation-editor-card
                             variant="text"
-                            :relation="relationEditorProxy({ relation: editedItem.incident_relations[index], type: 'incident', editedItem, sameTypeInfo: itoiInfo })"
+                            v-model:relation="editedItem.incident_relations[index]"
                             :multi-relation="incidentRelationMultiple"
                             :relation-types="incidentRelationTypes"
                     ></relation-editor-card>

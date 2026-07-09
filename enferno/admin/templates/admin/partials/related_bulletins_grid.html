@@ -11,7 +11,7 @@
                 <template #header>
                     <relation-editor-card
                             variant="text"
-                            :relation="relationEditorProxy({ relation: editedItem.bulletin_relations[index], type: 'bulletin', editedItem, sameTypeInfo: btobInfo })"
+                            v-model:relation="editedItem.bulletin_relations[index]"
                             :multi-relation="bulletinRelationMultiple"
                             :relation-types="bulletinRelationTypes"
                     ></relation-editor-card>
