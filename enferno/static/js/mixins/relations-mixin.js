@@ -84,7 +84,12 @@ const relationsMixin = {
         const relation = {
           [type]: item,
           ...relationData,
-          related_as: canonicalRelationId(sameTypeInfo, relationData.related_as, editedItem?.id, item.id),
+          related_as: canonicalRelationId({
+            relationInfo: sameTypeInfo,
+            pickedId: relationData.related_as,
+            viewedEntityId: editedItem?.id,
+            relatedEntityId: item.id,
+          }),
         };
         relationList.push(relation);
 
@@ -107,10 +112,20 @@ const relationsMixin = {
       return {
         [type]: relation[type],
         get related_as() {
-          return canonicalRelationId(sameTypeInfo, relation.related_as, editedItem?.id, relatedId);
+          return canonicalRelationId({
+            relationInfo: sameTypeInfo,
+            pickedId: relation.related_as,
+            viewedEntityId: editedItem?.id,
+            relatedEntityId: relatedId,
+          });
         },
         set related_as(pickedId) {
-          relation.related_as = canonicalRelationId(sameTypeInfo, pickedId, editedItem?.id, relatedId);
+          relation.related_as = canonicalRelationId({
+            relationInfo: sameTypeInfo,
+            pickedId,
+            viewedEntityId: editedItem?.id,
+            relatedEntityId: relatedId,
+          });
         },
         get probability() {
           return relation.probability;

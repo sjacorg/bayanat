@@ -522,8 +522,8 @@ function translate_status(str) {
 // From the higher-id entity's side, show each type's reverse_title so the relationship
 // reads correctly from both profiles. Falls back to title when a type has no reverse
 // (symmetric types, and all current B2B/I2I types). Cross-type relations never mirror.
-const relationTypeLabels = (relationInfo, item, viewed, related, sameType) => {
-  const flip = sameType && related && viewed.id > related.id;
+const relationTypeLabels = ({ relationInfo, item, viewedEntity, relatedEntity, sameType } = {}) => {
+  const flip = sameType && relatedEntity && viewedEntity.id > relatedEntity.id;
   const selectedIds = [].concat(item.related_as || []);
   return (relationInfo || [])
     .filter((relationType) => selectedIds.includes(relationType.id))
@@ -545,12 +545,14 @@ const reciprocalTypeId = (relationInfo, id) => {
 };
 
 // Convert a picked type (editor perspective) to the canonical id(s) to store.
-// Only flips when editing the higher-id entity of a same-type relation; no-ops when
-// relationInfo/pickedId/viewedId/relatedId aren't available (e.g. cross-type relations,
-// which never pass a same-type catalog in the first place).
-const canonicalRelationId = (relationInfo, pickedId, viewedId, relatedId) => {
-  if (!relationInfo || pickedId == null || viewedId == null || relatedId == null) return pickedId;
-  if (viewedId <= relatedId) return pickedId;
+// Only flips when viewedEntityId belongs to the higher-id entity of a same-type relation;
+// no-ops when relationInfo/pickedId/viewedEntityId/relatedEntityId aren't available (e.g.
+// cross-type relations, which never pass a same-type catalog in the first place).
+const canonicalRelationId = ({ relationInfo, pickedId, viewedEntityId, relatedEntityId } = {}) => {
+  if (!relationInfo || pickedId == null || viewedEntityId == null || relatedEntityId == null) {
+    return pickedId;
+  }
+  if (viewedEntityId <= relatedEntityId) return pickedId;
   return Array.isArray(pickedId)
     ? pickedId.map((id) => reciprocalTypeId(relationInfo, id))
     : reciprocalTypeId(relationInfo, pickedId);

@@ -49,13 +49,13 @@ const RelatedIncidentsCard = Vue.defineComponent({
       return this.translations.probs[item.probability].tr;
     },
     relatedAsLabels(item) {
-      return relationTypeLabels(
-        this.relationInfo,
+      return relationTypeLabels({
+        relationInfo: this.relationInfo,
         item,
-        this.entity,
-        item.incident,
-        this.entity.class?.toLowerCase() === 'incident',
-      );
+        viewedEntity: this.entity,
+        relatedEntity: item.incident,
+        sameType: this.entity.class?.toLowerCase() === 'incident',
+      });
     },
   },
   computed: {

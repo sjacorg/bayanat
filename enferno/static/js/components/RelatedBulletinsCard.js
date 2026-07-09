@@ -48,13 +48,13 @@ const RelatedBulletinsCard = Vue.defineComponent({
       return this.translations.probs[item.probability].tr;
     },
     relatedAsLabels(item) {
-      return relationTypeLabels(
-        this.relationInfo,
+      return relationTypeLabels({
+        relationInfo: this.relationInfo,
         item,
-        this.entity,
-        item.bulletin,
-        this.entity.class?.toLowerCase() === 'bulletin',
-      );
+        viewedEntity: this.entity,
+        relatedEntity: item.bulletin,
+        sameType: this.entity.class?.toLowerCase() === 'bulletin',
+      });
     },
   },
   computed: {

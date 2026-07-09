@@ -48,13 +48,13 @@ const RelatedActorsCard = Vue.defineComponent({
       return this.translations.probs[item.probability].tr;
     },
     relatedAsLabels(item) {
-      return relationTypeLabels(
-        this.relationInfo,
+      return relationTypeLabels({
+        relationInfo: this.relationInfo,
         item,
-        this.entity,
-        item.actor,
-        this.entity.class?.toLowerCase() === 'actor',
-      );
+        viewedEntity: this.entity,
+        relatedEntity: item.actor,
+        sameType: this.entity.class?.toLowerCase() === 'actor',
+      });
     },
   },
   computed: {
