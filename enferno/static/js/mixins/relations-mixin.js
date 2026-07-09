@@ -102,5 +102,39 @@ const relationsMixin = {
         relationList.splice(index, 1);
       }
     },
+
+    // Wraps a stored same-type relation so the type editor reads/writes it from the
+    // currently-edited entity's perspective instead of the raw canonical value. The
+    // canonical record is stored once (lower_id -> higher_id); canonicalRelationId is its
+    // own inverse, so the same call both displays and saves the perspective-correct type.
+    relationEditorProxy({ relation, type, editedItem = {}, sameTypeInfo = null } = {}) {
+      const relatedId = relation[type]?.id;
+      return {
+        [type]: relation[type],
+        get related_as() {
+          return sameTypeInfo && editedItem?.id && relatedId != null
+            ? canonicalRelationId(sameTypeInfo, relation.related_as, editedItem.id, relatedId)
+            : relation.related_as;
+        },
+        set related_as(pickedId) {
+          relation.related_as =
+            sameTypeInfo && editedItem?.id && relatedId != null
+              ? canonicalRelationId(sameTypeInfo, pickedId, editedItem.id, relatedId)
+              : pickedId;
+        },
+        get probability() {
+          return relation.probability;
+        },
+        set probability(value) {
+          relation.probability = value;
+        },
+        get comment() {
+          return relation.comment;
+        },
+        set comment(value) {
+          relation.comment = value;
+        },
+      };
+    },
   },
 };
