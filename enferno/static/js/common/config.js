@@ -545,9 +545,11 @@ const reciprocalTypeId = (relationInfo, id) => {
 };
 
 // Convert a picked type (editor perspective) to the canonical id(s) to store.
-// Only flips when editing the higher-id entity of a same-type relation.
-// Handles both shapes: A2A/I2I pick a single id, B2B picks an array (multi-select).
+// Only flips when editing the higher-id entity of a same-type relation; no-ops when
+// relationInfo/pickedId/viewedId/relatedId aren't available (e.g. cross-type relations,
+// which never pass a same-type catalog in the first place).
 const canonicalRelationId = (relationInfo, pickedId, viewedId, relatedId) => {
+  if (!relationInfo || pickedId == null || viewedId == null || relatedId == null) return pickedId;
   if (viewedId <= relatedId) return pickedId;
   return Array.isArray(pickedId)
     ? pickedId.map((id) => reciprocalTypeId(relationInfo, id))
