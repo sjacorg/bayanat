@@ -27,11 +27,6 @@ const ActorCard = Vue.defineComponent({
       this.mapLocations = aggregateActorLocations(this.actor);
     },
 
-    getRelatedValues(item, actor) {
-      const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
-      return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
-    },
-
     translate_status(status) {
       return translate_status(status);
     },

@@ -69,15 +69,27 @@ const relationsMixin = {
         ref?.reSearch();
       });
     },
-    addItemToRelation({ type, relationList = [], item = {}, relationData = {} } = {}) {
+    // sameTypeInfo: pass the relation-type catalog (e.g. this.atoaInfo) when relating two
+    // entities of the same type (actor-actor, bulletin-bulletin, incident-incident). Those
+    // relations are stored once, canonically keyed lower_id -> higher_id, so when relating
+    // from the higher-id entity's profile, the picked type is in that entity's perspective
+    // and must be converted to its reciprocal before being stored against the canonical
+    // record. Omit for cross-type relations (e.g. actor-bulletin), which never mirror.
+    addItemToRelation({ type, relationList = [], item = {}, relationData = {}, editedItem = {}, sameTypeInfo = null } = {}) {
       this.closeConfirmRelationDialog();
       // get list of existing attached actors
-      let ex = relationList.map((x) => x[type].id);
+      let existingIds = relationList.map((relation) => relation[type].id);
 
-      if (!ex.includes(item.id)) {
+      if (!existingIds.includes(item.id)) {
+        const relatedAs =
+          sameTypeInfo && editedItem?.id && relationData.related_as != null
+            ? canonicalRelationId(sameTypeInfo, relationData.related_as, editedItem.id, item.id)
+            : relationData.related_as;
+
         const relation = {
           [type]: item,
           ...relationData,
+          related_as: relatedAs,
         };
         relationList.push(relation);
 

@@ -530,6 +530,42 @@ const extractValuesById = function(dataList, idList, valueKey)
     return dataList.filter((item) => idList.includes(item.id)).map((item) => item[valueKey]);
 }
 
+// Same-type relations (A2A/B2B/I2I) are stored once in id order (lower_id -> higher_id).
+// From the higher-id entity's side, show each type's reverse_title so the relationship
+// reads correctly from both profiles. Falls back to title when a type has no reverse
+// (symmetric types, and all current B2B/I2I types). Cross-type relations never mirror.
+const relationTypeLabels = (relationInfo, item, viewed, related, sameType) => {
+  const flip = sameType && related && viewed.id > related.id;
+  const selectedIds = [].concat(item.related_as || []);
+  return (relationInfo || [])
+    .filter((relationType) => selectedIds.includes(relationType.id))
+    .map((relationType) => (flip && relationType.reverse_title ? relationType.reverse_title : relationType.title));
+};
+
+// Reciprocal relation type: the catalog row whose title/reverse_title are swapped.
+// Returns the same id for symmetric or unpaired types (lossless).
+const reciprocalTypeId = (relationInfo, id) => {
+  const relationType = (relationInfo || []).find((candidate) => candidate.id === id);
+  if (!relationType || !relationType.reverse_title || relationType.title === relationType.reverse_title) {
+    return id;
+  }
+  const reciprocalType = (relationInfo || []).find(
+    (candidate) =>
+      candidate.title === relationType.reverse_title && candidate.reverse_title === relationType.title,
+  );
+  return reciprocalType ? reciprocalType.id : id;
+};
+
+// Convert a picked type (editor perspective) to the canonical id(s) to store.
+// Only flips when editing the higher-id entity of a same-type relation.
+// Handles both shapes: A2A/I2I pick a single id, B2B picks an array (multi-select).
+const canonicalRelationId = (relationInfo, pickedId, viewedId, relatedId) => {
+  if (viewedId <= relatedId) return pickedId;
+  return Array.isArray(pickedId)
+    ? pickedId.map((id) => reciprocalTypeId(relationInfo, id))
+    : reciprocalTypeId(relationInfo, pickedId);
+};
+
 
 // global helper methods for geolocations
 

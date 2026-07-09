@@ -49,12 +49,13 @@ const RelatedActorsCard = Vue.defineComponent({
       return this.translations.probs[item.probability].tr;
     },
     relatedAsLabels(item) {
-      // Actor-to-actor relations are stored once in id order (actor_id < related_actor_id).
-      // Show the type's reverse_title from the higher-id actor's side so the relationship
-      // reads correctly from both profiles. Cross-type relations (A2B, I2A) are never mirrored.
-      const mirror =
-        this.entity.class?.toLowerCase() === 'actor' && this.entity.id > item.actor.id;
-      return this.extractValuesById(this.relationInfo, item.related_as, mirror ? 'reverse_title' : 'title');
+      return relationTypeLabels(
+        this.relationInfo,
+        item,
+        this.entity,
+        item.actor,
+        this.entity.class?.toLowerCase() === 'actor',
+      );
     },
   },
   computed: {
