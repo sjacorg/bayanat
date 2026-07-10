@@ -301,7 +301,7 @@
 
 {% block js %}
     <script
-            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            src="/static/js/tinymce/tinymce.min.js"
             referrerpolicy="origin"
     ></script>
 
@@ -1373,6 +1373,12 @@
                                 this.editedItem.comments = '';
                                 this.resetSwitchers();
                                 this.handleStatus(item);
+                                this.applySameTypePerspective({
+                                    relationList: this.editedItem.incident_relations,
+                                    type: 'incident',
+                                    editedItemId: this.editedItem.id,
+                                    sameTypeInfo: this.itoiInfo,
+                                });
 
                             });
 
@@ -1422,11 +1428,22 @@
                 },
 
                 save() {
+                    const incidentRelations = this.editedItem.incident_relations
+                        ? this.editedItem.incident_relations.map((relation) => ({ ...relation }))
+                        : this.editedItem.incident_relations;
+                    this.applySameTypePerspective({
+                        relationList: incidentRelations,
+                        type: 'incident',
+                        editedItemId: this.editedItem.id,
+                        sameTypeInfo: this.itoiInfo,
+                    });
+                    const payload = { ...this.editedItem, incident_relations: incidentRelations };
+
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
                         api.put(`/admin/api/incident/${this.editedItem.id}`, {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.showSnack(response.data);
                             this.refresh();
@@ -1441,7 +1458,7 @@
                     } else {
                         //create new record
                         api.post("/admin/api/incident/", {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.items.unshift(response.data.item);
                             this.totalCount += 1;
