@@ -1,11 +1,12 @@
 {% extends 'layout.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="/static/css/dropzone.min.css"/>
+    <link rel="stylesheet" href="/static/js/dropzone/dropzone.min.css"/>
     <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 {% endblock %} {% block content %}
 
+    <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionSaved"></media-redactor>
     {% include 'admin/partials/media_transcription_dialog.html' %}
     {% include  'admin/partials/actor_drawer.html' %}
     {% include 'admin/partials/bulk_actor_drawer.html' %}
@@ -338,13 +339,13 @@
 
 {% endblock %} {% block js %}
     <script
-            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            src="/static/js/tinymce/tinymce.min.js"
             referrerpolicy="origin"
     ></script>
 
     <script src="/static/js/tinymce-vue.min.js"></script>
 
-    <script src="/static/js/dropzone.min.js"></script>
+    <script src="/static/js/dropzone/dropzone.min.js"></script>
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/mixins/related-search-mixin.js"></script>
@@ -402,6 +403,7 @@
     <script src="/static/js/components/FieldRenderer.js"></script>
     <script src="/static/js/components/OcrTextLayer.js"></script>
     <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
+    <script src="/static/js/components/MediaRedactor.js"></script>
 
     <script src="/static/js/components/PdfViewer.js"></script>
     <script src="/static/js/components/NativePdfViewer.js"></script>
@@ -449,6 +451,7 @@
                 valid: false,
                 leftDialogProps: null,
                 rightDialogProps: null,
+                redaction: { dialog: false, media: null },
                 translations: window.translations,
                 validationRules: validationRules,
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
@@ -833,6 +836,41 @@
                     this.showOcrDialog(media.id);
                     this.refreshEditedMedia(media.id);
                     if (this.$route.params.id) this.showActor(this.$route.params.id);
+                },
+                openRedactor(media) {
+                    this.redaction.media = media;
+                    this.redaction.dialog = true;
+                },
+                removeRedaction(redaction) {
+                    if (!redaction.isRedaction) {
+                        this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
+                        return;
+                    }
+                    api.delete(`/admin/api/media/${redaction.id}/redact`)
+                        .then(() => {
+                            this.onRedactionDeleted(redaction);
+                        })
+                        .catch(err => {
+                            this.showSnack(handleRequestError(err));
+                        });
+                },
+                refreshRedactionState() {
+                    const id = this.$route.params.id || this.actor?.id;
+                    if (id) {
+                        this.showActor(id);
+                    } else if (this.editedItem?.id) {
+                        api.get(`/admin/api/actor/${this.editedItem.id}`).then(response => {
+                            this.editedItem.medias = response.data?.medias;
+                        }).catch(err => this.showSnack(handleRequestError(err)));
+                    }
+                },
+                onRedactionSaved() {
+                    this.showSnack("{{ _('Redaction saved') }}");
+                    this.refreshRedactionState();
+                },
+                onRedactionDeleted() {
+                    this.showSnack("{{ _('Redaction deleted') }}");
+                    this.refreshRedactionState();
                 },
                 handleRoute({ initialLoad = false } = {}) {
                     if (this.$route.params.id) this.showActor(this.$route.params.id);
@@ -1599,6 +1637,12 @@
                                 this.editedItem.comments = '';
                                 this.resetSwitchers();
                                 this.handleStatus(item);
+                                this.applySameTypePerspective({
+                                    relationList: this.editedItem.actor_relations,
+                                    type: 'actor',
+                                    editedItemId: this.editedItem.id,
+                                    sameTypeInfo: this.atoaInfo,
+                                });
                             });
 
 
@@ -1647,9 +1691,20 @@
                 },
 
                 save() {
+                    const actorRelations = this.editedItem.actor_relations
+                        ? this.editedItem.actor_relations.map((relation) => ({ ...relation }))
+                        : this.editedItem.actor_relations;
+                    this.applySameTypePerspective({
+                        relationList: actorRelations,
+                        type: 'actor',
+                        editedItemId: this.editedItem.id,
+                        sameTypeInfo: this.atoaInfo,
+                    });
+
                     const payload = {
                         ...this.editedItem,
-                        id_number: this.simpleIdNumberValue
+                        id_number: this.simpleIdNumberValue,
+                        actor_relations: actorRelations,
                     }
 
                     this.saving = true;
@@ -1687,22 +1742,6 @@
                             this.saving = false;
                         });
                     }
-                },
-
-                // related actors functions --------------------
-
-                detectDirection(editedItem, actor) {
-                    // Since relationships always enforced to flow from smaller id to bigger id
-                    // this can be used to determine the relationship label displayed
-                    // one special case needs handling is when a new actor is created (id is null) in this case
-                    // new actor id will be definitely larger than any id in the system
-
-                    if (!editedItem.id) {
-                        return false;
-                    } else {
-                        return editedItem.id < actor.id
-                    }
-
                 },
 
                 // related actors functions --------------------
@@ -1816,6 +1855,7 @@
         app.component('FieldRenderer', FieldRenderer);
         app.component('OcrTextLayer', OcrTextLayer);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
+        app.component('MediaRedactor', MediaRedactor);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);
