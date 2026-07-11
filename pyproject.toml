@@ -57,7 +57,9 @@ dependencies = [
     "Flask-Principal>=0.4.0",
     "flask-redis>=0.4.0",
     "Flask-Script>=2.0.6",
-    "flask-security-too>=5.7.0",
+    # Cap below 5.8: GHSA-f66q-9rf6-8795 (WebAuthn reauth freshness bypass) affects 5.8.0-5.8.1.
+    # Lift the cap once a patched 5.8.x/5.9 release ships and templates are re-verified.
+    "flask-security-too>=5.7.0,<5.8.0",
     "Flask-Session>=0.8.0",
     "flask-shell-ipython>=0.5.3",
     "Flask-SQLAlchemy>=3.1.0",

@@ -530,17 +530,48 @@ function translate_status(str) {
 
 // relationship information helper
 
-const extractValuesById = function(dataList, idList, valueKey)
-{
-    if (!idList || !dataList ) { // better check for null or undefined ..
-        return [];
-    }
-    if (!Array.isArray(idList)) {
-        idList = [idList];
-    }
+// Same-type relations (A2A/B2B/I2I) are stored once in id order (lower_id -> higher_id).
+// From the higher-id entity's side, show each type's reverse_title so the relationship
+// reads correctly from both profiles. Falls back to title when a type has no reverse
+// (symmetric types, and all current B2B/I2I types). Cross-type relations never mirror.
+const relationTypeLabels = ({ relationInfo, item, viewedEntity, relatedEntity, sameType } = {}) => {
+  const flip = sameType && relatedEntity && viewedEntity.id > relatedEntity.id;
+  const selectedIds = [].concat(item.related_as || []);
+  return (relationInfo || [])
+    .filter((relationType) => selectedIds.includes(relationType.id))
+    .map((relationType) => (flip && relationType.reverse_title ? relationType.reverse_title : relationType.title));
+};
 
-    return dataList.filter((item) => idList.includes(item.id)).map((item) => item[valueKey]);
-}
+// Reciprocal relation type: the catalog row whose title/reverse_title are swapped.
+// Returns the same id for symmetric or unpaired types (lossless).
+const reciprocalTypeId = (relationInfo, id) => {
+  const relationType = (relationInfo || []).find((candidate) => candidate.id === id);
+  if (!relationType || !relationType.reverse_title || relationType.title === relationType.reverse_title) {
+    return id;
+  }
+  const reciprocalType = (relationInfo || []).find(
+    (candidate) =>
+      candidate.title === relationType.reverse_title && candidate.reverse_title === relationType.title,
+  );
+  return reciprocalType ? reciprocalType.id : id;
+};
+
+// Convert a picked type (editor perspective) to the canonical id(s) to store.
+// Only flips when viewedEntityId is the higher-id side of a same-type relation. Callers
+// represent an unsaved entity as Infinity (it will get the highest id once created), so
+// that case always flips. No-ops when relationInfo/pickedId/viewedEntityId/relatedEntityId
+// aren't available (e.g. cross-type relations, which never pass a same-type catalog in the
+// first place) - this also guards against a caller forgetting to resolve viewedEntityId,
+// which would otherwise silently fall through to "flip" (undefined <= n is false in JS).
+const canonicalRelationId = ({ relationInfo, pickedId, viewedEntityId, relatedEntityId } = {}) => {
+  if (!relationInfo || pickedId == null || viewedEntityId == null || relatedEntityId == null) {
+    return pickedId;
+  }
+  if (viewedEntityId <= relatedEntityId) return pickedId;
+  return Array.isArray(pickedId)
+    ? pickedId.map((id) => reciprocalTypeId(relationInfo, id))
+    : reciprocalTypeId(relationInfo, pickedId);
+};
 
 
 // global helper methods for geolocations

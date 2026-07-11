@@ -27,11 +27,6 @@ const ActorCard = Vue.defineComponent({
       this.mapLocations = aggregateActorLocations(this.actor);
     },
 
-    getRelatedValues(item, actor) {
-      const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
-      return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
-    },
-
     translate_status(status) {
       return translate_status(status);
     },
@@ -427,6 +422,7 @@ const ActorCard = Vue.defineComponent({
                 :renderer-id="mediaRendererId"
                 :media="$root.expandedByRenderer?.[mediaRendererId]?.media"
                 :media-type="$root.expandedByRenderer?.[mediaRendererId]?.mediaType"
+                :initial-orientation="$root.expandedByRenderer?.[mediaRendererId]?.media?.orientation || 0"
                 @ready="$root.onMediaRendererReady"
                 @fullscreen="$root.handleFullscreen(mediaRendererId)"
                 @close="$root.closeExpandedMedia(mediaRendererId)"

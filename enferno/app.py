@@ -144,6 +144,20 @@ def register_extensions(app):
     security = Security(app, user_datastore, **security_options)
 
     session.init_app(app)
+
+    # Background polls (e.g. the notification poller) carry X-Silent-Poll and must
+    # not slide the server-side session, otherwise the idle timeout never fires.
+    from types import MethodType
+    from flask import request
+
+    def _should_set_storage(self, app, sess):
+        if request.headers.get("X-Silent-Poll") and not sess.modified:
+            return False
+        return sess.modified or app.config["SESSION_REFRESH_EACH_REQUEST"]
+
+    app.session_interface.should_set_storage = MethodType(
+        _should_set_storage, app.session_interface
+    )
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
     mail.init_app(app)
