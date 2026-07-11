@@ -14,7 +14,6 @@ const RelatedActorsCard = Vue.defineComponent({
       translations: window.translations,
       actorPage: 1, // Now managed internally for actor relations pagination
       actorLM: false, // Initially false, updated based on API response for actor relations
-      extractValuesById: extractValuesById, // Reuse the existing method for extracting values by ID
     };
   },
   watch: {
@@ -47,7 +46,16 @@ const RelatedActorsCard = Vue.defineComponent({
     probability(item) {
       // Ensure this method correctly accesses the 'probs' object within 'translations' for actors
       return this.translations.probs[item.probability].tr;
-    }
+    },
+    relatedAsLabels(item) {
+      return relationTypeLabels({
+        relationInfo: this.relationInfo,
+        item,
+        viewedEntity: this.entity,
+        relatedEntity: item.actor,
+        sameType: this.entity.class?.toLowerCase() === 'actor',
+      });
+    },
   },
   computed: {
     getRelTo(){
@@ -75,7 +83,7 @@ const RelatedActorsCard = Vue.defineComponent({
                   <v-chip v-if="item.probability !== null" size="small" label class="flex-chip">{{ probability(item) }}</v-chip>
                   <div class="text-caption font-weight-bold mt-2">Related as</div>
                   <div class="flex-chips">
-                    <v-chip v-if="item?.related_as" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')" class="flex-chip" size="small" label>{{ r }}</v-chip>
+                    <v-chip v-if="item?.related_as" v-for="r in relatedAsLabels(item)" class="flex-chip" size="small" label>{{ r }}</v-chip>
                   </div>
                   <div class="text-caption font-weight-bold mt-2">Comments</div>
                   <div v-if="item.comment" class="text-caption"><read-more>{{ item.comment }}</read-more></div>
