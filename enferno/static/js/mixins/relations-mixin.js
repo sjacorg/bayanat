@@ -69,12 +69,15 @@ const relationsMixin = {
         ref?.reSearch();
       });
     },
+    // Every relation picked in the dialog (create or edit-in-place) is a plain value in the
+    // currently-edited entity's own perspective while the dialog is open. No conversion here
+    // - applySameTypePerspective at load/save time handles the flip.
     addItemToRelation({ type, relationList = [], item = {}, relationData = {} } = {}) {
       this.closeConfirmRelationDialog();
       // get list of existing attached actors
-      let ex = relationList.map((x) => x[type].id);
+      let existingIds = relationList.map((relation) => relation[type].id);
 
-      if (!ex.includes(item.id)) {
+      if (!existingIds.includes(item.id)) {
         const relation = {
           [type]: item,
           ...relationData,
@@ -89,6 +92,25 @@ const relationsMixin = {
       if (confirm(translations.areYouSure_)) {
         relationList.splice(index, 1);
       }
+    },
+
+    // Same-type relations (actor-actor, bulletin-bulletin, incident-incident) are stored
+    // once, canonically keyed lower_id -> higher_id. A new (unsaved) entity always ends up
+    // with the highest id once created, so it's treated as the higher-id side here.
+    // canonicalRelationId is its own inverse, so this same helper both converts a freshly
+    // loaded/created entity's relations into its own perspective (call after editItem sets
+    // editedItem) and converts them back to canonical right before the save payload is sent
+    // (call in save(), before posting/putting). Mutates relationList in place.
+    applySameTypePerspective({ relationList = [], type, editedItemId = null, sameTypeInfo = null } = {}) {
+      const viewedEntityId = editedItemId ?? Infinity;
+      relationList.forEach((relation) => {
+        relation.related_as = canonicalRelationId({
+          relationInfo: sameTypeInfo,
+          pickedId: relation.related_as,
+          viewedEntityId,
+          relatedEntityId: relation[type]?.id,
+        });
+      });
     },
   },
 };

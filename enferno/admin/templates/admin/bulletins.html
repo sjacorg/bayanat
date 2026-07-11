@@ -1595,6 +1595,12 @@
 
                                     this.resetSwitchers();
                                     this.handleStatus(item);
+                                    this.applySameTypePerspective({
+                                        relationList: this.editedItem.bulletin_relations,
+                                        type: 'bulletin',
+                                        editedItemId: this.editedItem.id,
+                                        sameTypeInfo: this.btobInfo,
+                                    });
                                 })
 
 
@@ -1644,11 +1650,22 @@
                     },
 
                     save() {
+                        const bulletinRelations = this.editedItem.bulletin_relations
+                            ? this.editedItem.bulletin_relations.map((relation) => ({ ...relation }))
+                            : this.editedItem.bulletin_relations;
+                        this.applySameTypePerspective({
+                            relationList: bulletinRelations,
+                            type: 'bulletin',
+                            editedItemId: this.editedItem.id,
+                            sameTypeInfo: this.btobInfo,
+                        });
+                        const payload = { ...this.editedItem, bulletin_relations: bulletinRelations };
+
                         this.saving = true;
                         if (this.editedItem.id) {
                             //update record
                             api.put(`/admin/api/bulletin/${this.editedItem.id}`, {
-                                item: this.editedItem
+                                item: payload
                             }).then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();
@@ -1664,7 +1681,7 @@
                         } else {
                             //create new record
                             api.post("/admin/api/bulletin/", {
-                                item: this.editedItem
+                                item: payload
                             }).then(response => {
                                 this.items.unshift(response.data.item);
                                 this.totalCount += 1;
