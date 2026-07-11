@@ -64,6 +64,24 @@ def test_redact_image_bytes_burns_black_box():
     assert result.getpixel((90, 90)) == (255, 255, 255)
 
 
+def test_redact_image_bytes_honors_exif_orientation():
+    # Raw pixels are landscape (200x100) but EXIF says rotate 90 CW, so the browser
+    # (and the redaction UI) show it portrait (100x200). Boxes are drawn in that
+    # displayed space, so the backend must transpose before burning.
+    img = Image.new("RGB", (200, 100), "white")
+    exif = img.getexif()
+    exif[274] = 6  # Orientation: rotate 90 CW on display
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", exif=exif)
+
+    out = redact_image_bytes(buf.getvalue(), [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
+
+    result = Image.open(io.BytesIO(out)).convert("RGB")
+    assert result.size == (100, 200)  # displayed (transposed) dimensions, not raw
+    assert result.getpixel((10, 10)) == (0, 0, 0)
+    assert result.getpixel((90, 190)) == (255, 255, 255)
+
+
 def test_redaction_rejects_out_of_bounds_coordinates():
     src = _one_page_pdf_with_text()
     pages = [{"page": 0, "rects": [{"x": -0.1, "y": 0, "w": 0.2, "h": 0.2}]}]
