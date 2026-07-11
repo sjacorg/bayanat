@@ -265,8 +265,7 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
         return False
 
     for item in items:
-        if item.medias:
-            media = item.medias[0]
+        for media in item.medias:
             target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"
 
             if cfg.FILESYSTEM_LOCAL:
@@ -297,7 +296,7 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
                     clear_failed_export(export_request)
                     return False  # to stop chain
 
-        time.sleep(0.05)
+            time.sleep(0.05)
     return export_request.id
 
 
