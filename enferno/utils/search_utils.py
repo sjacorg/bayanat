@@ -1,6 +1,6 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, func, text, select, literal_column, bindparam
+from sqlalchemy import or_, and_, func, text, select, literal_column, bindparam
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy import String, Integer, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -95,24 +95,28 @@ class SearchUtils:
                 return select(Bulletin)
             # Get conditions from first query
             main_stmt, conditions = self.bulletin_query(self.search[0])
-            final_conditions = conditions
+            combined = and_(*conditions) if conditions else None
 
-            # Handle nested queries by combining conditions
+            # Fold remaining query blocks left-to-right; each block's
+            # conditions are grouped with AND before its op is applied.
             if len(self.search) > 1:
                 for i in range(1, len(self.search)):
                     _, next_conditions = self.bulletin_query(self.search[i])
+                    if not next_conditions:
+                        continue
+                    block = and_(*next_conditions)
                     op = self.search[i].get("op", "or")
-
-                    if op == "and":
-                        final_conditions.extend(next_conditions)
-                    elif op == "or":
-                        # Combine conditions with OR
-                        final_conditions = [or_(*conditions, *next_conditions)]
+                    if combined is None:
+                        combined = block
+                    elif op == "and":
+                        combined = and_(combined, block)
+                    else:
+                        combined = or_(combined, block)
 
             # Build final query with all conditions and default sorting
             result = select(Bulletin)
-            if final_conditions:
-                result = result.where(and_(*final_conditions))
+            if combined is not None:
+                result = result.where(combined)
             return result
 
         elif self.cls == "actor":
@@ -121,24 +125,28 @@ class SearchUtils:
                 return select(Actor)
             # Get conditions from first query
             main_stmt, conditions = self.actor_query(self.search[0])
-            final_conditions = conditions
+            combined = and_(*conditions) if conditions else None
 
-            # Handle nested queries by combining conditions
+            # Fold remaining query blocks left-to-right; each block's
+            # conditions are grouped with AND before its op is applied.
             if len(self.search) > 1:
                 for i in range(1, len(self.search)):
                     _, next_conditions = self.actor_query(self.search[i])
+                    if not next_conditions:
+                        continue
+                    block = and_(*next_conditions)
                     op = self.search[i].get("op", "or")
-
-                    if op == "and":
-                        final_conditions.extend(next_conditions)
-                    elif op == "or":
-                        # Combine conditions with OR
-                        final_conditions = [or_(*conditions, *next_conditions)]
+                    if combined is None:
+                        combined = block
+                    elif op == "and":
+                        combined = and_(combined, block)
+                    else:
+                        combined = or_(combined, block)
 
             # Build final query with all conditions and default sorting
             result = select(Actor)
-            if final_conditions:
-                result = result.where(and_(*final_conditions))
+            if combined is not None:
+                result = result.where(combined)
             return result
 
         elif self.cls == "incident":
