@@ -180,7 +180,14 @@ LOOKUP_TABLES = {
     "event_types": (
         "/admin/api/eventtypes/",
         "/admin/api/eventtype/",
-        {"item": {"title": "TestEventtype", "for_bulletin": True, "for_actor": False}},
+        {
+            "item": {
+                "title": "TestEventtype",
+                "for_bulletin": True,
+                "for_actor": False,
+                "for_incident": False,
+            }
+        },
         {"item": {"title": "Updated"}},
         ADMIN_MOD_UPDATE,
     ),
