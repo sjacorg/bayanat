@@ -87,33 +87,30 @@ class SearchUtils:
             return set()
         return self._ocr_matched_ids & set(bulletin_ids)
 
+    def _combine_query_blocks(self, build_query):
+        """Fold query blocks left-to-right; each block's conditions are
+        grouped with AND before its op (and/or) combines it with the rest."""
+        combined = None
+        for block_q in self.search:
+            _, conditions = build_query(block_q)
+            if not conditions:
+                continue
+            block = and_(*conditions)
+            if combined is None:
+                combined = block
+            elif block_q.get("op", "or") == "and":
+                combined = and_(combined, block)
+            else:
+                combined = or_(combined, block)
+        return combined
+
     def get_query(self):
         """Get the query for the given class."""
         if self.cls == "bulletin":
             # Handle empty search - return all bulletins
             if not self.search:
                 return select(Bulletin)
-            # Get conditions from first query
-            main_stmt, conditions = self.bulletin_query(self.search[0])
-            combined = and_(*conditions) if conditions else None
-
-            # Fold remaining query blocks left-to-right; each block's
-            # conditions are grouped with AND before its op is applied.
-            if len(self.search) > 1:
-                for i in range(1, len(self.search)):
-                    _, next_conditions = self.bulletin_query(self.search[i])
-                    if not next_conditions:
-                        continue
-                    block = and_(*next_conditions)
-                    op = self.search[i].get("op", "or")
-                    if combined is None:
-                        combined = block
-                    elif op == "and":
-                        combined = and_(combined, block)
-                    else:
-                        combined = or_(combined, block)
-
-            # Build final query with all conditions and default sorting
+            combined = self._combine_query_blocks(self.bulletin_query)
             result = select(Bulletin)
             if combined is not None:
                 result = result.where(combined)
@@ -123,27 +120,7 @@ class SearchUtils:
             # Handle empty search - return all actors
             if not self.search:
                 return select(Actor)
-            # Get conditions from first query
-            main_stmt, conditions = self.actor_query(self.search[0])
-            combined = and_(*conditions) if conditions else None
-
-            # Fold remaining query blocks left-to-right; each block's
-            # conditions are grouped with AND before its op is applied.
-            if len(self.search) > 1:
-                for i in range(1, len(self.search)):
-                    _, next_conditions = self.actor_query(self.search[i])
-                    if not next_conditions:
-                        continue
-                    block = and_(*next_conditions)
-                    op = self.search[i].get("op", "or")
-                    if combined is None:
-                        combined = block
-                    elif op == "and":
-                        combined = and_(combined, block)
-                    else:
-                        combined = or_(combined, block)
-
-            # Build final query with all conditions and default sorting
+            combined = self._combine_query_blocks(self.actor_query)
             result = select(Actor)
             if combined is not None:
                 result = result.where(combined)
