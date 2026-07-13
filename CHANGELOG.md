@@ -1,5 +1,31 @@
 # Changelog
 
+## v4.0.2
+
+### Security
+
+- Bumped vulnerable dependencies in `uv.lock`:
+  - `urllib3` 2.6.3 → 2.7.0 (high, [GHSA-48p4-8xcf-vxj5](https://github.com/advisories/GHSA-48p4-8xcf-vxj5) sensitive headers forwarded across origins in proxied redirects; [GHSA-pq67-6m6q-mj2v](https://github.com/advisories/GHSA-pq67-6m6q-mj2v) decompression-bomb bypass in streaming API)
+  - `lxml` 6.0.2 → 6.1.0 ([GHSA-pp7h-53gx-mx7r](https://github.com/advisories/GHSA-pp7h-53gx-mx7r), high, XXE in `iterparse`/`ETCompatXMLParser`)
+  - `pillow` 12.1.1 → 12.2.0 ([GHSA-2vfv-wwj6-7q47](https://github.com/advisories/GHSA-2vfv-wwj6-7q47), high, FITS GZIP decompression bomb)
+  - `pypdf` 6.10.0 → 6.10.2 (medium, three RAM-exhaustion advisories)
+  - `python-dotenv` 1.2.1 → 1.2.2 (medium, symlink-following in `set_key`)
+  - `Mako` 1.3.10 → 1.3.11 (medium, path traversal in `TemplateLookup`)
+  - `pytest` 9.0.2 → 9.0.3 (dev, medium, vulnerable `tmpdir` handling)
+- Bumped `axios` 1.15.0 → 1.16.0 (frontend dep, [GHSA-4hjh-wcwx-04pq](https://github.com/advisories/GHSA-4hjh-wcwx-04pq) DoS via large response).
+
+### Fixed
+
+- Admin "Reload" button now actually reloads the app. `uwsgi.ini` was missing the `touch-reload=reload.ini` directive, so the maintenance task touched the file with no effect on the running workers. After upgrading, existing installs should also append `touch-reload=reload.ini` to `/bayanat/uwsgi.ini` if they have local edits to that file.
+- Allowed-extensions validator now accepts up to 5-character file extensions (previously capped at 4 characters). The cap rejected valid extensions like `mhtml`, `xhtml`, and `jhtml` from `MEDIA_ALLOWED_EXTENSIONS` and `SHEETS_ALLOWED_EXTENSIONS`.
+- Restored the native browser PDF viewer for inline preview.
+
+## v4.0.1
+
+### Fixed
+
+- Bulk OCR: celery worker now consumes the `ocr` queue. The systemd unit written by the installer was only subscribing to the default `celery` queue, so tasks dispatched by bulk OCR (UI and `flask ocr process`) silently piled up in Redis. Single-media OCR was not affected. Existing installs can fix in place by adding `-Q celery,ocr` to `ExecStart` in `/etc/systemd/system/bayanat-celery.service`, then `systemctl daemon-reload && systemctl restart bayanat-celery`.
+
 ## v4.0.0
 
 ### Database Migrations (Alembic)
@@ -8,18 +34,18 @@ Bayanat now uses Alembic (Flask-Migrate) for all schema changes. This replaces t
 
 ### OCR and Text Extraction
 
-- Unified OCR into provider-agnostic LLM support, replacing the Google Vision-only pipeline
-- Added PDF and DOCX text extraction (non-OCR)
-- Parallelized bulk OCR processing
-- Added text map visualization for OCR results
-- Added search and translation for extracted text
-- S3 storage backend support for OCR
+- New provider-agnostic OCR pipeline supporting Google Vision and any OpenAI-compatible LLM endpoint, replacing the prior inline Tesseract helper used during PDF import
+- New `Extraction` table stores OCR results as first-class data with edit history
+- Administrators switch OCR providers from the system administration dashboard (no restart required)
+- Added PDF and DOCX text extraction (multi-page PDFs with configurable page cap)
+- Parallelized bulk OCR processing with per-task isolation
+- Text Map overlay: opt-in UI that draws per-word bounding boxes on document images (Google Vision only; falls back to plain text for LLM providers)
+- Added search over extracted text (trigram-indexed) and on-demand translation
+- S3 storage backend support throughout the OCR pipeline
 
 ### Notifications
 
-- Redesigned notification system with dedicated database table
-- Email notification support with delivery tracking
-- Read status, urgency flags, and categorization (Update, Alert, etc.)
+- Notification drawer usability tweaks: hover-only mark-as-read icon, new mark-all-as-read button, subtler urgent-notification styling, wider drawer (#248)
 
 ### Search and UI
 
@@ -69,12 +95,11 @@ Bayanat now uses Alembic (Flask-Migrate) for all schema changes. This replaces t
 
 ### Data Model
 
-- ID number types: actor `id_number` converted from string to JSONB array with type tracking
+- New `Extraction` table for OCR results with edit history
 - Dynamic fields: bug fixes and core field seeding for search dialogs
-- Notification table with email tracking
-- Extraction table for OCR results with history
 - Media orientation field for image rotation support
 - Label constraints: self-parent prevention, sibling title uniqueness
+- Media orphan cleanup and per-entity etag uniqueness
 
 ### Breaking Changes
 

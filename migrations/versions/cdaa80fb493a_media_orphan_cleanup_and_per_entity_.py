@@ -30,18 +30,15 @@ depends_on = None
 
 def upgrade():
     # 1. Soft-delete orphaned media (not attached to any bulletin or actor)
-    op.execute(
-        """
+    op.execute("""
         UPDATE media SET deleted = TRUE
         WHERE bulletin_id IS NULL
           AND actor_id IS NULL
           AND (deleted IS NULL OR deleted = FALSE)
-    """
-    )
+    """)
 
     # 2. Soft-delete same-bulletin duplicate etags (keep the newest per bulletin)
-    op.execute(
-        """
+    op.execute("""
         UPDATE media SET deleted = TRUE
         WHERE id IN (
             SELECT m.id FROM media m
@@ -58,12 +55,10 @@ def upgrade():
                   AND m.id != dups.keep_id
             WHERE (m.deleted IS NULL OR m.deleted = FALSE)
         )
-    """
-    )
+    """)
 
     # 3. Soft-delete same-actor duplicate etags (keep the newest per actor)
-    op.execute(
-        """
+    op.execute("""
         UPDATE media SET deleted = TRUE
         WHERE id IN (
             SELECT m.id FROM media m
@@ -80,32 +75,25 @@ def upgrade():
                   AND m.id != dups.keep_id
             WHERE (m.deleted IS NULL OR m.deleted = FALSE)
         )
-    """
-    )
+    """)
 
     # 4. Drop the global unique index
-    op.execute(
-        """
+    op.execute("""
         DROP INDEX IF EXISTS ix_media_etag_unique_not_deleted
-    """
-    )
+    """)
 
     # 5. Create per-entity partial unique indexes
-    op.execute(
-        """
-        CREATE UNIQUE INDEX ix_media_etag_bulletin_unique
+    op.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS ix_media_etag_bulletin_unique
         ON media (etag, bulletin_id)
         WHERE deleted = FALSE AND bulletin_id IS NOT NULL
-    """
-    )
+    """)
 
-    op.execute(
-        """
-        CREATE UNIQUE INDEX ix_media_etag_actor_unique
+    op.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS ix_media_etag_actor_unique
         ON media (etag, actor_id)
         WHERE deleted = FALSE AND actor_id IS NOT NULL
-    """
-    )
+    """)
 
     # 6. Now safe to fix the deleted column on media
     op.execute("UPDATE media SET deleted = FALSE WHERE deleted IS NULL")
@@ -117,12 +105,10 @@ def downgrade():
     # Restore global unique index, drop per-entity indexes
     op.execute("DROP INDEX IF EXISTS ix_media_etag_bulletin_unique")
     op.execute("DROP INDEX IF EXISTS ix_media_etag_actor_unique")
-    op.execute(
-        """
+    op.execute("""
         CREATE UNIQUE INDEX ix_media_etag_unique_not_deleted
         ON media (etag)
         WHERE deleted = FALSE
-    """
-    )
+    """)
     # Note: soft-deleted records are NOT restored (data cleanup is one-way)
     op.execute("ALTER TABLE media ALTER COLUMN deleted DROP NOT NULL")

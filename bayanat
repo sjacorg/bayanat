@@ -305,7 +305,7 @@ User=$APP_USER
 Group=$APP_USER
 WorkingDirectory=$CURRENT_LINK
 EnvironmentFile=$SHARED_DIR/.env
-ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B
+ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B -Q celery,ocr
 Restart=always
 RestartSec=3
 

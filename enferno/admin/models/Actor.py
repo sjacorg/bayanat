@@ -294,11 +294,7 @@ class Actor(db.Model, BaseMixin):
 
     @staticmethod
     def gen_full_name(first_name: str, last_name: str, middle_name: Optional[str] = None) -> str:
-        name = first_name
-        if middle_name:
-            name = name + " " + middle_name
-        name = name + " " + last_name
-        return name
+        return " ".join(part for part in (first_name, middle_name, last_name) if part)
 
     # populate actor object from json dict
     def from_json(self, json: dict[str, Any]) -> "Actor":

@@ -30,8 +30,17 @@ def etl_process_file(
         di.process(file)
         return "done"
     except Exception as e:
-        log = db.session.get(DataImport, data_import_id)
-        log.fail(e)
+        # Roll back any half-applied transaction so the session is usable below.
+        # Without this, errors that poison the session (e.g. dropped DB connection)
+        # cause the fail-marker query to raise PendingRollbackError, masking the
+        # original exception and leaving the import stuck in "Pending".
+        db.session.rollback()
+        try:
+            log = db.session.get(DataImport, data_import_id)
+            if log:
+                log.fail(e)
+        except Exception:
+            logger.exception("Could not mark data import %s as failed", data_import_id)
         raise  # Re-raise for chord coordination
 
 

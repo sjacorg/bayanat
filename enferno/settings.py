@@ -11,6 +11,7 @@ from enferno.utils.config_utils import ConfigManager
 from enferno.utils.dep_utils import dep_utils
 from enferno.admin.constants import Constants
 from enferno.utils.notification_config import NOTIFICATIONS_DEFAULT_CONFIG
+from enferno.utils.ocr import PROVIDERS as OCR_PROVIDERS
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -51,6 +52,13 @@ class Config(object):
         SQLALCHEMY_DATABASE_URI = f"postgresql:///{POSTGRES_DB}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Validate pooled connections before use and recycle them periodically so
+    # workers don't hand out a dropped connection (Postgres idle timeouts,
+    # NAT/conntrack drops, restarts).
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": int(os.environ.get("SQLALCHEMY_POOL_RECYCLE", 300)),
+    }
 
     # Redis
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
@@ -133,7 +141,7 @@ class Config(object):
     # Session
     SESSION_TYPE = "redis"
     SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/1")
-    PERMANENT_SESSION_LIFETIME = 3600
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("SESSION_LIFETIME", 3600))
 
     # Google 0Auth
     GOOGLE_OAUTH_ENABLED = manager.get_config("GOOGLE_OAUTH_ENABLED")
@@ -184,7 +192,16 @@ class Config(object):
     GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY") or manager.get_config(
         "GOOGLE_VISION_API_KEY"
     )
-    OCR_PROVIDER = os.environ.get("OCR_PROVIDER") or manager.get_config("OCR_PROVIDER")
+    OCR_PROVIDER = (
+        os.environ.get("OCR_PROVIDER") or manager.get_config("OCR_PROVIDER") or "google_vision"
+    )
+    if OCR_PROVIDER not in OCR_PROVIDERS:
+        import logging as _logging
+
+        _logging.getLogger("app_logger").warning(
+            "Invalid OCR_PROVIDER %r, falling back to google_vision", OCR_PROVIDER
+        )
+        OCR_PROVIDER = "google_vision"
     PDF_OCR_MAX_PAGES = int(os.environ.get("PDF_OCR_MAX_PAGES", 20))
     LLM_OCR_URL = os.environ.get("LLM_OCR_URL") or manager.get_config("LLM_OCR_URL")
     LLM_OCR_MODEL = os.environ.get("LLM_OCR_MODEL") or manager.get_config("LLM_OCR_MODEL")

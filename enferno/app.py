@@ -32,6 +32,7 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
+from enferno.utils.soft_delete import register_soft_delete
 from enferno.extensions import (
     db,
     migrate,
@@ -121,6 +122,7 @@ def register_extensions(app):
     """
     db.init_app(app)
     migrate.init_app(app, db)
+    register_soft_delete(db)
     # Skip debug toolbar when CSP is enabled (they conflict)
     if not app.config.get("CSP_ENABLED", False):
         debug_toolbar.init_app(app)
@@ -142,6 +144,20 @@ def register_extensions(app):
     security = Security(app, user_datastore, **security_options)
 
     session.init_app(app)
+
+    # Background polls (e.g. the notification poller) carry X-Silent-Poll and must
+    # not slide the server-side session, otherwise the idle timeout never fires.
+    from types import MethodType
+    from flask import request
+
+    def _should_set_storage(self, app, sess):
+        if request.headers.get("X-Silent-Poll") and not sess.modified:
+            return False
+        return sess.modified or app.config["SESSION_REFRESH_EACH_REQUEST"]
+
+    app.session_interface.should_set_storage = MethodType(
+        _should_set_storage, app.session_interface
+    )
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
     mail.init_app(app)
@@ -242,7 +258,7 @@ def register_talisman(app):
         # Other security headers
         force_https=app.config.get("FORCE_HTTPS", False),  # Don't force in dev
         force_https_permanent=False,
-        frame_options="DENY",
+        frame_options="SAMEORIGIN",
         strict_transport_security=app.config.get("FORCE_HTTPS", False),
         strict_transport_security_max_age=31536000,  # 1 year
         strict_transport_security_include_subdomains=True,
@@ -372,6 +388,7 @@ def register_commands(app):
     app.cli.add_command(commands.doctor)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.ocr_cli)
+    app.cli.add_command(commands.export_cli)
 
 
 def register_errorhandlers(app):
