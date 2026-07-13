@@ -90,7 +90,20 @@ def create_admin() -> Any:
     if User.query.filter(User.username == username.lower()).first():
         return HTTPResponse.error("Username already exists")
 
-    new_admin = User(username=username, password=hash_password(password), active=1, name="Admin")
+    new_admin = User(
+        username=username,
+        password=hash_password(password),
+        active=1,
+        name="Admin",
+        view_usernames=True,
+        view_simple_history=True,
+        view_full_history=True,
+        can_self_assign=True,
+        can_edit_locations=True,
+        can_export=True,
+        can_import_web=True,
+        can_access_media=True,
+    )
     new_admin.roles.append(admin_role)
 
     db.session.add(new_admin)
