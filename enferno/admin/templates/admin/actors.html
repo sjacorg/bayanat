@@ -214,6 +214,10 @@
                         
                         <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
+                        <template v-slot:item.name="{item}">
+                            ${ (item.name || '').trim() || item.name_ar }
+                        </template>
+
                         <template v-slot:item.type="{item}">
                             <v-tooltip :text="item.type">
                                 <template v-slot:activator="{props}">
@@ -1637,6 +1641,12 @@
                                 this.editedItem.comments = '';
                                 this.resetSwitchers();
                                 this.handleStatus(item);
+                                this.applySameTypePerspective({
+                                    relationList: this.editedItem.actor_relations,
+                                    type: 'actor',
+                                    editedItemId: this.editedItem.id,
+                                    sameTypeInfo: this.atoaInfo,
+                                });
                             });
 
 
@@ -1685,9 +1695,20 @@
                 },
 
                 save() {
+                    const actorRelations = this.editedItem.actor_relations
+                        ? this.editedItem.actor_relations.map((relation) => ({ ...relation }))
+                        : this.editedItem.actor_relations;
+                    this.applySameTypePerspective({
+                        relationList: actorRelations,
+                        type: 'actor',
+                        editedItemId: this.editedItem.id,
+                        sameTypeInfo: this.atoaInfo,
+                    });
+
                     const payload = {
                         ...this.editedItem,
-                        id_number: this.simpleIdNumberValue
+                        id_number: this.simpleIdNumberValue,
+                        actor_relations: actorRelations,
                     }
 
                     this.saving = true;
@@ -1725,22 +1746,6 @@
                             this.saving = false;
                         });
                     }
-                },
-
-                // related actors functions --------------------
-
-                detectDirection(editedItem, actor) {
-                    // Since relationships always enforced to flow from smaller id to bigger id
-                    // this can be used to determine the relationship label displayed
-                    // one special case needs handling is when a new actor is created (id is null) in this case
-                    // new actor id will be definitely larger than any id in the system
-
-                    if (!editedItem.id) {
-                        return false;
-                    } else {
-                        return editedItem.id < actor.id
-                    }
-
                 },
 
                 // related actors functions --------------------
