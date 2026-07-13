@@ -180,11 +180,13 @@ def setup_db_uninitialized(uninitialized_app):
     try:
         _db.session.query(IDNumberType).delete()
     except Exception:
+        # best-effort teardown: the table may already be gone if the test dropped the schema
         pass
     try:
         _db.session.remove()
         _db.drop_all()
     except Exception:
+        # best-effort teardown: ignore errors tearing down an already-partial schema
         pass
 
 

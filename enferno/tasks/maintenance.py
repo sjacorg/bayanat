@@ -192,7 +192,10 @@ def restart_celery():
             sentinel.touch()
             return
     except OSError:
-        pass
+        # Sentinel present but not writable: log and fall through to the sudo restart.
+        logger.warning(
+            "restart-celery sentinel touch failed; using fallback restart", exc_info=True
+        )
     try:
         subprocess.Popen(
             ["sudo", "-n", "/usr/bin/systemctl", "restart", "bayanat-celery"],
