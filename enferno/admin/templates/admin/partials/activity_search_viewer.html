@@ -4,47 +4,61 @@
             <v-spacer></v-spacer>
             <v-btn icon="mdi-close" @click="closeSearch()"></v-btn>
         </v-toolbar>
-        <v-card-text class="position-relative">
-            <v-overlay v-model="activitySearchViews" absolute contained persistent opacity="0" scroll-strategy="none"></v-overlay>
-            <v-expansion-panels v-if="searchClass!='incident'" multiple accordion v-model="searchPanels">
-                <v-expansion-panel v-for="(q,i) in search">
-                    <v-expansion-panel-title>${translations.query_} ${i+1} 
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
+        <v-card-text>
+            <div class="position-relative min-h-100">
+                <v-expansion-panels v-if="searchClass!='incident'" multiple accordion v-model="searchPanels">
+                    <v-expansion-panel v-for="(q,i) in search">
+                        <v-expansion-panel-title>${translations.query_} ${i+1} 
+                        </v-expansion-panel-title>
+                        <v-expansion-panel-text>
 
-                        {{ i }}
+                            {{ i }}
 
-                        <bulletin-search-box
-                            v-if="searchClass=='bulletin'"
-                            :show-op="!i==0"
-                            v-model="search[i]"
-                            :users="users"
-                            :roles="roles"
-                            :is-admin="has_role(currentUser,'Admin')"
-                        >
-                        </bulletin-search-box>
+                            <bulletin-search-box
+                                v-if="searchClass=='bulletin'"
+                                :show-op="!i==0"
+                                v-model="search[i]"
+                                :users="users"
+                                :roles="roles"
+                                :is-admin="has_role(currentUser,'Admin')"
+                                expand-active-panels
+                            >
+                            </bulletin-search-box>
 
-                        <actor-search-box
-                            v-if="searchClass=='actor'"
-                            :show-op="!i==0"
-                            v-model="search[i]"
-                            :users="users"
-                            :roles="roles"
-                            :is-admin="has_role(currentUser,'Admin')"
-                        >
-                        </actor-search-box>
-                    </v-expansion-panel-text>
-                </v-expansion-panel>
-            </v-expansion-panels>
+                            <actor-search-box
+                                v-if="searchClass=='actor'"
+                                :show-op="!i==0"
+                                v-model="search[i]"
+                                :users="users"
+                                :roles="roles"
+                                :is-admin="has_role(currentUser,'Admin')"
+                                expand-active-panels
+                            >
+                            </actor-search-box>
+                        </v-expansion-panel-text>
+                    </v-expansion-panel>
+                </v-expansion-panels>
 
-            <incident-search-box
-                v-if="searchClass=='incident'"
-                v-model="search"
-                :users="users"
-                :roles="roles"
-                :is-admin="has_role(currentUser,'Admin')"
-            >
-            </incident-search-box>
+                <incident-search-box
+                    v-if="searchClass=='incident'"
+                    v-model="search"
+                    :users="users"
+                    :roles="roles"
+                    :is-admin="has_role(currentUser,'Admin')"
+                    expand-active-panels
+                >
+                </incident-search-box>
+
+                <v-overlay
+                    v-model="activitySearchViews"
+                    absolute
+                    contained
+                    persistent
+                    opacity="0"
+                    scroll-strategy="none"
+                    class="h-100 w-100"
+                ></v-overlay>
+            </div>
         </v-card-text>
     </v-card>
 </v-dialog>
