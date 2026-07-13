@@ -307,9 +307,16 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
         # UI switch disabled, but just in case...
         return False
 
+    if not cfg.FILESYSTEM_LOCAL:
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+            region_name=cfg.AWS_REGION,
+        )
+
     for item in _accessible_items(export_request.requester, items, export_request.id):
-        if item.medias:
-            media = item.medias[0]
+        for media in item.medias:
             target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"
 
             if cfg.FILESYSTEM_LOCAL:
@@ -324,12 +331,6 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
                     clear_failed_export(export_request)
                     return False  # to stop chain
             else:
-                s3 = boto3.client(
-                    "s3",
-                    aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
-                    region_name=cfg.AWS_REGION,
-                )
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
                 except Exception:
@@ -340,7 +341,7 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
                     clear_failed_export(export_request)
                     return False  # to stop chain
 
-        time.sleep(0.05)
+            time.sleep(0.05)
     return export_request.id
 
 

@@ -203,7 +203,19 @@ def install(username: Optional[str], password: Optional[str], password_stdin: bo
             except ValueError as e:
                 click.echo(str(e))
 
-    user = User(username=u, password=hash_password(p), active=1)
+    user = User(
+        username=u,
+        password=hash_password(p),
+        active=1,
+        view_usernames=True,
+        view_simple_history=True,
+        view_full_history=True,
+        can_self_assign=True,
+        can_edit_locations=True,
+        can_export=True,
+        can_import_web=True,
+        can_access_media=True,
+    )
     user.name = "Admin"
     user.roles.append(admin_role)
     check = user.save()
