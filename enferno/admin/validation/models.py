@@ -246,6 +246,7 @@ class BulletinValidationModel(StrictValidationModel):
     assigned_to: Optional[PartialUserModel] = None
     first_peer_reviewer: Optional[PartialUserModel] = None
     description: Optional[SanitizedField] = None
+    public_description: Optional[SanitizedField] = None
     comments: str = Field(min_length=1)
     source_link: str = Field(min_length=1)
     source_link_type: Optional[bool] = None
@@ -839,6 +840,7 @@ class EventtypeValidationModel(one_must_exist(["title", "title_ar"])):
     title_ar: Optional[str] = None
     for_actor: Optional[bool] = None
     for_bulletin: Optional[bool] = None
+    for_incident: Optional[bool] = None
     comments: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
@@ -1704,7 +1706,7 @@ class ConfigValidationModel(StrictValidationModel):
                     raise ValueError(
                         "MEDIA_ALLOWED_EXTENSIONS and SHEETS_ALLOWED_EXTENSIONS must be lists of strings"
                     )
-                if len(ext) < 2 or len(ext) > 4:
+                if len(ext) < 2 or len(ext) > 5:
                     raise ValueError(
                         "Invalid value for MEDIA_ALLOWED_EXTENSIONS or SHEETS_ALLOWED_EXTENSIONS"
                     )

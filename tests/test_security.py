@@ -144,6 +144,14 @@ class TestSetupWizardFullFlow:
         assert resp.json["data"]["item"]["username"] == "testAdmin"
         admin = User.query.filter(User.username == "testAdmin").first()
         assert admin is not None
+        assert admin.view_usernames is True
+        assert admin.view_simple_history is True
+        assert admin.view_full_history is True
+        assert admin.can_self_assign is True
+        assert admin.can_edit_locations is True
+        assert admin.can_export is True
+        assert admin.can_import_web is True
+        assert admin.can_access_media is True
 
     @pytest.mark.parametrize(
         "client_fixture, expected",

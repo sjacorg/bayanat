@@ -351,7 +351,7 @@ const IncidentSearchBox = Vue.defineComponent({
                   <search-field
                       v-model="q.etype"
                       api="/admin/api/eventtypes/"
-                      :query-params="{ typ: 'for_bulletin' }"
+                      :query-params="{ typ: 'for_incident' }"
                       item-title="title"
                       item-value="id"
                       :multiple="false"
