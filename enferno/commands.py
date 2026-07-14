@@ -830,6 +830,64 @@ def extract(media_id: int, language: tuple, show_text: bool, force: bool) -> Non
         click.echo(f"Error: {result.get('error')}")
 
 
+@ocr_cli.command("slim-raw")
+@click.option("--batch-size", default=200, show_default=True, help="Rows per transaction")
+@click.option("--dry-run", is_flag=True, help="Report savings without writing")
+@with_appcontext
+def slim_raw_cmd(batch_size: int, dry_run: bool) -> None:
+    """Strip per-character symbols from stored OCR raw payloads.
+
+    One-time cleanup, idempotent and resumable: rows already slim are skipped,
+    so it can be stopped and rerun safely. Cuts raw payloads by roughly two
+    thirds; word text and paragraph/word geometry are preserved.
+    """
+    import json
+
+    from enferno.admin.models import Extraction
+    from enferno.utils.ocr.slim import has_symbols, slim_raw
+
+    last_id = 0
+    scanned = slimmed = 0
+    bytes_before = bytes_after = 0
+
+    while True:
+        rows = (
+            Extraction.query.filter(Extraction.id > last_id, Extraction.raw.isnot(None))
+            .order_by(Extraction.id)
+            .limit(batch_size)
+            .all()
+        )
+        if not rows:
+            break
+        for ext in rows:
+            scanned += 1
+            try:
+                if not has_symbols(ext.raw):
+                    continue
+                slim = slim_raw(ext.raw)
+                bytes_before += len(json.dumps(ext.raw, ensure_ascii=False))
+                bytes_after += len(json.dumps(slim, ensure_ascii=False))
+                if not dry_run:
+                    ext.raw = slim
+                slimmed += 1
+            except Exception as e:
+                logger.error(f"slim-raw: skipping extraction {ext.id}: {e}")
+        last_id = rows[-1].id
+        if not dry_run:
+            db.session.commit()
+        click.echo(f"  {scanned:,} scanned, {slimmed:,} slimmed (last id {last_id})")
+
+    saved_mb = (bytes_before - bytes_after) / 1024 / 1024
+    verb = "Would free" if dry_run else "Freed"
+    click.echo(
+        f"Done: {scanned:,} scanned, {slimmed:,} slimmed. {verb} ~{saved_mb:,.0f} MB of JSON (uncompressed)."
+    )
+    if not dry_run and slimmed:
+        click.echo(
+            "Disk space returns to the OS after VACUUM FULL extraction (locks table) or pg_repack."
+        )
+
+
 @ocr_cli.command()
 @with_appcontext
 def status() -> None:

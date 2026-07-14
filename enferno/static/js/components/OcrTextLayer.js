@@ -70,7 +70,7 @@ const OcrTextLayer = Vue.defineComponent({
           }
 
           const words = (para.words || []).map(w =>
-            (w.symbols || []).map(s => s.text).join('')
+            w.text ?? (w.symbols || []).map(s => s.text).join('')
           );
 
           const lang = para.property?.detectedLanguages?.[0]?.languageCode || '';
