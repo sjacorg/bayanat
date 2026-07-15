@@ -14,7 +14,6 @@ from enferno.extensions import db
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.ocr import get_provider
 from enferno.utils.ocr.pdf import pdf_to_images
-from enferno.utils.ocr.slim import slim_raw
 from enferno.utils.docx_utils import extract_docx_text
 
 logger = get_logger()
@@ -97,7 +96,6 @@ def process_media_extraction_task(
             media_id=media_id,
             text=cleaned_text,
             original_text=cleaned_text,
-            raw=slim_raw(result["raw"]),
             confidence=confidence,
             orientation=detected_orientation,
             status=status,
@@ -144,7 +142,6 @@ def _merge_page_results(results: list[dict]) -> dict:
         "word_count": word_count,
         "language": language,
         "orientation": orientation,
-        "raw": {"pages": [r["raw"] for r in results]},
     }
 
 
