@@ -835,3 +835,14 @@ function loadScript(src) {
   loadedScripts.set(src, promise);
   return promise;
 }
+
+const textUtils = {
+  normalizeDisplayText(value) {
+    if (value === null || value === undefined) return '';
+    return typeof value === 'string' ? value.trim() : value;
+  },
+
+  hasText(value) {
+    return this.normalizeDisplayText(value) !== '';
+  },
+};
