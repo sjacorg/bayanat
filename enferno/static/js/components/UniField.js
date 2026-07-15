@@ -16,7 +16,7 @@ const UniField = Vue.defineComponent({
         <v-list-item :title="caption" density="compact" :class="{ 'px-0': disableSpacing }">
           <v-sheet class="text-body-2">{{ sw ? english : arabic }}</v-sheet>
           <template #append>
-              <v-btn variant="text" size="x-small" icon="mdi-web" @click="sw= !sw"></v-btn>
+              <v-btn variant="text" size="x-small" icon="mdi-web" @click.stop="sw= !sw"></v-btn>
           </template>
         </v-list-item>
       </template>
