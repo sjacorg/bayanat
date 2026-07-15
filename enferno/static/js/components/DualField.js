@@ -1,3 +1,7 @@
+const shouldShowOriginalField = (original, translation) => {
+  return textUtils.hasText(original) || !textUtils.hasText(translation);
+};
+
 const DualField = Vue.defineComponent({
   name: 'DualField',
   props: {
@@ -48,35 +52,37 @@ const DualField = Vue.defineComponent({
   },
   emits: ['update:original', 'update:translation'],
   data() {
+    const hasInitialValue = textUtils.hasText(this.original) || textUtils.hasText(this.translation);
+
     return {
-      isOriginalVisible: !(!this.original && this.translation),
+      isOriginalVisible: shouldShowOriginalField(this.original, this.translation),
       localOriginal: this.original,
       localTranslation: this.translation,
-      hasAutoSelected: !!(this.original || this.translation),
+      hasSelectedInitialField: hasInitialValue,
     };
   },
   watch: {
     // Watch for prop changes and update local copies accordingly
     original(newVal) {
       this.localOriginal = newVal;
-      this.autoSelectVisibleField();
+      this.selectInitialVisibleField();
     },
     translation(newVal) {
       this.localTranslation = newVal;
-      this.autoSelectVisibleField();
+      this.selectInitialVisibleField();
     },
   },
   methods: {
     toggleField() {
       this.isOriginalVisible = !this.isOriginalVisible;
     },
-    autoSelectVisibleField() {
+    selectInitialVisibleField() {
       // Only runs once, the first time data arrives (e.g. async fetch after mount).
       // Skipped afterwards so it never overrides the user's manual toggle while editing.
-      if (this.hasAutoSelected) return;
-      if (!this.original && !this.translation) return;
-      this.hasAutoSelected = true;
-      this.isOriginalVisible = !(!this.original && this.translation);
+      if (this.hasSelectedInitialField) return;
+      if (!textUtils.hasText(this.original) && !textUtils.hasText(this.translation)) return;
+      this.hasSelectedInitialField = true;
+      this.isOriginalVisible = shouldShowOriginalField(this.original, this.translation);
     },
     setUnknown() {
       if (this.allowUnknown) {
