@@ -230,7 +230,12 @@ restore_pg() {
         local db="${POSTGRES_DB:-$APP_USER}"
         local host="${POSTGRES_HOST:-localhost}"
         if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
-            sudo -u "$user" pg_restore --clean --if-exists -d "$db" "$path"
+            # Restore as postgres (superuser): --clean drops/recreates the PostGIS and pg_trgm
+            # extensions and rewrites spatial_ref_sys, which the unprivileged app role
+            # (BAY-01-031, NOSUPERUSER) does not own and cannot restore. This is an explicit
+            # admin op (root -> postgres via the CLI), not the app runtime, so it does not
+            # weaken the hardened runtime role. Object ownership is preserved from the dump.
+            sudo -u postgres pg_restore --clean --if-exists -d "$db" < "$path"
         else
             PGPASSWORD="${POSTGRES_PASSWORD:-}" \
                 pg_restore --clean --if-exists \
