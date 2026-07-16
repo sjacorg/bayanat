@@ -92,6 +92,7 @@
   data-lang="{{ session.get('lang', 'en') }}"
   data-maps-api-endpoint="{{ config.MAPS_API_ENDPOINT }}"
   data-ocr-provider="{{ config.OCR_PROVIDER }}"
+  data-app-version="{{ config.VERSION }}"
 ></div>
 
 <script nonce="{{ csp_nonce() }}">
@@ -104,6 +105,7 @@
     window.__lang__ = el.dataset.lang;
     window.__MAPS_API_ENDPOINT__ = el.dataset.mapsApiEndpoint;
     window.__OCR_PROVIDER__ = el.dataset.ocrProvider;
+    window.__APP_VERSION__ = el.dataset.appVersion;
 </script>
 
 

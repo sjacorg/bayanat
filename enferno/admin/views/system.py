@@ -193,7 +193,7 @@ import time
 from pathlib import Path
 
 from enferno.extensions import rds
-from enferno.tasks.maintenance import UPDATE_CACHE_KEY, _current_version
+from enferno.tasks.maintenance import UPDATE_CACHE_KEY
 
 UPDATE_STATE_FILE = "/opt/bayanat/state/update.json"
 TERMINAL_PHASES = {"SUCCESS", "ROLLED_BACK", "NEEDS_INTERVENTION", "IDLE"}
@@ -227,7 +227,7 @@ def api_updates_available() -> Response:
         except Exception:
             cached = {}
     payload = {
-        "current": _current_version(),
+        "current": current_app.config["VERSION"],
         "latest": cached.get("latest"),
         "release_notes_url": cached.get("release_notes_url"),
         "checked_at": cached.get("checked_at"),
@@ -277,7 +277,7 @@ def api_snapshots() -> Response:
 @roles_required("Admin")
 def api_updates_status() -> Response:
     """Return the current update state (from the CLI-written JSON file)."""
-    current = _current_version()
+    current = current_app.config["VERSION"]
     path = Path(UPDATE_STATE_FILE)
     if not path.exists():
         return HTTPResponse.success(data=_idle_status(current))

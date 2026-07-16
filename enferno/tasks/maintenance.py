@@ -33,16 +33,6 @@ def _redis_get_str(key: str):
     return val.decode() if isinstance(val, (bytes, bytearray)) else val
 
 
-def _current_version() -> str:
-    try:
-        import tomllib
-
-        with open("pyproject.toml", "rb") as fh:
-            return tomllib.load(fh).get("project", {}).get("version", "0.0.0")
-    except Exception:
-        return "0.0.0"
-
-
 @celery.task
 def check_for_updates():
     """Poll GitHub releases. Cache latest. Notify admins on new tag. Optionally auto-apply patch."""
@@ -69,7 +59,7 @@ def check_for_updates():
         ),
     )
 
-    current = _current_version()
+    current = cfg.VERSION
     if latest_tag == current:
         return
     if _redis_get_str(UPDATE_NOTIFIED_KEY) == latest_tag:

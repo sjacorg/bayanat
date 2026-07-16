@@ -25,10 +25,28 @@ def uia_username_mapper(identity):
     return bleach.clean(identity, strip=True)
 
 
+def _read_version() -> str:
+    if env := os.environ.get("BAYANAT_VERSION"):
+        return env
+    try:
+        import tomllib
+
+        pyproject = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), os.pardir, "pyproject.toml"
+        )
+        with open(pyproject, "rb") as fh:
+            return tomllib.load(fh)["project"]["version"]
+    except Exception:
+        return "0.0.0"
+
+
 class Config(object):
     """Base configuration."""
 
     BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5000/")
+
+    # App version: pyproject.toml is the source of truth (BAYANAT_VERSION env overrides)
+    VERSION = _read_version()
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
@@ -374,6 +392,7 @@ class TestConfig:
     """Completely isolated test configuration - no external dependencies."""
 
     TESTING = True
+    VERSION = _read_version()
 
     # Flask Core Settings
     SECRET_KEY = "test-secret-key-not-for-production"

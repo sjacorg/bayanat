@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_from_directory
@@ -6,6 +5,7 @@ from flask_wtf.csrf import generate_csrf
 from sqlalchemy import text
 
 from enferno.extensions import db, limiter, rds
+from enferno.settings import Config
 from enferno.utils.logging_utils import get_logger
 
 bp_public = Blueprint("public", __name__, static_folder="../static")
@@ -43,18 +43,7 @@ def health() -> Response:
     except Exception:
         logger.error("health check failed", exc_info=True)
         return jsonify({"status": "error", "error": "Service unavailable"}), 503
-    version = os.environ.get("BAYANAT_VERSION") or _read_version_from_pyproject()
-    return jsonify({"status": "ok", "version": version})
-
-
-def _read_version_from_pyproject() -> Optional[str]:
-    try:
-        import tomllib
-
-        with open("pyproject.toml", "rb") as fh:
-            return tomllib.load(fh).get("project", {}).get("version")
-    except Exception:
-        return None
+    return jsonify({"status": "ok", "version": Config.VERSION})
 
 
 @bp_public.teardown_app_request

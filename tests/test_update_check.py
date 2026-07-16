@@ -26,7 +26,7 @@ def test_new_release_notifies_admins():
     with (
         patch.object(maintenance, "requests") as req,
         patch.object(maintenance, "rds", fake_redis),
-        patch.object(maintenance, "_current_version", return_value="4.1.0"),
+        patch.object(maintenance.cfg, "VERSION", "4.1.0"),
         patch.object(maintenance, "Notification") as notif,
     ):
         req.get.return_value = _github_response("v4.1.1")
@@ -42,7 +42,7 @@ def test_same_version_does_not_notify():
     with (
         patch.object(maintenance, "requests") as req,
         patch.object(maintenance, "rds", fake_redis),
-        patch.object(maintenance, "_current_version", return_value="4.1.1"),
+        patch.object(maintenance.cfg, "VERSION", "4.1.1"),
         patch.object(maintenance, "Notification") as notif,
     ):
         req.get.return_value = _github_response("v4.1.1")
