@@ -45,7 +45,7 @@ def api_eventtypes() -> Response:
         query.append(Eventtype.title.ilike("%" + q + "%"))
 
     typ = request.args.get("typ", None)
-    if typ and typ in ["for_bulletin", "for_actor"]:
+    if typ and typ in ["for_bulletin", "for_actor", "for_incident"]:
         query.append(getattr(Eventtype, typ) == True)
     result = (
         Eventtype.query.filter(*query)
