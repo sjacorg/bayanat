@@ -5,7 +5,6 @@ const globalMixin = {
     'Toast': Toast,
     'ProfileDropdown': ProfileDropdown,
     'UpdateBanner': UpdateBanner,
-    'UpdateProgressDialog': UpdateProgressDialog,
   },
   data: () => ({
     snackbar: false,

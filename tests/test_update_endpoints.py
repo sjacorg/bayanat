@@ -31,37 +31,6 @@ def test_available_returns_empty_when_no_cache(admin_client):
     assert data["latest"] is None
 
 
-def test_status_idle_when_no_state_file(admin_client, tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        "enferno.admin.views.system.UPDATE_STATE_FILE",
-        str(tmp_path / "missing.json"),
-    )
-    resp = admin_client.get("/admin/api/updates/status")
-    assert resp.status_code == 200
-    data = resp.get_json()["data"]
-    assert data["phase"] == "IDLE"
-    assert data["running"] is False
-
-
-def test_status_running_when_midway(admin_client, tmp_path, monkeypatch):
-    state = tmp_path / "update.json"
-    state.write_text(json.dumps({"phase": "MIGRATE", "target": "4.1.1"}))
-    monkeypatch.setattr("enferno.admin.views.system.UPDATE_STATE_FILE", str(state))
-    resp = admin_client.get("/admin/api/updates/status")
-    data = resp.get_json()["data"]
-    assert data["phase"] == "MIGRATE"
-    assert data["running"] is True
-
-
-def test_status_terminal_when_success(admin_client, tmp_path, monkeypatch):
-    state = tmp_path / "update.json"
-    state.write_text(json.dumps({"phase": "SUCCESS", "target": "4.1.1"}))
-    monkeypatch.setattr("enferno.admin.views.system.UPDATE_STATE_FILE", str(state))
-    resp = admin_client.get("/admin/api/updates/status")
-    data = resp.get_json()["data"]
-    assert data["running"] is False
-
-
 def test_start_endpoint_removed(admin_client):
     """The privileged web-triggered update endpoint is gone (BAY-01-013).
     Updates are applied via the root CLI only."""

@@ -211,36 +211,18 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
 
     try:
         csv_df = pd.DataFrame()
-        for id in export_request.items:
-            if export_type == "bulletin":
-                bulletin = db.session.get(Bulletin, id)
-                if not bulletin or not requester or not requester.can_access(bulletin):
-                    if bulletin:
-                        logger.warning(
-                            "Export #%s skipped restricted bulletin id=%s",
-                            export_id,
-                            bulletin.id,
-                        )
-                    continue
+        if export_type == "bulletin":
+            rows = (b for i in export_request.items if (b := db.session.get(Bulletin, i)))
+            for bulletin in _accessible_items(requester, rows, export_id):
                 # adjust list attributes to normal dicts
                 adjusted = convert_list_attributes(bulletin.to_csv_dict())
                 # normalize
                 df = pd.json_normalize(adjusted)
-                if csv_df.empty:
-                    csv_df = df
-                else:
-                    csv_df = pd.merge(csv_df, df, how="outer")
+                csv_df = df if csv_df.empty else pd.merge(csv_df, df, how="outer")
 
-            elif export_type == "actor":
-                actor = db.session.get(Actor, id)
-                if not actor or not requester or not requester.can_access(actor):
-                    if actor:
-                        logger.warning(
-                            "Export #%s skipped restricted actor id=%s",
-                            export_id,
-                            actor.id,
-                        )
-                    continue
+        elif export_type == "actor":
+            rows = (a for i in export_request.items if (a := db.session.get(Actor, i)))
+            for actor in _accessible_items(requester, rows, export_id):
                 # adjust list attributes to normal dicts
                 actor_dict = convert_list_attributes(actor.to_csv_dict())
 
@@ -252,10 +234,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
 
                 # normalize the combined dict
                 df = pd.json_normalize(actor_dict)
-                if csv_df.empty:
-                    csv_df = df
-                else:
-                    csv_df = pd.concat([csv_df, df], ignore_index=True)
+                csv_df = df if csv_df.empty else pd.concat([csv_df, df], ignore_index=True)
 
         # Neutralize spreadsheet formula injection before writing (BAY-01-024).
         csv_df = csv_df.map(escape_csv_formula_cell)
