@@ -609,6 +609,23 @@ _install_system_packages() {
         minisign
 }
 
+_ensure_swap() {
+    # uv sync compiles wheels and can OOM on small VMs. Any box under 8 GB
+    # with no swap gets a 4 GB swapfile so installs don't die mid-build.
+    local mem_kb swap_kb
+    mem_kb=$(awk '/^MemTotal:/{print $2}' /proc/meminfo)
+    swap_kb=$(awk '/^SwapTotal:/{print $2}' /proc/meminfo)
+    ((mem_kb < 8388608 && swap_kb == 0)) || return 0
+    log "Less than 8 GB RAM and no swap; creating 4 GB swapfile..."
+    fallocate -l 4G /swapfile 2>/dev/null \
+        || dd if=/dev/zero of=/swapfile bs=1M count=4096 status=none \
+        || die "Could not create /swapfile"
+    chmod 600 /swapfile
+    mkswap /swapfile >/dev/null
+    swapon /swapfile
+    grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >>/etc/fstab
+}
+
 _install_uv() {
     if command -v uv &>/dev/null; then
         log "uv already installed: $(uv --version)"
@@ -839,7 +856,10 @@ _fetch_release() {
 
     log "Extracting $tag..."
     mkdir -p "$dest"
+    # Strip macOS AppleDouble/Finder junk: a Mac-built tarball ships ._*.py
+    # binaries that alembic's versions/*.py glob picks up and crashes on.
     tar -xzf "$tmp/$asset" --strip-components=1 -C "$dest" \
+        --exclude='._*' --exclude='.DS_Store' \
         || die "Failed to extract $asset"
     touch "$dest/.bayanat-release"
     rm -rf "$tmp"
@@ -1152,6 +1172,7 @@ cmd_install() {
     log "Repository: ${BAYANAT_REPO:-$DEFAULT_REPO}"
 
     # System setup
+    _ensure_swap
     _install_system_packages
     _install_uv
     _install_caddy_repo
