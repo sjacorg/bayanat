@@ -127,13 +127,13 @@
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
-<script src="/static/js/Sortable.min.js"></script>
-<script src="/static/js/vuedraggable.umd.js"></script>
+<script src="/static/js/Sortable.min.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/vuedraggable.umd.js?v={{ config.VERSION }}"></script>
 
-<script src="/static/js/mixins/form-builder-mixin.js"></script>
-<script src="/static/js/components/FieldListItem.js"></script>
-<script src="/static/js/components/SelectFieldTypeDialog.js"></script>
-<script src="/static/js/components/ShowDetails.js"></script>
+<script src="/static/js/mixins/form-builder-mixin.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/components/FieldListItem.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/components/SelectFieldTypeDialog.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/components/ShowDetails.js?v={{ config.VERSION }}"></script>
 
 <script nonce="{{ csp_nonce() }}">
   const { createApp } = Vue;

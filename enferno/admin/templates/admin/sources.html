@@ -200,7 +200,7 @@
             </v-main>
 
 {% endblock %} {% block js %}
-    <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/SearchField.js?v={{ config.VERSION }}"></script>
     <script nonce="{{ csp_nonce() }}">
 
 

@@ -332,7 +332,7 @@
 
 
 {% endblock %} {% block js %}
-    <script src="/static/js/components/UserCard.js"></script>
+    <script src="/static/js/components/UserCard.js?v={{ config.VERSION }}"></script>
 
     <script nonce="{{ csp_nonce() }}">
 
