@@ -150,6 +150,9 @@ const IncidentSearchBox = Vue.defineComponent({
   },
 
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     setActivePanels() {
       if (!this.expandActivePanels) {
         return;
@@ -394,7 +397,7 @@ const IncidentSearchBox = Vue.defineComponent({
                       size="small"
                       filter
                       variant="outlined"
-                  >{{ category.title }}</v-chip>
+                  ><bdi>{{ localizedTitle(category) }}</bdi></v-chip>
                 </v-chip-group>
               </template>
 
@@ -411,7 +414,7 @@ const IncidentSearchBox = Vue.defineComponent({
                       size="small"
                       filter
                       variant="outlined"
-                  >{{ category.title }}</v-chip>
+                  ><bdi>{{ localizedTitle(category) }}</bdi></v-chip>
                 </v-chip-group>
               </template>
 
