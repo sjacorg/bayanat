@@ -1,3 +1,7 @@
+const shouldShowOriginalField = (original, translation) => {
+  return textUtils.hasText(original) || !textUtils.hasText(translation);
+};
+
 const DualField = Vue.defineComponent({
   name: 'DualField',
   props: {
@@ -48,24 +52,37 @@ const DualField = Vue.defineComponent({
   },
   emits: ['update:original', 'update:translation'],
   data() {
+    const hasInitialValue = textUtils.hasText(this.original) || textUtils.hasText(this.translation);
+
     return {
-      isOriginalVisible: true,
+      isOriginalVisible: shouldShowOriginalField(this.original, this.translation),
       localOriginal: this.original,
       localTranslation: this.translation,
+      hasSelectedInitialField: hasInitialValue,
     };
   },
   watch: {
     // Watch for prop changes and update local copies accordingly
     original(newVal) {
       this.localOriginal = newVal;
+      this.selectInitialVisibleField();
     },
     translation(newVal) {
       this.localTranslation = newVal;
+      this.selectInitialVisibleField();
     },
   },
   methods: {
     toggleField() {
       this.isOriginalVisible = !this.isOriginalVisible;
+    },
+    selectInitialVisibleField() {
+      // Only runs once, the first time data arrives (e.g. async fetch after mount).
+      // Skipped afterwards so it never overrides the user's manual toggle while editing.
+      if (this.hasSelectedInitialField) return;
+      if (!textUtils.hasText(this.original) && !textUtils.hasText(this.translation)) return;
+      this.hasSelectedInitialField = true;
+      this.isOriginalVisible = shouldShowOriginalField(this.original, this.translation);
     },
     setUnknown() {
       if (this.allowUnknown) {

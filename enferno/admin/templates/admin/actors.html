@@ -215,7 +215,7 @@
                         <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
                         <template v-slot:item.name="{item}">
-                            ${ (item.name || '').trim() || item.name_ar }
+                            <uni-field disable-spacing :english="item.name" :arabic="item.name_ar"></uni-field>
                         </template>
 
                         <template v-slot:item.type="{item}">
