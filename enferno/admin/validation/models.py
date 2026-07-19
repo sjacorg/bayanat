@@ -1006,6 +1006,7 @@ class LocationQueryRequestModel(BaseValidationModel):
 
 class LocationAdminLevelValidationModel(StrictValidationModel):
     title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     code: int
     display_order: Optional[int] = None
     id: Optional[int] = None
@@ -1021,6 +1022,7 @@ class LocationAdminLevelRequestModel(BaseValidationModel):
 
 class LocationTypeValidationModel(StrictValidationModel):
     title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
     description: Optional[SanitizedField] = None
