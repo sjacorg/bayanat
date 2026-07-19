@@ -211,6 +211,14 @@ const SearchField = Vue.defineComponent({
       :loading="loading"
       :rules="rules"
     >
+      <template v-slot:chip="{ item, props }">
+        <v-chip v-bind="props" label style="height: auto;">
+          <span class="d-flex flex-column py-1">
+            <bdi class="text-body-2">{{ primaryTitle(item.raw) }}</bdi>
+            <bdi v-if="secondaryTitle(item.raw)" class="text-caption text-medium-emphasis">{{ secondaryTitle(item.raw) }}</bdi>
+          </span>
+        </v-chip>
+      </template>
       <template v-slot:item="{ item, props }">
         <v-list-item v-bind="props" density="compact">
           <template v-if="multiple" v-slot:prepend="{ isActive }">
