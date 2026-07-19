@@ -89,7 +89,7 @@
   data-is-admin="{{ current_user.has_role('Admin')|tojson if current_user.is_authenticated else 'false' }}"
   data-is-da="{{ current_user.has_role('DA')|tojson if current_user.is_authenticated else 'false' }}"
   data-settings='{{ current_user.settings|tojson if current_user.is_authenticated and current_user.settings else '{}' }}'
-  data-lang="{{ session.get('lang', 'en') }}"
+  data-lang="{{ get_locale() }}"
   data-maps-api-endpoint="{{ config.MAPS_API_ENDPOINT }}"
   data-ocr-provider="{{ config.OCR_PROVIDER }}"
 ></div>
