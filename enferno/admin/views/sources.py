@@ -3,7 +3,7 @@ from __future__ import annotations
 from flask import Response, request
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 
 from enferno.extensions import db
 from enferno.admin.constants import Constants
@@ -47,7 +47,9 @@ def api_sources() -> Response:
     if q:
         words = q.split(" ")
         for word in words:
-            query = query.filter(Source.title.ilike(f"%{word}%"))
+            query = query.filter(
+                or_(Source.title.ilike(f"%{word}%"), Source.title_ar.ilike(f"%{word}%"))
+            )
 
         sources = query.all()
         children = Source.get_children(sources)
