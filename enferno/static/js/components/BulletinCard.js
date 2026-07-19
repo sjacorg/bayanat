@@ -34,6 +34,9 @@ const BulletinCard = Vue.defineComponent({
   },
 
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     translate_status(status) {
       return translate_status(status);
     },
@@ -317,7 +320,7 @@ const BulletinCard = Vue.defineComponent({
                 <v-card-text class="pt-0">
                   <div class="flex-chips">
                     <v-chip size="small" class="flex-chip" v-for="source in bulletin.sources" :key="source.id">
-                      {{ source.title }}
+                      <bdi>{{ localizedTitle(source) }}</bdi>
                     </v-chip>
                   </div>
                 </v-card-text>
@@ -343,7 +346,7 @@ const BulletinCard = Vue.defineComponent({
                 <v-card-text class="pt-0">
                   <div class="flex-chips">
                     <v-chip label size="small" class="flex-chip" v-for="label in bulletin.labels" :key="label.id">
-                      {{ label.title }}
+                      <bdi>{{ localizedTitle(label) }}</bdi>
                     </v-chip>
                   </div>
                 </v-card-text>
@@ -358,7 +361,7 @@ const BulletinCard = Vue.defineComponent({
                 <v-card-text class="pt-0">
                   <div class="flex-chips">
                     <v-chip label size="small" class="flex-chip" v-for="vlabel in bulletin.verLabels" :key="vlabel.id">
-                      {{ vlabel.title }}
+                      <bdi>{{ localizedTitle(vlabel) }}</bdi>
                     </v-chip>
                   </div>
                 </v-card-text>
