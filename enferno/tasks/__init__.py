@@ -145,6 +145,7 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
 
 
 # --- Import submodules so Celery discovers all tasks ---
+from enferno.tasks.background_search import background_search  # noqa: E402, F401
 from enferno.tasks.bulk_ops import (  # noqa: E402
     bulk_update_actors,
     bulk_update_bulletins,

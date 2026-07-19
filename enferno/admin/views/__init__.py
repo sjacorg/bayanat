@@ -119,7 +119,7 @@ def ctx() -> dict:
     Returns:
         - dict of users
     """
-    users = User.query.order_by(User.username).all()
+    users = User.query.order_by(User.username).all()  # noqa: F811
     if current_user and current_user.is_authenticated:
         users = [u.to_compact() for u in users]
         return {"users": users}
@@ -144,5 +144,6 @@ from . import activity  # noqa: E402, F401
 from . import system  # noqa: E402, F401
 from . import logs  # noqa: E402, F401
 from . import notifications  # noqa: E402, F401
+from . import background_search  # noqa: E402, F401
 from . import dynamic_fields  # noqa: E402, F401
 from . import flowmap  # noqa: E402, F401
