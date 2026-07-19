@@ -6,28 +6,28 @@
     <meta name="description" content=""/>
     <meta name="author" content="{{ _('Syria Justice and Accountability Center') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
-    <link rel="stylesheet" href="/static/css/app.css"/>
-    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css"/>
-    <link rel="stylesheet" href="/static/css/leaflet.css">
-    <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css">
+    <link rel="stylesheet" href="/static/css/vuetify.min.css?v={{ config.VERSION }}"/>
+    <link rel="stylesheet" href="/static/css/app.css?v={{ config.VERSION }}"/>
+    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css?v={{ config.VERSION }}"/>
+    <link rel="stylesheet" href="/static/css/leaflet.css?v={{ config.VERSION }}">
+    <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css?v={{ config.VERSION }}">
 
     <!-- favicon -->
 
-    <link rel="apple-touch-icon" sizes="57x57" href="/static/img/favicon/apple-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="/static/img/favicon/apple-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="/static/img/favicon/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="/static/img/favicon/apple-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="/static/img/favicon/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="/static/img/favicon/apple-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="/static/img/favicon/apple-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/static/img/favicon/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon/favicon-96x96.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
-    <link rel="manifest" crossorigin="use-credentials" href="/static/img/favicon/manifest.json">
+    <link rel="apple-touch-icon" sizes="57x57" href="/static/img/favicon/apple-icon-57x57.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="60x60" href="/static/img/favicon/apple-icon-60x60.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/img/favicon/apple-icon-72x72.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="76x76" href="/static/img/favicon/apple-icon-76x76.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/img/favicon/apple-icon-114x114.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/img/favicon/apple-icon-120x120.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="144x144" href="/static/img/favicon/apple-icon-144x144.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/img/favicon/apple-icon-152x152.png?v={{ config.VERSION }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-icon-180x180.png?v={{ config.VERSION }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon/android-icon-192x192.png?v={{ config.VERSION }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png?v={{ config.VERSION }}">
+    <link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon/favicon-96x96.png?v={{ config.VERSION }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png?v={{ config.VERSION }}">
+    <link rel="manifest" crossorigin="use-credentials" href="/static/img/favicon/manifest.json?v={{ config.VERSION }}">
     <meta name="msapplication-TileImage" content="/static/img/favicon/ms-icon-144x144.png">
 
 
@@ -451,9 +451,9 @@
 <div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
 
 {% if config.DEBUG %}
-    <script src="/static/js/vue.global.js"></script>
+    <script src="/static/js/vue.global.js?v={{ config.VERSION }}"></script>
 {% else %}
-    <script src="/static/js/vue.global.prod.js"></script>
+    <script src="/static/js/vue.global.prod.js?v={{ config.VERSION }}"></script>
 {% endif %}
 <script nonce="{{ csp_nonce() }}">
     window.__settings__ = {};
@@ -463,17 +463,17 @@
     {% include 'admin/jsapi.jinja2' %}
 </script>
 
-<script src="/static/js/components/NotificationsList.js"></script>
-<script src="/static/js/vuetify.min.js"></script>
-<script src="/static/js/axios.min.js"></script>
-<script src="/static/js/vue-router.global.js"></script>
-<script src="/static/js/leaflet.js"></script>
-<script src="/static/js/common/config.js"></script>
+<script src="/static/js/components/NotificationsList.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/vuetify.min.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/axios.min.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/vue-router.global.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/leaflet.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/common/config.js?v={{ config.VERSION }}"></script>
 
-<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
+<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js?v={{ config.VERSION }}"></script>
 
-<script src="/static/js/components/GeoMap.js"></script>
-<script src="/static/js/components/EditableTable.js"></script>
+<script src="/static/js/components/GeoMap.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/components/EditableTable.js?v={{ config.VERSION }}"></script>
 
 {% block js %}
     <script nonce="{{ csp_nonce() }}" type="module">
