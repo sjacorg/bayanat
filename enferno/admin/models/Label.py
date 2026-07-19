@@ -41,14 +41,19 @@ class Label(db.Model, BaseMixin):
     parent_label_id = db.Column(db.Integer, db.ForeignKey("label.id"), index=True, nullable=True)
     parent = db.relationship("Label", remote_side=id, backref="sub_label")
 
-    def _build_path(self) -> str:
-        """Walk up parent chain, return 'Grandparent > Parent' (excludes self)."""
+    def _build_path(self, translated: bool = False) -> str:
+        """Walk up parent chain, return 'Grandparent > Parent' (excludes self).
+
+        With translated=True, use each ancestor's Arabic title, falling back to the
+        English title per level for ancestors that have no translation yet.
+        """
         parts = []
         current = self.parent
         seen = set()
         while current and current.id not in seen:
             seen.add(current.id)
-            parts.append(current.title)
+            title = (current.title_ar or current.title) if translated else current.title
+            parts.append(title)
             current = current.parent
         parts.reverse()
         return " > ".join(parts) if parts else ""
@@ -184,7 +189,9 @@ class Label(db.Model, BaseMixin):
         return {
             "id": self.id,
             "title": self.title,
+            "title_ar": self.title_ar,
             "path": self._build_path(),
+            "path_ar": self._build_path(translated=True),
             "verified": self.verified,
             "for_bulletin": self.for_bulletin,
             "for_actor": self.for_actor,
