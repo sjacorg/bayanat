@@ -77,7 +77,7 @@ class Label(db.Model, BaseMixin):
     @staticmethod
     def build_tree(verified=None):
         """Build nested tree structure using raw SQL for performance."""
-        query = "SELECT id, title, parent_label_id, verified, for_bulletin, for_actor, for_incident, for_offline FROM label"
+        query = "SELECT id, title, parent_label_id, verified, for_bulletin, for_actor, for_incident, for_offline, title_ar, comments, comments_ar FROM label"
         conditions = []
         if verified is True:
             conditions.append("verified = true")
@@ -101,6 +101,9 @@ class Label(db.Model, BaseMixin):
                 "for_actor": r[5],
                 "for_incident": r[6],
                 "for_offline": r[7],
+                "title_ar": r[8],
+                "comments": r[9],
+                "comments_ar": r[10],
                 "children": [],
             }
 
