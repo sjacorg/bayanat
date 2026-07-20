@@ -25,7 +25,7 @@ from enferno.utils.http_response import HTTPResponse
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
-from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles
+from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles, reject_if_review_locked
 
 
 # Bulletin fields routes
@@ -139,15 +139,9 @@ def api_bulletins(validated_data: dict) -> Response:
                     "sjac_title": item.sjac_title,
                     "sjac_title_ar": item.sjac_title_ar,
                     "status": item.status,
-                    "assigned_to": (
-                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                        if item.assigned_to
-                        else None
-                    ),
+                    "assigned_to": (item.assigned_to.to_compact() if item.assigned_to else None),
                     "first_peer_reviewer": (
-                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
-                        if item.first_peer_reviewer
-                        else None
+                        item.first_peer_reviewer.to_compact() if item.first_peer_reviewer else None
                     ),
                     "roles": (
                         [
@@ -279,6 +273,16 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.forbidden("Restricted Access")
 
+        review_locked = reject_if_review_locked(bulletin, "bulletin", id)
+        if review_locked:
+            return review_locked
+
+        # Non-Admin owners cannot reassign or set reviewers via the normal update
+        # (BAY-01-022); assignment goes through the assign endpoint.
+        if not current_user.has_role("Admin"):
+            for field in ("assigned_to", "first_peer_reviewer", "second_peer_reviewer"):
+                validated_data["item"].pop(field, None)
+
         bulletin = bulletin.from_json(validated_data["item"])
 
         bulletin.create_revision()
@@ -397,6 +401,7 @@ def api_bulletin_bulk_update(
     if not current_user.has_role("Admin"):
         # silently discard access roles
         bulk.pop("roles", None)
+        bulk.pop("rolesReplace", None)
 
     if ids and len(bulk):
         job = bulk_update_bulletins.delay(ids, bulk, current_user.id)
