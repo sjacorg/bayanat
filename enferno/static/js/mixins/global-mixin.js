@@ -4,6 +4,7 @@ const globalMixin = {
     'ConfirmDialog': ConfirmDialog,
     'Toast': Toast,
     'ProfileDropdown': ProfileDropdown,
+    'UpdateBanner': UpdateBanner,
   },
   data: () => ({
     snackbar: false,
@@ -113,15 +114,15 @@ const globalMixin = {
         },
         parseValidationError(response){
             if (response && response.errors){
-                let message = '';
+                const messages = [];
                 for(const field in response.errors){
                     let fieldName = field;
                     if (fieldName.startsWith('item.')){
                         fieldName = fieldName.substring(5);
                     }
-                    message += `<strong style="color:#b71c1c;">[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]:</strong> ${response.errors[field]}<br/>`;
+                    messages.push(`[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]: ${response.errors[field]}`);
                 }
-                return message;
+                return messages.join('\n');
             }
             return response;
         },

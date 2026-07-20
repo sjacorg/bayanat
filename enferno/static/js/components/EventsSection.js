@@ -49,7 +49,7 @@ const EventsSection = Vue.defineComponent({
       if (!hasTitleOrType) missing.push(this.translations.titleOrTypeRequired_);
 
       if (missing.length > 0) {
-        this.$root.showSnack(missing.join('<br />'));
+        this.$root.showSnack(missing.join('\n'));
         return false;
       }
 
