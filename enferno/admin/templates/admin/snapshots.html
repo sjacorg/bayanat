@@ -1,0 +1,28 @@
+{% extends 'layout.html' %} {% block content %}
+
+    <v-main>
+        <v-container fluid>
+            <snapshots-list></snapshots-list>
+        </v-container>
+    </v-main>
+
+{% endblock %} {% block js %}
+    <script src="/static/js/components/SnapshotsList.js?v=1"></script>
+    <script nonce="{{ csp_nonce() }}">
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+            delimiters: delimiters,
+            mixins: [globalMixin],
+            data: () => ({}),
+        });
+        app.component('SnapshotsList', SnapshotsList);
+        app.use(router).use(vuetify);
+        router.isReady().then(() => {
+            app.mount('#app');
+            window.app = app;
+        });
+    </script>
+{% endblock %}
