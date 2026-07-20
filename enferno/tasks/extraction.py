@@ -96,7 +96,6 @@ def process_media_extraction_task(
             media_id=media_id,
             text=cleaned_text,
             original_text=cleaned_text,
-            raw=result["raw"],
             confidence=confidence,
             orientation=detected_orientation,
             status=status,
@@ -143,7 +142,6 @@ def _merge_page_results(results: list[dict]) -> dict:
         "word_count": word_count,
         "language": language,
         "orientation": orientation,
-        "raw": {"pages": [r["raw"] for r in results]},
     }
 
 

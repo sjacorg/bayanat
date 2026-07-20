@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import Response, request
 from flask_security.decorators import current_user, roles_accepted, roles_required
+from sqlalchemy import or_
 
 from enferno.extensions import db
 from enferno.admin.constants import Constants
@@ -33,7 +34,12 @@ def api_potentialviolations(page: int) -> Response:
     q = request.args.get("q", None)
     per_page = request.args.get("per_page", PER_PAGE, int)
     if q is not None:
-        query.append(PotentialViolation.title.ilike("%" + q + "%"))
+        query.append(
+            or_(
+                PotentialViolation.title.ilike(f"%{q}%"),
+                PotentialViolation.title_ar.ilike(f"%{q}%"),
+            )
+        )
     result = (
         PotentialViolation.query.filter(*query)
         .order_by(PotentialViolation.id)
@@ -179,7 +185,12 @@ def api_claimedviolations(page: int) -> Response:
     q = request.args.get("q", None)
     per_page = request.args.get("per_page", PER_PAGE, int)
     if q is not None:
-        query.append(ClaimedViolation.title.ilike("%" + q + "%"))
+        query.append(
+            or_(
+                ClaimedViolation.title.ilike(f"%{q}%"),
+                ClaimedViolation.title_ar.ilike(f"%{q}%"),
+            )
+        )
     result = (
         ClaimedViolation.query.filter(*query)
         .order_by(ClaimedViolation.id)
