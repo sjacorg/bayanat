@@ -68,7 +68,7 @@ const SearchField = Vue.defineComponent({
   methods: {
     translationField(raw) {
       if (this.itemTranslation) return this.itemTranslation;
-      if (!raw) return null;
+      if (raw == null || typeof raw !== 'object') return null;
       for (const suffix of ['_ar', '_tr']) {
         const key = this.itemTitle + suffix;
         if (key in raw) return key;
@@ -76,12 +76,14 @@ const SearchField = Vue.defineComponent({
       return null;
     },
     primaryTitle(raw) {
+      if (raw == null || typeof raw !== 'object') return raw ?? '';
       const field = this.translationField(raw);
       const translated = field ? raw[field] : null;
       if (this.isArabic && translated) return translated;
       return raw[this.itemTitle] || translated || '';
     },
     secondaryTitle(raw) {
+      if (raw == null || typeof raw !== 'object') return null;
       const field = this.translationField(raw);
       const translated = field ? raw[field] : null;
       if (!translated || !raw[this.itemTitle]) return null;
