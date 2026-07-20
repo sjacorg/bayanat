@@ -1,7 +1,7 @@
 """add title_tr to location admin levels and location types
 
 Revision ID: b6e3d1a8f254
-Revises: 68396035f041, c7d2e9f4a1b8
+Revises: f0a3d6c1e8b2
 Create Date: 2026-07-19 13:40:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "b6e3d1a8f254"
-down_revision = ("68396035f041", "c7d2e9f4a1b8")
+down_revision = "f0a3d6c1e8b2"
 branch_labels = None
 depends_on = None
 
