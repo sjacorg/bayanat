@@ -19,6 +19,19 @@ from enferno.utils.logging_utils import get_logger
 # Redis key namespace to set flag for forcing password reset
 SECURITY_KEY_NAMESPACE = "security:user"
 
+# Workflow statuses in which the assigned DA may mutate the item.
+# Mirrors the frontend editAllowed() rule. Changes here must match
+# the editAllowed() helper in admin/templates/admin/{bulletins,actors,incidents}.html.
+EDITABLE_STATUSES = frozenset(
+    {
+        "Human Created",
+        "Assigned",
+        "Updated",
+        "Peer Reviewed",
+        "Revisited",
+    }
+)
+
 logger = get_logger()
 
 
@@ -335,6 +348,34 @@ class User(UserMixin, db.Model, BaseMixin):
                 )
                 if not restrictive and not parent.roles:
                     return True
+
+        return False
+
+    def can_edit(self, obj: Any) -> bool:
+        """
+        Check if the user can mutate (create/update) an entity.
+
+        Mirrors the frontend editAllowed() rule:
+          - Admin can always edit.
+          - Otherwise must hold DA role.
+          - For Bulletin/Actor/Incident: must be the assigned analyst AND
+            the item must be in an editable workflow status.
+          - For Media: inherit from the parent Bulletin/Actor.
+          - In all cases the user must first pass can_access() (visibility).
+        """
+        if not self.can_access(obj):
+            return False
+        if self.has_role("Admin"):
+            return True
+        if not self.has_role("DA"):
+            return False
+
+        if obj.__tablename__ == "media":
+            parent = obj.bulletin or obj.actor
+            return parent is not None and self.can_edit(parent)
+
+        if obj.__tablename__ in ("bulletin", "actor", "incident"):
+            return obj.assigned_to_id == self.id and obj.status in EDITABLE_STATUSES
 
         return False
 

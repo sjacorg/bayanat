@@ -64,7 +64,7 @@
             {% endblock %}
 
         <v-snackbar v-model="snackbar" multi-line>
-                <span v-html="snackMessage"></span>
+                <span style="white-space: pre-line;" v-text="snackMessage"></span>
             <template #actions>
                 <v-btn icon="mdi-close" variant="text" @click="snackbar = false"></v-btn>
             </template>
@@ -92,6 +92,7 @@
   data-lang="{{ get_locale() }}"
   data-maps-api-endpoint="{{ config.MAPS_API_ENDPOINT }}"
   data-ocr-provider="{{ config.OCR_PROVIDER }}"
+  data-app-version="{{ config.VERSION }}"
 ></div>
 
 <script nonce="{{ csp_nonce() }}">
@@ -104,6 +105,7 @@
     window.__lang__ = el.dataset.lang;
     window.__MAPS_API_ENDPOINT__ = el.dataset.mapsApiEndpoint;
     window.__OCR_PROVIDER__ = el.dataset.ocrProvider;
+    window.__APP_VERSION__ = el.dataset.appVersion;
 </script>
 
 
@@ -133,6 +135,7 @@
     {%  include 'admin/jsapi.jinja2' %}
 </script>
 <script src="/static/js/components/ProfileDropdown.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/components/UpdateBanner.js?v={{ config.VERSION }}"></script>
 <script src="/static/js/components/NotificationsList.js?v={{ config.VERSION }}"></script>
 <script src="/static/js/components/ConfirmDialog.js?v={{ config.VERSION }}"></script>
 <script src="/static/js/components/Toast.js?v={{ config.VERSION }}"></script>

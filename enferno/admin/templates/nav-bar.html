@@ -11,6 +11,8 @@
   <v-spacer></v-spacer>
 
   <template v-slot:append>
+    <update-banner @update-started="$refs.progressDialog && $refs.progressDialog.open()"></update-banner>
+    <update-progress-dialog ref="progressDialog"></update-progress-dialog>
     {% if config.OCR_PROVIDER == 'google_vision' %}
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
