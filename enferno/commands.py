@@ -14,6 +14,7 @@ import shutil
 from pathlib import Path
 
 from enferno.extensions import db
+from enferno.settings import Config
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import (
@@ -546,7 +547,6 @@ def doctor() -> None:
         fail("Redis not reachable")
 
     try:
-        from celery import current_app as celery_app
         from enferno.tasks import celery
 
         inspector = celery.control.inspect(timeout=2)
@@ -768,6 +768,52 @@ def extract(media_id: int, language: tuple, show_text: bool, force: bool) -> Non
         click.echo(f"Error: {result.get('error')}")
 
 
+@ocr_cli.command("purge-raw")
+@click.option("--batch-size", default=500, show_default=True, help="Rows per transaction")
+@click.option("--dry-run", is_flag=True, help="Report what would be cleared without writing")
+@with_appcontext
+def purge_raw(batch_size: int, dry_run: bool) -> None:
+    """Clear stored raw OCR payloads (one-time cleanup, resumable).
+
+    Raw provider responses are no longer stored or read by the application.
+    This clears them from existing rows (processed and cant_read alike).
+    Failed extractions keep their small error payloads. Take a backup or
+    archival dump of the extraction table first. Disk space returns to the
+    OS after VACUUM FULL or pg_repack.
+
+    Transitional command for pre-existing data: remove it once deployed
+    installs have run it.
+    """
+    from sqlalchemy import text as sa_text
+
+    from enferno.admin.models import Extraction
+
+    count_q = Extraction.query.filter(Extraction.raw.isnot(None), Extraction.status != "failed")
+    total = count_q.count()
+    if dry_run or not total:
+        click.echo(f"{total:,} extractions hold raw payloads.")
+        return
+
+    cleared = 0
+    while True:
+        result = db.session.execute(
+            sa_text(
+                "UPDATE extraction SET raw = NULL WHERE id IN ("
+                "SELECT id FROM extraction WHERE raw IS NOT NULL "
+                "AND status != 'failed' LIMIT :batch)"
+            ),
+            {"batch": batch_size},
+        )
+        db.session.commit()
+        if not result.rowcount:
+            break
+        cleared += result.rowcount
+        click.echo(f"  {cleared:,}/{total:,} cleared")
+
+    click.echo(f"Done: {cleared:,} raw payloads cleared.")
+    click.echo("Run VACUUM FULL extraction (locks table) or pg_repack to return disk space.")
+
+
 @ocr_cli.command()
 @with_appcontext
 def status() -> None:
@@ -789,7 +835,7 @@ def status() -> None:
     total_extracted = sum(s["count"] for s in status_map.values())
     pending = total_media - total_extracted
 
-    click.echo(f"\nOCR Status Summary")
+    click.echo("\nOCR Status Summary")
     click.echo(f"{'─' * 40}")
     click.echo(f"Total media:          {total_media:,}")
     click.echo(f"Pending (no OCR):     {pending:,}")
