@@ -1,4 +1,16 @@
+.git
+node_modules
+.venv
 env
+__pycache__
+*.pyc
+*.pyo
 enferno/media
 enferno/imports
 logs
+backups
+.env
+.env.*
+.DS_Store
+*.md
+docs/node_modules

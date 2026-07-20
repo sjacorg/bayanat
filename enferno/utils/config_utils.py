@@ -54,7 +54,7 @@ class ConfigManager:
                 "txt",
             ],
             "MEDIA_UPLOAD_MAX_FILE_SIZE": 1000,
-            "SHEETS_ALLOWED_EXTENSIONS": ["csv", "xls", "xlsx"],
+            "SHEETS_ALLOWED_EXTENSIONS": ["csv", "xlsx"],
             "ETL_TOOL": False,
             "ETL_PATH_IMPORT": False,
             "ETL_VID_EXT": [

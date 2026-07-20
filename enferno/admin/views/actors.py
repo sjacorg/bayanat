@@ -26,7 +26,7 @@ from enferno.utils.background_search import apply_search_timeout, timeout_fallba
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
-from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles
+from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles, reject_if_review_locked
 
 
 # Actor fields routes
@@ -157,15 +157,9 @@ def api_actors(validated_data: dict) -> Response:
                     "name": item.name,
                     "name_ar": item.name_ar,
                     "status": item.status,
-                    "assigned_to": (
-                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                        if item.assigned_to
-                        else None
-                    ),
+                    "assigned_to": (item.assigned_to.to_compact() if item.assigned_to else None),
                     "first_peer_reviewer": (
-                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
-                        if item.first_peer_reviewer
-                        else None
+                        item.first_peer_reviewer.to_compact() if item.first_peer_reviewer else None
                     ),
                     "roles": (
                         [
@@ -296,6 +290,11 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
+
+        review_locked = reject_if_review_locked(actor, "actor", id)
+        if review_locked:
+            return review_locked
+
         actor = actor.from_json(validated_data["item"])
         # Create a revision using latest values
         # this method automatically commits
@@ -407,6 +406,7 @@ def api_actor_bulk_update(
     if not current_user.has_role("Admin"):
         # silently discard access roles
         bulk.pop("roles", None)
+        bulk.pop("rolesReplace", None)
 
     if ids and len(bulk):
         job = bulk_update_actors.delay(ids, bulk, current_user.id)
