@@ -708,7 +708,13 @@ class Bulletin(db.Model, BaseMixin):
         if self.labels and len(self.labels):
             for label in self.labels:
                 labels_json.append(
-                    {"id": label.id, "title": label.title, "title_ar": label.title_ar}
+                    {
+                        "id": label.id,
+                        "title": label.title,
+                        "title_ar": label.title_ar,
+                        "path": label._build_path(),
+                        "path_ar": label._build_path(translated=True),
+                    }
                 )
 
         # verified labels json
@@ -716,7 +722,13 @@ class Bulletin(db.Model, BaseMixin):
         if self.ver_labels and len(self.ver_labels):
             for vlabel in self.ver_labels:
                 ver_labels_json.append(
-                    {"id": vlabel.id, "title": vlabel.title, "title_ar": vlabel.title_ar}
+                    {
+                        "id": vlabel.id,
+                        "title": vlabel.title,
+                        "title_ar": vlabel.title_ar,
+                        "path": vlabel._build_path(),
+                        "path_ar": vlabel._build_path(translated=True),
+                    }
                 )
 
         # events json

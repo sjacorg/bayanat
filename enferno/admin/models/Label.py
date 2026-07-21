@@ -159,6 +159,8 @@ class Label(db.Model, BaseMixin):
             "id": self.id,
             "title": self.title,
             "title_ar": self.title_ar if self.title_ar else None,
+            "path": self._build_path(),
+            "path_ar": self._build_path(translated=True),
             "comments": self.comments if self.comments else None,
             "comments_ar": self.comments_ar if self.comments_ar else None,
             "order": self.order,
