@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
+import json
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
+import requests
+
+from enferno.admin.constants import Constants
 from enferno.admin.models import Activity, Location
+from enferno.admin.models.Notification import Notification
 from enferno.extensions import db, rds
 from enferno.tasks import celery, cfg
 from enferno.user.models import Session
@@ -11,6 +16,61 @@ from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger("celery.tasks.maintenance")
+
+GITHUB_LATEST_URL = "https://api.github.com/repos/sjacorg/bayanat/releases/latest"
+UPDATE_CACHE_KEY = "bayanat:update:available"
+UPDATE_NOTIFIED_KEY = "bayanat:update:available:notified"
+
+
+def _strip_v(tag: str) -> str:
+    return tag[1:] if tag.startswith("v") else tag
+
+
+def _redis_get_str(key: str):
+    val = rds.get(key)
+    if val is None:
+        return None
+    return val.decode() if isinstance(val, (bytes, bytearray)) else val
+
+
+@celery.task
+def check_for_updates():
+    """Poll GitHub releases. Cache latest. Notify admins on new tag. Optionally auto-apply patch."""
+    try:
+        resp = requests.get(GITHUB_LATEST_URL, timeout=10)
+        resp.raise_for_status()
+        release = resp.json()
+    except Exception as e:
+        logger.warning(f"update check failed: {e}")
+        return
+
+    latest_tag = _strip_v(release.get("tag_name", ""))
+    if not latest_tag:
+        return
+
+    rds.set(
+        UPDATE_CACHE_KEY,
+        json.dumps(
+            {
+                "latest": latest_tag,
+                "release_notes_url": release.get("html_url"),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ),
+    )
+
+    current = cfg.VERSION
+    if latest_tag == current:
+        return
+    if _redis_get_str(UPDATE_NOTIFIED_KEY) == latest_tag:
+        return
+
+    Notification.create_for_admins(
+        title=f"Update available: {latest_tag}",
+        message=f"A new Bayanat release is available. {release.get('html_url', '')}",
+        category=Constants.NotificationCategories.UPDATE.value,
+    )
+    rds.set(UPDATE_NOTIFIED_KEY, latest_tag)
 
 
 @celery.task
@@ -106,14 +166,29 @@ def reload_app():
 
 
 def restart_celery():
-    """Restart Celery worker via systemd. Requires sudoers entry.
-    Silently skips in dev mode (no systemd).
+    """Request a Celery worker restart.
+
+    Hardened deployments (BAY-01-032/033) run the services without any sudo
+    grant: the app touches a deploy-layout sentinel and a systemd path unit
+    watching it performs the restart as root. Legacy layouts without the
+    sentinel fall back to the old sudoers-based restart. Dev mode is a no-op.
     """
+    import pathlib
     import subprocess
 
+    sentinel = pathlib.Path(__file__).resolve().parents[2] / "restart-celery"
+    try:
+        if sentinel.exists():
+            sentinel.touch()
+            return
+    except OSError:
+        # Sentinel present but not writable: log and fall through to the sudo restart.
+        logger.warning(
+            "restart-celery sentinel touch failed; using fallback restart", exc_info=True
+        )
     try:
         subprocess.Popen(
-            ["sudo", "/usr/bin/systemctl", "restart", "bayanat-celery"],
+            ["sudo", "-n", "/usr/bin/systemctl", "restart", "bayanat-celery"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

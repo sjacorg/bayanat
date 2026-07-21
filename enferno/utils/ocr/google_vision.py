@@ -67,7 +67,7 @@ def _orientation_from_vision(page: dict) -> int:
 def extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
     """Call Google Vision REST API with retry.
 
-    Returns dict with: text, confidence, word_count, language, orientation, raw.
+    Returns dict with: text, confidence, word_count, language, orientation.
     """
     try:
         api_key = _get_api_key()
@@ -113,7 +113,6 @@ def extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
                 "word_count": 0,
                 "language": None,
                 "orientation": 0,
-                "raw": data,
             }
 
         page = annotation.get("pages", [{}])[0]
@@ -137,7 +136,6 @@ def extract_text(file_bytes: bytes, language_hints: list) -> dict | None:
             "word_count": word_count,
             "language": language,
             "orientation": orientation,
-            "raw": data,
         }
 
     except httpx.HTTPStatusError as e:

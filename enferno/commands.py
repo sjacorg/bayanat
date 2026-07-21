@@ -3,6 +3,7 @@
 
 import os
 from datetime import datetime, timezone
+from typing import Optional
 
 import click
 from flask import current_app
@@ -14,8 +15,10 @@ import shutil
 from pathlib import Path
 
 from enferno.extensions import db
+from enferno.settings import Config
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import (
     import_default_data,
     generate_user_roles,
@@ -31,7 +34,6 @@ from enferno.admin.models import Bulletin, Label
 from enferno.admin.models.Media import Media
 from enferno.admin.models.tables import bulletin_labels
 from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
-from enferno.utils.date_helper import DateHelper
 from enferno.utils.form_history_utils import record_form_history
 
 from enferno.utils.validation_utils import validate_password_policy
@@ -120,33 +122,87 @@ def import_data() -> None:
 
 
 @click.command()
+@click.option("-u", "--username", default=None, help="Admin username (prompted if not provided)")
+@click.option("-p", "--password", default=None, help="Admin password (generated if not provided)")
+@click.option(
+    "--password-stdin",
+    "password_stdin",
+    is_flag=True,
+    default=False,
+    help="Read admin password from stdin (avoids argv exposure)",
+)
 @with_appcontext
-def install() -> None:
-    """Install a default Admin user and add an Admin role to it."""
+def install(username: Optional[str], password: Optional[str], password_stdin: bool = False) -> None:
+    """Install a default Admin user and add an Admin role to it.
+
+    Non-interactive use:
+        flask install -u admin                          # generate a password
+        flask install -u admin -p '<password>'          # supply via flag
+        echo '<password>' | flask install -u admin --password-stdin
+    """
+    import secrets
+    import sys
+
+    if password_stdin:
+        if password:
+            click.echo("Cannot combine --password and --password-stdin.")
+            return
+        password = sys.stdin.readline().rstrip("\n")
+        if not password:
+            click.echo("Empty password on stdin.")
+            return
+
     logger.info("Installing admin user.")
     admin_role = Role.query.filter(Role.name == "Admin").first()
 
-    # check if there's an existing admin
     if admin_role.users.all():
         click.echo("An admin user is already installed.")
         logger.error("An admin user is already installed.")
         return
 
-    # to make sure username doesn't already exist
-    while True:
-        u = click.prompt("Admin username?", default="admin")
-        check = User.query.filter(User.username == u.lower()).first()
-        if check is not None:
+    # Resolve username
+    if username:
+        u = username.strip()
+        if User.query.filter(User.username == u.lower()).first() is not None:
+            click.echo(f"Username '{u}' already exists.")
+            logger.error("Install aborted: username already exists.")
+            return
+    else:
+        while True:
+            u = click.prompt("Admin username?", default="admin")
+            if User.query.filter(User.username == u.lower()).first() is None:
+                break
             click.echo("Username already exists.")
-        else:
-            break
-    while True:
-        p = click.prompt("Admin Password?", hide_input=True)
+
+    # Resolve password (generate if not supplied; show it once)
+    generated = False
+    if password:
         try:
-            p = validate_password_policy(p)
-            break
+            p = validate_password_policy(password)
         except ValueError as e:
             click.echo(str(e))
+            logger.error("Install aborted: password failed policy check.")
+            return
+    elif username:
+        # Non-interactive (username supplied, password not) → generate.
+        while True:
+            candidate = secrets.token_urlsafe(20)
+            try:
+                p = validate_password_policy(candidate)
+                generated = True
+                break
+            except ValueError:
+                # token_urlsafe is high-entropy; loop guard for the rare zxcvbn miss
+                continue
+    else:
+        while True:
+            p = click.prompt("Admin Password?", hide_input=True)
+            try:
+                p = validate_password_policy(p)
+                break
+            except ValueError as e:
+                click.echo(str(e))
+
     user = User(
         username=u,
         password=hash_password(p),
@@ -164,7 +220,14 @@ def install() -> None:
     user.roles.append(admin_role)
     check = user.save()
     if check:
-        click.echo("Admin user installed successfully.")
+        if generated:
+            click.echo("=" * 60)
+            click.echo(f"Admin user installed: {u}")
+            click.echo(f"Generated password : {p}")
+            click.echo("Save this now — it is not stored in plaintext anywhere.")
+            click.echo("=" * 60)
+        else:
+            click.echo("Admin user installed successfully.")
         logger.info("Admin user installed successfully.")
     else:
         click.echo("Error installing admin user.")
@@ -546,7 +609,6 @@ def doctor() -> None:
         fail("Redis not reachable")
 
     try:
-        from celery import current_app as celery_app
         from enferno.tasks import celery
 
         inspector = celery.control.inspect(timeout=2)
@@ -768,6 +830,52 @@ def extract(media_id: int, language: tuple, show_text: bool, force: bool) -> Non
         click.echo(f"Error: {result.get('error')}")
 
 
+@ocr_cli.command("purge-raw")
+@click.option("--batch-size", default=500, show_default=True, help="Rows per transaction")
+@click.option("--dry-run", is_flag=True, help="Report what would be cleared without writing")
+@with_appcontext
+def purge_raw(batch_size: int, dry_run: bool) -> None:
+    """Clear stored raw OCR payloads (one-time cleanup, resumable).
+
+    Raw provider responses are no longer stored or read by the application.
+    This clears them from existing rows (processed and cant_read alike).
+    Failed extractions keep their small error payloads. Take a backup or
+    archival dump of the extraction table first. Disk space returns to the
+    OS after VACUUM FULL or pg_repack.
+
+    Transitional command for pre-existing data: remove it once deployed
+    installs have run it.
+    """
+    from sqlalchemy import text as sa_text
+
+    from enferno.admin.models import Extraction
+
+    count_q = Extraction.query.filter(Extraction.raw.isnot(None), Extraction.status != "failed")
+    total = count_q.count()
+    if dry_run or not total:
+        click.echo(f"{total:,} extractions hold raw payloads.")
+        return
+
+    cleared = 0
+    while True:
+        result = db.session.execute(
+            sa_text(
+                "UPDATE extraction SET raw = NULL WHERE id IN ("
+                "SELECT id FROM extraction WHERE raw IS NOT NULL "
+                "AND status != 'failed' LIMIT :batch)"
+            ),
+            {"batch": batch_size},
+        )
+        db.session.commit()
+        if not result.rowcount:
+            break
+        cleared += result.rowcount
+        click.echo(f"  {cleared:,}/{total:,} cleared")
+
+    click.echo(f"Done: {cleared:,} raw payloads cleared.")
+    click.echo("Run VACUUM FULL extraction (locks table) or pg_repack to return disk space.")
+
+
 @ocr_cli.command()
 @with_appcontext
 def status() -> None:
@@ -789,7 +897,7 @@ def status() -> None:
     total_extracted = sum(s["count"] for s in status_map.values())
     pending = total_media - total_extracted
 
-    click.echo(f"\nOCR Status Summary")
+    click.echo("\nOCR Status Summary")
     click.echo(f"{'─' * 40}")
     click.echo(f"Total media:          {total_media:,}")
     click.echo(f"Pending (no OCR):     {pending:,}")

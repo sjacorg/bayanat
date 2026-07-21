@@ -97,7 +97,6 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
             "word_count": 0,
             "language": None,
             "orientation": 0,
-            "raw": data,
         }
 
     # Strip markdown code fences if model wraps output
@@ -118,7 +117,6 @@ def _extract_text_inner(file_bytes: bytes, language_hints: list) -> dict | None:
         "word_count": len(text.split()),
         "language": None,
         "orientation": 0,
-        "raw": data,
     }
 
 
