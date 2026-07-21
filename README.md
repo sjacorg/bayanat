@@ -34,6 +34,8 @@ git clone https://github.com/sjacorg/bayanat.git
 cd bayanat
 uv sync
 bash gen-env.sh
+uv run flask create-db --create-exts
+uv run flask db stamp head
 uv run flask install
 uv run flask run
 ```
