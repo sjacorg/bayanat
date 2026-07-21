@@ -1,4 +1,5 @@
 const ActorProfiles = Vue.defineComponent({
+  components: { LabelPathList },
   props: {
     actorId: {
       type: Number,
@@ -74,11 +75,7 @@ const ActorProfiles = Vue.defineComponent({
               <v-card class="ma-2" v-if="profile.labels?.length">
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.labels_ }}</div>
-                  <div class="flex-chips">
-                    <v-chip size="small" class="flex-chip" label v-for="label in profile.labels" :key="label.id">
-                      {{ label.title }}
-                    </v-chip>
-                  </div>
+                  <label-path-list :labels="profile.labels"></label-path-list>
                 </v-card-text>
               </v-card>
 
@@ -86,12 +83,7 @@ const ActorProfiles = Vue.defineComponent({
               <v-card class="ma-2" v-if="profile.ver_labels?.length">
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.verifiedLabels_ }}</div>
-                  <div class="flex-chips">
-                    <v-chip size="small" class="flex-chip" label v-for="verLabel in profile.ver_labels"
-                            :key="verLabel.id">
-                      {{ verLabel.title }}
-                    </v-chip>
-                  </div>
+                  <label-path-list :labels="profile.ver_labels"></label-path-list>
                 </v-card-text>
               </v-card>
 

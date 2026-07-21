@@ -1,0 +1,353 @@
+const LabelPathUtils = {
+  genericLeaves: new Set(['other', 'unknown', 'أخرى', 'آخر', 'غير معروف', 'غير معروفة']),
+
+  isRtl() {
+    const lang = (window.__lang__ || document?.documentElement?.lang || 'en').toLowerCase();
+    return lang.startsWith('ar');
+  },
+
+  primaryLang() {
+    return this.isRtl() ? 'ar' : 'en';
+  },
+
+  pathSeparator() {
+    return this.isRtl() ? '‹' : '›';
+  },
+
+  pathSeparatorForLang(lang = this.primaryLang()) {
+    return lang === 'ar' ? '‹' : '›';
+  },
+
+  splitPath(path) {
+    if (!path || typeof path !== 'string') return [];
+    return path.split('>').map(part => part.trim()).filter(Boolean);
+  },
+
+  title(label, lang = this.primaryLang()) {
+    if (!label) return '';
+    if (lang === 'ar') return label.title_ar || label.title_tr || label.title || '';
+    return label.title || label.title_ar || label.title_tr || '';
+  },
+
+  secondaryTitle(label) {
+    return this.primaryLang() === 'ar' ? (label?.title || '') : (label?.title_ar || label?.title_tr || '');
+  },
+
+  pathSegments(label, lang = this.primaryLang()) {
+    if (!label) return [];
+    const english = this.splitPath(label.path);
+    if (lang !== 'ar') return this.parentSegments(label, english, 'en');
+
+    const arabic = this.splitPath(label.path_ar || label.path_tr);
+    if (!english.length) return this.parentSegments(label, arabic, 'ar');
+    if (!arabic.length) return this.parentSegments(label, english, 'en');
+
+    const length = Math.max(english.length, arabic.length);
+    const segments = Array.from({ length }, (_, index) => arabic[index] || english[index]).filter(Boolean);
+    return this.parentSegments(label, segments, 'ar');
+  },
+
+  parentSegments(label, segments = [], lang = this.primaryLang()) {
+    const leaf = this.title(label, lang);
+    if (!segments.length || !leaf) return segments;
+    const last = segments[segments.length - 1];
+    if (this.sameSegments([last], [leaf])) return segments.slice(0, -1);
+    return segments;
+  },
+
+  fullPathSegments(label, lang = this.primaryLang()) {
+    const parentSegments = this.pathSegments(label, lang);
+    const leaf = this.title(label, lang);
+    return leaf ? [...parentSegments, leaf] : parentSegments;
+  },
+
+  normalizedSegments(segments = []) {
+    return segments
+      .map(segment => String(segment || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase())
+      .filter(Boolean);
+  },
+
+  sameSegments(first = [], second = []) {
+    const normalizedFirst = this.normalizedSegments(first);
+    const normalizedSecond = this.normalizedSegments(second);
+    return normalizedFirst.length === normalizedSecond.length
+      && normalizedFirst.every((segment, index) => segment === normalizedSecond[index]);
+  },
+
+  hasPath(label) {
+    return Boolean(this.pathSegments(label, 'en').length || this.pathSegments(label, 'ar').length);
+  },
+
+  parentTitle(label, lang = this.primaryLang()) {
+    const segments = this.pathSegments(label, lang);
+    return segments[segments.length - 1] || '';
+  },
+
+  collapsedPath(label, lang = this.primaryLang()) {
+    const segments = this.pathSegments(label, lang);
+    if (!segments.length) return '';
+    const displaySegments = segments.length > 3
+      ? [segments[0], '…', segments[segments.length - 1]]
+      : segments;
+    return displaySegments.join(` ${this.pathSeparatorForLang(lang)} `);
+  },
+
+  isGenericLeaf(label) {
+    return this.genericLeaves.has(this.title(label, 'en').trim().toLowerCase())
+      || this.genericLeaves.has(this.title(label, 'ar').trim());
+  },
+
+  chipText(label, duplicateLeaves = []) {
+    const leaf = this.title(label);
+    const shouldShowParent = this.hasPath(label)
+      && (this.isGenericLeaf(label) || duplicateLeaves.includes(this.leafKey(label)));
+    const parent = this.parentTitle(label);
+    if (!shouldShowParent || !parent) return leaf;
+    return this.isRtl()
+      ? `${leaf} ${this.pathSeparator()} ${parent}`
+      : `${parent} ${this.pathSeparator()} ${leaf}`;
+  },
+
+  leafKey(label) {
+    return this.title(label).trim().toLocaleLowerCase();
+  },
+};
+
+const LabelPathTrail = Vue.defineComponent({
+  props: {
+    label: { type: Object, required: true },
+    lang: { type: String, default: null },
+  },
+  computed: {
+    isRtl() {
+      return (this.lang || LabelPathUtils.primaryLang()) === 'ar';
+    },
+    segments() {
+      return LabelPathUtils.fullPathSegments(this.label, this.lang || LabelPathUtils.primaryLang());
+    },
+    separatorIcon() {
+      return this.isRtl ? 'mdi-chevron-left' : 'mdi-chevron-right';
+    },
+  },
+  template: `
+    <span
+      v-if="segments.length"
+      class="d-inline-flex align-center flex-wrap ga-1 text-body-2"
+      :dir="isRtl ? 'rtl' : 'ltr'"
+    >
+      <template v-for="(segment, index) in segments" :key="index">
+        <span :class="index < segments.length - 1 ? 'text-medium-emphasis' : 'font-weight-bold text-high-emphasis'">
+          {{ segment }}
+        </span>
+        <v-icon
+          v-if="index < segments.length - 1"
+          :icon="separatorIcon"
+          size="16"
+          class="text-medium-emphasis"
+        ></v-icon>
+      </template>
+    </span>
+  `,
+});
+
+const LabelPathChip = Vue.defineComponent({
+  components: { LabelPathTrail },
+  props: {
+    label: { type: Object, required: true },
+    duplicateLeaves: { type: Array, default: () => [] },
+  },
+  data: () => ({
+    menu: false,
+  }),
+  computed: {
+    hasPath() {
+      return LabelPathUtils.hasPath(this.label);
+    },
+    isRtl() {
+      return LabelPathUtils.isRtl();
+    },
+    markerIcon() {
+      return this.isRtl ? 'mdi-chevron-left' : 'mdi-chevron-right';
+    },
+    chipText() {
+      return LabelPathUtils.chipText(this.label, this.duplicateLeaves);
+    },
+    chipLeaf() {
+      return LabelPathUtils.title(this.label);
+    },
+    chipParent() {
+      return LabelPathUtils.parentTitle(this.label);
+    },
+    shouldShowParent() {
+      return this.hasPath
+        && this.chipParent
+        && (
+          LabelPathUtils.isGenericLeaf(this.label)
+          || this.duplicateLeaves.includes(LabelPathUtils.leafKey(this.label))
+        );
+    },
+    secondaryTitle() {
+      return LabelPathUtils.secondaryTitle(this.label);
+    },
+    primaryLang() {
+      return LabelPathUtils.primaryLang();
+    },
+    secondaryLang() {
+      return this.primaryLang === 'ar' ? 'en' : 'ar';
+    },
+    pathRows() {
+      const rows = [];
+      const primarySegments = LabelPathUtils.fullPathSegments(this.label, this.primaryLang);
+      const secondarySegments = LabelPathUtils.fullPathSegments(this.label, this.secondaryLang);
+      if (primarySegments.length) {
+        rows.push({
+          lang: this.primaryLang,
+          label: this.primaryLang === 'ar' ? 'AR' : 'EN',
+        });
+      }
+      if (secondarySegments.length && !LabelPathUtils.sameSegments(primarySegments, secondarySegments)) {
+        rows.push({
+          lang: this.secondaryLang,
+          label: this.secondaryLang === 'ar' ? 'AR' : 'EN',
+        });
+      }
+      return rows;
+    },
+  },
+  template: `
+    <v-menu
+      v-if="hasPath"
+      v-model="menu"
+      location="bottom start"
+      offset="6"
+      :close-on-content-click="false"
+    >
+      <template #activator="{ props }">
+        <v-chip
+          v-bind="props"
+          label
+          size="small"
+          color="primary"
+          variant="tonal"
+          class="flex-chip"
+          tabindex="0"
+          @keydown.enter.prevent="menu = true"
+          @keydown.space.prevent="menu = true"
+          @keydown.esc.prevent="menu = false"
+        >
+          <span class="text-primary font-weight-medium text-no-wrap">…</span>
+          <v-icon :icon="markerIcon" size="14" color="primary" class="me-1"></v-icon>
+          <template v-if="shouldShowParent">
+            <span v-if="isRtl">{{ chipLeaf }}</span>
+            <span v-else>{{ chipParent }}</span>
+            <v-icon :icon="markerIcon" size="14" color="primary" class="mx-1"></v-icon>
+            <span v-if="isRtl">{{ chipParent }}</span>
+            <span v-else>{{ chipLeaf }}</span>
+          </template>
+          <span v-else>{{ chipLeaf }}</span>
+        </v-chip>
+      </template>
+      <v-card
+        class="border rounded-lg"
+        elevation="8"
+        width="420"
+        max-width="calc(100vw - 32px)"
+        @keydown.esc.prevent="menu = false"
+      >
+        <v-card-text class="pa-3">
+          <div class="text-overline font-weight-bold text-medium-emphasis mb-2">
+            LABEL PATH
+          </div>
+          <div
+            v-for="(row, index) in pathRows"
+            :key="row.lang"
+            :class="{ 'mt-3': index > 0 }"
+            :dir="row.lang === 'ar' ? 'rtl' : 'ltr'"
+          >
+            <label-path-trail :label="label" :lang="row.lang"></label-path-trail>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-menu>
+    <v-chip
+      v-else
+      label
+      size="small"
+      color="primary"
+      variant="tonal"
+      class="flex-chip"
+      :ripple="false"
+    >
+      {{ chipText }}
+    </v-chip>
+  `,
+});
+
+const LabelPathList = Vue.defineComponent({
+  components: { LabelPathChip, LabelPathTrail },
+  props: {
+    labels: { type: Array, default: () => [] },
+    limit: { type: Number, default: 6 },
+    showFullPaths: { type: Boolean, default: false },
+  },
+  data: () => ({
+    expanded: false,
+  }),
+  computed: {
+    visibleLabels() {
+      return this.expanded ? this.labels : this.labels.slice(0, this.limit);
+    },
+    hiddenCount() {
+      return Math.max(this.labels.length - this.limit, 0);
+    },
+    duplicateLeaves() {
+      const counts = {};
+      this.labels.forEach(label => {
+        const key = LabelPathUtils.leafKey(label);
+        if (key) counts[key] = (counts[key] || 0) + 1;
+      });
+      return Object.keys(counts).filter(key => counts[key] > 1);
+    },
+    hasAnyPaths() {
+      return this.labels.some(label => LabelPathUtils.hasPath(label));
+    },
+  },
+  watch: {
+    labels() {
+      this.expanded = false;
+    },
+  },
+  template: `
+    <div>
+      <div class="flex-chips label-path-list">
+        <label-path-chip
+          v-for="label in visibleLabels"
+          :key="label.id || label.title"
+          :label="label"
+          :duplicate-leaves="duplicateLeaves"
+        ></label-path-chip>
+        <v-chip
+          v-if="!expanded && hiddenCount"
+          label
+          size="small"
+          variant="outlined"
+          class="flex-chip label-path-more"
+          tabindex="0"
+          @click="expanded = true"
+          @keydown.enter.prevent="expanded = true"
+          @keydown.space.prevent="expanded = true"
+        >
+          +{{ hiddenCount }} more
+        </v-chip>
+      </div>
+      <div v-if="showFullPaths && hasAnyPaths" class="mt-2">
+        <div v-for="label in visibleLabels" :key="'path-' + (label.id || label.title)" class="d-flex flex-column ga-1 text-caption mb-1">
+          <label-path-trail :label="label" lang="en"></label-path-trail>
+          <label-path-trail v-if="label.title_ar || label.title_tr || label.path_ar || label.path_tr" :label="label" lang="ar"></label-path-trail>
+        </div>
+      </div>
+    </div>
+  `,
+});
+
+window.LabelPathUtils = LabelPathUtils;

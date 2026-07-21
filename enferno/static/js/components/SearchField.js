@@ -52,9 +52,37 @@ const SearchField = Vue.defineComponent({
         return this.filterItems(this.items);
       }
       return this.items;
-    }
+    },
+    hasLabelPathSupport() {
+      return Boolean(window.LabelPathUtils);
+    },
   },
   methods: {
+    isLabelPathItem(item) {
+      return this.hasLabelPathSupport && (item?.path || item?.path_ar || item?.path_tr || item?.title_ar || item?.title_tr);
+    },
+    itemPrimaryTitle(item) {
+      if (this.isLabelPathItem(item)) {
+        return window.LabelPathUtils.title(item);
+      }
+      return item?.[this.itemTitle] || '';
+    },
+    itemSecondaryTitle(item) {
+      if (!this.isLabelPathItem(item)) return '';
+      return window.LabelPathUtils.secondaryTitle(item);
+    },
+    itemCollapsedPath(item) {
+      if (this.isLabelPathItem(item)) {
+        return window.LabelPathUtils.collapsedPath(item);
+      }
+      return this.itemSubtitle ? item?.[this.itemSubtitle] : '';
+    },
+    selectionTitle(item) {
+      if (this.isLabelPathItem(item)) {
+        return window.LabelPathUtils.title(item);
+      }
+      return item?.[this.itemTitle] || item || '';
+    },
     startSearch(search) {
       this.loading = true;
       this.debouncedSearch(search);
@@ -161,18 +189,26 @@ const SearchField = Vue.defineComponent({
       :loading="loading"
       :rules="rules"
     >
-      <template v-if="itemSubtitle" v-slot:item="{ item, props }">
+      <template v-if="itemSubtitle || hasLabelPathSupport" v-slot:item="{ item, props }">
         <v-list-item v-bind="props" density="compact">
           <template v-if="multiple" v-slot:prepend="{ isActive }">
             <v-checkbox-btn :model-value="isActive" density="compact" tabindex="-1" style="pointer-events: none;"></v-checkbox-btn>
           </template>
           <template v-slot:title>
-            <span class="text-body-2">{{ item.raw[itemTitle] }}</span>
+            <span class="text-body-2">{{ itemPrimaryTitle(item.raw) }}</span>
+            <span v-if="itemSecondaryTitle(item.raw)" class="d-block text-caption text-medium-emphasis">
+              {{ itemSecondaryTitle(item.raw) }}
+            </span>
           </template>
-          <template v-if="item.raw[itemSubtitle]" v-slot:subtitle>
-            <span class="text-caption text-grey">{{ item.raw[itemSubtitle] }}</span>
+          <template v-if="itemCollapsedPath(item.raw)" v-slot:subtitle>
+            <span class="text-caption text-grey">{{ itemCollapsedPath(item.raw) }}</span>
           </template>
         </v-list-item>
+      </template>
+      <template v-if="hasLabelPathSupport" v-slot:chip="{ item, props }">
+        <v-chip v-bind="props" size="small">
+          {{ selectionTitle(item.raw) }}
+        </v-chip>
       </template>
       <template v-if="showCopyIcon" v-slot:append>
         <v-btn icon="mdi-content-copy" variant="plain" @click="copyValue"></v-btn>

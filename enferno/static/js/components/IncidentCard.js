@@ -1,4 +1,5 @@
 const IncidentCard = Vue.defineComponent({
+  components: { LabelPathList },
   props: ['incident', 'close', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   mounted() {
@@ -216,9 +217,7 @@ const IncidentCard = Vue.defineComponent({
               <v-card class="ma-2">
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.labels_ }}</div>
-                  <div class="flex-chips">
-                    <v-chip class="flex-chip" v-for="label in incident.labels" :key="label.id">{{ label.title }}</v-chip>
-                  </div>
+                  <label-path-list :labels="incident.labels"></label-path-list>
                 </v-card-text>
               </v-card>
             </div>

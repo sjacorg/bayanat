@@ -216,6 +216,7 @@
             </v-main>
 
 {% endblock %} {% block js %}
+    <script src="/static/js/components/LabelPath.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
     <script nonce="{{ csp_nonce() }}">
 
@@ -428,6 +429,9 @@
             }
         });
         app.component('SearchField', SearchField);
+        app.component('LabelPathChip', LabelPathChip);
+        app.component('LabelPathList', LabelPathList);
+        app.component('LabelPathTrail', LabelPathTrail);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {
