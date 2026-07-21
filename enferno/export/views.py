@@ -168,8 +168,10 @@ def api_export_get(id: t.id) -> Response:
 
     if export is None:
         return HTTPResponse.not_found("Export not found")
-    else:
-        return HTTPResponse.success(data=export.to_dict(), message="Export retrieved successfully")
+    # Same ownership guard as the list/download routes (BAY-01-015).
+    if not current_user.has_role("Admin") and current_user.id != export.requester_id:
+        return HTTPResponse.forbidden("Forbidden")
+    return HTTPResponse.success(data=export.to_dict(), message="Export retrieved successfully")
 
 
 @export.post("/api/exports/")
