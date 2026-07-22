@@ -101,6 +101,26 @@ uv run flask db upgrade
 - Use idempotent SQL (`IF NOT EXISTS`, `IF EXISTS`) when writing raw SQL in migrations.
 - Never edit a migration that has already been applied to production.
 
+### Keeping a Single Head
+
+Each migration hardcodes its parent in `down_revision`, so two branches that both add a
+migration will both claim the same parent. Git merges them cleanly because they touch
+different files, and the break only surfaces as `Multiple head revisions are present`
+when `flask db upgrade` runs on deploy.
+
+`tests/test_migrations.py` fails the build when a branch has more than one head. If it
+fires after merging `main` into your branch:
+
+- **Your migration has not been applied anywhere yet** (the normal case): edit its
+  `down_revision` to point at the new head. Check the head with
+  `uv run flask db heads`.
+- **It has already been applied on staging or production**, or the two migrations touch
+  the same tables and order matters: do not re-parent. Run `uv run flask db merge heads`
+  to create a merge revision instead.
+
+Note that only the first branch to merge keeps a valid parent. If another migration lands
+on `main` before yours, re-parent again onto the new head.
+
 # Tests
 
 Bayanat comes with e2e tests using pytest and pydantic models. To run the tests, install the dependencies with
