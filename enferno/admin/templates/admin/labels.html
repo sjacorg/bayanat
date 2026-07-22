@@ -157,8 +157,7 @@
                                 </v-row>
                                 <v-row>
                                     <v-col cols="12" md="6">
-                                        <search-field
-                                            api="/admin/api/labels/"
+                                        <label-search-field
                                             item-title="title"
                                             item-subtitle="path"
                                             label="{{ _('Parent') }}"
@@ -167,7 +166,7 @@
                                             item-value="id"
                                             :multiple="false"
                                             :query-params="parentQueryParams"
-                                        ></search-field>
+                                        ></label-search-field>
                                     </v-col>
                                 </v-row>
                                 <div class="mb-3">{{ _('Available In') }}</div>
@@ -218,6 +217,7 @@
 {% endblock %} {% block js %}
     <script src="/static/js/components/LabelPath.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/LabelSearchField.js"></script>
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -429,6 +429,7 @@
             }
         });
         app.component('SearchField', SearchField);
+        app.component('LabelSearchField', LabelSearchField);
         app.component('LabelPathChip', LabelPathChip);
         app.component('LabelPathList', LabelPathList);
         app.component('LabelPathTrail', LabelPathTrail);

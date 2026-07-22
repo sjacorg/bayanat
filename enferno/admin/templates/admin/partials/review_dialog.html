@@ -66,9 +66,8 @@
                             </v-col>
                             <v-col>
 
-                                <search-field
+                                <label-search-field
                                         v-model="helper.labels"
-                                        api="/admin/api/labels/"
                                         :query-params="{ mode: 2 }"
                                         item-title="title"
                                         item-value="id"
@@ -77,14 +76,13 @@
                                         item-subtitle="path"
                                         :retain-search="true"
                                         label="{{ _('Labels') }}"
-                                ></search-field>
+                                ></label-search-field>
 
 
                             </v-col>
                             <v-col>
-                                <search-field
+                                <label-search-field
                                         v-model="helper.verified_labels"
-                                        api="/admin/api/labels/"
                                         :query-params="{ fltr: 'verified', mode: 2 }"
                                         item-title="title"
                                         item-value="id"
@@ -93,7 +91,7 @@
                                         item-subtitle="path"
                                         :retain-search="true"
                                         label="{{ _('Verified Labels') }}"
-                                ></search-field>
+                                ></label-search-field>
                             </v-col>
                             <v-col>
 

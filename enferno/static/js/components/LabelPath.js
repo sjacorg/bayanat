@@ -98,14 +98,32 @@ const LabelPathUtils = {
   },
 
   chipText(label, duplicateLeaves = []) {
+    const parts = this.chipParts(label, duplicateLeaves);
+    if (!parts.showParent) return parts.leaf;
+    return parts.isRtl
+      ? `${parts.leaf} ${parts.separator} ${parts.parent}`
+      : `${parts.parent} ${parts.separator} ${parts.leaf}`;
+  },
+
+  chipParts(label, duplicateLeaves = []) {
     const leaf = this.title(label);
-    const shouldShowParent = this.hasPath(label)
-      && (this.isGenericLeaf(label) || duplicateLeaves.includes(this.leafKey(label)));
     const parent = this.parentTitle(label);
-    if (!shouldShowParent || !parent) return leaf;
-    return this.isRtl()
-      ? `${leaf} ${this.pathSeparator()} ${parent}`
-      : `${parent} ${this.pathSeparator()} ${leaf}`;
+    const hasPath = this.hasPath(label);
+    const showParent = Boolean(
+      hasPath
+      && parent
+      && (this.isGenericLeaf(label) || duplicateLeaves.includes(this.leafKey(label)))
+    );
+    const isRtl = this.isRtl();
+    return {
+      hasPath,
+      isRtl,
+      leaf,
+      parent,
+      separator: this.pathSeparator(),
+      showParent,
+      markerIcon: isRtl ? 'mdi-chevron-left' : 'mdi-chevron-right',
+    };
   },
 
   leafKey(label) {
@@ -167,24 +185,13 @@ const LabelPathChip = Vue.defineComponent({
       return LabelPathUtils.isRtl();
     },
     markerIcon() {
-      return this.isRtl ? 'mdi-chevron-left' : 'mdi-chevron-right';
+      return this.chipParts.markerIcon;
     },
     chipText() {
       return LabelPathUtils.chipText(this.label, this.duplicateLeaves);
     },
-    chipLeaf() {
-      return LabelPathUtils.title(this.label);
-    },
-    chipParent() {
-      return LabelPathUtils.parentTitle(this.label);
-    },
-    shouldShowParent() {
-      return this.hasPath
-        && this.chipParent
-        && (
-          LabelPathUtils.isGenericLeaf(this.label)
-          || this.duplicateLeaves.includes(LabelPathUtils.leafKey(this.label))
-        );
+    chipParts() {
+      return LabelPathUtils.chipParts(this.label, this.duplicateLeaves);
     },
     secondaryTitle() {
       return LabelPathUtils.secondaryTitle(this.label);
@@ -237,14 +244,14 @@ const LabelPathChip = Vue.defineComponent({
         >
           <span class="text-primary font-weight-medium text-no-wrap">…</span>
           <v-icon :icon="markerIcon" size="14" color="primary" class="me-1"></v-icon>
-          <template v-if="shouldShowParent">
-            <span v-if="isRtl">{{ chipLeaf }}</span>
-            <span v-else>{{ chipParent }}</span>
+          <template v-if="chipParts.showParent">
+            <span v-if="chipParts.isRtl">{{ chipParts.leaf }}</span>
+            <span v-else>{{ chipParts.parent }}</span>
             <v-icon :icon="markerIcon" size="14" color="primary" class="mx-1"></v-icon>
-            <span v-if="isRtl">{{ chipParent }}</span>
-            <span v-else>{{ chipLeaf }}</span>
+            <span v-if="chipParts.isRtl">{{ chipParts.parent }}</span>
+            <span v-else>{{ chipParts.leaf }}</span>
           </template>
-          <span v-else>{{ chipLeaf }}</span>
+          <span v-else>{{ chipParts.leaf }}</span>
         </v-chip>
       </template>
       <v-card

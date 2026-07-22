@@ -835,9 +835,8 @@ const ActorSearchBox = Vue.defineComponent({
             <template v-if="$root.isFieldActiveByName('labels', { entityType: 'actor' })">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.LABELS_ }}</div>
               <v-card variant="outlined" class="mb-3 pa-3 border-thin">
-                <search-field
+                <label-search-field
                     v-model="q.labels"
-                    api="/admin/api/labels/"
                     :query-params="{ typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
@@ -845,14 +844,13 @@ const ActorSearchBox = Vue.defineComponent({
                     item-subtitle="path"
                     :retain-search="true"
                     :label="translations.includeLabels_"
-                ></search-field>
+                ></label-search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
                   <v-checkbox :label="translations.any_" density="compact" v-model="q.oplabels" color="primary"
                               class="me-4" hide-details></v-checkbox>
                 </div>
-                <search-field
+                <label-search-field
                     v-model="q.exlabels"
-                    api="/admin/api/labels/"
                     :query-params="{ typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
@@ -860,7 +858,7 @@ const ActorSearchBox = Vue.defineComponent({
                     item-subtitle="path"
                     :retain-search="true"
                     :label="translations.excludeLabels_"
-                ></search-field>
+                ></label-search-field>
                 <v-switch density="compact" color="primary" v-model="q.childlabels" :label="translations.includeChildLabels_" hide-details></v-switch>
               </v-card>
             </template>
@@ -869,9 +867,8 @@ const ActorSearchBox = Vue.defineComponent({
             <template v-if="$root.isFieldActiveByName('ver_labels', { entityType: 'actor' })">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.VERIFIEDLABELS_ }}</div>
               <v-card variant="outlined" class="mb-3 pa-3 border-thin">
-                <search-field
+                <label-search-field
                     v-model="q.vlabels"
-                    api="/admin/api/labels/"
                     :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
@@ -879,14 +876,13 @@ const ActorSearchBox = Vue.defineComponent({
                     item-subtitle="path"
                     :retain-search="true"
                     :label="translations.includeVerLabels_"
-                ></search-field>
+                ></label-search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
                   <v-checkbox :label="translations.any_" density="compact" v-model="q.opvlabels" color="primary"
                               class="me-4" hide-details></v-checkbox>
                 </div>
-                <search-field
+                <label-search-field
                     v-model="q.exvlabels"
-                    api="/admin/api/labels/"
                     :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
@@ -894,7 +890,7 @@ const ActorSearchBox = Vue.defineComponent({
                     item-subtitle="path"
                     :retain-search="true"
                     :label="translations.excludeVerLabels_"
-                ></search-field>
+                ></label-search-field>
                 <v-switch density="compact" color="primary" v-model="q.childverlabels" :label="translations.includeChildVerLabels_" hide-details></v-switch>
               </v-card>
             </template>
