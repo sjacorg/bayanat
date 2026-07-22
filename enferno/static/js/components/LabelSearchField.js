@@ -38,15 +38,12 @@ const LabelSearchField = Vue.defineComponent({
     itemCollapsedPath(item) {
       return this.isLabelPathItem(item) ? window.LabelPathUtils.collapsedPath(item) : '';
     },
-    selectionTitle(item) {
-      return this.isLabelPathItem(item) ? window.LabelPathUtils.title(item) : item?.title || item || '';
-    },
     selectionParts(item = null) {
       if (!this.isLabelPathItem(item)) {
         return {
           hasPath: false,
           isRtl: Boolean(window.LabelPathUtils?.isRtl()),
-          leaf: this.selectionTitle(item),
+          leaf: item?.title || item || '',
           markerIcon: window.LabelPathUtils?.isRtl() ? 'mdi-chevron-left' : 'mdi-chevron-right',
           parent: '',
           showParent: false,
@@ -119,6 +116,7 @@ const LabelSearchField = Vue.defineComponent({
         </v-list-item>
       </template>
       <template v-slot:chip="{ item, props }">
+        <!-- One-item loop keeps selectionParts readable and avoids recalculating it in this slot. -->
         <template v-for="parts in [selectionParts(item.raw)]">
           <v-chip v-bind="props" size="small" class="text-no-wrap">
             <template v-if="parts.hasPath">
