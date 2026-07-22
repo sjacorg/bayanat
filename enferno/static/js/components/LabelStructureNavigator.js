@@ -141,8 +141,8 @@ const LabelStructureNavigator = Vue.defineComponent({
         @mouseenter="holdOpen"
         @mouseleave="scheduleClose"
       >
-        <v-card-title class="d-flex align-center ga-2 pe-2">
-          <v-icon icon="mdi-file-tree-outline"></v-icon>
+        <v-card-title class="d-flex align-center ga-2 py-2 pe-2">
+          <v-icon icon="mdi-file-tree-outline" size="small"></v-icon>
           <span>{{ translations.labelStructure }}</span>
           <v-chip size="x-small" variant="tonal">{{ translations.readOnly }}</v-chip>
           <v-spacer></v-spacer>
@@ -155,7 +155,7 @@ const LabelStructureNavigator = Vue.defineComponent({
           ></v-btn>
         </v-card-title>
 
-        <v-card-text class="pb-2">
+        <v-card-text class="px-3 py-2">
           <v-text-field
             v-model="query"
             :label="translations.search"
@@ -194,9 +194,9 @@ const LabelStructureNavigator = Vue.defineComponent({
             open-on-click
           >
             <template #title="{ item }">
-              <div class="d-flex flex-column py-1">
+              <div class="d-flex flex-column label-structure-title">
                 <span>{{ item.title }}</span>
-                <span v-if="item.title_ar" class="text-caption text-medium-emphasis" dir="rtl">{{ item.title_ar }}</span>
+                <span v-if="item.title_ar" class="label-structure-title-ar text-medium-emphasis" dir="rtl">{{ item.title_ar }}</span>
               </div>
             </template>
             <template #prepend="{ item }">

@@ -760,12 +760,50 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 .label-structure-panel {
-    width: min(430px, calc(100vw - 24px));
+    width: min(390px, calc(100vw - 24px));
+    font-size: 13px;
+}
+
+.label-structure-panel .v-card-title {
+    min-height: 42px;
+    font-size: 1rem;
+}
+
+.label-structure-panel .v-field,
+.label-structure-panel .v-btn {
+    font-size: 13px;
 }
 
 .label-structure-tree {
     max-height: min(65vh, 560px);
     overflow-y: auto;
+}
+
+.label-structure-tree .v-list-item {
+    min-height: 30px;
+    padding-inline: 8px;
+}
+
+.label-structure-tree .v-list-item-title,
+.label-structure-title {
+    font-size: 13px;
+    line-height: 1.15rem;
+}
+
+.label-structure-title-ar {
+    font-size: 11px;
+    line-height: 1rem;
+}
+
+.label-structure-tree .v-chip {
+    height: 18px;
+    padding-inline: 5px;
+    font-size: 10px;
+}
+
+.label-structure-panel .v-card-actions {
+    min-height: 38px;
+    padding: 3px 8px;
 }
 
 
