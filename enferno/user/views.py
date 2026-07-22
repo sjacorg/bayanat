@@ -107,7 +107,7 @@ def auth_callback() -> Response:
     expected_state = session.pop("oauth_state", None)
     received_state = request.args.get("state")
     if not expected_state or expected_state != received_state:
-        return HTTPResponse.error("Invalid OAuth state. Please try again.", status=403)
+        return HTTPResponse.error(gettext("Invalid OAuth state. Please try again."), status=403)
 
     code = request.args.get("code")
     # Find out what URL to hit to get tokens that allow you to ask for
@@ -172,7 +172,7 @@ def auth_callback() -> Response:
         u.google_id = unique_id
         u.save()
     elif u.google_id != unique_id:
-        return HTTPResponse.forbidden("Google account does not match the linked identity.")
+        return HTTPResponse.forbidden(gettext("Google account does not match the linked identity."))
 
     # Check if 2FA is required before completing login
     tf_plugin = current_app.extensions["security"]._tf_plugin
@@ -334,8 +334,12 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
         Notification.send_notification_for_event(
             Constants.NotificationEvent.LOGIN_NEW_IP,
             current_user,
-            "Login from Different IP",
-            "You have logged in from a different IP address than your last login. If this was you, please ignore this message. If this was not you, please change your password immediately.",
+            gettext("Login from Different IP"),
+            gettext(
+                "You have logged in from a different IP address than your last login. "
+                "If this was you, please ignore this message. If this was not you, "
+                "please change your password immediately."
+            ),
         )
     # TODO: Check the login country and send notification to all admins if it's not the same as the user's country
 

@@ -24,25 +24,25 @@ const SnapshotsList = Vue.defineComponent({
   template: `
     <v-card>
       <v-card-title>
-        Pre-update Snapshots
+        {{ translations.preUpdateSnapshots_ }}
         <v-spacer />
         <v-btn icon="mdi-refresh" variant="text" @click="load" :loading="loading"></v-btn>
       </v-card-title>
       <v-card-text>
         <v-alert type="info" variant="tonal" density="compact" class="mb-3">
-          Restore is CLI-only for safety. SSH to the server and run
-          <code>sudo bayanat restore &lt;name&gt;</code> (needs root; it stops
-          services, runs <code>pg_restore</code>, and starts services again).
+          {{ translations.restoreIsCliOnly_ }}
+          <code>sudo bayanat restore &lt;name&gt;</code>
+          ({{ translations.restoreCommandExplanation_ }}).
         </v-alert>
         <v-data-table
           :items="items"
           :headers="[
-            { title: 'Name', key: 'name' },
-            { title: 'Size', key: 'size' },
-            { title: 'Age', key: 'age' }
+            { title: translations.snapshotName_, key: 'name' },
+            { title: translations.snapshotSize_, key: 'size' },
+            { title: translations.snapshotAge_, key: 'age' }
           ]"
           :loading="loading"
-          no-data-text="No snapshots available yet."
+          :no-data-text="translations.noSnapshotsAvailable_"
         ></v-data-table>
       </v-card-text>
     </v-card>

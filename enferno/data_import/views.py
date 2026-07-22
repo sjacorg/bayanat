@@ -6,6 +6,7 @@ from typing import Optional
 import shortuuid
 from flask import request, Response, Blueprint, current_app
 from flask.templating import render_template
+from flask_babel import gettext
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import safe_join
@@ -182,7 +183,7 @@ def etl_process() -> Response:
     body = request.json or {}
     files = body.pop("files", None)
     if not isinstance(files, list) or not files:
-        return HTTPResponse.error("Missing `files` array", status=417)
+        return HTTPResponse.error(gettext("Missing `files` array"), status=417)
     meta = body
     batch_id = shortuuid.uuid()[:9]
 
@@ -280,14 +281,14 @@ def api_csv_analyze() -> Response:
     # locate file
     file_obj = request.json.get("file")
     if not isinstance(file_obj, dict):
-        return HTTPResponse.error("Missing or malformed `file` field", status=417)
+        return HTTPResponse.error(gettext("Missing or malformed `file` field"), status=417)
     filename = file_obj.get("filename")
     if not isinstance(filename, str) or not filename:
-        return HTTPResponse.error("Missing `file.filename`", status=417)
+        return HTTPResponse.error(gettext("Missing `file.filename`"), status=417)
     filepath = _resolve_import_path(filename)
     if filepath is None:
         logger.warning("Rejected CSV analyze for invalid path: %r", filename)
-        return HTTPResponse.error("Invalid file path", status=400)
+        return HTTPResponse.error(gettext("Invalid file path"), status=400)
 
     result = SheetImport.parse_csv(filepath)
 
@@ -304,14 +305,14 @@ def api_xls_sheet() -> Response:
     """API endpoint to get sheets from an excel file."""
     file_obj = request.json.get("file")
     if not isinstance(file_obj, dict):
-        return HTTPResponse.error("Missing or malformed `file` field", status=417)
+        return HTTPResponse.error(gettext("Missing or malformed `file` field"), status=417)
     filename = file_obj.get("filename")
     if not isinstance(filename, str) or not filename:
-        return HTTPResponse.error("Missing `file.filename`", status=417)
+        return HTTPResponse.error(gettext("Missing `file.filename`"), status=417)
     filepath = _resolve_import_path(filename)
     if filepath is None:
         logger.warning("Rejected XLS sheets for invalid path: %r", filename)
-        return HTTPResponse.error("Invalid file path", status=400)
+        return HTTPResponse.error(gettext("Invalid file path"), status=400)
 
     sheets = SheetImport.get_sheets(filepath)
 
@@ -325,19 +326,19 @@ def api_xls_analyze() -> Response:
     # locate file
     file_obj = request.json.get("file")
     if not isinstance(file_obj, dict):
-        return HTTPResponse.error("Missing or malformed `file` field", status=417)
+        return HTTPResponse.error(gettext("Missing or malformed `file` field"), status=417)
     filename = file_obj.get("filename")
     if not isinstance(filename, str) or not filename:
-        return HTTPResponse.error("Missing `file.filename`", status=417)
+        return HTTPResponse.error(gettext("Missing `file.filename`"), status=417)
     filepath = _resolve_import_path(filename)
     if filepath is None:
         logger.warning("Rejected XLS analyze for invalid path: %r", filename)
-        return HTTPResponse.error("Invalid file path", status=400)
+        return HTTPResponse.error(gettext("Invalid file path"), status=400)
 
     sheet = request.json.get("sheet")
     # bool is an int subclass, so exclude it explicitly
     if isinstance(sheet, bool) or not isinstance(sheet, (str, int)):
-        return HTTPResponse.error("Missing or invalid `sheet` value", status=417)
+        return HTTPResponse.error(gettext("Missing or invalid `sheet` value"), status=417)
 
     result = SheetImport.parse_excel(filepath, sheet)
 
@@ -406,7 +407,7 @@ def api_mapping_update(id: t.id) -> Response:
     if map:
         data = request.json.get("data")
         if not isinstance(data, dict):
-            return HTTPResponse.error("Update request missing parameters data", status=417)
+            return HTTPResponse.error(gettext("Update request missing parameters data"), status=417)
         m = data.get("map", None)
         name = request.json.get("name", None)
         if m and name:
@@ -456,14 +457,14 @@ def api_process_sheet() -> Response:
     """
     files = request.json.get("files")
     if not isinstance(files, list) or not files:
-        return HTTPResponse.error("Missing `files` array", status=417)
+        return HTTPResponse.error(gettext("Missing `files` array"), status=417)
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
     map = request.json.get("map")
     vmap = request.json.get("vmap")
     sheet = request.json.get("sheet")
     # sheet is optional (CSV has none), but bool/list/etc. would crash the parser
     if sheet is not None and (isinstance(sheet, bool) or not isinstance(sheet, (str, int))):
-        return HTTPResponse.error("Invalid `sheet` value", status=417)
+        return HTTPResponse.error(gettext("Invalid `sheet` value"), status=417)
     lang = request.json.get("lang", "en")
     actor_config = request.json.get("actorConfig")
     roles = request.json.get("roles")

@@ -22,6 +22,7 @@ from flask import (
 )
 from flask_security import auth_required
 from flask_security.decorators import current_user, roles_accepted
+from flask_babel import gettext
 from sqlalchemy import func, desc
 from werkzeug.utils import safe_join, secure_filename
 
@@ -56,7 +57,7 @@ def _require_media_access(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if not current_user.has_role("Admin") and not current_user.can_access_media:
-            return HTTPResponse.forbidden("Unauthorized")
+            return HTTPResponse.forbidden(gettext("Unauthorized"))
         return f(*args, **kwargs)
 
     return decorated
@@ -247,7 +248,8 @@ def api_medias_chunk() -> Response:
     max_size_mb = current_app.config.get("MEDIA_UPLOAD_MAX_FILE_SIZE", 1000)
     if total_size > max_size_mb * 1024 * 1024:
         return HTTPResponse.error(
-            f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+            gettext("File exceeds maximum allowed size of %(size)s MB", size=max_size_mb),
+            status=413,
         )
 
     # validate dz_uuid
@@ -272,7 +274,8 @@ def api_medias_chunk() -> Response:
     if actual_bytes > max_size_mb * 1024 * 1024:
         shutil.rmtree(save_dir, ignore_errors=True)
         return HTTPResponse.error(
-            f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+            gettext("File exceeds maximum allowed size of %(size)s MB", size=max_size_mb),
+            status=413,
         )
 
     # See if we have all the chunks downloaded
@@ -447,7 +450,7 @@ def serve_media(
                     )
                     return HTTPResponse.forbidden("Restricted Access")
             except s3.exceptions.NoSuchKey:
-                return HTTPResponse.not_found("File not found")
+                return HTTPResponse.not_found(gettext("File not found"))
             except Exception:
                 return HTTPResponse.error("Internal Server Error", status=500)
         else:
@@ -559,12 +562,12 @@ def api_inline_medias_upload() -> Response:
     try:
         f = request.files.get("file")
         if not f:
-            return HTTPResponse.error("No file provided", status=400)
+            return HTTPResponse.error(gettext("No file provided"), status=400)
 
         # Validate file extension against allowed media types
         allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
         if not Media.validate_file_extension(f.filename, allowed_extensions):
-            return HTTPResponse.error("This file type is not allowed", status=415)
+            return HTTPResponse.error(gettext("This file type is not allowed"), status=415)
 
         # Enforce upload size limit
         f.seek(0, os.SEEK_END)
@@ -573,7 +576,8 @@ def api_inline_medias_upload() -> Response:
         max_size_mb = current_app.config.get("MEDIA_UPLOAD_MAX_FILE_SIZE", 1000)
         if size > max_size_mb * 1024 * 1024:
             return HTTPResponse.error(
-                f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+                gettext("File exceeds maximum allowed size of %(size)s MB", size=max_size_mb),
+                status=413,
             )
 
         # final file: opaque, unguessable name so inline media can't be
@@ -724,7 +728,7 @@ def api_media_redact(id: int) -> Response:
             out_ext = "jpg"
             out_type = "image/jpeg"
         else:
-            return HTTPResponse.error("This file type cannot be redacted", status=415)
+            return HTTPResponse.error(gettext("This file type cannot be redacted"), status=415)
     except RedactionError as e:
         return HTTPResponse.error(str(e), status=400)
     except FileNotFoundError:
@@ -755,7 +759,7 @@ def api_media_redact(id: int) -> Response:
         return HTTPResponse.success(data=media.to_dict())
 
     if _duplicate_redacted_media(etag, media):
-        return HTTPResponse.error("Redacted media already exists", status=409)
+        return HTTPResponse.error(gettext("Redacted media already exists"), status=409)
 
     filename = Media.generate_file_name(f"redacted.{out_ext}")
     _write_media_bytes(filename, out, out_type)
@@ -812,7 +816,7 @@ def api_media_redact_delete(id: int) -> Response:
     if not current_user.can_access(media):
         return HTTPResponse.forbidden("Restricted Access")
     if media.redaction is None:
-        return HTTPResponse.error("Not a redacted copy", status=400)
+        return HTTPResponse.error(gettext("Not a redacted copy"), status=400)
 
     media.deleted = True
     db.session.commit()
@@ -967,7 +971,7 @@ def api_extraction_get(extraction_id: int):
     # Check access via the parent media's bulletin/actor
     media = Media.query.get(extraction.media_id)
     if not media:
-        return HTTPResponse.not_found("Parent media not found")
+        return HTTPResponse.not_found(gettext("Parent media not found"))
     if not current_user.can_access(media):
         return HTTPResponse.forbidden("Restricted Access")
 
@@ -990,7 +994,7 @@ def api_extraction_update(extraction_id: int):
 
     media = Media.query.get(extraction.media_id)
     if not media:
-        return HTTPResponse.not_found("Parent media not found")
+        return HTTPResponse.not_found(gettext("Parent media not found"))
     # Editing extracted text mutates the item: require the assignment edit
     # boundary, not just visibility (BAY-01-009).
     if not current_user.can_edit(media):

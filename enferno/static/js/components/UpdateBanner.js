@@ -41,24 +41,24 @@ const UpdateBanner = Vue.defineComponent({
       @click="dialog = true"
       class="ms-2 me-2"
     >
-      Update available: {{ latest }}
+      {{ translations.updateAvailable_ }}: {{ latest }}
       <v-dialog v-model="dialog" max-width="520">
         <v-card>
-          <v-card-title>Update Bayanat to {{ latest }}</v-card-title>
+          <v-card-title>{{ translations.updateBayanatTo_ }} {{ latest }}</v-card-title>
           <v-card-text>
-            <p>Current: <strong>{{ current }}</strong></p>
-            <p>Target: <strong>{{ latest }}</strong></p>
+            <p>{{ translations.currentVersion_ }}: <strong>{{ current }}</strong></p>
+            <p>{{ translations.targetVersion_ }}: <strong>{{ latest }}</strong></p>
             <p v-if="releaseNotesUrl">
-              <a :href="releaseNotesUrl" target="_blank" rel="noopener">Release notes</a>
+              <a :href="releaseNotesUrl" target="_blank" rel="noopener">{{ translations.releaseNotes_ }}</a>
             </p>
             <v-alert type="info" variant="tonal" density="compact" class="mt-3">
-              To update, run this on the server as an administrator:
+              {{ translations.updateCommandInstruction_ }}
               <pre class="mt-2 mb-0"><code>sudo bayanat update {{ latest }}</code></pre>
             </v-alert>
           </v-card-text>
           <v-card-actions>
             <v-spacer />
-            <v-btn variant="text" @click="dialog = false">Close</v-btn>
+            <v-btn variant="text" @click="dialog = false">{{ translations.close_ }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
