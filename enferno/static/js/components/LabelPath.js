@@ -181,9 +181,6 @@ const LabelPathChip = Vue.defineComponent({
     hasPath() {
       return LabelPathUtils.hasPath(this.label);
     },
-    isRtl() {
-      return LabelPathUtils.isRtl();
-    },
     markerIcon() {
       return this.chipParts.markerIcon;
     },
@@ -192,9 +189,6 @@ const LabelPathChip = Vue.defineComponent({
     },
     chipParts() {
       return LabelPathUtils.chipParts(this.label, this.duplicateLeaves);
-    },
-    secondaryTitle() {
-      return LabelPathUtils.secondaryTitle(this.label);
     },
     primaryLang() {
       return LabelPathUtils.primaryLang();
@@ -209,13 +203,11 @@ const LabelPathChip = Vue.defineComponent({
       if (primarySegments.length) {
         rows.push({
           lang: this.primaryLang,
-          label: this.primaryLang === 'ar' ? 'AR' : 'EN',
         });
       }
       if (secondarySegments.length && !LabelPathUtils.sameSegments(primarySegments, secondarySegments)) {
         rows.push({
           lang: this.secondaryLang,
-          label: this.secondaryLang === 'ar' ? 'AR' : 'EN',
         });
       }
       return rows;
@@ -338,7 +330,8 @@ const LabelPathList = Vue.defineComponent({
           label
           size="small"
           variant="outlined"
-          class="flex-chip label-path-more"
+          class="flex-chip text-medium-emphasis"
+          style="border-style: dashed;"
           tabindex="0"
           @click="expanded = true"
           @keydown.enter.prevent="expanded = true"

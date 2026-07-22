@@ -1,5 +1,10 @@
 const LabelSearchField = Vue.defineComponent({
   extends: SearchField,
+  props: {
+    itemTitle: { type: String, default: 'title' },
+    itemValue: { type: String, default: 'id' },
+    itemSubtitle: { type: String, default: 'path' },
+  },
   computed: {
     labelQueryParams() {
       return {
@@ -102,8 +107,8 @@ const LabelSearchField = Vue.defineComponent({
       item-color="secondary"
       :label="label"
       :items="filteredItems"
-      item-title="title"
-      item-value="id"
+      :item-title="itemTitle"
+      :item-value="itemValue"
       prepend-inner-icon="mdi-magnify"
       :multiple="multiple"
       chips

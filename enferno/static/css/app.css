@@ -888,13 +888,6 @@ div.jsondiffpatch-child-node-type-array:after {
     white-space: normal;
 }
 
-.label-path-more {
-    border-color: rgba(var(--v-theme-on-surface), 0.28) !important;
-    border-style: dashed !important;
-    color: rgba(var(--v-theme-on-surface), 0.58) !important;
-    cursor: pointer;
-}
-
 /* Lightgallery.js place above all dialogs */
 .lg-backdrop,
 .lg-outer {

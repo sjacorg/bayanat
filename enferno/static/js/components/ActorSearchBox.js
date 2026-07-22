@@ -838,10 +838,7 @@ const ActorSearchBox = Vue.defineComponent({
                 <label-search-field
                     v-model="q.labels"
                     :query-params="{ typ: 'for_actor', mode: 2 }"
-                    item-title="title"
-                    item-value="id"
                     :multiple="true"
-                    item-subtitle="path"
                     :retain-search="true"
                     :label="translations.includeLabels_"
                 ></label-search-field>
@@ -852,10 +849,7 @@ const ActorSearchBox = Vue.defineComponent({
                 <label-search-field
                     v-model="q.exlabels"
                     :query-params="{ typ: 'for_actor', mode: 2 }"
-                    item-title="title"
-                    item-value="id"
                     :multiple="true"
-                    item-subtitle="path"
                     :retain-search="true"
                     :label="translations.excludeLabels_"
                 ></label-search-field>
@@ -870,10 +864,7 @@ const ActorSearchBox = Vue.defineComponent({
                 <label-search-field
                     v-model="q.vlabels"
                     :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
-                    item-title="title"
-                    item-value="id"
                     :multiple="true"
-                    item-subtitle="path"
                     :retain-search="true"
                     :label="translations.includeVerLabels_"
                 ></label-search-field>
@@ -884,10 +875,7 @@ const ActorSearchBox = Vue.defineComponent({
                 <label-search-field
                     v-model="q.exvlabels"
                     :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
-                    item-title="title"
-                    item-value="id"
                     :multiple="true"
-                    item-subtitle="path"
                     :retain-search="true"
                     :label="translations.excludeVerLabels_"
                 ></label-search-field>

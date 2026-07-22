@@ -160,10 +160,7 @@
                                                     <v-col cols="12" md="4">
                                                         <label-search-field
                                                                 :query-params="{ typ: 'for_bulletin', mode: 2 }"
-                                                                item-title="title"
-                                                                item-value="id"
                                                                 :multiple="true"
-                                                                item-subtitle="path"
                                                                 :retain-search="true"
                                                                 label="{{ _('Labels') }}"
                                                                 v-model="labels"
@@ -172,10 +169,7 @@
                                                     <v-col cols="12" md="4">
                                                         <label-search-field
                                                                 :query-params="{ fltr: 'verified', typ: 'for_bulletin', mode: 2 }"
-                                                                item-title="title"
-                                                                item-value="id"
                                                                 :multiple="true"
-                                                                item-subtitle="path"
                                                                 :retain-search="true"
                                                                 label="{{ _('Verified Labels') }} "
                                                                 v-model="verLabels"

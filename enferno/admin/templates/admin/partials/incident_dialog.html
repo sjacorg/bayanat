@@ -68,10 +68,7 @@
                                     <label-search-field
                                         v-model="editedItem.labels"
                                         :query-params="{ typ: 'for_incident', mode: 2 }"
-                                        item-title="title"
-                                        item-value="id"
                                         :multiple="true"
-                                        item-subtitle="path"
                                         :retain-search="true"
                                         label="{{ _('Labels') }}"
                                     ></label-search-field>

@@ -392,11 +392,8 @@
                                                         <label-search-field
                                                                 v-model="profile.labels"
                                                                 :query-params="{ typ: 'for_actor', mode: 2 }"
-                                                                item-title="title"
-                                                                item-value="id"
                                                                 :multiple="true"
                                                                 :show-copy-icon="advFeatures"
-                                                                item-subtitle="path"
                                                                 :retain-search="true"
                                                                 label="{{ _('Labels') }}"
                                                         ></label-search-field>
@@ -406,11 +403,8 @@
                                                         <label-search-field
                                                                 v-model="profile.ver_labels"
                                                                 :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
-                                                                item-title="title"
-                                                                item-value="id"
                                                                 :multiple="true"
                                                                 :show-copy-icon="advFeatures"
-                                                                item-subtitle="path"
                                                                 :retain-search="true"
                                                                 label="{{ _('Verified Labels') }}"
                                                         ></label-search-field>
