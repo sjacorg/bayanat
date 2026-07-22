@@ -759,6 +759,15 @@ div.jsondiffpatch-child-node-type-array:after {
     max-height: calc(100vh - 80px - 0.75rem);
 }
 
+.label-structure-panel {
+    width: min(430px, calc(100vw - 24px));
+}
+
+.label-structure-tree {
+    max-height: min(65vh, 560px);
+    overflow-y: auto;
+}
+
 
 /* steppers enhancements */
 .v-stepper > .v-window {
