@@ -1,17 +1,17 @@
 """update default role descriptions
 
 Revision ID: 479c8b98b036
-Revises: 68396035f041
+Revises: f0a3d6c1e8b2
 Create Date: 2026-07-06 11:06:11.207531
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
-revision = '479c8b98b036'
-down_revision = '68396035f041'
+revision = "479c8b98b036"
+down_revision = "f0a3d6c1e8b2"
 branch_labels = None
 depends_on = None
 
