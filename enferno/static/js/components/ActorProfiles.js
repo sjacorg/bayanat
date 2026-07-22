@@ -1,5 +1,4 @@
 const ActorProfiles = Vue.defineComponent({
-  components: { LabelPathList },
   props: {
     actorId: {
       type: Number,

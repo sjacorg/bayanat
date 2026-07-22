@@ -1,5 +1,4 @@
 const BulletinCard = Vue.defineComponent({
-  components: { LabelPathList },
   props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   watch: {
