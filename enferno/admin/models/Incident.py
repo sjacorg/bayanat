@@ -283,76 +283,36 @@ class Incident(db.Model, BaseMixin):
 
         # Related Actors (actor_relations)
         if "actor_relations" in json and "check_ar" in json:
-            # collect related actors ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["actor_relations"]:
-                actor = db.session.get(Actor, relation["actor"]["id"])
-
-                # Extra (check those actors exit)
-
-                if actor:
-                    rel_ids.append(actor.id)
-                    # this will update/create the relationship (will flush to db!)
-                    self.relate_actor(actor, relation=relation)
-
-                # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination actor not in the related ids
-
-            for r in self.actor_relations:
-                if not (r.actor_id in rel_ids):
-                    rel_actor = r.actor
-                    r.delete()
-
-                    # -revision related actor
-                    rel_actor.create_revision()
+            self.sync_relations(
+                json["actor_relations"],
+                Actor,
+                "actor",
+                self.relate_actor,
+                self.actor_relations,
+                lambda r: r.actor_id,
+            )
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json and "check_br" in json:
-            # collect related bulletin ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["bulletin_relations"]:
-                bulletin = db.session.get(Bulletin, relation["bulletin"]["id"])
+            self.sync_relations(
+                json["bulletin_relations"],
+                Bulletin,
+                "bulletin",
+                self.relate_bulletin,
+                self.bulletin_relations,
+                lambda r: r.bulletin_id,
+            )
 
-                # Extra (check those bulletins exit)
-                if bulletin:
-                    rel_ids.append(bulletin.id)
-                    # this will update/create the relationship (will flush to db!)
-                    self.relate_bulletin(bulletin, relation=relation)
-
-            # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination bulletin not in the related ids
-            for r in self.bulletin_relations:
-                if not (r.bulletin_id in rel_ids):
-                    rel_bulletin = r.bulletin
-                    r.delete()
-
-                    # -revision related bulletin
-                    rel_bulletin.create_revision()
-
-        # Related Incidnets (incident_relations)
+        # Related Incidents (incident_relations)
         if "incident_relations" in json and "check_ir" in json:
-            # collect related incident ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["incident_relations"]:
-                incident = db.session.get(Incident, relation["incident"]["id"])
-                # Extra (check those incidents exit)
-
-                if incident:
-                    rel_ids.append(incident.id)
-                    # this will update/create the relationship (will flush to db)
-                    self.relate_incident(incident, relation=relation)
-
-                # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination incident no in the related ids
-
-            for r in self.incident_relations:
-                # get related incident (in or out)
-                rid = r.get_other_id(self.id)
-                if not (rid in rel_ids):
-                    r.delete()
-
-                    # - revision related incident
-                    db.session.get(Incident, rid).create_revision()
+            self.sync_relations(
+                json["incident_relations"],
+                Incident,
+                "incident",
+                self.relate_incident,
+                self.incident_relations,
+                lambda r: r.get_other_id(self.id),
+            )
 
         if "comments" in json:
             self.comments = json["comments"]

@@ -11,6 +11,7 @@
   <v-spacer></v-spacer>
 
   <template v-slot:append>
+    <update-banner></update-banner>
     {% if config.OCR_PROVIDER == 'google_vision' %}
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">

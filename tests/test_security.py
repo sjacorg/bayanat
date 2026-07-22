@@ -68,8 +68,10 @@ class TestSetupWizard:
             uninit_app = create_app(cfg)
             rules = [r.rule for r in uninit_app.url_map.iter_rules()]
             assert "/setup_wizard" in rules
-            assert "/api/check-admin" in rules
-            assert "/api/create-admin" in rules
+            # /api/create-admin and /api/check-admin removed (BAY-01-005);
+            # admin bootstrap is now CLI-only via `flask install`.
+            assert "/api/create-admin" not in rules
+            assert "/api/check-admin" not in rules
 
 
 class TestInputValidation:
@@ -123,35 +125,6 @@ class TestSetupWizardFullFlow:
         resp = client.get("/dashboard")
         assert resp.status_code == 302
         assert "setup_wizard" in resp.location
-
-    def test_check_admin_not_found(self, uninitialized_app, setup_db_uninitialized):
-        client = uninitialized_app.test_client()
-        resp = client.get("/api/check-admin")
-        assert resp.status_code == 200
-        assert resp.json["data"] == {"status": "not_found"}
-        assert resp.json["message"] == "No admin user found"
-
-    def test_create_admin_user(self, uninitialized_app, session_uninitialized):
-        from enferno.user.models import User
-
-        client = uninitialized_app.test_client()
-        resp = client.post(
-            "/api/create-admin",
-            json={"username": "testAdmin", "password": "password"},
-        )
-        assert resp.status_code == 201
-        assert resp.json["message"] == "Admin user installed successfully"
-        assert resp.json["data"]["item"]["username"] == "testAdmin"
-        admin = User.query.filter(User.username == "testAdmin").first()
-        assert admin is not None
-        assert admin.view_usernames is True
-        assert admin.view_simple_history is True
-        assert admin.view_full_history is True
-        assert admin.can_self_assign is True
-        assert admin.can_edit_locations is True
-        assert admin.can_export is True
-        assert admin.can_import_web is True
-        assert admin.can_access_media is True
 
     @pytest.mark.parametrize(
         "client_fixture, expected",

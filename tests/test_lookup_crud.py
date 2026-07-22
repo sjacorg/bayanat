@@ -477,3 +477,42 @@ class TestDeleteIDNumberTypeStillReferenced:
         assert resp.status_code == expected
         if expected == 409:
             assert "is referenced by" in resp.text.lower()
+
+
+# ---------------------------------------------------------------------------
+# Translated-title search (typeahead endpoints)
+# ---------------------------------------------------------------------------
+
+_TRANSLATED_SEARCH_PARAMS = [
+    ("labels", "/admin/api/labels/", {"title": "Arrest", "title_ar": "اعتقال"}),
+    ("sources", "/admin/api/sources/", {"title": "Witness", "title_ar": "شاهد"}),
+    ("event_types", "/admin/api/eventtypes/", {"title": "Bombing", "title_ar": "قصف"}),
+    (
+        "potential_violations",
+        "/admin/api/potentialviolation/",
+        {"title": "Torture", "title_ar": "تعذيب"},
+    ),
+    (
+        "claimed_violations",
+        "/admin/api/claimedviolation/",
+        {"title": "Detention", "title_ar": "احتجاز"},
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "entity,list_url,fields",
+    _TRANSLATED_SEARCH_PARAMS,
+    ids=[p[0] for p in _TRANSLATED_SEARCH_PARAMS],
+)
+def test_lookup_search_by_translated_title(request, session, entity, list_url, fields):
+    Model = _get_model_map()[entity]
+    item = Model(**fields)
+    session.add(item)
+    session.commit()
+
+    client = request.getfixturevalue("admin_client")
+    resp = client.get(f"{list_url}?q={fields['title_ar']}", headers=HEADERS)
+    assert resp.status_code == 200
+    ids = [i["id"] for i in resp.json["data"]["items"]]
+    assert item.id in ids
