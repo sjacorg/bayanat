@@ -23,10 +23,13 @@ from enferno.tasks import bulk_update_actors
 from enferno.user.models import Role
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.background_search import apply_search_timeout, timeout_fallback
+from enferno.utils.logging_utils import get_logger
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles, reject_if_review_locked
+
+logger = get_logger()
 
 
 # Actor fields routes
@@ -209,32 +212,48 @@ def api_actor_create(
         - success/error string based on the operation result.
     """
     actor = Actor()
-    actor.from_json(validated_data["item"])
+    try:
+        actor.from_json(validated_data["item"])
 
-    # assign actor to creator by default
-    actor.assigned_to_id = current_user.id
+        # assign actor to creator by default
+        actor.assigned_to_id = current_user.id
 
-    roles = validated_data["item"].get("roles")
-    if roles:
-        role_ids = [x.get("id") for x in roles]
-        new_roles = Role.query.filter(Role.id.in_(role_ids)).all()
-        actor.roles = new_roles
+        roles = validated_data["item"].get("roles")
+        if roles:
+            role_ids = [x.get("id") for x in roles]
+            new_roles = Role.query.filter(Role.id.in_(role_ids)).all()
+            actor.roles = new_roles
 
-    if actor.save():
+        actor.save(raise_exception=True)
         # the below will create the first revision by default
         actor.create_revision()
-        # Record activity
-        Activity.create(
-            current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
-        )
-        # Select json encoding type
-        mode = request.args.get("mode", "1")
-        return HTTPResponse.created(
-            message=f"Created Actor #{actor.id}",
-            data={"item": actor.to_dict(mode=mode)},
-        )
-    else:
+    except Exception:
+        logger.exception("Actor create failed, cleaning up partial state")
+        db.session.rollback()
+        # from_json commits the session while wiring related objects, so a failure
+        # mid-flow can leave a committed actor behind, possibly without profiles and
+        # therefore invisible to search. Remove it so the client can retry cleanly
+        # without creating duplicates.
+        orphan = db.session.get(Actor, actor.id) if actor.id else None
+        if orphan is not None:
+            try:
+                db.session.delete(orphan)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                logger.exception(f"Failed to clean up orphan actor #{actor.id}")
         return HTTPResponse.error("Error creating Actor", status=500)
+
+    # Record activity
+    Activity.create(
+        current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
+    )
+    # Select json encoding type
+    mode = request.args.get("mode", "1")
+    return HTTPResponse.created(
+        message=f"Created Actor #{actor.id}",
+        data={"item": actor.to_dict(mode=mode)},
+    )
 
 
 # update actor endpoint

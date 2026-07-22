@@ -354,6 +354,30 @@ class TestActorCreate:
         assert resp.status_code == expected
 
 
+class TestActorCreateAtomic:
+    def test_failed_create_leaves_no_orphan(self, request, session, monkeypatch):
+        from enferno.admin.models import Actor
+
+        client = request.getfixturevalue("admin_client")
+        a = ActorFactory()
+        payload = a.to_dict()
+        payload["actor_profiles"] = [{"mode": 1}]
+        payload["id_number"] = a.id_number
+
+        def boom(self, *args, **kwargs):
+            raise RuntimeError("simulated failure after actor save")
+
+        monkeypatch.setattr(Actor, "create_revision", boom)
+        resp = client.post(
+            "/admin/api/actor",
+            json={"item": payload},
+            headers=HEADERS,
+            follow_redirects=True,
+        )
+        assert resp.status_code == 500
+        assert Actor.query.filter(Actor.name == payload["name"]).count() == 0
+
+
 class TestActorGetById:
     @pytest.mark.parametrize(
         "client_fixture, expected",
