@@ -160,10 +160,12 @@
                                                     <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/labels/"
-                                                                :query-params="{ typ: 'for_bulletin' }"
+                                                                :query-params="{ typ: 'for_bulletin', mode: 2 }"
                                                                 item-title="title"
                                                                 item-value="id"
                                                                 :multiple="true"
+                                                                item-subtitle="path"
+                                                                :retain-search="true"
                                                                 label="{{ _('Labels') }}"
                                                                 v-model="labels"
                                                         ></search-field>
@@ -171,10 +173,12 @@
                                                     <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/labels/"
-                                                                :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
+                                                                :query-params="{ fltr: 'verified', typ: 'for_bulletin', mode: 2 }"
                                                                 item-title="title"
                                                                 item-value="id"
                                                                 :multiple="true"
+                                                                item-subtitle="path"
+                                                                :retain-search="true"
                                                                 label="{{ _('Verified Labels') }} "
                                                                 v-model="verLabels"
                                                         ></search-field>

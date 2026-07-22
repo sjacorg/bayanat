@@ -838,10 +838,12 @@ const ActorSearchBox = Vue.defineComponent({
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
-                    :query-params="{ typ: 'for_actor' }"
+                    :query-params="{ typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    item-subtitle="path"
+                    :retain-search="true"
                     :label="translations.includeLabels_"
                 ></search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
@@ -851,10 +853,12 @@ const ActorSearchBox = Vue.defineComponent({
                 <search-field
                     v-model="q.exlabels"
                     api="/admin/api/labels/"
-                    :query-params="{ typ: 'for_actor' }"
+                    :query-params="{ typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    item-subtitle="path"
+                    :retain-search="true"
                     :label="translations.excludeLabels_"
                 ></search-field>
                 <v-switch density="compact" color="primary" v-model="q.childlabels" :label="translations.includeChildLabels_" hide-details></v-switch>
@@ -868,10 +872,12 @@ const ActorSearchBox = Vue.defineComponent({
                 <search-field
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
-                    :query-params="{ fltr: 'verified', typ: 'for_actor' }"
+                    :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    item-subtitle="path"
+                    :retain-search="true"
                     :label="translations.includeVerLabels_"
                 ></search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
@@ -881,10 +887,12 @@ const ActorSearchBox = Vue.defineComponent({
                 <search-field
                     v-model="q.exvlabels"
                     api="/admin/api/labels/"
-                    :query-params="{ fltr: 'verified', typ: 'for_actor' }"
+                    :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    item-subtitle="path"
+                    :retain-search="true"
                     :label="translations.excludeVerLabels_"
                 ></search-field>
                 <v-switch density="compact" color="primary" v-model="q.childverlabels" :label="translations.includeChildVerLabels_" hide-details></v-switch>

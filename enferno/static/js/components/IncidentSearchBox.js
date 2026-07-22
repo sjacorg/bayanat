@@ -434,10 +434,12 @@ const IncidentSearchBox = Vue.defineComponent({
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
-                    :query-params="{}"
+                    :query-params="{ mode: 2 }"
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    item-subtitle="path"
+                    :retain-search="true"
                     :label="translations.includeLabels_"
                 ></search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
@@ -447,10 +449,12 @@ const IncidentSearchBox = Vue.defineComponent({
                 <search-field
                     v-model="q.exlabels"
                     api="/admin/api/labels/"
-                    :query-params="{}"
+                    :query-params="{ mode: 2 }"
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    item-subtitle="path"
+                    :retain-search="true"
                     :label="translations.excludeLabels_"
                 ></search-field>
               </v-card>
