@@ -287,7 +287,6 @@ const LabelPathList = Vue.defineComponent({
   props: {
     labels: { type: Array, default: () => [] },
     limit: { type: Number, default: 6 },
-    showFullPaths: { type: Boolean, default: false },
   },
   data: () => ({
     expanded: false,
@@ -306,9 +305,6 @@ const LabelPathList = Vue.defineComponent({
         if (key) counts[key] = (counts[key] || 0) + 1;
       });
       return Object.keys(counts).filter(key => counts[key] > 1);
-    },
-    hasAnyPaths() {
-      return this.labels.some(label => LabelPathUtils.hasPath(label));
     },
   },
   watch: {
@@ -339,12 +335,6 @@ const LabelPathList = Vue.defineComponent({
         >
           +{{ hiddenCount }} more
         </v-chip>
-      </div>
-      <div v-if="showFullPaths && hasAnyPaths" class="mt-2">
-        <div v-for="label in visibleLabels" :key="'path-' + (label.id || label.title)" class="d-flex flex-column ga-1 text-caption mb-1">
-          <label-path-trail :label="label" lang="en"></label-path-trail>
-          <label-path-trail v-if="label.title_ar || label.title_tr || label.path_ar || label.path_tr" :label="label" lang="ar"></label-path-trail>
-        </div>
       </div>
     </div>
   `,

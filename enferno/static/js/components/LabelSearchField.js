@@ -41,24 +41,6 @@ const LabelSearchField = Vue.defineComponent({
     selectionTitle(item) {
       return this.isLabelPathItem(item) ? window.LabelPathUtils.title(item) : item?.title || item || '';
     },
-    selectionHasPath(item) {
-      return this.selectionParts(item).hasPath;
-    },
-    selectionMarkerIcon() {
-      return this.selectionParts().markerIcon;
-    },
-    selectionIsRtl() {
-      return this.selectionParts().isRtl;
-    },
-    selectionLeaf(item) {
-      return this.selectionParts(item).leaf;
-    },
-    selectionParent(item) {
-      return this.selectionParts(item).parent;
-    },
-    selectionShowsParent(item) {
-      return this.selectionParts(item).showParent;
-    },
     selectionParts(item = null) {
       if (!this.isLabelPathItem(item)) {
         return {
@@ -137,22 +119,24 @@ const LabelSearchField = Vue.defineComponent({
         </v-list-item>
       </template>
       <template v-slot:chip="{ item, props }">
-        <v-chip v-bind="props" size="small" class="text-no-wrap">
-          <template v-if="selectionHasPath(item.raw)">
-            <span class="text-medium-emphasis text-no-wrap">...</span>
-            <v-icon :icon="selectionMarkerIcon()" size="14" class="text-medium-emphasis me-1"></v-icon>
-          </template>
-          <template v-if="selectionShowsParent(item.raw)">
-            <span v-if="selectionIsRtl()">{{ selectionLeaf(item.raw) }}</span>
-            <span v-else>{{ selectionParent(item.raw) }}</span>
-            <v-icon :icon="selectionMarkerIcon()" size="14" class="mx-1"></v-icon>
-            <span v-if="selectionIsRtl()">{{ selectionParent(item.raw) }}</span>
-            <span v-else>{{ selectionLeaf(item.raw) }}</span>
-          </template>
-          <template v-else>
-            {{ selectionTitle(item.raw) }}
-          </template>
-        </v-chip>
+        <template v-for="parts in [selectionParts(item.raw)]">
+          <v-chip v-bind="props" size="small" class="text-no-wrap">
+            <template v-if="parts.hasPath">
+              <span class="text-medium-emphasis text-no-wrap">...</span>
+              <v-icon :icon="parts.markerIcon" size="14" class="text-medium-emphasis me-1"></v-icon>
+            </template>
+            <template v-if="parts.showParent">
+              <span v-if="parts.isRtl">{{ parts.leaf }}</span>
+              <span v-else>{{ parts.parent }}</span>
+              <v-icon :icon="parts.markerIcon" size="14" class="mx-1"></v-icon>
+              <span v-if="parts.isRtl">{{ parts.parent }}</span>
+              <span v-else>{{ parts.leaf }}</span>
+            </template>
+            <template v-else>
+              {{ parts.leaf }}
+            </template>
+          </v-chip>
+        </template>
       </template>
       <template v-if="showCopyIcon" v-slot:append>
         <v-btn icon="mdi-content-copy" variant="plain" @click="copyValue"></v-btn>
