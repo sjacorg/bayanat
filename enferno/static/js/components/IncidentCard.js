@@ -1,4 +1,5 @@
 const IncidentCard = Vue.defineComponent({
+  components: { LabelPathList },
   props: ['incident', 'close', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   mounted() {
