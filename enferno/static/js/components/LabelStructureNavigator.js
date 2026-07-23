@@ -199,9 +199,6 @@ const LabelStructureNavigator = Vue.defineComponent({
                 <span v-if="item.title_ar" class="label-structure-title-ar text-medium-emphasis" dir="rtl">{{ item.title_ar }}</span>
               </div>
             </template>
-            <template #prepend="{ item }">
-              <v-icon :icon="item.children?.length ? 'mdi-folder-outline' : 'mdi-label-outline'" size="small"></v-icon>
-            </template>
             <template #append="{ item }">
               <div class="d-flex ga-1 ms-2">
                 <v-chip v-if="item.for_bulletin" :title="translations.bulletins" size="x-small">B</v-chip>
