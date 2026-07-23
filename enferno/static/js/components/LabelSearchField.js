@@ -1,17 +1,12 @@
 const LabelSearchField = Vue.defineComponent({
   extends: SearchField,
   props: {
+    api: { type: String, default: '/admin/api/labels/' },
     itemTitle: { type: String, default: 'title' },
     itemValue: { type: String, default: 'id' },
     itemSubtitle: { type: String, default: 'path' },
   },
   computed: {
-    labelQueryParams() {
-      return {
-        ...this.queryParams,
-        mode: this.queryParams.mode ?? 2,
-      };
-    },
     selectedDuplicateLeaves() {
       if (!window.LabelPathUtils) return [];
       const selectedItems = Array.isArray(this.modelValue)
@@ -51,24 +46,6 @@ const LabelSearchField = Vue.defineComponent({
       }
       return window.LabelPathUtils.chipParts(item, this.selectedDuplicateLeaves);
     },
-    debouncedSearch: debounce(function (search) {
-      this.loading = true;
-      api
-        .get('/admin/api/labels/', {
-          params: {
-            q: search,
-            ...this.labelQueryParams,
-            per_page: 100,
-          },
-        })
-        .then((response) => {
-          this.items = this._mergeSelected(response.data.items);
-        })
-        .catch(console.error)
-        .finally(() => {
-          this.loading = false;
-        });
-    }, 350),
   },
   template: `
     <v-autocomplete
