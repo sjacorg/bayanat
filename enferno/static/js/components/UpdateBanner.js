@@ -1,6 +1,7 @@
 const UpdateBanner = Vue.defineComponent({
   data() {
     return {
+      translations: window.translations,
       current: null,
       latest: null,
       releaseNotesUrl: null,

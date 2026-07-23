@@ -1,6 +1,7 @@
 const SnapshotsList = Vue.defineComponent({
   data() {
     return {
+      translations: window.translations,
       items: [],
       loading: false,
     };
