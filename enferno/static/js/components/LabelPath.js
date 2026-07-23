@@ -1,6 +1,4 @@
 const LabelPathUtils = {
-  genericLeaves: new Set(['other', 'unknown', 'أخرى', 'آخر', 'غير معروف', 'غير معروفة']),
-
   isRtl() {
     const lang = (window.__lang__ || document?.documentElement?.lang || 'en').toLowerCase();
     return lang.startsWith('ar');
@@ -25,34 +23,21 @@ const LabelPathUtils = {
 
   title(label, lang = this.primaryLang()) {
     if (!label) return '';
-    if (lang === 'ar') return label.title_ar || label.title_tr || label.title || '';
-    return label.title || label.title_ar || label.title_tr || '';
+    if (lang === 'ar') return label.title_ar || label.title || '';
+    return label.title || label.title_ar || '';
   },
 
   secondaryTitle(label) {
-    return this.primaryLang() === 'ar' ? (label?.title || '') : (label?.title_ar || label?.title_tr || '');
+    return this.primaryLang() === 'ar' ? (label?.title || '') : (label?.title_ar || '');
   },
 
   pathSegments(label, lang = this.primaryLang()) {
     if (!label) return [];
-    const english = this.splitPath(label.path);
-    if (lang !== 'ar') return this.parentSegments(label, english, 'en');
+    if (lang !== 'ar') return this.splitPath(label.path);
 
-    const arabic = this.splitPath(label.path_ar || label.path_tr);
-    if (!english.length) return this.parentSegments(label, arabic, 'ar');
-    if (!arabic.length) return this.parentSegments(label, english, 'en');
-
-    const length = Math.max(english.length, arabic.length);
-    const segments = Array.from({ length }, (_, index) => arabic[index] || english[index]).filter(Boolean);
-    return this.parentSegments(label, segments, 'ar');
-  },
-
-  parentSegments(label, segments = [], lang = this.primaryLang()) {
-    const leaf = this.title(label, lang);
-    if (!segments.length || !leaf) return segments;
-    const last = segments[segments.length - 1];
-    if (this.sameSegments([last], [leaf])) return segments.slice(0, -1);
-    return segments;
+    const arabic = this.splitPath(label.path_ar);
+    if (arabic.length) return arabic;
+    return this.splitPath(label.path);
   },
 
   fullPathSegments(label, lang = this.primaryLang()) {
@@ -92,11 +77,6 @@ const LabelPathUtils = {
     return displaySegments.join(` ${this.pathSeparatorForLang(lang)} `);
   },
 
-  isGenericLeaf(label) {
-    return this.genericLeaves.has(this.title(label, 'en').trim().toLowerCase())
-      || this.genericLeaves.has(this.title(label, 'ar').trim());
-  },
-
   chipText(label, duplicateLeaves = []) {
     const parts = this.chipParts(label, duplicateLeaves);
     if (!parts.showParent) return parts.leaf;
@@ -109,11 +89,7 @@ const LabelPathUtils = {
     const leaf = this.title(label);
     const parent = this.parentTitle(label);
     const hasPath = this.hasPath(label);
-    const showParent = Boolean(
-      hasPath
-      && parent
-      && (this.isGenericLeaf(label) || duplicateLeaves.includes(this.leafKey(label)))
-    );
+    const showParent = Boolean(hasPath && parent && duplicateLeaves.includes(this.leafKey(label)));
     const isRtl = this.isRtl();
     return {
       hasPath,
@@ -176,6 +152,7 @@ const LabelPathChip = Vue.defineComponent({
   },
   data: () => ({
     menu: false,
+    translations: window.translations,
   }),
   computed: {
     hasPath() {
@@ -255,7 +232,7 @@ const LabelPathChip = Vue.defineComponent({
       >
         <v-card-text class="pa-3">
           <div class="text-overline font-weight-bold text-medium-emphasis mb-2">
-            LABEL PATH
+            {{ translations.labelPath_ }}
           </div>
           <div
             v-for="(row, index) in pathRows"
@@ -290,6 +267,7 @@ const LabelPathList = Vue.defineComponent({
   },
   data: () => ({
     expanded: false,
+    translations: window.translations,
   }),
   computed: {
     visibleLabels() {
@@ -297,6 +275,9 @@ const LabelPathList = Vue.defineComponent({
     },
     hiddenCount() {
       return Math.max(this.labels.length - this.limit, 0);
+    },
+    moreLabel() {
+      return this.translations.moreLabels_(this.hiddenCount);
     },
     duplicateLeaves() {
       const counts = {};
@@ -333,7 +314,7 @@ const LabelPathList = Vue.defineComponent({
           @keydown.enter.prevent="expanded = true"
           @keydown.space.prevent="expanded = true"
         >
-          +{{ hiddenCount }} more
+          {{ moreLabel }}
         </v-chip>
       </div>
     </div>
