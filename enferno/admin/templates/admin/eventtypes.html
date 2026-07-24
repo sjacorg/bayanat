@@ -28,6 +28,9 @@
                                         <v-toolbar-title>{{ _('Event Types') }}</v-toolbar-title>
 
                                         <v-spacer></v-spacer>
+                                        {% with help_url='https://docs.bayanat.org/guide/events.html', help_title='Events' %}
+                                        {% include 'admin/partials/contextual_help_fab.html' %}
+                                        {% endwith %}
 
                                         <v-btn
                                                 color="primary"

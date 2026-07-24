@@ -29,6 +29,9 @@
                                 </v-toolbar-title>
 
                                 <v-spacer></v-spacer>
+                                {% with help_url='https://docs.bayanat.org/guide/deduplication.html', help_title='Video Deduplication' %}
+                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                {% endwith %}
                                 
                                 <v-btn @click="process" class="ma-2" :disabled="processOn" color="green" variant="elevated">
                                     <v-icon left>mdi-play</v-icon>

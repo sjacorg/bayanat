@@ -27,6 +27,9 @@
                                         </v-text-field>
 
                                         <v-spacer></v-spacer>
+                                        {% with help_url='https://docs.bayanat.org/guide/labels.html', help_title='Labels' %}
+                                        {% include 'admin/partials/contextual_help_fab.html' %}
+                                        {% endwith %}
 
                                         <v-btn-toggle v-model="viewMode" mandatory density="compact" class="ma-2">
                                             <v-btn value="table" icon="mdi-table"></v-btn>

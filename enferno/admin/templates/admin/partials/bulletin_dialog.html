@@ -60,6 +60,9 @@
                 </v-toolbar-title>
 
                 <template #append>
+                    {% with help_url='https://docs.bayanat.org/guide/bulletins.html', help_title='Bulletins' %}
+                    {% include 'admin/partials/contextual_help_fab.html' %}
+                    {% endwith %}
                     <v-btn @click="validateFormAndSave" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>

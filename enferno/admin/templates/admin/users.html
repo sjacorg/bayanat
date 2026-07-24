@@ -23,6 +23,9 @@
                                 <v-toolbar-title>{{ _('System Users') }}</v-toolbar-title>
 
                                 <v-spacer></v-spacer>
+                                {% with help_url='https://docs.bayanat.org/guide/access-control.html', help_title='Access Control' %}
+                                {% include 'admin/partials/contextual_help_fab.html' %}
+                                {% endwith %}
 
                                 <v-btn @click.once="forceGlobalReset" class="ma-2" color="error" variant="elevated">
                                     {{ _('Force Global Password Reset') }}
