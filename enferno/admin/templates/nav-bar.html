@@ -11,6 +11,25 @@
   <v-spacer></v-spacer>
 
   <template v-slot:append>
+    {% if current_user.roles_in(['Admin', 'Mod', 'DA']) %}
+    <label-structure-navigator
+      :can-manage="{{ current_user.roles_in(['Admin', 'Mod'])|tojson }}"
+      :translations='{{ {
+        "labelStructure": _("Label Structure"),
+        "readOnly": _("Read only"),
+        "search": _("Search labels"),
+        "close": _("Close"),
+        "loadError": _("Could not load labels"),
+        "retry": _("Retry"),
+        "noLabels": _("No labels found"),
+        "manageLabels": _("Manage Labels"),
+        "bulletins": _("Bulletins"),
+        "actors": _("Actors"),
+        "incidents": _("Incidents"),
+        "offline": _("Offline")
+      }|tojson }}'
+    ></label-structure-navigator>
+    {% endif %}
     <update-banner></update-banner>
     {% if config.OCR_PROVIDER == 'google_vision' %}
     <v-tooltip location="bottom">
