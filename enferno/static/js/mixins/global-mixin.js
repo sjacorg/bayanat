@@ -94,6 +94,25 @@ const globalMixin = {
         default: return d.format(format);
       }
     },
+    // Count how many filters are set in a saved search's stored data, for an "at a glance"
+    // preview in the "Load existing search" dropdown. Excludes structural/default-selected
+    // or modifier-only keys that don't reflect user intent.
+    countSavedSearchFilters(data) {
+      const q = Array.isArray(data) ? data[0] : data;
+      if (!q || typeof q !== 'object') return 0;
+
+      const ignoredKeys = new Set([
+        'locTypes', 'opTerms', 'termsExact', 'opExTerms', 'exTermsExact',
+        'opTags', 'inExact', 'opExTags', 'exExact', 'singleEvent',
+      ]);
+      const isEmpty = (val) =>
+        val === null || val === undefined || val === '' ||
+        (Array.isArray(val) && val.length === 0) ||
+        (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0);
+
+      return Object.entries(q).filter(([key, val]) => !ignoredKeys.has(key) && !isEmpty(val)).length;
+    },
+
     // Snack Bar
     showSnack(message) {
       if (typeof message === 'string') {

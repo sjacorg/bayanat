@@ -1648,6 +1648,12 @@
                         }
                     },
 
+                    confirmNavigateToFormBuilder() {
+                        if (confirm(translations.unsavedChangesWillBeLost_)) {
+                            window.location.href = '/admin/bulletin-fields/';
+                        }
+                    },
+
                     save() {
                         const bulletinRelations = this.editedItem.bulletin_relations
                             ? this.editedItem.bulletin_relations.map((relation) => ({ ...relation }))

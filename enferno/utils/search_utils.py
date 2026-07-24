@@ -226,7 +226,6 @@ class SearchUtils:
                     for f in db.session.query(DynamicField)
                     .filter(
                         DynamicField.entity_type == entity_type,
-                        DynamicField.active.is_(True),
                         DynamicField.searchable.is_(True),
                     )
                     .all()

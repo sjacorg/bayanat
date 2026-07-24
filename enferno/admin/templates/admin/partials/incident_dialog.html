@@ -12,6 +12,13 @@
                     <v-btn variant="elevated" @click="validateForm" :disabled="saving" :loading="saving" class="mx-2"
                     >{{ _('Save Incident') }}
                     </v-btn>
+                    {% if current_user.has_role("Admin") %}
+                    <v-tooltip location="bottom" text="{{ _('Open Incident Form Builder') }}">
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" icon="mdi-tune" @click="confirmNavigateToFormBuilder"></v-btn>
+                        </template>
+                    </v-tooltip>
+                    {% endif %}
                     <v-btn @click="confirmClose" icon="mdi-close">
                     </v-btn>
 

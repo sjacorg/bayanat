@@ -1412,6 +1412,12 @@
                         this.close();
                     }
                 },
+
+                confirmNavigateToFormBuilder() {
+                    if (confirm(translations.unsavedChangesWillBeLost_)) {
+                        window.location.href = '/admin/incident-fields/';
+                    }
+                },
                 close() {
                     this.dialog = false;
                     setTimeout(() => {
