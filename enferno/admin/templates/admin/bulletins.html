@@ -385,7 +385,9 @@
     <script src="/static/js/components/GeoMap.js?v={{ config.VERSION }}"></script>
     <script src="/static/js/components/UniField.js?v={{ config.VERSION }}"></script>
     <script src="/static/js/components/DualField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/LabelPath.js?v={{ config.VERSION }}"></script>
     <script src="/static/js/components/SearchField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/LabelSearchField.js?v={{ config.VERSION }}"></script>
     <script src="/static/js/components/SplitView.js?v={{ config.VERSION }}"></script>
 
     <script src="/static/js/components/RelatedBulletinsCard.js?v={{ config.VERSION }}"></script>
@@ -1795,6 +1797,8 @@
 
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
+        app.component('LabelSearchField', LabelSearchField);
+        app.component('LabelPathList', LabelPathList);
         app.component('UniField', UniField);
         app.component('DualField', DualField);
         app.component('LocationSearchField', LocationSearchField);

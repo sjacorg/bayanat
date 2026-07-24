@@ -157,17 +157,13 @@
                                 </v-row>
                                 <v-row>
                                     <v-col cols="12" md="6">
-                                        <search-field
-                                            api="/admin/api/labels/"
-                                            item-title="title"
-                                            item-subtitle="path"
+                                        <label-search-field
                                             label="{{ _('Parent') }}"
                                             v-model="editedItem.parent"
                                             :filter-items="filterCircularParents"
-                                            item-value="id"
                                             :multiple="false"
                                             :query-params="parentQueryParams"
-                                        ></search-field>
+                                        ></label-search-field>
                                     </v-col>
                                 </v-row>
                                 <div class="mb-3">{{ _('Available In') }}</div>
@@ -216,7 +212,9 @@
             </v-main>
 
 {% endblock %} {% block js %}
+    <script src="/static/js/components/LabelPath.js?v={{ config.VERSION }}"></script>
     <script src="/static/js/components/SearchField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/LabelSearchField.js?v={{ config.VERSION }}"></script>
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -429,6 +427,8 @@
             }
         });
         app.component('SearchField', SearchField);
+        app.component('LabelSearchField', LabelSearchField);
+        app.component('LabelPathList', LabelPathList);
 
         app.use(router).use(vuetify);
         router.isReady().then(() => {

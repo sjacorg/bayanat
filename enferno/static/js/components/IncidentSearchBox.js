@@ -434,28 +434,24 @@ const IncidentSearchBox = Vue.defineComponent({
 
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2">{{ translations.LABELS_ }}</div>
               <v-card variant="outlined" class="pa-3 border-thin">
-                <search-field
+                <label-search-field
                     v-model="q.labels"
-                    api="/admin/api/labels/"
-                    :query-params="{}"
-                    item-title="title"
-                    item-value="id"
+                    :query-params="{ mode: 2 }"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.includeLabels_"
-                ></search-field>
+                ></label-search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
                   <v-checkbox :label="translations.any_" density="compact" v-model="q.oplabels" color="primary"
                               class="me-4" hide-details></v-checkbox>
                 </div>
-                <search-field
+                <label-search-field
                     v-model="q.exlabels"
-                    api="/admin/api/labels/"
-                    :query-params="{}"
-                    item-title="title"
-                    item-value="id"
+                    :query-params="{ mode: 2 }"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.excludeLabels_"
-                ></search-field>
+                ></label-search-field>
               </v-card>
 
             </v-expansion-panel-text>
