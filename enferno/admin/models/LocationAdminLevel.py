@@ -16,6 +16,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.Integer, nullable=False, unique=True)
     title = db.Column(db.String)
+    title_tr = db.Column(db.String)
     display_order = db.Column(db.Integer)
 
     def to_dict(self) -> dict[str, Any]:
@@ -24,6 +25,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
             "id": self.id,
             "code": self.code,
             "title": self.title,
+            "title_tr": self.title_tr,
             "display_order": self.display_order,
         }
 
@@ -36,6 +38,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
         """
         self.code = jsn.get("code")
         self.title = jsn.get("title")
+        self.title_tr = jsn.get("title_tr")
         self.display_order = jsn.get("display_order", 0)
 
     @staticmethod

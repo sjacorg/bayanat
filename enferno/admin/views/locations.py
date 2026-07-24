@@ -5,6 +5,7 @@ from typing import Optional
 from flask import Response, request
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
+from sqlalchemy import or_
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import Location, LocationAdminLevel, LocationType, Activity
@@ -266,7 +267,12 @@ def api_location_admin_levels() -> Response:
     query = request.args.get("q")
     if query:
         result = (
-            LocationAdminLevel.query.filter(LocationAdminLevel.title.ilike(f"%{query}%"))
+            LocationAdminLevel.query.filter(
+                or_(
+                    LocationAdminLevel.title.ilike(f"%{query}%"),
+                    LocationAdminLevel.title_tr.ilike(f"%{query}%"),
+                )
+            )
             .order_by(-LocationAdminLevel.id)
             .paginate(page=page, per_page=per_page, count=True)
         )
@@ -437,7 +443,12 @@ def api_location_types() -> Response:
     query = request.args.get("q")
     if query:
         result = (
-            LocationType.query.filter(LocationType.title.ilike(f"%{query}%"))
+            LocationType.query.filter(
+                or_(
+                    LocationType.title.ilike(f"%{query}%"),
+                    LocationType.title_tr.ilike(f"%{query}%"),
+                )
+            )
             .order_by(-LocationType.id)
             .paginate(page=page, per_page=per_page, count=True)
         )
