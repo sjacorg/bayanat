@@ -84,7 +84,7 @@ const RelatedIncidentsCard = Vue.defineComponent({
                 <v-chip v-if="item.probability !== null" size="small" label class="flex-chip">{{ probability(item) }}</v-chip>
                 <div class="text-caption font-weight-bold mt-2">Related as</div>
                 <div class="flex-chips">
-                  <v-chip v-if="item?.related_as" v-for="r in relatedAsLabels(item)" class="flex-chip" size="small" label>{{ r }}</v-chip>
+                  <v-chip v-if="item?.related_as" v-for="r in relatedAsLabels(item)" class="flex-chip" size="small" label><bdi>{{ r }}</bdi></v-chip>
                 </div>
                 <div class="text-caption font-weight-bold mt-2">Comments</div>
                 <div v-if="item.comment" class="text-caption"><read-more>{{ item.comment }}</read-more></div>

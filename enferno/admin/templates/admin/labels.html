@@ -212,9 +212,9 @@
             </v-main>
 
 {% endblock %} {% block js %}
-    <script src="/static/js/components/LabelPath.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
-    <script src="/static/js/components/LabelSearchField.js"></script>
+    <script src="/static/js/components/LabelPath.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/SearchField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/LabelSearchField.js?v={{ config.VERSION }}"></script>
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -244,6 +244,7 @@
                 headers: [
                     {title: "{{_('ID')}}", value: "id", width: 80},
                     {title: "{{_('Title')}}", value: "title"},
+                    {title: "{{_('Title (AR)')}}", value: "title_ar"},
                     {title: "{{_('Parent')}}", value: "parent", sortable: false},
                     {title: "{{_('Available In')}}", value: "available_in"},
                     {% if current_user.roles_in(['Admin','Mod']) %}

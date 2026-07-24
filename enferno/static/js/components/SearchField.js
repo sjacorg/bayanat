@@ -34,6 +34,14 @@ const SearchField = Vue.defineComponent({
       type: String,
       default: null,
     },
+    // Field holding the translated title (e.g. 'title_ar' or 'title_tr').
+    // When null, a '<itemTitle>_ar' / '<itemTitle>_tr' key on the fetched items
+    // is picked up automatically. The user's interface language decides which
+    // language renders as the primary text and which as the secondary one.
+    itemTranslation: {
+      type: String,
+      default: null,
+    },
     retainSearch: {
       type: Boolean,
       default: false,
@@ -53,8 +61,52 @@ const SearchField = Vue.defineComponent({
       }
       return this.items;
     },
+    isArabic() {
+      return window.__lang__ === 'ar';
+    },
   },
   methods: {
+    translationField(raw) {
+      if (this.itemTranslation) return this.itemTranslation;
+      if (raw == null || typeof raw !== 'object') return null;
+      for (const suffix of ['_ar', '_tr']) {
+        const key = this.itemTitle + suffix;
+        if (key in raw) return key;
+      }
+      return null;
+    },
+    primaryTitle(raw) {
+      if (raw == null || typeof raw !== 'object') return raw ?? '';
+      const field = this.translationField(raw);
+      const translated = field ? raw[field] : null;
+      if (this.isArabic && translated) return translated;
+      return raw[this.itemTitle] || translated || '';
+    },
+    secondaryTitle(raw) {
+      if (raw == null || typeof raw !== 'object') return null;
+      const field = this.translationField(raw);
+      const translated = field ? raw[field] : null;
+      if (!translated || !raw[this.itemTitle]) return null;
+      return this.isArabic ? raw[this.itemTitle] : translated;
+    },
+    localizedItemTitle(item) {
+      if (item == null || typeof item !== 'object') return item;
+      return this.primaryTitle(item);
+    },
+    subtitleText(raw) {
+      if (!this.itemSubtitle) return null;
+      let text = raw[this.itemSubtitle];
+      if (this.isArabic && raw[this.itemSubtitle + '_ar']) {
+        text = raw[this.itemSubtitle + '_ar'];
+      }
+      return this.collapsePath(text);
+    },
+    collapsePath(text) {
+      if (!text) return text;
+      const parts = String(text).split(' > ');
+      if (parts.length <= 3) return text;
+      return [parts[0], '…', parts[parts.length - 1]].join(' > ');
+    },
     startSearch(search) {
       this.loading = true;
       this.debouncedSearch(search);
@@ -148,7 +200,7 @@ const SearchField = Vue.defineComponent({
       item-color="secondary"
       :label="label"
       :items="filteredItems"
-      :item-title="itemTitle"
+      :item-title="localizedItemTitle"
       :item-value="itemValue"
       prepend-inner-icon="mdi-magnify"
       :multiple="multiple"
@@ -161,16 +213,26 @@ const SearchField = Vue.defineComponent({
       :loading="loading"
       :rules="rules"
     >
-      <template v-if="itemSubtitle" v-slot:item="{ item, props }">
+      <template v-slot:chip="{ item, props }">
+        <v-chip v-bind="props" label style="height: auto;">
+          <span class="d-flex flex-column py-1">
+            <bdi class="text-body-2">{{ primaryTitle(item.raw) }}</bdi>
+            <bdi v-if="secondaryTitle(item.raw)" class="text-caption text-medium-emphasis">{{ secondaryTitle(item.raw) }}</bdi>
+          </span>
+        </v-chip>
+      </template>
+      <template v-slot:item="{ item, props }">
         <v-list-item v-bind="props" density="compact">
           <template v-if="multiple" v-slot:prepend="{ isActive }">
             <v-checkbox-btn :model-value="isActive" density="compact" tabindex="-1" style="pointer-events: none;"></v-checkbox-btn>
           </template>
           <template v-slot:title>
-            <span class="text-body-2">{{ item.raw[itemTitle] }}</span>
+            <span class="text-body-2">
+              <bdi>{{ primaryTitle(item.raw) }}</bdi><template v-if="secondaryTitle(item.raw)"> · <bdi class="text-caption text-grey">{{ secondaryTitle(item.raw) }}</bdi></template>
+            </span>
           </template>
-          <template v-if="item.raw[itemSubtitle]" v-slot:subtitle>
-            <span class="text-caption text-grey">{{ item.raw[itemSubtitle] }}</span>
+          <template v-if="subtitleText(item.raw)" v-slot:subtitle>
+            <span class="text-caption text-grey"><bdi>{{ subtitleText(item.raw) }}</bdi></span>
           </template>
         </v-list-item>
       </template>

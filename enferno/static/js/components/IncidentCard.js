@@ -6,6 +6,9 @@ const IncidentCard = Vue.defineComponent({
     this.$root.fetchDynamicFields({ entityType: 'incident' })
   },
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     async loadGeoMap() {
       this.geoMapLoading = true;
       this.geoMapOn = true;
