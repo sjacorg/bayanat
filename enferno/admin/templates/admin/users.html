@@ -131,7 +131,7 @@
 
                         <template v-slot:no-data></template>
                     </v-data-table-server>
-                    <v-dialog v-model="dialog" max-width="1200px">
+                    <v-dialog v-model="dialog" max-width="1046px">
                         <v-card>
                         <v-form ref="form" v-model="valid">
                             <v-toolbar :title="formTitle">
@@ -141,12 +141,16 @@
                                     </v-btn>
                                 </template>
                             </v-toolbar>
-                            <v-card-text>
-                                <v-container>
+                            <v-divider></v-divider>
+                            <v-card-text class="pa-6">
+                                <v-container fluid class="pa-0">
+
+                                    <h3 class="text-subtitle-1 mb-4">{{ _('User Details') }}</h3>
                                     <v-row>
 
-                                        <v-col cols="12" md="4">
+                                        <v-col cols="12" md="4" class="px-3">
                                             <v-text-field
+                                                    variant="filled"
                                                     label="{{ _('Full Name') }}"
                                                     v-model="editedItem.name"
                                                     :rules="[
@@ -156,165 +160,198 @@
                                             ></v-text-field>
 
                                         </v-col>
-                                        <v-col cols="12" md="4">
+                                        <v-col cols="12" md="4" class="px-3">
 
-                                            <div class="d-flex">
-
-                                                <v-text-field
-                                                        label="{{ _('Email') }}"
-                                                        :disabled="disableEmail"
-                                                        v-model="editedItem.email"
-                                                        v-bind="serverErrorPropsForField(serverErrors, 'item.email')"
-                                                        type="email"
-                                                ></v-text-field>
-                                                <v-btn @click.stop="enableEmail"
-                                                       v-if="editedItem.id" class="my-auto mx-1"
-                                                       icon="mdi-pencil"
-                                                       size="small"
-                                                       variant="plain"
-                                                >
-
-                                                </v-btn>
-                                            </div>
+                                            <v-text-field
+                                                    variant="filled"
+                                                    label="{{ _('Email') }}"
+                                                    :disabled="disableEmail"
+                                                    v-model="editedItem.email"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.email')"
+                                                    type="email"
+                                            >
+                                                <template #append-inner>
+                                                    <v-btn v-if="editedItem.id" class="field-action-enabled" icon="mdi-pencil"
+                                                           size="small" variant="text" @click.stop="enableEmail"></v-btn>
+                                                </template>
+                                            </v-text-field>
                                         </v-col>
-                                        <v-col cols="12" md="4">
+                                        <v-col cols="12" md="4" class="px-3">
 
-                                            <div class="d-flex align-center">
-
-                                                <v-text-field
-                                                        label="{{ _('Password') }}"
-                                                        :class="isStrongPassword ? 'text-success' : undefined"
-                                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
-                                                        :disabled="disablePassword"
-                                                        v-model="editedItem.password"
-                                                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                                                        :type="showPassword ? 'text' : 'password'"
-                                                        @click:append="showPassword = !showPassword"
-                                                        :rules="disablePassword ? [] : [
-                                                            validationRules.required(),
-                                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
-                                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
-                                                        ]"
-                                                        @input="isStrongPassword = false"
-                                                >
-                                                </v-text-field>
-
-                                                <v-btn @click.stop="enablePassword"
-                                                       v-if="editedItem.id" class="mb-3 mx-1"
-                                                       icon="mdi-pencil"
-                                                       size="small"
-                                                       variant="plain"
-                                                >
-
-                                                </v-btn>
-
-                                            </div>
+                                            <v-text-field
+                                                    variant="filled"
+                                                    label="{{ _('Password') }}"
+                                                    :class="isStrongPassword ? 'text-success' : undefined"
+                                                    :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
+                                                    :disabled="disablePassword"
+                                                    v-model="editedItem.password"
+                                                    :type="showPassword ? 'text' : 'password'"
+                                                    :rules="disablePassword ? [] : [
+                                                        validationRules.required(),
+                                                        validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                        validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                                    ]"
+                                                    @input="isStrongPassword = false"
+                                            >
+                                                <template #append-inner>
+                                                    <v-btn class="field-action-enabled" :icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                                           size="small" variant="text" @click.stop="showPassword = !showPassword"></v-btn>
+                                                    <v-btn v-if="editedItem.id" class="field-action-enabled" icon="mdi-pencil"
+                                                           size="small" variant="text" @click.stop="enablePassword"></v-btn>
+                                                </template>
+                                            </v-text-field>
                                         </v-col>
                                     </v-row>
                                     <v-row>
-                                        <v-col>
-                                            <div class="d-flex">
-                                                <v-text-field
-                                                              label="{{ _('Username') }}"
-                                                              :class="isUsernameAvailable ? 'text-success' : undefined"
-                                                              :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
-                                                              :disabled="disableUsername"
-                                                              v-model="editedItem.username"
-                                                              :rules="disableUsername ? [] : [
-                                                                    validationRules.required(),
-                                                                    validationRules.minLength(4),
-                                                                    validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
-                                                                ]"
-                                                              @input="isUsernameAvailable = false"
-                                                              v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
-                                                ></v-text-field>
-
-                                                <v-btn @click.stop="enableUsername"
-                                                       v-if="editedItem.id" class="my-auto mx-1"
-                                                       icon="mdi-pencil"
-                                                       size="small"
-                                                       variant="plain"
-                                                >
-
-                                                </v-btn>
-                                            </div>
-
-
+                                        <v-col cols="12" md="6" class="px-3">
+                                            <v-text-field
+                                                    variant="filled"
+                                                    label="{{ _('Username') }}"
+                                                    :class="isUsernameAvailable ? 'text-success' : undefined"
+                                                    :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
+                                                    :disabled="disableUsername"
+                                                    v-model="editedItem.username"
+                                                    :rules="disableUsername ? [] : [
+                                                        validationRules.required(),
+                                                        validationRules.minLength(4),
+                                                        validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
+                                                    ]"
+                                                    @input="isUsernameAvailable = false"
+                                                    v-bind="serverErrorPropsForField(serverErrors, 'item.username')"
+                                            >
+                                                <template #append-inner>
+                                                    <v-btn v-if="editedItem.id" class="field-action-enabled" icon="mdi-pencil"
+                                                           size="small" variant="text" @click.stop="enableUsername"></v-btn>
+                                                </template>
+                                            </v-text-field>
                                         </v-col>
-                                        <v-col cols="4" md="4">
+                                        <v-col cols="12" md="6" class="px-3">
                                             <v-select
+                                                    variant="filled"
                                                     :items="roles"
                                                     item-title="name"
                                                     item-value="id"
                                                     v-model="editedItem.roles"
-                                                    label="{{ _('Groups') }}"
+                                                    label="{{ _('Group') }}"
                                                     return-object
                                                     multiple
+                                                    :menu-props="{ maxWidth: '100%' }"
                                                     @update:model-value="checkRoles"
-                                            ></v-select>
+                                            >
+                                                <template #item="{ item, props: itemProps, index }">
+                                                    <div>
+                                                        <v-list-item v-bind="itemProps" :title="undefined" lines="two" :active="false">
+                                                            <v-list-item-title
+                                                                    class="d-flex align-center"
+                                                                    :class="editedItem.roles?.some(r => r.id === item.raw.id) ? 'text-primary' : undefined">
+                                                                ${ item.raw.name }
+                                                                <v-icon v-if="editedItem.roles?.some(r => r.id === item.raw.id)" class="ml-1" size="small" color="primary">mdi-check</v-icon>
+                                                            </v-list-item-title>
+                                                            <v-list-item-subtitle class="text-wrap">
+                                                                ${ item.raw.description }
+                                                            </v-list-item-subtitle>
+                                                        </v-list-item>
+                                                        <v-divider v-if="index < roles.length - 1"></v-divider>
+                                                    </div>
+                                                </template>
+                                            </v-select>
+
+                                        </v-col>
+                                    </v-row>
+
+                                    <h3 class="text-subtitle-1 mb-2 mt-6">{{ _('Account Status') }}</h3>
+                                    <v-row class="mb-6 ml-1">
+                                        <v-col cols="12">
+                                            <v-switch color="primary" hide-details v-model="editedItem.active">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Active') }}</span>
+                                                </template>
+                                            </v-switch>
+                                        </v-col>
+                                    </v-row>
+
+                                    <h3 class="text-subtitle-1 mb-2">{{ _('User Permissions') }}</h3>
+                                    <v-row class="ml-1">
+                                        <v-col cols="12" md="4">
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.view_usernames">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can View Usernames') }}</span>
+                                                </template>
+                                            </v-switch>
+                                        </v-col>
+                                        <v-col cols="12" md="4">
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.view_simple_history">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can View Activity Overview') }}</span>
+                                                </template>
+                                            </v-switch>
+                                        </v-col>
+                                        <v-col cols="12" md="4">
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.view_full_history">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can View Detailed Activity Record') }}</span>
+                                                </template>
+                                            </v-switch>
+                                        </v-col>
+                                        <v-col cols="12" md="4">
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.can_self_assign">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can Self-Assign') }}</span>
+                                                </template>
+                                            </v-switch>
 
                                         </v-col>
                                         <v-col cols="12" md="4">
-                                            <v-switch color="primary" label="{{ _('Active') }}"
-                                                      v-model="editedItem.active"></v-switch>
-                                        </v-col>
-                                    </v-row>
-                                    <v-row>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view usernames') }}"
-                                                      v-model="editedItem.view_usernames"></v-switch>
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view simple history') }}"
-                                                      v-model="editedItem.view_simple_history"></v-switch>
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view Full History') }}"
-                                                      v-model="editedItem.view_full_history"></v-switch>
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can self assign') }}"
-                                                      v-model="editedItem.can_self_assign"></v-switch>
-
-                                        </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can edit Locations') }}"
-                                                      v-model="editedItem.can_edit_locations"></v-switch>
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.can_edit_locations">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can Edit Locations') }}</span>
+                                                </template>
+                                            </v-switch>
 
                                         </v-col>
 
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Request Exports') }}"
-                                                      v-model="editedItem.can_export"></v-switch>
+                                        <v-col cols="12" md="4">
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.can_export">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can Request Exports') }}</span>
+                                                </template>
+                                            </v-switch>
                                         </v-col>
 
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Import from Web') }}"
-                                                      v-model="editedItem.can_import_web"></v-switch>
+                                        <v-col cols="12" md="4">
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.can_import_web">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can Import From Web') }}</span>
+                                                </template>
+                                            </v-switch>
                                         </v-col>
-                                        <v-col cols="12" md="3">
-                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Access Media') }}"
-                                                      v-model="editedItem.can_access_media"></v-switch>
+                                        <v-col cols="12" md="4">
+                                            <v-switch :disabled="isAdmin" color="primary" hide-details v-model="editedItem.can_access_media">
+                                                <template #label>
+                                                    <span class="text-body-2 ms-1">{{ _('Can Access Media') }}</span>
+                                                </template>
+                                            </v-switch>
                                         </v-col>
                                     </v-row>
                                 </v-container>
                             </v-card-text>
-                            <v-card-text class="text-center">
-                                <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
+
+                            <v-card-text v-if="editedItem?.id" class="d-flex align-center justify-center pa-4">
+                                <v-btn v-if="editedItem.two_factor_devices?.length" variant="text" prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
                                     {{ _('Revoke 2FA') }}
                                 </v-btn>
 
-                                <v-btn v-if="editedItem?.id" @click.once="logoutAllUserSessions(editedItem.id)" color="error">
-                                    <v-icon left>mdi-logout</v-icon>
+                                <v-btn @click.once="logoutAllUserSessions(editedItem.id)" color="error" variant="elevated" prepend-icon="mdi-logout">
                                     {{ _('Logout All Sessions') }}
                                 </v-btn>
                             </v-card-text>
 
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
-                                <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="validateFormAndSave" color="primary" variant="elevated">
-                                    {{ _('Save') }}
+                                <v-btn @click="close" variant="outlined" class="px-4">{{ _('Cancel') }}</v-btn>
+                                <v-btn @click="validateFormAndSave" color="primary" variant="elevated" class="px-4" slim
+                                       :prepend-icon="editedItem?.id ? 'mdi-check' : 'mdi-plus'">
+                                    ${ saveButtonText }
                                 </v-btn>
                             </v-card-actions>
                         </v-form>
@@ -388,7 +425,10 @@
 
             computed: {
                 formTitle() {
-                    return this.editedItem?.id ? "{{_('Edit Item')}}" : "{{_('New Item')}}";
+                    return this.editedItem?.id ? "{{_('Edit User')}}" : "{{_('Add New User')}}";
+                },
+                saveButtonText() {
+                    return this.editedItem?.id ? "{{_('Save')}}" : "{{_('Add User')}}";
                 },
             },
 
