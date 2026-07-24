@@ -120,8 +120,10 @@ def api_app_reload() -> Response:
     reloaded = reload_app()
     restart_celery()
     if reloaded:
-        return HTTPResponse.success(message="Reloading Bayanat")
-    return HTTPResponse.success(message="Configuration saved. Please restart Bayanat manually.")
+        return HTTPResponse.success(message=gettext("Reloading Bayanat"))
+    return HTTPResponse.success(
+        message=gettext("Configuration saved. Please restart Bayanat manually.")
+    )
 
 
 @admin.app_template_filter("to_config")
