@@ -871,6 +871,18 @@
 
                 },
                 mounted: function () {
+                    // resume a completed background search from its notification link
+                    const bgsToken = new URLSearchParams(window.location.search).get('bgs');
+                    if (bgsToken) {
+                        axios.get(`/admin/api/background-search/${bgsToken}`).then(res => {
+                            const applyBgs = () => {
+                                if (this.loading) return setTimeout(applyBgs, 300);
+                                this.search = [{ ids: res.data.ids }];
+                                this.refresh();
+                            };
+                            applyBgs();
+                        }).catch(() => this.showSnack('Background search results have expired'));
+                    }
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
                         api.get('/admin/api/roles/').then(res => {
@@ -1184,6 +1196,10 @@
 
                         axios.post('/admin/api/bulletins/', requestData)
                             .then((response) => {
+                                if (response.status === 202) {
+                                    this.showSnack(response.data.message);
+                                    return;
+                                }
                                 const endTime = new Date()
                                 const duration = endTime - startTime
                                 this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
