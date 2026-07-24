@@ -28,6 +28,11 @@ const RelationEditorCard = Vue.defineComponent({
       translations: window.translations,
     };
   },
+  methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
+  },
   template: `
     <v-card>
       <v-card-item>
@@ -60,7 +65,7 @@ const RelationEditorCard = Vue.defineComponent({
             >
               <v-chip v-for="rel in relationTypes"
                       :value="rel.id"
-                      :key="rel.id" size="small"> {{ rel.title }}
+                      :key="rel.id" size="small"><bdi>{{ localizedTitle(rel) }}</bdi>
               </v-chip>
             </v-chip-group>
           </v-list-item-subtitle>

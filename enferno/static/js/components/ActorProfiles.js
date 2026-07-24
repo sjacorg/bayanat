@@ -19,6 +19,9 @@ const ActorProfiles = Vue.defineComponent({
   },
 
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     fetchProfiles() {
       axios
         .get(`/admin/api/actor/${this.actorId}/profiles`)
@@ -65,7 +68,7 @@ const ActorProfiles = Vue.defineComponent({
                   <div class="px-1 title black--text">{{ translations.sources_ }}</div>
                   <div class="flex-chips">
                     <v-chip size="small" class="flex-chip" label v-for="source in profile.sources" :key="source.id">
-                      {{ source.title }}
+                      <bdi>{{ localizedTitle(source) }}</bdi>
                     </v-chip>
                   </div>
                 </v-card-text>
@@ -76,7 +79,7 @@ const ActorProfiles = Vue.defineComponent({
                   <div class="px-1 title black--text">{{ translations.labels_ }}</div>
                   <div class="flex-chips">
                     <v-chip size="small" class="flex-chip" label v-for="label in profile.labels" :key="label.id">
-                      {{ label.title }}
+                      <bdi>{{ localizedTitle(label) }}</bdi>
                     </v-chip>
                   </div>
                 </v-card-text>
@@ -89,7 +92,7 @@ const ActorProfiles = Vue.defineComponent({
                   <div class="flex-chips">
                     <v-chip size="small" class="flex-chip" label v-for="verLabel in profile.ver_labels"
                             :key="verLabel.id">
-                      {{ verLabel.title }}
+                      <bdi>{{ localizedTitle(verLabel) }}</bdi>
                     </v-chip>
                   </div>
                 </v-card-text>

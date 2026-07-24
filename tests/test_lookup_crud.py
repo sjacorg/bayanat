@@ -516,3 +516,23 @@ def test_lookup_search_by_translated_title(request, session, entity, list_url, f
     assert resp.status_code == 200
     ids = [i["id"] for i in resp.json["data"]["items"]]
     assert item.id in ids
+
+
+def test_label_mode2_includes_translated_title_and_path(session):
+    from enferno.admin.models import Label
+
+    root = Label(title="Root", title_ar="جذر")
+    session.add(root)
+    session.commit()
+    mid = Label(title="Mid", parent_label_id=root.id)
+    session.add(mid)
+    session.commit()
+    leaf = Label(title="Leaf", title_ar="ورقة", parent_label_id=mid.id)
+    session.add(leaf)
+    session.commit()
+
+    d = leaf.to_mode2()
+    assert d["title_ar"] == "ورقة"
+    assert d["path"] == "Root > Mid"
+    # untranslated ancestors fall back to their English title per level
+    assert d["path_ar"] == "جذر > Mid"

@@ -5,6 +5,9 @@ const IncidentCard = Vue.defineComponent({
     this.$root.fetchDynamicFields({ entityType: 'incident' })
   },
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     async loadGeoMap() {
       this.geoMapLoading = true;
       this.geoMapOn = true;
@@ -217,7 +220,7 @@ const IncidentCard = Vue.defineComponent({
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.labels_ }}</div>
                   <div class="flex-chips">
-                    <v-chip class="flex-chip" v-for="label in incident.labels" :key="label.id">{{ label.title }}</v-chip>
+                    <v-chip class="flex-chip" v-for="label in incident.labels" :key="label.id"><bdi>{{ localizedTitle(label) }}</bdi></v-chip>
                   </div>
                 </v-card-text>
               </v-card>

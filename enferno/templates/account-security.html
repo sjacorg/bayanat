@@ -408,7 +408,7 @@
     </div>
 </v-main>
 {% endblock %} {% block js %}
-<script src="/static/js/qrcodejs/qrcode.min.js"></script>
+<script src="/static/js/qrcodejs/qrcode.min.js?v={{ config.VERSION }}"></script>
 
 <script nonce="{{ csp_nonce() }}">
     const { createApp } = Vue;

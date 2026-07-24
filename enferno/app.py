@@ -159,6 +159,7 @@ def register_extensions(app):
         _should_set_storage, app.session_interface
     )
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
+    app.jinja_env.globals["get_locale"] = get_locale
     rds.init_app(app)
     mail.init_app(app)
 

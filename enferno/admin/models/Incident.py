@@ -488,7 +488,15 @@ class Incident(db.Model, BaseMixin):
         labels_json = []
         if self.labels and len(self.labels):
             for label in self.labels:
-                labels_json.append({"id": label.id, "title": label.title})
+                labels_json.append(
+                    {
+                        "id": label.id,
+                        "title": label.title,
+                        "title_ar": label.title_ar,
+                        "path": label._build_path(),
+                        "path_ar": label._build_path(translated=True),
+                    }
+                )
 
         # Locations json
         locations_json = []
@@ -577,7 +585,15 @@ class Incident(db.Model, BaseMixin):
         labels_json = []
         if self.labels and len(self.labels):
             for label in self.labels:
-                labels_json.append({"id": label.id, "title": label.title})
+                labels_json.append(
+                    {
+                        "id": label.id,
+                        "title": label.title,
+                        "title_ar": label.title_ar,
+                        "path": label._build_path(),
+                        "path_ar": label._build_path(translated=True),
+                    }
+                )
 
         # Locations json
         locations_json = []
