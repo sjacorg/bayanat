@@ -4,6 +4,11 @@ const LabelStructureNavigator = Vue.defineComponent({
       type: Boolean,
       default: false,
     },
+    // 'appbar' anchors the panel to the toolbar, 'inline' to the field it sits next to
+    variant: {
+      type: String,
+      default: 'appbar',
+    },
     translations: {
       type: Object,
       required: true,
@@ -91,7 +96,7 @@ const LabelStructureNavigator = Vue.defineComponent({
     <v-menu
       v-model="menuOpen"
       :close-on-content-click="false"
-      location="bottom end"
+      :location="variant === 'inline' ? 'bottom start' : 'bottom end'"
       offset="8"
     >
       <template #activator="{ props }">
@@ -100,6 +105,9 @@ const LabelStructureNavigator = Vue.defineComponent({
           icon="mdi-file-tree-outline"
           :aria-label="translations.labelStructure"
           :aria-expanded="menuOpen"
+          :density="variant === 'inline' ? 'comfortable' : 'default'"
+          :size="variant === 'inline' ? 'small' : undefined"
+          :variant="variant === 'inline' ? 'text' : undefined"
           :title="translations.labelStructure"
         ></v-btn>
       </template>
