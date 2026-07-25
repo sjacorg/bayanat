@@ -52,6 +52,13 @@ const LabelStructureNavigator = Vue.defineComponent({
       };
       return find(this.treeItems)?.title || '';
     },
+    // ancestors read as context, the label itself is what he came to read
+    activeCrumbs() {
+      return this.activePath
+        .split(/[,،]/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+    },
   },
   watch: {
     open(open) {
@@ -260,8 +267,12 @@ const LabelStructureNavigator = Vue.defineComponent({
           ></v-text-field>
         </v-card-text>
 
-        <div v-if="activePath" class="label-structure-path px-3 py-1" :title="activePath">
-          {{ activePath }}
+        <div v-if="activePath" class="label-structure-path px-3 py-2" :title="activePath">
+          <v-icon icon="mdi-label-outline" size="small"></v-icon>
+          <template v-for="(crumb, index) in activeCrumbs" :key="index">
+            <span v-if="index" class="label-structure-crumb-sep">›</span>
+            <span :class="index === activeCrumbs.length - 1 ? 'label-structure-crumb-leaf' : 'text-medium-emphasis'">{{ crumb }}</span>
+          </template>
         </div>
 
         <div class="label-structure-tree">

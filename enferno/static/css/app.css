@@ -829,15 +829,28 @@ div.jsondiffpatch-child-node-type-array:after {
     margin-inline-end: 2px;
 }
 
-/* the selected row's full path, pinned under the search box */
+/* the selected row's full path, pinned under the search box. this is the one
+   line he reads, so it outranks the tree rows in size and colour */
 .label-structure-path {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     flex: 0 0 auto;
-    font-size: 12px;
-    line-height: 1.1rem;
-    background: rgba(var(--v-theme-primary), 0.08);
-    border-block: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+    font-size: 13.5px;
+    line-height: 1.25rem;
+    color: rgb(var(--v-theme-primary));
+    background: rgba(var(--v-theme-primary), 0.1);
+    border-block: thin solid rgba(var(--v-theme-primary), 0.25);
     overflow-x: auto;
     white-space: nowrap;
+}
+
+.label-structure-crumb-sep {
+    opacity: 0.5;
+}
+
+.label-structure-crumb-leaf {
+    font-weight: 600;
 }
 
 .label-structure-tree .v-list-item-title,
