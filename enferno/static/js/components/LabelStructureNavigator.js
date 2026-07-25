@@ -9,13 +9,10 @@ const LabelStructureNavigator = Vue.defineComponent({
       type: String,
       default: 'appbar',
     },
-    translations: {
-      type: Object,
-      required: true,
-    },
   },
   data() {
     return {
+      translations: window.labelTreeTranslations,
       error: false,
       loaded: false,
       loading: false,

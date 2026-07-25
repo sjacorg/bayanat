@@ -14,7 +14,7 @@
     {% if current_user.roles_in(['Admin', 'Mod', 'DA']) %}
     <label-structure-navigator
       :can-manage="{{ current_user.roles_in(['Admin', 'Mod'])|tojson }}"
-      :translations="labelTreeTranslations"
+     
     ></label-structure-navigator>
     {% endif %}
     <update-banner></update-banner>

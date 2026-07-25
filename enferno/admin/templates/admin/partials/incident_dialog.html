@@ -73,7 +73,7 @@
                                         :retain-search="true"
                                         label="{{ _('Labels') }}"
                                     ></label-search-field>
-                                    <label-structure-navigator variant="inline" :translations="labelTreeTranslations" class="mt-2"></label-structure-navigator>
+                                    <label-structure-navigator variant="inline" class="mt-2"></label-structure-navigator>
                                 </div>
                                 <div v-else-if="isFieldActive(field, 'locations')" :class="[fieldClass(field), 'px-3 py-2']">
                                     <location-search-field
