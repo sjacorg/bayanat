@@ -1,5 +1,5 @@
 const PANEL_WIDTH = 390;
-const FAB_SIZE = 52;
+const FAB_SIZE = 48;
 
 const LabelStructureNavigator = Vue.defineComponent({
   props: {
@@ -17,10 +17,10 @@ const LabelStructureNavigator = Vue.defineComponent({
       x: saved?.x ?? 24,
       y: saved?.y ?? Math.max(72, window.innerHeight - 640),
       dragOffset: null,
-      // right margin at mid height: clear of the app bar, the New Bulletin
-      // button and the edit dialog's own toolbar. draggable from there.
-      fabX: savedFab?.x ?? window.innerWidth - 72,
-      fabY: savedFab?.y ?? Math.round(window.innerHeight / 2) - 26,
+      // sits in the app bar, left of the existing toolbar icons, and floats
+      // above dialogs so it stays reachable while editing. draggable anywhere.
+      fabX: savedFab?.x ?? window.innerWidth - 300,
+      fabY: savedFab?.y ?? 8,
       fabDragged: false,
       fabOffset: null,
       fabPointer: null,
@@ -111,7 +111,7 @@ const LabelStructureNavigator = Vue.defineComponent({
     },
     clampFab() {
       this.fabX = Math.min(Math.max(this.fabX, 0), window.innerWidth - FAB_SIZE);
-      this.fabY = Math.min(Math.max(this.fabY, 64), window.innerHeight - FAB_SIZE);
+      this.fabY = Math.min(Math.max(this.fabY, 0), window.innerHeight - FAB_SIZE);
     },
     startFabDrag(event) {
       this.fabDragged = false;
@@ -193,7 +193,7 @@ const LabelStructureNavigator = Vue.defineComponent({
         :icon="open ? 'mdi-close' : 'mdi-file-tree-outline'"
         variant="elevated"
         rounded="circle"
-        size="large"
+        size="default"
         :style="{left: fabX + 'px', top: fabY + 'px'}"
         @pointerdown="startFabDrag"
         @pointermove="onFabDrag"
