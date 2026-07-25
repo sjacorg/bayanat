@@ -775,28 +775,8 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 .label-structure-tree {
-    flex: 1 1 auto;
+    max-height: min(65vh, 560px);
     overflow-y: auto;
-}
-
-/* sits above Vuetify's overlay layer (2400) so it stays usable while a
-   fullscreen edit dialog is open */
-.label-structure-dock {
-    position: fixed;
-    top: 64px;
-    right: 0;
-    bottom: 0;
-    z-index: 2500;
-    display: flex;
-    flex-direction: column;
-    border-radius: 0;
-}
-
-@media (max-width: 960px) {
-    .label-structure-dock {
-        width: 100vw;
-        top: 56px;
-    }
 }
 
 .label-structure-tree .v-list-item {
