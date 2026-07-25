@@ -867,7 +867,8 @@ div.jsondiffpatch-child-node-type-array:after {
 .overflow-unset { overflow: var(--v-overflow-unset); }
 .z-1 { z-index: var(--v-z-1); }
 .z-100 { z-index: var(--v-z-100); }
-.left-auto { left: var(--v-left-auto) !important; }
+.inset-inline-start-0 { inset-inline-start: 0 !important; }
+.inset-inline-end-0 { inset-inline-end: 0 !important; }
 .h-fit { height: var(--v-h-fit); }
 .pointer-events-none { pointer-events: var(--v-pointer-events-none) !important; }
 .pointer-events-auto { pointer-events: var(--v-pointer-events-auto) !important; }

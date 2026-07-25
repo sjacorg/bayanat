@@ -90,16 +90,16 @@ const ProfileDropdown = Vue.defineComponent({
         <v-list density="compact" nav>
             <v-list-subheader>{{ translations.theme_ }}</v-list-subheader>
 
-            <v-radio-group class="ml-5" hide-details v-model="$root.settings.dark" @update:model-value="$root.saveSettings" row>
+            <v-radio-group class="ms-5" hide-details v-model="$root.settings.dark" @update:model-value="$root.saveSettings" row>
                 <v-radio :value="0" true-icon="mdi-check-circle">
                     <template #label>
-                        <v-icon size="small" class="mr-2">mdi-weather-sunny</v-icon>
+                        <v-icon size="small" class="me-2">mdi-weather-sunny</v-icon>
                         <span class="text-body-2">{{ translations.light_ }}</span>
                     </template>
                 </v-radio>
                 <v-radio :value="1" true-icon="mdi-check-circle">
                     <template #label>
-                        <v-icon size="small" class="mr-2">mdi-weather-night</v-icon>
+                        <v-icon size="small" class="me-2">mdi-weather-night</v-icon>
                         <span class="text-body-2">{{ translations.dark_ }}</span>
                     </template>
                 </v-radio>

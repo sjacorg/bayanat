@@ -125,6 +125,7 @@ const NotificationsList = Vue.defineComponent({
                             </template>
 
                             <v-list-item-title
+                                dir="auto"
                                 :class="{ 'font-weight-bold': (!notification?.read_status || notification?.is_urgent) }"
                                 class="text-body-1"
                                 :style="getLineClampStyles(config.maxTitleLines)"
@@ -132,12 +133,13 @@ const NotificationsList = Vue.defineComponent({
                             />
                             <v-list-item-subtitle class="mt-1" opacity="100">
                                 <div
+                                dir="auto"
                                 class="text-caption text-high-emphasis"
                                 :style="getLineClampStyles(config.maxSubtitleLines)"
                                 v-text="notification?.message"
                                 />
                                 <div class="d-flex justify-space-between align-center mt-2">
-                                    <span class="text-caption text-high-emphasis">{{ getDateFromNotification(notification) }}</span>
+                                    <span dir="ltr" class="text-caption text-high-emphasis">{{ getDateFromNotification(notification) }}</span>
                                 </div>
                             </v-list-item-subtitle>
 

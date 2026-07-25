@@ -1,13 +1,11 @@
 <v-app-bar color="primary">
   <template v-slot:prepend>
     <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+    <a href="/" class="d-inline-flex align-center ms-2">
+      <img src="/static/img/bayanat-h-w-v2.svg?v={{ config.VERSION }}" class="d-block" height="42" loading="lazy" />
+    </a>
   </template>
 
-  <v-toolbar-title class="ml-0 pl-2 flex-fill">
-    <a href="/">
-      <img src="/static/img/bayanat-h-w-v2.svg?v={{ config.VERSION }}" class="mt-1" height="42" cover loading="lazy" />
-    </a>
-  </v-toolbar-title>
   <v-spacer></v-spacer>
 
   <template v-slot:append>
@@ -15,14 +13,14 @@
     {% if config.OCR_PROVIDER == 'google_vision' %}
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
-        <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-google" size="small" class="mr-2" href="/admin/media/">Vision API</v-chip>
+        <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-google" size="small" class="me-2" href="/admin/media/">Vision API</v-chip>
       </template>
       {{ _('OCR powered by Google Vision') }}
     </v-tooltip>
     {% elif config.OCR_PROVIDER %}
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
-        <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-creation" size="small" class="mr-2" href="/admin/media/">AI Powered</v-chip>
+        <v-chip v-bind="props" color="white" variant="tonal" prepend-icon="mdi-creation" size="small" class="me-2" href="/admin/media/">AI Powered</v-chip>
       </template>
       {{ _('OCR powered by AI') }}
     </v-tooltip>

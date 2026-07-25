@@ -431,10 +431,10 @@ const MediaRedactor = Vue.defineComponent({
     <v-dialog v-model="show" fullscreen scrollable persistent @keydown.esc.prevent no-click-animation>
       <v-card>
         <v-toolbar color="dark-primary">
-          <v-icon icon="mdi-marker" class="ml-3 mr-2" size="20"></v-icon>
+          <v-icon icon="mdi-marker" class="ms-3 me-2" size="20"></v-icon>
           <v-toolbar-title class="font-weight-medium">
             Redaction Tool
-            <span class="text-body-2 font-weight-regular opacity-70 ml-2">— {{ media?.title || media?.filename || 'document' }}</span>
+            <span class="text-body-2 font-weight-regular opacity-70 ms-2" dir="auto">— {{ media?.title || media?.filename || 'document' }}</span>
           </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-text-field
@@ -457,7 +457,7 @@ const MediaRedactor = Vue.defineComponent({
                   :disabled="!canSubmit"
                   :loading="saving"
                   @click="submit(true)"
-                  class="mr-2"
+                  class="me-2"
                 >Save changes</v-btn>
                 <v-btn
                   :prepend-icon="isRedactedCopy ? 'mdi-content-save-plus-outline' : 'mdi-content-save-outline'"
@@ -465,7 +465,7 @@ const MediaRedactor = Vue.defineComponent({
                   :disabled="!canSubmit"
                   :loading="saving"
                   @click="submit(false)"
-                  class="mr-2"
+                  class="me-2"
                 >{{ isRedactedCopy ? 'Save as new copy' : 'Save redacted copy' }}</v-btn>
               </div>
             </template>
@@ -477,7 +477,7 @@ const MediaRedactor = Vue.defineComponent({
         </v-toolbar>
 
         <v-toolbar density="compact" class="border-b">
-          <v-chip size="small" variant="text" prepend-icon="mdi-cursor-default-click-outline" class="ml-2 text-caption opacity-70">Click &amp; drag to draw a black box</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-cursor-default-click-outline" class="ms-2 text-caption opacity-70">Click &amp; drag to draw a black box</v-chip>
           <v-chip size="small" variant="text" prepend-icon="mdi-arrow-all" class="text-caption opacity-70">Drag box to reposition</v-chip>
           <v-chip size="small" variant="text" prepend-icon="mdi-delete-outline" class="text-caption opacity-70">Click box then Delete to remove</v-chip>
           <v-chip size="small" variant="text" prepend-icon="mdi-hand-back-right-outline" class="text-caption opacity-70">Hold Space + drag to pan</v-chip>
