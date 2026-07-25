@@ -1135,10 +1135,10 @@
 
 {% block js %}
 
-    <script src="/static/js/diff-tool.js"></script>
-    <script src="/static/js/components/GeoMap.js"></script>
-    <script src="/static/js/components/ShowDetails.js"></script>
-    <script src="/static/js/components/DiffRenderer.js"></script>
+    <script src="/static/js/diff-tool.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/GeoMap.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ShowDetails.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/DiffRenderer.js?v={{ config.VERSION }}"></script>
     <script nonce="{{ csp_nonce() }}">
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         const {createApp} = Vue;
