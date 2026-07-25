@@ -1,23 +1,24 @@
+const PANEL_WIDTH = 390;
+
 const LabelStructureNavigator = Vue.defineComponent({
   props: {
     canManage: {
       type: Boolean,
       default: false,
     },
-    // 'appbar' anchors the panel to the toolbar, 'inline' to the field it sits next to
-    variant: {
-      type: String,
-      default: 'appbar',
-    },
   },
   data() {
+    const saved = JSON.parse(localStorage.getItem('labelTreePos') || 'null');
     return {
       translations: window.labelTreeTranslations,
+      open: localStorage.getItem('labelTreeOpen') === '1',
+      x: saved?.x ?? 24,
+      y: saved?.y ?? Math.max(72, window.innerHeight - 640),
+      dragOffset: null,
       error: false,
       loaded: false,
       loading: false,
-      menuOpen: false,
-      opened: [],
+      opened: JSON.parse(localStorage.getItem('labelTreeOpened') || '[]'),
       query: '',
       treeItems: [],
     };
@@ -30,12 +31,30 @@ const LabelStructureNavigator = Vue.defineComponent({
     },
   },
   watch: {
-    menuOpen(open) {
-      if (open) this.loadTree();
+    open(open) {
+      localStorage.setItem('labelTreeOpen', open ? '1' : '0');
+      if (open) {
+        this.clampToViewport();
+        this.loadTree();
+      }
+    },
+    opened(ids) {
+      localStorage.setItem('labelTreeOpened', JSON.stringify(ids));
     },
     query(value) {
       if (value.trim()) this.opened = this.collectParentIds(this.filteredItems);
     },
+  },
+  mounted() {
+    window.addEventListener('resize', this.clampToViewport);
+    if (this.open) {
+      this.clampToViewport();
+      this.loadTree();
+    }
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.clampToViewport);
+    this.stopDrag();
   },
   methods: {
     collectParentIds(items) {
@@ -73,6 +92,30 @@ const LabelStructureNavigator = Vue.defineComponent({
       if (this.isAssignable(item)) return '';
       return item.children?.length ? this.translations.groupingOnly : this.translations.retired;
     },
+    // keep at least a corner of the panel on screen after drags and window resizes
+    clampToViewport() {
+      const edge = 80;
+      this.x = Math.min(Math.max(this.x, edge - PANEL_WIDTH), window.innerWidth - edge);
+      this.y = Math.min(Math.max(this.y, 0), window.innerHeight - 48);
+    },
+    startDrag(event) {
+      this.dragOffset = {x: event.clientX - this.x, y: event.clientY - this.y};
+      window.addEventListener('pointermove', this.onDrag);
+      window.addEventListener('pointerup', this.stopDrag);
+    },
+    onDrag(event) {
+      this.x = event.clientX - this.dragOffset.x;
+      this.y = event.clientY - this.dragOffset.y;
+      this.clampToViewport();
+    },
+    stopDrag() {
+      window.removeEventListener('pointermove', this.onDrag);
+      window.removeEventListener('pointerup', this.stopDrag);
+      if (this.dragOffset) {
+        localStorage.setItem('labelTreePos', JSON.stringify({x: this.x, y: this.y}));
+        this.dragOffset = null;
+      }
+    },
     async loadTree() {
       if (this.loaded || this.loading) return;
 
@@ -90,28 +133,31 @@ const LabelStructureNavigator = Vue.defineComponent({
     },
   },
   template: `
-    <v-menu
-      v-model="menuOpen"
-      :close-on-content-click="false"
-      :location="variant === 'inline' ? 'bottom start' : 'bottom end'"
-      offset="8"
-    >
-      <template #activator="{ props }">
-        <v-btn
-          v-bind="props"
-          icon="mdi-file-tree-outline"
-          :aria-label="translations.labelStructure"
-          :aria-expanded="menuOpen"
-          :density="variant === 'inline' ? 'comfortable' : 'default'"
-          :size="variant === 'inline' ? 'small' : undefined"
-          :variant="variant === 'inline' ? 'text' : undefined"
-          :title="translations.labelStructure"
-        ></v-btn>
-      </template>
+    <teleport to="body">
+      <v-btn
+        class="label-structure-fab"
+        :aria-label="translations.labelStructure"
+        :aria-expanded="open"
+        color="primary"
+        :title="translations.labelStructure"
+        :icon="open ? 'mdi-close' : 'mdi-file-tree-outline'"
+        variant="elevated"
+        rounded="circle"
+        size="large"
+        @click="open = !open"
+      ></v-btn>
 
-      <v-card class="label-structure-panel">
-        <v-card-title class="d-flex align-center ga-2 py-2 pe-2">
-          <v-icon icon="mdi-file-tree-outline" size="small"></v-icon>
+      <v-card
+        v-if="open"
+        class="label-structure-panel label-structure-dock"
+        :style="{left: x + 'px', top: y + 'px'}"
+        elevation="12"
+      >
+        <v-card-title
+          class="d-flex align-center ga-2 py-2 pe-2 label-structure-handle"
+          @pointerdown.prevent="startDrag"
+        >
+          <v-icon icon="mdi-drag-horizontal-variant" size="small"></v-icon>
           <span>{{ translations.labelStructure }}</span>
           <v-chip size="x-small" variant="tonal">{{ translations.readOnly }}</v-chip>
           <v-spacer></v-spacer>
@@ -120,7 +166,7 @@ const LabelStructureNavigator = Vue.defineComponent({
             icon="mdi-close"
             size="small"
             variant="text"
-            @click="menuOpen = false"
+            @click="open = false"
           ></v-btn>
         </v-card-title>
 
@@ -189,6 +235,6 @@ const LabelStructureNavigator = Vue.defineComponent({
           </v-btn>
         </v-card-actions>
       </v-card>
-    </v-menu>
+    </teleport>
   `,
 });

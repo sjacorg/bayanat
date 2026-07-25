@@ -111,9 +111,8 @@
                                         <div class="text-subtitle-2 mb-2 mt-4">{{ _('Public Description') }}</div>
                                         <tinymce-editor :init="tinyConfig" :key="descKey + '-public-description'" v-model="editedItem.public_description"></tinymce-editor>
                                     </div>
-                                    <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2 d-flex align-start ga-1']">
-                                        <label-search-field class="flex-grow-1" v-model="editedItem.labels" :query-params="{ typ: 'for_bulletin', mode: 2 }" :multiple="true" :show-copy-icon="advFeatures" :retain-search="true" label="{{ _('Labels') }}"></label-search-field>
-                                        <label-structure-navigator variant="inline" class="mt-2"></label-structure-navigator>
+                                    <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <label-search-field v-model="editedItem.labels" :query-params="{ typ: 'for_bulletin', mode: 2 }" :multiple="true" :show-copy-icon="advFeatures" :retain-search="true" label="{{ _('Labels') }}"></label-search-field>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'ver_labels')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <label-search-field v-model="editedItem.verLabels"
