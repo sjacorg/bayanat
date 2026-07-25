@@ -56,8 +56,20 @@ const LabelStructureNavigator = Vue.defineComponent({
         return matches;
       }, []);
     },
-    isCategory(item) {
-      return !(item.for_bulletin || item.for_actor || item.for_incident || item.for_offline);
+    isAssignable(item) {
+      return Boolean(
+        item.for_bulletin || item.for_actor || item.for_incident || item.for_offline,
+      );
+    },
+    // not assignable + has children = a grouping node; without children it is a
+    // retired label that still carries historical tags
+    itemIcon(item) {
+      if (this.isAssignable(item)) return 'mdi-label';
+      return item.children?.length ? 'mdi-folder-outline' : 'mdi-label-off-outline';
+    },
+    itemIconHint(item) {
+      if (this.isAssignable(item)) return '';
+      return item.children?.length ? this.translations.groupingOnly : this.translations.retired;
     },
     async loadTree() {
       if (this.loaded || this.loading) return;
@@ -146,15 +158,11 @@ const LabelStructureNavigator = Vue.defineComponent({
             open-on-click
           >
             <template #prepend="{ item }">
-              <v-icon
-                :icon="isCategory(item) ? 'mdi-folder-outline' : 'mdi-label'"
-                :title="isCategory(item) ? translations.categoryOnly : ''"
-                size="small"
-              ></v-icon>
+              <v-icon :icon="itemIcon(item)" :title="itemIconHint(item)" size="small"></v-icon>
             </template>
             <template #title="{ item }">
               <div class="d-flex flex-column label-structure-title">
-                <span :class="{'text-medium-emphasis': isCategory(item)}">{{ item.title }}</span>
+                <span :class="{'text-medium-emphasis': !isAssignable(item)}">{{ item.title }}</span>
                 <span v-if="item.title_ar" class="label-structure-title-ar text-medium-emphasis" dir="rtl">{{ item.title_ar }}</span>
               </div>
             </template>
