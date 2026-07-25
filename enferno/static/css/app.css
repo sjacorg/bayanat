@@ -760,7 +760,7 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 .label-structure-panel {
-    width: min(390px, calc(100vw - 24px));
+    width: min(720px, calc(100vw - 24px));
     font-size: 13px;
 }
 
@@ -793,9 +793,15 @@ div.jsondiffpatch-child-node-type-array:after {
 .label-structure-dock {
     position: fixed;
     z-index: 2600;
-    max-height: min(70vh, 620px);
+    max-height: min(80vh, 720px);
     display: flex;
     flex-direction: column;
+    /* native resize handle rather than a hand-rolled one, for the rare label that
+       still runs long */
+    resize: horizontal;
+    overflow: hidden;
+    min-width: 360px;
+    max-width: calc(100vw - 24px);
 }
 
 .label-structure-handle {

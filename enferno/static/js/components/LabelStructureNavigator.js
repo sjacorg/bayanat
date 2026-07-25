@@ -1,4 +1,4 @@
-const PANEL_WIDTH = 390;
+const PANEL_WIDTH = 720;
 const FAB_SIZE = 48;
 
 const LabelStructureNavigator = Vue.defineComponent({
@@ -67,6 +67,15 @@ const LabelStructureNavigator = Vue.defineComponent({
     this.stopDrag();
   },
   methods: {
+    // titles are stored as full comma-delimited paths ("Type, Martial, Air Strike"),
+    // so a row only needs the last segment: the tree itself shows the ancestry, and
+    // repeating it pushes the deeper levels off the panel
+    leafTitle(title) {
+      return String(title || '')
+        .split(/[,،]/)
+        .pop()
+        .trim();
+    },
     collectParentIds(items) {
       return items.flatMap((item) => [
         ...(item.children?.length ? [item.id] : []),
@@ -267,9 +276,9 @@ const LabelStructureNavigator = Vue.defineComponent({
               <v-icon :icon="itemIcon(item)" :title="itemIconHint(item)" size="small"></v-icon>
             </template>
             <template #title="{ item }">
-              <div class="d-flex flex-column label-structure-title">
-                <span :class="{'text-medium-emphasis': !isAssignable(item)}">{{ item.title }}</span>
-                <span v-if="item.title_ar" class="label-structure-title-ar text-medium-emphasis" dir="rtl">{{ item.title_ar }}</span>
+              <div class="d-flex flex-column label-structure-title" :title="item.title">
+                <span :class="{'text-medium-emphasis': !isAssignable(item)}">{{ leafTitle(item.title) }}</span>
+                <span v-if="item.title_ar" class="label-structure-title-ar text-medium-emphasis" dir="rtl">{{ leafTitle(item.title_ar) }}</span>
               </div>
             </template>
             <template #append="{ item }">
