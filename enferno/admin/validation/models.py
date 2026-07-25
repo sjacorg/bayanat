@@ -829,6 +829,9 @@ class LabelValidationModel(StrictValidationModel):
     # sent by tree view edit (build_tree node shape), not used by from_json
     parent_label_id: Optional[int] = None
     children: Optional[List] = None
+    # computed by to_dict for hierarchy display, not used by from_json
+    path: Optional[str] = None
+    path_ar: Optional[str] = None
 
 
 class LabelRequestModel(BaseValidationModel):
