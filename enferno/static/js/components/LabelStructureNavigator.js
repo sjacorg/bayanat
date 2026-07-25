@@ -1,4 +1,5 @@
 const PANEL_WIDTH = 390;
+const FAB_SIZE = 52;
 
 const LabelStructureNavigator = Vue.defineComponent({
   props: {
@@ -9,12 +10,20 @@ const LabelStructureNavigator = Vue.defineComponent({
   },
   data() {
     const saved = JSON.parse(localStorage.getItem('labelTreePos') || 'null');
+    const savedFab = JSON.parse(localStorage.getItem('labelTreeFabPos') || 'null');
     return {
       translations: window.labelTreeTranslations,
       open: localStorage.getItem('labelTreeOpen') === '1',
       x: saved?.x ?? 24,
       y: saved?.y ?? Math.max(72, window.innerHeight - 640),
       dragOffset: null,
+      // right margin at mid height: clear of the app bar, the New Bulletin
+      // button and the edit dialog's own toolbar. draggable from there.
+      fabX: savedFab?.x ?? window.innerWidth - 72,
+      fabY: savedFab?.y ?? Math.round(window.innerHeight / 2) - 26,
+      fabDragged: false,
+      fabOffset: null,
+      fabPointer: null,
       error: false,
       loaded: false,
       loading: false,
@@ -47,6 +56,7 @@ const LabelStructureNavigator = Vue.defineComponent({
   },
   mounted() {
     window.addEventListener('resize', this.clampToViewport);
+    this.clampFab();
     if (this.open) {
       this.clampToViewport();
       this.loadTree();
@@ -97,6 +107,46 @@ const LabelStructureNavigator = Vue.defineComponent({
       const edge = 80;
       this.x = Math.min(Math.max(this.x, edge - PANEL_WIDTH), window.innerWidth - edge);
       this.y = Math.min(Math.max(this.y, 0), window.innerHeight - 48);
+      this.clampFab();
+    },
+    clampFab() {
+      this.fabX = Math.min(Math.max(this.fabX, 0), window.innerWidth - FAB_SIZE);
+      this.fabY = Math.min(Math.max(this.fabY, 64), window.innerHeight - FAB_SIZE);
+    },
+    startFabDrag(event) {
+      this.fabDragged = false;
+      this.fabPointer = event.pointerId;
+      this.fabOffset = {x: event.clientX - this.fabX, y: event.clientY - this.fabY};
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    onFabDrag(event) {
+      if (this.fabPointer !== event.pointerId || !this.fabOffset) return;
+      const next = {x: event.clientX - this.fabOffset.x, y: event.clientY - this.fabOffset.y};
+      // ignore jitter so a plain click is never read as a drag
+      if (Math.abs(next.x - this.fabX) + Math.abs(next.y - this.fabY) < 4) return;
+      this.fabDragged = true;
+      this.fabX = next.x;
+      this.fabY = next.y;
+      this.clampFab();
+    },
+    stopFabDrag(event) {
+      if (this.fabPointer !== event?.pointerId) return;
+      if (event.currentTarget?.hasPointerCapture?.(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      this.fabPointer = null;
+      this.fabOffset = null;
+      if (this.fabDragged) {
+        localStorage.setItem('labelTreeFabPos', JSON.stringify({x: this.fabX, y: this.fabY}));
+      }
+    },
+    // a drag ends in a click event too, so swallow that one
+    toggle() {
+      if (this.fabDragged) {
+        this.fabDragged = false;
+        return;
+      }
+      this.open = !this.open;
     },
     startDrag(event) {
       this.dragOffset = {x: event.clientX - this.x, y: event.clientY - this.y};
@@ -144,7 +194,12 @@ const LabelStructureNavigator = Vue.defineComponent({
         variant="elevated"
         rounded="circle"
         size="large"
-        @click="open = !open"
+        :style="{left: fabX + 'px', top: fabY + 'px'}"
+        @pointerdown="startFabDrag"
+        @pointermove="onFabDrag"
+        @pointerup="stopFabDrag"
+        @pointercancel="stopFabDrag"
+        @click="toggle"
       ></v-btn>
 
       <v-card

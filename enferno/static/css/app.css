@@ -780,14 +780,13 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 /* both sit above Vuetify's overlay layer (2400) so they survive a fullscreen dialog */
-/* clears the left icon rail (56px) so it never blends into the sidebar.
-   the app sets global v-btn defaults (text variant, no elevation), so the
-   shadow is restated here rather than relying on the elevation prop */
+/* position comes from the component so it can be dragged. the app sets global
+   v-btn defaults (text variant, no elevation), so the shadow is restated here
+   rather than relying on the elevation prop */
 .label-structure-fab {
     position: fixed;
-    left: 88px;
-    bottom: 24px;
     z-index: 2600;
+    cursor: move;
     box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14);
 }
 
