@@ -847,6 +847,13 @@ div.jsondiffpatch-child-node-type-array:after {
     white-space: nowrap;
 }
 
+.label-structure-scope .v-btn {
+    height: 24px;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
 .label-structure-crumb-sep {
     opacity: 0.5;
 }

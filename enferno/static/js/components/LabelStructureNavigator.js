@@ -25,12 +25,16 @@ const LabelStructureNavigator = Vue.defineComponent({
       fabOffset: null,
       fabPointer: null,
       error: false,
-      loaded: false,
       loading: false,
-      opened: JSON.parse(localStorage.getItem('labelTreeOpened') || '[]'),
+      // labels and verified labels are two separate hierarchies in one table, and
+      // merging them puts the same label at two different depths
+      verified: localStorage.getItem('labelTreeVerified') === '1',
+      // he opens the branch he wants, so the tree always starts fully collapsed
+      opened: [],
       activated: [],
       query: '',
       treeItems: [],
+      cache: {},
     };
   },
   computed: {
@@ -68,11 +72,15 @@ const LabelStructureNavigator = Vue.defineComponent({
         this.loadTree();
       }
     },
-    opened(ids) {
-      localStorage.setItem('labelTreeOpened', JSON.stringify(ids));
+    verified(verified) {
+      localStorage.setItem('labelTreeVerified', verified ? '1' : '0');
+      this.opened = [];
+      this.activated = [];
+      this.loadTree();
     },
     query(value) {
-      if (value.trim()) this.opened = this.collectParentIds(this.filteredItems);
+      // a search expands what it matched; clearing it folds the tree back up
+      this.opened = value.trim() ? this.collectParentIds(this.filteredItems) : [];
     },
   },
   mounted() {
@@ -197,14 +205,22 @@ const LabelStructureNavigator = Vue.defineComponent({
       }
     },
     async loadTree() {
-      if (this.loaded || this.loading) return;
+      const key = this.verified ? 'verified' : 'labels';
+      if (this.cache[key]) {
+        this.treeItems = this.cache[key];
+        return;
+      }
+      if (this.loading) return;
 
       this.error = false;
       this.loading = true;
+      this.treeItems = [];
       try {
-        const response = await api.get('/admin/api/labels/tree');
+        const response = await api.get('/admin/api/labels/tree', {
+          params: {verified: this.verified},
+        });
+        this.cache[key] = response.data.items;
         this.treeItems = response.data.items;
-        this.loaded = true;
       } catch (_error) {
         this.error = true;
       } finally {
@@ -246,6 +262,17 @@ const LabelStructureNavigator = Vue.defineComponent({
           <span>{{ translations.labelStructure }}</span>
           <v-chip size="x-small" variant="tonal">{{ translations.readOnly }}</v-chip>
           <v-spacer></v-spacer>
+          <v-btn-toggle
+            v-model="verified"
+            class="label-structure-scope"
+            density="compact"
+            mandatory
+            variant="outlined"
+            @pointerdown.stop
+          >
+            <v-btn :value="false" size="small">{{ translations.labels }}</v-btn>
+            <v-btn :value="true" size="small">{{ translations.verifiedLabels }}</v-btn>
+          </v-btn-toggle>
           <v-btn
             :aria-label="translations.close"
             icon="mdi-close"
@@ -287,7 +314,7 @@ const LabelStructureNavigator = Vue.defineComponent({
             </template>
           </v-alert>
 
-          <div v-else-if="loaded && !filteredItems.length" class="pa-6 text-center text-medium-emphasis">
+          <div v-else-if="!filteredItems.length" class="pa-6 text-center text-medium-emphasis">
             {{ translations.noLabels }}
           </div>
 
