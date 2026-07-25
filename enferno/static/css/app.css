@@ -793,6 +793,8 @@ div.jsondiffpatch-child-node-type-array:after {
 .label-structure-title-ar {
     font-size: 11px;
     line-height: 1rem;
+    /* dir=rtl keeps the bidi order correct; alignment follows the English line above */
+    text-align: left;
 }
 
 .label-structure-tree .v-chip {
