@@ -518,6 +518,26 @@ def test_lookup_search_by_translated_title(request, session, entity, list_url, f
     assert item.id in ids
 
 
+def test_label_update_accepts_its_own_serialization(request, session):
+    """The edit form PUTs back what to_dict returned, path fields included."""
+    from enferno.admin.models import Label
+
+    parent = Label(title="Parent")
+    session.add(parent)
+    session.commit()
+    label = Label(title="Child", parent_label_id=parent.id)
+    session.add(label)
+    session.commit()
+
+    payload = label.to_dict()
+    assert "path" in payload and "path_ar" in payload
+    payload["title"] = "Renamed"
+
+    client = request.getfixturevalue("admin_client")
+    resp = client.put(f"/admin/api/label/{label.id}", json={"item": payload}, headers=HEADERS)
+    assert resp.status_code == 200
+
+
 def test_label_mode2_includes_translated_title_and_path(session):
     from enferno.admin.models import Label
 
