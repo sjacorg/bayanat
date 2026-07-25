@@ -14,8 +14,8 @@ const LabelStructureNavigator = Vue.defineComponent({
       error: false,
       loaded: false,
       loading: false,
-      menuOpen: false,
-      opened: [],
+      menuOpen: localStorage.getItem('labelTreeDock') === 'open',
+      opened: JSON.parse(localStorage.getItem('labelTreeOpened') || '[]'),
       query: '',
       treeItems: [],
     };
@@ -29,11 +29,18 @@ const LabelStructureNavigator = Vue.defineComponent({
   },
   watch: {
     menuOpen(open) {
+      localStorage.setItem('labelTreeDock', open ? 'open' : 'closed');
       if (open) this.loadTree();
+    },
+    opened(ids) {
+      localStorage.setItem('labelTreeOpened', JSON.stringify(ids));
     },
     query(value) {
       if (value.trim()) this.opened = this.collectParentIds(this.filteredItems);
     },
+  },
+  mounted() {
+    if (this.menuOpen) this.loadTree();
   },
   methods: {
     collectParentIds(items) {
@@ -88,23 +95,18 @@ const LabelStructureNavigator = Vue.defineComponent({
     },
   },
   template: `
-    <v-menu
-      v-model="menuOpen"
-      :close-on-content-click="false"
-      location="bottom end"
-      offset="8"
-    >
-      <template #activator="{ props }">
-        <v-btn
-          v-bind="props"
-          icon="mdi-file-tree-outline"
-          :aria-label="translations.labelStructure"
-          :aria-expanded="menuOpen"
-          :title="translations.labelStructure"
-        ></v-btn>
-      </template>
+    <div>
+      <v-btn
+        icon="mdi-file-tree-outline"
+        :aria-label="translations.labelStructure"
+        :aria-expanded="menuOpen"
+        :color="menuOpen ? 'primary' : undefined"
+        :title="translations.labelStructure"
+        @click="menuOpen = !menuOpen"
+      ></v-btn>
 
-      <v-card class="label-structure-panel">
+      <teleport to="body">
+      <v-card v-if="menuOpen" class="label-structure-panel label-structure-dock" elevation="8">
         <v-card-title class="d-flex align-center ga-2 py-2 pe-2">
           <v-icon icon="mdi-file-tree-outline" size="small"></v-icon>
           <span>{{ translations.labelStructure }}</span>
@@ -184,6 +186,7 @@ const LabelStructureNavigator = Vue.defineComponent({
           </v-btn>
         </v-card-actions>
       </v-card>
-    </v-menu>
+      </teleport>
+    </div>
   `,
 });
