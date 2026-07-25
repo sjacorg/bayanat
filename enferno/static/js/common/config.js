@@ -166,6 +166,10 @@ const variables = {
     'pointer-events-auto': 'auto',
 }
 const vuetifyConfig = {
+    locale: {
+        locale: window.__lang__ || document.documentElement.lang,
+        fallback: 'en',
+    },
     defaults: {
         VRow: {
             dense: true,

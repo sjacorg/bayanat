@@ -305,6 +305,10 @@ button.swh {
     float: right;
 }
 
+[dir="rtl"] .vue-query-builder button.pull-right {
+    float: left;
+}
+
 
 .smaller {
     transform: scale(0.9);
