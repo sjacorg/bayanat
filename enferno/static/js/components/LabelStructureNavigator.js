@@ -11,14 +11,11 @@ const LabelStructureNavigator = Vue.defineComponent({
   },
   data() {
     return {
-      closeTimer: null,
       error: false,
       loaded: false,
       loading: false,
       menuOpen: false,
-      openTimer: null,
       opened: [],
-      pinned: false,
       query: '',
       treeItems: [],
     };
@@ -32,24 +29,13 @@ const LabelStructureNavigator = Vue.defineComponent({
   },
   watch: {
     menuOpen(open) {
-      if (open) {
-        this.loadTree();
-      } else {
-        this.pinned = false;
-      }
+      if (open) this.loadTree();
     },
     query(value) {
       if (value.trim()) this.opened = this.collectParentIds(this.filteredItems);
     },
   },
-  beforeUnmount() {
-    this.clearTimers();
-  },
   methods: {
-    clearTimers() {
-      clearTimeout(this.openTimer);
-      clearTimeout(this.closeTimer);
-    },
     collectParentIds(items) {
       return items.flatMap((item) => [
         ...(item.children?.length ? [item.id] : []),
@@ -70,31 +56,8 @@ const LabelStructureNavigator = Vue.defineComponent({
         return matches;
       }, []);
     },
-    holdOpen() {
-      this.clearTimers();
-    },
-    preview() {
-      this.clearTimers();
-      if (this.menuOpen) return;
-      this.openTimer = setTimeout(() => {
-        this.menuOpen = true;
-      }, 250);
-    },
-    scheduleClose() {
-      clearTimeout(this.closeTimer);
-      if (this.pinned) return;
-      this.closeTimer = setTimeout(() => {
-        this.menuOpen = false;
-      }, 300);
-    },
-    togglePinned() {
-      this.clearTimers();
-      if (this.menuOpen && this.pinned) {
-        this.menuOpen = false;
-        return;
-      }
-      this.pinned = true;
-      this.menuOpen = true;
+    isCategory(item) {
+      return !(item.for_bulletin || item.for_actor || item.for_incident || item.for_offline);
     },
     async loadTree() {
       if (this.loaded || this.loading) return;
@@ -127,20 +90,10 @@ const LabelStructureNavigator = Vue.defineComponent({
           :aria-label="translations.labelStructure"
           :aria-expanded="menuOpen"
           :title="translations.labelStructure"
-          @click.stop="togglePinned"
-          @focus="preview"
-          @mouseenter="preview"
-          @mouseleave="scheduleClose"
         ></v-btn>
       </template>
 
-      <v-card
-        class="label-structure-panel"
-        @focusin="holdOpen"
-        @focusout="scheduleClose"
-        @mouseenter="holdOpen"
-        @mouseleave="scheduleClose"
-      >
+      <v-card class="label-structure-panel">
         <v-card-title class="d-flex align-center ga-2 py-2 pe-2">
           <v-icon icon="mdi-file-tree-outline" size="small"></v-icon>
           <span>{{ translations.labelStructure }}</span>
@@ -193,9 +146,16 @@ const LabelStructureNavigator = Vue.defineComponent({
             item-value="id"
             open-on-click
           >
+            <template #prepend="{ item }">
+              <v-icon
+                :icon="isCategory(item) ? 'mdi-folder-outline' : 'mdi-label'"
+                :title="isCategory(item) ? translations.categoryOnly : ''"
+                size="small"
+              ></v-icon>
+            </template>
             <template #title="{ item }">
               <div class="d-flex flex-column label-structure-title">
-                <span>{{ item.title }}</span>
+                <span :class="{'text-medium-emphasis': isCategory(item)}">{{ item.title }}</span>
                 <span v-if="item.title_ar" class="label-structure-title-ar text-medium-emphasis" dir="rtl">{{ item.title_ar }}</span>
               </div>
             </template>
