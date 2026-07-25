@@ -79,7 +79,6 @@ const LabelStructureNavigator = Vue.defineComponent({
     <v-menu
       v-model="menuOpen"
       :close-on-content-click="false"
-      :open-on-click="false"
       location="bottom end"
       offset="8"
     >
