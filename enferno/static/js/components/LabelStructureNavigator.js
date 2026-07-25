@@ -44,9 +44,9 @@ const LabelStructureNavigator = Vue.defineComponent({
       return this.filterTree(this.treeItems, query);
     },
     // the title already is the full path, so the picked row is the whole crumb
-    activePath() {
+    activeItem() {
       const id = this.activated[0];
-      if (!id) return '';
+      if (!id) return null;
       const find = (items) => {
         for (const item of items) {
           if (item.id === id) return item;
@@ -54,14 +54,15 @@ const LabelStructureNavigator = Vue.defineComponent({
           if (match) return match;
         }
       };
-      return find(this.treeItems)?.title || '';
+      return find(this.treeItems) || null;
     },
     // ancestors read as context, the label itself is what he came to read
     activeCrumbs() {
-      return this.activePath
-        .split(/[,،]/)
-        .map((part) => part.trim())
-        .filter(Boolean);
+      return this.crumbs(this.activeItem?.title);
+    },
+    // title_ar is stored as a full path too, with the Arabic comma
+    activeCrumbsAr() {
+      return this.crumbs(this.activeItem?.title_ar);
     },
   },
   watch: {
@@ -104,6 +105,12 @@ const LabelStructureNavigator = Vue.defineComponent({
         .split(/[,،]/)
         .pop()
         .trim();
+    },
+    crumbs(title) {
+      return String(title || '')
+        .split(/[,،]/)
+        .map((part) => part.trim())
+        .filter(Boolean);
     },
     collectParentIds(items) {
       return items.flatMap((item) => [
@@ -294,12 +301,20 @@ const LabelStructureNavigator = Vue.defineComponent({
           ></v-text-field>
         </v-card-text>
 
-        <div v-if="activePath" class="label-structure-path px-3 py-1" :title="activePath">
-          <v-icon icon="mdi-label-outline" size="x-small"></v-icon>
-          <template v-for="(crumb, index) in activeCrumbs" :key="index">
-            <span v-if="index" class="label-structure-crumb-sep">›</span>
-            <span :class="index === activeCrumbs.length - 1 ? 'label-structure-crumb-leaf' : 'text-medium-emphasis'">{{ crumb }}</span>
-          </template>
+        <div v-if="activeItem" class="label-structure-path px-3 py-1" :title="activeItem.title">
+          <div class="label-structure-path-line">
+            <v-icon icon="mdi-label-outline" size="x-small"></v-icon>
+            <template v-for="(crumb, index) in activeCrumbs" :key="index">
+              <span v-if="index" class="label-structure-crumb-sep">›</span>
+              <span :class="index === activeCrumbs.length - 1 ? 'label-structure-crumb-leaf' : 'text-medium-emphasis'">{{ crumb }}</span>
+            </template>
+          </div>
+          <div v-if="activeCrumbsAr.length" class="label-structure-path-ar" dir="rtl">
+            <template v-for="(crumb, index) in activeCrumbsAr" :key="index">
+              <span v-if="index" class="label-structure-crumb-sep"> › </span>
+              <span :class="index === activeCrumbsAr.length - 1 ? 'label-structure-crumb-leaf' : 'text-medium-emphasis'">{{ crumb }}</span>
+            </template>
+          </div>
         </div>
 
         <div class="label-structure-tree">

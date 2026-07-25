@@ -832,9 +832,6 @@ div.jsondiffpatch-child-node-type-array:after {
 /* the selected row's full path, pinned under the search box. this is the one
    line he reads, so it outranks the tree rows in size and colour */
 .label-structure-path {
-    display: flex;
-    align-items: center;
-    gap: 4px;
     flex: 0 0 auto;
     /* small enough that a six level path fits without scrolling sideways, which
        is the point of showing it at all */
@@ -844,6 +841,19 @@ div.jsondiffpatch-child-node-type-array:after {
     background: rgba(var(--v-theme-primary), 0.1);
     border-block: thin solid rgba(var(--v-theme-primary), 0.25);
     overflow-x: auto;
+    white-space: nowrap;
+}
+
+.label-structure-path-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* dir=rtl orders the segments right to left; the line itself stays left aligned
+   so it reads as a second line under the English one */
+.label-structure-path-ar {
+    text-align: left;
     white-space: nowrap;
 }
 
