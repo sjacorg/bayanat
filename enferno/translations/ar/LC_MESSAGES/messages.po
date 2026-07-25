@@ -3,21 +3,29 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Bayanat\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-22 16:01+0300\n"
+"POT-Creation-Date: 2026-07-24 09:39+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ar\n"
 "Language-Team: ar <LL@li.org>\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=0 && n%100<=2 ? 4 : 5);\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=0 && n%100<=2 ? 4 : 5);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
+#: enferno/admin/templates/nav-bar.html:18
+msgid "Vision API"
+msgstr "واجهة Vision API"
+
 #: enferno/admin/templates/nav-bar.html:20
 msgid "OCR powered by Google Vision"
 msgstr "التعرّف الضوئي على الحروف مدعوم من Google Vision"
+
+#: enferno/admin/templates/nav-bar.html:25
+msgid "AI Powered"
+msgstr "مدعوم بالذكاء الاصطناعي"
 
 #: enferno/admin/templates/nav-bar.html:27
 msgid "OCR powered by AI"
@@ -81,8 +89,8 @@ msgstr "الإجراء"
 #: enferno/admin/templates/admin/actors.html:625
 #: enferno/admin/templates/admin/bulletins.html:665
 #: enferno/admin/templates/admin/incidents.html:548
-#: enferno/admin/templates/admin/jsapi.jinja2:210
-#: enferno/admin/templates/admin/jsapi.jinja2:497
+#: enferno/admin/templates/admin/jsapi.jinja2:214
+#: enferno/admin/templates/admin/jsapi.jinja2:505
 #: enferno/admin/templates/admin/media-dashboard.html:86
 #: enferno/admin/templates/admin/partials/actor_dialog.html:923
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:60
@@ -106,7 +114,7 @@ msgid "Class"
 msgstr "الفئة"
 
 #: enferno/admin/templates/admin/activity.html:274
-#: enferno/admin/templates/admin/jsapi.jinja2:315
+#: enferno/admin/templates/admin/jsapi.jinja2:323
 #: enferno/data_import/templates/sheets-import.html:501
 #: enferno/data_import/templates/sheets-import.html:506
 #: enferno/data_import/templates/sheets-import.html:514
@@ -204,7 +212,7 @@ msgstr "منشئ نموذج الكيان الديناميكي"
 #: enferno/admin/templates/admin/bulletins.html:90
 #: enferno/admin/templates/admin/incident-fields.html:71
 #: enferno/admin/templates/admin/incidents.html:82
-#: enferno/admin/templates/admin/jsapi.jinja2:292
+#: enferno/admin/templates/admin/jsapi.jinja2:300
 #: enferno/admin/templates/admin/labels.html:26
 #: enferno/admin/templates/admin/locations.html:42
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:84
@@ -330,8 +338,8 @@ msgstr "إسناد كيان إلى الذات"
 #: enferno/admin/templates/admin/eventtypes.html:90
 #: enferno/admin/templates/admin/eventtypes.html:220
 #: enferno/admin/templates/admin/incidents.html:277
-#: enferno/admin/templates/admin/jsapi.jinja2:208
-#: enferno/admin/templates/admin/jsapi.jinja2:382
+#: enferno/admin/templates/admin/jsapi.jinja2:212
+#: enferno/admin/templates/admin/jsapi.jinja2:390
 #: enferno/admin/templates/admin/labels.html:152
 #: enferno/admin/templates/admin/partials/actor_dialog.html:917
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:94
@@ -354,17 +362,17 @@ msgid "Assign to self"
 msgstr "إسناد إلى الذات"
 
 #: enferno/admin/templates/admin/actors.html:478
-#: enferno/admin/templates/admin/jsapi.jinja2:327
+#: enferno/admin/templates/admin/jsapi.jinja2:335
 msgid "Normal"
 msgstr "طبيعي"
 
 #: enferno/admin/templates/admin/actors.html:479
-#: enferno/admin/templates/admin/jsapi.jinja2:328
+#: enferno/admin/templates/admin/jsapi.jinja2:336
 msgid "Main"
 msgstr "رئيسي"
 
 #: enferno/admin/templates/admin/actors.html:480
-#: enferno/admin/templates/admin/jsapi.jinja2:435
+#: enferno/admin/templates/admin/jsapi.jinja2:443
 msgid "Missing Person"
 msgstr "ملف الشخص المفقود"
 
@@ -373,7 +381,7 @@ msgstr "ملف الشخص المفقود"
 #: enferno/admin/templates/admin/component-data.html:414
 #: enferno/admin/templates/admin/eventtypes.html:214
 #: enferno/admin/templates/admin/incidents.html:542
-#: enferno/admin/templates/admin/jsapi.jinja2:359
+#: enferno/admin/templates/admin/jsapi.jinja2:367
 #: enferno/admin/templates/admin/labels.html:247
 #: enferno/admin/templates/admin/locations.html:206
 #: enferno/admin/templates/admin/partials/actor_dialog.html:13
@@ -384,22 +392,22 @@ msgstr "ملف الشخص المفقود"
 #: enferno/data_import/templates/import-log.html:171
 #: enferno/deduplication/templates/deduplication.html:198
 #: enferno/export/templates/export-dashboard.html:168
-#: enferno/templates/setup_wizard.html:487
+#: enferno/templates/setup_wizard.html:491
 msgid "ID"
 msgstr "الرقم التعريفي"
 
 #: enferno/admin/templates/admin/actors.html:619
-#: enferno/admin/templates/admin/jsapi.jinja2:322
-#: enferno/admin/templates/admin/jsapi.jinja2:614
+#: enferno/admin/templates/admin/jsapi.jinja2:330
+#: enferno/admin/templates/admin/jsapi.jinja2:625
 #: enferno/admin/templates/admin/system-logs.html:148
 msgid "Type"
 msgstr "النوع"
 
 #: enferno/admin/templates/admin/actors.html:620
 #: enferno/admin/templates/admin/jsapi.jinja2:190
-#: enferno/admin/templates/admin/jsapi.jinja2:316
-#: enferno/admin/templates/admin/jsapi.jinja2:443
-#: enferno/admin/templates/admin/jsapi.jinja2:657
+#: enferno/admin/templates/admin/jsapi.jinja2:324
+#: enferno/admin/templates/admin/jsapi.jinja2:451
+#: enferno/admin/templates/admin/jsapi.jinja2:668
 #: enferno/admin/templates/admin/partials/actor_dialog.html:57
 #: enferno/admin/templates/admin/partials/actor_dialog.html:503
 #: enferno/admin/templates/admin/roles.html:202
@@ -422,7 +430,7 @@ msgstr "موكل إلى"
 #: enferno/admin/templates/admin/actors.html:623
 #: enferno/admin/templates/admin/bulletins.html:663
 #: enferno/admin/templates/admin/incidents.html:546
-#: enferno/admin/templates/admin/jsapi.jinja2:337
+#: enferno/admin/templates/admin/jsapi.jinja2:345
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:80
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:87
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:71
@@ -444,7 +452,7 @@ msgstr "مجموعات الوصول"
 #: enferno/admin/templates/admin/system-administration.html:1220
 #: enferno/admin/templates/admin/system-administration.html:1229
 #: enferno/admin/templates/admin/users.html:362
-#: enferno/templates/setup_wizard.html:490
+#: enferno/templates/setup_wizard.html:494
 msgid "Actions"
 msgstr "العمليات"
 
@@ -539,7 +547,7 @@ msgid "Bulletin Dynamic From Builder"
 msgstr "منشئ نموذج المادة الديناميكي"
 
 #: enferno/admin/templates/admin/bulletin-fields.html:95
-#: enferno/admin/templates/admin/jsapi.jinja2:371
+#: enferno/admin/templates/admin/jsapi.jinja2:379
 #: enferno/admin/templates/admin/partials/media_dialog.html:7
 msgid "Media"
 msgstr "وسائط"
@@ -568,7 +576,7 @@ msgstr "إسناد مادة إلى الذات"
 
 #: enferno/admin/templates/admin/bulletins.html:307
 #: enferno/admin/templates/admin/jsapi.jinja2:192
-#: enferno/admin/templates/admin/jsapi.jinja2:251
+#: enferno/admin/templates/admin/jsapi.jinja2:259
 #: enferno/admin/templates/admin/partials/actor_dialog.html:256
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:67
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:71
@@ -598,7 +606,7 @@ msgstr "استيراد"
 #: enferno/admin/templates/admin/eventtypes.html:215
 #: enferno/admin/templates/admin/incidents.html:543
 #: enferno/admin/templates/admin/jsapi.jinja2:187
-#: enferno/admin/templates/admin/jsapi.jinja2:365
+#: enferno/admin/templates/admin/jsapi.jinja2:373
 #: enferno/admin/templates/admin/labels.html:129
 #: enferno/admin/templates/admin/labels.html:248
 #: enferno/admin/templates/admin/locations.html:207
@@ -611,7 +619,7 @@ msgstr "استيراد"
 #: enferno/admin/templates/admin/system-administration.html:1219
 #: enferno/admin/templates/admin/system-administration.html:1228
 #: enferno/data_import/templates/sheets-import.html:672
-#: enferno/templates/setup_wizard.html:489
+#: enferno/templates/setup_wizard.html:493
 msgid "Title"
 msgstr "العنوان"
 
@@ -643,22 +651,22 @@ msgstr "تنسيق النص الكامل للمكان"
 msgid ""
 "These settings control how the Full Location text of each\n"
 "                                            Location is\n"
-"                                            formatted and generated from its"
-" title and its parents. You can\n"
-"                                            customize this order to match "
-"the\n"
-"                                            address system of the country "
-"you're working on."
+"                                            formatted and generated from "
+"its title and its parents. You can\n"
+"                                            customize this order to match"
+" the\n"
+"                                            address system of the country"
+" you're working on."
 msgstr ""
-"تتحكم هذه الإعدادات في تنسيق النص الكامل لكل مكان وإنشائه من عنوانه والأماكن"
-" الأصلية التابعة له. يمكنك تخصيص هذا الترتيب ليتوافق مع نظام العناوين في "
-"البلد الذي تعمل عليه."
+"تتحكم هذه الإعدادات في تنسيق النص الكامل لكل مكان وإنشائه من عنوانه "
+"والأماكن الأصلية التابعة له. يمكنك تخصيص هذا الترتيب ليتوافق مع نظام "
+"العناوين في البلد الذي تعمل عليه."
 
 #: enferno/admin/templates/admin/component-data.html:62
 msgid ""
 "You can change the option to include postal codes in\n"
-"                                                format of the Full Location "
-"text in the system settings."
+"                                                format of the Full "
+"Location text in the system settings."
 msgstr ""
 "يمكنك تغيير خيار تضمين الرموز البريدية في تنسيق النص الكامل للمكان من "
 "إعدادات النظام."
@@ -676,7 +684,9 @@ msgid "Save order"
 msgstr "حفظ الترتيب"
 
 #: enferno/admin/templates/admin/component-data.html:82
-msgid "You must re-generate Full Location texts for the new format to take effect."
+msgid ""
+"You must re-generate Full Location texts for the new format to take "
+"effect."
 msgstr "يجب إعادة إنشاء النصوص الكاملة للأماكن لتطبيق التنسيق الجديد."
 
 #: enferno/admin/templates/admin/component-data.html:90
@@ -691,7 +701,7 @@ msgstr "الدول"
 
 #: enferno/admin/templates/admin/component-data.html:118
 #: enferno/admin/templates/admin/component-data.html:327
-#: enferno/admin/templates/admin/jsapi.jinja2:418
+#: enferno/admin/templates/admin/jsapi.jinja2:426
 #: enferno/admin/templates/admin/partials/actor_dialog.html:230
 #: enferno/data_import/templates/sheets-import.html:312
 msgid "Ethnographic Information"
@@ -760,6 +770,7 @@ msgid "Claimed Violation Categories"
 msgstr "فئات الانتهاكات المزعومة"
 
 #: enferno/admin/templates/admin/component-data.html:317
+#: enferno/admin/templates/admin/jsapi.jinja2:211
 #: enferno/admin/templates/admin/system-administration.html:1210
 #: enferno/data_import/templates/sheets-import.html:702
 #: enferno/templates/setup_wizard.html:120
@@ -816,7 +827,8 @@ msgstr "فئات الانتهاكات"
 
 #: enferno/admin/templates/admin/component-data.html:417
 #: enferno/admin/templates/admin/system-administration.html:1218
-#: enferno/templates/login_dialog.html:112 enferno/templates/setup_wizard.html:488
+#: enferno/templates/login_dialog.html:112
+#: enferno/templates/setup_wizard.html:492
 msgid "Code"
 msgstr "رمز"
 
@@ -894,7 +906,7 @@ msgid "Cancel"
 msgstr "إلغاء"
 
 #: enferno/admin/templates/admin/eventtypes.html:111
-#: enferno/admin/templates/admin/jsapi.jinja2:321
+#: enferno/admin/templates/admin/jsapi.jinja2:329
 #: enferno/admin/templates/admin/labels.html:197
 #: enferno/admin/templates/admin/labels.html:212
 #: enferno/admin/templates/admin/locations.html:102
@@ -957,7 +969,7 @@ msgid "New Incident"
 msgstr "واقعة جديدة"
 
 #: enferno/admin/templates/admin/incidents.html:210
-#: enferno/admin/templates/admin/jsapi.jinja2:361
+#: enferno/admin/templates/admin/jsapi.jinja2:369
 #: enferno/templates/account-security.html:124
 #: enferno/templates/account-security.html:224
 msgid "Edit"
@@ -1050,8 +1062,10 @@ msgid "Report a Bug"
 msgstr "التبليغ عن مشكلة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:28
-#: enferno/templates/login_dialog.html:41 enferno/templates/login_dialog.html:81
-#: enferno/templates/login_dialog.html:120 enferno/templates/login_dialog.html:144
+#: enferno/templates/login_dialog.html:41
+#: enferno/templates/login_dialog.html:81
+#: enferno/templates/login_dialog.html:120
+#: enferno/templates/login_dialog.html:144
 msgid "Logout"
 msgstr "تسجيل خروج"
 
@@ -1331,7 +1345,9 @@ msgstr "لم يُشغّل التعرّف الضوئي على الحروف على
 
 #: enferno/admin/templates/admin/jsapi.jinja2:95
 msgid "Click 'Run OCR' below to extract text from this image"
-msgstr "انقر على «تشغيل التعرّف الضوئي على الحروف» أدناه لاستخراج النص من هذه الصورة"
+msgstr ""
+"انقر على «تشغيل التعرّف الضوئي على الحروف» أدناه لاستخراج النص من هذه "
+"الصورة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:96
 msgid "No extraction data found for this media."
@@ -1422,7 +1438,7 @@ msgid "Long Text"
 msgstr "نص طويل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:122
-#: enferno/admin/templates/admin/jsapi.jinja2:612
+#: enferno/admin/templates/admin/jsapi.jinja2:623
 #: enferno/data_import/templates/sheets-import.html:342
 msgid "Number"
 msgstr "رقم"
@@ -1694,7 +1710,7 @@ msgid "Name (AR)"
 msgstr "الاسم (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:193
-#: enferno/admin/templates/admin/jsapi.jinja2:390
+#: enferno/admin/templates/admin/jsapi.jinja2:398
 #: enferno/admin/templates/admin/partials/actor_dialog.html:71
 #: enferno/data_import/templates/sheets-import.html:243
 msgid "First Name"
@@ -1717,7 +1733,7 @@ msgid "Middle Name (AR)"
 msgstr "الاسم الأوسط (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:197
-#: enferno/admin/templates/admin/jsapi.jinja2:392
+#: enferno/admin/templates/admin/jsapi.jinja2:400
 #: enferno/admin/templates/admin/partials/actor_dialog.html:97
 #: enferno/data_import/templates/sheets-import.html:257
 msgid "Last Name"
@@ -1730,30 +1746,30 @@ msgid "Last Name (AR)"
 msgstr "الكنية (عربي)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:199
-#: enferno/admin/templates/admin/jsapi.jinja2:306
-#: enferno/admin/templates/admin/jsapi.jinja2:397
+#: enferno/admin/templates/admin/jsapi.jinja2:314
+#: enferno/admin/templates/admin/jsapi.jinja2:405
 #: enferno/admin/templates/admin/partials/actor_dialog.html:150
 #: enferno/data_import/templates/sheets-import.html:278
 msgid "Sex"
 msgstr "الجنس"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:200
-#: enferno/admin/templates/admin/jsapi.jinja2:308
+#: enferno/admin/templates/admin/jsapi.jinja2:316
 #: enferno/admin/templates/admin/partials/actor_dialog.html:170
 #: enferno/data_import/templates/sheets-import.html:282
 msgid "Civilian/Non Civilian"
 msgstr "مدني/غير مدني"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:201
-#: enferno/admin/templates/admin/jsapi.jinja2:404
+#: enferno/admin/templates/admin/jsapi.jinja2:412
 #: enferno/admin/templates/admin/partials/actor_dialog.html:181
 #: enferno/data_import/templates/sheets-import.html:286
 msgid "Place of Origin"
 msgstr "مكان الولادة"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:202
-#: enferno/admin/templates/admin/jsapi.jinja2:248
-#: enferno/admin/templates/admin/jsapi.jinja2:360
+#: enferno/admin/templates/admin/jsapi.jinja2:256
+#: enferno/admin/templates/admin/jsapi.jinja2:368
 #: enferno/admin/templates/admin/partials/actor_dialog.html:342
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:40
 #: enferno/admin/templates/admin/sources.html:78
@@ -1763,7 +1779,7 @@ msgid "Origin ID"
 msgstr "رقم تعريف المصدر"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:203
-#: enferno/admin/templates/admin/jsapi.jinja2:367
+#: enferno/admin/templates/admin/jsapi.jinja2:375
 #: enferno/admin/templates/admin/partials/actor_dialog.html:385
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:104
 #: enferno/admin/templates/admin/partials/review_dialog.html:102
@@ -1775,7 +1791,7 @@ msgid "Sources"
 msgstr "المصادر"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:204
-#: enferno/admin/templates/admin/jsapi.jinja2:368
+#: enferno/admin/templates/admin/jsapi.jinja2:376
 #: enferno/admin/templates/admin/labels.html:10
 #: enferno/admin/templates/admin/partials/actor_dialog.html:402
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:117
@@ -1802,475 +1818,504 @@ msgstr "من"
 msgid "To"
 msgstr "إلى"
 
+#: enferno/admin/templates/admin/jsapi.jinja2:208
+msgid "Previous"
+msgstr "السابق"
+
 #: enferno/admin/templates/admin/jsapi.jinja2:209
+#: enferno/data_import/templates/media-import.html:109
+msgid "Next"
+msgstr "التالي"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:210
+msgid "Here"
+msgstr "هنا"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:213
 msgid "Comments (Ar)"
 msgstr "التعليقات (عربي)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:211
+#: enferno/admin/templates/admin/jsapi.jinja2:215
 #: enferno/admin/templates/admin/partials/actor_dialog.html:939
 msgid "Restrict Actor to Access Group(s)"
 msgstr "اختر مجموعات الوصول لتقييد الوصول إلى الكيان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:212
+#: enferno/admin/templates/admin/jsapi.jinja2:216
 #: enferno/admin/templates/admin/partials/actor_dialog.html:949
 msgid "No Access Access Groups"
 msgstr "بدون تقييد الوصول"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:213
+#: enferno/admin/templates/admin/jsapi.jinja2:217
 #: enferno/admin/templates/admin/partials/actor_dialog.html:302
 msgid "Profile"
 msgstr "ملف شخصي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:214
+#: enferno/admin/templates/admin/jsapi.jinja2:218
 msgid "No items available"
 msgstr "لا توجد عناصر متاحة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:215
+#: enferno/admin/templates/admin/jsapi.jinja2:219
 msgid "No more items to load"
 msgstr "لا توجد عناصر أخرى للتحميل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:217
+#: enferno/admin/templates/admin/jsapi.jinja2:221
 msgid "Map Visualization"
 msgstr "عرض الخريطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:218
+#: enferno/admin/templates/admin/jsapi.jinja2:222
 msgid "Starting map generation..."
 msgstr "جارٍ بدء إنشاء الخريطة..."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:219
+#: enferno/admin/templates/admin/jsapi.jinja2:223
 msgid "Waiting for map data..."
 msgstr "في انتظار بيانات الخريطة..."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:220
+#: enferno/admin/templates/admin/jsapi.jinja2:224
 msgid "Loading map data..."
 msgstr "جارٍ تحميل بيانات الخريطة..."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:221
+#: enferno/admin/templates/admin/jsapi.jinja2:225
 msgid "Map generation failed"
 msgstr "فشل إنشاء الخريطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:222
+#: enferno/admin/templates/admin/jsapi.jinja2:226
 msgid "Preparing map..."
 msgstr "جارٍ إعداد الخريطة..."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:223
+#: enferno/admin/templates/admin/jsapi.jinja2:227
 msgid "Rendering map..."
 msgstr "جارٍ عرض الخريطة..."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:224
+#: enferno/admin/templates/admin/jsapi.jinja2:228
 msgid "Flow Details"
 msgstr "تفاصيل التدفق"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:225
+#: enferno/admin/templates/admin/jsapi.jinja2:229
 msgid "Origin"
 msgstr "المصدر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:226
+#: enferno/admin/templates/admin/jsapi.jinja2:230
 msgid "Destination"
 msgstr "الوجهة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:227
+#: enferno/admin/templates/admin/jsapi.jinja2:231
 msgid "Count"
 msgstr "العدد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:228
+#: enferno/admin/templates/admin/jsapi.jinja2:232
 msgid "Location Details"
 msgstr "تفاصيل المكان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:229
+#: enferno/admin/templates/admin/jsapi.jinja2:233
 msgid "Total In"
 msgstr "إجمالي الوارد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:230
+#: enferno/admin/templates/admin/jsapi.jinja2:234
 msgid "Total Out"
 msgstr "إجمالي الصادر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:231
+#: enferno/admin/templates/admin/jsapi.jinja2:235
+msgid "No actors found."
+msgstr "لم يتم العثور على كيانات."
+
+#: enferno/admin/templates/admin/jsapi.jinja2:236
+msgid "Actor has events, but no contextual data is available."
+msgstr "لدى الكيان حوادث، ولكن لا تتوفر بيانات سياقية."
+
+#: enferno/admin/templates/admin/jsapi.jinja2:237
+msgid "total"
+msgstr "الإجمالي"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:238
 #, python-brace-format
 msgid ""
-"Loaded {total_locations} locations, {total_flows} flows, and {total_actors} "
-"actors"
+"Loaded {total_locations} locations, {total_flows} flows, and "
+"{total_actors} actors"
 msgstr ""
 "تم تحميل {total_locations} مكانًا و{total_flows} تدفقًا و{total_actors} "
 "كيانًا"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:232
+#: enferno/admin/templates/admin/jsapi.jinja2:239
 msgid "File Type Not Supported"
 msgstr "نوع الملف غير مدعوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:233
+#: enferno/admin/templates/admin/jsapi.jinja2:240
+msgid "Untitled"
+msgstr "بدون عنوان"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:241
 #, python-brace-format
 msgid "OCR processing is only available for the following file types: {fileTypes}"
 msgstr ""
 "تتوفر معالجة التعرّف الضوئي على الحروف لأنواع الملفات التالية فقط: "
 "{fileTypes}"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:235
+#: enferno/admin/templates/admin/jsapi.jinja2:243
 msgid "Show more"
 msgstr "عرض المزيد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:236
+#: enferno/admin/templates/admin/jsapi.jinja2:244
 msgid "Show less"
 msgstr "عرض أقل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:237
+#: enferno/admin/templates/admin/jsapi.jinja2:245
 msgid "Add as related"
 msgstr "إضافة كعنصر مرتبط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:238
+#: enferno/admin/templates/admin/jsapi.jinja2:246
 msgid "Hide from results"
 msgstr "إخفاء من النتائج"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:239
+#: enferno/admin/templates/admin/jsapi.jinja2:247
 msgid "Show search"
 msgstr "إظهار البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:240
+#: enferno/admin/templates/admin/jsapi.jinja2:248
 msgid "Hide search"
 msgstr "إخفاء البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:241
+#: enferno/admin/templates/admin/jsapi.jinja2:249
 #: enferno/deduplication/templates/deduplication.html:199
 msgid "Query"
 msgstr "استعلام"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:242
+#: enferno/admin/templates/admin/jsapi.jinja2:250
 msgid "Advanced Search"
 msgstr "البحث المتقدم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:243
+#: enferno/admin/templates/admin/jsapi.jinja2:251
 msgid "No (more) items found."
 msgstr "لم يتم العثور على أي نتائج (أخرى)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:244
+#: enferno/admin/templates/admin/jsapi.jinja2:252
 msgid "Hide"
 msgstr "اخفي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:245
+#: enferno/admin/templates/admin/jsapi.jinja2:253
 msgid "Relate"
 msgstr "اربط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:246
+#: enferno/admin/templates/admin/jsapi.jinja2:254
 msgid "Contains"
 msgstr "يتضمن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:247
+#: enferno/admin/templates/admin/jsapi.jinja2:255
 msgid "Does not contain"
 msgstr "لا يتضمن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:249
+#: enferno/admin/templates/admin/jsapi.jinja2:257
 msgid "Search Terms"
 msgstr "مصطلحات البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:250
+#: enferno/admin/templates/admin/jsapi.jinja2:258
 msgid "Exclude Terms"
 msgstr "استبعاد المصطلحات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:252
+#: enferno/admin/templates/admin/jsapi.jinja2:260
 msgid "Include Tags"
 msgstr "تضمين الوسوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:253
+#: enferno/admin/templates/admin/jsapi.jinja2:261
 msgid "Include Tags (All)"
 msgstr "تضمين جميع الوسوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:254
+#: enferno/admin/templates/admin/jsapi.jinja2:262
 msgid "Exclude Tags"
 msgstr "استبعاد الوسوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:255
+#: enferno/admin/templates/admin/jsapi.jinja2:263
 msgid "Exclude Tags (Any)"
 msgstr "استبعاد أي من الوسوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:256
-#: enferno/admin/templates/admin/jsapi.jinja2:379
+#: enferno/admin/templates/admin/jsapi.jinja2:264
+#: enferno/admin/templates/admin/jsapi.jinja2:387
 #: enferno/admin/templates/admin/partials/actor_dialog.html:428
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:140
 #: enferno/data_import/templates/sheets-import.html:451
 msgid "Publish Date"
 msgstr "تاريخ النشر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:257
-#: enferno/admin/templates/admin/jsapi.jinja2:380
+#: enferno/admin/templates/admin/jsapi.jinja2:265
+#: enferno/admin/templates/admin/jsapi.jinja2:388
 #: enferno/admin/templates/admin/partials/actor_dialog.html:436
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:144
 #: enferno/data_import/templates/sheets-import.html:453
 msgid "Documentation Date"
 msgstr "تاريخ التوثيق"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:258
+#: enferno/admin/templates/admin/jsapi.jinja2:266
 msgid "Creation Date"
 msgstr "تاريخ الإنشاء"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:259
+#: enferno/admin/templates/admin/jsapi.jinja2:267
 msgid "Last Modified Date"
 msgstr "تاريخ آخر تعديل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:260
+#: enferno/admin/templates/admin/jsapi.jinja2:268
 msgid "Event Date"
 msgstr "تاريخ الحدث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:261
+#: enferno/admin/templates/admin/jsapi.jinja2:269
 msgid "Event"
 msgstr "الحادث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:262
+#: enferno/admin/templates/admin/jsapi.jinja2:270
 msgid "Timing for this event is estimated"
 msgstr "توقيت هذا الحدث تقديري"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:263
+#: enferno/admin/templates/admin/jsapi.jinja2:271
 msgid "Search in a single event"
 msgstr "في نفس الحادثة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:264
+#: enferno/admin/templates/admin/jsapi.jinja2:272
 msgid "ASSIGNED USER"
 msgstr "المستخدم المكلّف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:265
+#: enferno/admin/templates/admin/jsapi.jinja2:273
 msgid "Assigned User"
 msgstr "المسؤول"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:266
+#: enferno/admin/templates/admin/jsapi.jinja2:274
 msgid "Unassigned"
 msgstr "غير مسندة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:267
+#: enferno/admin/templates/admin/jsapi.jinja2:275
 msgid "REVIEWER"
 msgstr "المراجع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:268
+#: enferno/admin/templates/admin/jsapi.jinja2:276
 msgid "WORKFLOW STATUS"
 msgstr "حالة سير العمل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:269
+#: enferno/admin/templates/admin/jsapi.jinja2:277
 msgid "Workflow Status"
 msgstr "حالة سير العمل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:270
+#: enferno/admin/templates/admin/jsapi.jinja2:278
 msgid "REVIEW ACTION"
 msgstr "إجراء المراجعة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:271
+#: enferno/admin/templates/admin/jsapi.jinja2:279
 msgid "Include sources"
 msgstr "أضف مصادر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:272
+#: enferno/admin/templates/admin/jsapi.jinja2:280
 msgid "Exclude sources (All)"
 msgstr "استبعد مصادر (الكل)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:273
+#: enferno/admin/templates/admin/jsapi.jinja2:281
 msgid "Also include child sources"
 msgstr "اشمل المصادر المتفرعة أيضاً"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:274
+#: enferno/admin/templates/admin/jsapi.jinja2:282
 msgid "Any"
 msgstr "أي خيار"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:275
+#: enferno/admin/templates/admin/jsapi.jinja2:283
 #: enferno/admin/templates/admin/media-dashboard.html:332
 #: enferno/templates/notifications_dialog.html:26
 msgid "All"
 msgstr "الكل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:276
+#: enferno/admin/templates/admin/jsapi.jinja2:284
 msgid "Include labels"
 msgstr "أضف وسوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:277
+#: enferno/admin/templates/admin/jsapi.jinja2:285
 msgid "Exclude labels (All)"
 msgstr "استبعد وسوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:278
+#: enferno/admin/templates/admin/jsapi.jinja2:286
 msgid "Also include child labels"
 msgstr "اشمل الوسوم المتفرعة أيضاً"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:279
+#: enferno/admin/templates/admin/jsapi.jinja2:287
 msgid "Include verified labels"
 msgstr "أضف وسوم مثبتة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:280
+#: enferno/admin/templates/admin/jsapi.jinja2:288
 msgid "Exclude verified labels (All)"
 msgstr "استبعد وسوم مثبتة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:281
+#: enferno/admin/templates/admin/jsapi.jinja2:289
 msgid "Also include verified child labels"
 msgstr "اشمل الوسوم المثبتة المتفرعة أيضاً"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:282
+#: enferno/admin/templates/admin/jsapi.jinja2:290
 msgid "Include locations"
 msgstr "أضف مواقع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:283
+#: enferno/admin/templates/admin/jsapi.jinja2:291
 msgid "Radius"
 msgstr "نصف القطر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:284
+#: enferno/admin/templates/admin/jsapi.jinja2:292
 msgid "Meters"
 msgstr "متر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:285
+#: enferno/admin/templates/admin/jsapi.jinja2:293
 msgid "Exclude locations (All)"
 msgstr "استبعد مواقع (الكل)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:286
+#: enferno/admin/templates/admin/jsapi.jinja2:294
 msgid "Include origin locations (Any)"
 msgstr "أضف مواقع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:287
+#: enferno/admin/templates/admin/jsapi.jinja2:295
 msgid "Exclude origin locations (All)"
 msgstr "استبعد مواقع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:288
+#: enferno/admin/templates/admin/jsapi.jinja2:296
 msgid "Include event locations"
 msgstr "أضف مواقع الحوادث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:289
+#: enferno/admin/templates/admin/jsapi.jinja2:297
 msgid "Event type"
 msgstr "نوع الحدث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:290
+#: enferno/admin/templates/admin/jsapi.jinja2:298
 msgid "GEOSPATIAL"
 msgstr "المعلومات الجغرافية المكانية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:291
+#: enferno/admin/templates/admin/jsapi.jinja2:299
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:69
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:73
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:55
 msgid "Clear Search"
 msgstr "مسح البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:293
+#: enferno/admin/templates/admin/jsapi.jinja2:301
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:71
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:75
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:56
 msgid "Save Search"
 msgstr "حفظ البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:294
+#: enferno/admin/templates/admin/jsapi.jinja2:302
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:83
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:87
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:68
 msgid "Save As New"
 msgstr "حفظ كجديد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:295
+#: enferno/admin/templates/admin/jsapi.jinja2:303
 msgid "Delete Search"
 msgstr "حذف البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:296
+#: enferno/admin/templates/admin/jsapi.jinja2:304
 #: enferno/admin/templates/admin/partials/actor_advsearch.html:77
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:81
 #: enferno/admin/templates/admin/partials/incident_advsearch.html:62
 msgid "Update Search"
 msgstr "تحديث البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:297
+#: enferno/admin/templates/admin/jsapi.jinja2:305
 msgid "Refine/Extend Search"
 msgstr "تضييق/توسيع نطاق البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:298
+#: enferno/admin/templates/admin/jsapi.jinja2:306
 msgid "Load existing search"
 msgstr "تحميل بحث (تم حفظه مسبقاً)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:299
-#: enferno/admin/templates/admin/jsapi.jinja2:413
+#: enferno/admin/templates/admin/jsapi.jinja2:307
+#: enferno/admin/templates/admin/jsapi.jinja2:421
 #: enferno/admin/templates/admin/partials/actor_dialog.html:188
 #: enferno/data_import/templates/sheets-import.html:291
 msgid "Occupation"
 msgstr "المهنة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:300
+#: enferno/admin/templates/admin/jsapi.jinja2:308
 msgid "Occupation (Ar)"
 msgstr "المهنة (عربي)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:301
-#: enferno/admin/templates/admin/jsapi.jinja2:414
+#: enferno/admin/templates/admin/jsapi.jinja2:309
+#: enferno/admin/templates/admin/jsapi.jinja2:422
 #: enferno/admin/templates/admin/partials/actor_dialog.html:200
 #: enferno/data_import/templates/sheets-import.html:298
 msgid "Position"
 msgstr "المنصب"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:302
+#: enferno/admin/templates/admin/jsapi.jinja2:310
 msgid "Position (Ar)"
 msgstr "المنصب (عربي)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:303
+#: enferno/admin/templates/admin/jsapi.jinja2:311
 msgid "Spoken dialects"
 msgstr "اللهجات المحكية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:304
-#: enferno/admin/templates/admin/jsapi.jinja2:416
+#: enferno/admin/templates/admin/jsapi.jinja2:312
+#: enferno/admin/templates/admin/jsapi.jinja2:424
 #: enferno/admin/templates/admin/partials/actor_dialog.html:215
 #: enferno/data_import/templates/sheets-import.html:304
 msgid "Family Status"
 msgstr "الوضع العائلي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:305
+#: enferno/admin/templates/admin/jsapi.jinja2:313
 #: enferno/admin/templates/admin/partials/actor_dialog.html:220
 #: enferno/data_import/templates/sheets-import.html:307
 msgid "No of Children"
 msgstr "عدد الأولاد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:307
+#: enferno/admin/templates/admin/jsapi.jinja2:315
 #: enferno/admin/templates/admin/partials/actor_dialog.html:160
 #: enferno/data_import/templates/sheets-import.html:280
 msgid "Minor/Adult"
 msgstr "قاصر/بالغ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:309
-#: enferno/admin/templates/admin/jsapi.jinja2:400
+#: enferno/admin/templates/admin/jsapi.jinja2:317
+#: enferno/admin/templates/admin/jsapi.jinja2:408
 #: enferno/data_import/templates/sheets-import.html:191
 #: enferno/data_import/templates/sheets-import.html:195
 msgid "Actor Type"
 msgstr "نوع الكيان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:310
+#: enferno/admin/templates/admin/jsapi.jinja2:318
 msgid "Ethnography"
 msgstr "معلومات إثنيَّة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:311
+#: enferno/admin/templates/admin/jsapi.jinja2:319
 msgid "Nationality"
 msgstr "الجنسية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:312
+#: enferno/admin/templates/admin/jsapi.jinja2:320
 msgid "Yes"
 msgstr "نعم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:313
+#: enferno/admin/templates/admin/jsapi.jinja2:321
 msgid "No"
 msgstr "لا"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:314
-#: enferno/admin/templates/admin/jsapi.jinja2:713
-#: enferno/admin/templates/admin/jsapi.jinja2:717
+#: enferno/admin/templates/admin/jsapi.jinja2:322
+#: enferno/admin/templates/admin/jsapi.jinja2:727
+#: enferno/admin/templates/admin/jsapi.jinja2:731
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:317
+#: enferno/admin/templates/admin/jsapi.jinja2:325
 msgid "Reporting Persons"
 msgstr "الإبلاغ عن الأشخاص"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:318
+#: enferno/admin/templates/admin/jsapi.jinja2:326
 msgid "Contact info ( phone, email, address)"
 msgstr "معلومات الاتصال (هاتف، بريد إلكتروني، عنوان)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:319
+#: enferno/admin/templates/admin/jsapi.jinja2:327
 msgid "Relation"
 msgstr "العلاقة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:320
+#: enferno/admin/templates/admin/jsapi.jinja2:328
 msgid "Relationship"
 msgstr "العلاقة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:323
+#: enferno/admin/templates/admin/jsapi.jinja2:331
 msgid "Latitude"
 msgstr "خط العرض"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:324
+#: enferno/admin/templates/admin/jsapi.jinja2:332
 msgid "Longitude"
 msgstr "خط الطول"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:325
+#: enferno/admin/templates/admin/jsapi.jinja2:333
 #: enferno/admin/templates/admin/labels.html:164
 #: enferno/admin/templates/admin/labels.html:249
 #: enferno/admin/templates/admin/locations.html:209
@@ -2279,112 +2324,112 @@ msgstr "خط الطول"
 msgid "Parent"
 msgstr "أب"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:326
+#: enferno/admin/templates/admin/jsapi.jinja2:334
 #: enferno/admin/templates/admin/partials/location_dialog.html:119
 msgid "Postal Code"
 msgstr "الرمز البريدي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:329
+#: enferno/admin/templates/admin/jsapi.jinja2:337
 msgid "Main Incident"
 msgstr "الواقعة الرئيسية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:330
+#: enferno/admin/templates/admin/jsapi.jinja2:338
 msgid "Filter and display related items in main table"
 msgstr "فرز وعرض العناصر ذات الصلة في الجدول الرئيسي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:331
+#: enferno/admin/templates/admin/jsapi.jinja2:339
 msgid "Load More"
 msgstr "تحميل المزيد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:332
+#: enferno/admin/templates/admin/jsapi.jinja2:340
 msgid "Restricted"
 msgstr "مقيَّد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:333
+#: enferno/admin/templates/admin/jsapi.jinja2:341
 msgid "Unrestricted"
 msgstr "غير مقيَّد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:334
+#: enferno/admin/templates/admin/jsapi.jinja2:342
 msgid "And"
 msgstr "وَ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:335
+#: enferno/admin/templates/admin/jsapi.jinja2:343
 msgid "Or"
 msgstr "أو"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:336
+#: enferno/admin/templates/admin/jsapi.jinja2:344
 msgid "ACCESS GROUPS"
 msgstr "مجموعات الوصول"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:338
+#: enferno/admin/templates/admin/jsapi.jinja2:346
 #: enferno/admin/templates/admin/partials/review_dialog.html:142
 msgid "No Review Needed"
 msgstr "لا تحتاج مراجعة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:339
+#: enferno/admin/templates/admin/jsapi.jinja2:347
 #: enferno/admin/templates/admin/partials/review_dialog.html:140
 msgid "Needs Review"
 msgstr "تحتاج مراجعة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:340
+#: enferno/admin/templates/admin/jsapi.jinja2:348
 msgid "Needs Transcription"
 msgstr "يحتاج إلى نسخ نصي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:341
+#: enferno/admin/templates/admin/jsapi.jinja2:349
 msgid "Load Geo Map"
 msgstr "تحميل الخريطة الجغرافية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:342
+#: enferno/admin/templates/admin/jsapi.jinja2:350
 msgid "By"
 msgstr "بواسطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:343
+#: enferno/admin/templates/admin/jsapi.jinja2:351
 msgid "Search Locations"
 msgstr "البحث في المواقع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:344
+#: enferno/admin/templates/admin/jsapi.jinja2:352
 #: enferno/admin/templates/admin/locations.html:210
 #: enferno/admin/templates/admin/partials/location_dialog.html:63
 msgid "Location Type"
 msgstr "نوع المكان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:345
+#: enferno/admin/templates/admin/jsapi.jinja2:353
 #: enferno/admin/templates/admin/locations.html:211
 #: enferno/admin/templates/admin/partials/location_dialog.html:80
 msgid "Admin Level"
 msgstr "المستوى الإداري"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:346
+#: enferno/admin/templates/admin/jsapi.jinja2:354
 #: enferno/admin/templates/admin/partials/location_dialog.html:94
 msgid "Country"
 msgstr "الدولة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:347
+#: enferno/admin/templates/admin/jsapi.jinja2:355
 msgid "Estimated"
 msgstr "تقديرياً"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:348
+#: enferno/admin/templates/admin/jsapi.jinja2:356
 #: enferno/admin/templates/admin/system-administration.html:1106
 msgid "Confirm"
 msgstr "تأكيد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:349
+#: enferno/admin/templates/admin/jsapi.jinja2:357
 msgid "Are you sure?"
 msgstr "هل أنت متأكد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:350
+#: enferno/admin/templates/admin/jsapi.jinja2:358
 msgid "Confirmation"
 msgstr "تأكيد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:351
+#: enferno/admin/templates/admin/jsapi.jinja2:359
 msgid "Are you sure you want to proceed?"
 msgstr "هل أنت متأكد من المتابعة؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:352
+#: enferno/admin/templates/admin/jsapi.jinja2:360
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:353
+#: enferno/admin/templates/admin/jsapi.jinja2:361
 #: enferno/admin/templates/admin/system-administration.html:750
 #: enferno/admin/templates/admin/system-administration.html:760
 #: enferno/admin/templates/admin/system-administration.html:769
@@ -2407,15 +2452,15 @@ msgstr "تحديد كمقروء"
 msgid "In-app"
 msgstr "داخل التطبيق"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:356
+#: enferno/admin/templates/admin/jsapi.jinja2:364
 msgid "Search Activities"
 msgstr "أنشطة البحث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:362
+#: enferno/admin/templates/admin/jsapi.jinja2:370
 msgid "Visualize"
 msgstr "تمثيل مرئي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:363
+#: enferno/admin/templates/admin/jsapi.jinja2:371
 #: enferno/admin/templates/admin/partials/actor_dialog.html:369
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:107
 #: enferno/admin/templates/admin/roles.html:50
@@ -2424,17 +2469,17 @@ msgstr "تمثيل مرئي"
 msgid "Description"
 msgstr "التوصيف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:364
+#: enferno/admin/templates/admin/jsapi.jinja2:372
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:111
 msgid "Public Description"
 msgstr "التوصيف العام"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:366
+#: enferno/admin/templates/admin/jsapi.jinja2:374
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:85
 msgid "Original Title"
 msgstr "العنوان الأصلي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:369
+#: enferno/admin/templates/admin/jsapi.jinja2:377
 #: enferno/admin/templates/admin/labels.html:11
 #: enferno/admin/templates/admin/partials/actor_dialog.html:417
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:122
@@ -2444,15 +2489,15 @@ msgstr "العنوان الأصلي"
 msgid "Verified Labels"
 msgstr "الوسوم المُثبتة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:370
-#: enferno/admin/templates/admin/jsapi.jinja2:686
-#: enferno/admin/templates/admin/jsapi.jinja2:693
+#: enferno/admin/templates/admin/jsapi.jinja2:378
+#: enferno/admin/templates/admin/jsapi.jinja2:700
+#: enferno/admin/templates/admin/jsapi.jinja2:707
 #: enferno/data_import/templates/sheets-import.html:666
 msgid "Events"
 msgstr "الحوادث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:372
-#: enferno/admin/templates/admin/jsapi.jinja2:684
+#: enferno/admin/templates/admin/jsapi.jinja2:380
+#: enferno/admin/templates/admin/jsapi.jinja2:698
 #: enferno/admin/templates/admin/locations.html:30
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:126
 #: enferno/admin/templates/admin/partials/incident_dialog.html:87
@@ -2462,37 +2507,37 @@ msgstr "الحوادث"
 msgid "Locations"
 msgstr "الأماكن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:373
+#: enferno/admin/templates/admin/jsapi.jinja2:381
 msgid "Probability"
 msgstr "الاحتمالية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:374
+#: enferno/admin/templates/admin/jsapi.jinja2:382
 msgid "Related as"
 msgstr "مرتبط بصفته"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:375
+#: enferno/admin/templates/admin/jsapi.jinja2:383
 #: enferno/admin/templates/admin/partials/edit_related_bulletins.html:4
 #: enferno/admin/templates/admin/partials/review_dialog.html:116
 msgid "Related Bulletins"
 msgstr "المواد المرتبطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:376
+#: enferno/admin/templates/admin/jsapi.jinja2:384
 #: enferno/admin/templates/admin/partials/edit_related_actors.html:3
 #: enferno/admin/templates/admin/partials/review_dialog.html:123
 msgid "Related Actors"
 msgstr "الكيانات المرتبطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:377
+#: enferno/admin/templates/admin/jsapi.jinja2:385
 #: enferno/admin/templates/admin/partials/edit_related_incidents.html:3
 #: enferno/admin/templates/admin/partials/review_dialog.html:129
 msgid "Related Incidents"
 msgstr "الوقائع المرتبطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:378
+#: enferno/admin/templates/admin/jsapi.jinja2:386
 msgid "Relationship Info"
 msgstr "معلومات الارتباط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:381
+#: enferno/admin/templates/admin/jsapi.jinja2:389
 #: enferno/admin/templates/admin/partials/actor_dialog.html:351
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:57
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:159
@@ -2500,191 +2545,191 @@ msgstr "معلومات الارتباط"
 msgid "Source Link"
 msgstr "رابط المصدر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:383
+#: enferno/admin/templates/admin/jsapi.jinja2:391
 msgid "Log History"
 msgstr "سجل التغييرات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:386
+#: enferno/admin/templates/admin/jsapi.jinja2:394
 #: enferno/admin/templates/admin/users.html:150
 msgid "Full Name"
 msgstr "الاسم الكامل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:387
+#: enferno/admin/templates/admin/jsapi.jinja2:395
 #: enferno/admin/templates/admin/partials/actor_dialog.html:111
 #: enferno/data_import/templates/sheets-import.html:235
 #: enferno/templates/security/wan_register.html:144
 msgid "Nickname"
 msgstr "اللقب"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:388
+#: enferno/admin/templates/admin/jsapi.jinja2:396
 msgid "Nickname (Ar)"
 msgstr "اللقب (عربي)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:389
+#: enferno/admin/templates/admin/jsapi.jinja2:397
 msgid "Nickname(s)"
 msgstr "اللقب / الألقاب"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:391
+#: enferno/admin/templates/admin/jsapi.jinja2:399
 #: enferno/data_import/templates/sheets-import.html:250
 msgid "Middle Name(s)"
 msgstr "الأسم الأوسط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:393
+#: enferno/admin/templates/admin/jsapi.jinja2:401
 #: enferno/admin/templates/admin/partials/actor_dialog.html:123
 #: enferno/data_import/templates/sheets-import.html:263
 msgid "Father's Name"
 msgstr "اسم الأب"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:394
+#: enferno/admin/templates/admin/jsapi.jinja2:402
 msgid "Father's Name (Ar)"
 msgstr "اسم الأب (عربي)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:395
+#: enferno/admin/templates/admin/jsapi.jinja2:403
 #: enferno/admin/templates/admin/partials/actor_dialog.html:135
 #: enferno/data_import/templates/sheets-import.html:269
 msgid "Mother's Name"
 msgstr "اسم الأم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:396
+#: enferno/admin/templates/admin/jsapi.jinja2:404
 msgid "Mother's Name (Ar)"
 msgstr "اسم الأم (عربي)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:398
-#: enferno/admin/templates/admin/jsapi.jinja2:659
+#: enferno/admin/templates/admin/jsapi.jinja2:406
+#: enferno/admin/templates/admin/jsapi.jinja2:670
 msgid "Age"
 msgstr "العمر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:399
-#: enferno/admin/templates/admin/jsapi.jinja2:718
+#: enferno/admin/templates/admin/jsapi.jinja2:407
+#: enferno/admin/templates/admin/jsapi.jinja2:732
 msgid "Civilian"
 msgstr "مدني"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:401
+#: enferno/admin/templates/admin/jsapi.jinja2:409
 #, python-brace-format
 msgid "Relationship with Bulletin {id}"
 msgstr "العلاقة بالمادة {id}"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:402
+#: enferno/admin/templates/admin/jsapi.jinja2:410
 msgid ""
-"The relationship between the new Actor and the Bulletin will be created when"
-" the Actor is saved"
+"The relationship between the new Actor and the Bulletin will be created "
+"when the Actor is saved"
 msgstr "ستُنشأ العلاقة بين الكيان الجديد والمادة عند حفظ الكيان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:406
+#: enferno/admin/templates/admin/jsapi.jinja2:414
 msgid "ID NUMBER"
 msgstr "رقم التعريف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:407
+#: enferno/admin/templates/admin/jsapi.jinja2:415
 msgid "ID Number"
 msgstr "رقم بطاقة التعريف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:408
+#: enferno/admin/templates/admin/jsapi.jinja2:416
 #: enferno/data_import/templates/sheets-import.html:322
 msgid "ID Numbers"
 msgstr "أرقام التعريف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:409
+#: enferno/admin/templates/admin/jsapi.jinja2:417
 #: enferno/data_import/templates/sheets-import.html:329
 msgid "ID Type"
 msgstr "نوع التعريف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:410
+#: enferno/admin/templates/admin/jsapi.jinja2:418
 msgid "Are you sure you want to delete this record?"
 msgstr "هل أنت متأكد من حذف هذا السجل؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:411
+#: enferno/admin/templates/admin/jsapi.jinja2:419
 msgid "Leave blank to include all types."
 msgstr "اتركه فارغًا لتضمين جميع الأنواع."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:415
+#: enferno/admin/templates/admin/jsapi.jinja2:423
 #: enferno/data_import/templates/sheets-import.html:316
 msgid "Spoken Dialects"
 msgstr "اللهجات المحكية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:419
+#: enferno/admin/templates/admin/jsapi.jinja2:427
 #: enferno/admin/templates/admin/partials/actor_dialog.html:241
 #: enferno/data_import/templates/sheets-import.html:314
 msgid "Nationalities"
 msgstr "الجنسية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:420
+#: enferno/admin/templates/admin/jsapi.jinja2:428
 msgid "National ID Card"
 msgstr "الرقم الوطني"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:422
+#: enferno/admin/templates/admin/jsapi.jinja2:430
 msgid "Overview"
 msgstr "ملخص"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:425
+#: enferno/admin/templates/admin/jsapi.jinja2:433
 msgid "CLAIMED VIOLATIONS CATEGORIES"
 msgstr "فئات الانتهاكات المزعومة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:426
+#: enferno/admin/templates/admin/jsapi.jinja2:434
 #: enferno/admin/templates/admin/partials/incident_dialog.html:64
 msgid "Claimed Violations Categories"
 msgstr "فئات الانتهاكات المزعومة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:427
+#: enferno/admin/templates/admin/jsapi.jinja2:435
 #: enferno/admin/templates/admin/partials/incident_dialog.html:54
 msgid "Potential violation categories"
 msgstr "فئات الانتهاكات المحتملة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:428
+#: enferno/admin/templates/admin/jsapi.jinja2:436
 msgid "POTENTIAL VIOLATION CATEGORIES"
 msgstr "فئات الانتهاكات المحتملة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:431
-#: enferno/admin/templates/admin/jsapi.jinja2:685
+#: enferno/admin/templates/admin/jsapi.jinja2:439
+#: enferno/admin/templates/admin/jsapi.jinja2:699
 msgid "Geo Markers"
 msgstr "علامات جغرافية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:432
+#: enferno/admin/templates/admin/jsapi.jinja2:440
 msgid "Add Geo Marker"
 msgstr "أضف علامة جغرافية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:437
+#: enferno/admin/templates/admin/jsapi.jinja2:445
 msgid "Place of Disappearance"
 msgstr "مكان الاختفاء"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:438
+#: enferno/admin/templates/admin/jsapi.jinja2:446
 #: enferno/admin/templates/admin/partials/actor_dialog.html:461
 #: enferno/data_import/templates/sheets-import.html:467
 msgid "Marriage History"
 msgstr "سجل الزواج"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:439
+#: enferno/admin/templates/admin/jsapi.jinja2:447
 msgid "Bio Children"
 msgstr "الأولاد البيولوجيون"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:440
+#: enferno/admin/templates/admin/jsapi.jinja2:448
 #: enferno/admin/templates/admin/partials/actor_dialog.html:470
 #: enferno/data_import/templates/sheets-import.html:472
 msgid "Pregnant at Disappearance"
 msgstr "حامل وقت الاختفاء"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:441
+#: enferno/admin/templates/admin/jsapi.jinja2:449
 msgid "Months Pregnant at Disappearance"
 msgstr "شهر الحمل وقت الاختفاء"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:442
+#: enferno/admin/templates/admin/jsapi.jinja2:450
 #: enferno/admin/templates/admin/partials/actor_dialog.html:488
 #: enferno/data_import/templates/sheets-import.html:476
 msgid "Missing Relatives"
 msgstr "أقارب مفقودين"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:444
+#: enferno/admin/templates/admin/jsapi.jinja2:452
 #: enferno/admin/templates/admin/partials/actor_dialog.html:508
 #: enferno/data_import/templates/sheets-import.html:489
 msgid "Address"
 msgstr "العنوان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:445
+#: enferno/admin/templates/admin/jsapi.jinja2:453
 #: enferno/admin/templates/admin/partials/actor_dialog.html:512
 #: enferno/data_import/templates/sheets-import.html:491
 msgid "Phone"
 msgstr "رقم الهاتف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:446
+#: enferno/admin/templates/admin/jsapi.jinja2:454
 #: enferno/admin/templates/admin/partials/actor_dialog.html:516
 #: enferno/admin/templates/admin/system-administration.html:751
 #: enferno/admin/templates/admin/system-administration.html:761
@@ -2711,1001 +2756,1029 @@ msgstr "رقم الهاتف"
 msgid "Email"
 msgstr "البريد الالكتروني"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:447
+#: enferno/admin/templates/admin/jsapi.jinja2:455
 #: enferno/admin/templates/admin/partials/actor_dialog.html:525
 msgid "Seen in a detention center?"
 msgstr "هل شوهد في مركز اعتقال؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:448
+#: enferno/admin/templates/admin/jsapi.jinja2:456
 #: enferno/admin/templates/admin/partials/actor_dialog.html:532
 msgid "Injured around time of disappearance?"
 msgstr "هل كان مصابا وقت الاختفاء؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:449
+#: enferno/admin/templates/admin/jsapi.jinja2:457
 #: enferno/admin/templates/admin/partials/actor_dialog.html:541
 msgid "Known to be dead?"
 msgstr "هل يعرف بأنه ميت؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:450
+#: enferno/admin/templates/admin/jsapi.jinja2:458
 #: enferno/admin/templates/admin/partials/actor_dialog.html:550
 msgid "Details about circumstances of death"
 msgstr "تفاصيل حول ظروف الوفاة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:451
+#: enferno/admin/templates/admin/jsapi.jinja2:459
 #: enferno/admin/templates/admin/partials/actor_dialog.html:558
 msgid "Personal Items (watch,ring,chains etc)"
 msgstr "متعلقات شخصية (ساعة، خاتم، قلادة..إلخ)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:452
+#: enferno/admin/templates/admin/jsapi.jinja2:460
 #: enferno/admin/templates/admin/partials/actor_dialog.html:568
 #: enferno/data_import/templates/sheets-import.html:521
 msgid "Height"
 msgstr "الطول"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:453
+#: enferno/admin/templates/admin/jsapi.jinja2:461
 #: enferno/admin/templates/admin/partials/actor_dialog.html:578
 #: enferno/data_import/templates/sheets-import.html:523
 msgid "Weight"
 msgstr "الوزن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:454
+#: enferno/admin/templates/admin/jsapi.jinja2:462
 #: enferno/admin/templates/admin/partials/actor_dialog.html:587
 #: enferno/data_import/templates/sheets-import.html:525
 msgid "Physique"
 msgstr "البنية الجسدية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:455
+#: enferno/admin/templates/admin/jsapi.jinja2:463
 #: enferno/data_import/templates/sheets-import.html:527
 msgid "Hair Loss"
 msgstr "كثافة الشعر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:456
+#: enferno/admin/templates/admin/jsapi.jinja2:464
 #: enferno/data_import/templates/sheets-import.html:532
 msgid "Hair Type"
 msgstr "نوع الشعر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:457
+#: enferno/admin/templates/admin/jsapi.jinja2:465
 #: enferno/data_import/templates/sheets-import.html:534
 msgid "Hair Length"
 msgstr "طول الشعر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:458
+#: enferno/admin/templates/admin/jsapi.jinja2:466
 #: enferno/data_import/templates/sheets-import.html:536
 msgid "Hair Color"
 msgstr "لون الشعر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:459
+#: enferno/admin/templates/admin/jsapi.jinja2:467
 #: enferno/data_import/templates/sheets-import.html:538
 msgid "Facial Hair"
 msgstr "شعر الوجه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:460
+#: enferno/admin/templates/admin/jsapi.jinja2:468
 #: enferno/admin/templates/admin/partials/actor_dialog.html:652
 msgid "Notes on posture and walking style"
 msgstr "ملاحظة عن القامة وطريقة المشي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:461
+#: enferno/admin/templates/admin/jsapi.jinja2:469
 #: enferno/admin/templates/admin/partials/actor_dialog.html:675
 msgid "Skin Markings"
 msgstr "علامات ظاهرة على الجلد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:462
+#: enferno/admin/templates/admin/jsapi.jinja2:470
 #: enferno/data_import/templates/sheets-import.html:544
 msgid "Handedness"
 msgstr "أيمن/أعسر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:463
+#: enferno/admin/templates/admin/jsapi.jinja2:471
 #: enferno/admin/templates/admin/partials/actor_dialog.html:661
 #: enferno/data_import/templates/sheets-import.html:546
 msgid "Glasses"
 msgstr "نظارات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:464
+#: enferno/admin/templates/admin/jsapi.jinja2:472
 #: enferno/data_import/templates/sheets-import.html:548
 msgid "Eye Color"
 msgstr "لون العين"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:465
+#: enferno/admin/templates/admin/jsapi.jinja2:473
 #: enferno/admin/templates/admin/partials/actor_dialog.html:692
 #: enferno/data_import/templates/sheets-import.html:560
 msgid "Distinctive characteristics (congenital)"
 msgstr "سمات مميزة (خلقية)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:466
+#: enferno/admin/templates/admin/jsapi.jinja2:474
 #: enferno/admin/templates/admin/partials/actor_dialog.html:699
 #: enferno/data_import/templates/sheets-import.html:562
 msgid "Distinctive characteristics (acquired)"
 msgstr "سمات مميزة (مكتسبة)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:467
+#: enferno/admin/templates/admin/jsapi.jinja2:475
 #: enferno/admin/templates/admin/partials/actor_dialog.html:708
 msgid "Physical habits"
 msgstr "عادات بدنية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:468
+#: enferno/admin/templates/admin/jsapi.jinja2:476
 #: enferno/admin/templates/admin/partials/actor_dialog.html:715
 #: enferno/data_import/templates/sheets-import.html:568
 msgid "Other comments"
 msgstr "تعليقات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:469
+#: enferno/admin/templates/admin/jsapi.jinja2:477
 #: enferno/data_import/templates/sheets-import.html:572
 msgid "Physician's name and contact"
 msgstr "اسم الطبيب ومعلومات الاتصال"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:470
+#: enferno/admin/templates/admin/jsapi.jinja2:478
 #: enferno/data_import/templates/sheets-import.html:574
 msgid "Fractures / Injuries"
 msgstr "كسور / إصابات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:471
+#: enferno/admin/templates/admin/jsapi.jinja2:479
 msgid "Implants "
 msgstr "عمليات زرع "
 
-#: enferno/admin/templates/admin/jsapi.jinja2:472
+#: enferno/admin/templates/admin/jsapi.jinja2:480
 #: enferno/data_import/templates/sheets-import.html:581
 msgid "Congenital malformations"
 msgstr "التشوهات الخلقية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:473
+#: enferno/admin/templates/admin/jsapi.jinja2:481
 msgid "Pain and / or ailments"
 msgstr "آلام واعتلالات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:474
+#: enferno/admin/templates/admin/jsapi.jinja2:482
 #: enferno/data_import/templates/sheets-import.html:588
 msgid "Other medical conditions"
 msgstr "حالات طبية أخرى"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:475
+#: enferno/admin/templates/admin/jsapi.jinja2:483
 #: enferno/data_import/templates/sheets-import.html:593
 msgid "Accidents"
 msgstr "الوقائع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:476
+#: enferno/admin/templates/admin/jsapi.jinja2:484
 #: enferno/data_import/templates/sheets-import.html:595
 msgid "Prescription drugs taken"
 msgstr "الأدوية المتناولة التي تتطلب وصفات طبية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:477
+#: enferno/admin/templates/admin/jsapi.jinja2:485
 #: enferno/admin/templates/admin/partials/actor_dialog.html:793
 #: enferno/data_import/templates/sheets-import.html:600
 msgid "Smoker"
 msgstr "مدخن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:478
+#: enferno/admin/templates/admin/jsapi.jinja2:486
 msgid "Is there a Dental Record"
 msgstr "هل هناك سجل أسنان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:479
+#: enferno/admin/templates/admin/jsapi.jinja2:487
 #: enferno/admin/templates/admin/partials/actor_dialog.html:805
 #: enferno/data_import/templates/sheets-import.html:606
 msgid "Dentist's name and contact"
 msgstr "اسم طبيب الأسنان ومعلومات الاتصال"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:480
+#: enferno/admin/templates/admin/jsapi.jinja2:488
 #: enferno/data_import/templates/sheets-import.html:608
 msgid "Teeth features"
 msgstr "مواصفات الأسنان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:481
+#: enferno/admin/templates/admin/jsapi.jinja2:489
 #: enferno/data_import/templates/sheets-import.html:613
 msgid "Dental problems"
 msgstr "مشاكل سنية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:482
+#: enferno/admin/templates/admin/jsapi.jinja2:490
 #: enferno/data_import/templates/sheets-import.html:615
 msgid "Dental treatments"
 msgstr "علاجات سنية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:483
+#: enferno/admin/templates/admin/jsapi.jinja2:491
 msgid "Dental habits"
 msgstr "عادات سنية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:484
+#: enferno/admin/templates/admin/jsapi.jinja2:492
 #: enferno/admin/templates/admin/partials/actor_dialog.html:843
 msgid "Case status"
 msgstr "حالة الكيان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:485
+#: enferno/admin/templates/admin/jsapi.jinja2:493
 msgid "Reporters"
 msgstr "الإبلاغ عن الأشخاص"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:486
+#: enferno/admin/templates/admin/jsapi.jinja2:494
 #: enferno/admin/templates/admin/partials/actor_dialog.html:864
 msgid "Identified by (responsible institution)"
 msgstr "تم التعرف عليه من قبل (المؤسسة المسؤولة)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:487
+#: enferno/admin/templates/admin/jsapi.jinja2:495
 #: enferno/admin/templates/admin/partials/actor_dialog.html:871
 msgid "Was the family notified?"
 msgstr "هل تم إخطار العائلة؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:488
+#: enferno/admin/templates/admin/jsapi.jinja2:496
 #: enferno/data_import/templates/sheets-import.html:658
 msgid "Location of reburial"
 msgstr "مكان إعادة الدفن (العنوان كاملا)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:489
+#: enferno/admin/templates/admin/jsapi.jinja2:497
 #: enferno/admin/templates/admin/partials/actor_dialog.html:500
 #: enferno/data_import/templates/sheets-import.html:481
 msgid "Details of the person who saw them last"
 msgstr "معلومات الشخص الذي شاهدهم أخر مرة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:491
+#: enferno/admin/templates/admin/jsapi.jinja2:499
 msgid "Contact"
 msgstr "معلومات الاتصال"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:496
-#: enferno/admin/templates/admin/jsapi.jinja2:535
+#: enferno/admin/templates/admin/jsapi.jinja2:504
+#: enferno/admin/templates/admin/jsapi.jinja2:543
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:140
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:144
 msgid "Time"
 msgstr "الوقت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:500
+#: enferno/admin/templates/admin/jsapi.jinja2:508
 #: enferno/templates/nav-drawer.html:6
 msgid "Actors"
 msgstr "الكيانات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:501
+#: enferno/admin/templates/admin/jsapi.jinja2:509
 #: enferno/templates/nav-drawer.html:3
 msgid "Bulletins"
 msgstr "المواد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:502
+#: enferno/admin/templates/admin/jsapi.jinja2:510
 #: enferno/templates/nav-drawer.html:9
 msgid "Incidents"
 msgstr "الوقائع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:503
+#: enferno/admin/templates/admin/jsapi.jinja2:511
 msgid "Double click on a node to expand graph, click and hold CTRL to view"
 msgstr "اضغط على العنصر لتوسيع التمثيل، اضغط مع مفتاح التحكم لمعاينة العنصر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:506
+#: enferno/admin/templates/admin/jsapi.jinja2:514
 msgid "Import Date"
 msgstr "تاريخ الاستيراد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:507
+#: enferno/admin/templates/admin/jsapi.jinja2:515
 #: enferno/data_import/templates/import-log.html:176
 msgid "File"
 msgstr "ملف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:508
+#: enferno/admin/templates/admin/jsapi.jinja2:516
 #: enferno/data_import/templates/import-log.html:32
 #: enferno/templates/nav-drawer.html:55
 msgid "Import Log"
 msgstr "سجل الاستيراد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:511
+#: enferno/admin/templates/admin/jsapi.jinja2:519
 msgid "Requested On"
 msgstr "تم الطلب في"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:512
+#: enferno/admin/templates/admin/jsapi.jinja2:520
 msgid "Expires On"
 msgstr "تنتهي الصلاحية في"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:513
+#: enferno/admin/templates/admin/jsapi.jinja2:521
 msgid "Admin Actions"
 msgstr "إجراءات المشرف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:514
+#: enferno/admin/templates/admin/jsapi.jinja2:522
 msgid "Approve"
 msgstr "موافقة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:515
+#: enferno/admin/templates/admin/jsapi.jinja2:523
 msgid "Expire Now"
 msgstr "إنهاء الصلاحية الآن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:516
+#: enferno/admin/templates/admin/jsapi.jinja2:524
 msgid "Reject"
 msgstr "رفض"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:517
+#: enferno/admin/templates/admin/jsapi.jinja2:525
 msgid "Change Expiry"
 msgstr "تعديل الصلاحية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:518
+#: enferno/admin/templates/admin/jsapi.jinja2:526
 msgid "Set Expiry"
 msgstr "تحديد إنتهاء الصلاحية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:519
+#: enferno/admin/templates/admin/jsapi.jinja2:527
 msgid "Export Expiry"
 msgstr "إنتهاء صلاحية التصدير"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:522
-#: enferno/admin/templates/admin/jsapi.jinja2:747
+#: enferno/admin/templates/admin/jsapi.jinja2:530
+#: enferno/admin/templates/admin/jsapi.jinja2:761
 msgid "Maybe"
 msgstr "ضئيل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:523
-#: enferno/admin/templates/admin/jsapi.jinja2:748
+#: enferno/admin/templates/admin/jsapi.jinja2:531
+#: enferno/admin/templates/admin/jsapi.jinja2:762
 msgid "Likely"
 msgstr "غالب/محتمل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:524
-#: enferno/admin/templates/admin/jsapi.jinja2:749
+#: enferno/admin/templates/admin/jsapi.jinja2:532
+#: enferno/admin/templates/admin/jsapi.jinja2:763
 msgid "Certain"
 msgstr "أكيد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:527
+#: enferno/admin/templates/admin/jsapi.jinja2:535
 #: enferno/admin/templates/admin/system-logs.html:150
 msgid "Message"
 msgstr "رسالة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:528
+#: enferno/admin/templates/admin/jsapi.jinja2:536
 msgid "Stacktrace"
 msgstr "تتبع المكدس"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:529
+#: enferno/admin/templates/admin/jsapi.jinja2:537
 #: enferno/admin/templates/admin/system-logs.html:149
 msgid "Endpoint"
 msgstr "نقطة النهاية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:530
+#: enferno/admin/templates/admin/jsapi.jinja2:538
 msgid "User ID"
 msgstr "معرِّف المستخدم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:531
+#: enferno/admin/templates/admin/jsapi.jinja2:539
 msgid "Line No"
 msgstr "رقم السطر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:532
+#: enferno/admin/templates/admin/jsapi.jinja2:540
 msgid "Path"
 msgstr "المسار"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:533
+#: enferno/admin/templates/admin/jsapi.jinja2:541
 msgid "Error Type"
 msgstr "نوع الخطأ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:534
+#: enferno/admin/templates/admin/jsapi.jinja2:542
 #: enferno/admin/templates/admin/system-logs.html:147
 msgid "Level"
 msgstr "المستوى"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:536
+#: enferno/admin/templates/admin/jsapi.jinja2:544
 msgid "Refresh available log files and select latest log file"
 msgstr "تحديث ملفات السجل المتاحة واختيار أحدث ملف سجل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:537
+#: enferno/admin/templates/admin/jsapi.jinja2:545
 msgid "No log files available"
 msgstr "لا يوجد ملفات سجل متوفرة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:540
+#: enferno/admin/templates/admin/jsapi.jinja2:548
 msgid "URGENT"
 msgstr "عاجل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:541
+#: enferno/admin/templates/admin/jsapi.jinja2:549
 msgid "No notifications yet"
 msgstr "لا توجد إشعارات بعد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:542
-msgid "You haven't received any notifications yet. When you do, they'll appear here."
+#: enferno/admin/templates/admin/jsapi.jinja2:550
+msgid ""
+"You haven't received any notifications yet. When you do, they'll appear "
+"here."
 msgstr "لم تتلق أي إشعارات بعد. ستظهر هنا عند ورودها."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:543
+#: enferno/admin/templates/admin/jsapi.jinja2:551
 msgid "Load more"
 msgstr "تحميل المزيد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:544
+#: enferno/admin/templates/admin/jsapi.jinja2:552
 msgid "No more notifications to load."
 msgstr "لا توجد إشعارات أخرى للتحميل."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:545
+#: enferno/admin/templates/admin/jsapi.jinja2:553
 msgid "Oops! Notifications couldn’t be loaded"
 msgstr "تعذر تحميل الإشعارات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:546
+#: enferno/admin/templates/admin/jsapi.jinja2:554
 msgid ""
 "We’re having trouble fetching your notifications right now. Check your "
 "connection or refresh the page."
 msgstr "نواجه مشكلة في جلب إشعاراتك حاليًا. تحقق من اتصالك أو حدّث الصفحة."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:547
+#: enferno/admin/templates/admin/jsapi.jinja2:555
 msgid "We couldn’t load more notifications. Please try again."
 msgstr "تعذر تحميل المزيد من الإشعارات. يرجى المحاولة مرة أخرى."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:548
+#: enferno/admin/templates/admin/jsapi.jinja2:556
 msgid "Oops"
 msgstr "عذرًا"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:549
+#: enferno/admin/templates/admin/jsapi.jinja2:557
 msgid "Retry"
 msgstr "إعادة المحاولة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:552
+#: enferno/admin/templates/admin/jsapi.jinja2:558
+msgid "Snapshot"
+msgstr "لقطة"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:559
+msgid "Attach snapshot"
+msgstr "إرفاق اللقطة"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:560
+msgid "Add new"
+msgstr "إضافة جديد"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:563
 msgid "USER"
 msgstr "المستخدم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:553
+#: enferno/admin/templates/admin/jsapi.jinja2:564
 msgid "SELECT TYPE"
 msgstr "اختر النوع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:554
+#: enferno/admin/templates/admin/jsapi.jinja2:565
 msgid "SELECT ACTION"
 msgstr "اختر الإجراء"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:555
+#: enferno/admin/templates/admin/jsapi.jinja2:566
 msgid "Activity Date"
 msgstr "تاريخ النشاط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:558
+#: enferno/admin/templates/admin/jsapi.jinja2:569
 msgid "Select Event Type"
 msgstr "اختر نوع الحدث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:561
+#: enferno/admin/templates/admin/jsapi.jinja2:572
 msgid "Exact Match"
 msgstr "مطابقة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:564
+#: enferno/admin/templates/admin/jsapi.jinja2:575
 msgid "Address Line 1"
 msgstr "سطر العنوان 1"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:565
+#: enferno/admin/templates/admin/jsapi.jinja2:576
 msgid "Address Line 2"
 msgstr "سطر العنوان 2"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:566
+#: enferno/admin/templates/admin/jsapi.jinja2:577
 msgid "City"
 msgstr "المدينة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:567
+#: enferno/admin/templates/admin/jsapi.jinja2:578
 msgid "Street"
 msgstr "الشارع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:568
+#: enferno/admin/templates/admin/jsapi.jinja2:579
 msgid "Street No"
 msgstr "رقم الشارع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:571
+#: enferno/admin/templates/admin/jsapi.jinja2:582
 msgid "Are you sure you want to delete"
 msgstr "هل أنت متأكد من رغبتك بالحذف؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:572
+#: enferno/admin/templates/admin/jsapi.jinja2:583
 msgid "Confirm deleting this event?"
 msgstr "هل تريد تأكيد حذف هذا الحدث؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:575
+#: enferno/admin/templates/admin/jsapi.jinja2:586
 #: enferno/export/templates/export-dashboard.html:68
 #: enferno/export/templates/export-dashboard.html:173
 msgid "Include Media"
 msgstr "قم بتضمين ملفات الوسائط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:576
+#: enferno/admin/templates/admin/jsapi.jinja2:587
 #: enferno/admin/templates/admin/partials/export_drawer.html:27
 msgid "Export format"
 msgstr "التصدير بصيغة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:579
+#: enferno/admin/templates/admin/jsapi.jinja2:590
 #: enferno/export/templates/export-dashboard.html:177
 msgid "Download"
 msgstr "تنزيل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:582
+#: enferno/admin/templates/admin/jsapi.jinja2:593
 #: enferno/data_import/templates/import-log.html:257
 #: enferno/data_import/templates/import-log.html:271
 #: enferno/export/templates/export-dashboard.html:225
 msgid "Oops! We couldn't find this item."
 msgstr "عذرًا! لم نعثر على العنصر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:585
-#: enferno/admin/templates/admin/jsapi.jinja2:753
+#: enferno/admin/templates/admin/jsapi.jinja2:596
+#: enferno/admin/templates/admin/jsapi.jinja2:767
 msgid "You have been logged out. Please log in again."
 msgstr "تم تسجيل خروجك. الرجاء تسجيل الدخول مجدداً"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:586
-#: enferno/admin/templates/admin/jsapi.jinja2:754
+#: enferno/admin/templates/admin/jsapi.jinja2:597
+#: enferno/admin/templates/admin/jsapi.jinja2:768
 msgid "Are you sure you want to log out all sessions for this user?"
 msgstr "هل أنت متأكد من رغبتك تسجيل الخروج من كافة جلسات هذا المستخدم؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:587
-#: enferno/admin/templates/admin/jsapi.jinja2:761
+#: enferno/admin/templates/admin/jsapi.jinja2:598
+#: enferno/admin/templates/admin/jsapi.jinja2:775
 msgid "User Permissions"
 msgstr "صلاحيات المستخدم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:588
+#: enferno/admin/templates/admin/jsapi.jinja2:599
 msgid "User 2FA Methods"
 msgstr "طرق المصادقة الثنائية للمستخدم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:589
+#: enferno/admin/templates/admin/jsapi.jinja2:600
 #: enferno/admin/templates/admin/users.html:84
 msgid "2FA Inactive"
 msgstr "المصادقة الثنائية غير النشطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:590
-#: enferno/admin/templates/admin/jsapi.jinja2:762
+#: enferno/admin/templates/admin/jsapi.jinja2:601
+#: enferno/admin/templates/admin/jsapi.jinja2:776
 msgid "Can View Usernames"
 msgstr "رؤية أسماء المستخدمين"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:591
+#: enferno/admin/templates/admin/jsapi.jinja2:602
 msgid "Cannot View Usernames"
 msgstr "لا يمكنه عرض أسماء المستخدمين"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:592
-#: enferno/admin/templates/admin/jsapi.jinja2:763
+#: enferno/admin/templates/admin/jsapi.jinja2:603
+#: enferno/admin/templates/admin/jsapi.jinja2:777
 msgid "Can View Simple History"
 msgstr "رؤية السجل المبسط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:593
+#: enferno/admin/templates/admin/jsapi.jinja2:604
 msgid "Cannot View Simple History"
 msgstr "لا يمكنه عرض السجل المبسط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:594
-#: enferno/admin/templates/admin/jsapi.jinja2:764
+#: enferno/admin/templates/admin/jsapi.jinja2:605
+#: enferno/admin/templates/admin/jsapi.jinja2:778
 msgid "Can View Full History"
 msgstr "رؤية السجل الكامل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:595
+#: enferno/admin/templates/admin/jsapi.jinja2:606
 msgid "Cannot View Full History"
 msgstr "لا يمكنه عرض السجل الكامل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:596
-#: enferno/admin/templates/admin/jsapi.jinja2:765
+#: enferno/admin/templates/admin/jsapi.jinja2:607
+#: enferno/admin/templates/admin/jsapi.jinja2:779
 msgid "Can Edit Locations"
 msgstr "تعديل المواقع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:597
+#: enferno/admin/templates/admin/jsapi.jinja2:608
 msgid "Cannot Edit Locations"
 msgstr "لا يمكنه تعديل الأماكن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:598
-#: enferno/admin/templates/admin/jsapi.jinja2:766
+#: enferno/admin/templates/admin/jsapi.jinja2:609
+#: enferno/admin/templates/admin/jsapi.jinja2:780
 msgid "Can Export"
 msgstr "التصدير"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:599
+#: enferno/admin/templates/admin/jsapi.jinja2:610
 msgid "Cannot Export"
 msgstr "لا يمكنه التصدير"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:600
-#: enferno/admin/templates/admin/jsapi.jinja2:767
+#: enferno/admin/templates/admin/jsapi.jinja2:611
+#: enferno/admin/templates/admin/jsapi.jinja2:781
 msgid "Can Self Assign"
 msgstr "التخصيص الذاتي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:601
+#: enferno/admin/templates/admin/jsapi.jinja2:612
 msgid "Cannot Self Assign"
 msgstr "لا يمكنه التكليف الذاتي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:602
-#: enferno/admin/templates/admin/jsapi.jinja2:768
+#: enferno/admin/templates/admin/jsapi.jinja2:613
+#: enferno/admin/templates/admin/jsapi.jinja2:782
 msgid "User Sessions"
 msgstr "جلسات المستخدم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:603
-#: enferno/admin/templates/admin/jsapi.jinja2:769
+#: enferno/admin/templates/admin/jsapi.jinja2:614
+#: enferno/admin/templates/admin/jsapi.jinja2:783
 msgid "Session"
 msgstr "جلسة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:604
-#: enferno/admin/templates/admin/jsapi.jinja2:770
+#: enferno/admin/templates/admin/jsapi.jinja2:615
+#: enferno/admin/templates/admin/jsapi.jinja2:784
 msgid "IP"
 msgstr "عنوان IP"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:605
-#: enferno/admin/templates/admin/jsapi.jinja2:771
+#: enferno/admin/templates/admin/jsapi.jinja2:616
+#: enferno/admin/templates/admin/jsapi.jinja2:785
 msgid "User Agent"
 msgstr "وكيل المستخدم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:606
-#: enferno/admin/templates/admin/jsapi.jinja2:772
+#: enferno/admin/templates/admin/jsapi.jinja2:617
+#: enferno/admin/templates/admin/jsapi.jinja2:786
 msgid "Started"
 msgstr "بدأت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:607
-#: enferno/admin/templates/admin/jsapi.jinja2:773
+#: enferno/admin/templates/admin/jsapi.jinja2:618
+#: enferno/admin/templates/admin/jsapi.jinja2:787
 msgid "Log off this device"
 msgstr "تسجيل الخروج من هذا الجهاز"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:610
+#: enferno/admin/templates/admin/jsapi.jinja2:621
 msgid "View Fullscreen"
 msgstr "عرض بكامل الشاشة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:611
+#: enferno/admin/templates/admin/jsapi.jinja2:622
 msgid "Exit Fullscreen"
 msgstr "خروج من وضع العرض بكامل الشاشة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:613
+#: enferno/admin/templates/admin/jsapi.jinja2:624
 msgid "Coordinates"
 msgstr "الإحداثيات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:615
+#: enferno/admin/templates/admin/jsapi.jinja2:626
 #: enferno/data_import/templates/sheets-import.html:678
 #: enferno/data_import/templates/sheets-import.html:682
 msgid "Event Type"
 msgstr "نوع الحادثة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:616
+#: enferno/admin/templates/admin/jsapi.jinja2:627
 msgid "Parent ID"
 msgstr "معرّف المكان الأصل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:619
+#: enferno/admin/templates/admin/jsapi.jinja2:630
 msgid "Preview Image"
 msgstr "معاينة الصورة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:620
+#: enferno/admin/templates/admin/jsapi.jinja2:631
 msgid "Play Video"
 msgstr "تشغيل الفيديو"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:621
+#: enferno/admin/templates/admin/jsapi.jinja2:632
 msgid "Open PDF in PDF Viewer"
 msgstr "فتح ملف PDF في مستعرض PDF"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:622
+#: enferno/admin/templates/admin/jsapi.jinja2:633
 msgid "Download File"
 msgstr "تحميل الملف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:623
+#: enferno/admin/templates/admin/jsapi.jinja2:634
 msgid "Category"
 msgstr "الفئة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:624
+#: enferno/admin/templates/admin/jsapi.jinja2:635
 msgid "Duration"
 msgstr "المدة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:625
+#: enferno/admin/templates/admin/jsapi.jinja2:636
 msgid "Click to copy"
 msgstr "انقر للنسخ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:626
+#: enferno/admin/templates/admin/jsapi.jinja2:637
 msgid "File Hash"
 msgstr "تجزئة الملف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:627
+#: enferno/admin/templates/admin/jsapi.jinja2:638
 #: enferno/admin/templates/admin/media-dashboard.html:295
 msgid "Filename"
 msgstr "اسم الملف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:628
+#: enferno/admin/templates/admin/jsapi.jinja2:639
 msgid "Preview not available"
 msgstr "المعاينة غير متاحة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:629
+#: enferno/admin/templates/admin/jsapi.jinja2:640
 msgid "Download file"
 msgstr "تنزيل الملف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:630
+#: enferno/admin/templates/admin/jsapi.jinja2:641
 msgid "Only redactions can be deleted"
 msgstr "لا يمكن حذف سوى النسخ المحجوبة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:631
+#: enferno/admin/templates/admin/jsapi.jinja2:642
 #: enferno/admin/templates/admin/media-dashboard.html:241
 msgid "Redact"
 msgstr "حجب"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:632
+#: enferno/admin/templates/admin/jsapi.jinja2:643
 msgid "You're about to delete a redacted copy"
 msgstr "أنت على وشك حذف نسخة محجوبة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:633
+#: enferno/admin/templates/admin/jsapi.jinja2:644
 msgid "Deleting this redacted copy will not delete the original media."
 msgstr "لن يؤدي حذف هذه النسخة المحجوبة إلى حذف الوسائط الأصلية."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:634
+#: enferno/admin/templates/admin/jsapi.jinja2:645
 msgid "Delete Redaction"
 msgstr "حذف النسخة المحجوبة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:635
+#: enferno/admin/templates/admin/jsapi.jinja2:646
 msgid "Redact document"
 msgstr "حجب أجزاء من المستند"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:636
+#: enferno/admin/templates/admin/jsapi.jinja2:647
 msgid "Draw black boxes to censor sensitive areas, then save a new redacted copy"
 msgstr "ارسم مربعات سوداء لحجب المناطق الحساسة، ثم احفظ نسخة محجوبة جديدة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:637
+#: enferno/admin/templates/admin/jsapi.jinja2:648
 msgid "redacted copy"
 msgstr "نسخة محجوبة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:638
+#: enferno/admin/templates/admin/jsapi.jinja2:649
 msgid "redacted copies"
 msgstr "نسخ محجوبة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:639
+#: enferno/admin/templates/admin/jsapi.jinja2:650
 msgid "Redaction Tool"
 msgstr "أداة الحجب"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:640
+#: enferno/admin/templates/admin/jsapi.jinja2:651
 msgid "document"
 msgstr "مستند"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:641
+#: enferno/admin/templates/admin/jsapi.jinja2:652
 msgid "Copy name (e.g. detainee name)"
 msgstr "اسم النسخة (مثلاً اسم المحتجز)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:642
+#: enferno/admin/templates/admin/jsapi.jinja2:653
 #: enferno/admin/templates/admin/system-administration.html:44
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:643
+#: enferno/admin/templates/admin/jsapi.jinja2:654
 msgid "Save as new copy"
 msgstr "حفظ كنسخة جديدة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:644
+#: enferno/admin/templates/admin/jsapi.jinja2:655
 msgid "Save redacted copy"
 msgstr "حفظ نسخة محجوبة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:645
+#: enferno/admin/templates/admin/jsapi.jinja2:656
 msgid "Draw at least one black box on the document to save"
 msgstr "ارسم مربعاً أسود واحداً على الأقل على المستند قبل الحفظ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:646
+#: enferno/admin/templates/admin/jsapi.jinja2:657
 msgid "Click & drag to draw a black box"
 msgstr "انقر واسحب لرسم مربع أسود"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:647
+#: enferno/admin/templates/admin/jsapi.jinja2:658
 msgid "Drag box to reposition"
 msgstr "اسحب المربع لتغيير موضعه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:648
+#: enferno/admin/templates/admin/jsapi.jinja2:659
 msgid "Click box then Delete to remove"
 msgstr "انقر على المربع ثم اضغط Delete لإزالته"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:649
+#: enferno/admin/templates/admin/jsapi.jinja2:660
 msgid "Hold Space + drag to pan"
 msgstr "اضغط مطولاً على مفتاح المسافة واسحب للتحريك"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:650
+#: enferno/admin/templates/admin/jsapi.jinja2:661
 msgid "Fit"
 msgstr "ملاءمة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:651
+#: enferno/admin/templates/admin/jsapi.jinja2:662
 msgid "Unsupported file type"
 msgstr "نوع الملف غير مدعوم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:652
+#: enferno/admin/templates/admin/jsapi.jinja2:663
 msgid "Failed to load document"
 msgstr "تعذر تحميل المستند"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:653
+#: enferno/admin/templates/admin/jsapi.jinja2:664
 msgid "Failed to save redaction"
 msgstr "تعذر حفظ النسخة المحجوبة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:654
+#: enferno/admin/templates/admin/jsapi.jinja2:665
 msgid "Pre-update Snapshots"
 msgstr "لقطات ما قبل التحديث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:655
+#: enferno/admin/templates/admin/jsapi.jinja2:666
 msgid "Restore is CLI-only for safety. SSH to the server and run"
 msgstr ""
-"حفاظاً على السلامة، لا تتوفر الاستعادة إلا عبر سطر الأوامر. اتصل بالخادم عبر"
-" SSH وشغّل"
+"حفاظاً على السلامة، لا تتوفر الاستعادة إلا عبر سطر الأوامر. اتصل بالخادم "
+"عبر SSH وشغّل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:656
-msgid "requires root; it stops services, runs pg_restore, and starts services again"
+#: enferno/admin/templates/admin/jsapi.jinja2:667
+msgid ""
+"requires root; it stops services, runs pg_restore, and starts services "
+"again"
 msgstr "يتطلب صلاحيات root؛ يوقف الخدمات، ويشغّل pg_restore، ثم يعيد تشغيل الخدمات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:658
+#: enferno/admin/templates/admin/jsapi.jinja2:669
 msgid "Size"
 msgstr "الحجم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:660
+#: enferno/admin/templates/admin/jsapi.jinja2:671
 msgid "No snapshots available yet."
 msgstr "لا توجد لقطات متاحة بعد."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:661
+#: enferno/admin/templates/admin/jsapi.jinja2:672
 msgid "Update available"
 msgstr "يتوفر تحديث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:662
+#: enferno/admin/templates/admin/jsapi.jinja2:673
 msgid "Update Bayanat to"
 msgstr "تحديث Bayanat إلى"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:663
+#: enferno/admin/templates/admin/jsapi.jinja2:674
 msgid "Current"
 msgstr "الحالي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:664
+#: enferno/admin/templates/admin/jsapi.jinja2:675
 msgid "Target"
 msgstr "المستهدف"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:665
+#: enferno/admin/templates/admin/jsapi.jinja2:676
 msgid "Release notes"
 msgstr "ملاحظات الإصدار"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:666
+#: enferno/admin/templates/admin/jsapi.jinja2:677
 msgid "To update, run this on the server as an administrator:"
 msgstr "لتحديث النظام، شغّل الأمر التالي على الخادم بصلاحيات مسؤول:"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:667
+#: enferno/admin/templates/admin/jsapi.jinja2:678
 #: enferno/admin/templates/admin/users.html:315
 #: enferno/templates/security/login_user.html:78
 msgid "Close"
 msgstr "اغلاق"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:670
+#: enferno/admin/templates/admin/jsapi.jinja2:679
+msgid "Editing"
+msgstr "جارٍ التعديل"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:680
+msgid "Revisions"
+msgstr "المراجعات"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:681
+msgid "Revision saved"
+msgstr "تم حفظ المراجعة"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:682
+msgid "Save Revision"
+msgstr "حفظ المراجعة"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:685
 msgid "Default settings loaded. Click Save to apply changes."
 msgstr "تم تحميل الإعدادات الافتراضية. انقر على حفظ لتطبيق التغييرات."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:671
+#: enferno/admin/templates/admin/jsapi.jinja2:686
 msgid "Field"
 msgstr "الحقل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:672
-msgid "Previous"
-msgstr "السابق"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:673
+#: enferno/admin/templates/admin/jsapi.jinja2:687
 msgid "Updated"
 msgstr "محدّث"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:674
+#: enferno/admin/templates/admin/jsapi.jinja2:688
 msgid "UNSET"
 msgstr "غير معيّن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:675
+#: enferno/admin/templates/admin/jsapi.jinja2:689
 msgid "On"
 msgstr "مفعّل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:676
+#: enferno/admin/templates/admin/jsapi.jinja2:690
 msgid "Off"
 msgstr "معطّل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:679
+#: enferno/admin/templates/admin/jsapi.jinja2:693
 msgid "Include Postal Code"
 msgstr "الرمز البريدي"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:680
+#: enferno/admin/templates/admin/jsapi.jinja2:694
 #: enferno/admin/templates/admin/system-logs.html:146
 msgid "Logger"
 msgstr "المسجّل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:692
+#: enferno/admin/templates/admin/jsapi.jinja2:706
 msgid "Origin Place"
 msgstr "مكان الأصل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:701
+#: enferno/admin/templates/admin/jsapi.jinja2:715
 msgid "Person"
 msgstr "شخص"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:702
+#: enferno/admin/templates/admin/jsapi.jinja2:716
 msgid "Entity"
 msgstr "كيان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:706
+#: enferno/admin/templates/admin/jsapi.jinja2:720
 msgid "Male"
 msgstr "ذكر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:707
+#: enferno/admin/templates/admin/jsapi.jinja2:721
 msgid "Female"
 msgstr "أنثى"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:711
+#: enferno/admin/templates/admin/jsapi.jinja2:725
 msgid "Minor"
 msgstr "قاصر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:712
+#: enferno/admin/templates/admin/jsapi.jinja2:726
 msgid "Adult"
 msgstr "بالغ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:719
+#: enferno/admin/templates/admin/jsapi.jinja2:733
 msgid "Non-Civilian"
 msgstr "غير مدني"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:720
+#: enferno/admin/templates/admin/jsapi.jinja2:734
 msgid "Police"
 msgstr "شرطة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:721
+#: enferno/admin/templates/admin/jsapi.jinja2:735
 msgid "Other Security Forces"
 msgstr "قوات أمنية أخرى"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:725
+#: enferno/admin/templates/admin/jsapi.jinja2:739
 msgid "Single"
 msgstr "عازبـ(ة)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:726
+#: enferno/admin/templates/admin/jsapi.jinja2:740
 msgid "Married"
 msgstr "متزوجـ(ة)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:727
+#: enferno/admin/templates/admin/jsapi.jinja2:741
 msgid "Seperated"
 msgstr "منفصلـ(ة)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:728
+#: enferno/admin/templates/admin/jsapi.jinja2:742
 msgid "Divorced"
 msgstr "مطلقـ(ة)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:729
+#: enferno/admin/templates/admin/jsapi.jinja2:743
 msgid "Widowed"
 msgstr "أرملـ(ة)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:755
+#: enferno/admin/templates/admin/jsapi.jinja2:769
 msgid "Are you sure you want to end the session for this device?"
 msgstr "هل أنت متأكد من إنهاء جلسة هذا الجهاز؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:756
+#: enferno/admin/templates/admin/jsapi.jinja2:770
 msgid "All sessions for the user have been logged out successfully."
 msgstr "تم تسجيل الخروج من جميع جلسات هذا المستخدم بنجاح."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:757
+#: enferno/admin/templates/admin/jsapi.jinja2:771
 msgid "Logged out session"
 msgstr "جلسة تم تسجيل الخروج منها"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:758
+#: enferno/admin/templates/admin/jsapi.jinja2:772
 msgid "Error fetching sessions"
 msgstr "خطأ في جلب الجلسات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:759
+#: enferno/admin/templates/admin/jsapi.jinja2:773
 msgid "Error logging out session"
 msgstr "خطأ في تسجيل الخروج من الجلسة"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:760
+#: enferno/admin/templates/admin/jsapi.jinja2:774
 msgid "Error logging out all sessions for user ID:"
 msgstr "خطأ في تسجيل الخروج من جميع جلسات المستخدم ذو المعرٍّف:"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:774
+#: enferno/admin/templates/admin/jsapi.jinja2:788
 #: enferno/admin/templates/admin/users.html:108
 #: enferno/admin/templates/admin/users.html:258
 msgid "Active"
 msgstr "نشط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:775
+#: enferno/admin/templates/admin/jsapi.jinja2:789
 #: enferno/admin/templates/admin/users.html:108
 msgid "Inactive"
 msgstr "غير نشط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:776
+#: enferno/admin/templates/admin/jsapi.jinja2:790
 #: enferno/admin/templates/admin/users.html:309
 msgid "Logout All Sessions"
 msgstr "تسجيل الخروج من جميع الجلسات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:777
+#: enferno/admin/templates/admin/jsapi.jinja2:791
 msgid "Reset password"
 msgstr "إعادة تعيين كلمة المرور"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:778
+#: enferno/admin/templates/admin/jsapi.jinja2:792
 #: enferno/admin/templates/admin/users.html:43
 msgid "Password reset already requested."
 msgstr "تم طلب إعادة تعيين كلمة المرور مسبقاً."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:779
+#: enferno/admin/templates/admin/jsapi.jinja2:793
 #: enferno/admin/templates/admin/users.html:72
 msgid "Password reset requested."
 msgstr "تم طلب إعادة تعيين كلمة المرور"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:780
+#: enferno/admin/templates/admin/jsapi.jinja2:794
 #: enferno/admin/templates/admin/users.html:43
 msgid "Force password reset"
 msgstr "فرض إعادة تعيين كلمة المرور"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:781
+#: enferno/admin/templates/admin/jsapi.jinja2:795
 #: enferno/admin/templates/admin/users.html:59
 #: enferno/admin/templates/admin/users.html:304
 msgid "Revoke 2FA"
 msgstr "إلغاء المصادقة الثنائية"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:784
+#: enferno/admin/templates/admin/jsapi.jinja2:798
 #, python-brace-format
 msgid "Must be {max} characters or fewer."
 msgstr "يجب ألا يتجاوز {max} حرفًا."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:785
+#: enferno/admin/templates/admin/jsapi.jinja2:799
 #, python-brace-format
 msgid "Must be at least {min} characters."
 msgstr "يجب ألا يقل عن {min} حرفًا."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:786
+#: enferno/admin/templates/admin/jsapi.jinja2:800
 msgid "This field is required."
 msgstr "هذا الحقل مطلوب."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:787
+#: enferno/admin/templates/admin/jsapi.jinja2:801
 msgid "Please enter a valid number."
 msgstr "يرجى إدخال رقم صالح."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:873
+#: enferno/admin/templates/admin/jsapi.jinja2:887
 #: enferno/data_import/templates/sheets-import.html:1257
 msgid "Error"
 msgstr "خطأ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:874
+#: enferno/admin/templates/admin/jsapi.jinja2:888
 msgid "Warning"
 msgstr "تنبيه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:875
+#: enferno/admin/templates/admin/jsapi.jinja2:889
 msgid "Info"
 msgstr "معلومات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:876
+#: enferno/admin/templates/admin/jsapi.jinja2:890
 msgid "Debug"
 msgstr "تنقيح / تصحيح"
 
@@ -3909,11 +3982,11 @@ msgstr "الحد الأقصى لمسافة إزالة التكرار"
 
 #: enferno/admin/templates/admin/system-administration.html:104
 msgid ""
-"Number of matches to send for processing in every batch. Affects speed of "
-"processing and performance of the server."
+"Number of matches to send for processing in every batch. Affects speed of"
+" processing and performance of the server."
 msgstr ""
-"عدد المطابقات التي يتم إرسالها للمعالجة في كل دفعة. تؤثر على سرعة المعالجة "
-"وأداء الخادم"
+"عدد المطابقات التي يتم إرسالها للمعالجة في كل دفعة. تؤثر على سرعة "
+"المعالجة وأداء الخادم"
 
 #: enferno/admin/templates/admin/system-administration.html:105
 msgid "Deduplication batch size"
@@ -3923,7 +3996,9 @@ msgstr "حجم دفعة إزالة التكرار"
 msgid ""
 "Interval of batches sent for processing. Affects speed of processing and "
 "performance of the server."
-msgstr "فاصل زمني بين الدفعات المرسلة للمعالجة. يؤثر على سرعة المعالجة وأداء الخادم"
+msgstr ""
+"فاصل زمني بين الدفعات المرسلة للمعالجة. يؤثر على سرعة المعالجة وأداء "
+"الخادم"
 
 #: enferno/admin/templates/admin/system-administration.html:111
 msgid "Deduplication interval"
@@ -3946,14 +4021,14 @@ msgstr "الإعدادات"
 msgid ""
 "Storage options for media files uploaded to Bayanat. By default, Bayanat "
 "store these files locally on the server. It's also possible to use S3 "
-"compatible bucket using cloud providers like AWS, Azure, Google Cloud, or "
-"MinIO (which can be used in offline installations)."
+"compatible bucket using cloud providers like AWS, Azure, Google Cloud, or"
+" MinIO (which can be used in offline installations)."
 msgstr ""
-"خيارات التخزين لملفات الوسائط التي تم تحميلها إلى Bayanat. تقوم Bayanat بشكل"
-" افتراضي بتخزين هذه الملفات محليًا على الخادم. من الممكن أيضًا استخدام وحدة "
-"تخزين متوافقة مع S3 باستخدام موفري الخدمات السحابية مثل AWS أو Azure أو "
-"Google Cloud أو MinIO (والتي يمكن استخدامها في التثبيتات غير المتصلة "
-"بالإنترنت)."
+"خيارات التخزين لملفات الوسائط التي تم تحميلها إلى Bayanat. تقوم Bayanat "
+"بشكل افتراضي بتخزين هذه الملفات محليًا على الخادم. من الممكن أيضًا "
+"استخدام وحدة تخزين متوافقة مع S3 باستخدام موفري الخدمات السحابية مثل AWS "
+"أو Azure أو Google Cloud أو MinIO (والتي يمكن استخدامها في التثبيتات غير "
+"المتصلة بالإنترنت)."
 
 #: enferno/admin/templates/admin/system-administration.html:135
 #: enferno/templates/setup_wizard.html:170
@@ -3991,11 +4066,11 @@ msgstr "لواحق الوسائط المسموح بها"
 
 #: enferno/admin/templates/admin/system-administration.html:165
 msgid ""
-"The system will only allow files uploaded whose extensions are included in "
-"this list and reject all other extensions."
+"The system will only allow files uploaded whose extensions are included "
+"in this list and reject all other extensions."
 msgstr ""
-"سوف يسمح النظام برفع الملفات المدرجة لواحقها في هذه القائمة فقط، وسوف يقوم "
-"برفض كافة اللواحق الأخرى"
+"سوف يسمح النظام برفع الملفات المدرجة لواحقها في هذه القائمة فقط، وسوف "
+"يقوم برفض كافة اللواحق الأخرى"
 
 #: enferno/admin/templates/admin/system-administration.html:168
 msgid "Media Max Upload Size"
@@ -4031,19 +4106,19 @@ msgstr "قوة كلمة المرور"
 #: enferno/admin/templates/admin/system-administration.html:194
 msgid ""
 "Bayanat uses zxcvbn password strength estimator to\n"
-"                                                calculate a password score. "
-"'Medium' coresponds to a zxcvbn score of 2 and is suitable for\n"
+"                                                calculate a password "
+"score. 'Medium' coresponds to a zxcvbn score of 2 and is suitable for\n"
 "                                                offline Bayanat "
 "installation. 'Strong' corresponds to a score of 3, we recommend this\n"
-"                                                setting for online Bayanat "
-"installations. 'Very Strong' corresponds to a zxcvbn score of 4\n"
-"                                                and offers the highest level"
-" of protection."
+"                                                setting for online "
+"Bayanat installations. 'Very Strong' corresponds to a zxcvbn score of 4\n"
+"                                                and offers the highest "
+"level of protection."
 msgstr ""
-"يستخدم بيانات مقياس zxcvbn لحساب قوة كلمة المرور. تتوافق «متوسطة» مع الدرجة "
-"2 وتناسب تثبيت بيانات دون اتصال. وتتوافق «قوية» مع الدرجة 3 ونوصي بها "
-"للتثبيت المتصل بالإنترنت. وتتوافق «قوية جدًا» مع الدرجة 4 وتوفر أعلى مستوى "
-"من الحماية."
+"يستخدم بيانات مقياس zxcvbn لحساب قوة كلمة المرور. تتوافق «متوسطة» مع "
+"الدرجة 2 وتناسب تثبيت بيانات دون اتصال. وتتوافق «قوية» مع الدرجة 3 ونوصي "
+"بها للتثبيت المتصل بالإنترنت. وتتوافق «قوية جدًا» مع الدرجة 4 وتوفر أعلى "
+"مستوى من الحماية."
 
 #: enferno/admin/templates/admin/system-administration.html:204
 #: enferno/templates/setup_wizard.html:241
@@ -4090,11 +4165,11 @@ msgstr "تفعيل reCAPTCHA"
 
 #: enferno/admin/templates/admin/system-administration.html:238
 msgid ""
-"Add further security to Bayanat's by requiring Google Recaptcha on the login"
-" form."
+"Add further security to Bayanat's by requiring Google Recaptcha on the "
+"login form."
 msgstr ""
-"أضف مزيدًا من الأمان إلى Bayanat عن طريق طلب Google Recaptcha في نموذج تسجيل"
-" الدخول."
+"أضف مزيدًا من الأمان إلى Bayanat عن طريق طلب Google Recaptcha في نموذج "
+"تسجيل الدخول."
 
 #: enferno/admin/templates/admin/system-administration.html:243
 msgid "Recaptcha Public Key"
@@ -4145,16 +4220,16 @@ msgid ""
 "By default, users can access all\n"
 "                                        items in the Bayanat database, "
 "except for items which are restricted from them. Administrators can\n"
-"                                        restrict access to certain items by "
-"assigning Access Group(s) to these items. Additionally, only\n"
-"                                        administrators can restrict items. "
-"This default behaviour can be changed with the following\n"
+"                                        restrict access to certain items "
+"by assigning Access Group(s) to these items. Additionally, only\n"
+"                                        administrators can restrict "
+"items. This default behaviour can be changed with the following\n"
 "                                        settings."
 msgstr ""
-"يمكن للمستخدمين افتراضيًا الوصول إلى جميع العناصر في قاعدة بيانات بيانات، "
-"باستثناء العناصر المقيّدة عنهم. يمكن للمسؤولين تقييد الوصول إلى عناصر معينة "
-"بإسناد مجموعات وصول إليها، ولا يمكن تقييد العناصر إلا بواسطة المسؤولين. يمكن"
-" تغيير هذا السلوك الافتراضي من الإعدادات التالية."
+"يمكن للمستخدمين افتراضيًا الوصول إلى جميع العناصر في قاعدة بيانات بيانات،"
+" باستثناء العناصر المقيّدة عنهم. يمكن للمسؤولين تقييد الوصول إلى عناصر "
+"معينة بإسناد مجموعات وصول إليها، ولا يمكن تقييد العناصر إلا بواسطة "
+"المسؤولين. يمكن تغيير هذا السلوك الافتراضي من الإعدادات التالية."
 
 #: enferno/admin/templates/admin/system-administration.html:303
 msgid "Restrictive access control"
@@ -4167,7 +4242,8 @@ msgid ""
 "administrators, except when they are explicitly given access."
 msgstr ""
 "سيتم تقييد الوصول لجميع العناصر في قاعدة البيانات بشكل أفتراضي لجيمع "
-"المستخدمين باستثناء مدراء النظام، إلا إذا تم منحهم صلاحية الوصول بشكل صريح."
+"المستخدمين باستثناء مدراء النظام، إلا إذا تم منحهم صلاحية الوصول بشكل "
+"صريح."
 
 #: enferno/admin/templates/admin/system-administration.html:309
 msgid "Allow non-admin users to restrict new items"
@@ -4176,9 +4252,9 @@ msgstr "السماح للمستخدمين غير المسؤولين بتقييد
 #: enferno/admin/templates/admin/system-administration.html:311
 #: enferno/templates/setup_wizard.html:276
 msgid ""
-"Users with no administrative privileges will be allowed to restrict items "
-"they create. They can only restrict items to one or more of their own access"
-" groups."
+"Users with no administrative privileges will be allowed to restrict items"
+" they create. They can only restrict items to one or more of their own "
+"access groups."
 msgstr ""
 "سيُسمح للمستخدمين الذين ليس لديهم امتيازات إدارية بتقييد العناصر التي "
 "ينشؤونها. يمكنهم فقط تقييد العناصر إلى واحدة أو أكثر من مجموعات الوصول "
@@ -4213,8 +4289,8 @@ msgstr " بواسطة المستخدمين."
 
 #: enferno/admin/templates/admin/system-administration.html:331
 msgid ""
-"This setting will log Actors, Bulletins, Incidents and all other secondary "
-"items created by users."
+"This setting will log Actors, Bulletins, Incidents and all other "
+"secondary items created by users."
 msgstr ""
 "سيقوم هذا الإعداد بتسجيل الكيانات والمواد والوقائع وكل العناصر الأخرى "
 "الثانوية التي أنشأها المستخدمون."
@@ -4235,11 +4311,11 @@ msgstr "العناصر المعدّلة"
 
 #: enferno/admin/templates/admin/system-administration.html:347
 msgid ""
-"This setting will log Actors, Bulletins, Incidents and all other secondary "
-"items edited by users."
+"This setting will log Actors, Bulletins, Incidents and all other "
+"secondary items edited by users."
 msgstr ""
-"سيقوم هذا الإعداد بتسجيل جميع الكيانات والمواد والوقائع وكل العناصر الأخرى "
-"الثانوية التي قام المستخدمون بتعديلها."
+"سيقوم هذا الإعداد بتسجيل جميع الكيانات والمواد والوقائع وكل العناصر "
+"الأخرى الثانوية التي قام المستخدمون بتعديلها."
 
 #: enferno/admin/templates/admin/system-administration.html:352
 msgid "Items deleted"
@@ -4247,18 +4323,21 @@ msgstr "العناصر المحذوفة"
 
 #: enferno/admin/templates/admin/system-administration.html:355
 msgid ""
-"This setting will enable logging all secondary items deleted by authorized "
-"users. Note: Actors, Bulletins and Incidents cannot be deleted."
+"This setting will enable logging all secondary items deleted by "
+"authorized users. Note: Actors, Bulletins and Incidents cannot be "
+"deleted."
 msgstr ""
-"سيسمح هذا الإعداد بتسجيل كل العناصر الثانوية التي تم حذفها من قبل المستخدمين"
-" المصرح لهم. ملاحظة: الكيانات والمواد والوقائع لا يمكن حذفها."
+"سيسمح هذا الإعداد بتسجيل كل العناصر الثانوية التي تم حذفها من قبل "
+"المستخدمين المصرح لهم. ملاحظة: الكيانات والمواد والوقائع لا يمكن حذفها."
 
 #: enferno/admin/templates/admin/system-administration.html:360
 msgid "Items reviewed"
 msgstr "العناصر التي تمت مراجعتها"
 
 #: enferno/admin/templates/admin/system-administration.html:363
-msgid "This setting will enable logging all items peer-viewed by authorized users."
+msgid ""
+"This setting will enable logging all items peer-viewed by authorized "
+"users."
 msgstr ""
 "سيسمح هذا الإعداد بتسجيل كل العناصر التي تمت مراجعتها من قبل المستخدمين "
 "المصرح لهم."
@@ -4285,9 +4364,11 @@ msgstr " بواسطة المستخدمين."
 
 #: enferno/admin/templates/admin/system-administration.html:385
 msgid ""
-"This setting will enable logging all export requests submitted by authorized"
-" users."
-msgstr "سيسمح هذا الإعداد بتسجيل كل طلبات التصدير التي قام بها المستخدمون المصرح لهم."
+"This setting will enable logging all export requests submitted by "
+"authorized users."
+msgstr ""
+"سيسمح هذا الإعداد بتسجيل كل طلبات التصدير التي قام بها المستخدمون المصرح "
+"لهم."
 
 #: enferno/admin/templates/admin/system-administration.html:390
 msgid "Export requests approved"
@@ -4316,7 +4397,9 @@ msgstr "طلبات التصدير المرفوضة"
 msgid ""
 "This setting will enable logging all export requests rejections by "
 "administrators."
-msgstr "سيسمح هذا الإعداد بتسجيل كل طلبات التصدير التي تمت رفضها من قبل مدراء النظام."
+msgstr ""
+"سيسمح هذا الإعداد بتسجيل كل طلبات التصدير التي تمت رفضها من قبل مدراء "
+"النظام."
 
 #: enferno/admin/templates/admin/system-administration.html:406
 msgid "Export requests downloaded"
@@ -4324,8 +4407,8 @@ msgstr "طلبات التصدير المنزّلة"
 
 #: enferno/admin/templates/admin/system-administration.html:409
 msgid ""
-"This setting will enable logging all export requests downloads by authorized"
-" users."
+"This setting will enable logging all export requests downloads by "
+"authorized users."
 msgstr ""
 "سيسمح هذا الإعداد بتسجيل كل طلبات التصدير التي تم تنزيلها من قبل مدراء "
 "النظام."
@@ -4349,13 +4432,13 @@ msgstr "عمليات تسجيل الخروج"
 #: enferno/admin/templates/admin/system-administration.html:429
 msgid ""
 "This setting will enable logging all user logout activities. Note: only "
-"explicit logout will be logged, users closing their browsers without logging"
-" out will not for example."
+"explicit logout will be logged, users closing their browsers without "
+"logging out will not for example."
 msgstr ""
-"سيسمح هذا الإعداد بتسجيل كل عمليات تسجيل الخروج لكافة المستخدمين. ملاحظة: "
-"سوف يتم تسجيل عمليات تسجيل الخروج الفعلية فقط، على سبيل المثال لن يتم تسجيل "
-"عملية تسجيل الخروج إذا قام المستخدم بإغلاق المتصفح دون الضغط على تسجيل "
-"الخروج."
+"سيسمح هذا الإعداد بتسجيل كل عمليات تسجيل الخروج لكافة المستخدمين. ملاحظة:"
+" سوف يتم تسجيل عمليات تسجيل الخروج الفعلية فقط، على سبيل المثال لن يتم "
+"تسجيل عملية تسجيل الخروج إذا قام المستخدم بإغلاق المتصفح دون الضغط على "
+"تسجيل الخروج."
 
 #: enferno/admin/templates/admin/system-administration.html:439
 msgid "Search queries made"
@@ -4363,18 +4446,20 @@ msgstr "استعلامات البحث المنفذة"
 
 #: enferno/admin/templates/admin/system-administration.html:442
 msgid ""
-"This setting will enable logging all searches conducted by users on Actors, "
-"Bulletins and Incidents."
+"This setting will enable logging all searches conducted by users on "
+"Actors, Bulletins and Incidents."
 msgstr ""
-"سيسمح هذا الإعداد بتسجيل كل عمليات البحث عن الكيانات والمواد والوقائع التي "
-"قام بها المستخدمون."
+"سيسمح هذا الإعداد بتسجيل كل عمليات البحث عن الكيانات والمواد والوقائع "
+"التي قام بها المستخدمون."
 
 #: enferno/admin/templates/admin/system-administration.html:448
 msgid "Files uploaded"
 msgstr "الملفات المرفوعة"
 
 #: enferno/admin/templates/admin/system-administration.html:451
-msgid "This setting will enable logging all files uploaded users to media storage."
+msgid ""
+"This setting will enable logging all files uploaded users to media "
+"storage."
 msgstr ""
 "سيسمح هذا الإعداد بتسجيل كل الملفات التي تم رفعها من قبل المستخدمين إلى "
 "وسائط التخزين."
@@ -4385,8 +4470,8 @@ msgstr "العمليات المجمّعة الموضوعة في قائمة ال�
 
 #: enferno/admin/templates/admin/system-administration.html:459
 msgid ""
-"This setting will enable logging all bulk operations initiated by authorized"
-" users on Actors, Bulletins and Incidents."
+"This setting will enable logging all bulk operations initiated by "
+"authorized users on Actors, Bulletins and Incidents."
 msgstr ""
 "سيسمح هذا الإعداد بتسجيل كل العمليات على الدفعات التي تم إجراؤها من قبل "
 "المستخدمين المصرح لهم على الكيانات والمواد والوقائع."
@@ -4419,20 +4504,21 @@ msgstr "فحص مسار استيراد الوسائط"
 
 #: enferno/admin/templates/admin/system-administration.html:495
 msgid ""
-"Allow scanning of the import path for files in the Media Import tool. The "
-"path needs to be set in the .env file for this setting to work. This is done"
-" for security purposes. WARNING: This is a DANGEROUS setting and should only"
-" be enabled on installation that can utilize this feature. It should be "
-"turned on only when it's needed."
+"Allow scanning of the import path for files in the Media Import tool. The"
+" path needs to be set in the .env file for this setting to work. This is "
+"done for security purposes. WARNING: This is a DANGEROUS setting and "
+"should only be enabled on installation that can utilize this feature. It "
+"should be turned on only when it's needed."
 msgstr ""
-"السماح بفحص مسار الاستيراد بحثًا عن ملفات لأداة استيراد الوسائط. يجب تعيين "
-"المسار في ملف .env ليعمل هذا الإعداد. تحذير: هذا إعداد خطير ويجب تفعيله فقط "
-"في عمليات التثبيت التي تحتاج إلى هذه الميزة، وعند الحاجة إليها فقط."
+"السماح بفحص مسار الاستيراد بحثًا عن ملفات لأداة استيراد الوسائط. يجب "
+"تعيين المسار في ملف .env ليعمل هذا الإعداد. تحذير: هذا إعداد خطير ويجب "
+"تفعيله فقط في عمليات التثبيت التي تحتاج إلى هذه الميزة، وعند الحاجة إليها"
+" فقط."
 
 #: enferno/admin/templates/admin/system-administration.html:500
 msgid ""
-"The file extensions for media, documents, and other files that are permitted"
-" for import using the Media Import Tool."
+"The file extensions for media, documents, and other files that are "
+"permitted for import using the Media Import Tool."
 msgstr ""
 "امتدادات ملفات الوسائط والمستندات والملفات الأخرى المسموح باستيرادها "
 "باستخدام أداة استيراد الوسائط."
@@ -4447,19 +4533,21 @@ msgstr "تفعيل النسخ النصي"
 
 #: enferno/admin/templates/admin/system-administration.html:508
 msgid ""
-"Enables transcription of audio and video files using OpenAI's Whisper during"
-" import. Bayanat will need to download the specified model below from "
-"OpenAI's servers. However, the transcription will run locally on the Bayanat"
-" server. For more information about the models' performance, required "
-"resources and available language please check:"
+"Enables transcription of audio and video files using OpenAI's Whisper "
+"during import. Bayanat will need to download the specified model below "
+"from OpenAI's servers. However, the transcription will run locally on the"
+" Bayanat server. For more information about the models' performance, "
+"required resources and available language please check:"
 msgstr ""
 "يفعّل نسخ ملفات الصوت والفيديو نصيًا باستخدام Whisper أثناء الاستيراد. "
-"سيحتاج بيانات إلى تنزيل النموذج المحدد أدناه، لكن النسخ النصي سيعمل محليًا "
-"على خادم بيانات. لمزيد من المعلومات حول أداء النماذج والموارد المطلوبة "
-"واللغات المتاحة، راجع:"
+"سيحتاج بيانات إلى تنزيل النموذج المحدد أدناه، لكن النسخ النصي سيعمل "
+"محليًا على خادم بيانات. لمزيد من المعلومات حول أداء النماذج والموارد "
+"المطلوبة واللغات المتاحة، راجع:"
 
 #: enferno/admin/templates/admin/system-administration.html:519
-msgid "OpenAI Whisper is not installed. Please install it to enable transcription."
+msgid ""
+"OpenAI Whisper is not installed. Please install it to enable "
+"transcription."
 msgstr "Whisper غير مثبت. يرجى تثبيته لتفعيل النسخ النصي."
 
 #: enferno/admin/templates/admin/system-administration.html:526
@@ -4513,12 +4601,12 @@ msgstr "النطاقات المسموح بها"
 
 #: enferno/admin/templates/admin/system-administration.html:575
 msgid ""
-"List of domains from which media can be imported. Check yt-dlp's repository "
-"(https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list "
-"of supported websites."
+"List of domains from which media can be imported. Check yt-dlp's "
+"repository (https://github.com/yt-dlp/yt-"
+"dlp/blob/master/supportedsites.md) for a list of supported websites."
 msgstr ""
-"قائمة النطاقات التي يمكن استيراد الوسائط منها. راجع مستودع yt-dlp للاطلاع "
-"على قائمة المواقع المدعومة."
+"قائمة النطاقات التي يمكن استيراد الوسائط منها. راجع مستودع yt-dlp للاطلاع"
+" على قائمة المواقع المدعومة."
 
 #: enferno/admin/templates/admin/system-administration.html:581
 msgid "Web import cookies"
@@ -4536,11 +4624,11 @@ msgstr "التعرّف الضوئي على الحروف أثناء الاستي�
 
 #: enferno/admin/templates/admin/system-administration.html:598
 msgid ""
-"Extracts text from uploaded documents and images during data import. Runs "
-"locally via the Tesseract system package, no API key required."
+"Extracts text from uploaded documents and images during data import. Runs"
+" locally via the Tesseract system package, no API key required."
 msgstr ""
-"يستخرج النص من المستندات والصور المرفوعة أثناء استيراد البيانات. يعمل محلياً"
-" باستخدام حزمة النظام Tesseract، ولا يتطلب مفتاح API."
+"يستخرج النص من المستندات والصور المرفوعة أثناء استيراد البيانات. يعمل "
+"محلياً باستخدام حزمة النظام Tesseract، ولا يتطلب مفتاح API."
 
 #: enferno/admin/templates/admin/system-administration.html:601
 msgid "Enable Tesseract OCR on import for the file extensions listed below."
@@ -4570,11 +4658,11 @@ msgstr "مزوّد التعرّف الضوئي على الحروف عند الط
 
 #: enferno/admin/templates/admin/system-administration.html:628
 msgid ""
-"Backend used for on-demand OCR extraction from existing media items. Google "
-"Vision is also used for text translation features."
+"Backend used for on-demand OCR extraction from existing media items. "
+"Google Vision is also used for text translation features."
 msgstr ""
-"النظام الخلفي المستخدم لاستخراج النص عند الطلب من عناصر الوسائط الموجودة. "
-"يُستخدم Google Vision أيضاً لميزات ترجمة النصوص."
+"النظام الخلفي المستخدم لاستخراج النص عند الطلب من عناصر الوسائط الموجودة."
+" يُستخدم Google Vision أيضاً لميزات ترجمة النصوص."
 
 #: enferno/admin/templates/admin/system-administration.html:633
 msgid "Provider"
@@ -4597,8 +4685,8 @@ msgid ""
 "Enables advanced OCR (Vision) and text translation. Used across OCR "
 "extraction and translation features."
 msgstr ""
-"يفعّل التعرّف الضوئي المتقدم على الحروف والترجمة النصية. يُستخدم في ميزات "
-"استخراج النص وترجمته."
+"يفعّل التعرّف الضوئي المتقدم على الحروف والترجمة النصية. يُستخدم في ميزات"
+" استخراج النص وترجمته."
 
 #: enferno/admin/templates/admin/system-administration.html:654
 msgid "LLM Endpoint URL"
@@ -4606,11 +4694,11 @@ msgstr "عنوان URL لنقطة نهاية نموذج اللغة الكبير"
 
 #: enferno/admin/templates/admin/system-administration.html:655
 msgid ""
-"Any OpenAI-compatible /v1/chat/completions endpoint (Ollama, vLLM, RunPod, "
-"OpenAI, OpenRouter, etc)."
+"Any OpenAI-compatible /v1/chat/completions endpoint (Ollama, vLLM, "
+"RunPod, OpenAI, OpenRouter, etc)."
 msgstr ""
-"أي نقطة نهاية /v1/chat/completions متوافقة مع OpenAI، مثل Ollama أو vLLM أو "
-"RunPod أو OpenAI أو OpenRouter."
+"أي نقطة نهاية /v1/chat/completions متوافقة مع OpenAI، مثل Ollama أو vLLM "
+"أو RunPod أو OpenAI أو OpenRouter."
 
 #: enferno/admin/templates/admin/system-administration.html:661
 msgid "LLM Model"
@@ -4626,11 +4714,11 @@ msgstr "مفتاح API لنموذج اللغة الكبير"
 
 #: enferno/admin/templates/admin/system-administration.html:669
 msgid ""
-"Required for hosted providers (OpenAI, OpenRouter, RunPod). Leave empty for "
-"unauthenticated local endpoints."
+"Required for hosted providers (OpenAI, OpenRouter, RunPod). Leave empty "
+"for unauthenticated local endpoints."
 msgstr ""
-"يلزم لمزودي الخدمات المستضافة مثل OpenAI وOpenRouter وRunPod. اتركه فارغاً "
-"لنقاط النهاية المحلية التي لا تتطلب مصادقة."
+"يلزم لمزودي الخدمات المستضافة مثل OpenAI وOpenRouter وRunPod. اتركه "
+"فارغاً لنقاط النهاية المحلية التي لا تتطلب مصادقة."
 
 #: enferno/admin/templates/admin/system-administration.html:684
 msgid "Export system"
@@ -4641,14 +4729,14 @@ msgstr "نظام التصدير"
 msgid ""
 "Enables exporting Actors, Bulletins and Incidents into various formats. "
 "Users with the correct permissions can request exports of items. "
-"Administrators can approve or reject these requests. Approved exports can be"
-" downloaded by the requesting user from the Exports dashboard."
+"Administrators can approve or reject these requests. Approved exports can"
+" be downloaded by the requesting user from the Exports dashboard."
 msgstr ""
-"يتيح تصدير الكيانات والنشرات والأحداث بتنسيقات مختلفة. يمكن للمستخدمين الذين"
-" لديهم الأذونات الصحيحة طلب تصدير العناصر. يمكن للمسؤولين الموافقة على هذه "
-"الطلبات أو رفضها.\n"
-"التصديرات التي تمت الموافقة عليها يمكن أن يتم تحميلها من قبل المستخدم الذي "
-"طلبها عن طريق "
+"يتيح تصدير الكيانات والنشرات والأحداث بتنسيقات مختلفة. يمكن للمستخدمين "
+"الذين لديهم الأذونات الصحيحة طلب تصدير العناصر. يمكن للمسؤولين الموافقة "
+"على هذه الطلبات أو رفضها.\n"
+"التصديرات التي تمت الموافقة عليها يمكن أن يتم تحميلها من قبل المستخدم "
+"الذي طلبها عن طريق "
 
 #: enferno/admin/templates/admin/system-administration.html:689
 #: enferno/templates/setup_wizard.html:332
@@ -4667,12 +4755,12 @@ msgstr "نقطة نهاية واجهة الخرائط"
 #: enferno/admin/templates/admin/system-administration.html:703
 msgid ""
 "API provider for Open Street Maps tiles. By default, Bayanat uses "
-"OpenStreetMaps tiles servers. This can be changed using this setting, for "
-"example to use an offline instance of OSM."
+"OpenStreetMaps tiles servers. This can be changed using this setting, for"
+" example to use an offline instance of OSM."
 msgstr ""
-"مزود واجهة برمجة التطبيقات لمربعات خرائط OpenStreetMap. تستخدم بيانات مزودات"
-" خدمة مربعات OpenStreetMaps بشكل افتراضي. يمكن تغيير ذلك من هنا لاستخدام "
-"نسخة غير متصلة بالانترنت من OSM على سبيل المثال."
+"مزود واجهة برمجة التطبيقات لمربعات خرائط OpenStreetMap. تستخدم بيانات "
+"مزودات خدمة مربعات OpenStreetMaps بشكل افتراضي. يمكن تغيير ذلك من هنا "
+"لاستخدام نسخة غير متصلة بالانترنت من OSM على سبيل المثال."
 
 #: enferno/admin/templates/admin/system-administration.html:706
 #: enferno/templates/setup_wizard.html:133
@@ -4682,8 +4770,8 @@ msgstr "صور الأقمار الصناعية"
 #: enferno/admin/templates/admin/system-administration.html:707
 msgid ""
 "Bayanat uses OpenStreetMaps by default. Optionally, it is\n"
-"                                        able to show satellite imagery using"
-" Google Maps, in addition to OSM. To enable, add a Google Maps\n"
+"                                        able to show satellite imagery "
+"using Google Maps, in addition to OSM. To enable, add a Google Maps\n"
 "                                        API Key."
 msgstr ""
 "يستخدم بيانات OpenStreetMap افتراضيًا، ويمكنه اختياريًا عرض صور الأقمار "
@@ -4698,11 +4786,11 @@ msgstr "مفتاح واجهة برمجة التطبيقات لخرائط غوغ�
 #: enferno/admin/templates/admin/system-administration.html:712
 #: enferno/templates/setup_wizard.html:137
 msgid ""
-"API key for Google Maps. Adding a key enables satellite imagery in Bayanat's"
-" maps."
+"API key for Google Maps. Adding a key enables satellite imagery in "
+"Bayanat's maps."
 msgstr ""
-"مفتاح API لخرائط Google. إضافة مفتاح يتيح عرض صور الأقمار الصناعية في خرائط "
-"Bayanat"
+"مفتاح API لخرائط Google. إضافة مفتاح يتيح عرض صور الأقمار الصناعية في "
+"خرائط Bayanat"
 
 #: enferno/admin/templates/admin/system-administration.html:715
 #: enferno/templates/setup_wizard.html:128
@@ -4720,16 +4808,16 @@ msgstr "إعدادات تضمين الرمز البريدي"
 #: enferno/admin/templates/admin/system-administration.html:732
 msgid ""
 "Include postal codes in the format of full location text of all entries. "
-"Note: you must regenerate full locations from the Component Data dashboard "
-"for this change to take effect."
+"Note: you must regenerate full locations from the Component Data "
+"dashboard for this change to take effect."
 msgstr ""
-"تضمين الرموز البريدية في تنسيق النص الكامل للمكان لجميع السجلات. يجب إعادة "
-"إنشاء الأماكن الكاملة من لوحة بيانات المكونات لتطبيق هذا التغيير."
+"تضمين الرموز البريدية في تنسيق النص الكامل للمكان لجميع السجلات. يجب "
+"إعادة إنشاء الأماكن الكاملة من لوحة بيانات المكونات لتطبيق هذا التغيير."
 
 #: enferno/admin/templates/admin/system-administration.html:742
 msgid ""
-"Email is not configured, and email notifications are currently disabled. To "
-"enable them, set up the email service in the Mail tab."
+"Email is not configured, and email notifications are currently disabled. "
+"To enable them, set up the email service in the Mail tab."
 msgstr ""
 "البريد الإلكتروني غير مهيأ وإشعارات البريد معطّلة حاليًا. لتفعيلها، اضبط "
 "خدمة البريد من تبويب البريد."
@@ -4756,7 +4844,8 @@ msgstr "إرسال إشعار عند تسجيل دخول مستخدم من عن�
 
 #: enferno/admin/templates/admin/system-administration.html:758
 #: enferno/admin/templates/admin/users.html:185
-#: enferno/templates/login_dialog.html:24 enferno/templates/reauth_dialog.html:11
+#: enferno/templates/login_dialog.html:24
+#: enferno/templates/reauth_dialog.html:11
 #: enferno/templates/security/login_user.html:33
 #: enferno/templates/security/login_user.html:39
 #: enferno/templates/security/two_factor_verify_password.html:15
@@ -4912,8 +5001,8 @@ msgstr "إشعارات المسؤولين"
 
 #: enferno/admin/templates/admin/system-administration.html:948
 msgid ""
-"Notifications sent to individual administrators about the results of actions"
-" they initiated."
+"Notifications sent to individual administrators about the results of "
+"actions they initiated."
 msgstr "إشعارات تُرسل إلى المسؤولين الأفراد بشأن نتائج الإجراءات التي بدؤوها."
 
 #: enferno/admin/templates/admin/system-administration.html:951
@@ -5035,7 +5124,9 @@ msgstr "لم يتم العثور على أي تغييرات"
 #: enferno/admin/templates/admin/system-administration.html:1125
 #: enferno/templates/setup_wizard.html:394
 msgid "Restarting Bayanat to new settings to take effect, please wait..."
-msgstr "جاري إعادة تشغيل Bayanat للإعدادات الجديدة حتى يتم تطبيقها، يرجى الانتظار..."
+msgstr ""
+"جاري إعادة تشغيل Bayanat للإعدادات الجديدة حتى يتم تطبيقها، يرجى "
+"الانتظار..."
 
 #: enferno/admin/templates/admin/system-administration.html:1128
 #: enferno/templates/setup_wizard.html:397
@@ -5097,7 +5188,7 @@ msgid "Mail"
 msgstr "البريد"
 
 #: enferno/admin/templates/admin/system-administration.html:1412
-#: enferno/templates/setup_wizard.html:563
+#: enferno/templates/setup_wizard.html:567
 msgid "Bayanat reloaded successfully."
 msgstr "تم إعادة تحميل البيانات بنجاح."
 
@@ -5306,22 +5397,24 @@ msgstr "اسم ومعلومات الاتصال الخاصة بالطبيب"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:732
 msgid ""
-"Fractures / Injuries (indicate place, side, circumstances, age at the time "
-"of injury, treatment)"
+"Fractures / Injuries (indicate place, side, circumstances, age at the "
+"time of injury, treatment)"
 msgstr ""
-"كسور / إصابات (حدد مكان الإصابة، الطرف، الظروف والعمر عند الإصابة مع معلومات"
-" العلاج)"
+"كسور / إصابات (حدد مكان الإصابة، الطرف، الظروف والعمر عند الإصابة مع "
+"معلومات العلاج)"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:741
 msgid ""
-"Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...)"
-" with date or age"
-msgstr "عمليات زرع (منظمات ضربات القلب، أطراف صناعية، براغي أو ألواح معدنية، إلخ...)"
+"Implants (pacemakers, orthopedic prostheses, screws or metal plates, "
+"etc...) with date or age"
+msgstr ""
+"عمليات زرع (منظمات ضربات القلب، أطراف صناعية، براغي أو ألواح معدنية، "
+"إلخ...)"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:748
 msgid ""
-"Congenital malformations (indicate type and whether there is more than one "
-"relative with the same pathology)"
+"Congenital malformations (indicate type and whether there is more than "
+"one relative with the same pathology)"
 msgstr "التشوهات الخلقية (حدد النوع واذا وُجد قريب آخر يعاني من ذات التشوه)"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:757
@@ -5684,10 +5777,6 @@ msgstr "مسار العملية"
 msgid "Process existing files in a path on the server."
 msgstr "معالجة الملفات الموجودة في مسار على الخادم"
 
-#: enferno/data_import/templates/media-import.html:109
-msgid "Next"
-msgstr "التالي"
-
 #: enferno/data_import/templates/media-import.html:129
 #: enferno/templates/security/mf_recovery.html:33
 #: enferno/templates/security/two_factor_select.html:55
@@ -5751,11 +5840,11 @@ msgstr "أدخل مسار فرعي لفحصه أو اتركه فارغًا لف�
 
 #: enferno/data_import/templates/media-import.html:292
 msgid ""
-"To scan a sub-path of the allowed path, enter the sub-path only without any "
-"parents (e.g. 'videos')."
+"To scan a sub-path of the allowed path, enter the sub-path only without "
+"any parents (e.g. 'videos')."
 msgstr ""
-"لفحص مسار فرعي من المسار المسموح به أدخل المسار الفرعي بدون مسار أب (مثال: "
-"'videos')"
+"لفحص مسار فرعي من المسار المسموح به أدخل المسار الفرعي بدون مسار أب "
+"(مثال: 'videos')"
 
 #: enferno/data_import/templates/media-import.html:294
 msgid "Search recursively"
@@ -5982,8 +6071,12 @@ msgid "Are you sure you want to reset this mapping?"
 msgstr "هل أنت متأكد من إعادة تعيين هذا الربط؟"
 
 #: enferno/data_import/templates/sheets-import.html:1249
-msgid "Rows from file were added to queue successfully and will be imported in turn."
-msgstr "تم إضافة الصفوف من الملف إلى قائمة الانتظار بنجاح وسوف يتم استيرادها تباعاً"
+msgid ""
+"Rows from file were added to queue successfully and will be imported in "
+"turn."
+msgstr ""
+"تم إضافة الصفوف من الملف إلى قائمة الانتظار بنجاح وسوف يتم استيرادها "
+"تباعاً"
 
 #: enferno/data_import/templates/sheets-import.html:1329
 msgid "Are you sure you want to delete this mapping?"
@@ -6115,11 +6208,12 @@ msgstr "تم الإعداد"
 
 #: enferno/templates/account-security.html:119
 msgid ""
-"Two factor authentication (2FA) adds an extra layer of protection to your "
-"Bayanat account by requiring a verification code from an authenticator app."
+"Two factor authentication (2FA) adds an extra layer of protection to your"
+" Bayanat account by requiring a verification code from an authenticator "
+"app."
 msgstr ""
-"تضيف المصادقة الثنائية طبقة حماية إضافية إلى حسابك في Bayanat عبر طلب رمز "
-"تحقق من تطبيق مصادقة."
+"تضيف المصادقة الثنائية طبقة حماية إضافية إلى حسابك في Bayanat عبر طلب رمز"
+" تحقق من تطبيق مصادقة."
 
 #: enferno/templates/account-security.html:124
 #: enferno/templates/account-security.html:224
@@ -6146,7 +6240,9 @@ msgid "Step 1"
 msgstr "الخطوة 1"
 
 #: enferno/templates/account-security.html:160
-msgid "Open your authenticator app such as Google Authenticator, LastPass, or Authy."
+msgid ""
+"Open your authenticator app such as Google Authenticator, LastPass, or "
+"Authy."
 msgstr "افتح تطبيق المصادقة، مثل Google Authenticator أو LastPass أو Authy."
 
 #: enferno/templates/account-security.html:164
@@ -6182,6 +6278,7 @@ msgid "Enter six digit code"
 msgstr "أدخل رمزاً من ستة أرقام"
 
 #: enferno/templates/account-security.html:197
+#: enferno/templates/security/two_factor_setup.html:137
 msgid "Submit Code"
 msgstr "إرسال الرمز"
 
@@ -6192,12 +6289,12 @@ msgstr "مفاتيح الأمان ومفاتيح المرور"
 #: enferno/templates/account-security.html:219
 msgid ""
 "Security keys and passkeys let you sign in using a physical device or "
-"built‑in biometric authentication. They provide strong protection against "
-"phishing and unauthorized access."
+"built‑in biometric authentication. They provide strong protection against"
+" phishing and unauthorized access."
 msgstr ""
 "تتيح لك مفاتيح الأمان ومفاتيح المرور تسجيل الدخول باستخدام جهاز فعلي أو "
-"المصادقة البيومترية المدمجة. وهي توفر حماية قوية من التصيد الاحتيالي والوصول"
-" غير المصرّح به."
+"المصادقة البيومترية المدمجة. وهي توفر حماية قوية من التصيد الاحتيالي "
+"والوصول غير المصرّح به."
 
 #: enferno/templates/account-security.html:236
 msgid "Security key added successfully."
@@ -6222,8 +6319,8 @@ msgstr "إضافة مفتاح أمان أو مفتاح مرور"
 
 #: enferno/templates/account-security.html:275
 msgid ""
-"Give your device a nickname (e.g., \"My Laptop\" or \"USB Key\") so you can "
-"recognize it later."
+"Give your device a nickname (e.g., \"My Laptop\" or \"USB Key\") so you "
+"can recognize it later."
 msgstr ""
 "امنح جهازك اسماً مستعاراً، مثل «حاسبي المحمول» أو «مفتاح USB»، لتتمكن من "
 "تمييزه لاحقاً."
@@ -6263,18 +6360,20 @@ msgstr "تم الإنشاء"
 #: enferno/templates/account-security.html:323
 msgid ""
 "Recovery codes allow you to regain access to your Bayanat account if you "
-"lose your authenticator app or security key. Store them somewhere safe and "
-"accessible."
+"lose your authenticator app or security key. Store them somewhere safe "
+"and accessible."
 msgstr ""
-"تتيح لك رموز الاسترداد استعادة الوصول إلى حسابك في Bayanat إذا فقدت تطبيق "
-"المصادقة أو مفتاح الأمان. خزّنها في مكان آمن يسهل الوصول إليه."
+"تتيح لك رموز الاسترداد استعادة الوصول إلى حسابك في Bayanat إذا فقدت تطبيق"
+" المصادقة أو مفتاح الأمان. خزّنها في مكان آمن يسهل الوصول إليه."
 
 #: enferno/templates/account-security.html:328
 msgid "View"
 msgstr "عرض"
 
 #: enferno/templates/account-security.html:344
-msgid "Click the Generate Recovery Codes button to create a new set of backup codes."
+msgid ""
+"Click the Generate Recovery Codes button to create a new set of backup "
+"codes."
 msgstr "انقر زر إنشاء رموز استرداد لإنشاء مجموعة جديدة من الرموز الاحتياطية."
 
 #: enferno/templates/account-security.html:353
@@ -6283,8 +6382,8 @@ msgstr "إنشاء رموز استرداد جديدة"
 
 #: enferno/templates/account-security.html:361
 msgid ""
-"Copy your codes and store them in a secure location (like a password manager"
-" or a locked physical safe)."
+"Copy your codes and store them in a secure location (like a password "
+"manager or a locked physical safe)."
 msgstr "انسخ رموزك وخزّنها في مكان آمن، مثل مدير كلمات المرور أو خزنة فعلية مقفلة."
 
 #: enferno/templates/account-security.html:375
@@ -6301,9 +6400,11 @@ msgstr "ستظهر رموزك هنا بعد إنشائها أو عرضها."
 
 #: enferno/templates/account-security.html:394
 msgid ""
-"Keep in mind that each code can only be used once. After a code is used, it "
-"becomes invalid."
-msgstr "ضع في اعتبارك أن كل رمز لا يُستخدم إلا مرة واحدة. بعد استخدامه يصبح غير صالح."
+"Keep in mind that each code can only be used once. After a code is used, "
+"it becomes invalid."
+msgstr ""
+"ضع في اعتبارك أن كل رمز لا يُستخدم إلا مرة واحدة. بعد استخدامه يصبح غير "
+"صالح."
 
 #: enferno/templates/account-security.html:424
 msgid "Authentication Methods"
@@ -6329,8 +6430,8 @@ msgstr "هل أنت متأكد من إزالة طريقة المصادقة ال�
 
 #: enferno/templates/account-security.html:676
 msgid ""
-"Removing this authenticator app means you'll no longer use it to sign in to "
-"Bayanat."
+"Removing this authenticator app means you'll no longer use it to sign in "
+"to Bayanat."
 msgstr ""
 "يعني حذف تطبيق المصادقة هذا أنك لن تستخدمه بعد الآن لتسجيل الدخول إلى "
 "Bayanat."
@@ -6340,8 +6441,8 @@ msgid ""
 "To keep your account safe, please make sure you have another 2FA method "
 "active or your recovery codes handy so you don't get locked out."
 msgstr ""
-"للحفاظ على أمان حسابك، تأكد من تفعيل طريقة أخرى للمصادقة الثنائية أو احتفظ "
-"برموز الاسترداد في متناولك حتى لا تفقد الوصول إلى حسابك."
+"للحفاظ على أمان حسابك، تأكد من تفعيل طريقة أخرى للمصادقة الثنائية أو "
+"احتفظ برموز الاسترداد في متناولك حتى لا تفقد الوصول إلى حسابك."
 
 #: enferno/templates/account-security.html:677
 msgid "I understand, remove this method"
@@ -6361,19 +6462,19 @@ msgstr "هل تريد إزالة مفتاح الأمان هذا؟"
 
 #: enferno/templates/account-security.html:817
 msgid ""
-"Removing this security key means you'll no longer be able to use it to sign "
-"in to Bayanat."
+"Removing this security key means you'll no longer be able to use it to "
+"sign in to Bayanat."
 msgstr ""
-"يعني حذف مفتاح الأمان هذا أنك لن تتمكن بعد الآن من استخدامه لتسجيل الدخول "
-"إلى Bayanat."
+"يعني حذف مفتاح الأمان هذا أنك لن تتمكن بعد الآن من استخدامه لتسجيل الدخول"
+" إلى Bayanat."
 
 #: enferno/templates/account-security.html:817
 msgid ""
-"To keep your account safe, make sure you have another sign-in method active "
-"so you don't get locked out."
+"To keep your account safe, make sure you have another sign-in method "
+"active so you don't get locked out."
 msgstr ""
-"للحفاظ على أمان حسابك، تأكد من تفعيل طريقة أخرى لتسجيل الدخول حتى لا تفقد "
-"الوصول إلى حسابك."
+"للحفاظ على أمان حسابك، تأكد من تفعيل طريقة أخرى لتسجيل الدخول حتى لا تفقد"
+" الوصول إلى حسابك."
 
 #: enferno/templates/account-security.html:819
 msgid "I understand, remove this key"
@@ -6413,9 +6514,9 @@ msgstr "إدارة المستخدمين"
 
 #: enferno/templates/dashboard.html:38
 msgid ""
-"Create user accounts for your team so they can access your Bayanat server. "
-"Users Dashboard allow you to manage your user accounts, their access levels "
-"and their permissions."
+"Create user accounts for your team so they can access your Bayanat "
+"server. Users Dashboard allow you to manage your user accounts, their "
+"access levels and their permissions."
 msgstr ""
 "قم بإنشاء حسابات مستخدمين لفريقك حتى يتمكنوا من الوصول إلى خادم Bayanat "
 "الخاص بك. تتيح لك لوحة تحكم المستخدمين إدارة حساباتهم ومستويات الوصول "
@@ -6427,18 +6528,18 @@ msgstr "لوحة تحكم المستخدمين"
 
 #: enferno/templates/dashboard.html:56
 msgid ""
-"Create access groups to manage your team's access to your data. You can then"
-" add your users to the appropriate access groups and assign these groups to "
-"Actor, Bulletins and Incidents that needs to be restricted. Actors and "
-"Bulletins can be restricted when imported by the Media and Sheets Import "
-"Tools. Access groups of all items can be tweaked any time using bulk "
-"updates."
+"Create access groups to manage your team's access to your data. You can "
+"then add your users to the appropriate access groups and assign these "
+"groups to Actor, Bulletins and Incidents that needs to be restricted. "
+"Actors and Bulletins can be restricted when imported by the Media and "
+"Sheets Import Tools. Access groups of all items can be tweaked any time "
+"using bulk updates."
 msgstr ""
 "أنشئ مجموعات وصول لإدارة وصول فريقك إلى بياناتك. يمكنك بعد ذلك إضافة "
 "المستخدمين إلى مجموعات الوصول المناسبة وتعيين هذه المجموعات إلى الكيانات "
 "والنشرات والأحداث التي تحتاج إلى تقييد. يمكن تقييد الكيانات والنشرات عند "
-"استيرادها بواسطة أدوات استيراد الوسائط والجداول. يمكن تعديل مجموعات الوصول "
-"لجميع العناصر في أي وقت باستخدام التحديثات المجمعة."
+"استيرادها بواسطة أدوات استيراد الوسائط والجداول. يمكن تعديل مجموعات "
+"الوصول لجميع العناصر في أي وقت باستخدام التحديثات المجمعة."
 
 #: enferno/templates/dashboard.html:64
 msgid "Groups Dashboard"
@@ -6450,14 +6551,14 @@ msgstr "تخصيص بيانات المكونات"
 
 #: enferno/templates/dashboard.html:76
 msgid ""
-"If you haven't imported Bayanat's default data, you'll need to create items "
-"for the system lists from the Component Data dashboard. If you have, you "
-"still need to create Ethnicities and Dialects for the country(s) your team "
-"will be working on."
+"If you haven't imported Bayanat's default data, you'll need to create "
+"items for the system lists from the Component Data dashboard. If you "
+"have, you still need to create Ethnicities and Dialects for the "
+"country(s) your team will be working on."
 msgstr ""
 "إذا لم تقم باستيراد بيانات Bayanat الافتراضية، فستحتاج إلى إنشاء عناصر "
-"لقوائم النظام من لوحة معلومات بيانات المكونات. إذا قمت بذلك، فلا يزال يتعين "
-"عليك إنشاء الأعراق واللهجات للبلد (البلدان) التي سيعمل عليها فريقك."
+"لقوائم النظام من لوحة معلومات بيانات المكونات. إذا قمت بذلك، فلا يزال "
+"يتعين عليك إنشاء الأعراق واللهجات للبلد (البلدان) التي سيعمل عليها فريقك."
 
 #: enferno/templates/dashboard.html:84 enferno/templates/nav-drawer.html:106
 msgid "Component Data"
@@ -6469,11 +6570,11 @@ msgstr "مزيد من إعدادات النظام"
 
 #: enferno/templates/dashboard.html:94
 msgid ""
-"This wizard went through a few important settings. Bayanat can be customized"
-" even further from the System Settings."
+"This wizard went through a few important settings. Bayanat can be "
+"customized even further from the System Settings."
 msgstr ""
-"لقد مر هذا المعالج ببعض الإعدادات المهمة. يمكن تخصيص Bayanat بشكل أكبر من "
-"خلال إعدادات النظام."
+"لقد مر هذا المعالج ببعض الإعدادات المهمة. يمكن تخصيص Bayanat بشكل أكبر من"
+" خلال إعدادات النظام."
 
 #: enferno/templates/dashboard.html:102
 msgid "System Settings"
@@ -6502,8 +6603,8 @@ msgid ""
 "is an open source project by SJAC released under the GNU Affero General "
 "Public License (AGPL)."
 msgstr ""
-"هو مشروع مفتوح المصدر من قبل المركز السوري للعدالة والمساءلة، تم إصداره تحت "
-"رخصة GNU Affero General Public License (AGPL)"
+"هو مشروع مفتوح المصدر من قبل المركز السوري للعدالة والمساءلة، تم إصداره "
+"تحت رخصة GNU Affero General Public License (AGPL)"
 
 #: enferno/templates/important_notifications_dialog.html:8
 msgid "Important System Notice"
@@ -6534,7 +6635,8 @@ msgstr "انتهت صلاحية الجلسة"
 msgid "Please sign in again to continue."
 msgstr "يرجى تسجيل الدخول مجددًا للمتابعة."
 
-#: enferno/templates/login_dialog.html:11 enferno/templates/login_dialog.html:50
+#: enferno/templates/login_dialog.html:11
+#: enferno/templates/login_dialog.html:50
 #: enferno/templates/reauth_dialog.html:37
 #: enferno/templates/security/login_user.html:63
 msgid "Login"
@@ -6548,7 +6650,8 @@ msgstr "اختر طريقة المصادقة الثنائية"
 msgid "Choose one of the methods below"
 msgstr "اختر إحدى الطرق أدناه"
 
-#: enferno/templates/login_dialog.html:66 enferno/templates/login_dialog.html:101
+#: enferno/templates/login_dialog.html:66
+#: enferno/templates/login_dialog.html:101
 #: enferno/templates/security/two_factor_select.html:82
 msgid "Authenticator"
 msgstr "تطبيق المصادقة"
@@ -6681,18 +6784,21 @@ msgid ""
 "Welcome to your Bayanat server. This wizard will guide you through a few "
 "basic steps \n"
 "                                                to set up your Bayanat "
-"server. You can start using your Bayanat server afterwards. You can use the "
-"default settings in this wizard without any change, and all these settings "
-"can be easily changed later on."
+"server. You can start using your Bayanat server afterwards. You can use "
+"the default settings in this wizard without any change, and all these "
+"settings can be easily changed later on."
 msgstr ""
-"مرحبًا بك في خادم Bayanat. سيرشدك هذا المعالج خلال بضع خطوات أساسية لإعداد "
-"خادم Bayanat الخاص بك. يمكنك البدء في استخدام خادم Bayanat الخاص بك بعد ذلك."
-" يمكنك استخدام الإعدادات الافتراضية في هذا المعالج دون أي تغيير، ويمكن تغيير"
-" كل هذه الإعدادات بسهولة لاحقًا"
+"مرحبًا بك في خادم Bayanat. سيرشدك هذا المعالج خلال بضع خطوات أساسية "
+"لإعداد خادم Bayanat الخاص بك. يمكنك البدء في استخدام خادم Bayanat الخاص "
+"بك بعد ذلك. يمكنك استخدام الإعدادات الافتراضية في هذا المعالج دون أي "
+"تغيير، ويمكن تغيير كل هذه الإعدادات بسهولة لاحقًا"
 
-#: enferno/templates/setup_wizard.html:62 enferno/templates/setup_wizard.html:86
-#: enferno/templates/setup_wizard.html:151 enferno/templates/setup_wizard.html:189
-#: enferno/templates/setup_wizard.html:250 enferno/templates/setup_wizard.html:282
+#: enferno/templates/setup_wizard.html:62
+#: enferno/templates/setup_wizard.html:86
+#: enferno/templates/setup_wizard.html:151
+#: enferno/templates/setup_wizard.html:189
+#: enferno/templates/setup_wizard.html:250
+#: enferno/templates/setup_wizard.html:282
 #: enferno/templates/setup_wizard.html:311
 msgid "Proceed"
 msgstr "يتابع"
@@ -6701,10 +6807,14 @@ msgstr "يتابع"
 msgid "Language"
 msgstr "اللغة"
 
-#: enferno/templates/setup_wizard.html:90 enferno/templates/setup_wizard.html:114
-#: enferno/templates/setup_wizard.html:155 enferno/templates/setup_wizard.html:193
-#: enferno/templates/setup_wizard.html:254 enferno/templates/setup_wizard.html:286
-#: enferno/templates/setup_wizard.html:315 enferno/templates/setup_wizard.html:351
+#: enferno/templates/setup_wizard.html:90
+#: enferno/templates/setup_wizard.html:114
+#: enferno/templates/setup_wizard.html:155
+#: enferno/templates/setup_wizard.html:193
+#: enferno/templates/setup_wizard.html:254
+#: enferno/templates/setup_wizard.html:286
+#: enferno/templates/setup_wizard.html:315
+#: enferno/templates/setup_wizard.html:351
 msgid "Go Back"
 msgstr "العودة"
 
@@ -6714,16 +6824,16 @@ msgstr "البيانات الافتراضية"
 
 #: enferno/templates/setup_wizard.html:101
 msgid ""
-"Would you like to import Bayanat's default component data? This will allow "
-"your team to quickly start using Bayanat's default component data such as: "
-"Violations categories, Event types, Countries and Nationalities, GeoLocation"
-" types, Media category and relationships types. You can modify or delete "
-"these later."
+"Would you like to import Bayanat's default component data? This will "
+"allow your team to quickly start using Bayanat's default component data "
+"such as: Violations categories, Event types, Countries and Nationalities,"
+" GeoLocation types, Media category and relationships types. You can "
+"modify or delete these later."
 msgstr ""
 "هل ترغب في استيراد بيانات المكونات الافتراضية لبيانات؟ سيسمح هذا لفريقك "
 "بالبدء بسرعة في استخدام بيانات المكونات الافتراضية لبيانات مثل: فئات "
-"الانتهاكات، وأنواع الأحداث، والدول والجنسيات، وأنواع الموقع الجغرافي، وفئة "
-"الوسائط، وأنواع الارتباطات. يمكنك تعديلها أو حذفها لاحقًا."
+"الانتهاكات، وأنواع الأحداث، والدول والجنسيات، وأنواع الموقع الجغرافي، "
+"وفئة الوسائط، وأنواع الارتباطات. يمكنك تعديلها أو حذفها لاحقًا."
 
 #: enferno/templates/setup_wizard.html:106
 msgid "Import Default Data"
@@ -6735,8 +6845,8 @@ msgstr "تخطى"
 
 #: enferno/templates/setup_wizard.html:125
 msgid ""
-"Customize Bayanat's location data to suit the country and context of your "
-"team's investigations."
+"Customize Bayanat's location data to suit the country and context of your"
+" team's investigations."
 msgstr "قم بتخصيص بيانات موقع Bayanat لتناسب بلد وسياق تحقيقات فريقك"
 
 #: enferno/templates/setup_wizard.html:129
@@ -6746,12 +6856,12 @@ msgstr "تغيير موضع المركز الافتراضي لجميع الخر�
 #: enferno/templates/setup_wizard.html:134
 msgid ""
 "Bayanat uses OpenStreetMaps by default. Optionally, it is able to show "
-"satellite imagery using Google Maps, in addition to OSM. To enable, add a "
-"Google Maps API Key."
+"satellite imagery using Google Maps, in addition to OSM. To enable, add a"
+" Google Maps API Key."
 msgstr ""
-"يستخدم تطبيق Bayanat خرائط OpenStreetMaps بشكل افتراضي. وبشكل اختياري، يمكنه"
-" عرض صور الأقمار الصناعية باستخدام خرائط Google، بالإضافة إلى OSM. للسماح "
-"بذلك، أضف مفتاح API لخرائط Google."
+"يستخدم تطبيق Bayanat خرائط OpenStreetMaps بشكل افتراضي. وبشكل اختياري، "
+"يمكنه عرض صور الأقمار الصناعية باستخدام خرائط Google، بالإضافة إلى OSM. "
+"للسماح بذلك، أضف مفتاح API لخرائط Google."
 
 #: enferno/templates/setup_wizard.html:140
 msgid "Administrative Divisions"
@@ -6759,12 +6869,12 @@ msgstr "التقسيمات الإدارية"
 
 #: enferno/templates/setup_wizard.html:141
 msgid ""
-"Bayanat ships with the Syrian administrative divisions by default. Change "
-"the names of the administrative divisions to match the country your team "
-"will be working on."
+"Bayanat ships with the Syrian administrative divisions by default. Change"
+" the names of the administrative divisions to match the country your team"
+" will be working on."
 msgstr ""
-"يتم شحن تطبيق \"بيانات\" بالتقسيمات الإدارية السورية بشكل افتراضي. قم بتغيير"
-" أسماء التقسيمات الإدارية لتتناسب مع البلد الذي سيعمل فيه فريقك."
+"يتم شحن تطبيق \"بيانات\" بالتقسيمات الإدارية السورية بشكل افتراضي. قم "
+"بتغيير أسماء التقسيمات الإدارية لتتناسب مع البلد الذي سيعمل فيه فريقك."
 
 #: enferno/templates/setup_wizard.html:166
 msgid "Media Storage"
@@ -6783,11 +6893,11 @@ msgid ""
 "corresponds to a zxcvbn score of 4 and offers the highest level of "
 "protection."
 msgstr ""
-"تستخدم Bayanat مُقدّر قوة كلمات المرور zxcvbn لحساب درجة قوة كلمة المرور. "
-"درجة \"متوسطة\" تتوافق مع درجة zxcvbn بقيمة 2 وتعتبر مناسبة لتثبيت Bayanat "
-"دون اتصال بالإنترنت. درجة \"قوية\" تتوافق مع درجة بقيمة 3 ونوصي باستخدام هذا"
-" الإعداد لتثبيت Bayanat عبر الإنترنت. درجة \"قوية جدًا\" تتوافق مع درجة "
-"zxcvbn بقيمة 4 وتوفر أعلى مستوى من الحماية"
+"تستخدم Bayanat مُقدّر قوة كلمات المرور zxcvbn لحساب درجة قوة كلمة المرور."
+" درجة \"متوسطة\" تتوافق مع درجة zxcvbn بقيمة 2 وتعتبر مناسبة لتثبيت "
+"Bayanat دون اتصال بالإنترنت. درجة \"قوية\" تتوافق مع درجة بقيمة 3 ونوصي "
+"باستخدام هذا الإعداد لتثبيت Bayanat عبر الإنترنت. درجة \"قوية جدًا\" "
+"تتوافق مع درجة zxcvbn بقيمة 4 وتوفر أعلى مستوى من الحماية"
 
 #: enferno/templates/setup_wizard.html:242
 msgid "Force 2FA Enrollment"
@@ -6803,17 +6913,17 @@ msgstr "التحكم بالوصول"
 
 #: enferno/templates/setup_wizard.html:267
 msgid ""
-"By default, users can access all items in the Bayanat database, except for "
-"items which are restricted from them. Administrators can restrict access to "
-"certain items by assigning Access Group(s) to these items. Additionally, "
-"only administrators can restrict items. This default behavior can be changed"
-" with the following settings."
+"By default, users can access all items in the Bayanat database, except "
+"for items which are restricted from them. Administrators can restrict "
+"access to certain items by assigning Access Group(s) to these items. "
+"Additionally, only administrators can restrict items. This default "
+"behavior can be changed with the following settings."
 msgstr ""
 "بشكل افتراضي، يمكن للمستخدمين الوصول إلى جميع العناصر في قاعدة بيانات "
 "Bayanat، باستثناء العناصر التي تم حظر الوصول إليها. يمكن للمسؤولين تقييد "
-"الوصول إلى عناصر معينة عن طريق تخصيص مجموعات وصول إلى هذه العناصر. بالإضافة "
-"إلى ذلك، يمكن للمسؤولين فقط تقييد العناصر. يمكن تغيير هذا السلوك الافتراضي "
-"بالإعدادات التالية."
+"الوصول إلى عناصر معينة عن طريق تخصيص مجموعات وصول إلى هذه العناصر. "
+"بالإضافة إلى ذلك، يمكن للمسؤولين فقط تقييد العناصر. يمكن تغيير هذا السلوك"
+" الافتراضي بالإعدادات التالية."
 
 #: enferno/templates/setup_wizard.html:270
 msgid "Restrictive Access Control"
@@ -6916,8 +7026,8 @@ msgstr "رمز المصادقة"
 
 #: enferno/templates/security/two_factor_verify_code.html:16
 msgid ""
-"The authentication code consists of 6 digits and is generated within your "
-"Authenticator app."
+"The authentication code consists of 6 digits and is generated within your"
+" Authenticator app."
 msgstr "يتكوّن رمز المصادقة من 6 أرقام ويُنشأ داخل تطبيق المصادقة."
 
 #: enferno/templates/security/two_factor_verify_code.html:41
@@ -6944,11 +7054,11 @@ msgstr "قم بضبط خيارات تسجيل الدخول الموحد"
 
 #: enferno/templates/security/us_setup.html:28
 msgid ""
-"Open your authenticator app on your device and scan the following qrcode to "
-"start receiving codes:"
+"Open your authenticator app on your device and scan the following qrcode "
+"to start receiving codes:"
 msgstr ""
-"افتح برنامج الموثّق على جهاز الموبايل الخاص بك وامسح رمز الاستجابة السريع "
-"(QRCode) التالي:"
+"افتح برنامج الموثّق على جهاز الموبايل الخاص بك وامسح رمز الاستجابة السريع"
+" (QRCode) التالي:"
 
 #: enferno/templates/security/us_setup.html:29
 msgid "Passwordless QRCode"
@@ -7034,23 +7144,23 @@ msgstr "أُلغيت المصادقة أو انتهت مهلتها."
 msgid "Invalid OAuth state. Please try again."
 msgstr "حالة OAuth غير صالحة. يرجى المحاولة مرة أخرى."
 
-#: enferno/user/views.py:176
+#: enferno/user/views.py:175
 msgid "Google account does not match the linked identity."
 msgstr "لا يتطابق حساب Google مع الهوية المرتبطة."
 
-#: enferno/user/views.py:223
+#: enferno/user/views.py:221
 msgid "Never"
 msgstr "أبداً"
 
-#: enferno/user/views.py:339
+#: enferno/user/views.py:337
 msgid "Login from Different IP"
 msgstr "تسجيل الدخول من عنوان IP مختلف"
 
-#: enferno/user/views.py:341
+#: enferno/user/views.py:339
 msgid ""
-"You have logged in from a different IP address than your last login. If this"
-" was you, please ignore this message. If this was not you, please change "
-"your password immediately."
+"You have logged in from a different IP address than your last login. If "
+"this was you, please ignore this message. If this was not you, please "
+"change your password immediately."
 msgstr ""
 "لقد سجلت الدخول من عنوان IP مختلف عن آخر تسجيل دخول. إذا كنت أنت من قام "
 "بذلك، فتجاهل هذه الرسالة. وإذا لم تكن أنت، فغيّر كلمة مرورك فوراً."
@@ -7136,9 +7246,9 @@ msgstr "اسم جهاز WebAuthn طويل جداً (الحد الأقصى 64 ح�
 #~ msgstr "تفعيل التعرف الضوئي على الحروف"
 
 #~ msgid ""
-#~ "API key for Google Maps. Adding a "
-#~ "key enables satalite imagery in Bayanat's"
-#~ " maps."
+#~ "API key for Google Maps. Adding a"
+#~ " key enables satalite imagery in "
+#~ "Bayanat's maps."
 #~ msgstr ""
 #~ "مفتاح واجهة برمجة التطبيقات لخرائط غوغل."
 #~ " إضافة المفتاح يمكِّن من عرض صور "
@@ -7186,15 +7296,15 @@ msgstr "اسم جهاز WebAuthn طويل جداً (الحد الأقصى 64 ح�
 #~ msgid ""
 #~ "Bayanat uses OpenStreetMaps by default. "
 #~ "Optionally, it is able to show "
-#~ "satalite imagery using Google Maps, in "
-#~ "addition to OSM. To enable, add a "
-#~ "Google Maps API Key."
+#~ "satalite imagery using Google Maps, in"
+#~ " addition to OSM. To enable, add "
+#~ "a Google Maps API Key."
 #~ msgstr ""
 #~ "يستخدم تطبيق Bayanat خرائط OpenStreetMaps "
-#~ "بشكل افتراضي. وبشكل اختياري، يمكنه عرض "
-#~ "صور الأقمار الصناعية باستخدام خرائط Google،"
-#~ " بالإضافة إلى OSM. للسماح بذلك، أضف "
-#~ "مفتاح API لخرائط Google."
+#~ "بشكل افتراضي. وبشكل اختياري، يمكنه عرض"
+#~ " صور الأقمار الصناعية باستخدام خرائط "
+#~ "Google، بالإضافة إلى OSM. للسماح بذلك،"
+#~ " أضف مفتاح API لخرائط Google."
 
 #~ msgid "User Settings"
 #~ msgstr "إعدادات المستخدم"
@@ -7208,15 +7318,15 @@ msgstr "اسم جهاز WebAuthn طويل جداً (الحد الأقصى 64 ح�
 #~ msgid ""
 #~ "Basic OCR during data import using "
 #~ "Tesseract. Extracts text from images and"
-#~ " scanned PDFs (requires Tesseract system "
-#~ "package)."
+#~ " scanned PDFs (requires Tesseract system"
+#~ " package)."
 #~ msgstr ""
-#~ "يمكن لأداة استيراد الوسائط الخاصة ببيانات"
-#~ " استخدام محرك Tesseract من غوغل للتعرف"
-#~ " الضوئي على الأحرف. سوف يتيح هذا "
-#~ "الخيار إمكانية معالجة النصوص واستخراجها من"
-#~ " الصور وملفات PDF الممسوحة ضوئيا (يتطلب"
-#~ " حزمة نظام Tesseract) "
+#~ "يمكن لأداة استيراد الوسائط الخاصة "
+#~ "ببيانات استخدام محرك Tesseract من غوغل"
+#~ " للتعرف الضوئي على الأحرف. سوف يتيح"
+#~ " هذا الخيار إمكانية معالجة النصوص "
+#~ "واستخراجها من الصور وملفات PDF الممسوحة"
+#~ " ضوئيا (يتطلب حزمة نظام Tesseract) "
 
 #~ msgid "Tesseract is not installed. Please install it to enable OCR."
 #~ msgstr ""
@@ -7229,13 +7339,14 @@ msgstr "اسم جهاز WebAuthn طويل جداً (الحد الأقصى 64 ح�
 
 #~ msgid ""
 #~ "Create your first admin account. This account will have unrestricted\n"
-#~ "                                                    access to"
-#~ " all features and settings in Bayanat."
+#~ "                                                    access "
+#~ "to all features and settings in "
+#~ "Bayanat."
 #~ msgstr ""
 #~ "قم بإنشاء حساب المسؤول الأول الخاص "
-#~ "بك. سيتمكن هذا الحساب من الوصول دون"
-#~ " قيود إلى كافة الميزات والإعدادات في "
-#~ "Bayanat."
+#~ "بك. سيتمكن هذا الحساب من الوصول "
+#~ "دون قيود إلى كافة الميزات والإعدادات "
+#~ "في Bayanat."
 
 #~ msgid "Create Admin Account"
 #~ msgstr "إنشاء حساب المسؤول"

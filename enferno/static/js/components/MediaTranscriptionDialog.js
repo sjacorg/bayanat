@@ -104,7 +104,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
 
       api.put(`/admin/api/extraction/${this.media.extraction.id}`, { action: 'transcribe', text: this.transcriptionText })
         .then(() => {
-          this.$root.showSnack(this.translations.revisionSaved_ || 'Revision saved');
+          this.$root.showSnack(this.translations.revisionSaved_);
           this.editing = false;
           this.$emit('transcribed', { media: this.media, text: this.transcriptionText });
         })
@@ -433,7 +433,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
                       <div v-if="hasText || editing" class="text-subtitle-2 mb-2 d-flex align-center">
                         {{ translations.extractedText_ }}
-                        <v-chip v-if="editing" color="warning" size="x-small" variant="tonal" class="ml-2">{{ translations.editing_ || 'Editing' }}</v-chip>
+                        <v-chip v-if="editing" color="warning" size="x-small" variant="tonal" class="ml-2">{{ translations.editing_ }}</v-chip>
                         <v-spacer></v-spacer>
 
                         <!-- Edit / Cancel button -->
@@ -443,14 +443,14 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           variant="outlined"
                           class="border-thin mr-2"
                           @click="enterEditMode"
-                        >{{ translations.edit_ || 'Edit' }}</v-btn>
+                        >{{ translations.edit_ }}</v-btn>
 
                         <v-btn
                           v-if="editing"
                           variant="text"
                           class="mr-2"
                           @click="cancelEdit"
-                        >{{ translations.cancel_ || 'Cancel' }}</v-btn>
+                        >{{ translations.cancel_ }}</v-btn>
 
                         <v-btn
                           v-if="hasOcrProvider && !editing"
@@ -586,7 +586,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     <v-expansion-panel>
                       <v-expansion-panel-title class="text-caption py-1" style="min-height: 36px;">
                         <v-icon icon="mdi-history" size="small" class="mr-2"></v-icon>
-                        {{ translations.revisions_ || 'Revisions' }} ({{ revisionCount }})
+                        {{ translations.revisions_ }} ({{ revisionCount }})
                       </v-expansion-panel-title>
                       <v-expansion-panel-text>
                         <div v-for="(entry, idx) in [...media.extraction.history].reverse()" :key="idx" class="mb-2 text-caption">
@@ -618,7 +618,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       size="large"
                       @click="cancelEdit"
                     >
-                      {{ translations.cancel_ || 'Cancel' }}
+                      {{ translations.cancel_ }}
                     </v-btn>
                     <v-btn
                       color="primary"
@@ -629,7 +629,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       :loading="saving"
                       @click="saveRevision"
                     >
-                      {{ translations.saveRevision_ || 'Save Revision' }}
+                      {{ translations.saveRevision_ }}
                     </v-btn>
                   </v-card-actions>
                 </v-card>

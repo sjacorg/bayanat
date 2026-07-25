@@ -106,7 +106,7 @@ const InlineMediaRenderer = Vue.defineComponent({
               </v-tooltip>
               <uni-field
                 class="text-truncate"
-                :english="media.title || 'Untitled'"
+                :english="media.title || translations.untitled_"
                 :arabic="media.title_ar || ''"
                 disable-spacing
               ></uni-field>
