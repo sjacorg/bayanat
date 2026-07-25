@@ -765,8 +765,8 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 .label-structure-panel .v-card-title {
-    min-height: 42px;
-    font-size: 1rem;
+    min-height: 36px;
+    font-size: 0.95rem;
 }
 
 .label-structure-panel .v-field,
@@ -810,32 +810,58 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 .label-structure-tree .v-list-item {
-    min-height: 30px;
-    padding-inline: 8px;
+    min-height: 26px;
+    padding-inline-end: 6px;
+}
+
+/* every level costs one indent step plus the width Vuetify reserves for the
+   prepend slot; both are trimmed so a six level path still fits */
+.label-structure-tree .v-list-group {
+    --list-indent-size: 12px;
+    --prepend-width: 24px;
+}
+
+.label-structure-tree .v-list-item__spacer {
+    width: 4px;
+}
+
+.label-structure-tree .v-list-item__prepend > .v-list-item-action {
+    margin-inline-end: 2px;
+}
+
+/* the selected row's full path, pinned under the search box */
+.label-structure-path {
+    flex: 0 0 auto;
+    font-size: 12px;
+    line-height: 1.1rem;
+    background: rgba(var(--v-theme-primary), 0.08);
+    border-block: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
 .label-structure-tree .v-list-item-title,
 .label-structure-title {
-    font-size: 13px;
-    line-height: 1.15rem;
+    font-size: 12.5px;
+    line-height: 1.05rem;
 }
 
 .label-structure-title-ar {
-    font-size: 11px;
-    line-height: 1rem;
+    font-size: 10.5px;
+    line-height: 0.95rem;
     /* dir=rtl keeps the bidi order correct; alignment follows the English line above */
     text-align: left;
 }
 
 .label-structure-tree .v-chip {
-    height: 18px;
-    padding-inline: 5px;
-    font-size: 10px;
+    height: 16px;
+    padding-inline: 4px;
+    font-size: 9px;
 }
 
 .label-structure-panel .v-card-actions {
-    min-height: 38px;
-    padding: 3px 8px;
+    min-height: 32px;
+    padding: 2px 8px;
 }
 
 

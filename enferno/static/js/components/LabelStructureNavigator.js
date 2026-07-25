@@ -28,6 +28,7 @@ const LabelStructureNavigator = Vue.defineComponent({
       loaded: false,
       loading: false,
       opened: JSON.parse(localStorage.getItem('labelTreeOpened') || '[]'),
+      activated: [],
       query: '',
       treeItems: [],
     };
@@ -37,6 +38,19 @@ const LabelStructureNavigator = Vue.defineComponent({
       const query = this.query.trim().toLocaleLowerCase();
       if (!query) return this.treeItems;
       return this.filterTree(this.treeItems, query);
+    },
+    // the title already is the full path, so the picked row is the whole crumb
+    activePath() {
+      const id = this.activated[0];
+      if (!id) return '';
+      const find = (items) => {
+        for (const item of items) {
+          if (item.id === id) return item;
+          const match = find(item.children || []);
+          if (match) return match;
+        }
+      };
+      return find(this.treeItems)?.title || '';
     },
   },
   watch: {
@@ -234,7 +248,7 @@ const LabelStructureNavigator = Vue.defineComponent({
           ></v-btn>
         </v-card-title>
 
-        <v-card-text class="px-3 py-2">
+        <v-card-text class="px-2 py-1">
           <v-text-field
             v-model="query"
             :label="translations.search"
@@ -245,6 +259,10 @@ const LabelStructureNavigator = Vue.defineComponent({
             variant="outlined"
           ></v-text-field>
         </v-card-text>
+
+        <div v-if="activePath" class="label-structure-path px-3 py-1" :title="activePath">
+          {{ activePath }}
+        </div>
 
         <div class="label-structure-tree">
           <div v-if="loading" class="d-flex justify-center pa-8">
@@ -265,6 +283,9 @@ const LabelStructureNavigator = Vue.defineComponent({
           <v-treeview
             v-else
             v-model:opened="opened"
+            v-model:activated="activated"
+            activatable
+            active-strategy="single-independent"
             :items="filteredItems"
             density="compact"
             item-children="children"
