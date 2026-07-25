@@ -834,10 +834,12 @@ div.jsondiffpatch-child-node-type-array:after {
 .label-structure-path {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     flex: 0 0 auto;
-    font-size: 13.5px;
-    line-height: 1.25rem;
+    /* small enough that a six level path fits without scrolling sideways, which
+       is the point of showing it at all */
+    font-size: 11.5px;
+    line-height: 1.05rem;
     color: rgb(var(--v-theme-primary));
     background: rgba(var(--v-theme-primary), 0.1);
     border-block: thin solid rgba(var(--v-theme-primary), 0.25);

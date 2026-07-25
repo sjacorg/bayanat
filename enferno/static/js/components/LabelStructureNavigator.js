@@ -267,8 +267,8 @@ const LabelStructureNavigator = Vue.defineComponent({
           ></v-text-field>
         </v-card-text>
 
-        <div v-if="activePath" class="label-structure-path px-3 py-2" :title="activePath">
-          <v-icon icon="mdi-label-outline" size="small"></v-icon>
+        <div v-if="activePath" class="label-structure-path px-3 py-1" :title="activePath">
+          <v-icon icon="mdi-label-outline" size="x-small"></v-icon>
           <template v-for="(crumb, index) in activeCrumbs" :key="index">
             <span v-if="index" class="label-structure-crumb-sep">›</span>
             <span :class="index === activeCrumbs.length - 1 ? 'label-structure-crumb-leaf' : 'text-medium-emphasis'">{{ crumb }}</span>
