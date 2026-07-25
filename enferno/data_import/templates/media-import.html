@@ -158,26 +158,22 @@
 
                                                     </v-col>
                                                     <v-col cols="12" md="4">
-                                                        <search-field
-                                                                api="/admin/api/labels/"
-                                                                :query-params="{ typ: 'for_bulletin' }"
-                                                                item-title="title"
-                                                                item-value="id"
+                                                        <label-search-field
+                                                                :query-params="{ typ: 'for_bulletin', mode: 2 }"
                                                                 :multiple="true"
+                                                                :retain-search="true"
                                                                 label="{{ _('Labels') }}"
                                                                 v-model="labels"
-                                                        ></search-field>
+                                                        ></label-search-field>
                                                     </v-col>
                                                     <v-col cols="12" md="4">
-                                                        <search-field
-                                                                api="/admin/api/labels/"
-                                                                :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
-                                                                item-title="title"
-                                                                item-value="id"
+                                                        <label-search-field
+                                                                :query-params="{ fltr: 'verified', typ: 'for_bulletin', mode: 2 }"
                                                                 :multiple="true"
+                                                                :retain-search="true"
                                                                 label="{{ _('Verified Labels') }} "
                                                                 v-model="verLabels"
-                                                        ></search-field>
+                                                        ></label-search-field>
                                                     </v-col>
                                                 </v-row>
                                                 <v-row>
@@ -347,7 +343,9 @@
     <script src="/static/js/dropzone/dropzone.min.js?v={{ config.VERSION }}"></script>
     <script src="/static/js/components/VueDropzone.js?v={{ config.VERSION }}"></script>
 
+    <script src="/static/js/components/LabelPath.js?v={{ config.VERSION }}"></script>
     <script src="/static/js/components/SearchField.js?v={{ config.VERSION }}" ></script>
+    <script src="/static/js/components/LabelSearchField.js?v={{ config.VERSION }}" ></script>
     <script src="/static/js/mixins/whisper-mixin.js?v={{ config.VERSION }}" ></script>
     <script src="/static/js/mixins/media-mixin.js?v={{ config.VERSION }}" ></script>
 
@@ -629,6 +627,7 @@
 
         app.component('VueDropzone', VueDropzone);
         app.component('SearchField', SearchField);
+        app.component('LabelSearchField', LabelSearchField);
         app.component('LocationSearchField', LocationSearchField);
 
         app.use(router).use(vuetify);
