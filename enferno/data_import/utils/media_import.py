@@ -105,7 +105,9 @@ class MediaImport:
                 region_name=Config.get("AWS_REGION"),
             )
             try:
-                s3.Bucket(Config.get("S3_BUCKET")).put_object(Key=target, Body=open(filepath, "rb"))
+                # upload_file streams via a managed multipart transfer; put_object is a
+                # single PUT and fails with EntityTooLarge above S3's 5 GiB limit.
+                s3.Bucket(Config.get("S3_BUCKET")).upload_file(filepath, target)
                 self.data_import.add_to_log("File uploaded to S3 bucket.")
                 return True
             except Exception as e:
