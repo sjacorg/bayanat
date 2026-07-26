@@ -6,7 +6,7 @@ Used by both single-field endpoints and the bulk-save endpoint.
 Key characteristics:
 - No HTTP request/response handling
 - No db.session.commit() - caller controls transactions
-- Returns (result, error_message) tuples for consistent error handling
+- Returns validation errors to the caller and raises database errors
 """
 
 import time
@@ -16,9 +16,6 @@ from sqlalchemy import select
 
 from enferno.admin.models import DynamicField
 from enferno.extensions import db
-from enferno.utils.logging_utils import get_logger
-
-logger = get_logger()
 
 
 def create_field(field_data, entity_type):
@@ -69,13 +66,9 @@ def create_field(field_data, entity_type):
         field.ensure_option_ids()
 
     # Add to session and create column
-    try:
-        db.session.add(field)
-        db.session.flush()  # Get the ID without committing
-        field.create_column()
-    except Exception as e:
-        logger.error(f"Failed to create field: {e}", exc_info=True)
-        return None, "Database error"
+    db.session.add(field)
+    db.session.flush()  # Get the ID without committing
+    field.create_column()
 
     return field, None
 
@@ -160,12 +153,8 @@ def update_field(field_id, field_data):
             field.ensure_option_ids()
 
     # Add to session
-    try:
-        db.session.add(field)
-        db.session.flush()
-    except Exception as e:
-        logger.error(f"Failed to update field: {e}", exc_info=True)
-        return None, "Database error"
+    db.session.add(field)
+    db.session.flush()
 
     return field, None
 
@@ -191,11 +180,7 @@ def delete_field(field_id):
     field.active = False
     field.deleted = True
 
-    try:
-        db.session.add(field)
-        db.session.flush()
-    except Exception as e:
-        logger.error(f"Failed to delete field: {e}", exc_info=True)
-        return None, "Database error"
+    db.session.add(field)
+    db.session.flush()
 
     return field, None

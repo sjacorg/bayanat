@@ -1,6 +1,10 @@
 name: Deploy Docs
 
 on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
   push:
     branches: [main]
     paths:
@@ -35,6 +39,7 @@ jobs:
           path: docs/.vitepress/dist
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ github.pages_url }}
