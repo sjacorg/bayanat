@@ -389,7 +389,10 @@ class MediaImport:
 
         # Upload to S3 if needed
         if not Config.get("FILESYSTEM_LOCAL"):
-            self.upload(filepath, os.path.basename(filepath))
+            if not self.upload(filepath, os.path.basename(filepath)):
+                self.data_import.add_to_log("Unable to proceed without media file. Terminating.")
+                self.data_import.fail()
+                return
 
         # Bundle info for bulletin creation
         info["filename"] = filename
@@ -448,7 +451,10 @@ class MediaImport:
         info["originalFilename"] = file.get("original_filename")
 
         if not Config.get("FILESYSTEM_LOCAL"):
-            self.upload(filepath, os.path.basename(filepath))
+            if not self.upload(filepath, os.path.basename(filepath)):
+                self.data_import.add_to_log("Unable to proceed without media file. Terminating.")
+                self.data_import.fail()
+                return
 
         # get file extension and duration
         _, ext = os.path.splitext(filename)
@@ -495,6 +501,11 @@ class MediaImport:
         else:
             self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
+            return
+
+        # Each import mode logs the reason and fails the DataImport before
+        # returning None, so stop here rather than dereferencing it below.
+        if info is None:
             return
 
         mime_type = info.get("File:MIMEType")
