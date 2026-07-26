@@ -5152,7 +5152,7 @@ msgstr "وقت التعديل"
 #: enferno/templates/security/login_user.html:19
 #: enferno/templates/security/login_user.html:24
 msgid "Username"
-msgstr "إمكانية عرض أسماء المستخدمين"
+msgstr "اسم المستخدم"
 
 #: enferno/admin/templates/admin/system-administration.html:1201
 msgid "General"
@@ -5255,7 +5255,7 @@ msgstr "المجموعات"
 
 #: enferno/admin/templates/admin/users.html:264
 msgid "Can view usernames"
-msgstr "إمكانبة عرض أسماء المستخدمين"
+msgstr "إمكانية عرض أسماء المستخدمين"
 
 #: enferno/admin/templates/admin/users.html:268
 msgid "Can view simple history"
