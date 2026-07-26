@@ -75,7 +75,7 @@ def create_field(field_data, entity_type):
         field.create_column()
     except Exception as e:
         logger.error(f"Failed to create field: {e}", exc_info=True)
-        return None, f"Database error: {str(e)}"
+        return None, "Database error"
 
     return field, None
 
@@ -165,7 +165,7 @@ def update_field(field_id, field_data):
         db.session.flush()
     except Exception as e:
         logger.error(f"Failed to update field: {e}", exc_info=True)
-        return None, f"Database error: {str(e)}"
+        return None, "Database error"
 
     return field, None
 
@@ -196,6 +196,6 @@ def delete_field(field_id):
         db.session.flush()
     except Exception as e:
         logger.error(f"Failed to delete field: {e}", exc_info=True)
-        return None, f"Database error: {str(e)}"
+        return None, "Database error"
 
     return field, None
