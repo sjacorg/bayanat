@@ -284,35 +284,20 @@ def locations_config(id: Optional[t.id]):
 
 
 # location admin level endpoints
-def requested_hierarchy_scope() -> tuple[bool, Optional[t.id]]:
-    """
-    Read the optional hierarchy scope of an admin-level request.
-
-    `hierarchy_id=null` scopes to the legacy global levels, an integer scopes to
-    that hierarchy, and an absent parameter means unscoped (every level).
-
-    Returns:
-        - (scoped, hierarchy_id) tuple.
-    """
-    raw = request.args.get("hierarchy_id")
-    if raw is None:
-        return False, None
-    if raw in ("null", ""):
-        return True, None
-    return True, int(raw)
-
-
 @admin.route("/api/location-admin-levels/", methods=["GET", "POST"])
 def api_location_admin_levels() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
-    try:
-        scoped, hierarchy_id = requested_hierarchy_scope()
-    except ValueError:
-        return HTTPResponse.error("Invalid hierarchy_id", status=400)
-
-    levels = LocationAdminLevel.in_hierarchy(hierarchy_id) if scoped else LocationAdminLevel.query
+    # hierarchy_id=null scopes to the legacy levels, an integer to that hierarchy,
+    # and an absent parameter returns every level, which is the old behavior
+    scope = request.args.get("hierarchy_id")
+    levels = LocationAdminLevel.query
+    if scope is not None:
+        try:
+            levels = LocationAdminLevel.in_hierarchy(None if scope in ("null", "") else int(scope))
+        except ValueError:
+            return HTTPResponse.error("Invalid hierarchy_id", status=400)
 
     query = request.args.get("q")
     if query:
