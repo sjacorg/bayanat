@@ -99,23 +99,33 @@ class TestSubtreeRebuild:
 
 
 class TestStaleDetection:
-    def test_reports_zero_when_consistent(self, tree):
-        assert Location.count_stale_paths() == 0
+    """
+    The count is table wide, so these assert the delta this test causes rather
+    than an absolute, which other test modules' fixtures would perturb.
+    """
+
+    def test_reports_nothing_for_rows_it_just_rebuilt(self, session, tree):
+        _, _, sub_id = tree
+        baseline = Location.count_stale_paths()
+        db.session.get(Location, tree[0]).rebuild_subtree()
+        assert Location.count_stale_paths() == baseline
 
     def test_detects_text_written_outside_the_app(self, session, tree):
         _, _, sub_id = tree
+        baseline = Location.count_stale_paths()
         session.execute(
             text("update location set full_location = 'wrong' where id = :id"), {"id": sub_id}
         )
         session.commit()
-        assert Location.count_stale_paths() == 1
+        assert Location.count_stale_paths() == baseline + 1
 
     def test_detects_a_missing_ancestor_tree(self, session, tree):
         """An import that never generated id_tree leaves rows unreachable by ancestor search."""
         _, _, sub_id = tree
+        baseline = Location.count_stale_paths()
         session.execute(text("update location set id_tree = null where id = :id"), {"id": sub_id})
         session.commit()
-        assert Location.count_stale_paths() == 1
+        assert Location.count_stale_paths() == baseline + 1
         assert sub_id not in Location.get_children_by_id(tree[0])
 
 
