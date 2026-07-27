@@ -7,7 +7,7 @@ system administration gets its location text assembled in no particular order.
 Codes were already assigned in ladder order, so they are the correct fallback.
 
 Revision ID: c9e1b7a4f206
-Revises: f0a3d6c1e8b2
+Revises: a1c4e70b93d2
 Create Date: 2026-07-27 00:00:00.000000
 
 """
@@ -15,7 +15,7 @@ Create Date: 2026-07-27 00:00:00.000000
 from alembic import op
 
 revision = "c9e1b7a4f206"
-down_revision = "f0a3d6c1e8b2"
+down_revision = "a1c4e70b93d2"
 branch_labels = None
 depends_on = None
 
