@@ -39,10 +39,14 @@ def upgrade():
     )
 
     # existing levels stay global: code is unique per hierarchy, and a partial
-    # index keeps the legacy (null hierarchy) codes unique on their own
-    op.execute(
-        "ALTER TABLE location_admin_level DROP CONSTRAINT IF EXISTS location_admin_level_code_key"
-    )
+    # index keeps the legacy (null hierarchy) codes unique on their own.
+    # Drop whatever the global unique on code is actually called: a hard coded
+    # name would no-op on an install that named it differently, silently leaving
+    # the old constraint to reject a second hierarchy's codes.
+    inspector = sa.inspect(op.get_bind())
+    for constraint in inspector.get_unique_constraints("location_admin_level"):
+        if constraint["column_names"] == ["code"]:
+            op.drop_constraint(constraint["name"], "location_admin_level", type_="unique")
     op.create_index(
         "ix_location_admin_level_legacy_code",
         "location_admin_level",

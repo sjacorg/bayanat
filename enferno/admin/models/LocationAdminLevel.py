@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from enferno.extensions import db
@@ -121,12 +121,19 @@ class LocationAdminLevel(db.Model, BaseMixin):
             - ids: the list of ids to reorder.
             - hierarchy_id: the hierarchy the ids must all belong to.
         """
-        levels = {l.id: l for l in LocationAdminLevel.in_hierarchy(hierarchy_id).all()}
-        if set(ids) != set(levels):
+        known = {
+            id
+            for (id,) in LocationAdminLevel.in_hierarchy(hierarchy_id).with_entities(
+                LocationAdminLevel.id
+            )
+        }
+        if set(ids) != known:
             raise ValueError("Reorder requires the complete level set of a single hierarchy")
 
-        for i, id in enumerate(ids):
-            lal = levels[id]
-            lal.display_order = i + 1
-            if not lal.save(raise_exception=True):
-                raise ValueError("Error updating location admin level display order")
+        # one statement, one transaction: a half applied order would silently
+        # reshuffle every full_location built from this hierarchy
+        db.session.execute(
+            update(LocationAdminLevel),
+            [{"id": id, "display_order": i + 1} for i, id in enumerate(ids)],
+        )
+        db.session.commit()

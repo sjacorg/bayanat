@@ -108,6 +108,9 @@ def api_location_create(
     location = Location()
     location = location.from_json(validated_data["item"])
 
+    if location.has_hierarchy_conflict():
+        return HTTPResponse.error("Parent location belongs to a different hierarchy", status=400)
+
     if location.save():
         location.full_location = location.get_full_string()
         location.id_tree = location.get_id_tree()
@@ -145,6 +148,13 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
     location = db.session.get(Location, id)
     if location is not None:
         location = location.from_json(validated_data["item"])
+
+        if location.has_hierarchy_conflict():
+            db.session.rollback()
+            return HTTPResponse.error(
+                "Parent location belongs to a different hierarchy", status=400
+            )
+
         # we need to commit this change to db first, to utilize CTE
         if location.save():
             # then update the location full string
@@ -419,7 +429,7 @@ def api_location_admin_level_delete(id: t.id) -> Response:
     if admin_level.hierarchy_id is None and admin_level.code in (1, 2, 3):
         return HTTPResponse.error("Cannot delete the first 3 levels", status=400)
 
-    if Location.query.filter(Location.admin_level_id == id).count() > 0:
+    if db.session.query(Location.query.filter(Location.admin_level_id == id).exists()).scalar():
         return HTTPResponse.error("Cannot delete a level that is in use by a location", status=409)
 
     if admin_level.code != LocationAdminLevel.max_code(admin_level.hierarchy_id):
@@ -576,7 +586,7 @@ def api_location_hierarchy_delete(id: t.id) -> Response:
     if hierarchy is None:
         return HTTPResponse.not_found("Location Hierarchy not found")
 
-    if LocationAdminLevel.in_hierarchy(id).count() > 0:
+    if db.session.query(LocationAdminLevel.in_hierarchy(id).exists()).scalar():
         return HTTPResponse.error(
             "Cannot delete a hierarchy that still has admin levels", status=409
         )
