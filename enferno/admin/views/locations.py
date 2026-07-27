@@ -108,6 +108,11 @@ def api_location_create(
     location = Location()
     location = location.from_json(validated_data["item"])
 
+    if location.has_parent_cycle():
+        return HTTPResponse.error(
+            "A location cannot be placed under itself or one of its own descendants", status=400
+        )
+
     if location.has_hierarchy_conflict():
         return HTTPResponse.error("Parent location belongs to a different hierarchy", status=400)
 
@@ -147,6 +152,12 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
     location = db.session.get(Location, id)
     if location is not None:
         location = location.from_json(validated_data["item"])
+
+        if location.has_parent_cycle():
+            db.session.rollback()
+            return HTTPResponse.error(
+                "A location cannot be placed under itself or one of its own descendants", status=400
+            )
 
         if location.has_hierarchy_conflict():
             db.session.rollback()
