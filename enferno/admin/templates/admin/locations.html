@@ -221,6 +221,10 @@
                 editedIndex: -1,
 
                 locQueryParams: {},
+                // transient editor scope: a location derives its hierarchy from
+                // its admin level, nothing is stored on the location itself
+                hierarchy: null,
+                hierarchies: [],
                 editedItem: {
                     title: "",
                     parent: {
@@ -242,6 +246,9 @@
             computed: {
                 formTitle() {
                     return !this.editedItem.id ? "{{_('New Location')}}" : "{{_('Edit Location')}}";
+                },
+                levelQueryParams() {
+                    return {hierarchy_id: this.hierarchy?.id ?? 'null'};
                 }
             },
 
@@ -272,6 +279,9 @@
 
             mounted: function () {
 
+                api.get('/admin/api/location-hierarchies/?per_page=100')
+                    .then(response => this.hierarchies = response.data.items)
+                    .catch(console.error);
 
                 if (this.$route.params.id) {
                     this.showLocation(this.$route.params.id);
@@ -352,19 +362,30 @@
                         this.showSnack(handleRequestError(error));
                     });
                 },
+                levelOrder(level) {
+                    return level?.display_order || level?.code;
+                },
+
+                onHierarchyChange() {
+                    this.editedItem.admin_level = null;
+                    this.editedItem.parent = null;
+                    this.locQueryParams = {};
+                },
+
                 restrictSearch() {
-                    if (this.editedItem.location_type?.title === 'Administrative Location' 
-                        && !!this.editedItem.admin_level
-                    ) {
-                        const restrict = this.editedItem.admin_level.code - 1;
-                        if (this.editedItem.parent?.admin_level.code !== restrict) {
-                            // clear parent location
-                            this.editedItem.parent = null;
-                        }
-                        this.locQueryParams = {lvl: restrict};
-                    } else {
+                    const level = this.editedItem.admin_level;
+                    if (this.editedItem.location_type?.title !== 'Administrative Location' || !level) {
                         this.locQueryParams = {};
+                        return;
                     }
+                    // the eligible parent level is resolved server side, so no
+                    // assumption here that a parent sits at this level's code minus one
+                    const parentLevel = this.editedItem.parent?.admin_level;
+                    const sameHierarchy = (parentLevel?.hierarchy?.id ?? null) === (level.hierarchy?.id ?? null);
+                    if (parentLevel && (!sameHierarchy || this.levelOrder(parentLevel) >= this.levelOrder(level))) {
+                        this.editedItem.parent = null;
+                    }
+                    this.locQueryParams = {parent_of: level.id};
                 },
 
                 has_role(user, role) {
@@ -433,6 +454,7 @@
                 newItem() {
 
                     this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                    this.hierarchy = null;
                     this.dialog = true;
                     this.$nextTick(() => {
                         this.locationKey += 1;
@@ -444,6 +466,8 @@
                     this.locationDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = Object.assign({}, item);
+                    // a location has no hierarchy of its own, it is read back off its level
+                    this.hierarchy = item.admin_level?.hierarchy || item.parent?.admin_level?.hierarchy || null;
                     this.restrictSearch()
                     this.dialog = true;
                     this.$nextTick(() => {

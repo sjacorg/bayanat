@@ -7,13 +7,20 @@ from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
 
 from enferno.admin.constants import Constants
-from enferno.admin.models import Location, LocationAdminLevel, LocationType, Activity
+from enferno.admin.models import (
+    Location,
+    LocationAdminLevel,
+    LocationHierarchy,
+    LocationType,
+    Activity,
+)
 from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.models import (
     LocationQueryRequestModel,
     LocationRequestModel,
     LocationAdminLevelRequestModel,
     LocationAdminLevelReorderRequestModel,
+    LocationHierarchyRequestModel,
     LocationTypeRequestModel,
 )
 from enferno.extensions import db, rds
@@ -258,22 +265,43 @@ def locations_config(id: Optional[t.id]):
 
 
 # location admin level endpoints
+def requested_hierarchy_scope() -> tuple[bool, Optional[t.id]]:
+    """
+    Read the optional hierarchy scope of an admin-level request.
+
+    `hierarchy_id=null` scopes to the legacy global levels, an integer scopes to
+    that hierarchy, and an absent parameter means unscoped (every level).
+
+    Returns:
+        - (scoped, hierarchy_id) tuple.
+    """
+    raw = request.args.get("hierarchy_id")
+    if raw is None:
+        return False, None
+    if raw in ("null", ""):
+        return True, None
+    return True, int(raw)
+
+
 @admin.route("/api/location-admin-levels/", methods=["GET", "POST"])
 def api_location_admin_levels() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
+    try:
+        scoped, hierarchy_id = requested_hierarchy_scope()
+    except ValueError:
+        return HTTPResponse.error("Invalid hierarchy_id", status=400)
+
+    levels = LocationAdminLevel.in_hierarchy(hierarchy_id) if scoped else LocationAdminLevel.query
+
     query = request.args.get("q")
     if query:
-        result = (
-            LocationAdminLevel.query.filter(LocationAdminLevel.title.ilike(f"%{query}%"))
-            .order_by(-LocationAdminLevel.id)
-            .paginate(page=page, per_page=per_page, count=True)
-        )
-    else:
-        result = LocationAdminLevel.query.order_by(-LocationAdminLevel.id).paginate(
-            page=page, per_page=per_page, count=True
-        )
+        levels = levels.filter(LocationAdminLevel.title.ilike(f"%{query}%"))
+
+    result = levels.order_by(-LocationAdminLevel.id).paginate(
+        page=page, per_page=per_page, count=True
+    )
 
     response = {
         "items": [item.to_dict() for item in result.items],
@@ -300,15 +328,24 @@ def api_location_admin_level_create(
     """
     admin_level = LocationAdminLevel()
     admin_level.from_json(validated_data["item"])
-    all_codes = [level.code for level in LocationAdminLevel.query.all()]
-    max_code = max(all_codes) if len(all_codes) > 0 else 0
+
+    if admin_level.hierarchy_id is not None and not db.session.get(
+        LocationHierarchy, admin_level.hierarchy_id
+    ):
+        return HTTPResponse.not_found("Location Hierarchy not found")
+
+    max_code = LocationAdminLevel.max_code(admin_level.hierarchy_id)
 
     if admin_level.code is None:
         admin_level.code = max_code + 1
     elif admin_level.code != max_code + 1:
         return HTTPResponse.error(
-            "Code must be unique and one more than the highest code", status=400
+            "Code must be unique and one more than the highest code in its hierarchy", status=400
         )
+
+    # a new level sits last until someone reorders the hierarchy
+    if not admin_level.display_order:
+        admin_level.display_order = admin_level.code
 
     if admin_level.save():
         Activity.create(
@@ -344,6 +381,8 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
     if admin_level:
         if validated_data["item"]["code"] != admin_level.code:
             return HTTPResponse.error("Cannot change the code of a level", status=400)
+        if LocationAdminLevel.hierarchy_id_of(validated_data["item"]) != admin_level.hierarchy_id:
+            return HTTPResponse.error("Cannot move a level between hierarchies", status=400)
         admin_level.from_json(validated_data["item"])
         if admin_level.save():
             Activity.create(
@@ -372,17 +411,21 @@ def api_location_admin_level_delete(id: t.id) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    if id in [1, 2, 3] or LocationAdminLevel.query.count() <= 3:
-        return HTTPResponse.error("Cannot delete the first 3 levels", status=400)
     admin_level = db.session.get(LocationAdminLevel, id)
     if admin_level is None:
         return HTTPResponse.not_found("Location Admin Level not found")
+
+    # legacy defaults are protected by scope and code, not by database id
+    if admin_level.hierarchy_id is None and admin_level.code in (1, 2, 3):
+        return HTTPResponse.error("Cannot delete the first 3 levels", status=400)
+
     if Location.query.filter(Location.admin_level_id == id).count() > 0:
         return HTTPResponse.error("Cannot delete a level that is in use by a location", status=409)
 
-    max_code = max([level.code for level in LocationAdminLevel.query.all()])
-    if admin_level.code != max_code:
-        return HTTPResponse.error("Only the highest level can be deleted.", status=400)
+    if admin_level.code != LocationAdminLevel.max_code(admin_level.hierarchy_id):
+        return HTTPResponse.error(
+            "Only the highest level of a hierarchy can be deleted.", status=400
+        )
 
     if admin_level.delete():
         Activity.create(
@@ -411,7 +454,9 @@ def api_location_admin_levels_reorder(validated_data: dict) -> Response:
     """
     new_order = validated_data.get("order")
     try:
-        LocationAdminLevel.reorder(new_order)
+        LocationAdminLevel.reorder(new_order, validated_data.get("hierarchy_id"))
+    except ValueError as e:
+        return HTTPResponse.error(str(e), status=400)
     except Exception as e:
         logger.error(f"Failed to reorder location admin levels: {str(e)}", exc_info=True)
         return HTTPResponse.error(
@@ -420,6 +465,138 @@ def api_location_admin_levels_reorder(validated_data: dict) -> Response:
     return HTTPResponse.success(
         message="Updated, user should regenerate full locations from system settings"
     )
+
+
+# location hierarchy endpoints
+@admin.route("/api/location-hierarchies/", methods=["GET", "POST"])
+def api_location_hierarchies() -> Response:
+    """
+    Endpoint to get location hierarchies with paging support.
+
+    Returns:
+        - json response of location hierarchies.
+    """
+    page = request.args.get("page", 1, int)
+    per_page = request.args.get("per_page", PER_PAGE, int)
+
+    hierarchies = LocationHierarchy.query
+    query = request.args.get("q")
+    if query:
+        hierarchies = hierarchies.filter(LocationHierarchy.title.ilike(f"%{query}%"))
+
+    result = hierarchies.order_by(-LocationHierarchy.id).paginate(
+        page=page, per_page=per_page, count=True
+    )
+
+    response = {
+        "items": [item.to_dict() for item in result.items],
+        "perPage": per_page,
+        "total": result.total,
+    }
+    return HTTPResponse.success(data=response)
+
+
+@admin.post("/api/location-hierarchy")
+@roles_required("Admin")
+@validate_with(LocationHierarchyRequestModel)
+def api_location_hierarchy_create(validated_data: dict) -> Response:
+    """
+    Endpoint to create a location hierarchy.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    hierarchy = LocationHierarchy()
+    hierarchy.from_json(validated_data["item"])
+
+    if hierarchy.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            hierarchy.to_mini(),
+            "locationhierarchy",
+        )
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{hierarchy.id}",
+            data={"item": hierarchy.to_dict()},
+        )
+    else:
+        return HTTPResponse.error("Creation failed.", status=500)
+
+
+@admin.put("/api/location-hierarchy/<int:id>")
+@roles_required("Admin")
+@validate_with(LocationHierarchyRequestModel)
+def api_location_hierarchy_update(id: t.id, validated_data: dict) -> Response:
+    """
+    Endpoint to update a location hierarchy.
+
+    Args:
+        - id: id of the location hierarchy.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    hierarchy = db.session.get(LocationHierarchy, id)
+    if hierarchy is None:
+        return HTTPResponse.not_found("Location Hierarchy not found")
+
+    hierarchy.from_json(validated_data["item"])
+    if hierarchy.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            hierarchy.to_mini(),
+            "locationhierarchy",
+        )
+        return HTTPResponse.success(message="Updated")
+    else:
+        return HTTPResponse.error("Error saving item", status=500)
+
+
+@admin.delete("/api/location-hierarchy/<int:id>")
+@roles_required("Admin")
+def api_location_hierarchy_delete(id: t.id) -> Response:
+    """
+    Endpoint to delete a location hierarchy.
+
+    Args:
+        - id: id of the location hierarchy.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    hierarchy = db.session.get(LocationHierarchy, id)
+    if hierarchy is None:
+        return HTTPResponse.not_found("Location Hierarchy not found")
+
+    if LocationAdminLevel.in_hierarchy(id).count() > 0:
+        return HTTPResponse.error(
+            "Cannot delete a hierarchy that still has admin levels", status=409
+        )
+
+    if hierarchy.delete():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            hierarchy.to_mini(),
+            "locationhierarchy",
+        )
+        Notification.send_admin_notification_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Location Hierarchy Deleted",
+            f"Location Hierarchy {hierarchy.title} has been deleted by {current_user.username} successfully.",
+        )
+        return HTTPResponse.success(message=f"Location Hierarchy Deleted #{hierarchy.id}")
+    else:
+        return HTTPResponse.error("Error deleting Location Hierarchy", status=500)
 
 
 # location type endpoints

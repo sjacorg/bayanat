@@ -34,6 +34,7 @@ from .ItoiInfo import ItoiInfo
 from .Label import Label
 from .Location import Location
 from .LocationAdminLevel import LocationAdminLevel
+from .LocationHierarchy import LocationHierarchy
 from .LocationHistory import LocationHistory
 from .LocationType import LocationType
 from .Media import Media
