@@ -16,20 +16,12 @@ from enferno.admin.models import (
     ItoaInfo,
     ItoiInfo,
     Country,
-    Ethnography,
+    Media,
     MediaCategory,
     GeoLocationType,
     WorkflowStatus,
 )
 from enferno.extensions import db
-from enferno.admin.models import (
-    Media,
-    ClaimedViolation,
-    Eventtype,
-    LocationAdminLevel,
-    LocationType,
-    PotentialViolation,
-)
 from enferno.data_import.models import DataImport
 from enferno.user.models import Role
 from enferno.utils.logging_utils import get_logger
@@ -165,11 +157,12 @@ def create_default_location_data() -> None:
     Generates default required location data.
     """
     if not LocationAdminLevel.query.all():
-        db.session.add(LocationAdminLevel(code=1, title="Governorate"))
-        db.session.add(LocationAdminLevel(code=2, title="District"))
-        db.session.add(LocationAdminLevel(code=3, title="Subdistrict"))
-        db.session.add(LocationAdminLevel(code=4, title="Community"))
-        db.session.add(LocationAdminLevel(code=5, title="Neighbourhood"))
+        # display_order drives the order of the components in full_location, so
+        # leaving it null makes that text come out in an arbitrary order
+        for code, title in enumerate(
+            ["Governorate", "District", "Subdistrict", "Community", "Neighbourhood"], start=1
+        ):
+            db.session.add(LocationAdminLevel(code=code, title=title, display_order=code))
         db.session.commit()
 
     if not LocationType.query.all():

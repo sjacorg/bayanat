@@ -112,8 +112,7 @@ def api_location_create(
         return HTTPResponse.error("Parent location belongs to a different hierarchy", status=400)
 
     if location.save():
-        location.full_location = location.get_full_string()
-        location.id_tree = location.get_id_tree()
+        location.rebuild_subtree()
         location.create_revision()
         Activity.create(
             current_user,
@@ -157,9 +156,8 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
 
         # we need to commit this change to db first, to utilize CTE
         if location.save():
-            # then update the location full string
-            location.full_location = location.get_full_string()
-            location.id_tree = location.get_id_tree()
+            # a rename or a move invalidates the whole subtree, not just this row
+            location.rebuild_subtree()
             location.create_revision()
             Activity.create(
                 current_user,

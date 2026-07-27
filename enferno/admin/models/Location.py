@@ -355,78 +355,124 @@ class Location(db.Model, BaseMixin):
     @staticmethod
     def regenerate_all_full_locations() -> None:
         """
-        Regenerates and saves full location strings for all locations using a single CTE query.
-        Args:
-            - postal_code: whether to include postal code in result
+        Rebuild full_location and id_tree for every location, one subtree at a time.
+
+        Used by the Regenerate action in system administration. It used to rebuild
+        the text only, which is why an import that never generated an ancestor tree
+        could leave locations permanently unreachable by ancestor search with no way
+        to repair them from the interface.
         """
-        with db.session.begin_nested():
-            try:
-                query = """
-                BEGIN;
-                WITH RECURSIVE location_tree AS (
-                    SELECT 
-                        l.id,
-                        l.title,
-                        l.postal_code,
-                        l.admin_level_id,
-                        ARRAY[l.id] as path,
-                        CASE 
-                            WHEN l.parent_id IS NULL OR l.admin_level_id IS NULL THEN 
-                                CASE 
-                                    WHEN :postal_code AND l.postal_code IS NOT NULL 
-                                    THEN l.title || ' ' || l.postal_code
-                                    ELSE l.title
-                                END
-                            ELSE l.title
-                        END as full_string
-                    FROM location l 
-                    WHERE l.parent_id IS NULL
-                    
-                    UNION ALL
-                    
-                    SELECT
-                        child.id,
-                        child.title,
-                        child.postal_code,
-                        child.admin_level_id,
-                        child.id || t.path,
-                        CASE 
-                            WHEN child.parent_id IS NULL OR child.admin_level_id IS NULL THEN 
-                                CASE 
-                                    WHEN :postal_code AND child.postal_code IS NOT NULL 
-                                    THEN child.title || ' ' || child.postal_code
-                                    ELSE child.title
-                                END
-                            ELSE (
-                                SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST)
-                                FROM unnest(child.id || t.path) WITH ORDINALITY AS ids(id, ord)
-                                JOIN location loc ON loc.id = ids.id
-                                LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
-                            ) || CASE 
-                                    WHEN :postal_code AND child.postal_code IS NOT NULL 
-                                    THEN ' ' || child.postal_code 
-                                    ELSE '' 
-                                END
-                        END as full_string
-                    FROM location child
-                    JOIN location_tree t ON child.parent_id = t.id
-                )
-                UPDATE location l
-                SET full_location = lt.full_string
-                FROM location_tree lt
-                WHERE l.id = lt.id;
-                COMMIT;
-                """
-                if not has_app_context():
-                    postal_code = False
-                else:
-                    postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
-                with db.engine.connect() as connection:
-                    connection.execute(text(query), {"postal_code": postal_code})
-                    connection.commit()
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Failed to regenerate location strings: {str(e)}", exc_info=e)
+        roots = Location.query.filter(Location.parent_id.is_(None)).all()
+        for root in roots:
+            root.rebuild_subtree()
+        logger.info(f"Rebuilt location paths under {len(roots)} roots.")
+
+    def rebuild_subtree(self) -> None:
+        """
+        Rebuild full_location and id_tree for this location and every descendant.
+
+        Both columns are denormalized copies of the path from the root, so renaming
+        a location or moving it invalidates every row underneath it, not just itself.
+        Rebuilding only the edited row leaves descendants holding the old text and,
+        worse, the old ancestor chain, which drops them out of ancestor search.
+        """
+        query = """
+        WITH RECURSIVE ancestry AS (
+            SELECT id, parent_id, ARRAY[id] AS path
+            FROM location WHERE id = :id
+            UNION ALL
+            SELECT p.id, p.parent_id, a.path || p.id
+            FROM location p JOIN ancestry a ON p.id = a.parent_id
+        ),
+        root_path AS (
+            SELECT path FROM ancestry ORDER BY array_length(path, 1) DESC LIMIT 1
+        ),
+        subtree AS (
+            SELECT l.id, l.title, l.postal_code, l.admin_level_id, l.parent_id,
+                   (SELECT path FROM root_path) AS path
+            FROM location l WHERE l.id = :id
+            UNION ALL
+            SELECT c.id, c.title, c.postal_code, c.admin_level_id, c.parent_id, c.id || s.path
+            FROM location c JOIN subtree s ON c.parent_id = s.id
+        )
+        UPDATE location l SET
+            full_location = CASE
+                WHEN s.parent_id IS NULL OR s.admin_level_id IS NULL THEN
+                    CASE WHEN :postal_code AND s.postal_code IS NOT NULL
+                         THEN s.title || ' ' || s.postal_code ELSE s.title END
+                ELSE (
+                    SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST)
+                    FROM unnest(s.path) WITH ORDINALITY AS ids(id, ord)
+                    JOIN location loc ON loc.id = ids.id
+                    LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
+                ) || CASE WHEN :postal_code AND s.postal_code IS NOT NULL
+                          THEN ' ' || s.postal_code ELSE '' END
+            END,
+            id_tree = (
+                SELECT string_agg('[' || ids.id || ']', ' ' ORDER BY ids.ord)
+                FROM unnest(s.path) WITH ORDINALITY AS ids(id, ord)
+            )
+        FROM subtree s WHERE l.id = s.id;
+        """
+        if not has_app_context():
+            postal_code = False
+        else:
+            postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
+        try:
+            db.session.execute(text(query), {"id": self.id, "postal_code": postal_code})
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to rebuild location subtree {self.id}: {str(e)}", exc_info=e)
+            raise
+
+    @staticmethod
+    def count_stale_paths() -> int:
+        """
+        Locations whose stored full_location disagrees with the current titles.
+
+        Anything writing rows outside the app (imports, scripts, psql) leaves the
+        denormalized text behind. This makes that drift visible instead of silent.
+        """
+        query = """
+        WITH RECURSIVE tree AS (
+            SELECT id, title, postal_code, admin_level_id, parent_id, full_location, id_tree,
+                   ARRAY[id] AS path
+            FROM location WHERE parent_id IS NULL
+            UNION ALL
+            SELECT c.id, c.title, c.postal_code, c.admin_level_id, c.parent_id, c.full_location,
+                   c.id_tree, c.id || t.path
+            FROM location c JOIN tree t ON c.parent_id = t.id
+        ),
+        expected AS (
+            SELECT t.id, t.full_location, t.id_tree,
+                CASE
+                    WHEN t.parent_id IS NULL OR t.admin_level_id IS NULL THEN
+                        CASE WHEN :postal_code AND t.postal_code IS NOT NULL
+                             THEN t.title || ' ' || t.postal_code ELSE t.title END
+                    ELSE (
+                        SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST)
+                        FROM unnest(t.path) WITH ORDINALITY AS ids(id, ord)
+                        JOIN location loc ON loc.id = ids.id
+                        LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
+                    ) || CASE WHEN :postal_code AND t.postal_code IS NOT NULL
+                              THEN ' ' || t.postal_code ELSE '' END
+                END AS expected_full,
+                (
+                    SELECT string_agg('[' || ids.id || ']', ' ' ORDER BY ids.ord)
+                    FROM unnest(t.path) WITH ORDINALITY AS ids(id, ord)
+                ) AS expected_tree
+            FROM tree t
+        )
+        SELECT count(*) FROM expected
+        WHERE coalesce(full_location, '') <> coalesce(expected_full, '')
+           OR coalesce(id_tree, '') <> coalesce(expected_tree, '');
+        """
+        if not has_app_context():
+            postal_code = False
+        else:
+            postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
+        return db.session.execute(text(query), {"postal_code": postal_code}).scalar() or 0
 
     def get_id_tree(self) -> str:
         """Use common table expressions to generate the full tree of ids, this is very useful to reduce
@@ -463,15 +509,6 @@ class Location(db.Model, BaseMixin):
         return func.ST_DWithin(
             func.cast(Location.latlng, Geography), func.cast(point, Geography), radius_in_meters
         )
-
-    @staticmethod
-    def rebuild_id_trees():
-        """Rebuild the id tree for all locations."""
-        for l in Location.query.all():
-            l.id_tree = l.get_id_tree()
-            l.save()
-
-        logger.info("Locations ID tree generated successfuly.")
 
     # imports csv data into db
     @staticmethod
