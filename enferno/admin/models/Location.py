@@ -28,7 +28,10 @@ class Location(db.Model, BaseMixin):
     CELERY_FLAG = "tasks:locations:fullpath:status"
 
     COLOR = "#ff663366"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        db.CheckConstraint("parent_id != id", name="location_no_self_parent"),
+        {"extend_existing": True},
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     parent_id = db.Column(db.Integer, db.ForeignKey("location.id"))
@@ -69,6 +72,27 @@ class Location(db.Model, BaseMixin):
             l.created_at = created
             l.updated_at = created
         l.save()
+
+    def has_parent_cycle(self) -> bool:
+        """
+        Whether the chosen parent is this location itself or one of its descendants.
+
+        Walks up from the proposed parent, which is cheap and, unlike walking down
+        through id_tree, does not depend on a denormalized column that may be stale.
+        Label already guards its own tree this way.
+        """
+        if not self.parent_id:
+            return False
+        if self.parent_id == self.id:
+            return True
+        seen = set()
+        current = db.session.get(Location, self.parent_id)
+        while current and current.id not in seen:
+            if current.id == self.id:
+                return True
+            seen.add(current.id)
+            current = db.session.get(Location, current.parent_id) if current.parent_id else None
+        return False
 
     def has_hierarchy_conflict(self) -> bool:
         """
@@ -383,6 +407,7 @@ class Location(db.Model, BaseMixin):
             UNION ALL
             SELECT p.id, p.parent_id, a.path || p.id
             FROM location p JOIN ancestry a ON p.id = a.parent_id
+            WHERE NOT p.id = ANY(a.path)
         ),
         root_path AS (
             SELECT path FROM ancestry ORDER BY array_length(path, 1) DESC LIMIT 1
@@ -394,6 +419,8 @@ class Location(db.Model, BaseMixin):
             UNION ALL
             SELECT c.id, c.title, c.postal_code, c.admin_level_id, c.parent_id, c.id || s.path
             FROM location c JOIN subtree s ON c.parent_id = s.id
+            -- a pre-existing cycle would otherwise recurse until the statement times out
+            WHERE NOT c.id = ANY(s.path)
         )
         UPDATE location l SET
             full_location = CASE
@@ -443,6 +470,7 @@ class Location(db.Model, BaseMixin):
             SELECT c.id, c.title, c.postal_code, c.admin_level_id, c.parent_id, c.full_location,
                    c.id_tree, c.id || t.path
             FROM location c JOIN tree t ON c.parent_id = t.id
+            WHERE NOT c.id = ANY(t.path)
         ),
         expected AS (
             SELECT t.id, t.full_location, t.id_tree,

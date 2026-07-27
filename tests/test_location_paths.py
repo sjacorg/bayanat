@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from enferno.extensions import db
 from enferno.admin.models import Location, LocationAdminLevel, LocationType
@@ -144,3 +145,72 @@ class TestRegenerateAll:
         assert fetch(sub_id).id_tree == f"[{sub_id}] [{dis_id}] [{gov_id}]"
         assert fetch(sub_id).full_location == "Aleppo, Afrin, Jandairis"
         assert Location.count_stale_paths() == 0
+
+
+class TestParentCycles:
+    """
+    Nothing used to stop a location becoming a child of its own descendant, and
+    rebuilding a subtree walks downward, so a cycle would recurse until the
+    statement timed out. Label guards its tree the same way.
+    """
+
+    def test_a_location_cannot_be_its_own_parent(self, session, tree):
+        gov_id, _, _ = tree
+        gov = fetch(gov_id)
+        gov.parent_id = gov.id
+        try:
+            assert gov.has_parent_cycle()
+        finally:
+            session.rollback()
+
+    def test_a_location_cannot_move_under_its_own_descendant(self, session, tree):
+        gov_id, _, sub_id = tree
+        gov = fetch(gov_id)
+        gov.parent_id = sub_id
+        try:
+            assert gov.has_parent_cycle()
+        finally:
+            session.rollback()
+
+    def test_a_normal_move_is_not_a_cycle(self, session, tree):
+        gov_id, dis_id, sub_id = tree
+        sub = fetch(sub_id)
+        sub.parent_id = gov_id
+        try:
+            assert not sub.has_parent_cycle()
+        finally:
+            session.rollback()
+
+    def test_the_api_refuses_a_cycle(self, session, admin_client, tree):
+        gov_id, _, sub_id = tree
+        gov = fetch(gov_id)
+        payload = gov.to_dict()
+        payload["parent"] = {"id": sub_id}
+        resp = admin_client.put(
+            f"/admin/api/location/{gov_id}",
+            json={"item": payload},
+            headers={"Content-Type": "application/json"},
+        )
+        assert resp.status_code == 400
+
+    def test_the_database_refuses_a_self_parent(self, session, tree):
+        gov_id, _, _ = tree
+        with pytest.raises(IntegrityError):
+            session.execute(
+                text("update location set parent_id = id where id = :id"), {"id": gov_id}
+            )
+        session.rollback()
+
+    def test_rebuilding_a_pre_existing_cycle_terminates(self, session, tree):
+        """Data that already contains a cycle must not hang the rebuild."""
+        gov_id, dis_id, sub_id = tree
+        session.execute(
+            text("update location set parent_id = :sub where id = :gov"),
+            {"sub": sub_id, "gov": gov_id},
+        )
+        session.commit()
+        fetch(gov_id).rebuild_subtree()  # returns rather than spinning
+        assert Location.count_stale_paths() >= 0
+
+        session.execute(text("update location set parent_id = null where id = :id"), {"id": gov_id})
+        session.commit()
