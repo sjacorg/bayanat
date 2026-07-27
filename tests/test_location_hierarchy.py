@@ -161,6 +161,19 @@ class TestLevelEndpoints:
         # the partner ladder may drop below three levels, that floor is legacy-only
         assert LocationAdminLevel.in_hierarchy(hierarchy.id).count() == 2
 
+    def test_reorder_leaves_no_partial_order_on_failure(self, session, admin_client, hierarchy):
+        """A rejected reorder must not have renumbered some of the levels already."""
+        before = {l.id: l.display_order for l in LocationAdminLevel.in_hierarchy(hierarchy.id)}
+        resp = admin_client.post(
+            "/admin/api/location-admin-levels/reorder",
+            json={"order": list(reversed(list(before)))[:2], "hierarchy_id": hierarchy.id},
+            headers=HEADERS,
+        )
+        assert resp.status_code == 400
+        session.expire_all()
+        after = {l.id: l.display_order for l in LocationAdminLevel.in_hierarchy(hierarchy.id)}
+        assert after == before
+
     def test_reorder_rejects_mixed_hierarchies(self, session, admin_client, hierarchy):
         legacy_id = LocationAdminLevel.in_hierarchy(None).first().id
         ids = [l.id for l in LocationAdminLevel.in_hierarchy(hierarchy.id)]
@@ -321,6 +334,86 @@ class TestLocationSearch:
             headers=HEADERS,
         )
         assert [i["id"] for i in resp.json["data"]["items"]] == [territory_id]
+
+
+class TestMixedHierarchyPaths:
+    """
+    full_location orders a path by the display_order of its levels, so a path
+    that mixes hierarchies reads back with its rungs shuffled.
+    """
+
+    def test_mixed_path_would_reverse_the_full_location(self, session, hierarchy):
+        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+        legacy = LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first()
+        territory = LocationAdminLevel.in_hierarchy(hierarchy.id).filter_by(code=1).first()
+
+        parent = Location(title="Damascus", location_type=admin_type, admin_level=legacy)
+        session.add(parent)
+        session.commit()
+        child = Location(
+            title="West Bank",
+            location_type=admin_type,
+            admin_level=territory,
+            parent_id=parent.id,
+        )
+        session.add(child)
+        session.commit()
+
+        assert child.has_hierarchy_conflict()
+        # the reason the API refuses it: the path comes back inside out
+        assert child.get_full_string() == "West Bank, Damascus"
+
+        session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
+            synchronize_session=False
+        )
+        session.commit()
+
+    def test_api_refuses_a_parent_from_another_hierarchy(self, session, admin_client, hierarchy):
+        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+        legacy = LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first()
+        territory = LocationAdminLevel.in_hierarchy(hierarchy.id).filter_by(code=1).first()
+        parent = Location(title="Damascus", location_type=admin_type, admin_level=legacy)
+        session.add(parent)
+        session.commit()
+
+        resp = admin_client.post(
+            "/admin/api/location/",
+            json={
+                "item": {
+                    "title": "West Bank",
+                    "location_type": {"id": admin_type.id, "title": admin_type.title},
+                    "admin_level": {"id": territory.id, "code": territory.code},
+                    "parent": {"id": parent.id},
+                }
+            },
+            headers=HEADERS,
+        )
+        assert resp.status_code == 400
+        assert Location.query.filter_by(title="West Bank").count() == 0
+
+        session.query(Location).filter_by(id=parent.id).delete(synchronize_session=False)
+        session.commit()
+
+    def test_a_legacy_parent_and_child_never_conflict(self, session):
+        """Installations without hierarchies must be untouched by the new rule."""
+        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+        gov = LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first()
+        dis = LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first()
+        parent = Location(title="Rural Damascus", location_type=admin_type, admin_level=gov)
+        session.add(parent)
+        session.commit()
+        child = Location(
+            title="At Tall", location_type=admin_type, admin_level=dis, parent_id=parent.id
+        )
+        session.add(child)
+        session.commit()
+
+        assert not child.has_hierarchy_conflict()
+
+        session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
+            synchronize_session=False
+        )
+        session.commit()
 
 
 class TestBackwardCompatibility:

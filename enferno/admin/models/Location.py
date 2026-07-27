@@ -70,6 +70,19 @@ class Location(db.Model, BaseMixin):
             l.updated_at = created
         l.save()
 
+    def has_hierarchy_conflict(self) -> bool:
+        """
+        Whether this location and its parent sit on different hierarchies.
+
+        `full_location` orders a path by the display_order of its levels, and that
+        order is only meaningful inside one hierarchy, so a mixed path reads back
+        with its rungs shuffled. Legacy locations carry no hierarchy on either
+        side, so this never fires on an installation without one.
+        """
+        if not self.parent or not self.admin_level or not self.parent.admin_level:
+            return False
+        return self.admin_level.hierarchy_id != self.parent.admin_level.hierarchy_id
+
     def get_children_ids(self) -> list:
         """
         Get the ids of the children of the current location.
