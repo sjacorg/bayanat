@@ -107,6 +107,17 @@
                                             </v-toolbar>
                                         </template>
 
+                                        <template v-slot:item.admin_level.title="{ item }">
+                                            <div v-if="item.admin_level">
+                                                <bdi>${item.admin_level.title}</bdi>
+                                                <!-- a level title alone is ambiguous once two ladders
+                                                     both carry, say, a Governorate -->
+                                                <div v-if="hierarchies.length" class="text-caption text-medium-emphasis">
+                                                    <bdi>${item.admin_level.hierarchy_title || "{{ _('Default') }}"}</bdi>
+                                                </div>
+                                            </div>
+                                        </template>
+
                                         <template v-slot:item.parent.title="{ item }">
                                             <div v-if="item.parent">
                                                 <v-btn  size="x-small" variant="plain">
