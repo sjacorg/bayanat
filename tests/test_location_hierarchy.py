@@ -338,11 +338,12 @@ class TestLocationSearch:
 
 class TestMixedHierarchyPaths:
     """
-    full_location orders a path by the display_order of its levels, so a path
-    that mixes hierarchies reads back with its rungs shuffled.
+    full_location orders a path by the display_order of its levels. Across two
+    ladders those numbers are no longer unique, so a mixed path is ordered by a
+    tie: the rungs can come back in either order and neither is meaningful.
     """
 
-    def test_mixed_path_would_reverse_the_full_location(self, session, hierarchy):
+    def test_a_mixed_path_has_no_defined_order(self, session, hierarchy):
         admin_type = LocationType.query.filter_by(title="Administrative Location").first()
         legacy = LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first()
         territory = LocationAdminLevel.in_hierarchy(hierarchy.id).filter_by(code=1).first()
@@ -359,14 +360,16 @@ class TestMixedHierarchyPaths:
         session.add(child)
         session.commit()
 
-        assert child.has_hierarchy_conflict()
-        # the reason the API refuses it: the path comes back inside out
-        assert child.get_full_string() == "West Bank, Damascus"
-
-        session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
-            synchronize_session=False
-        )
-        session.commit()
+        try:
+            assert child.has_hierarchy_conflict()
+            # both rungs claim the same display_order, so the sort cannot separate them
+            assert legacy.level_order == territory.level_order
+            assert set(child.get_full_string().split(", ")) == {"Damascus", "West Bank"}
+        finally:
+            session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
+                synchronize_session=False
+            )
+            session.commit()
 
     def test_api_refuses_a_parent_from_another_hierarchy(self, session, admin_client, hierarchy):
         admin_type = LocationType.query.filter_by(title="Administrative Location").first()
@@ -388,11 +391,14 @@ class TestMixedHierarchyPaths:
             },
             headers=HEADERS,
         )
-        assert resp.status_code == 400
-        assert Location.query.filter_by(title="West Bank").count() == 0
-
-        session.query(Location).filter_by(id=parent.id).delete(synchronize_session=False)
-        session.commit()
+        try:
+            assert resp.status_code == 400
+            assert Location.query.filter_by(title="West Bank").count() == 0
+        finally:
+            session.query(Location).filter(Location.title.in_(["Damascus", "West Bank"])).delete(
+                synchronize_session=False
+            )
+            session.commit()
 
     def test_a_legacy_parent_and_child_never_conflict(self, session):
         """Installations without hierarchies must be untouched by the new rule."""
@@ -408,12 +414,13 @@ class TestMixedHierarchyPaths:
         session.add(child)
         session.commit()
 
-        assert not child.has_hierarchy_conflict()
-
-        session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
-            synchronize_session=False
-        )
-        session.commit()
+        try:
+            assert not child.has_hierarchy_conflict()
+        finally:
+            session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
+                synchronize_session=False
+            )
+            session.commit()
 
 
 class TestBackwardCompatibility:
