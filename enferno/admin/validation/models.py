@@ -1040,7 +1040,6 @@ class LocationAdminLevelRequestModel(BaseValidationModel):
 class LocationHierarchyValidationModel(StrictValidationModel):
     title: str = Field(min_length=1)
     title_tr: Optional[str] = None
-    description: Optional[SanitizedField] = None
     id: Optional[int] = None
 
 

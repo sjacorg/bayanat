@@ -42,7 +42,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
     title_tr = db.Column(db.String)
     display_order = db.Column(db.Integer)
     hierarchy_id = db.Column(db.Integer, db.ForeignKey("location_hierarchy.id"))
-    hierarchy = db.relationship("LocationHierarchy", back_populates="admin_levels")
+    hierarchy = db.relationship("LocationHierarchy")
 
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the location admin level."""

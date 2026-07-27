@@ -24,7 +24,6 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("title_tr", sa.String(), nullable=True),
-        sa.Column("description", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("title"),
     )
