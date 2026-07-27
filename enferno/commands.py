@@ -597,6 +597,22 @@ def doctor() -> None:
     except Exception as e:
         warn(f"Could not check schema: {e}")
 
+    # Denormalized location paths: anything writing rows outside the app leaves
+    # full_location and id_tree behind, and nothing surfaces it today
+    try:
+        from enferno.admin.models import Location
+
+        stale = Location.count_stale_paths()
+        if stale:
+            warn(
+                f"{stale} location(s) have stale full location text or ancestor tree "
+                "(regenerate from System Administration)"
+            )
+        else:
+            ok("Location paths consistent")
+    except Exception as e:
+        warn(f"Could not check location paths: {e}")
+
     # --- Services ---
     click.echo("\nServices:")
 
