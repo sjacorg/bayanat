@@ -128,6 +128,7 @@ const LocationSearchBox = Vue.defineComponent({
                     api="/admin/api/location-admin-levels/"
                     item-title="title"
                     item-value="id"
+                    item-subtitle="hierarchy_title"
                     v-model="q.admin_level"
                     :multiple="false"
                     :label="translations.adminLevel_"

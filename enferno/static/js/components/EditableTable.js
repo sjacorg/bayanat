@@ -45,6 +45,11 @@ const EditableTable = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
+    // fields every newly created item starts with, e.g. the hierarchy it belongs to
+    defaultItem: {
+      type: Object,
+      default: () => ({}),
+    },
     editableColumns: {
       type: Array,
       default: () => ['title'],
@@ -200,7 +205,7 @@ const EditableTable = Vue.defineComponent({
         isLoading: false,
         isOpen: true,
         mode: 'insert',
-        item: {}
+        item: { ...this.defaultItem }
       }
     },
 
