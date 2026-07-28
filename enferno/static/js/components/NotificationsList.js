@@ -41,9 +41,9 @@ const NotificationsList = Vue.defineComponent({
             return date.isValid() ? date.format('MM/DD/YYYY HH:mm') : '-';
         },
         getLineClampStyles(lines) {
-            if (!lines) return 'white-space: normal;'
+            if (!lines) return 'white-space: normal; text-align: match-parent;'
 
-            return `overflow: hidden; display: -webkit-box; -webkit-line-clamp: ${lines}; -webkit-box-orient: vertical; white-space: normal;`
+            return `overflow: hidden; display: -webkit-box; -webkit-line-clamp: ${lines}; -webkit-box-orient: vertical; white-space: normal; text-align: match-parent;`
         },
         getListItemColorProps(notification) {
             if (!notification) return

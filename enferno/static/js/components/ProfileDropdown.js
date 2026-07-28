@@ -64,7 +64,7 @@ const ProfileDropdown = Vue.defineComponent({
   },
 
   template: /* html */ `
-    <v-menu :close-on-content-click="false">
+    <v-menu :close-on-content-click="false" :z-index="3004">
       <template v-slot:activator="{ props: menu }">
         <v-tooltip location="top">
           <template v-slot:activator="{ props: tooltip }">
