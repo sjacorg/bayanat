@@ -129,6 +129,27 @@ class TestStaleDetection:
         assert Location.count_stale_paths() == baseline + 1
         assert sub_id not in Location.get_children_by_id(tree[0])
 
+    def test_counts_rows_the_root_walk_never_reaches(self, session, tree):
+        """Two rows pointing at each other are unreachable from any root, so the
+        rooted walk never visits them and their stored paths cannot be correct."""
+        gov_id, dis_id, sub_id = tree
+        baseline = Location.count_stale_paths()
+
+        session.execute(
+            text("update location set parent_id = :sub where id = :dis"),
+            {"sub": sub_id, "dis": dis_id},
+        )
+        session.commit()
+
+        try:
+            assert Location.count_stale_paths() >= baseline + 2
+        finally:
+            session.execute(
+                text("update location set parent_id = :gov where id = :dis"),
+                {"gov": gov_id, "dis": dis_id},
+            )
+            session.commit()
+
 
 class TestRegenerateAll:
     def test_rebuilds_ancestor_trees_not_only_text(self, session, tree):
@@ -264,29 +285,6 @@ class TestParentLevelOrder:
             session.rollback()
 
 
-class TestStaleDetectorCoverage:
-    def test_counts_rows_the_root_walk_never_reaches(self, session, tree):
-        """Two rows pointing at each other are unreachable from any root, so the
-        rooted walk never visits them and their stored paths cannot be correct."""
-        gov_id, dis_id, sub_id = tree
-        baseline = Location.count_stale_paths()
-
-        session.execute(
-            text("update location set parent_id = :sub where id = :dis"),
-            {"sub": sub_id, "dis": dis_id},
-        )
-        session.commit()
-
-        try:
-            assert Location.count_stale_paths() >= baseline + 2
-        finally:
-            session.execute(
-                text("update location set parent_id = :gov where id = :dis"),
-                {"gov": gov_id, "dis": dis_id},
-            )
-            session.commit()
-
-
 class TestStructuralOrderIsIndependentOfDisplay:
     """
     The Full Location text format panel lets an admin drag levels into any order to
@@ -311,42 +309,69 @@ class TestStructuralOrderIsIndependentOfDisplay:
             session.commit()
 
 
+@pytest.fixture
+def through_a_poi(session):
+    """A levelled root, an unlevelled point of interest, and a levelled node below it."""
+    admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+    poi_type = LocationType.query.filter_by(title="Point of Interest").first()
+    top_level = LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first()
+    deep_level = LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first()
+
+    top = Location(title="Levelled root", location_type=admin_type, admin_level=top_level)
+    session.add(top)
+    session.commit()
+    poi = Location(title="A crossing", location_type=poi_type, parent_id=top.id)
+    session.add(poi)
+    session.commit()
+    deep = Location(
+        title="Levelled below the crossing",
+        location_type=admin_type,
+        admin_level=deep_level,
+        parent_id=poi.id,
+    )
+    session.add(deep)
+    session.commit()
+
+    ids = [deep.id, poi.id, top.id]
+    yield top.id, poi.id, deep.id, deep_level
+    session.rollback()
+    session.query(Location).filter(Location.id.in_(ids)).delete(synchronize_session=False)
+    session.commit()
+
+
 class TestUnlevelledIntermediate:
-    def test_a_point_of_interest_cannot_hide_a_mixed_ladder(self, session, tree):
-        """partner root -> POI -> legacy child used to pass every guard."""
-        gov_id, _, _ = tree
-        poi_type = LocationType.query.filter_by(title="Point of Interest").first()
-        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+    """
+    A point of interest between two administrative locations is a supported shape,
+    so the ladder rules have to hold through it in both directions. Validating
+    upward but not downward left the second case below reachable from the editor.
+    """
+
+    def test_the_shape_itself_is_valid(self, through_a_poi):
+        _, _, deep_id, _ = through_a_poi
+        assert fetch(deep_id).placement_error() is None
+
+    def test_a_child_on_another_ladder_is_refused_through_it(self, session, through_a_poi):
+        _, poi_id, _, _ = through_a_poi
         hierarchy = LocationHierarchy(title="Ladder for POI test")
         session.add(hierarchy)
         session.commit()
         partner_level = LocationAdminLevel(
-            code=1, title="Territory", display_order=1, hierarchy_id=hierarchy.id
+            code=2, title="Partner rung", display_order=2, hierarchy_id=hierarchy.id
         )
         session.add(partner_level)
         session.commit()
 
-        root = Location(title="Partner root", location_type=admin_type, admin_level=partner_level)
-        session.add(root)
-        session.commit()
-        poi = Location(title="A checkpoint", location_type=poi_type, parent_id=root.id)
-        session.add(poi)
-        session.commit()
-
-        legacy_child = Location(
-            title="Legacy under a POI",
-            location_type=admin_type,
-            admin_level=LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first(),
-            parent_id=poi.id,
+        stray = Location(
+            title="Partner node under a legacy crossing",
+            location_type=LocationType.query.filter_by(title="Administrative Location").first(),
+            admin_level=partner_level,
+            parent_id=poi_id,
         )
-        session.add(legacy_child)
+        session.add(stray)
         try:
-            assert "different hierarchy" in (legacy_child.placement_error() or "")
+            assert "different hierarchy" in (stray.placement_error() or "")
         finally:
             session.rollback()
-            session.query(Location).filter(Location.id.in_([poi.id, root.id])).delete(
-                synchronize_session=False
-            )
             session.query(LocationAdminLevel).filter_by(hierarchy_id=hierarchy.id).delete(
                 synchronize_session=False
             )
@@ -355,72 +380,8 @@ class TestUnlevelledIntermediate:
             )
             session.commit()
 
-
-class TestRelevellingFromAbove:
-    """
-    The mirror of the parent rules. Editing a parent must not push it onto the
-    same rung as its children, or below them.
-    """
-
-    def test_pushing_a_parent_down_onto_its_child_rung_is_refused(self, session, tree):
-        gov_id, dis_id, _ = tree
-        gov = fetch(gov_id)
-        district_level = LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first()
-        gov.admin_level = district_level  # same rung as its own child
-        try:
-            assert "at or above" in (gov.placement_error() or "")
-        finally:
-            session.rollback()
-
-    def test_a_valid_relevelling_is_allowed(self, session, tree):
-        _, dis_id, sub_id = tree
-        dis = fetch(dis_id)
-        # code 2 -> still above the subdistrict child at code 3
-        assert dis.placement_error() is None
-
-
-class TestUnlevelledIntermediateBothDirections:
-    """
-    A point of interest between two administrative locations is a supported shape,
-    so the rules have to hold through it in both directions. Validating upward but
-    not downward left the exact sequence below reachable through the editor.
-    """
-
-    def test_relevelling_across_a_point_of_interest_is_refused(self, session, tree):
-        gov_id, _, _ = tree
-        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
-        poi_type = LocationType.query.filter_by(title="Point of Interest").first()
-        district = LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first()
-
-        top = Location(
-            title="Level one root",
-            location_type=admin_type,
-            admin_level=LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first(),
-        )
-        session.add(top)
-        session.commit()
-        poi = Location(title="A crossing", location_type=poi_type, parent_id=top.id)
-        session.add(poi)
-        session.commit()
-        deep = Location(
-            title="District below the crossing",
-            location_type=admin_type,
-            admin_level=district,
-            parent_id=poi.id,
-        )
-        session.add(deep)
-        session.commit()
-
-        try:
-            # the child is valid as created, through the unlevelled intermediate
-            assert fetch(deep.id).placement_error() is None
-            # now push the root down onto the same rung as its levelled descendant
-            top_again = fetch(top.id)
-            top_again.admin_level = district
-            assert "at or above" in (top_again.placement_error() or "")
-        finally:
-            session.rollback()
-            session.query(Location).filter(Location.id.in_([deep.id, poi.id, top.id])).delete(
-                synchronize_session=False
-            )
-            session.commit()
+    def test_relevelling_the_root_onto_its_deep_rung_is_refused(self, session, through_a_poi):
+        top_id, _, _, deep_level = through_a_poi
+        top = fetch(top_id)
+        top.admin_level = deep_level
+        assert "at or above" in (top.placement_error() or "")
