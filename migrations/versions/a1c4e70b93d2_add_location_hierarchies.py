@@ -60,10 +60,33 @@ def upgrade():
         unique=True,
     )
 
+    # levels seeded before this point carry a null display_order, and full_location
+    # orders its components by that column. With every value null the order is
+    # arbitrary. Codes were already assigned in ladder order, so they are the
+    # correct fallback. A no-op on any install that has set an order.
+    op.execute(
+        "UPDATE location_admin_level SET display_order = code "
+        "WHERE display_order IS NULL OR display_order = 0"
+    )
+
+    # every tree walk joins on parent_id and the table had no index on it at all
+    op.create_index("ix_location_parent_id", "location", ["parent_id"])
+
+    # a location cannot be its own parent. A full cycle cannot be expressed as a
+    # check constraint, so the application guards that; this catches the simplest
+    # case for writers that never go through the application.
+    op.execute("UPDATE location SET parent_id = NULL WHERE parent_id = id")
+    op.create_check_constraint("location_no_self_parent", "location", "parent_id != id")
+
 
 def downgrade():
+    op.drop_constraint("location_no_self_parent", "location", type_="check")
+    op.drop_index("ix_location_parent_id", table_name="location")
     op.drop_index("ix_location_admin_level_hierarchy_code", table_name="location_admin_level")
     op.drop_index("ix_location_admin_level_legacy_code", table_name="location_admin_level")
+    # fails while a partner ladder still exists, because its codes collide with the
+    # legacy ones. Delete that ladder's levels first; failing is better than
+    # silently merging or dropping somebody's hierarchy.
     op.create_unique_constraint("location_admin_level_code_key", "location_admin_level", ["code"])
     op.drop_constraint(
         "location_admin_level_hierarchy_id_fkey", "location_admin_level", type_="foreignkey"

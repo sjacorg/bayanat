@@ -653,4 +653,9 @@ class Location(db.Model, BaseMixin):
         db.session.execute(text("alter sequence location_id_seq restart with :m"), {"m": max_id})
         db.session.commit()
 
+        # bulk inserts bypass the per-edit rebuild, and an import that leaves id_tree
+        # empty makes every imported location invisible to ancestor search
+        Location.regenerate_all_full_locations()
+        logger.info("Location paths regenerated after import.")
+
         return ""

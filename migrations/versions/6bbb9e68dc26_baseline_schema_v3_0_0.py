@@ -93,8 +93,7 @@ def upgrade():
     # 4. ID number types table + actor id_number migration
     # ==========================================
     if not table_exists("id_number_types"):
-        op.execute(
-            """
+        op.execute("""
             CREATE TABLE id_number_types (
                 id SERIAL PRIMARY KEY,
                 title VARCHAR NOT NULL,
@@ -103,16 +102,13 @@ def upgrade():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 deleted BOOLEAN DEFAULT FALSE
             )
-        """
-        )
-        op.execute(
-            """
+        """)
+        op.execute("""
             INSERT INTO id_number_types (title, title_tr) VALUES
                 ('National ID', ''), ('Passport', ''), ('Driver License', ''),
                 ('Social Security Number', ''), ('Tax ID', ''), ('Military ID', ''),
                 ('Birth Certificate', ''), ('Student ID', '')
-        """
-        )
+        """)
     else:
         # Ensure National ID with id=1 exists for the migration below
         op.execute(
@@ -137,8 +133,7 @@ def upgrade():
     # ==========================================
     # 5. Notification table
     # ==========================================
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS notification (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
@@ -155,8 +150,7 @@ def upgrade():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             deleted BOOLEAN DEFAULT FALSE
         )
-    """
-    )
+    """)
     op.execute("CREATE INDEX IF NOT EXISTS ix_notification_user_id ON notification (user_id)")
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_notification_user_read "
@@ -166,15 +160,13 @@ def upgrade():
         "CREATE INDEX IF NOT EXISTS ix_notification_user_type "
         "ON notification (user_id, category)"
     )
-    op.execute(
-        """
+    op.execute("""
         DO $$ BEGIN
             ALTER TABLE notification ADD CONSTRAINT fk_notification_user_id
             FOREIGN KEY (user_id) REFERENCES "user"(id);
         EXCEPTION WHEN duplicate_object THEN NULL;
         END $$
-    """
-    )
+    """)
 
     # ==========================================
     # 6. Dynamic fields + form history tables
@@ -322,8 +314,7 @@ def _create_search_indexes(op):
 
 def _migrate_actor_id_number(op):
     """Convert actor.id_number from string to JSONB array."""
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
         RETURNS BOOLEAN AS $$
         BEGIN
@@ -343,25 +334,20 @@ def _migrate_actor_id_number(op):
             );
         END;
         $$ LANGUAGE plpgsql IMMUTABLE
-    """
-    )
-    op.execute(
-        """
+    """)
+    op.execute("""
         CREATE TABLE IF NOT EXISTS actor_id_number_backup AS
         SELECT id, id_number FROM actor
         WHERE id_number IS NOT NULL AND id_number != ''
-    """
-    )
+    """)
     op.execute("ALTER TABLE actor ADD COLUMN id_number_temp JSONB")
-    op.execute(
-        """
+    op.execute("""
         UPDATE actor SET id_number_temp = CASE
             WHEN id_number IS NOT NULL AND trim(id_number) != ''
             THEN jsonb_build_array(jsonb_build_object('type', '1', 'number', trim(id_number)))
             ELSE '[]'::jsonb
         END
-    """
-    )
+    """)
     op.execute("ALTER TABLE actor DROP COLUMN id_number")
     op.execute("ALTER TABLE actor RENAME COLUMN id_number_temp TO id_number")
     op.execute("ALTER TABLE actor ALTER COLUMN id_number SET DEFAULT '[]'::jsonb")
@@ -375,8 +361,7 @@ def _migrate_actor_id_number(op):
 
 def _create_dynamic_fields_tables(op):
     """Create dynamic_fields and dynamic_form_history tables."""
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS dynamic_fields (
             id SERIAL PRIMARY KEY,
             name VARCHAR(50) NOT NULL,
@@ -397,8 +382,7 @@ def _create_dynamic_fields_tables(op):
             deleted BOOLEAN NOT NULL DEFAULT FALSE,
             CONSTRAINT uq_field_name_entity UNIQUE (name, entity_type)
         )
-    """
-    )
+    """)
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_dynamic_fields_entity_type "
         "ON dynamic_fields (entity_type)"
@@ -415,8 +399,7 @@ def _create_dynamic_fields_tables(op):
         "CREATE INDEX IF NOT EXISTS ix_dynamic_fields_entity_sort "
         "ON dynamic_fields (entity_type, sort_order)"
     )
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS dynamic_form_history (
             id SERIAL PRIMARY KEY,
             entity_type VARCHAR(50) NOT NULL,
@@ -426,8 +409,7 @@ def _create_dynamic_fields_tables(op):
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             deleted BOOLEAN DEFAULT FALSE
         )
-    """
-    )
+    """)
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_dynamic_form_history_entity_type "
         "ON dynamic_form_history (entity_type)"
@@ -446,8 +428,7 @@ def _seed_core_fields(conn):
     """Seed core dynamic fields for all entity types."""
     # Use exec_driver_sql to bypass SQLAlchemy's text() colon parsing,
     # which conflicts with JSON values like {"key":true}.
-    conn.exec_driver_sql(
-        """
+    conn.exec_driver_sql("""
         INSERT INTO dynamic_fields (
             name, title, entity_type, field_type, searchable,
             ui_component, schema_config, ui_config, validation_config,
@@ -519,12 +500,10 @@ def _seed_core_fields(conn):
             ('comments', 'Comments', 'incident', 'long_text', false, 'textarea', '{}'::jsonb, '{"width":"w-50"}'::jsonb, '{}'::jsonb, '[]'::jsonb, true, 11, true),
             ('status', 'Status', 'incident', 'select', false, 'dropdown', '{"allow_multiple":false}'::jsonb, '{"width":"w-50"}'::jsonb, '{}'::jsonb, '[]'::jsonb, true, 12, true)
         ON CONFLICT (name, entity_type) DO NOTHING
-    """
-    )
+    """)
 
     # Create initial form history snapshots (only if none exist)
-    op.execute(
-        """
+    op.execute("""
         INSERT INTO dynamic_form_history (entity_type, fields_snapshot, user_id)
         SELECT df.entity_type,
             jsonb_agg(jsonb_build_object(
@@ -542,14 +521,12 @@ def _seed_core_fields(conn):
               SELECT 1 FROM dynamic_form_history h WHERE h.entity_type = df.entity_type
           )
         GROUP BY df.entity_type
-    """
-    )
+    """)
 
 
 def _create_extraction_table(op):
     """Create extraction table with normalize function and indexes."""
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS extraction (
             id SERIAL PRIMARY KEY,
             media_id INTEGER NOT NULL UNIQUE,
@@ -568,15 +545,13 @@ def _create_extraction_table(op):
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             deleted BOOLEAN
         )
-    """
-    )
+    """)
     # ix_extraction_media_id omitted: media_id has UNIQUE constraint which creates an index
     op.execute("CREATE INDEX IF NOT EXISTS ix_extraction_status ON extraction (status)")
     op.execute("CREATE INDEX IF NOT EXISTS ix_extraction_confidence ON extraction (confidence)")
 
     # Arabic text normalization function (with newline collapsing)
-    op.execute(
-        r"""
+    op.execute(r"""
         CREATE OR REPLACE FUNCTION normalize_arabic_text(input text) RETURNS text AS $$
         BEGIN
             IF input IS NULL THEN RETURN NULL; END IF;
@@ -590,28 +565,23 @@ def _create_extraction_table(op):
             );
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT
-    """
-    )
+    """)
 
     # FK constraints
-    op.execute(
-        """
+    op.execute("""
         DO $$ BEGIN
             ALTER TABLE extraction ADD CONSTRAINT fk_extraction_media_id
             FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE;
         EXCEPTION WHEN duplicate_object THEN NULL;
         END $$
-    """
-    )
-    op.execute(
-        """
+    """)
+    op.execute("""
         DO $$ BEGIN
             ALTER TABLE extraction ADD CONSTRAINT fk_extraction_reviewed_by
             FOREIGN KEY (reviewed_by) REFERENCES "user"(id);
         EXCEPTION WHEN duplicate_object THEN NULL;
         END $$
-    """
-    )
+    """)
 
 
 def _fix_deleted_columns(op):
@@ -672,8 +642,7 @@ def _fix_deleted_columns(op):
         "user",
         "workflow_statuses",
     ]
-    op.execute(
-        """
+    op.execute("""
         DO $$
         DECLARE tbl TEXT;
             tables TEXT[] := ARRAY[{table_list}];
@@ -687,10 +656,7 @@ def _fix_deleted_columns(op):
                 END;
             END LOOP;
         END $$
-    """.format(
-            table_list=",".join(f"'{t}'" for t in tables)
-        )
-    )
+    """.format(table_list=",".join(f"'{t}'" for t in tables)))
 
     # Media: only set default for new records. Existing NULLs and NOT NULL
     # enforcement deferred until etag uniqueness constraint is reworked.
