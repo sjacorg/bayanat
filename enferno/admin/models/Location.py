@@ -34,7 +34,7 @@ class Location(db.Model, BaseMixin):
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    parent_id = db.Column(db.Integer, db.ForeignKey("location.id"))
+    parent_id = db.Column(db.Integer, db.ForeignKey("location.id"), index=True)
     parent = db.relationship("Location", remote_side=id, backref="child_locations")
     title = db.Column(db.String)
     title_ar = db.Column(db.String)
@@ -85,36 +85,66 @@ class Location(db.Model, BaseMixin):
         The parent is read by id rather than through the relationship: on create the
         object is still transient, and the relationship would silently be None.
         """
-        from enferno.admin.models import LocationAdminLevel  # noqa: F811
-
         parent = db.session.get(Location, self.parent_id) if self.parent_id else None
 
         if self.parent_id and (self.parent_id == self.id or self._is_descendant(parent)):
             return "A location cannot be placed under itself or one of its own descendants"
 
-        if self.admin_level and parent and parent.admin_level:
-            if self.admin_level.hierarchy_id != parent.admin_level.hierarchy_id:
+        # compare against the nearest levelled ancestor, not the immediate parent: a
+        # point of interest in between carries no level and would otherwise hide a
+        # mixed ladder. This is the plan's rule that a non-administrative place takes
+        # its hierarchy from its nearest administrative ancestor.
+        above = self._nearest_levelled_ancestor(parent)
+        if self.admin_level and above:
+            if self.admin_level.hierarchy_id != above.hierarchy_id:
                 return "Parent location belongs to a different hierarchy"
-            if parent.admin_level.level_order >= self.admin_level.level_order:
+            # code is the structural order and is immutable; display_order is the
+            # presentation order and admins reorder it to match an address format
+            if above.code >= self.admin_level.code:
                 return "Parent location must sit on a level above this one"
 
         # re-levelling into another ladder would strand everything underneath
-        if self.id and self.admin_level:
-            stranded = (
-                db.session.query(Location.id)
-                .join(LocationAdminLevel, Location.admin_level_id == LocationAdminLevel.id)
-                .filter(
-                    Location.parent_id == self.id,
-                    ~LocationAdminLevel.hierarchy_id.is_not_distinct_from(
-                        self.admin_level.hierarchy_id
-                    ),
-                )
-                .first()
-            )
-            if stranded:
-                return "Locations under this one belong to a different hierarchy"
+        if self.id and self.admin_level and self._has_stranded_descendant():
+            return "Locations under this one belong to a different hierarchy"
 
         return None
+
+    def _nearest_levelled_ancestor(self, node: Optional["Location"]):
+        """The closest ancestor carrying an admin level, skipping unlevelled ones."""
+        seen = set()
+        while node and node.id not in seen:
+            if node.admin_level:
+                return node.admin_level
+            seen.add(node.id)
+            node = db.session.get(Location, node.parent_id) if node.parent_id else None
+        return None
+
+    def _has_stranded_descendant(self) -> bool:
+        """
+        Whether any nearest levelled descendant sits on a different ladder.
+
+        Descends through unlevelled locations and stops at the first levelled one on
+        each branch: anything below that is that location's own responsibility.
+        """
+        query = """
+        WITH RECURSIVE below AS (
+            SELECT id, admin_level_id, ARRAY[id] AS path
+            FROM location WHERE parent_id = :id
+            UNION ALL
+            SELECT c.id, c.admin_level_id, c.id || b.path
+            FROM location c JOIN below b ON c.parent_id = b.id
+            WHERE b.admin_level_id IS NULL AND NOT c.id = ANY(b.path)
+        )
+        SELECT 1 FROM below b
+        JOIN location_admin_level la ON la.id = b.admin_level_id
+        WHERE la.hierarchy_id IS DISTINCT FROM :hierarchy_id
+        LIMIT 1;
+        """
+        return bool(
+            db.session.execute(
+                text(query), {"id": self.id, "hierarchy_id": self.admin_level.hierarchy_id}
+            ).scalar()
+        )
 
     def _is_descendant(self, node: Optional["Location"]) -> bool:
         """Whether the given node sits below this one, walked upward from that node."""
@@ -398,26 +428,60 @@ class Location(db.Model, BaseMixin):
     @staticmethod
     def regenerate_all_full_locations() -> None:
         """
-        Rebuild full_location and id_tree for every location, one subtree at a time.
+        Rebuild full_location and id_tree for every location, in one statement.
 
         Used by the Regenerate action in system administration. It used to rebuild
         the text only, which is why an import that never generated an ancestor tree
         could leave locations permanently unreachable by ancestor search with no way
         to repair them from the interface.
-        """
-        roots = Location.query.filter(Location.parent_id.is_(None)).all()
-        try:
-            for root in roots:
-                root.rebuild_subtree(commit=False)
-            db.session.commit()
-        except Exception:
-            # one transaction for the whole table: a partial rebuild would leave
-            # some paths on the old level order and some on the new one
-            db.session.rollback()
-            raise
-        logger.info(f"Rebuilt location paths under {len(roots)} roots.")
 
-    def rebuild_subtree(self, commit: bool = True) -> None:
+        Seeded from every root at once rather than looping subtrees: one recursive
+        pass over the table instead of one per root, and one transaction, so a
+        failure cannot leave half the paths on the old order and half on the new.
+        """
+        query = """
+        WITH RECURSIVE tree AS (
+            SELECT l.id, l.title, l.postal_code, l.admin_level_id, l.parent_id,
+                   ARRAY[l.id] AS path
+            FROM location l WHERE l.parent_id IS NULL
+            UNION ALL
+            SELECT c.id, c.title, c.postal_code, c.admin_level_id, c.parent_id, c.id || t.path
+            FROM location c JOIN tree t ON c.parent_id = t.id
+            WHERE NOT c.id = ANY(t.path)
+        )
+        UPDATE location l SET
+            full_location = CASE
+                WHEN t.parent_id IS NULL OR t.admin_level_id IS NULL THEN
+                    CASE WHEN :postal_code AND t.postal_code IS NOT NULL
+                         THEN t.title || ' ' || t.postal_code ELSE t.title END
+                ELSE (
+                    SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST)
+                    FROM unnest(t.path) WITH ORDINALITY AS ids(id, ord)
+                    JOIN location loc ON loc.id = ids.id
+                    LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
+                ) || CASE WHEN :postal_code AND t.postal_code IS NOT NULL
+                          THEN ' ' || t.postal_code ELSE '' END
+            END,
+            id_tree = (
+                SELECT string_agg('[' || ids.id || ']', ' ' ORDER BY ids.ord)
+                FROM unnest(t.path) WITH ORDINALITY AS ids(id, ord)
+            )
+        FROM tree t WHERE l.id = t.id;
+        """
+        if not has_app_context():
+            postal_code = False
+        else:
+            postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
+        try:
+            result = db.session.execute(text(query), {"postal_code": postal_code})
+            db.session.commit()
+            logger.info(f"Rebuilt location paths for {result.rowcount} locations.")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to regenerate location strings: {str(e)}", exc_info=e)
+            raise
+
+    def rebuild_subtree(self) -> None:
         """
         Rebuild full_location and id_tree for this location and every descendant.
 
@@ -473,8 +537,7 @@ class Location(db.Model, BaseMixin):
             postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
         try:
             db.session.execute(text(query), {"id": self.id, "postal_code": postal_code})
-            if commit:
-                db.session.commit()
+            db.session.commit()
         except Exception as e:
             db.session.rollback()
             logger.error(f"Failed to rebuild location subtree {self.id}: {str(e)}", exc_info=e)

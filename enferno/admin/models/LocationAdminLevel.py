@@ -1,7 +1,6 @@
 from typing import Any, Optional
 
 from sqlalchemy import func, update
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
@@ -71,15 +70,6 @@ class LocationAdminLevel(db.Model, BaseMixin):
     def hierarchy_id_of(jsn: dict[str, Any]) -> Optional[int]:
         """Read the hierarchy out of a payload, sent either flat or as the serialized object."""
         return jsn.get("hierarchy_id") or (jsn.get("hierarchy") or {}).get("id")
-
-    @hybrid_property
-    def level_order(self) -> int:
-        """Position of the level in its hierarchy. Legacy rows predate display_order."""
-        return self.display_order or self.code
-
-    @level_order.expression
-    def level_order(cls):
-        return func.coalesce(func.nullif(cls.display_order, 0), cls.code)
 
     @staticmethod
     def in_hierarchy(hierarchy_id: Optional[int]):

@@ -62,15 +62,15 @@ class TestLevelScoping:
             session.commit()
         session.rollback()
 
-    def test_level_order_falls_back_to_code(self, session, hierarchy):
-        """Legacy rows predate display_order, so ordering must not depend on it."""
+    def test_structural_order_comes_from_code_not_display_order(self, session, hierarchy):
+        """display_order is the presentation order and admins reorder it freely, so
+        structure must not depend on it."""
         level = LocationAdminLevel(code=4, title="Unordered", hierarchy_id=hierarchy.id)
         session.add(level)
         session.commit()
-        assert level.level_order == 4
         found = (
             LocationAdminLevel.in_hierarchy(hierarchy.id)
-            .order_by(LocationAdminLevel.level_order.desc())
+            .order_by(LocationAdminLevel.code.desc())
             .first()
         )
         assert found.id == level.id
@@ -292,9 +292,14 @@ class TestLocationSearch:
         )
         assert [i["id"] for i in resp.json["data"]["items"]] == [territory_id]
 
-    def test_parent_of_resolves_the_preceding_level(self, admin_client, ladder):
-        """Eligible parents come from the level order, not from the child's code minus one."""
+    def test_parent_of_offers_every_rung_above(self, admin_client, ladder):
+        """
+        Not the child's code minus one, and not only the rung directly above: a
+        partner dataset may omit a rung, and the picker has to be able to express
+        what the API accepts.
+        """
         territory_id, governorate_id, levels = ladder
+
         resp = admin_client.post(
             "/admin/api/locations/",
             json={"q": {"parent_of": levels[2]}, "options": {}},
@@ -302,12 +307,15 @@ class TestLocationSearch:
         )
         assert [i["id"] for i in resp.json["data"]["items"]] == [territory_id]
 
+        # a Locality can hang off either the Governorate above it or the Territory
         resp = admin_client.post(
             "/admin/api/locations/",
             json={"q": {"parent_of": levels[3]}, "options": {}},
             headers=HEADERS,
         )
-        assert [i["id"] for i in resp.json["data"]["items"]] == [governorate_id]
+        assert sorted(i["id"] for i in resp.json["data"]["items"]) == sorted(
+            [territory_id, governorate_id]
+        )
 
     def test_top_level_has_no_eligible_parents(self, admin_client, ladder):
         _, _, levels = ladder
@@ -363,7 +371,7 @@ class TestMixedHierarchyPaths:
         try:
             assert child.placement_error() == "Parent location belongs to a different hierarchy"
             # both rungs claim the same display_order, so the sort cannot separate them
-            assert legacy.level_order == territory.level_order
+            assert legacy.code == territory.code
             assert set(child.get_full_string().split(", ")) == {"Damascus", "West Bank"}
         finally:
             session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(

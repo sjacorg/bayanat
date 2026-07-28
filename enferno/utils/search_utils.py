@@ -1512,20 +1512,24 @@ class SearchUtils:
                 # If the specific location type exists, add it to the query
                 query.append(Location.admin_level == admin_level)
 
-        # restrict to locations eligible as parents of the given admin level,
-        # i.e. sitting on the level that precedes it inside its own hierarchy
+        # restrict to locations eligible as parents of the given admin level: anything
+        # on a higher rung of the same ladder. Ordering is by code, which is immutable,
+        # not by display_order, which admins reorder to change how the text reads.
+        # Every rung above is offered rather than only the one directly above, because
+        # a partner dataset may legitimately omit a rung.
         if parent_of := q.get("parent_of"):
             level = db.session.get(LocationAdminLevel, parent_of)
-            preceding = level and db.session.scalar(
-                select(LocationAdminLevel)
-                .where(
-                    LocationAdminLevel.hierarchy_id.is_not_distinct_from(level.hierarchy_id),
-                    LocationAdminLevel.level_order < level.level_order,
-                )
-                .order_by(LocationAdminLevel.level_order.desc())
+            above = (
+                level
+                and db.session.scalars(
+                    select(LocationAdminLevel.id).where(
+                        LocationAdminLevel.hierarchy_id.is_not_distinct_from(level.hierarchy_id),
+                        LocationAdminLevel.code < level.code,
+                    )
+                ).all()
             )
-            # no preceding level means nothing can parent it
-            query.append(Location.admin_level_id == preceding.id if preceding else false())
+            # the top rung of a ladder has nothing that can parent it
+            query.append(Location.admin_level_id.in_(above) if above else false())
 
         if title := q.get("title"):
             words = title.split(" ")
