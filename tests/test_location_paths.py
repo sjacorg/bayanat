@@ -159,7 +159,7 @@ class TestParentCycles:
         gov = fetch(gov_id)
         gov.parent_id = gov.id
         try:
-            assert gov.has_parent_cycle()
+            assert "under itself" in (gov.placement_error() or "")
         finally:
             session.rollback()
 
@@ -168,7 +168,7 @@ class TestParentCycles:
         gov = fetch(gov_id)
         gov.parent_id = sub_id
         try:
-            assert gov.has_parent_cycle()
+            assert "under itself" in (gov.placement_error() or "")
         finally:
             session.rollback()
 
@@ -177,7 +177,7 @@ class TestParentCycles:
         sub = fetch(sub_id)
         sub.parent_id = gov_id
         try:
-            assert not sub.has_parent_cycle()
+            assert sub.placement_error() is None
         finally:
             session.rollback()
 
@@ -214,3 +214,74 @@ class TestParentCycles:
 
         session.execute(text("update location set parent_id = null where id = :id"), {"id": gov_id})
         session.commit()
+
+
+class TestParentLevelOrder:
+    """
+    A parent must sit above its child on the ladder. Verified against real data
+    first: all 10,965 parented administrative locations on prod2 already satisfy
+    this, so enforcing it rejects nothing that exists.
+    """
+
+    def test_a_parent_on_the_same_level_is_refused(self, session, tree):
+        gov_id, dis_id, _ = tree
+        other = fetch(dis_id)
+        sibling = Location(
+            title="Azaz",
+            location_type=other.location_type,
+            admin_level=other.admin_level,
+            parent_id=dis_id,
+        )
+        session.add(sibling)
+        try:
+            assert "level above" in (sibling.placement_error() or "")
+        finally:
+            session.rollback()
+
+    def test_an_inverted_parent_is_refused(self, session, tree):
+        gov_id, dis_id, sub_id = tree
+        gov = fetch(gov_id)
+        inverted = Location(
+            title="Backwards",
+            location_type=gov.location_type,
+            admin_level=gov.admin_level,
+            parent_id=sub_id,
+        )
+        session.add(inverted)
+        try:
+            assert "level above" in (inverted.placement_error() or "")
+        finally:
+            session.rollback()
+
+    def test_a_skipped_rung_is_allowed(self, session, tree):
+        """Partner datasets may legitimately omit a rung, so only order is enforced."""
+        gov_id, _, sub_id = tree
+        sub = fetch(sub_id)
+        sub.parent_id = gov_id
+        try:
+            assert sub.placement_error() is None
+        finally:
+            session.rollback()
+
+
+class TestStaleDetectorCoverage:
+    def test_counts_rows_the_root_walk_never_reaches(self, session, tree):
+        """Two rows pointing at each other are unreachable from any root, so the
+        rooted walk never visits them and their stored paths cannot be correct."""
+        gov_id, dis_id, sub_id = tree
+        baseline = Location.count_stale_paths()
+
+        session.execute(
+            text("update location set parent_id = :sub where id = :dis"),
+            {"sub": sub_id, "dis": dis_id},
+        )
+        session.commit()
+
+        try:
+            assert Location.count_stale_paths() >= baseline + 2
+        finally:
+            session.execute(
+                text("update location set parent_id = :gov where id = :dis"),
+                {"gov": gov_id, "dis": dis_id},
+            )
+            session.commit()

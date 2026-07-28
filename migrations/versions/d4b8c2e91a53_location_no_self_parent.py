@@ -21,7 +21,18 @@ depends_on = None
 
 def upgrade():
     # break any existing self-parent rows first, otherwise the constraint cannot be added
-    op.execute("UPDATE location SET parent_id = NULL WHERE parent_id = id")
+    op.execute("""
+        CREATE TEMP TABLE promoted_roots AS
+            SELECT id FROM location WHERE parent_id = id;
+        UPDATE location SET parent_id = NULL WHERE id IN (SELECT id FROM promoted_roots);
+        -- promoting a row to a root changes its ancestry, so its stored path and
+        -- everything under it are now wrong. flask doctor would report them; clear
+        -- them instead so the next regenerate is the only thing needed.
+        UPDATE location SET full_location = NULL, id_tree = NULL
+         WHERE id IN (SELECT id FROM promoted_roots)
+            OR id_tree LIKE ANY (SELECT '%[' || id || ']%' FROM promoted_roots);
+        DROP TABLE promoted_roots;
+        """)
     op.create_check_constraint("location_no_self_parent", "location", "parent_id != id")
 
 

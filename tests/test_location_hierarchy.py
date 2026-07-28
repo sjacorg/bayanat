@@ -361,7 +361,7 @@ class TestMixedHierarchyPaths:
         session.commit()
 
         try:
-            assert child.has_hierarchy_conflict()
+            assert child.placement_error() == "Parent location belongs to a different hierarchy"
             # both rungs claim the same display_order, so the sort cannot separate them
             assert legacy.level_order == territory.level_order
             assert set(child.get_full_string().split(", ")) == {"Damascus", "West Bank"}
@@ -415,7 +415,7 @@ class TestMixedHierarchyPaths:
         session.commit()
 
         try:
-            assert not child.has_hierarchy_conflict()
+            assert child.placement_error() is None
         finally:
             session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
                 synchronize_session=False
@@ -440,3 +440,32 @@ class TestBackwardCompatibility:
 
         session.delete(loc)
         session.commit()
+
+
+class TestRelevellingASubtree:
+    def test_moving_a_parent_into_another_ladder_is_refused(self, session, admin_client, hierarchy):
+        """Its children would be stranded on the ladder it just left."""
+        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+        legacy_gov = LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first()
+        legacy_dis = LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first()
+        territory = LocationAdminLevel.in_hierarchy(hierarchy.id).filter_by(code=1).first()
+
+        parent = Location(title="Aleppo", location_type=admin_type, admin_level=legacy_gov)
+        session.add(parent)
+        session.commit()
+        child = Location(
+            title="Afrin", location_type=admin_type, admin_level=legacy_dis, parent_id=parent.id
+        )
+        session.add(child)
+        session.commit()
+
+        try:
+            # re-level the parent into the partner ladder while the child stays legacy
+            parent.admin_level = territory
+            assert "Locations under this one" in (parent.placement_error() or "")
+        finally:
+            session.rollback()
+            session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
+                synchronize_session=False
+            )
+            session.commit()

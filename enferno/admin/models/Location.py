@@ -73,39 +73,58 @@ class Location(db.Model, BaseMixin):
             l.updated_at = created
         l.save()
 
-    def has_parent_cycle(self) -> bool:
+    def placement_error(self) -> Optional[str]:
         """
-        Whether the chosen parent is this location itself or one of its descendants.
+        Why this location cannot sit where it has been put, or None if it can.
 
-        Walks up from the proposed parent, which is cheap and, unlike walking down
-        through id_tree, does not depend on a denormalized column that may be stale.
-        Label already guards its own tree this way.
+        `full_location` orders a path by the display_order of its levels, so a path
+        that mixes ladders, doubles back on itself, or loops produces text that means
+        nothing. Legacy locations carry no hierarchy on either side, so the hierarchy
+        rules never fire on an installation that has not created one.
+
+        The parent is read by id rather than through the relationship: on create the
+        object is still transient, and the relationship would silently be None.
         """
-        if not self.parent_id:
-            return False
-        if self.parent_id == self.id:
-            return True
+        from enferno.admin.models import LocationAdminLevel  # noqa: F811
+
+        parent = db.session.get(Location, self.parent_id) if self.parent_id else None
+
+        if self.parent_id and (self.parent_id == self.id or self._is_descendant(parent)):
+            return "A location cannot be placed under itself or one of its own descendants"
+
+        if self.admin_level and parent and parent.admin_level:
+            if self.admin_level.hierarchy_id != parent.admin_level.hierarchy_id:
+                return "Parent location belongs to a different hierarchy"
+            if parent.admin_level.level_order >= self.admin_level.level_order:
+                return "Parent location must sit on a level above this one"
+
+        # re-levelling into another ladder would strand everything underneath
+        if self.id and self.admin_level:
+            stranded = (
+                db.session.query(Location.id)
+                .join(LocationAdminLevel, Location.admin_level_id == LocationAdminLevel.id)
+                .filter(
+                    Location.parent_id == self.id,
+                    ~LocationAdminLevel.hierarchy_id.is_not_distinct_from(
+                        self.admin_level.hierarchy_id
+                    ),
+                )
+                .first()
+            )
+            if stranded:
+                return "Locations under this one belong to a different hierarchy"
+
+        return None
+
+    def _is_descendant(self, node: Optional["Location"]) -> bool:
+        """Whether the given node sits below this one, walked upward from that node."""
         seen = set()
-        current = db.session.get(Location, self.parent_id)
-        while current and current.id not in seen:
-            if current.id == self.id:
+        while node and node.id not in seen:
+            if node.id == self.id:
                 return True
-            seen.add(current.id)
-            current = db.session.get(Location, current.parent_id) if current.parent_id else None
+            seen.add(node.id)
+            node = db.session.get(Location, node.parent_id) if node.parent_id else None
         return False
-
-    def has_hierarchy_conflict(self) -> bool:
-        """
-        Whether this location and its parent sit on different hierarchies.
-
-        `full_location` orders a path by the display_order of its levels, and that
-        order is only meaningful inside one hierarchy, so a mixed path reads back
-        with its rungs shuffled. Legacy locations carry no hierarchy on either
-        side, so this never fires on an installation without one.
-        """
-        if not self.parent or not self.admin_level or not self.parent.admin_level:
-            return False
-        return self.admin_level.hierarchy_id != self.parent.admin_level.hierarchy_id
 
     def get_children_ids(self) -> list:
         """
@@ -387,11 +406,18 @@ class Location(db.Model, BaseMixin):
         to repair them from the interface.
         """
         roots = Location.query.filter(Location.parent_id.is_(None)).all()
-        for root in roots:
-            root.rebuild_subtree()
+        try:
+            for root in roots:
+                root.rebuild_subtree(commit=False)
+            db.session.commit()
+        except Exception:
+            # one transaction for the whole table: a partial rebuild would leave
+            # some paths on the old level order and some on the new one
+            db.session.rollback()
+            raise
         logger.info(f"Rebuilt location paths under {len(roots)} roots.")
 
-    def rebuild_subtree(self) -> None:
+    def rebuild_subtree(self, commit: bool = True) -> None:
         """
         Rebuild full_location and id_tree for this location and every descendant.
 
@@ -447,7 +473,8 @@ class Location(db.Model, BaseMixin):
             postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
         try:
             db.session.execute(text(query), {"id": self.id, "postal_code": postal_code})
-            db.session.commit()
+            if commit:
+                db.session.commit()
         except Exception as e:
             db.session.rollback()
             logger.error(f"Failed to rebuild location subtree {self.id}: {str(e)}", exc_info=e)
@@ -492,9 +519,14 @@ class Location(db.Model, BaseMixin):
                 ) AS expected_tree
             FROM tree t
         )
-        SELECT count(*) FROM expected
-        WHERE coalesce(full_location, '') <> coalesce(expected_full, '')
-           OR coalesce(id_tree, '') <> coalesce(expected_tree, '');
+        SELECT
+            (SELECT count(*) FROM expected
+              WHERE full_location IS DISTINCT FROM expected_full
+                 OR id_tree IS DISTINCT FROM expected_tree)
+            -- rows the walk never reached are unrooted or caught in a cycle, so
+            -- their stored path cannot be correct either
+          + (SELECT count(*) FROM location l
+              WHERE NOT EXISTS (SELECT 1 FROM tree t WHERE t.id = l.id));
         """
         if not has_app_context():
             postal_code = False

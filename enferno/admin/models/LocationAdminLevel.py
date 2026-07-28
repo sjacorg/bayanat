@@ -127,7 +127,9 @@ class LocationAdminLevel(db.Model, BaseMixin):
                 LocationAdminLevel.id
             )
         }
-        if set(ids) != known:
+        # length matters as well as membership: [a, a, b] satisfies set equality
+        # against {a, b} and would renumber a twice, leaving a gap in the order
+        if len(ids) != len(known) or set(ids) != known:
             raise ValueError("Reorder requires the complete level set of a single hierarchy")
 
         # one statement, one transaction: a half applied order would silently

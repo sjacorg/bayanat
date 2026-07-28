@@ -108,13 +108,8 @@ def api_location_create(
     location = Location()
     location = location.from_json(validated_data["item"])
 
-    if location.has_parent_cycle():
-        return HTTPResponse.error(
-            "A location cannot be placed under itself or one of its own descendants", status=400
-        )
-
-    if location.has_hierarchy_conflict():
-        return HTTPResponse.error("Parent location belongs to a different hierarchy", status=400)
+    if error := location.placement_error():
+        return HTTPResponse.error(error, status=400)
 
     if location.save():
         location.rebuild_subtree()
@@ -153,17 +148,9 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
     if location is not None:
         location = location.from_json(validated_data["item"])
 
-        if location.has_parent_cycle():
+        if error := location.placement_error():
             db.session.rollback()
-            return HTTPResponse.error(
-                "A location cannot be placed under itself or one of its own descendants", status=400
-            )
-
-        if location.has_hierarchy_conflict():
-            db.session.rollback()
-            return HTTPResponse.error(
-                "Parent location belongs to a different hierarchy", status=400
-            )
+            return HTTPResponse.error(error, status=400)
 
         # we need to commit this change to db first, to utilize CTE
         if location.save():
