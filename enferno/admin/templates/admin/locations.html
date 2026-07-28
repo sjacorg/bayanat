@@ -373,10 +373,6 @@
                         this.showSnack(handleRequestError(error));
                     });
                 },
-                levelOrder(level) {
-                    return level?.display_order || level?.code;
-                },
-
                 onHierarchyChange() {
                     this.editedItem.admin_level = null;
                     this.editedItem.parent = null;
@@ -389,11 +385,13 @@
                         this.locQueryParams = {};
                         return;
                     }
-                    // the eligible parent level is resolved server side, so no
-                    // assumption here that a parent sits at this level's code minus one
+                    // eligible parents are resolved server side, so nothing here assumes
+                    // a parent sits at this level's code minus one. Compare code, not
+                    // display_order: display_order is the address format an admin can
+                    // reorder, and using it would drop the parent of a valid location.
                     const parentLevel = this.editedItem.parent?.admin_level;
                     const sameHierarchy = (parentLevel?.hierarchy?.id ?? null) === (level.hierarchy?.id ?? null);
-                    if (parentLevel && (!sameHierarchy || this.levelOrder(parentLevel) >= this.levelOrder(level))) {
+                    if (parentLevel && (!sameHierarchy || parentLevel.code >= level.code)) {
                         this.editedItem.parent = null;
                     }
                     this.locQueryParams = {parent_of: level.id};

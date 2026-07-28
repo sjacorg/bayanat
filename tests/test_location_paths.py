@@ -354,3 +354,26 @@ class TestUnlevelledIntermediate:
                 synchronize_session=False
             )
             session.commit()
+
+
+class TestRelevellingFromAbove:
+    """
+    The mirror of the parent rules. Editing a parent must not push it onto the
+    same rung as its children, or below them.
+    """
+
+    def test_pushing_a_parent_down_onto_its_child_rung_is_refused(self, session, tree):
+        gov_id, dis_id, _ = tree
+        gov = fetch(gov_id)
+        district_level = LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first()
+        gov.admin_level = district_level  # same rung as its own child
+        try:
+            assert "at or above" in (gov.placement_error() or "")
+        finally:
+            session.rollback()
+
+    def test_a_valid_relevelling_is_allowed(self, session, tree):
+        _, dis_id, sub_id = tree
+        dis = fetch(dis_id)
+        # code 2 -> still above the subdistrict child at code 3
+        assert dis.placement_error() is None
