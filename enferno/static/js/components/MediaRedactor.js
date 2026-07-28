@@ -351,13 +351,13 @@ const MediaRedactor = Vue.defineComponent({
       return boxes;
     },
     zoomIn() {
-      this.zoom = Math.min(+(this.zoom + 0.25).toFixed(2), REDACTOR_MAX_ZOOM);
+      this.applyZoom(Math.min(+(this.zoom + 0.25).toFixed(2), REDACTOR_MAX_ZOOM));
     },
     zoomOut() {
-      this.zoom = Math.max(+(this.zoom - 0.25).toFixed(2), 1);
+      this.applyZoom(Math.max(+(this.zoom - 0.25).toFixed(2), 1));
     },
     zoomFit() {
-      this.zoom = 1;
+      this.applyZoom(1);
     },
     pinchDistance(touches) {
       const dx = touches[0].clientX - touches[1].clientX;
@@ -434,7 +434,9 @@ const MediaRedactor = Vue.defineComponent({
           <v-icon icon="mdi-marker" class="ms-3 me-2" size="20"></v-icon>
           <v-toolbar-title class="font-weight-medium">
             Redaction Tool
-            <span class="text-body-2 font-weight-regular opacity-70 ms-2" dir="auto">— {{ media?.title || media?.filename || 'document' }}</span>
+            <span class="text-body-2 font-weight-regular opacity-70 ms-2" dir="ltr">
+              <bdi>{{ media?.title || media?.filename || 'document' }}</bdi>
+            </span>
           </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-text-field
@@ -491,6 +493,7 @@ const MediaRedactor = Vue.defineComponent({
         <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
         <v-card-text
           ref="scrollPane"
+          dir="ltr"
           class="pa-0 bg-grey-lighten-3"
           style="overflow: auto;"
           :style="{ touchAction: zoom > 1 ? 'pan-x pan-y' : 'pan-y', cursor: panning ? 'grabbing' : spaceDown ? 'grab' : 'default' }"
