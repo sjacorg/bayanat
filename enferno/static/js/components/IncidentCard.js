@@ -119,12 +119,12 @@ const IncidentCard = Vue.defineComponent({
             {{ translations.id_ }} {{ incident.id }}
           </v-chip>
 
-          <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"
+          <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ms-2"
                  @click="$emit('edit',incident)">
             {{ translations.edit_ }}
           </v-btn>
 
-          <v-btn size="small" class="ml-2" variant="tonal" prepend-icon="mdi-graph-outline"
+          <v-btn size="small" class="ms-2" variant="tonal" prepend-icon="mdi-graph-outline"
                  @click.stop="$root.$refs.viz.visualize(incident)">
             {{ translations.visualize_ }}
           </v-btn>
