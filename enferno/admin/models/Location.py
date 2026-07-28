@@ -85,7 +85,6 @@ class Location(db.Model, BaseMixin):
         The parent is read by id rather than through the relationship: on create the
         object is still transient, and the relationship would silently be None.
         """
-        from enferno.admin.models import LocationAdminLevel  # noqa: F811
 
         loops, above = self._walk_up()
         if loops:
@@ -99,22 +98,33 @@ class Location(db.Model, BaseMixin):
             if above.code >= self.admin_level.code:
                 return "Parent location must sit on a level above this one"
 
-        # the same two rules seen from above: re-levelling this location must not
-        # leave its children on another ladder, nor on a rung at or above its own
+        # the same two rules seen from above. Descends past unlevelled children for
+        # the same reason the upward walk climbs past unlevelled ancestors: a point
+        # of interest in between must not be able to hide a mixed or inverted ladder.
         if self.id and self.admin_level:
-            children = (
-                db.session.query(Location.id, LocationAdminLevel)
-                .join(LocationAdminLevel, Location.admin_level_id == LocationAdminLevel.id)
-                .filter(Location.parent_id == self.id)
-            )
-
-            for _, level in children:
-                if level.hierarchy_id != self.admin_level.hierarchy_id:
+            for hierarchy_id, code in self._nearest_levelled_descendants():
+                if hierarchy_id != self.admin_level.hierarchy_id:
                     return "Locations under this one belong to a different hierarchy"
-                if level.code <= self.admin_level.code:
+                if code <= self.admin_level.code:
                     return "Locations under this one sit on a level at or above this one"
 
         return None
+
+    def _nearest_levelled_descendants(self):
+        """The first levelled location on each branch below this one, as (hierarchy, code)."""
+        query = """
+        WITH RECURSIVE below AS (
+            SELECT id, admin_level_id, ARRAY[id] AS path
+            FROM location WHERE parent_id = :id
+            UNION ALL
+            SELECT c.id, c.admin_level_id, c.id || b.path
+            FROM location c JOIN below b ON c.parent_id = b.id
+            WHERE b.admin_level_id IS NULL AND NOT c.id = ANY(b.path)
+        )
+        SELECT la.hierarchy_id, la.code
+        FROM below b JOIN location_admin_level la ON la.id = b.admin_level_id;
+        """
+        return db.session.execute(text(query), {"id": self.id}).all()
 
     def _walk_up(self):
         """

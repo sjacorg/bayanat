@@ -377,3 +377,50 @@ class TestRelevellingFromAbove:
         dis = fetch(dis_id)
         # code 2 -> still above the subdistrict child at code 3
         assert dis.placement_error() is None
+
+
+class TestUnlevelledIntermediateBothDirections:
+    """
+    A point of interest between two administrative locations is a supported shape,
+    so the rules have to hold through it in both directions. Validating upward but
+    not downward left the exact sequence below reachable through the editor.
+    """
+
+    def test_relevelling_across_a_point_of_interest_is_refused(self, session, tree):
+        gov_id, _, _ = tree
+        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+        poi_type = LocationType.query.filter_by(title="Point of Interest").first()
+        district = LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first()
+
+        top = Location(
+            title="Level one root",
+            location_type=admin_type,
+            admin_level=LocationAdminLevel.in_hierarchy(None).filter_by(code=1).first(),
+        )
+        session.add(top)
+        session.commit()
+        poi = Location(title="A crossing", location_type=poi_type, parent_id=top.id)
+        session.add(poi)
+        session.commit()
+        deep = Location(
+            title="District below the crossing",
+            location_type=admin_type,
+            admin_level=district,
+            parent_id=poi.id,
+        )
+        session.add(deep)
+        session.commit()
+
+        try:
+            # the child is valid as created, through the unlevelled intermediate
+            assert fetch(deep.id).placement_error() is None
+            # now push the root down onto the same rung as its levelled descendant
+            top_again = fetch(top.id)
+            top_again.admin_level = district
+            assert "at or above" in (top_again.placement_error() or "")
+        finally:
+            session.rollback()
+            session.query(Location).filter(Location.id.in_([deep.id, poi.id, top.id])).delete(
+                synchronize_session=False
+            )
+            session.commit()
