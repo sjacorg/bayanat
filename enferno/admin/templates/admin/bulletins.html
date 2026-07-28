@@ -108,11 +108,11 @@
                                             @click="webImportDlg = true"
                                             color="primary"
                                             variant="elevated"
+                                            prepend-icon="mdi-web"
                                             class="ma-2"
                                     >
-                                        <v-icon left>mdi-web</v-icon>
-                                            {{ _('Import from Web') }}
-                                        </v-btn>
+                                        {{ _('Import from Web') }}
+                                    </v-btn>
                                     {% endif %}
                                 {% endif %}
                                 {% include'admin/partials/bulletin_dialog.html' %}
