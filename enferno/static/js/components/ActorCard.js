@@ -151,7 +151,8 @@ const ActorCard = Vue.defineComponent({
                         :href="actor.source_link" 
                         target="_blank" 
                         label
-                        append-icon="mdi-open-in-new">
+                        append-icon="mdi-open-in-new"
+                        class="ms-2">
                         {{ actor.originid }}
 
                     </v-chip>
@@ -243,7 +244,7 @@ const ActorCard = Vue.defineComponent({
                   variant="text"
                   append-icon="mdi-open-in-new"
                   label
-                  class="white--text ml-1">
+                  class="white--text ms-1">
                   {{ actor.source_link }}
                   
                 </v-chip>
