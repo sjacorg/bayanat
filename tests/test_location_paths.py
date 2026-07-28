@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from enferno.extensions import db
-from enferno.admin.models import Location, LocationAdminLevel, LocationType
+from enferno.admin.models import Location, LocationAdminLevel, LocationHierarchy, LocationType
 
 
 @pytest.fixture
@@ -283,5 +283,74 @@ class TestStaleDetectorCoverage:
             session.execute(
                 text("update location set parent_id = :gov where id = :dis"),
                 {"gov": gov_id, "dis": dis_id},
+            )
+            session.commit()
+
+
+class TestStructuralOrderIsIndependentOfDisplay:
+    """
+    The Full Location text format panel lets an admin drag levels into any order to
+    match an address system, and a small-to-large format is the exact reverse of
+    Syria's. Structure must therefore not be derived from display_order.
+    """
+
+    def test_reversing_the_display_order_does_not_invalidate_the_tree(self, session, tree):
+        gov_id, dis_id, sub_id = tree
+        levels = LocationAdminLevel.in_hierarchy(None).order_by(LocationAdminLevel.code).all()
+        original = {l.id: l.display_order for l in levels}
+
+        # reverse the presentation order, as the drag-and-drop panel would
+        LocationAdminLevel.reorder([l.id for l in reversed(levels)], None)
+        session.expire_all()
+        try:
+            assert fetch(sub_id).placement_error() is None
+            assert fetch(dis_id).placement_error() is None
+        finally:
+            for id, order in original.items():
+                session.get(LocationAdminLevel, id).display_order = order
+            session.commit()
+
+
+class TestUnlevelledIntermediate:
+    def test_a_point_of_interest_cannot_hide_a_mixed_ladder(self, session, tree):
+        """partner root -> POI -> legacy child used to pass every guard."""
+        gov_id, _, _ = tree
+        poi_type = LocationType.query.filter_by(title="Point of Interest").first()
+        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+        hierarchy = LocationHierarchy(title="Ladder for POI test")
+        session.add(hierarchy)
+        session.commit()
+        partner_level = LocationAdminLevel(
+            code=1, title="Territory", display_order=1, hierarchy_id=hierarchy.id
+        )
+        session.add(partner_level)
+        session.commit()
+
+        root = Location(title="Partner root", location_type=admin_type, admin_level=partner_level)
+        session.add(root)
+        session.commit()
+        poi = Location(title="A checkpoint", location_type=poi_type, parent_id=root.id)
+        session.add(poi)
+        session.commit()
+
+        legacy_child = Location(
+            title="Legacy under a POI",
+            location_type=admin_type,
+            admin_level=LocationAdminLevel.in_hierarchy(None).filter_by(code=2).first(),
+            parent_id=poi.id,
+        )
+        session.add(legacy_child)
+        try:
+            assert "different hierarchy" in (legacy_child.placement_error() or "")
+        finally:
+            session.rollback()
+            session.query(Location).filter(Location.id.in_([poi.id, root.id])).delete(
+                synchronize_session=False
+            )
+            session.query(LocationAdminLevel).filter_by(hierarchy_id=hierarchy.id).delete(
+                synchronize_session=False
+            )
+            session.query(LocationHierarchy).filter_by(id=hierarchy.id).delete(
+                synchronize_session=False
             )
             session.commit()
