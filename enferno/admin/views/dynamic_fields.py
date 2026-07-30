@@ -169,10 +169,9 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
             field, error = create_field(item, entity_type)
             if error:
                 db.session.rollback()
-                status = 500 if error.startswith("Database error:") else 400
 
                 return HTTPResponse.error(
-                    f"Failed to create field '{field_title}'", status=status, errors=[error]
+                    f"Failed to create field '{field_title}'", status=400, errors=[error]
                 )
             created_count += 1
 
@@ -188,8 +187,6 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
                 db.session.rollback()
                 if "not found" in error.lower():
                     status = 404
-                elif error.startswith("Database error:"):
-                    status = 500
                 else:
                     status = 400
                 return HTTPResponse.error(
@@ -245,8 +242,8 @@ def api_dynamic_fields_bulk_save(validated_data: dict) -> Response:
             data={"fields": [f.to_dict() for f in fields]},
         )
 
-    except Exception as e:
-        logger.error(f"Error in bulk save: {str(e)}")
+    except Exception:
+        logger.exception("Error in bulk save")
         db.session.rollback()
         return HTTPResponse.error("Bulk save failed", status=500)
 

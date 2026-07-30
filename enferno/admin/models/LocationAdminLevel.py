@@ -38,6 +38,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.Integer, nullable=False)
     title = db.Column(db.String)
+    title_tr = db.Column(db.String)
     display_order = db.Column(db.Integer)
     hierarchy_id = db.Column(db.Integer, db.ForeignKey("location_hierarchy.id"))
     hierarchy = db.relationship("LocationHierarchy")
@@ -48,6 +49,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
             "id": self.id,
             "code": self.code,
             "title": self.title,
+            "title_tr": self.title_tr,
             "display_order": self.display_order,
             "hierarchy": self.hierarchy.to_dict() if self.hierarchy else None,
             # flat label so lists and dropdowns can disambiguate duplicate codes
@@ -63,6 +65,7 @@ class LocationAdminLevel(db.Model, BaseMixin):
         """
         self.code = jsn.get("code")
         self.title = jsn.get("title")
+        self.title_tr = jsn.get("title_tr")
         self.display_order = jsn.get("display_order", 0)
         self.hierarchy_id = LocationAdminLevel.hierarchy_id_of(jsn)
 
