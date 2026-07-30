@@ -29,7 +29,7 @@
                             <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                 <div v-if="tabState.child === 'administrative-levels'">
                                     <editable-table :height="`calc(100vh - ${showLalWarning ? '701px' : '628px'})`" title="{{ _('Location Administrative Levels') }}"
-                                        :item-headers="alHeaders" :editable-columns="['code', 'title']"
+                                        :item-headers="alHeaders" :editable-columns="['code', 'title', 'title_tr']"
                                         :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
                                         delete-endpoint="/admin/api/location-admin-level"
                                         save-endpoint="/admin/api/location-admin-level"
@@ -88,7 +88,7 @@
 
                                 <div v-if="tabState.child === 'location-types'">
                                     <editable-table height="calc(100vh - 375px)" title="{{ _('Location Types') }}"
-                                        :item-headers="ltHeaders" :no-action-ids="[1,2]" delete-endpoint="/admin/api/location-type"
+                                        :item-headers="ltHeaders" :editable-columns="['title','title_tr']" :no-action-ids="[1,2]" delete-endpoint="/admin/api/location-type"
                                         save-endpoint="/admin/api/location-type"
                                         load-endpoint="/admin/api/location-types/?per_page=1000">
                                     </editable-table>
@@ -357,7 +357,7 @@
                 },
 
                 alHeaders: this.createHeaders('codeAndTitle'),
-                ltHeaders: this.createHeaders('basicTitle'),
+                ltHeaders: this.createHeaders('titleLocalized'),
                 countryHeaders: this.createHeaders('titleLocalized'),
                 ethnoHeaders: this.createHeaders('titleLocalized'),
                 dialectHeaders: this.createHeaders('titleLocalized'),
@@ -414,8 +414,7 @@
                 const base = [{ title: "{{ _('ID') }}", value: 'id' }];
 
                 const fieldMaps = {
-                    codeAndTitle: [{ title: "{{ _('Code') }}", value: 'code' }, { title: "{{ _('Title') }}", value: 'title' }],
-                    basicTitle: [{ title: "{{ _('Title') }}", value: 'title' }],
+                    codeAndTitle: [{ title: "{{ _('Code') }}", value: 'code' }, { title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Translated Title') }}", value: 'title_tr' }],
                     titleLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Translated Title') }}", value: 'title_tr' }],
                     titleWithReverseLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Translated Title') }}", value: 'title_tr' }, { title: "{{ _('Reverse Title') }}", value: 'reverse_title' }, { title: "{{ _('Translated Reverse Title') }}", value: 'reverse_title_tr' }],
                 };
