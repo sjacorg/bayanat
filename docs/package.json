@@ -9,7 +9,14 @@
   },
   "devDependencies": {
     "mermaid": "^11.15.0",
+    "postcss": "^8.5.23",
     "vitepress": "^1.6.4",
     "vitepress-plugin-mermaid": "^2.0.17"
+  },
+  "overrides": {
+    "dompurify": "3.4.12",
+    "esbuild": "0.25.0",
+    "uuid": "11.1.1",
+    "vite": "6.4.3"
   }
 }
