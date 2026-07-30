@@ -49,11 +49,11 @@ def background_search(token: str, user_id: int, entity: str, q: list) -> None:
     db.session.rollback()  # end the timed read transaction before writing
     results.store_result(token, user_id, entity, ids)
     capped = "+" if len(ids) == results.MAX_RESULTS else ""
-    link = f"/admin/{entity}s/?bgs={token}"
     Notification.send_notification_for_event(
         Constants.NotificationEvent.BACKGROUND_SEARCH_STATUS,
         user,
         "Search Completed",
-        f"Your {entity} search finished with {len(ids)}{capped} results. "
-        f'<a href="{link}">View results</a> (available for 24 hours).',
+        f"Your {entity} search finished with {len(ids)}{capped} results, "
+        "available for 24 hours.",
+        link=f"/admin/{entity}s/?bgs={token}",
     )

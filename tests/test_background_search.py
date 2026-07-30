@@ -58,7 +58,10 @@ class TestBackgroundSearchTask:
         )
         assert notification is not None
         assert "Search Completed" in notification.title
-        assert "tok-task" in notification.message
+        # the token travels in link, not in message: message is rendered with
+        # v-text (BAY-01-034), so markup smuggled through it renders literally
+        assert notification.link == "/admin/bulletins/?bgs=tok-task"
+        assert "<" not in notification.message
 
 
 class TestTimeoutFallbackEndpoint:
