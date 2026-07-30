@@ -336,7 +336,7 @@ def reset(username: str, password: str) -> None:
         except ValueError as e:
             click.echo(str(e))
             return
-        user.password = hash_password(password)
+        user.set_password(password)
         user.save()
         click.echo("User password has been reset successfully.")
         logger.info("User password has been reset successfully.")
@@ -384,7 +384,7 @@ def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool, active_on
         results.append((user.username, user.email, new_password))
 
         if not dry_run:
-            user.password = hash_password(new_password)
+            user.set_password(new_password)
             user.set_security_reset_key()
             user.save()
 
