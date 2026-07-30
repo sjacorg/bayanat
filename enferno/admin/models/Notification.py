@@ -6,7 +6,6 @@ from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
-from flask import current_app
 from sqlalchemy import select, func, case, and_
 from enferno.utils.notification_config import ALWAYS_ON_SECURITY_EVENTS
 
@@ -216,8 +215,11 @@ def get_notification_config(event):
     # Get dynamic notifications config from Flask Config (includes config.json values)
     notifications_config = Config.get("NOTIFICATIONS")
 
-    # Check always-on security events first, then configurable events
-    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(event)
+    # Check always-on security events first, then configurable events.
+    # An event added in a later release is absent from an existing install's
+    # config.json, since get_config returns that dict wholesale rather than
+    # merging the defaults into it. Fall back to the defaults below.
+    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(event) or {}
 
     return {
         "enabled": config.get("in_app_enabled", True),
