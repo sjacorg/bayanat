@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 {% block css %}
-    <link rel="stylesheet" href="/static/js/dropzone/dropzone.min.css">
+    <link rel="stylesheet" href="/static/js/dropzone/dropzone.min.css?v={{ config.VERSION }}">
 {% endblock %}
 
 {% block content %}
@@ -78,7 +78,7 @@
 
 
                             <v-img style="margin:auto"
-                                    src="/static/img/csv-tool-bg.jpg">
+                                    src="/static/img/csv-tool-bg.jpg?v={{ config.VERSION }}">
                         </div>
                     </v-sheet>
 
@@ -824,15 +824,15 @@
 {% block js %}
 
 
-    <script src="/static/js/dropzone/dropzone.min.js"></script>
-    <script src="/static/js/components/VueDropzone.js"></script>
+    <script src="/static/js/dropzone/dropzone.min.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/VueDropzone.js?v={{ config.VERSION }}"></script>
 
 
 
-    <script src="/static/js/Sortable.min.js"></script>
-    <script src="/static/js/vuedraggable.umd.js"></script>
-    <script src="/static/js/components/DropField.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/Sortable.min.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/vuedraggable.umd.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/DropField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/SearchField.js?v={{ config.VERSION }}"></script>
 
     <script nonce="{{ csp_nonce() }}">
 

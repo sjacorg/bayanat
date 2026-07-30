@@ -400,6 +400,39 @@ class Actor(db.Model, BaseMixin):
         else:
             self.origin_place_id = None
 
+        # Handling Actor Profiles
+        # Processed before any related object that commits the session (events, medias,
+        # relations): a mid-flow commit must never persist an actor without its profiles,
+        # since profile-less actors are invisible to search.
+        if "actor_profiles" in json:
+            existing_profile_ids = [profile.id for profile in self.actor_profiles]
+            new_profile_data = json["actor_profiles"]
+
+            # Update existing profiles or create new ones
+            for profile_data in new_profile_data:
+                if "id" in profile_data and profile_data["id"] in existing_profile_ids:
+                    # Update existing profile
+                    profile = next(
+                        (p for p in self.actor_profiles if p.id == profile_data["id"]), None
+                    )
+                    if profile:
+                        profile.from_json(profile_data)
+                else:
+                    # Create new profile
+                    new_profile = ActorProfile()
+                    new_profile = new_profile.from_json(profile_data)
+                    new_profile.actor = self
+                    self.actor_profiles.append(new_profile)
+
+            # Remove profiles that are no longer associated
+            for existing_id in existing_profile_ids:
+                if existing_id not in [p.get("id") for p in new_profile_data]:
+                    profile_to_remove = next(
+                        (p for p in self.actor_profiles if p.id == existing_id), None
+                    )
+                    if profile_to_remove:
+                        self.actor_profiles.remove(profile_to_remove)
+
         # Events
         if "events" in json:
             new_events = []
@@ -488,36 +521,6 @@ class Actor(db.Model, BaseMixin):
 
         if "status" in json:
             self.status = json["status"]
-
-        # Handling Actor Profiles
-        if "actor_profiles" in json:
-            existing_profile_ids = [profile.id for profile in self.actor_profiles]
-            new_profile_data = json["actor_profiles"]
-
-            # Update existing profiles or create new ones
-            for profile_data in new_profile_data:
-                if "id" in profile_data and profile_data["id"] in existing_profile_ids:
-                    # Update existing profile
-                    profile = next(
-                        (p for p in self.actor_profiles if p.id == profile_data["id"]), None
-                    )
-                    if profile:
-                        profile.from_json(profile_data)
-                else:
-                    # Create new profile
-                    new_profile = ActorProfile()
-                    new_profile = new_profile.from_json(profile_data)
-                    new_profile.actor = self
-                    self.actor_profiles.append(new_profile)
-
-            # Remove profiles that are no longer associated
-            for existing_id in existing_profile_ids:
-                if existing_id not in [p.get("id") for p in new_profile_data]:
-                    profile_to_remove = next(
-                        (p for p in self.actor_profiles if p.id == existing_id), None
-                    )
-                    if profile_to_remove:
-                        self.actor_profiles.remove(profile_to_remove)
 
         # Dynamic fields: apply values via a central helper for simplicity
         try:
