@@ -41,14 +41,19 @@ class Label(db.Model, BaseMixin):
     parent_label_id = db.Column(db.Integer, db.ForeignKey("label.id"), index=True, nullable=True)
     parent = db.relationship("Label", remote_side=id, backref="sub_label")
 
-    def _build_path(self) -> str:
-        """Walk up parent chain, return 'Grandparent > Parent' (excludes self)."""
+    def _build_path(self, translated: bool = False) -> str:
+        """Walk up parent chain, return 'Grandparent > Parent' (excludes self).
+
+        With translated=True, use each ancestor's Arabic title, falling back to the
+        English title per level for ancestors that have no translation yet.
+        """
         parts = []
         current = self.parent
         seen = set()
         while current and current.id not in seen:
             seen.add(current.id)
-            parts.append(current.title)
+            title = (current.title_ar or current.title) if translated else current.title
+            parts.append(title)
             current = current.parent
         parts.reverse()
         return " > ".join(parts) if parts else ""
@@ -77,7 +82,7 @@ class Label(db.Model, BaseMixin):
     @staticmethod
     def build_tree(verified=None):
         """Build nested tree structure using raw SQL for performance."""
-        query = "SELECT id, title, parent_label_id, verified, for_bulletin, for_actor, for_incident, for_offline FROM label"
+        query = "SELECT id, title, parent_label_id, verified, for_bulletin, for_actor, for_incident, for_offline, title_ar, comments, comments_ar FROM label"
         conditions = []
         if verified is True:
             conditions.append("verified = true")
@@ -101,6 +106,9 @@ class Label(db.Model, BaseMixin):
                 "for_actor": r[5],
                 "for_incident": r[6],
                 "for_offline": r[7],
+                "title_ar": r[8],
+                "comments": r[9],
+                "comments_ar": r[10],
                 "children": [],
             }
 
@@ -151,6 +159,8 @@ class Label(db.Model, BaseMixin):
             "id": self.id,
             "title": self.title,
             "title_ar": self.title_ar if self.title_ar else None,
+            "path": self._build_path(),
+            "path_ar": self._build_path(translated=True),
             "comments": self.comments if self.comments else None,
             "comments_ar": self.comments_ar if self.comments_ar else None,
             "order": self.order,
@@ -181,7 +191,9 @@ class Label(db.Model, BaseMixin):
         return {
             "id": self.id,
             "title": self.title,
+            "title_ar": self.title_ar,
             "path": self._build_path(),
+            "path_ar": self._build_path(translated=True),
             "verified": self.verified,
             "for_bulletin": self.for_bulletin,
             "for_actor": self.for_actor,
