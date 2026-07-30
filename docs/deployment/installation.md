@@ -136,6 +136,7 @@ Create the database tables, roles, and default data. The create-exts flag create
 
 ```bash
 uv run flask create-db --create-exts
+uv run flask db stamp head
 ```
 
 ### Create Admin User

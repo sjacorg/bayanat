@@ -61,6 +61,7 @@ class Source(db.Model, BaseMixin):
         return {
             "id": self.id,
             "title": self.title,
+            "title_ar": self.title_ar,
             "etl_id": self.etl_id,
             "parent": {"id": self.parent.id, "title": self.parent.title} if self.parent else None,
             "comments": self.comments,

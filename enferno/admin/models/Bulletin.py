@@ -484,7 +484,9 @@ class Bulletin(db.Model, BaseMixin):
         sources_json = []
         if self.sources and len(self.sources):
             for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
+                sources_json.append(
+                    {"id": source.id, "title": source.title, "title_ar": source.title_ar}
+                )
 
         return {
             "id": self.id,
@@ -697,19 +699,37 @@ class Bulletin(db.Model, BaseMixin):
         sources_json = []
         if self.sources and len(self.sources):
             for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
+                sources_json.append(
+                    {"id": source.id, "title": source.title, "title_ar": source.title_ar}
+                )
 
         # labels json
         labels_json = []
         if self.labels and len(self.labels):
             for label in self.labels:
-                labels_json.append({"id": label.id, "title": label.title})
+                labels_json.append(
+                    {
+                        "id": label.id,
+                        "title": label.title,
+                        "title_ar": label.title_ar,
+                        "path": label._build_path(),
+                        "path_ar": label._build_path(translated=True),
+                    }
+                )
 
         # verified labels json
         ver_labels_json = []
         if self.ver_labels and len(self.ver_labels):
             for vlabel in self.ver_labels:
-                ver_labels_json.append({"id": vlabel.id, "title": vlabel.title})
+                ver_labels_json.append(
+                    {
+                        "id": vlabel.id,
+                        "title": vlabel.title,
+                        "title_ar": vlabel.title_ar,
+                        "path": vlabel._build_path(),
+                        "path_ar": vlabel._build_path(translated=True),
+                    }
+                )
 
         # events json
         events_json = []
@@ -806,7 +826,9 @@ class Bulletin(db.Model, BaseMixin):
         sources_json = []
         if self.sources and len(self.sources):
             for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
+                sources_json.append(
+                    {"id": source.id, "title": source.title, "title_ar": source.title_ar}
+                )
 
         return {
             "class": "Bulletin",

@@ -558,13 +558,20 @@ def doctor() -> None:
 
         config = migrate_ext.get_config()
         script = ScriptDirectory.from_config(config)
-        head = script.get_current_head()
+        # get_current_head() raises when a branch merge left two heads, which would be
+        # swallowed as a warning below. Read them all so the break is reported as a failure.
+        heads = script.get_heads()
 
         context = MigrationContext.configure(db.session.connection())
         current = context.get_current_heads()
         current_rev = current[0] if current else None
+        head = heads[0] if heads else None
 
-        if current_rev is None:
+        if len(heads) > 1:
+            fail(
+                f"Multiple migration heads ({', '.join(h[:8] for h in heads)}): db upgrade will abort"
+            )
+        elif current_rev is None:
             warn("No Alembic revision stamped (run: flask db upgrade)")
         elif current_rev == head:
             ok("Migrations up to date")
