@@ -336,7 +336,7 @@ def reset(username: str, password: str) -> None:
         except ValueError as e:
             click.echo(str(e))
             return
-        user.password = hash_password(password)
+        user.set_password(password)
         user.save()
         click.echo("User password has been reset successfully.")
         logger.info("User password has been reset successfully.")
@@ -384,7 +384,7 @@ def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool, active_on
         results.append((user.username, user.email, new_password))
 
         if not dry_run:
-            user.password = hash_password(new_password)
+            user.set_password(new_password)
             user.set_security_reset_key()
             user.save()
 
@@ -558,13 +558,20 @@ def doctor() -> None:
 
         config = migrate_ext.get_config()
         script = ScriptDirectory.from_config(config)
-        head = script.get_current_head()
+        # get_current_head() raises when a branch merge left two heads, which would be
+        # swallowed as a warning below. Read them all so the break is reported as a failure.
+        heads = script.get_heads()
 
         context = MigrationContext.configure(db.session.connection())
         current = context.get_current_heads()
         current_rev = current[0] if current else None
+        head = heads[0] if heads else None
 
-        if current_rev is None:
+        if len(heads) > 1:
+            fail(
+                f"Multiple migration heads ({', '.join(h[:8] for h in heads)}): db upgrade will abort"
+            )
+        elif current_rev is None:
             warn("No Alembic revision stamped (run: flask db upgrade)")
         elif current_rev == head:
             ok("Migrations up to date")
