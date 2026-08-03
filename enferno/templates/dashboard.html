@@ -124,7 +124,14 @@
                 <v-sheet class="pa-2 mt-auto text-caption">
                     <p>&copy; 2024 <a href="https://syriaaccountability.org/" target="_blank">{{ _('Syria Justice &amp;
                         Accountability Center (SJAC) ') }}</a> {{ _('All rights reserved.') }}</p>
-                    <p><a href="https://bayanat.org/" target="_blank">{{ _('Bayanat ') }}</a> {{ _('is an open source project by SJAC released under the GNU Affero General Public License (AGPL).') }}</p>
+                    <p>
+                        <a href="https://bayanat.org/" target="_blank">{{ _('Bayanat ') }}</a> {{ _('is an open source project by SJAC released under the GNU Affero General Public License (AGPL).') }}
+                        {% if config.VERSION and config.VERSION != '0.0.0' %}
+                            <a href="https://github.com/sjacorg/bayanat/releases/tag/v{{ config.VERSION }}" target="_blank" rel="noopener" class="text-medium-emphasis">Bayanat v{{ config.VERSION }}</a>
+                        {% else %}
+                            <span class="text-medium-emphasis">Bayanat v{{ config.VERSION }}</span>
+                        {% endif %}
+                    </p>
                 </v-sheet>
 
             </v-card>
