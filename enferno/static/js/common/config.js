@@ -314,6 +314,10 @@ const api = {
 //global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
+        if (!hasSilentPollHeader(response?.config?.headers)) {
+            document.dispatchEvent(new CustomEvent('session-refreshed'));
+        }
+
         const shouldFlatten =
             isPlainObject(response?.data?.data) &&
             !response?.config?.skipFlattening;
@@ -343,6 +347,12 @@ axios.interceptors.response.use(
         return Promise.reject(error);
     },
 );
+
+function hasSilentPollHeader(headers) {
+    if (!headers) return false;
+    if (typeof headers.get === 'function') return Boolean(headers.get('X-Silent-Poll'));
+    return Boolean(headers['X-Silent-Poll'] || headers['x-silent-poll']);
+}
 
 function isPlainObject(val) {
     return val !== null && typeof val === 'object' && !Array.isArray(val);

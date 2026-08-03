@@ -1,5 +1,5 @@
 const globalMixin = {
-  mixins: [reauthMixin, notificationMixin],
+  mixins: [reauthMixin, notificationMixin, sessionLifecycleMixin],
   components: {
     'ConfirmDialog': ConfirmDialog,
     'Toast': Toast,

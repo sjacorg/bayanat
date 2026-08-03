@@ -72,6 +72,30 @@
 
         {% include 'login_dialog.html' %}
         {% include 'reauth_dialog.html' %}
+        <v-dialog v-model="sessionWarningVisible" max-width="420" persistent>
+            <v-card prepend-icon="mdi-clock-alert-outline" title="{{ _('Session Expiring Soon') }}" subtitle="{{ _('Your session is about to expire.') }}">
+                <v-card-text class="text-body-2">
+                    {{ _('Stay signed in to continue working.') }}
+                    <div class="mt-2 text-caption text-medium-emphasis">
+                        {{ _('Time remaining:') }} ${sessionWarningRemainingSeconds}s
+                    </div>
+                </v-card-text>
+
+                <v-divider></v-divider>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="primary"
+                        variant="flat"
+                        :loading="sessionStaySignedInLoading"
+                        @click="staySignedIn"
+                    >
+                        {{ _('Stay signed in') }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-app>
     
     <confirm-dialog ref="confirmDialog"></confirm-dialog>
@@ -93,6 +117,7 @@
   data-maps-api-endpoint="{{ config.MAPS_API_ENDPOINT }}"
   data-ocr-provider="{{ config.OCR_PROVIDER }}"
   data-app-version="{{ config.VERSION }}"
+  data-session-lifetime="{{ config.PERMANENT_SESSION_LIFETIME }}"
 ></div>
 
 <script nonce="{{ csp_nonce() }}">
@@ -106,6 +131,7 @@
     window.__MAPS_API_ENDPOINT__ = el.dataset.mapsApiEndpoint;
     window.__OCR_PROVIDER__ = el.dataset.ocrProvider;
     window.__APP_VERSION__ = el.dataset.appVersion;
+    window.__SESSION_LIFETIME__ = Number(el.dataset.sessionLifetime || 0);
 </script>
 
 
@@ -142,6 +168,7 @@
 <script src="/static/js/common/config.js?v={{ config.VERSION }}"></script>
 <script src="/static/js/mixins/reauth-mixin.js?v={{ config.VERSION }}"></script>
 <script src="/static/js/mixins/notification-mixin.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/mixins/session-lifecycle-mixin.js?v={{ config.VERSION }}"></script>
 <script src="/static/js/mixins/global-mixin.js?v={{ config.VERSION }}"></script>
 
 {% block js %}{% endblock %}
