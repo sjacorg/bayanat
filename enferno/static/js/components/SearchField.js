@@ -53,7 +53,13 @@ const SearchField = Vue.defineComponent({
     items: [],
     searchQuery: '',
     _justSelected: false,
+    _searchRequestId: 0,
   }),
+  created() {
+    this.debouncedSearch = debounce(function (search, requestId) {
+      this.executeSearch(search, requestId);
+    }, 350);
+  },
   computed: {
     filteredItems() {
       if (typeof this.filterItems === 'function') {
@@ -108,10 +114,11 @@ const SearchField = Vue.defineComponent({
       return [parts[0], '…', parts[parts.length - 1]].join(' > ');
     },
     startSearch(search) {
+      const requestId = ++this._searchRequestId;
       this.loading = true;
-      this.debouncedSearch(search);
+      this.debouncedSearch(search, requestId);
     },
-    debouncedSearch: debounce(function (search) {
+    executeSearch(search, requestId) {
       api
         .get(this.api, {
           params: {
@@ -121,13 +128,17 @@ const SearchField = Vue.defineComponent({
           },
         })
         .then((response) => {
+          if (requestId !== this._searchRequestId) return;
           this.items = this._mergeSelected(response.data.items);
         })
-        .catch(console.error)
+        .catch((error) => {
+          if (requestId === this._searchRequestId) console.error(error);
+        })
         .finally(() => {
+          if (requestId !== this._searchRequestId) return;
           this.loading = false;
         });
-    }, 350),
+    },
     _mergeSelected(fetchedItems) {
       if (!this.multiple || !Array.isArray(this.modelValue) || !this.modelValue.length) {
         return fetchedItems;
@@ -167,8 +178,12 @@ const SearchField = Vue.defineComponent({
       }).catch(console.error);
     },
     onFocused(focused) {
-      if (focused) this.startSearch(this.searchQuery)
-      else this.loading = false
+      if (focused) {
+        if (this.searchQuery || !this.items.length) this.startSearch(this.searchQuery)
+      } else {
+        this._searchRequestId++;
+        this.loading = false
+      }
     }
   },
   watch: {
@@ -246,8 +261,7 @@ const SearchField = Vue.defineComponent({
 const LocationSearchField = Vue.defineComponent({
   extends: SearchField,
   methods: {
-    debouncedSearch: debounce(function (search) {
-      this.loading = true;
+    executeSearch(search, requestId) {
       api
         .post(this.api, {
           q: {
@@ -257,10 +271,14 @@ const LocationSearchField = Vue.defineComponent({
           options: {},
         })
         .then((response) => {
+          if (requestId !== this._searchRequestId) return;
           this.items = this._mergeSelected(response.data.items);
+        }).catch((error) => {
+          if (requestId === this._searchRequestId) console.error(error);
         }).finally(() => {
+          if (requestId !== this._searchRequestId) return;
           this.loading = false;
         });
-    }, 350),
+    },
   },
 });
