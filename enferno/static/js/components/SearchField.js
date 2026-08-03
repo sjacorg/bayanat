@@ -54,8 +54,11 @@ const SearchField = Vue.defineComponent({
     searchQuery: '',
     _justSelected: false,
     _searchRequestId: 0,
+    // Tracks which query produced items, so focus can refresh stale cached results.
+    _itemsSearchQuery: null,
   }),
   created() {
+    // Use a normal function so debounce forwards Vue's instance context.
     this.debouncedSearch = debounce(function (search, requestId) {
       this.executeSearch(search, requestId);
     }, 350);
@@ -130,6 +133,7 @@ const SearchField = Vue.defineComponent({
         .then((response) => {
           if (requestId !== this._searchRequestId) return;
           this.items = this._mergeSelected(response.data.items);
+          this._itemsSearchQuery = search;
         })
         .catch((error) => {
           if (requestId === this._searchRequestId) console.error(error);
@@ -179,7 +183,8 @@ const SearchField = Vue.defineComponent({
     },
     onFocused(focused) {
       if (focused) {
-        if (this.searchQuery || !this.items.length) this.startSearch(this.searchQuery)
+        // Refresh if retained/cached results no longer match the current query.
+        if (this.searchQuery || !this.items.length || this._itemsSearchQuery !== this.searchQuery) this.startSearch(this.searchQuery)
       } else {
         this._searchRequestId++;
         this.loading = false
@@ -273,6 +278,7 @@ const LocationSearchField = Vue.defineComponent({
         .then((response) => {
           if (requestId !== this._searchRequestId) return;
           this.items = this._mergeSelected(response.data.items);
+          this._itemsSearchQuery = search;
         }).catch((error) => {
           if (requestId === this._searchRequestId) console.error(error);
         }).finally(() => {
