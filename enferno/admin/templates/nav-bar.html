@@ -28,17 +28,17 @@
     </v-tooltip>
     {% endif %}
 
-    <v-tooltip v-if="currentHelpLink" location="bottom">
+    <v-tooltip v-if="currentHelpUrl" location="bottom">
       <template v-slot:activator="{ props }">
         <v-btn
           v-bind="props"
           icon="mdi-help-circle-outline"
-          :href="currentHelpLink"
+          :href="currentHelpUrl"
           target="_blank"
           rel="noopener noreferrer"
         ></v-btn>
       </template>
-      {{ _('User Guides') }}
+      ${currentHelpLabel}
     </v-tooltip>
 
     <v-tooltip location="bottom">
