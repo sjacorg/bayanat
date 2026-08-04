@@ -27,7 +27,7 @@ const EditableTable = Vue.defineComponent({
     },
     addButtonLabel: {
       type: String,
-      default: 'Add new',
+      default: () => window.translations.addNew_,
     },
     allowAdd: {
       type: Boolean,
@@ -101,13 +101,13 @@ const EditableTable = Vue.defineComponent({
                   <v-spacer></v-spacer>
                   <v-btn
                     @click="dialogState.isOpen = false"
-                  >Cancel</v-btn>
+                  >{{ translations.cancel_ }}</v-btn>
                   <v-btn
                     :loading="dialogState.isLoading"
                     color="primary"
                     @click="itemSave()"
                     variant="elevated"
-                  >Save</v-btn
+                  >{{ translations.save_ }}</v-btn
                   >
               </v-card-actions>
           </v-card>

@@ -52,7 +52,7 @@
                                             :append-inner-icon="changePassword.showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                                             @click:append-inner="changePassword.showPassword = !changePassword.showPassword"
                                             v-bind="inputProps">
-                                            <template v-slot:label>{{ _('Current Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                            <template v-slot:label>{{ _('Current Password') }} <span class="text-error" aria-label="{{ _('required') }}">*</span></template>
                                         </v-text-field>
                                         {% else %}
                                         <p class="text-body-2 text-medium-emphasis">
@@ -75,7 +75,7 @@
                                             @click:append-inner="changePassword.showNewPassword = !changePassword.showNewPassword"
                                             @input="changePassword.isStrong = false"
                                             v-bind="inputProps">
-                                            <template v-slot:label>{{ _('New Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                            <template v-slot:label>{{ _('New Password') }} <span class="text-error" aria-label="{{ _('required') }}">*</span></template>
                                         </v-text-field>
 
                                         <v-text-field
@@ -86,7 +86,7 @@
                                             :append-inner-icon="changePassword.showNewPasswordConfirm ? 'mdi-eye-off' : 'mdi-eye'"
                                             @click:append-inner="changePassword.showNewPasswordConfirm = !changePassword.showNewPasswordConfirm"
                                             v-bind="inputProps">
-                                            <template v-slot:label>{{ _('Retype Password') }} <span class="text-error" aria-label="required">*</span></template>
+                                            <template v-slot:label>{{ _('Retype Password') }} <span class="text-error" aria-label="{{ _('required') }}">*</span></template>
                                         </v-text-field>
                                     </v-card-text>
 

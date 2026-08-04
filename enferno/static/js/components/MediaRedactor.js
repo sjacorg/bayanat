@@ -10,6 +10,7 @@ const MediaRedactor = Vue.defineComponent({
   data() {
     return {
       REDACTOR_MAX_ZOOM,
+      translations: window.translations,
       loading: false,
       saving: false,
       error: null,
@@ -162,7 +163,7 @@ const MediaRedactor = Vue.defineComponent({
         this.boxes = { 0: [] };
         return;
       }
-      this.error = 'Unsupported file type';
+      this.error = this.translations.unsupportedFileType_;
     },
     async loadPdf() {
       const loadId = this._loadId;
@@ -193,7 +194,7 @@ const MediaRedactor = Vue.defineComponent({
       } catch (e) {
         if (loadId !== this._loadId) return;
         console.error('PDF redactor load failed:', e);
-        this.error = 'Failed to load document';
+        this.error = this.translations.failedToLoadDocument_;
         this.loading = false;
       }
     },
@@ -420,7 +421,7 @@ const MediaRedactor = Vue.defineComponent({
         this.$emit('redacted', response.data.data);
         this.show = false;
       } catch (e) {
-        this.error = e.response?.data?.message || 'Failed to save redaction';
+        this.error = e.response?.data?.message || this.translations.failedToSaveRedaction_;
       } finally {
         this.saving = false;
       }
@@ -433,8 +434,8 @@ const MediaRedactor = Vue.defineComponent({
         <v-toolbar color="dark-primary">
           <v-icon icon="mdi-marker" class="ml-3 mr-2" size="20"></v-icon>
           <v-toolbar-title class="font-weight-medium">
-            Redaction Tool
-            <span class="text-body-2 font-weight-regular opacity-70 ml-2">— {{ media?.title || media?.filename || 'document' }}</span>
+            {{ translations.redactionTool_ }}
+            <span class="text-body-2 font-weight-regular opacity-70 ml-2">{{ media?.title || media?.filename || translations.document_ }}</span>
           </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-text-field
@@ -442,7 +443,7 @@ const MediaRedactor = Vue.defineComponent({
             density="comfortable"
             variant="solo"
             hide-details
-            label="Copy name (e.g. detainee name)"
+            :label="translations.copyNameExample_"
             prepend-inner-icon="mdi-tag-outline"
             style="max-width: 300px;"
             class="mx-3"
@@ -458,7 +459,7 @@ const MediaRedactor = Vue.defineComponent({
                   :loading="saving"
                   @click="submit(true)"
                   class="mr-2"
-                >Save changes</v-btn>
+                >{{ translations.saveChanges_ }}</v-btn>
                 <v-btn
                   :prepend-icon="isRedactedCopy ? 'mdi-content-save-plus-outline' : 'mdi-content-save-outline'"
                   :variant="isRedactedCopy ? 'tonal' : 'elevated'"
@@ -466,10 +467,10 @@ const MediaRedactor = Vue.defineComponent({
                   :loading="saving"
                   @click="submit(false)"
                   class="mr-2"
-                >{{ isRedactedCopy ? 'Save as new copy' : 'Save redacted copy' }}</v-btn>
+                >{{ isRedactedCopy ? translations.saveAsNewCopy_ : translations.saveRedactedCopy_ }}</v-btn>
               </div>
             </template>
-            <span>Draw at least one black box on the document to save</span>
+            <span>{{ translations.drawAtLeastOneBlackBox_ }}</span>
           </v-tooltip>
           <template #append>
             <v-btn icon="mdi-close" variant="text" @click="show = false"></v-btn>
@@ -477,15 +478,15 @@ const MediaRedactor = Vue.defineComponent({
         </v-toolbar>
 
         <v-toolbar density="compact" class="border-b">
-          <v-chip size="small" variant="text" prepend-icon="mdi-cursor-default-click-outline" class="ml-2 text-caption opacity-70">Click &amp; drag to draw a black box</v-chip>
-          <v-chip size="small" variant="text" prepend-icon="mdi-arrow-all" class="text-caption opacity-70">Drag box to reposition</v-chip>
-          <v-chip size="small" variant="text" prepend-icon="mdi-delete-outline" class="text-caption opacity-70">Click box then Delete to remove</v-chip>
-          <v-chip size="small" variant="text" prepend-icon="mdi-hand-back-right-outline" class="text-caption opacity-70">Hold Space + drag to pan</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-cursor-default-click-outline" class="ml-2 text-caption opacity-70">{{ translations.clickAndDragToDrawABlackBox_ }}</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-arrow-all" class="text-caption opacity-70">{{ translations.dragBoxToReposition_ }}</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-delete-outline" class="text-caption opacity-70">{{ translations.clickBoxThenDeleteToRemove_ }}</v-chip>
+          <v-chip size="small" variant="text" prepend-icon="mdi-hand-back-right-outline" class="text-caption opacity-70">{{ translations.holdSpaceAndDragToPan_ }}</v-chip>
           <v-spacer></v-spacer>
           <v-btn icon="mdi-minus" variant="tonal" density="compact" :disabled="zoom <= 1" @click="zoomOut"></v-btn>
           <span class="text-body-2 mx-1" style="min-width: 44px; text-align: center;">{{ Math.round(zoom * 100) }}%</span>
           <v-btn icon="mdi-plus" variant="tonal" density="compact" :disabled="zoom >= REDACTOR_MAX_ZOOM" @click="zoomIn"></v-btn>
-          <v-btn variant="tonal" density="compact" size="large" class="mx-2" @click="zoomFit">Fit</v-btn>
+          <v-btn variant="tonal" density="compact" size="large" class="mx-2" @click="zoomFit">{{ translations.fit_ }}</v-btn>
         </v-toolbar>
 
         <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
