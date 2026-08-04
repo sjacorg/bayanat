@@ -180,7 +180,14 @@ LOOKUP_TABLES = {
     "event_types": (
         "/admin/api/eventtypes/",
         "/admin/api/eventtype/",
-        {"item": {"title": "TestEventtype", "for_bulletin": True, "for_actor": False}},
+        {
+            "item": {
+                "title": "TestEventtype",
+                "for_bulletin": True,
+                "for_actor": False,
+                "for_incident": False,
+            }
+        },
         {"item": {"title": "Updated"}},
         ADMIN_MOD_UPDATE,
     ),
@@ -470,3 +477,62 @@ class TestDeleteIDNumberTypeStillReferenced:
         assert resp.status_code == expected
         if expected == 409:
             assert "is referenced by" in resp.text.lower()
+
+
+# ---------------------------------------------------------------------------
+# Translated-title search (typeahead endpoints)
+# ---------------------------------------------------------------------------
+
+_TRANSLATED_SEARCH_PARAMS = [
+    ("labels", "/admin/api/labels/", {"title": "Arrest", "title_ar": "اعتقال"}),
+    ("sources", "/admin/api/sources/", {"title": "Witness", "title_ar": "شاهد"}),
+    ("event_types", "/admin/api/eventtypes/", {"title": "Bombing", "title_ar": "قصف"}),
+    (
+        "potential_violations",
+        "/admin/api/potentialviolation/",
+        {"title": "Torture", "title_ar": "تعذيب"},
+    ),
+    (
+        "claimed_violations",
+        "/admin/api/claimedviolation/",
+        {"title": "Detention", "title_ar": "احتجاز"},
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "entity,list_url,fields",
+    _TRANSLATED_SEARCH_PARAMS,
+    ids=[p[0] for p in _TRANSLATED_SEARCH_PARAMS],
+)
+def test_lookup_search_by_translated_title(request, session, entity, list_url, fields):
+    Model = _get_model_map()[entity]
+    item = Model(**fields)
+    session.add(item)
+    session.commit()
+
+    client = request.getfixturevalue("admin_client")
+    resp = client.get(f"{list_url}?q={fields['title_ar']}", headers=HEADERS)
+    assert resp.status_code == 200
+    ids = [i["id"] for i in resp.json["data"]["items"]]
+    assert item.id in ids
+
+
+def test_label_mode2_includes_translated_title_and_path(session):
+    from enferno.admin.models import Label
+
+    root = Label(title="Root", title_ar="جذر")
+    session.add(root)
+    session.commit()
+    mid = Label(title="Mid", parent_label_id=root.id)
+    session.add(mid)
+    session.commit()
+    leaf = Label(title="Leaf", title_ar="ورقة", parent_label_id=mid.id)
+    session.add(leaf)
+    session.commit()
+
+    d = leaf.to_mode2()
+    assert d["title_ar"] == "ورقة"
+    assert d["path"] == "Root > Mid"
+    # untranslated ancestors fall back to their English title per level
+    assert d["path_ar"] == "جذر > Mid"

@@ -30,3 +30,9 @@ backups/*
 cookies.txt
 
 *.egg-info/
+
+# Release signing: NEVER commit secret keys. The pinned public key is baked
+# into the installer/updater, not stored as a loose file in the repo.
+*.key
+bayanat-release.key
+bayanat-release.pub

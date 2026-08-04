@@ -6,7 +6,6 @@ from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
-from flask import current_app
 from sqlalchemy import select, func, case, and_
 from enferno.utils.notification_config import ALWAYS_ON_SECURITY_EVENTS
 
@@ -24,6 +23,9 @@ class Notification(db.Model, BaseMixin):
     user = db.relationship("User", foreign_keys=[user_id], backref="notifications")
     title = db.Column(db.String, nullable=False)
     message = db.Column(db.Text, nullable=False)
+    # in-app path the notification points at; rendered as a bound href, never
+    # as markup inside message, which is escaped on purpose (BAY-01-034)
+    link = db.Column(db.String, nullable=True)
     category = db.Column(db.String, nullable=False, default=NotificationCategories.UPDATE.value)
     read_status = db.Column(db.Boolean, default=False)
     read_at = db.Column(db.DateTime)
@@ -52,6 +54,7 @@ class Notification(db.Model, BaseMixin):
             "id": self.id,
             "title": self.title,
             "message": self.message,
+            "link": self.link,
             "category": self.category,
             "read_status": self.read_status,
             "read_at": DateHelper.serialize_datetime(self.read_at) if self.read_at else None,
@@ -128,6 +131,7 @@ class Notification(db.Model, BaseMixin):
         category=NotificationCategories.UPDATE.value,
         is_urgent=False,
         send_email=False,
+        link=None,
     ):
         """Create notification for a specific user"""
         # Determine if email should be enabled
@@ -137,6 +141,7 @@ class Notification(db.Model, BaseMixin):
             user=user,
             title=title,
             message=message,
+            link=link,
             category=category,
             is_urgent=is_urgent,
             email_enabled=email_enabled,
@@ -173,7 +178,9 @@ class Notification(db.Model, BaseMixin):
         return notifications
 
     @staticmethod
-    def send_notification_for_event(event, user, title, message, category=None, is_urgent=False):
+    def send_notification_for_event(
+        event, user, title, message, category=None, is_urgent=False, link=None
+    ):
         """Send notification to user based on event configuration"""
         config = get_notification_config(event)
 
@@ -182,6 +189,7 @@ class Notification(db.Model, BaseMixin):
                 user=user,
                 title=title,
                 message=message,
+                link=link,
                 category=category or config.get("category", NotificationCategories.UPDATE.value),
                 is_urgent=is_urgent,
                 send_email=config.get("email", False),
@@ -216,8 +224,11 @@ def get_notification_config(event):
     # Get dynamic notifications config from Flask Config (includes config.json values)
     notifications_config = Config.get("NOTIFICATIONS")
 
-    # Check always-on security events first, then configurable events
-    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(event)
+    # Check always-on security events first, then configurable events.
+    # An event added in a later release is absent from an existing install's
+    # config.json, since get_config returns that dict wholesale rather than
+    # merging the defaults into it. Fall back to the defaults below.
+    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(event) or {}
 
     return {
         "enabled": config.get("in_app_enabled", True),

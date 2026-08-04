@@ -840,6 +840,7 @@ class EventtypeValidationModel(one_must_exist(["title", "title_ar"])):
     title_ar: Optional[str] = None
     for_actor: Optional[bool] = None
     for_bulletin: Optional[bool] = None
+    for_incident: Optional[bool] = None
     comments: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
@@ -1005,6 +1006,7 @@ class LocationQueryRequestModel(BaseValidationModel):
 
 class LocationAdminLevelValidationModel(StrictValidationModel):
     title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     code: int
     display_order: Optional[int] = None
     id: Optional[int] = None
@@ -1020,6 +1022,7 @@ class LocationAdminLevelRequestModel(BaseValidationModel):
 
 class LocationTypeValidationModel(StrictValidationModel):
     title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
     description: Optional[SanitizedField] = None
@@ -2086,7 +2089,11 @@ class WebImportValidationModel(StrictValidationModel):
         if domain.startswith("www."):
             domain = domain[4:]
         allowed_domains = Config.get("YTDLP_ALLOWED_DOMAINS")
-        if not any(domain.endswith(allowed) for allowed in allowed_domains):
+        # Match the registered domain or a real subdomain, not any suffix
+        # (BAY-01-014): plain endswith let "evilyoutube.com" pass "youtube.com".
+        if not any(
+            domain == allowed or domain.endswith("." + allowed) for allowed in allowed_domains
+        ):
             raise ValueError(f"Imports not allowed from {domain}")
 
         return str(v)

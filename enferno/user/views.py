@@ -165,10 +165,14 @@ def auth_callback() -> Response:
             "User not found. Ask an administrator to create an account for you."
         )
 
-    # Update the user's Google ID if it doesn't exist
+    # Enforce a durable binding to the Google subject (BAY-01-019). Bind on
+    # first login; on later logins for the same email, refuse if the Google
+    # subject differs instead of silently inheriting the existing identity.
     if u.google_id is None:
         u.google_id = unique_id
         u.save()
+    elif u.google_id != unique_id:
+        return HTTPResponse.forbidden("Google account does not match the linked identity.")
 
     # Check if 2FA is required before completing login
     tf_plugin = current_app.extensions["security"]._tf_plugin

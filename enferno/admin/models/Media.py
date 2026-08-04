@@ -1,5 +1,6 @@
 import json
 import pathlib
+import secrets
 from pathlib import Path
 from typing import Any
 from unidecode import unidecode
@@ -146,6 +147,20 @@ class Media(db.Model, BaseMixin):
         """
         decoded = secure_filename(unidecode(filename)).lower()
         return f"{DateHelper.utcnow().strftime('%Y%m%d-%H%M%S')}-{decoded}"
+
+    @staticmethod
+    def generate_inline_file_name(filename: str) -> str:
+        """Opaque, unguessable name for inline rich-text uploads (BAY-01-020).
+
+        Inline media is served on a session-only route with no per-item access
+        check, so the old timestamp+basename name let any authenticated user
+        reconstruct a filename and fetch media for items they can't access. A
+        random token makes the URL a capability only held by viewers of the
+        (access-controlled) description that embeds it.
+        """
+        decoded = secure_filename(unidecode(filename)).lower().rsplit(".", 1)
+        suffix = f".{decoded[1]}" if len(decoded) == 2 and decoded[1] else ""
+        return f"{secrets.token_urlsafe(24)}{suffix}"
 
     @staticmethod
     def validate_file_extension(filepath: str, allowed_extensions: list[str]) -> bool:

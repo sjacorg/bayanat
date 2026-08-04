@@ -56,7 +56,7 @@ const Toast = Vue.defineComponent({
   template: `
     <v-snackbar v-model="open" multi-line v-bind="snackbarProps">
       <v-icon v-if="iconProps" class="mr-2" v-bind="iconProps"></v-icon>
-      <span v-html="message"></span>
+      <span style="white-space: pre-line;" v-text="message"></span>
       <template v-if="!hideActions" #actions>
           <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>
       </template>

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Response, request
+from flask import Response, current_app, request
 from flask.templating import render_template
 from flask_babel import gettext
-from flask_security.decorators import auth_required, current_user, roles_required
+from flask_security.decorators import current_user, roles_required
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import (
@@ -23,11 +23,11 @@ from enferno.admin.validation.models import ConfigRequestModel
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.validation_utils import validate_with
-from . import admin, PER_PAGE
+from . import admin, PER_PAGE, fresh_auth
 
 
 @admin.get("/system-administration/")
-@auth_required(within=15, grace=0)
+@fresh_auth
 @roles_required("Admin")
 def system_admin() -> str:
     """Endpoint for system administration."""
@@ -76,6 +76,7 @@ def api_config() -> str:
 
 
 @admin.put("/api/configuration/")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(ConfigRequestModel)
 def api_config_write(
@@ -107,6 +108,7 @@ def api_config_write(
 
 
 @admin.post("/api/reload/")
+@fresh_auth
 @roles_required("Admin")
 def api_app_reload() -> Response:
     """
@@ -184,3 +186,68 @@ def get_data(table: str) -> list[dict[str, Any]] | list[dict[str, dict[str, Any 
         return [{"en": item.title, "tr": item.title_tr or ""} for item in items]
 
     return None
+
+
+import json
+import time
+from pathlib import Path
+
+from enferno.tasks.maintenance import UPDATE_CACHE_KEY, _redis_get_str
+
+
+@admin.get("/api/updates/available")
+@roles_required("Admin")
+def api_updates_available() -> Response:
+    """Return the latest cached GitHub release info."""
+    raw = _redis_get_str(UPDATE_CACHE_KEY)
+    cached = {}
+    if raw:
+        try:
+            cached = json.loads(raw)
+        except Exception:
+            cached = {}
+    payload = {
+        "current": current_app.config["VERSION"],
+        "latest": cached.get("latest"),
+        "release_notes_url": cached.get("release_notes_url"),
+        "checked_at": cached.get("checked_at"),
+    }
+    return HTTPResponse.success(data=payload)
+
+
+@admin.get("/snapshots/")
+@fresh_auth
+@roles_required("Admin")
+def snapshots_page() -> str:
+    """Render the snapshots list page."""
+    return render_template("admin/snapshots.html")
+
+
+@admin.get("/api/snapshots/")
+@roles_required("Admin")
+def api_snapshots() -> Response:
+    """List pre-update snapshots from the backups directory.
+
+    Reads the directory the updater writes snapshots into instead of shelling
+    `sudo bayanat snapshots`, so the service account needs no sudo grant
+    (BAY-01-032).
+    """
+    backups = Path(current_app.config.get("BACKUPS_LOCAL_PATH", ""))
+    items = []
+    if backups.is_dir():
+        now = time.time()
+        for p in sorted(backups.glob("pre-*.dump"), key=lambda p: p.stat().st_mtime, reverse=True):
+            st = p.stat()
+            size = st.st_size
+            for unit in ("B", "K", "M", "G", "T"):
+                if size < 1024:
+                    break
+                size /= 1024
+            items.append(
+                {
+                    "name": p.name,
+                    "size": f"{size:.0f}{unit}",
+                    "age": f"{int((now - st.st_mtime) // 3600)}h",
+                }
+            )
+    return HTTPResponse.success(data=items)

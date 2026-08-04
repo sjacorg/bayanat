@@ -15,11 +15,17 @@ class LocationType(db.Model, BaseMixin):
     __table_args__ = {"extend_existing": True}
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
     description = db.Column(db.String)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the location type."""
-        return {"id": self.id, "title": self.title, "description": self.description}
+        return {
+            "id": self.id,
+            "title": self.title,
+            "title_tr": self.title_tr,
+            "description": self.description,
+        }
 
     def from_json(self, jsn: dict[str, Any]) -> "LocationType":
         """
@@ -29,4 +35,5 @@ class LocationType(db.Model, BaseMixin):
             - json: the json dictionary to create the location type from.
         """
         self.title = jsn.get("title")
+        self.title_tr = jsn.get("title_tr")
         self.description = jsn.get("description")

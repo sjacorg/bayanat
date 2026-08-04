@@ -1,11 +1,8 @@
-import os
-
 from datetime import datetime as dt
 from pathlib import Path
 from typing import Any, Union
 
 import arrow
-from flask import current_app
 from sqlalchemy import ARRAY
 from flask_security.decorators import current_user
 
@@ -67,6 +64,20 @@ class Export(db.Model, BaseMixin):
         else:
             return True
 
+    @staticmethod
+    def _accessible_item_ids(table: str, items: Any) -> list:
+        """Filter requested export item IDs to those the current user may access
+        (BAY-01-026). Admins keep everything; others keep only in-scope items.
+        """
+        from enferno.admin.models import Actor, Bulletin, Incident
+
+        model = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}.get(table)
+        if not model or not isinstance(items, list):
+            return []
+        rows = model.query.filter(model.id.in_(items)).all()
+        allowed = {r.id for r in rows if current_user and current_user.can_access(r)}
+        return [i for i in items if i in allowed]
+
     def from_json(self, table: str, json: dict) -> "Export":
         """
         Export Deserializer.
@@ -78,13 +89,19 @@ class Export(db.Model, BaseMixin):
         Returns:
             - Export object
         """
+        if not isinstance(json, dict):
+            json = {}
         cfg = json.get("config")
-        items = json.get("items")
+        if not isinstance(cfg, dict):
+            cfg = {}
 
         self.requester = current_user
         self.table = table
-        self.items = items
-        self.tags = cfg.get("tags") if "tags" in cfg else []
+        # Store only items the requester can access (BAY-01-026): keep crafted /
+        # out-of-scope IDs from ever being persisted, approved, or exported. The
+        # worker re-validates access at generation time too (BAY-01-003).
+        self.items = self._accessible_item_ids(table, json.get("items"))
+        self.tags = cfg.get("tags", [])
         self.comment = cfg.get("comment")
         self.file_format = cfg.get("format")
         self.include_media = cfg.get("includeMedia")

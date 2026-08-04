@@ -9,6 +9,7 @@ from pdf2image import convert_from_path
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
+from enferno.utils.validation_utils import sanitize_string
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
@@ -20,7 +21,6 @@ from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
 from enferno.extensions import db
 from sqlalchemy import any_
-from urllib.parse import urlparse
 
 logger = get_logger()
 
@@ -105,7 +105,9 @@ class MediaImport:
                 region_name=Config.get("AWS_REGION"),
             )
             try:
-                s3.Bucket(Config.get("S3_BUCKET")).put_object(Key=target, Body=open(filepath, "rb"))
+                # upload_file streams via a managed multipart transfer; put_object is a
+                # single PUT and fails with EntityTooLarge above S3's 5 GiB limit.
+                s3.Bucket(Config.get("S3_BUCKET")).upload_file(filepath, target)
                 self.data_import.add_to_log("File uploaded to S3 bucket.")
                 return True
             except Exception as e:
@@ -389,7 +391,10 @@ class MediaImport:
 
         # Upload to S3 if needed
         if not Config.get("FILESYSTEM_LOCAL"):
-            self.upload(filepath, os.path.basename(filepath))
+            if not self.upload(filepath, os.path.basename(filepath)):
+                self.data_import.add_to_log("Unable to proceed without media file. Terminating.")
+                self.data_import.fail()
+                return
 
         # Bundle info for bulletin creation
         info["filename"] = filename
@@ -448,7 +453,10 @@ class MediaImport:
         info["originalFilename"] = file.get("original_filename")
 
         if not Config.get("FILESYSTEM_LOCAL"):
-            self.upload(filepath, os.path.basename(filepath))
+            if not self.upload(filepath, os.path.basename(filepath)):
+                self.data_import.add_to_log("Unable to proceed without media file. Terminating.")
+                self.data_import.fail()
+                return
 
         # get file extension and duration
         _, ext = os.path.splitext(filename)
@@ -495,6 +503,11 @@ class MediaImport:
         else:
             self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
+            return
+
+        # Each import mode logs the reason and fails the DataImport before
+        # returning None, so stop here rather than dereferencing it below.
+        if info is None:
             return
 
         mime_type = info.get("File:MIMEType")
@@ -568,6 +581,7 @@ class MediaImport:
         db.session.add(bulletin)
 
         def update_description(description):
+            description = sanitize_string(description or "")
             if bulletin.description:
                 bulletin.description += f"<br />{description}"
             else:
@@ -593,20 +607,19 @@ class MediaImport:
             channel_url = info.get("channel_url")
             channel = info.get("channel")
 
-            domain = info.get("extractor_key")
+            domain = info.get("extractor_key") or info.get("extractor")
             if not domain:
-                url = urlparse(info.get("source_url")).netloc.lower()
-                url = domain[4:] if domain.startswith("www.") else domain
-                domain = url.split(".")[0].first()
-
-            main_source = Source.query.filter(Source.title == domain).first()
-
-            if not main_source:
-                main_source = Source()
-                main_source.title = domain
-                main_source.etl_id = info.get("webpage_url_domain") or url
-                main_source.save()
-            bulletin.sources.append(main_source)
+                self.data_import.add_to_log(
+                    "yt-dlp metadata missing extractor_key; skipping Source linkage."
+                )
+            else:
+                main_source = Source.query.filter(Source.title == domain).first()
+                if not main_source:
+                    main_source = Source()
+                    main_source.title = domain
+                    main_source.etl_id = info.get("webpage_url_domain")
+                    main_source.save()
+                bulletin.sources.append(main_source)
 
             source = None
 
@@ -665,12 +678,12 @@ class MediaImport:
                 bulletin.publish_date = upload_date
 
             if description := info.get("description"):
-                bulletin.description = description
+                bulletin.description = sanitize_string(description)
         else:
             bulletin.source_link = info.get("old_path")
 
         if info.get("text_content"):
-            bulletin.description = info.get("text_content")
+            bulletin.description = sanitize_string(info.get("text_content"))
 
         if info.get("transcription"):
             update_description(info.get("transcription"))

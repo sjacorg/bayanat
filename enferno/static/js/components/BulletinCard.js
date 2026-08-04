@@ -1,4 +1,5 @@
 const BulletinCard = Vue.defineComponent({
+  components: { LabelPathList },
   props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   watch: {
@@ -34,6 +35,9 @@ const BulletinCard = Vue.defineComponent({
   },
 
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     translate_status(status) {
       return translate_status(status);
     },
@@ -317,7 +321,7 @@ const BulletinCard = Vue.defineComponent({
                 <v-card-text class="pt-0">
                   <div class="flex-chips">
                     <v-chip size="small" class="flex-chip" v-for="source in bulletin.sources" :key="source.id">
-                      {{ source.title }}
+                      <bdi>{{ localizedTitle(source) }}</bdi>
                     </v-chip>
                   </div>
                 </v-card-text>
@@ -341,11 +345,7 @@ const BulletinCard = Vue.defineComponent({
                   <v-toolbar-title class="text-subtitle-1">{{ translations.labels_ }}</v-toolbar-title>
                 </v-toolbar>
                 <v-card-text class="pt-0">
-                  <div class="flex-chips">
-                    <v-chip label size="small" class="flex-chip" v-for="label in bulletin.labels" :key="label.id">
-                      {{ label.title }}
-                    </v-chip>
-                  </div>
+                  <label-path-list :labels="bulletin.labels"></label-path-list>
                 </v-card-text>
               </v-card>
             </div>
@@ -356,11 +356,7 @@ const BulletinCard = Vue.defineComponent({
                   <v-toolbar-title class="text-subtitle-1">{{ translations.verifiedLabels_ }}</v-toolbar-title>
                 </v-toolbar>
                 <v-card-text class="pt-0">
-                  <div class="flex-chips">
-                    <v-chip label size="small" class="flex-chip" v-for="vlabel in bulletin.verLabels" :key="vlabel.id">
-                      {{ vlabel.title }}
-                    </v-chip>
-                  </div>
+                  <label-path-list :labels="bulletin.verLabels"></label-path-list>
                 </v-card-text>
               </v-card>
             </div>

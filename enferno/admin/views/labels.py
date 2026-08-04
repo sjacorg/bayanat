@@ -43,7 +43,12 @@ def api_labels() -> Response:
 
     if q:
         words = q.split(" ")
-        query.extend([Label.title.ilike(f"%{word}%") for word in words])
+        query.extend(
+            [
+                or_(Label.title.ilike(f"%{word}%"), Label.title_ar.ilike(f"%{word}%"))
+                for word in words
+            ]
+        )
 
     typ = request.args.get("typ", None)
     if typ and typ in ["for_bulletin", "for_actor", "for_incident", "for_offline"]:

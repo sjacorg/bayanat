@@ -5,6 +5,20 @@ from flask_login import current_user
 #  Role based Access Control Decorator for Bulletins / Actors  / Incidents  #
 
 
+def can_view_media():
+    """Whether the current actor may see media metadata in entity payloads.
+
+    CLI/Celery (no request context) are trusted. Otherwise mirror the
+    _require_media_access gate on the direct media endpoints: Admins and users
+    with can_access_media only. Without this, a user blocked from the media
+    endpoints could still read filenames, etags and OCR text embedded in a
+    parent bulletin/actor payload (BAY-01-012).
+    """
+    if not has_request_context():
+        return True
+    return current_user.has_role("Admin") or current_user.can_access_media
+
+
 def check_roles(method):
     """
     Decorator to check if the current user has access to the resource. If the

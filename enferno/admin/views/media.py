@@ -388,6 +388,7 @@ def api_medias_upload() -> Response:
 
 # return signed url from s3 valid for some time
 @admin.route("/api/media/<filename>")
+@_require_media_access
 def serve_media(
     filename: str,
 ) -> Response:
@@ -475,6 +476,7 @@ def serve_media(
 
 
 @admin.route("/api/serve/media/<filename>")
+@_require_media_access
 def api_local_serve_media(
     filename: str,
 ) -> Response:
@@ -522,6 +524,7 @@ def api_local_serve_media(
 
 @admin.route("/api/media/<int:id>/proxy")
 @auth_required()
+@_require_media_access
 def api_media_proxy(id: int) -> Response:
     """Proxy media file through Flask -- ensures same-origin inline display for PDFs."""
     media = Media.query.get(id)
@@ -573,8 +576,9 @@ def api_inline_medias_upload() -> Response:
                 f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
             )
 
-        # final file
-        filename = Media.generate_file_name(f.filename)
+        # final file: opaque, unguessable name so inline media can't be
+        # enumerated/reconstructed by other users (BAY-01-020)
+        filename = Media.generate_inline_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
 
@@ -604,6 +608,7 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 @admin.get("/api/media/<int:id>")
 @auth_required("session")
+@_require_media_access
 def api_media_get(id: int):
     """Get a single media item by ID with extraction and bulletin info."""
     media = Media.query.get(id)
@@ -616,8 +621,6 @@ def api_media_get(id: int):
     item = media.to_dict()
     ext = media.extraction
     ext_dict = ext.to_dict() if ext else None
-    if ext_dict and ext:
-        ext_dict["raw"] = ext.raw
     item["extraction"] = ext_dict
     item["ocr_status"] = ext.status if ext else "pending"
     if media.bulletin:
@@ -650,14 +653,14 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
     if media is None:
         return HTTPResponse.not_found("Media not found")
 
-    if not current_user.can_access(media):
+    if not current_user.can_edit(media):
         Activity.create(
             current_user,
             Activity.ACTION_VIEW,
             Activity.STATUS_DENIED,
             validated_data,
             "media",
-            details="Unauthorized attempt to update restricted media.",
+            details="Unauthorized attempt to update media outside edit boundary.",
         )
         return HTTPResponse.forbidden("Restricted Access")
 
@@ -954,6 +957,7 @@ def api_ocr_stats():
 
 @admin.get("/api/extraction/<int:extraction_id>")
 @auth_required("session")
+@_require_media_access
 def api_extraction_get(extraction_id: int):
     """Return full extraction data including text."""
     extraction = Extraction.query.get(extraction_id)
@@ -983,6 +987,14 @@ def api_extraction_update(extraction_id: int):
     extraction = Extraction.query.get(extraction_id)
     if not extraction:
         return HTTPResponse.not_found("Extraction not found")
+
+    media = Media.query.get(extraction.media_id)
+    if not media:
+        return HTTPResponse.not_found("Parent media not found")
+    # Editing extracted text mutates the item: require the assignment edit
+    # boundary, not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
+        return HTTPResponse.forbidden("Restricted Access")
 
     data = request.json or {}
     action = data.get("action")
@@ -1032,7 +1044,7 @@ def api_extraction_update(extraction_id: int):
         details=detail_map.get(action),
     )
 
-    return jsonify(extraction.to_dict())
+    return jsonify(extraction.to_compact_dict())
 
 
 @admin.put("/api/media/<int:id>/orientation")
@@ -1044,7 +1056,9 @@ def api_media_orientation(id: int):
     if not media:
         return HTTPResponse.not_found("Media not found")
 
-    if not current_user.can_access(media):
+    # Rotating media mutates the item: require the assignment edit boundary,
+    # not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     data = request.json or {}
@@ -1107,7 +1121,9 @@ def api_ocr_process(media_id: int):
     media = db.session.get(Media, media_id)
     if not media:
         return HTTPResponse.not_found("Media not found")
-    if not current_user.can_access(media):
+    # Running OCR writes the item's extraction: require the assignment edit
+    # boundary, not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     result = process_media_extraction_task(media_id, force=True)
@@ -1151,12 +1167,13 @@ def api_ocr_bulk():
     ocr_ext = current_app.config.get("OCR_EXT", [])
     ext_filters = [Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext] if ocr_ext else []
 
-    # Build media ID list
+    # Build media ID list. Every path is scoped to the caller's access via
+    # _apply_media_access_filter so a non-admin can't OCR restricted items.
     if process_all and not media_ids:
         stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None))
         if ext_filters:
             stmt = stmt.where(or_(*ext_filters))
-        stmt = stmt.limit(limit)
+        stmt = _apply_media_access_filter(stmt).limit(limit)
         media_ids = list(db.session.scalars(stmt))
     elif bulletin_id and not media_ids:
         stmt = (
@@ -1167,8 +1184,20 @@ def api_ocr_bulk():
         )
         if ext_filters:
             stmt = stmt.where(or_(*ext_filters))
-        stmt = stmt.limit(limit)
+        stmt = _apply_media_access_filter(stmt).limit(limit)
         media_ids = list(db.session.scalars(stmt))
+    elif media_ids:
+        # explicit list: drop any the caller can't access
+        stmt = _apply_media_access_filter(select(Media.id).where(Media.id.in_(media_ids)))
+        media_ids = list(db.session.scalars(stmt))
+
+    # OCR writes an extraction, so enforce the assignment edit boundary per
+    # item, matching the single-OCR endpoint (BAY-01-009). The query filter
+    # above only expresses visibility (can_access); can_edit needs the parent's
+    # assignment + status, so post-filter here. Admins always pass.
+    if media_ids and not current_user.has_role("Admin"):
+        candidates = db.session.scalars(select(Media).where(Media.id.in_(media_ids)))
+        media_ids = [m.id for m in candidates if current_user.can_edit(m)]
 
     if not media_ids:
         return HTTPResponse.error("No media to process")

@@ -191,7 +191,9 @@
                             if (result.error_msg) {
 
                                 const error_element = document.getElementById("wan-errors");
-                                error_element.innerHTML = `<em>${result.error_msg}</em>`;
+                                const error_message = document.createElement("em");
+                                error_message.textContent = result.error_msg;
+                                error_element.replaceChildren(error_message);
                             } else {
                                 document.getElementById("credential").value = result.credential;
                                 /* We auto-submit this form - there is a Submit button on the

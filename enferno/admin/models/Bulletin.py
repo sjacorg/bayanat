@@ -31,7 +31,7 @@ from enferno.admin.models.tables import (
     bulletin_verlabels,
     bulletin_events,
 )
-from enferno.admin.models.utils import check_roles
+from enferno.admin.models.utils import check_roles, can_view_media
 
 logger = get_logger()
 
@@ -415,74 +415,36 @@ class Bulletin(db.Model, BaseMixin):
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json:
-            # collect related bulletin ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["bulletin_relations"]:
-                bulletin = db.session.get(Bulletin, relation["bulletin"]["id"])
-                # Extra (check those bulletins exit)
+            self.sync_relations(
+                json["bulletin_relations"],
+                Bulletin,
+                "bulletin",
+                self.relate_bulletin,
+                self.bulletin_relations,
+                lambda r: r.get_other_id(self.id),
+            )
 
-                if bulletin:
-                    rel_ids.append(bulletin.id)
-                    # this will update/create the relationship (will flush to db)
-                    self.relate_bulletin(bulletin, relation=relation)
-
-                # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination bulletin no in the related ids
-
-            for r in self.bulletin_relations:
-                # get related bulletin (in or out)
-                rid = r.get_other_id(self.id)
-                if not (rid in rel_ids):
-                    r.delete()
-
-                    # ------- create revision on the other side of the relationship
-                    db.session.get(Bulletin, rid).create_revision()
-
-        # Related Actors (actors_relations)
+        # Related Actors (actor_relations)
         if "actor_relations" in json:
-            # collect related bulletin ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["actor_relations"]:
-                actor = db.session.get(Actor, relation["actor"]["id"])
-                if actor:
-                    rel_ids.append(actor.id)
-                    # helper method to update/create the relationship (will flush to db)
-                    self.relate_actor(actor, relation=relation)
+            self.sync_relations(
+                json["actor_relations"],
+                Actor,
+                "actor",
+                self.relate_actor,
+                self.actor_relations,
+                lambda r: r.actor_id,
+            )
 
-            # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination actor no in the related ids
-
-            for r in self.actor_relations:
-                # get related bulletin (in or out)
-                if not (r.actor_id in rel_ids):
-                    rel_actor = r.actor
-                    r.delete()
-
-                    # --revision relation
-                    rel_actor.create_revision()
-
-        # Related Incidents (incidents_relations)
+        # Related Incidents (incident_relations)
         if "incident_relations" in json:
-            # collect related incident ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["incident_relations"]:
-                incident = db.session.get(Incident, relation["incident"]["id"])
-                if incident:
-                    rel_ids.append(incident.id)
-                    # helper method to update/create the relationship (will flush to db)
-                    self.relate_incident(incident, relation=relation)
-
-            # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination incident no in the related ids
-
-            for r in self.incident_relations:
-                # get related bulletin (in or out)
-                if not (r.incident_id in rel_ids):
-                    rel_incident = r.incident
-                    r.delete()
-
-                    # --revision relation
-                    rel_incident.create_revision()
+            self.sync_relations(
+                json["incident_relations"],
+                Incident,
+                "incident",
+                self.relate_incident,
+                self.incident_relations,
+                lambda r: r.incident_id,
+            )
 
         self.publish_date = json.get("publish_date", None)
         if self.publish_date == "":
@@ -522,7 +484,9 @@ class Bulletin(db.Model, BaseMixin):
         sources_json = []
         if self.sources and len(self.sources):
             for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
+                sources_json.append(
+                    {"id": source.id, "title": source.title, "title_ar": source.title_ar}
+                )
 
         return {
             "id": self.id,
@@ -735,19 +699,37 @@ class Bulletin(db.Model, BaseMixin):
         sources_json = []
         if self.sources and len(self.sources):
             for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
+                sources_json.append(
+                    {"id": source.id, "title": source.title, "title_ar": source.title_ar}
+                )
 
         # labels json
         labels_json = []
         if self.labels and len(self.labels):
             for label in self.labels:
-                labels_json.append({"id": label.id, "title": label.title})
+                labels_json.append(
+                    {
+                        "id": label.id,
+                        "title": label.title,
+                        "title_ar": label.title_ar,
+                        "path": label._build_path(),
+                        "path_ar": label._build_path(translated=True),
+                    }
+                )
 
         # verified labels json
         ver_labels_json = []
         if self.ver_labels and len(self.ver_labels):
             for vlabel in self.ver_labels:
-                ver_labels_json.append({"id": vlabel.id, "title": vlabel.title})
+                ver_labels_json.append(
+                    {
+                        "id": vlabel.id,
+                        "title": vlabel.title,
+                        "title_ar": vlabel.title_ar,
+                        "path": vlabel._build_path(),
+                        "path_ar": vlabel._build_path(translated=True),
+                    }
+                )
 
         # events json
         events_json = []
@@ -755,9 +737,9 @@ class Bulletin(db.Model, BaseMixin):
             for event in self.events:
                 events_json.append(event.to_dict())
 
-        # medias json
+        # medias json (hidden from users without media access, BAY-01-012)
         medias_json = []
-        if self.medias and len(self.medias):
+        if can_view_media() and self.medias and len(self.medias):
             for media in self.medias:
                 medias_json.append(media.to_dict())
 
@@ -844,7 +826,9 @@ class Bulletin(db.Model, BaseMixin):
         sources_json = []
         if self.sources and len(self.sources):
             for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
+                sources_json.append(
+                    {"id": source.id, "title": source.title, "title_ar": source.title_ar}
+                )
 
         return {
             "class": "Bulletin",

@@ -50,13 +50,16 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
+    total_updated = 0
     for group in chunks:
         # Fetch bulletins
         bulletins = Bulletin.query.filter(Bulletin.id.in_(group))
+        # Only items the caller may actually modify, so downstream revisions,
+        # activity, notifications and counts never cover skipped items (BAY-01-018).
+        mutated = []
         for bulletin in bulletins:
             # check user can access each bulletin
             if not user.can_access(bulletin):
-                # Log?
                 continue
 
             # get Status initially
@@ -115,27 +118,27 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
             # add only to session
             db.session.add(bulletin)
+            mutated.append(bulletin)
 
-        revmaps = []
-        bulletins = Bulletin.query.filter(Bulletin.id.in_(group)).all()
-        for bulletin in bulletins:
-            # this commits automatically
-            tmp = {"bulletin_id": bulletin.id, "user_id": cur_user.id, "data": bulletin.to_dict()}
-            revmaps.append(tmp)
+        revmaps = [
+            {"bulletin_id": b.id, "user_id": cur_user.id, "data": b.to_dict()} for b in mutated
+        ]
         db.session.bulk_insert_mappings(BulletinHistory, revmaps)
 
         # commit session when a batch of items and revisions are added
         db.session.commit()
+        total_updated += len(mutated)
 
-        # Record Activity
-        updated = [b.to_mini() for b in bulletins]
-        Activity.create(
-            cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "bulletin"
-        )
+        # Record Activity only for items actually updated
+        if mutated:
+            updated = [b.to_mini() for b in mutated]
+            Activity.create(
+                cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "bulletin"
+            )
         # perhaps allow a little time out
         time.sleep(0.1)
 
-    logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {total_updated}")
 
     assigner = db.session.get(User, cur_user_id)
     # Notify admin
@@ -143,7 +146,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         assigner,
         "Bulk Operation Status",
-        f"Bulk update of {len(ids)} Bulletins has been completed successfully.",
+        f"Bulk update of {total_updated} Bulletins has been completed successfully.",
     )
 
     # send notifications for assignments and reviews
@@ -152,7 +155,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             Constants.NotificationEvent.NEW_ASSIGNMENT,
             db.session.get(User, assigned_to_id),
             "New Assignment",
-            f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for analysis.",
+            f"{total_updated} Bulletins have been assigned to you by {assigner.username} for analysis.",
         )
 
     if first_peer_reviewer_id:
@@ -160,7 +163,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             Constants.NotificationEvent.REVIEW_NEEDED,
             db.session.get(User, first_peer_reviewer_id),
             "Review Needed",
-            f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for review.",
+            f"{total_updated} Bulletins have been assigned to you by {assigner.username} for review.",
         )
 
 
@@ -192,13 +195,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
+    total_updated = 0
     for group in chunks:
         # Fetch bulletins
         actors = Actor.query.filter(Actor.id.in_(group))
+        # Only items the caller may actually modify (BAY-01-018).
+        mutated = []
         for actor in actors:
             # check user can access each actor
             if not user.can_access(actor):
-                # Log?
                 continue
 
             # get Status initially
@@ -257,27 +262,25 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
             # add only to session
             db.session.add(actor)
+            mutated.append(actor)
 
-        revmaps = []
-        actors = Actor.query.filter(Actor.id.in_(group)).all()
-        for actor in actors:
-            # this commits automatically
-            tmp = {"actor_id": actor.id, "user_id": cur_user.id, "data": actor.to_dict()}
-            revmaps.append(tmp)
+        revmaps = [{"actor_id": a.id, "user_id": cur_user.id, "data": a.to_dict()} for a in mutated]
         db.session.bulk_insert_mappings(ActorHistory, revmaps)
 
         # commit session when a batch of items and revisions are added
         db.session.commit()
+        total_updated += len(mutated)
 
-        # Record Activity
-        updated = [b.to_mini() for b in actors]
-        Activity.create(
-            cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "actor"
-        )
+        # Record Activity only for items actually updated
+        if mutated:
+            updated = [b.to_mini() for b in mutated]
+            Activity.create(
+                cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "actor"
+            )
         # perhaps allow a little time out
         time.sleep(0.25)
 
-    logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {total_updated}")
 
     assigner = db.session.get(User, cur_user_id)
     # Notify admin
@@ -285,7 +288,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         assigner,
         "Bulk Operation Status",
-        f"Bulk update of {len(ids)} Actors has been completed successfully.",
+        f"Bulk update of {total_updated} Actors has been completed successfully.",
     )
 
     # send notifications for assignments and reviews
@@ -294,7 +297,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             Constants.NotificationEvent.NEW_ASSIGNMENT,
             db.session.get(User, assigned_to_id),
             "New Assignment",
-            f"{len(ids)} Actors have been assigned to you by {assigner.username} for analysis.",
+            f"{total_updated} Actors have been assigned to you by {assigner.username} for analysis.",
         )
 
     if first_peer_reviewer_id:
@@ -302,7 +305,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             Constants.NotificationEvent.REVIEW_NEEDED,
             db.session.get(User, first_peer_reviewer_id),
             "Review Needed",
-            f"{len(ids)} Actors have been assigned to you by {assigner.username} for review.",
+            f"{total_updated} Actors have been assigned to you by {assigner.username} for review.",
         )
 
 
@@ -340,13 +343,15 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
     clear_reviewer = bulk.get("reviewerClear")
 
+    total_updated = 0
     for group in chunks:
         # Fetch bulletins
         incidents = Incident.query.filter(Incident.id.in_(group))
+        # Only items the caller may actually modify (BAY-01-018).
+        mutated = []
         for incident in incidents:
             # check if user can access incident
             if not user.can_access(incident):
-                # Log?
                 continue
 
             # get Status initially
@@ -403,23 +408,23 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
             # add only to session
             db.session.add(incident)
+            mutated.append(incident)
 
-        revmaps = []
-        incidents = Incident.query.filter(Incident.id.in_(group)).all()
-        for incident in incidents:
-            # this commits automatically
-            tmp = {"incident_id": incident.id, "user_id": cur_user.id, "data": incident.to_dict()}
-            revmaps.append(tmp)
+        revmaps = [
+            {"incident_id": i.id, "user_id": cur_user.id, "data": i.to_dict()} for i in mutated
+        ]
         db.session.bulk_insert_mappings(IncidentHistory, revmaps)
 
         # commit session when a batch of items and revisions are added
         db.session.commit()
+        total_updated += len(mutated)
 
-        # Record Activity
-        updated = [b.to_mini() for b in incidents]
-        Activity.create(
-            cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "incident"
-        )
+        # Record Activity only for items actually updated
+        if mutated:
+            updated = [b.to_mini() for b in mutated]
+            Activity.create(
+                cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "incident"
+            )
 
         # restrict or assign related items
         if assign_related or restrict_related:
@@ -445,7 +450,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         # perhaps allow a little time out
         time.sleep(0.25)
 
-    logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {total_updated}")
 
     assigner = db.session.get(User, cur_user_id)
     # Notify admin
@@ -453,7 +458,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         assigner,
         "Bulk Operation Status",
-        f"Bulk update of {len(ids)} Incidents has been completed successfully.",
+        f"Bulk update of {total_updated} Incidents has been completed successfully.",
     )
 
     # send notifications for assignments and reviews
@@ -462,7 +467,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             Constants.NotificationEvent.NEW_ASSIGNMENT,
             db.session.get(User, assigned_to_id),
             "New Assignment",
-            f"{len(ids)} Incidents have been assigned to you by {assigner.username} for analysis.",
+            f"{total_updated} Incidents have been assigned to you by {assigner.username} for analysis.",
         )
 
     if first_peer_reviewer_id:
@@ -470,5 +475,5 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             Constants.NotificationEvent.REVIEW_NEEDED,
             db.session.get(User, first_peer_reviewer_id),
             "Review Needed",
-            f"{len(ids)} Incidents have been assigned to you by {assigner.username} for review.",
+            f"{total_updated} Incidents have been assigned to you by {assigner.username} for review.",
         )

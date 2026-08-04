@@ -118,6 +118,18 @@ function isValidLength(value, limit, type) {
     return type === "max" ? length <= limit : length >= limit;
 }
 
+function escapeHtml(value) {
+  const entityMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+
+  return String(value ?? '').replace(/[&<>"']/g, char => entityMap[char]);
+}
+
 function scrollToFirstError() {
   const wrapper = document.querySelector(".v-input--error");
   if (!wrapper) return;
@@ -365,8 +377,8 @@ function getInfraMessage(status) {
       return Object.entries(errors).map(([field, message]) => {
         const fieldName = field.startsWith('item.') ? field.slice(5) : field;
         const label = fieldName.includes('__root__') ? 'Validation Error' : fieldName;
-        return `<span class="font-weight-bold text-red">[${label}]</span>: ${message}`;
-      }).join('<br />') || 'An error occurred.';
+        return `[${label}]: ${message}`;
+      }).join('\n') || 'An error occurred.';
     }
 
     if (response?.data?.message) {
@@ -519,6 +531,16 @@ function translate_status(str) {
 // relationship information helper
 
 // Same-type relations (A2A/B2B/I2I) are stored once in id order (lower_id -> higher_id).
+// Lookup items render in the user's interface language when a translation exists,
+// falling back to the base (English) title. Lookups name the translated field
+// either <field>_ar or <field>_tr depending on the model.
+const localizedLookupTitle = (item, field = 'title') => {
+  if (!item) return '';
+  const translated = item[field + '_ar'] || item[field + '_tr'];
+  if (window.__lang__ === 'ar' && translated) return translated;
+  return item[field] || translated || '';
+};
+
 // From the higher-id entity's side, show each type's reverse_title so the relationship
 // reads correctly from both profiles. Falls back to title when a type has no reverse
 // (symmetric types, and all current B2B/I2I types). Cross-type relations never mirror.
@@ -527,7 +549,11 @@ const relationTypeLabels = ({ relationInfo, item, viewedEntity, relatedEntity, s
   const selectedIds = [].concat(item.related_as || []);
   return (relationInfo || [])
     .filter((relationType) => selectedIds.includes(relationType.id))
-    .map((relationType) => (flip && relationType.reverse_title ? relationType.reverse_title : relationType.title));
+    .map((relationType) =>
+      flip && relationType.reverse_title
+        ? localizedLookupTitle(relationType, 'reverse_title')
+        : localizedLookupTitle(relationType, 'title'),
+    );
 };
 
 // Reciprocal relation type: the catalog row whose title/reverse_title are swapped.
