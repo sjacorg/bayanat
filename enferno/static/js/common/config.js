@@ -459,6 +459,36 @@ const routes = [
 
 ];
 
+const contextualHelpLinks = {
+    dashboard: 'https://docs.bayanat.org/guide/workflow.html',
+    activity: 'https://docs.bayanat.org/guide/activity.html',
+    actors: 'https://docs.bayanat.org/guide/actors.html',
+    actor: 'https://docs.bayanat.org/guide/actors.html',
+    'actor-fields': 'https://docs.bayanat.org/guide/dynamic-fields.html',
+    bulletins: 'https://docs.bayanat.org/guide/bulletins.html',
+    bulletin: 'https://docs.bayanat.org/guide/bulletins.html',
+    'bulletin-fields': 'https://docs.bayanat.org/guide/dynamic-fields.html',
+    incidents: 'https://docs.bayanat.org/guide/incidents.html',
+    incident: 'https://docs.bayanat.org/guide/incidents.html',
+    'incident-fields': 'https://docs.bayanat.org/guide/dynamic-fields.html',
+    locations: 'https://docs.bayanat.org/guide/locations.html',
+    location: 'https://docs.bayanat.org/guide/locations.html',
+    labels: 'https://docs.bayanat.org/guide/labels.html',
+    sources: 'https://docs.bayanat.org/guide/sources.html',
+    eventtypes: 'https://docs.bayanat.org/guide/events.html',
+    roles: 'https://docs.bayanat.org/guide/permissions.html',
+    users: 'https://docs.bayanat.org/guide/access-control.html',
+    medias: 'https://docs.bayanat.org/guide/ocr.html',
+    media: 'https://docs.bayanat.org/guide/ocr.html',
+    'import-media': 'https://docs.bayanat.org/guide/data-import.html',
+    'import-sheets': 'https://docs.bayanat.org/guide/data-import.html',
+    'import-logs': 'https://docs.bayanat.org/guide/data-import.html',
+    'import-log': 'https://docs.bayanat.org/guide/data-import.html',
+    'deduplication-dashboard': 'https://docs.bayanat.org/guide/deduplication.html',
+    exports: 'https://docs.bayanat.org/guide/data-export.html',
+    export: 'https://docs.bayanat.org/guide/data-export.html',
+};
+
 const router = createRouter({
     history: createWebHistory(),
     routes: routes,

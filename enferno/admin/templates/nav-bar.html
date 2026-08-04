@@ -28,6 +28,19 @@
     </v-tooltip>
     {% endif %}
 
+    <v-tooltip v-if="currentHelpLink" location="bottom">
+      <template v-slot:activator="{ props }">
+        <v-btn
+          v-bind="props"
+          icon="mdi-help-circle-outline"
+          :href="currentHelpLink"
+          target="_blank"
+          rel="noopener noreferrer"
+        ></v-btn>
+      </template>
+      {{ _('User Guides') }}
+    </v-tooltip>
+
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
         <v-btn id="menu-activator" v-bind="props" icon="mdi-translate"></v-btn>

@@ -61,6 +61,11 @@ const globalMixin = {
   beforeUnmount() {
     document.removeEventListener('global-axios-error', this.showSnack);
   },
+  computed: {
+    currentHelpLink() {
+      return contextualHelpLinks[this.$route?.name] || null;
+    },
+  },
   methods: {
     /**
      * Format a date with Day.js supporting timezone, locale, and special formats.
