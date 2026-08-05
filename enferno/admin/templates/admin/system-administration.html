@@ -684,9 +684,11 @@
 
                                     <v-slide-y-transition>
                                         <v-sheet v-show="eitem.OCR_ENABLED && {% if config.HAS_TESSERACT %}true{% else %}false{% endif %}" style="max-width: 640px;">
-                                            <v-combobox id="setting-ocr-extensions" v-bind="inputProps" class="mt-3" multiple chips persistent-hint
-                                                hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}" :items="eitem.OCR_EXT"
-                                                label="{{ _('OCR Extensions') }}" v-model="eitem.OCR_EXT"></v-combobox>
+                                            <div id="setting-ocr-extensions">
+                                                <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
+                                                    hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}" :items="eitem.OCR_EXT"
+                                                    label="{{ _('OCR Extensions') }}" v-model="eitem.OCR_EXT"></v-combobox>
+                                            </div>
                                         </v-sheet>
                                     </v-slide-y-transition>
 
@@ -708,37 +710,44 @@
                                         ></v-select>
 
                                         <v-slide-y-transition>
-                                            <v-text-field id="setting-google-vision-api-key" v-show="eitem.OCR_PROVIDER === 'google_vision'"
-                                                v-bind="inputProps" class="mt-3"
-                                                label="{{ _('Google Cloud API Key') }}"
-                                                hint="{{ _('Enables advanced OCR (Vision) and text translation. Used across OCR extraction and translation features.') }}"
-                                                persistent-hint
-                                                v-model="eitem.GOOGLE_VISION_API_KEY"
-                                            ></v-text-field>
+                                            <div id="setting-google-vision-api-key" v-show="eitem.OCR_PROVIDER === 'google_vision'">
+                                                <v-text-field v-bind="inputProps" class="mt-3"
+                                                    label="{{ _('Google Cloud API Key') }}"
+                                                    hint="{{ _('Enables advanced OCR (Vision) and text translation. Used across OCR extraction and translation features.') }}"
+                                                    persistent-hint
+                                                    v-model="eitem.GOOGLE_VISION_API_KEY"
+                                                ></v-text-field>
+                                            </div>
                                         </v-slide-y-transition>
 
                                         <v-slide-y-transition>
                                             <div v-show="eitem.OCR_PROVIDER === 'llm'">
-                                                <v-text-field v-bind="inputProps" class="mt-3"
-                                                    label="{{ _('LLM Endpoint URL') }}"
-                                                    hint="{{ _('Any OpenAI-compatible /v1/chat/completions endpoint (Ollama, vLLM, RunPod, OpenAI, OpenRouter, etc).') }}"
-                                                    persistent-hint
-                                                    v-model="eitem.LLM_OCR_URL"
-                                                ></v-text-field>
+                                                <div id="setting-llm-ocr-url">
+                                                    <v-text-field v-bind="inputProps" class="mt-3"
+                                                        label="{{ _('LLM Endpoint URL') }}"
+                                                        hint="{{ _('Any OpenAI-compatible /v1/chat/completions endpoint (Ollama, vLLM, RunPod, OpenAI, OpenRouter, etc).') }}"
+                                                        persistent-hint
+                                                        v-model="eitem.LLM_OCR_URL"
+                                                    ></v-text-field>
+                                                </div>
 
-                                                <v-text-field v-bind="inputProps" class="mt-3"
-                                                    label="{{ _('LLM Model') }}"
-                                                    hint="{{ _('Model name, e.g. llava, gpt-4o, anthropic/claude-sonnet-4-20250514.') }}"
-                                                    persistent-hint
-                                                    v-model="eitem.LLM_OCR_MODEL"
-                                                ></v-text-field>
+                                                <div id="setting-llm-ocr-model">
+                                                    <v-text-field v-bind="inputProps" class="mt-3"
+                                                        label="{{ _('LLM Model') }}"
+                                                        hint="{{ _('Model name, e.g. llava, gpt-4o, anthropic/claude-sonnet-4-20250514.') }}"
+                                                        persistent-hint
+                                                        v-model="eitem.LLM_OCR_MODEL"
+                                                    ></v-text-field>
+                                                </div>
 
-                                                <v-text-field v-bind="inputProps" class="mt-3"
-                                                    label="{{ _('LLM API Key') }}"
-                                                    hint="{{ _('Required for hosted providers (OpenAI, OpenRouter, RunPod). Leave empty for unauthenticated local endpoints.') }}"
-                                                    persistent-hint
-                                                    v-model="eitem.LLM_OCR_API_KEY"
-                                                ></v-text-field>
+                                                <div id="setting-llm-ocr-api-key">
+                                                    <v-text-field v-bind="inputProps" class="mt-3"
+                                                        label="{{ _('LLM API Key') }}"
+                                                        hint="{{ _('Required for hosted providers (OpenAI, OpenRouter, RunPod). Leave empty for unauthenticated local endpoints.') }}"
+                                                        persistent-hint
+                                                        v-model="eitem.LLM_OCR_API_KEY"
+                                                    ></v-text-field>
+                                                </div>
                                             </div>
                                         </v-slide-y-transition>
                                     </div>
@@ -1382,6 +1391,9 @@
                     { id: 'ocr_extensions', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('OCR Extensions') }}", anchorId: 'setting-ocr-extensions', requires: { label: "{{ _('Tesseract OCR') }}", anchorId: 'setting-import-ocr' }, keywords: ["{{ _('ocr') }}", "{{ _('extensions') }}", "{{ _('tesseract') }}"] },
                     { id: 'ocr_provider', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Provider') }}", anchorId: 'setting-ocr-provider', keywords: ["{{ _('vision') }}", "{{ _('llm') }}", "{{ _('ocr') }}"] },
                     { id: 'vision_api_key', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Google Cloud API Key') }}", anchorId: 'setting-google-vision-api-key', requires: { label: "{{ _('Google Vision') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('vision') }}", "{{ _('ocr') }}", "{{ _('translation') }}"] },
+                    { id: 'llm_ocr_url', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM Endpoint URL') }}", anchorId: 'setting-llm-ocr-url', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('llm') }}", "{{ _('endpoint') }}", "{{ _('url') }}", "{{ _('ocr') }}"] },
+                    { id: 'llm_ocr_model', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM Model') }}", anchorId: 'setting-llm-ocr-model', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('llm') }}", "{{ _('model') }}", "{{ _('ocr') }}"] },
+                    { id: 'llm_ocr_api_key', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM API Key') }}", anchorId: 'setting-llm-ocr-api-key', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('llm') }}", "{{ _('api key') }}", "{{ _('ocr') }}", "{{ _('credentials') }}"] },
 
                     { id: 'export_tool', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export system') }}", anchorId: 'setting-export-tool', keywords: ["{{ _('exports') }}", "{{ _('requests') }}"] },
                     { id: 'export_expiry', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export Expiry Time') }}", anchorId: 'setting-export-expiry-time', requires: { label: "{{ _('Export system') }}", anchorId: 'setting-export-tool' }, keywords: ["{{ _('expiry') }}", "{{ _('retention') }}", "{{ _('hours') }}"] },
