@@ -159,10 +159,18 @@
 
                         <template #bottom>
                             <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
-                                <div>{{ _('Search time: ') }}
-                                    ${searchTime} {{ _('seconds') }}</div>
+                                <div class="d-flex align-center ga-4">
+                                    <div>{{ _('Search time: ') }}
+                                        ${searchTime} {{ _('seconds') }}</div>
+                                    {% if current_user.has_role("Admin") %}
+                                    <div class="d-flex align-center text-caption text-medium-emphasis">
+                                        <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
+                                        <span><strong>{{ _('Administrators:') }}</strong> {{ _('You can edit this form in Customize Database >') }} <a href="/admin/incident-fields/" class="text-decoration-underline">{{ _('Incident Form Builder') }}</a>.</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
                                 <div>
-                        
+
                                     <div class="d-flex flex-row align-center ga-2">
                                         <div class="d-flex flex-row align-center ga-2">
                                             {{ _('Items per page:') }}
