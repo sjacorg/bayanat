@@ -4,6 +4,7 @@ from typing import Any, Union
 
 import arrow
 from sqlalchemy import ARRAY
+from sqlalchemy.dialects.postgresql import JSONB
 from flask_security.decorators import current_user
 
 from enferno.extensions import db
@@ -194,3 +195,77 @@ class Export(db.Model, BaseMixin):
         # Create unique directory
         dir_id = Export.generate_export_dir()
         return Export.export_dir / dir_id / Export.export_file_name, dir_id
+
+
+class ExportTemplate(db.Model, BaseMixin):
+    """
+    Analyst-defined dossier template: an ordered list of smart-block configs
+    rendered server-side by the block registry (enferno/export/blocks.py).
+    Block content is data, never evaluated as a template.
+    """
+
+    __tablename__ = "export_template"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    entity_type = db.Column(db.String(32), nullable=False, default="actor", server_default="actor")
+    locale = db.Column(db.String(8), nullable=False, default="ar", server_default="ar")
+    blocks = db.Column(JSONB, nullable=False, default=list)
+    published = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
+    # Immutable snapshot taken at publish time; rendering for export always uses
+    # this copy so a published template cannot change after review.
+    published_blocks = db.Column(JSONB)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"), index=True)
+    user = db.relationship("User", backref="export_templates", foreign_keys=[user_id])
+
+    @property
+    def render_blocks(self) -> list:
+        """Blocks used for dossier rendering: the published snapshot when
+        published, the working copy otherwise (previews)."""
+        if self.published and self.published_blocks is not None:
+            return self.published_blocks
+        return self.blocks or []
+
+    def from_json(self, json: dict) -> "ExportTemplate":
+        from enferno.export.blocks import validate_blocks
+
+        self.title = (json.get("title") or "").strip()
+        if not self.title:
+            raise ValueError("Template title is required")
+        entity_type = json.get("entity_type", "actor")
+        if entity_type != "actor":
+            raise ValueError("Only actor templates are supported")
+        self.entity_type = entity_type
+        locale = json.get("locale", "ar")
+        if locale not in ("ar", "en"):
+            raise ValueError("Locale must be 'ar' or 'en'")
+        self.locale = locale
+        self.blocks = validate_blocks(json.get("blocks"))
+        return self
+
+    def publish(self) -> "ExportTemplate":
+        self.published = True
+        self.published_blocks = self.blocks
+        return self
+
+    def unpublish(self) -> "ExportTemplate":
+        self.published = False
+        return self
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "class": self.__tablename__,
+            "title": self.title,
+            "entity_type": self.entity_type,
+            "locale": self.locale,
+            "blocks": self.blocks or [],
+            "published": self.published,
+            "user": self.user.to_compact() if self.user else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
+            "created_at": (
+                DateHelper.serialize_datetime(self.created_at) if self.created_at else None
+            ),
+        }

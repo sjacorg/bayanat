@@ -68,6 +68,10 @@
                 <v-list-item prepend-icon="mdi-file-export" title="{{ _('Exports') }}" href="/export/dashboard/"
                              key="export"></v-list-item>
             {% endif %}
+            {% if current_user.has_role('Admin') %}
+                <v-list-item prepend-icon="mdi-file-document-multiple" title="{{ _('Dossier Templates') }}"
+                             href="/export/templates/" key="export-templates"></v-list-item>
+            {% endif %}
         {% endif %}
 
         {% if current_user.has_role("Admin") %}
