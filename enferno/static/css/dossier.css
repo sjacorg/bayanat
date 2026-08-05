@@ -226,21 +226,21 @@ html[dir="rtl"] .narrative {
 
 .page-break { break-after: page; }
 
-/* Print */
+/* Print. Every margin-box slot is claimed explicitly: author-defined boxes
+   take precedence over the browser's default print headers/footers (date,
+   page title, URL), which otherwise stamp raw text on every page. */
 @page {
     size: A4;
     margin: 1.9cm 1.8cm 2.1cm;
 
+    @top-left { content: ""; }
+    @top-center { content: ""; }
+    @top-right { content: ""; }
+    @bottom-left { content: ""; }
+    @bottom-right { content: ""; }
+
     @bottom-center {
         content: counter(page) " / " counter(pages);
-        font-family: "IBM Plex Sans Arabic", sans-serif;
-        font-size: 8.5px;
-        color: #6f6a60;
-    }
-
-    /* WeasyPrint renders the running title; browsers ignore string-set */
-    @bottom-left {
-        content: string(doctitle);
         font-family: "IBM Plex Sans Arabic", sans-serif;
         font-size: 8.5px;
         color: #6f6a60;

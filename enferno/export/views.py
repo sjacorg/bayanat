@@ -563,7 +563,15 @@ def dossier(template_id: t.id, actor_id: t.id) -> Response:
     from enferno.utils.pdf_utils import _safe_url_fetcher
 
     stylesheet = CSS(filename=f"{current_app.root_path}/static/css/dossier.css")
-    pdf = HTML(string=html, url_fetcher=_safe_url_fetcher).write_pdf(stylesheets=[stylesheet])
+    # WeasyPrint-only: running document title in the footer (string() is not
+    # supported by browsers, so it stays out of the shared stylesheet).
+    running_title = CSS(
+        string="@page { @bottom-left { content: string(doctitle); "
+        'font-family: "IBM Plex Sans Arabic", sans-serif; font-size: 8.5px; color: #6f6a60; } }'
+    )
+    pdf = HTML(string=html, url_fetcher=_safe_url_fetcher).write_pdf(
+        stylesheets=[stylesheet, running_title]
+    )
     return Response(
         pdf,
         mimetype="application/pdf",
