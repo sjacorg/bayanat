@@ -694,20 +694,22 @@
 
                                     <v-divider class="my-8"></v-divider>
 
-                                    <h4 id="setting-ocr-provider" class="subtitle-2 mb-n1">{{ _('On-demand OCR Provider') }}</h4>
+                                    <h4 class="subtitle-2 mb-n1">{{ _('On-demand OCR Provider') }}</h4>
                                     <p class="text-caption text-medium-emphasis mb-3">
                                         {{ _('Backend used for on-demand OCR extraction from existing media items. Google Vision is also used for text translation features.') }}
                                     </p>
 
                                     <div style="max-width: 640px;">
-                                        <v-select v-bind="inputProps" class="mt-3"
-                                            label="{{ _('Provider') }}"
-                                            :items="[
-                                                { title: '{{ _('Google Vision') }}', value: 'google_vision' },
-                                                { title: '{{ _('LLM (OpenAI-compatible)') }}', value: 'llm' },
-                                            ]"
-                                            v-model="eitem.OCR_PROVIDER"
-                                        ></v-select>
+                                        <div id="setting-ocr-provider">
+                                            <v-select v-bind="inputProps" class="mt-3"
+                                                label="{{ _('Provider') }}"
+                                                :items="[
+                                                    { title: '{{ _('Google Vision') }}', value: 'google_vision' },
+                                                    { title: '{{ _('LLM (OpenAI-compatible)') }}', value: 'llm' },
+                                                ]"
+                                                v-model="eitem.OCR_PROVIDER"
+                                            ></v-select>
+                                        </div>
 
                                         <v-slide-y-transition>
                                             <div id="setting-google-vision-api-key" v-show="eitem.OCR_PROVIDER === 'google_vision'">
