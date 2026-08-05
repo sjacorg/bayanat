@@ -262,6 +262,10 @@ h1.doc-title { string-set: doctitle content(); }
 
     .no-print { display: none !important; }
 
+    /* dev-only flask-debugtoolbar overlay: position:fixed elements are
+       re-stamped on every printed page, showing as an empty box top-right */
+    #flDebug { display: none !important; }
+
     .kv-table th, .data-table thead th, .narrative,
     .data-table tbody tr:nth-child(even) td {
         -webkit-print-color-adjust: exact;
