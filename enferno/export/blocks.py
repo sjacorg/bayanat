@@ -65,6 +65,20 @@ def _location_string(location) -> Optional[str]:
     return location.title_ar or location.full_location or location.title
 
 
+def _id_numbers(actor) -> Optional[str]:
+    """Format the id_number JSONB list, resolving type ids to their titles."""
+    from enferno.admin.models import IDNumberType
+
+    entries = [d for d in (actor.id_number or []) if isinstance(d, dict)]
+    if not entries:
+        return None
+    types = {str(t.id): t.title_tr or t.title for t in IDNumberType.query.all()}
+    return ", ".join(
+        f"{types.get(str(d.get('type')), d.get('type', ''))}: {d.get('number', '')}".strip(": ")
+        for d in entries
+    )
+
+
 # ---------------------------------------------------------------------------
 # Field whitelist: the only actor data a field_table block can surface.
 # Each entry: label (en), label_ar, getter(actor) -> display value.
@@ -169,12 +183,7 @@ ACTOR_FIELDS: dict[str, dict] = {
     "id_number": {
         "label": "ID numbers",
         "label_ar": "الأرقام الثبوتية",
-        "get": lambda a: ", ".join(
-            f"{d.get('type', '')}: {d.get('number', '')}".strip(": ")
-            for d in (a.id_number or [])
-            if isinstance(d, dict)
-        )
-        or None,
+        "get": lambda a: _id_numbers(a),
     },
     "tags": {
         "label": "Tags",
@@ -210,20 +219,32 @@ ACTOR_FIELDS: dict[str, dict] = {
 }
 
 RELATED_ACTOR_COLUMNS = {
-    "id": {"label": "Database ID", "label_ar": "الرقم التعريفي"},
+    "id": {"label": "Database ID", "label_ar": "الرقم التعريفي", "ltr": True},
     "name": {"label": "Full name", "label_ar": "الاسم الكامل"},
     "relation": {"label": "Relationship", "label_ar": "صلة القرابة"},
     "comment": {"label": "Notes", "label_ar": "ملاحظات"},
 }
 
 RELATED_BULLETIN_COLUMNS = {
-    "id": {"label": "Database ID", "label_ar": "الرقم التسلسلي حسب قاعدة البيانات"},
+    "id": {"label": "Database ID", "label_ar": "الرقم التسلسلي حسب قاعدة البيانات", "ltr": True},
     "title": {"label": "Title", "label_ar": "العنوان"},
-    "originid": {"label": "Origin ID", "label_ar": "الرقم المصدري"},
+    "originid": {"label": "Origin ID", "label_ar": "الرقم المصدري", "ltr": True},
     "sources": {"label": "Sources", "label_ar": "المصادر"},
-    "publish_date": {"label": "Publish date", "label_ar": "تاريخ النشر"},
-    "documentation_date": {"label": "Documentation date", "label_ar": "تاريخ توثيق الدليل"},
+    "publish_date": {"label": "Publish date", "label_ar": "تاريخ النشر", "ltr": True},
+    "documentation_date": {
+        "label": "Documentation date",
+        "label_ar": "تاريخ توثيق الدليل",
+        "ltr": True,
+    },
     "comment": {"label": "Notes", "label_ar": "ملاحظات"},
+}
+
+EVENT_COLUMNS = {
+    "date": {"label": "Date", "label_ar": "التاريخ", "ltr": True},
+    "title": {"label": "Event", "label_ar": "الحدث"},
+    "type": {"label": "Type", "label_ar": "النوع"},
+    "location": {"label": "Location", "label_ar": "المكان"},
+    "comments": {"label": "Notes", "label_ar": "ملاحظات"},
 }
 
 
@@ -362,7 +383,11 @@ def _v_events_timeline(config: dict) -> dict:
     order = config.get("order", "asc")
     if order not in ("asc", "desc"):
         raise ValueError("'order' must be 'asc' or 'desc'")
-    return {"title": _require_str(config, "title", MAX_TITLE), "order": order}
+    return {
+        "title": _require_str(config, "title", MAX_TITLE),
+        "order": order,
+        "columns": _validate_columns(config, EVENT_COLUMNS, ["date", "title", "comments"]),
+    }
 
 
 def _v_related_items(config: dict) -> dict:
@@ -445,8 +470,9 @@ def _b_events_timeline(data: DossierData, config: dict) -> dict:
         }
         for e in events
     ]
+    columns = _labeled_columns(config["columns"], EVENT_COLUMNS, data.locale)
     missing = [] if rows else ["No events recorded"]
-    return {"title": config.get("title"), "rows": rows, "missing": missing}
+    return {"title": config.get("title"), "columns": columns, "rows": rows, "missing": missing}
 
 
 def _b_related_items(data: DossierData, config: dict) -> dict:
@@ -485,7 +511,7 @@ def _b_page_break(data: DossierData, config: dict) -> dict:
 
 def _labeled_columns(keys: list, spec: dict, locale: str) -> list[dict]:
     label_key = "label_ar" if locale == "ar" else "label"
-    return [{"key": k, "label": spec[k][label_key]} for k in keys]
+    return [{"key": k, "label": spec[k][label_key], "ltr": bool(spec[k].get("ltr"))} for k in keys]
 
 
 BLOCK_TYPES: dict[str, dict] = {

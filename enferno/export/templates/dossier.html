@@ -4,7 +4,9 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <title>{{ template.title }} - {{ actor.name_ar or actor.name }}</title>
-    <link rel="stylesheet" href="/static/css/dossier.css?v={{ config.VERSION }}"/>
+    {% if not pdf_mode %}
+        <link rel="stylesheet" href="/static/css/dossier.css?v={{ config.VERSION }}"/>
+    {% endif %}
 </head>
 <body>
 
@@ -27,10 +29,22 @@
 {% endif %}
 
 <main class="dossier">
+    <header class="brand-band">
+        <span class="band-note">{{ template.title }}</span>
+        <img src="{{ logo_src }}" alt=""/>
+    </header>
+
+    {% set ns = namespace(subtitle_done=false) %}
     {% for block in blocks %}
         {% if block.type == 'heading' %}
             {% if block.level == 1 %}
                 <h1 class="doc-title">{{ block.text }}</h1>
+                {% if not ns.subtitle_done %}
+                    <div class="doc-subtitle">
+                        {{ actor.name_ar or actor.name }} &middot; <bdi class="ltr">#{{ actor.id }}</bdi>
+                    </div>
+                    {% set ns.subtitle_done = true %}
+                {% endif %}
             {% else %}
                 <h2 class="section"><span class="section-number">{{ block.number }}.</span> {{ block.text }}</h2>
             {% endif %}
@@ -51,7 +65,7 @@
                 </tbody>
             </table>
 
-        {% elif block.type in ('family_members_table', 'related_items_table') %}
+        {% elif block.type in ('family_members_table', 'related_items_table', 'events_timeline') %}
             {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
             <table class="data-table">
                 <thead>
@@ -65,7 +79,7 @@
                 {% for row in block.rows %}
                     <tr>
                         {% for column in block.columns %}
-                            <td>{{ row[column.key] if row[column.key] is not none else '' }}</td>
+                            <td {% if column.ltr %}class="ltr-cell"{% endif %}>{{ row[column.key] if row[column.key] is not none else '' }}</td>
                         {% endfor %}
                     </tr>
                 {% else %}
@@ -76,52 +90,15 @@
                 </tbody>
             </table>
 
-        {% elif block.type == 'events_timeline' %}
-            {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
-            <table class="data-table">
-                <thead>
-                <tr>
-                    <th>{{ _('Date') }}</th>
-                    <th>{{ _('Event') }}</th>
-                    <th>{{ _('Type') }}</th>
-                    <th>{{ _('Location') }}</th>
-                    <th>{{ _('Notes') }}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for row in block.rows %}
-                    <tr>
-                        <td class="ltr-cell">{{ row.date or '' }}</td>
-                        <td>{{ row.title or '' }}</td>
-                        <td>{{ row.type or '' }}</td>
-                        <td>{{ row.location or '' }}</td>
-                        <td>{{ row.comments or '' }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="5" class="empty-row"></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-
         {% elif block.type == 'narrative_box' %}
-            <table class="narrative">
-                <tbody>
-                {% if block.title %}
-                    <tr>
-                        <th>{{ block.title }}</th>
-                    </tr>
-                {% endif %}
-                <tr>
-                    <td>
-                        {% if block.html %}
-                            {% if block.is_html %}{{ block.html | safe }}{% else %}{{ block.html }}{% endif %}
-                        {% endif %}
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+            <div class="narrative">
+                {% if block.title %}<div class="narrative-title">{{ block.title }}</div>{% endif %}
+                <div class="narrative-body">
+                    {% if block.html %}
+                        {% if block.is_html %}{{ block.html | safe }}{% else %}{{ block.html }}{% endif %}
+                    {% endif %}
+                </div>
+            </div>
 
         {% elif block.type == 'page_break' %}
             <div class="page-break"></div>

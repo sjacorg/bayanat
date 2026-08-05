@@ -30,7 +30,7 @@
             </v-col>
 
             <!-- Editor -->
-            <v-col cols="12" md="5" v-if="template">
+            <v-col cols="12" md="7" lg="6" v-if="template">
                 <v-card>
                     <v-toolbar flat density="compact">
                         <v-toolbar-title>
@@ -148,6 +148,14 @@
                                                       :items="[{title: '{{ _('Oldest first') }}', value: 'asc'}, {title: '{{ _('Newest first') }}', value: 'desc'}]"
                                                       variant="outlined" density="compact"
                                                       :label="'{{ _('Order') }}'"></v-select>
+                                            <v-select
+                                                    v-model="block.config.columns"
+                                                    :items="meta.columns.events_timeline"
+                                                    item-title="label" item-value="key"
+                                                    multiple chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Columns') }}'"
+                                            ></v-select>
                                         </template>
 
                                         <template v-else-if="block.type === 'related_items_table'">
@@ -203,19 +211,6 @@
                     </v-card-text>
 
                     <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" variant="flat" :loading="saving" @click="saveTemplate">
-                            {{ _('Save') }}
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-col>
-
-            <!-- Preview -->
-            <v-col cols="12" md="4" v-if="template">
-                <v-card>
-                    <v-toolbar flat density="compact">
-                        <v-toolbar-title>{{ _('Preview') }}</v-toolbar-title>
                         <v-text-field
                                 v-model="previewEntityId"
                                 variant="outlined"
@@ -224,9 +219,19 @@
                                 style="max-width: 140px"
                                 :label="'{{ _('Actor ID') }}'"
                         ></v-text-field>
-                        <v-btn icon="mdi-refresh" :loading="previewLoading" @click="refreshPreview"></v-btn>
-                    </v-toolbar>
-                    <iframe class="dossier-preview" :srcdoc="previewHtml" sandbox=""></iframe>
+                        <v-btn
+                                prepend-icon="mdi-open-in-new"
+                                variant="tonal"
+                                :loading="saving"
+                                @click="previewInTab"
+                        >
+                            {{ _('Preview') }}
+                        </v-btn>
+                        <v-spacer></v-spacer>
+                        <v-btn color="primary" variant="flat" :loading="saving" @click="saveTemplate">
+                            {{ _('Save') }}
+                        </v-btn>
+                    </v-card-actions>
                 </v-card>
             </v-col>
 
@@ -250,14 +255,6 @@
     </v-snackbar>
 </v-main>
 
-<style>
-    .dossier-preview {
-        width: 100%;
-        height: calc(100vh - 220px);
-        border: none;
-        background: #fff;
-    }
-</style>
 {% endblock %}
 
 {% block js %}
@@ -293,8 +290,6 @@
             saving: false,
             deleteDialog: false,
             previewEntityId: null,
-            previewHtml: '',
-            previewLoading: false,
         }),
         async mounted() {
             const meta = await axios.get('/export/api/templates/meta');
@@ -308,12 +303,10 @@
             },
             newTemplate() {
                 this.template = {id: null, title: '', locale: 'ar', published: false, blocks: []};
-                this.previewHtml = '';
             },
             editTemplate(t) {
                 this.template = JSON.parse(JSON.stringify(t));
                 this.template.blocks.forEach((b) => (b._open = false));
-                this.previewHtml = '';
             },
             addBlock(type) {
                 const defaults = {
@@ -321,7 +314,7 @@
                     rich_text: {html: ''},
                     field_table: {title: '', fields: []},
                     family_members_table: {title: '', relation_ids: [], columns: ['id', 'name', 'relation', 'comment']},
-                    events_timeline: {title: '', order: 'asc'},
+                    events_timeline: {title: '', order: 'asc', columns: ['date', 'title', 'comments']},
                     related_items_table: {title: '', columns: ['id', 'title', 'documentation_date', 'comment']},
                     narrative_box: {title: '', field: null},
                     page_break: {},
@@ -374,27 +367,15 @@
                 this.template = null;
                 await this.refreshTemplates();
             },
-            async refreshPreview() {
+            async previewInTab() {
                 if (!this.previewEntityId) {
                     this.showSnack("{{ _('Enter an actor ID to preview') }}");
                     return;
                 }
-                this.previewLoading = true;
-                try {
-                    const res = await axios.post(
-                        '/export/api/dossier/preview',
-                        {
-                            entity_id: parseInt(this.previewEntityId),
-                            title: this.template.title,
-                            locale: this.template.locale,
-                            blocks: this.cleanBlocks(),
-                        },
-                        {transformResponse: [(data) => data]},
-                    );
-                    this.previewHtml = res.data;
-                } finally {
-                    this.previewLoading = false;
-                }
+                // open synchronously to survive popup blockers, then save and point it
+                const win = window.open('', '_blank');
+                await this.saveTemplate();
+                win.location = `/export/dossier/${this.template.id}/${parseInt(this.previewEntityId)}`;
             },
         },
     });

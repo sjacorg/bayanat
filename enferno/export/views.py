@@ -370,6 +370,7 @@ def api_templates_meta() -> Response:
     from enferno.admin.models.DynamicField import DynamicField
     from enferno.export.blocks import (
         ACTOR_FIELDS,
+        EVENT_COLUMNS,
         RELATED_ACTOR_COLUMNS,
         RELATED_BULLETIN_COLUMNS,
     )
@@ -395,6 +396,7 @@ def api_templates_meta() -> Response:
         "related_items_table": [
             {"key": k, "label": v["label"]} for k, v in RELATED_BULLETIN_COLUMNS.items()
         ],
+        "events_timeline": [{"key": k, "label": v["label"]} for k, v in EVENT_COLUMNS.items()],
     }
     return HTTPResponse.success(
         data={"fields": fields, "relation_types": relation_types, "columns": columns}
@@ -510,35 +512,23 @@ def api_template_delete(id: t.id) -> Response:
     return HTTPResponse.error("Error deleting template", status=417)
 
 
-def _render_dossier(template: ExportTemplate, actor: Actor, show_toolbar: bool = True) -> str:
+def _render_dossier(
+    template: ExportTemplate, actor: Actor, show_toolbar: bool = True, pdf_mode: bool = False
+) -> str:
+    from flask import current_app
     from enferno.export.blocks import build_dossier
 
     context = build_dossier(template, actor, current_user)
-    return render_template("dossier.html", show_toolbar=show_toolbar, **context)
-
-
-@export.post("/api/dossier/preview")
-@roles_required("Admin")
-def api_dossier_preview() -> Response:
-    """Render a dossier preview from unsaved editor state (blocks + entity id)."""
-    from enferno.export.blocks import validate_blocks
-
-    actor_id = request.json.get("entity_id")
-    actor = db.session.get(Actor, actor_id) if actor_id else None
-    if actor is None or actor.deleted:
-        return HTTPResponse.not_found("Entity not found")
-    if not current_user.can_access(actor):
-        return HTTPResponse.forbidden("Forbidden")
-    preview = ExportTemplate(
-        title=request.json.get("title") or "Preview",
-        entity_type="actor",
-        locale=request.json.get("locale") or "ar",
+    # Browsers load the logo over HTTP; WeasyPrint reads it straight from disk
+    # (the hardened fetcher allows file:// under the app root only).
+    logo_src = (
+        f"file://{current_app.root_path}/static/img/sjac-logo.png"
+        if pdf_mode
+        else "/static/img/sjac-logo.png"
     )
-    try:
-        preview.blocks = validate_blocks(request.json.get("blocks"))
-    except ValueError as e:
-        return HTTPResponse.error(str(e), status=417)
-    return Response(_render_dossier(preview, actor, show_toolbar=False), mimetype="text/html")
+    return render_template(
+        "dossier.html", show_toolbar=show_toolbar, pdf_mode=pdf_mode, logo_src=logo_src, **context
+    )
 
 
 @export.get("/dossier/<int:template_id>/<int:actor_id>")
@@ -557,7 +547,7 @@ def dossier(template_id: t.id, actor_id: t.id) -> Response:
         return HTTPResponse.forbidden("Forbidden")
 
     as_pdf = request.args.get("format") == "pdf"
-    html = _render_dossier(template, actor, show_toolbar=not as_pdf)
+    html = _render_dossier(template, actor, show_toolbar=not as_pdf, pdf_mode=as_pdf)
     Activity.create(
         current_user,
         Activity.ACTION_DOWNLOAD if as_pdf else Activity.ACTION_VIEW,
