@@ -25,7 +25,6 @@ def extract_docx_text(file_bytes: bytes) -> dict | None:
             "confidence": 100.0,
             "language": None,
             "orientation": 0,
-            "raw": {},
         }
     except Exception as e:
         logger.error(f"DOCX extraction failed: {e}")

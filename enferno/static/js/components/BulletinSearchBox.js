@@ -22,6 +22,10 @@ const BulletinSearchBox = Vue.defineComponent({
       type: Boolean,
       default: false,
     },
+    expandActivePanels: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   emits: ['update:modelValue', 'search'],
@@ -46,6 +50,8 @@ const BulletinSearchBox = Vue.defineComponent({
     (this.q?.dyn || []).forEach(field => {
       this.dyn.set(field.name, field)
     });
+
+    this.setActivePanels();
   },
 
   watch: {
@@ -75,6 +81,7 @@ const BulletinSearchBox = Vue.defineComponent({
         } else {
           this.dyn = new Map();
         }
+        this.setActivePanels();
       },
       immediate: true
     }
@@ -158,6 +165,25 @@ const BulletinSearchBox = Vue.defineComponent({
   },
 
   methods: {
+    setActivePanels() {
+      if (!this.expandActivePanels) {
+        return;
+      }
+
+      this.$nextTick(() => {
+        const panels = [];
+        if (this.textSearchCount) panels.push('0');
+        if (this.dateCount) panels.push('1');
+        if (this.eventCount) panels.push('2');
+        if (this.classificationCount) panels.push('3');
+        if (this.workflowCount) panels.push('4');
+        if (this.locationCount) panels.push('5');
+        if (this.dynamicFieldCount) panels.push('6');
+
+        this.openPanels = panels.length ? panels : ['0'];
+      });
+    },
+
     updateDynamicField(value, field, operator) {
       const normalized = Array.isArray(value)
         ? value.filter((item) => item !== undefined && item !== null && item !== '')
@@ -480,28 +506,24 @@ const BulletinSearchBox = Vue.defineComponent({
               <template v-if="$root.isFieldActiveByName('labels', { entityType: 'bulletin' })">
                 <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.LABELS_ }}</div>
                 <v-card variant="outlined" class="mb-3 pa-3 border-thin">
-                  <search-field
+                  <label-search-field
                       v-model="q.labels"
-                      api="/admin/api/labels/"
-                      :query-params="{ typ: 'for_bulletin' }"
-                      item-title="title"
-                      item-value="id"
+                      :query-params="{ typ: 'for_bulletin', mode: 2 }"
                       :multiple="true"
+                      :retain-search="true"
                       :label="translations.includeLabels_"
-                  ></search-field>
+                  ></label-search-field>
                   <div class="d-flex align-center flex-wrap mt-n1">
                     <v-checkbox :label="translations.any_" density="compact" v-model="q.oplabels" color="primary"
                                 class="me-4" hide-details></v-checkbox>
                   </div>
-                  <search-field
+                  <label-search-field
                       v-model="q.exlabels"
-                      api="/admin/api/labels/"
-                      :query-params="{ typ: 'for_bulletin' }"
-                      item-title="title"
-                      item-value="id"
+                      :query-params="{ typ: 'for_bulletin', mode: 2 }"
                       :multiple="true"
+                      :retain-search="true"
                       :label="translations.excludeLabels_"
-                  ></search-field>
+                  ></label-search-field>
                   <v-switch density="compact" color="primary" v-model="q.childlabels" :label="translations.includeChildLabels_" hide-details></v-switch>
                 </v-card>
               </template>
@@ -510,28 +532,24 @@ const BulletinSearchBox = Vue.defineComponent({
               <template v-if="$root.isFieldActiveByName('ver_labels', { entityType: 'bulletin' })">
                 <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.VERIFIEDLABELS_ }}</div>
                 <v-card variant="outlined" class="mb-3 pa-3 border-thin">
-                  <search-field
+                  <label-search-field
                       v-model="q.vlabels"
-                      api="/admin/api/labels/"
-                      :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
-                      item-title="title"
-                      item-value="id"
+                      :query-params="{ fltr: 'verified', typ: 'for_bulletin', mode: 2 }"
                       :multiple="true"
+                      :retain-search="true"
                       :label="translations.includeVerLabels_"
-                  ></search-field>
+                  ></label-search-field>
                   <div class="d-flex align-center flex-wrap mt-n1">
                     <v-checkbox :label="translations.any_" density="compact" v-model="q.opvlabels" color="primary"
                                 class="me-4" hide-details></v-checkbox>
                   </div>
-                  <search-field
+                  <label-search-field
                       v-model="q.exvlabels"
-                      api="/admin/api/labels/"
-                      :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
-                      item-title="title"
-                      item-value="id"
+                      :query-params="{ fltr: 'verified', typ: 'for_bulletin', mode: 2 }"
                       :multiple="true"
+                      :retain-search="true"
                       :label="translations.excludeVerLabels_"
-                  ></search-field>
+                  ></label-search-field>
                   <v-switch density="compact" color="primary" v-model="q.childverlabels" :label="translations.includeChildVerLabels_" hide-details></v-switch>
                 </v-card>
               </template>

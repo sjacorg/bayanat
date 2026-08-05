@@ -3,16 +3,22 @@
 
 import os
 from datetime import datetime, timezone
+from typing import Optional
 
 import click
 from flask import current_app
 from flask.cli import AppGroup, with_appcontext
 from flask_security.utils import hash_password
 
-from enferno.settings import Config
+import json
+import shutil
+from pathlib import Path
+
 from enferno.extensions import db
+from enferno.settings import Config
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import (
     import_default_data,
     generate_user_roles,
@@ -21,11 +27,13 @@ from enferno.utils.data_helpers import (
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
+from geoalchemy2.shape import to_shape
 from sqlalchemy import text
-from enferno.admin.models import Bulletin
-from enferno.admin.models.DynamicField import DynamicField
+from sqlalchemy.orm import subqueryload
+from enferno.admin.models import Bulletin, Label
+from enferno.admin.models.Media import Media
+from enferno.admin.models.tables import bulletin_labels
 from enferno.admin.models.DynamicFormHistory import DynamicFormHistory
-from enferno.utils.date_helper import DateHelper
 from enferno.utils.form_history_utils import record_form_history
 
 from enferno.utils.validation_utils import validate_password_policy
@@ -114,39 +122,112 @@ def import_data() -> None:
 
 
 @click.command()
+@click.option("-u", "--username", default=None, help="Admin username (prompted if not provided)")
+@click.option("-p", "--password", default=None, help="Admin password (generated if not provided)")
+@click.option(
+    "--password-stdin",
+    "password_stdin",
+    is_flag=True,
+    default=False,
+    help="Read admin password from stdin (avoids argv exposure)",
+)
 @with_appcontext
-def install() -> None:
-    """Install a default Admin user and add an Admin role to it."""
+def install(username: Optional[str], password: Optional[str], password_stdin: bool = False) -> None:
+    """Install a default Admin user and add an Admin role to it.
+
+    Non-interactive use:
+        flask install -u admin                          # generate a password
+        flask install -u admin -p '<password>'          # supply via flag
+        echo '<password>' | flask install -u admin --password-stdin
+    """
+    import secrets
+    import sys
+
+    if password_stdin:
+        if password:
+            click.echo("Cannot combine --password and --password-stdin.")
+            return
+        password = sys.stdin.readline().rstrip("\n")
+        if not password:
+            click.echo("Empty password on stdin.")
+            return
+
     logger.info("Installing admin user.")
     admin_role = Role.query.filter(Role.name == "Admin").first()
 
-    # check if there's an existing admin
     if admin_role.users.all():
         click.echo("An admin user is already installed.")
         logger.error("An admin user is already installed.")
         return
 
-    # to make sure username doesn't already exist
-    while True:
-        u = click.prompt("Admin username?", default="admin")
-        check = User.query.filter(User.username == u.lower()).first()
-        if check is not None:
+    # Resolve username
+    if username:
+        u = username.strip()
+        if User.query.filter(User.username == u.lower()).first() is not None:
+            click.echo(f"Username '{u}' already exists.")
+            logger.error("Install aborted: username already exists.")
+            return
+    else:
+        while True:
+            u = click.prompt("Admin username?", default="admin")
+            if User.query.filter(User.username == u.lower()).first() is None:
+                break
             click.echo("Username already exists.")
-        else:
-            break
-    while True:
-        p = click.prompt("Admin Password?", hide_input=True)
+
+    # Resolve password (generate if not supplied; show it once)
+    generated = False
+    if password:
         try:
-            p = validate_password_policy(p)
-            break
+            p = validate_password_policy(password)
         except ValueError as e:
             click.echo(str(e))
-    user = User(username=u, password=hash_password(p), active=1)
+            logger.error("Install aborted: password failed policy check.")
+            return
+    elif username:
+        # Non-interactive (username supplied, password not) → generate.
+        while True:
+            candidate = secrets.token_urlsafe(20)
+            try:
+                p = validate_password_policy(candidate)
+                generated = True
+                break
+            except ValueError:
+                # token_urlsafe is high-entropy; loop guard for the rare zxcvbn miss
+                continue
+    else:
+        while True:
+            p = click.prompt("Admin Password?", hide_input=True)
+            try:
+                p = validate_password_policy(p)
+                break
+            except ValueError as e:
+                click.echo(str(e))
+
+    user = User(
+        username=u,
+        password=hash_password(p),
+        active=1,
+        view_usernames=True,
+        view_simple_history=True,
+        view_full_history=True,
+        can_self_assign=True,
+        can_edit_locations=True,
+        can_export=True,
+        can_import_web=True,
+        can_access_media=True,
+    )
     user.name = "Admin"
     user.roles.append(admin_role)
     check = user.save()
     if check:
-        click.echo("Admin user installed successfully.")
+        if generated:
+            click.echo("=" * 60)
+            click.echo(f"Admin user installed: {u}")
+            click.echo(f"Generated password : {p}")
+            click.echo("Save this now — it is not stored in plaintext anywhere.")
+            click.echo("=" * 60)
+        else:
+            click.echo("Admin user installed successfully.")
         logger.info("Admin user installed successfully.")
     else:
         click.echo("Error installing admin user.")
@@ -255,7 +336,7 @@ def reset(username: str, password: str) -> None:
         except ValueError as e:
             click.echo(str(e))
             return
-        user.password = hash_password(password)
+        user.set_password(password)
         user.save()
         click.echo("User password has been reset successfully.")
         logger.info("User password has been reset successfully.")
@@ -303,7 +384,7 @@ def reset_all_passwords(output: str, dry_run: bool, bcrypt_only: bool, active_on
         results.append((user.username, user.email, new_password))
 
         if not dry_run:
-            user.password = hash_password(new_password)
+            user.set_password(new_password)
             user.set_security_reset_key()
             user.save()
 
@@ -408,6 +489,204 @@ def check_db_alignment() -> None:
     checker = DBAlignmentChecker()
     checker.check_db_alignment()
     logger.info("Database schema alignment check completed.")
+
+
+@click.command()
+@with_appcontext
+def doctor() -> None:
+    """Run diagnostics on the Bayanat installation."""
+    passed = 0
+    warnings = 0
+    failed = 0
+
+    def ok(msg):
+        nonlocal passed
+        click.echo(f"  + {msg}")
+        passed += 1
+
+    def warn(msg):
+        nonlocal warnings
+        click.echo(click.style(f"  ! {msg}", fg="yellow"))
+        warnings += 1
+
+    def fail(msg):
+        nonlocal failed
+        click.echo(click.style(f"  - {msg}", fg="red"))
+        failed += 1
+
+    # --- Database ---
+    click.echo("\nDatabase:")
+
+    try:
+        db.session.execute(text("SELECT 1"))
+        ok("PostgreSQL connected")
+    except Exception as e:
+        fail(f"PostgreSQL connection failed: {e}")
+
+    try:
+        result = db.session.execute(
+            text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")
+        ).scalar()
+        if result:
+            ok("PostGIS loaded")
+        else:
+            fail("PostGIS extension not installed")
+    except Exception:
+        fail("Could not check PostGIS")
+
+    try:
+        result = db.session.execute(
+            text("SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm'")
+        ).scalar()
+        if result:
+            ok("pg_trgm loaded")
+        else:
+            fail("pg_trgm extension not installed")
+    except Exception:
+        fail("Could not check pg_trgm")
+
+    # Alembic migration status
+    try:
+        import logging as _logging
+
+        from alembic.migration import MigrationContext
+        from alembic.script import ScriptDirectory
+        from enferno.extensions import migrate as migrate_ext
+
+        # Suppress Alembic's "Context impl" info lines
+        _logging.getLogger("alembic.runtime.migration").setLevel(_logging.WARNING)
+
+        config = migrate_ext.get_config()
+        script = ScriptDirectory.from_config(config)
+        # get_current_head() raises when a branch merge left two heads, which would be
+        # swallowed as a warning below. Read them all so the break is reported as a failure.
+        heads = script.get_heads()
+
+        context = MigrationContext.configure(db.session.connection())
+        current = context.get_current_heads()
+        current_rev = current[0] if current else None
+        head = heads[0] if heads else None
+
+        if len(heads) > 1:
+            fail(
+                f"Multiple migration heads ({', '.join(h[:8] for h in heads)}): db upgrade will abort"
+            )
+        elif current_rev is None:
+            warn("No Alembic revision stamped (run: flask db upgrade)")
+        elif current_rev == head:
+            ok("Migrations up to date")
+        else:
+            fail(f"Pending migrations (current: {current_rev[:8]}, head: {head[:8]})")
+    except Exception as e:
+        warn(f"Could not check migrations: {e}")
+
+    # Schema alignment (lightweight check)
+    try:
+        import warnings as _warnings
+
+        _warnings.filterwarnings("ignore", message="Did not recognize type")
+        checker = DBAlignmentChecker()
+        issues = []
+        for model, table_name in checker.model_classes:
+            table = checker.metadata.tables.get(table_name)
+            if table is None:
+                issues.append(f"missing table '{table_name}'")
+                continue
+            model_cols = {c.name for c in model.__table__.columns}
+            table_cols = {c.name for c in table.columns}
+            missing = model_cols - table_cols
+            if missing:
+                issues.append(f"'{table_name}' missing: {', '.join(missing)}")
+        if issues:
+            fail(f"Schema mismatch: {'; '.join(issues[:3])}")
+        else:
+            ok("Schema aligned with models")
+    except Exception as e:
+        warn(f"Could not check schema: {e}")
+
+    # --- Services ---
+    click.echo("\nServices:")
+
+    try:
+        from enferno.extensions import rds
+
+        rds.ping()
+        ok("Redis connected")
+    except Exception:
+        fail("Redis not reachable")
+
+    try:
+        from enferno.tasks import celery
+
+        inspector = celery.control.inspect(timeout=2)
+        ping = inspector.ping()
+        if ping:
+            worker_count = len(ping)
+            ok(f"Celery workers responding ({worker_count})")
+        else:
+            warn("No Celery workers responding")
+    except Exception:
+        warn("Could not reach Celery workers")
+
+    # --- Filesystem ---
+    click.echo("\nFilesystem:")
+
+    media_dir = os.path.join(current_app.config.get("APP_DIR", "enferno"), "media")
+    if os.path.isdir(media_dir) and os.access(media_dir, os.W_OK):
+        ok("Media directory OK")
+    elif os.path.isdir(media_dir):
+        warn("Media directory exists but not writable")
+    else:
+        fail("Media directory missing")
+
+    logs_dir = os.path.join(Config.PROJECT_ROOT, "logs")
+    if os.path.isdir(logs_dir) and os.access(logs_dir, os.W_OK):
+        ok("Logs directory OK")
+    elif os.path.isdir(logs_dir):
+        warn("Logs directory exists but not writable")
+    else:
+        warn("Logs directory missing")
+
+    env_path = os.path.join(Config.PROJECT_ROOT, ".env")
+    if os.path.isfile(env_path):
+        ok(".env file exists")
+    else:
+        fail(".env file missing")
+
+    # --- Config ---
+    click.echo("\nConfig:")
+
+    secret_key = current_app.config.get("SECRET_KEY")
+    if secret_key and secret_key != "test-secret-key-not-for-production":
+        ok("SECRET_KEY set")
+    elif secret_key:
+        warn("SECRET_KEY is using test default")
+    else:
+        fail("SECRET_KEY not set")
+
+    salt = current_app.config.get("SECURITY_PASSWORD_SALT")
+    if salt and salt != "test-salt":
+        ok("SECURITY_PASSWORD_SALT set")
+    elif salt:
+        warn("SECURITY_PASSWORD_SALT is using test default")
+    else:
+        fail("SECURITY_PASSWORD_SALT not set")
+
+    mail_server = current_app.config.get("MAIL_SERVER")
+    if mail_server:
+        ok(f"Mail configured ({mail_server})")
+    else:
+        warn("MAIL_SERVER not configured")
+
+    # --- Summary ---
+    click.echo(f"\n{passed} passed", nl=False)
+    if warnings:
+        click.echo(click.style(f", {warnings} warnings", fg="yellow"), nl=False)
+    if failed:
+        click.echo(click.style(f", {failed} failed", fg="red"), nl=False)
+    click.echo()
+
+    raise SystemExit(1 if failed else 0)
 
 
 @click.command()
@@ -558,6 +837,52 @@ def extract(media_id: int, language: tuple, show_text: bool, force: bool) -> Non
         click.echo(f"Error: {result.get('error')}")
 
 
+@ocr_cli.command("purge-raw")
+@click.option("--batch-size", default=500, show_default=True, help="Rows per transaction")
+@click.option("--dry-run", is_flag=True, help="Report what would be cleared without writing")
+@with_appcontext
+def purge_raw(batch_size: int, dry_run: bool) -> None:
+    """Clear stored raw OCR payloads (one-time cleanup, resumable).
+
+    Raw provider responses are no longer stored or read by the application.
+    This clears them from existing rows (processed and cant_read alike).
+    Failed extractions keep their small error payloads. Take a backup or
+    archival dump of the extraction table first. Disk space returns to the
+    OS after VACUUM FULL or pg_repack.
+
+    Transitional command for pre-existing data: remove it once deployed
+    installs have run it.
+    """
+    from sqlalchemy import text as sa_text
+
+    from enferno.admin.models import Extraction
+
+    count_q = Extraction.query.filter(Extraction.raw.isnot(None), Extraction.status != "failed")
+    total = count_q.count()
+    if dry_run or not total:
+        click.echo(f"{total:,} extractions hold raw payloads.")
+        return
+
+    cleared = 0
+    while True:
+        result = db.session.execute(
+            sa_text(
+                "UPDATE extraction SET raw = NULL WHERE id IN ("
+                "SELECT id FROM extraction WHERE raw IS NOT NULL "
+                "AND status != 'failed' LIMIT :batch)"
+            ),
+            {"batch": batch_size},
+        )
+        db.session.commit()
+        if not result.rowcount:
+            break
+        cleared += result.rowcount
+        click.echo(f"  {cleared:,}/{total:,} cleared")
+
+    click.echo(f"Done: {cleared:,} raw payloads cleared.")
+    click.echo("Run VACUUM FULL extraction (locks table) or pg_repack to return disk space.")
+
+
 @ocr_cli.command()
 @with_appcontext
 def status() -> None:
@@ -579,7 +904,7 @@ def status() -> None:
     total_extracted = sum(s["count"] for s in status_map.values())
     pending = total_media - total_extracted
 
-    click.echo(f"\nOCR Status Summary")
+    click.echo("\nOCR Status Summary")
     click.echo(f"{'─' * 40}")
     click.echo(f"Total media:          {total_media:,}")
     click.echo(f"Pending (no OCR):     {pending:,}")
@@ -594,3 +919,247 @@ def status() -> None:
 
     click.echo(f"{'─' * 40}")
     click.echo(f"Total extracted:      {total_extracted:,}\n")
+
+
+# Public archive export commands
+export_cli = AppGroup("export", short_help="Export commands for public archive")
+
+MEDIA_DIR = Media.media_dir
+
+
+def serialize_bulletin(bulletin):
+    """Serialize a bulletin for the public archive export.
+
+    Includes only public-facing fields. The internal ``description`` is
+    never exported; only the SJAC-authored ``public_description`` goes out.
+    Strips workflow, assignment, review, and internal metadata.
+    """
+    labels = [
+        {"id": l.id, "title": l.title, "title_ar": l.title_ar, "verified": l.verified}
+        for l in bulletin.labels
+    ]
+
+    ver_labels = [
+        {"id": l.id, "title": l.title, "title_ar": l.title_ar} for l in bulletin.ver_labels
+    ]
+
+    sources = [{"id": s.id, "title": s.title} for s in bulletin.sources]
+
+    locations = [
+        {
+            "id": loc.id,
+            "title": loc.title,
+            "title_ar": loc.title_ar,
+            "lat": to_shape(loc.latlng).y if loc.latlng else None,
+            "lng": to_shape(loc.latlng).x if loc.latlng else None,
+            "location_type": loc.location_type.title if loc.location_type else None,
+            "country": loc.country.title if loc.country else None,
+            "full_location": loc.full_location,
+        }
+        for loc in bulletin.locations
+    ]
+
+    geo_locations = [
+        {
+            "id": geo.id,
+            "title": geo.title,
+            "lat": to_shape(geo.latlng).y if geo.latlng else None,
+            "lng": to_shape(geo.latlng).x if geo.latlng else None,
+            "type": geo.type.title if geo.type else None,
+        }
+        for geo in bulletin.geo_locations
+    ]
+
+    events = [
+        {
+            "id": e.id,
+            "title": e.title,
+            "title_ar": e.title_ar,
+            "type": e.eventtype.title if e.eventtype else None,
+            "from_date": DateHelper.serialize_datetime(e.from_date),
+            "to_date": DateHelper.serialize_datetime(e.to_date),
+            "location": e.location.title if e.location else None,
+        }
+        for e in bulletin.events
+    ]
+
+    medias = []
+    for media in bulletin.medias:
+        if media.deleted:
+            continue
+        entry = {
+            "id": media.id,
+            "filename": media.media_file,
+            "type": media.media_file_type,
+            "title": media.title,
+            "title_ar": media.title_ar,
+        }
+        if media.extraction:
+            entry["extraction"] = {
+                "text": media.extraction.text,
+                "original_text": media.extraction.original_text,
+                "confidence": media.extraction.confidence,
+                "language": media.extraction.language,
+            }
+        medias.append(entry)
+
+    related_bulletins = []
+    for rel in bulletin.bulletin_relations:
+        other = rel.bulletin_to if bulletin.id == rel.bulletin_id else rel.bulletin_from
+        related_bulletins.append(
+            {
+                "id": other.id,
+                "title": other.title,
+                "title_ar": other.title_ar,
+                "related_as": rel.related_as,
+            }
+        )
+
+    related_actors = [
+        {
+            "id": rel.actor.id,
+            "name": rel.actor.name,
+            "type": rel.actor.type,
+            "related_as": rel.related_as or [],
+        }
+        for rel in bulletin.related_actors
+    ]
+
+    related_incidents = [
+        {
+            "id": rel.incident.id,
+            "title": rel.incident.title,
+            "title_ar": rel.incident.title_ar,
+            "related_as": rel.related_as,
+        }
+        for rel in bulletin.related_incidents
+    ]
+
+    return {
+        "id": bulletin.id,
+        "title": bulletin.title,
+        "title_ar": bulletin.title_ar,
+        "public_description": bulletin.public_description,
+        "source_link": bulletin.source_link,
+        "publish_date": DateHelper.serialize_datetime(bulletin.publish_date),
+        "documentation_date": DateHelper.serialize_datetime(bulletin.documentation_date),
+        "labels": labels,
+        "verified_labels": ver_labels,
+        "sources": sources,
+        "locations": locations,
+        "geo_locations": geo_locations,
+        "events": events,
+        "media": medias,
+        "related_bulletins": related_bulletins,
+        "related_actors": related_actors,
+        "related_incidents": related_incidents,
+    }
+
+
+def copy_media_files(bulletins, output_dir):
+    """Copy media files for exported bulletins to the output directory.
+
+    Reads FILESYSTEM_LOCAL from app config to decide between local copy and S3 download.
+    """
+    import boto3
+
+    cfg = current_app.config
+    use_s3 = not cfg.get("FILESYSTEM_LOCAL")
+    dest_dir = output_dir / "media"
+    dest_dir.mkdir(exist_ok=True)
+
+    s3 = None
+    if use_s3:
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=cfg["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=cfg["AWS_SECRET_ACCESS_KEY"],
+            region_name=cfg["AWS_REGION"],
+        )
+
+    copied = 0
+    missing = 0
+    for bulletin in bulletins:
+        for media in bulletin.medias:
+            if media.deleted or not media.media_file:
+                continue
+            dest = dest_dir / media.media_file
+            if use_s3:
+                try:
+                    s3.download_file(cfg["S3_BUCKET"], media.media_file, str(dest))
+                    copied += 1
+                except Exception:
+                    logger.warning(
+                        "S3 download failed: %s (bulletin %d)", media.media_file, bulletin.id
+                    )
+                    missing += 1
+            else:
+                src = MEDIA_DIR / media.media_file
+                if src.exists():
+                    shutil.copy2(src, dest)
+                    copied += 1
+                else:
+                    logger.warning("Media file not found: %s (bulletin %d)", src, bulletin.id)
+                    missing += 1
+
+    return copied, missing
+
+
+@export_cli.command("public")
+@click.option("--label", required=True, help="Label title to filter bulletins for export.")
+@click.option("--output", required=True, type=click.Path(), help="Output directory for the export.")
+@click.option("--copy-media/--no-copy-media", default=True, help="Copy media files to output.")
+@with_appcontext
+def export_public(label, output, copy_media):
+    """Export labeled bulletins as denormalized JSON for the public archive.
+
+    Usage:
+        flask export public --label "public-archive" --output ./export/
+    """
+    output_dir = Path(output)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    target_label = Label.query.filter(Label.title == label).first()
+    if not target_label:
+        click.echo(f'Label "{label}" not found.')
+        raise SystemExit(1)
+
+    bulletins = (
+        Bulletin.query.join(bulletin_labels)
+        .filter(bulletin_labels.c.label_id == target_label.id)
+        .filter(Bulletin.deleted == False)
+        .options(
+            subqueryload(Bulletin.labels),
+            subqueryload(Bulletin.ver_labels),
+            subqueryload(Bulletin.sources),
+            subqueryload(Bulletin.locations),
+            subqueryload(Bulletin.geo_locations),
+            subqueryload(Bulletin.events),
+            subqueryload(Bulletin.medias).joinedload(Media.extraction),
+            subqueryload(Bulletin.bulletins_to),
+            subqueryload(Bulletin.bulletins_from),
+            subqueryload(Bulletin.related_actors),
+            subqueryload(Bulletin.related_incidents),
+        )
+        .order_by(Bulletin.id)
+        .all()
+    )
+
+    if not bulletins:
+        click.echo(f'No bulletins found with label "{label}".')
+        raise SystemExit(1)
+
+    click.echo(f"Exporting {len(bulletins)} bulletins...")
+
+    documents = [serialize_bulletin(b) for b in bulletins]
+
+    out_file = output_dir / "documents.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(documents, f, ensure_ascii=False, indent=2)
+    click.echo(f"Wrote {len(documents)} documents to {out_file}")
+
+    if copy_media:
+        copied, missing = copy_media_files(bulletins, output_dir)
+        click.echo(f"Copied {copied} media files ({missing} missing)")
+
+    click.echo("Export complete.")

@@ -4,6 +4,7 @@ import os
 import shutil
 from datetime import datetime, timedelta
 from functools import wraps
+from hashlib import md5
 from typing import Optional
 
 import boto3
@@ -24,13 +25,19 @@ from flask_security.decorators import current_user, roles_accepted
 from sqlalchemy import func, desc
 from werkzeug.utils import safe_join, secure_filename
 
-from enferno.admin.models import Media, Activity, Extraction
+from enferno.admin.models import Media, Activity, Extraction, MediaRedaction, MediaCategory
 from enferno.admin.models.tables import bulletin_roles, actor_roles
 from enferno.extensions import db, rds
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.redaction_utils import (
+    RedactionError,
+    redact_image_bytes,
+    redact_pdf_bytes,
+    rotate_rect_to_original,
+)
 from enferno.utils.text_utils import normalize_arabic
 from enferno.utils.validation_utils import validate_with
 from enferno.admin.validation.models import MediaRequestModel
@@ -111,6 +118,61 @@ def _media_url(media_file):
     )
 
 
+def _read_media_bytes(media: Media) -> bytes:
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        filepath = safe_join(str(Media.media_dir), media.media_file)
+        if not filepath or not os.path.exists(filepath):
+            raise FileNotFoundError(media.media_file)
+        with open(filepath, "rb") as f:
+            return f.read()
+
+    s3 = boto3.client(
+        "s3",
+        config=BotoConfig(signature_version="s3v4"),
+        aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+        region_name=current_app.config["AWS_REGION"],
+    )
+    return s3.get_object(Bucket=current_app.config["S3_BUCKET"], Key=media.media_file)[
+        "Body"
+    ].read()
+
+
+def _write_media_bytes(filename: str, data: bytes, content_type: str) -> None:
+    if current_app.config.get("FILESYSTEM_LOCAL"):
+        filepath = safe_join(str(Media.media_dir), filename)
+        if not filepath:
+            raise ValueError("Invalid media filename")
+        with open(filepath, "wb") as f:
+            f.write(data)
+        return
+
+    s3 = boto3.resource(
+        "s3",
+        aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+        region_name=current_app.config["AWS_REGION"],
+    )
+    s3.Bucket(current_app.config["S3_BUCKET"]).put_object(
+        Key=filename,
+        Body=data,
+        ContentType=content_type,
+    )
+
+
+def _file_extension(media: Media) -> str:
+    return os.path.splitext(media.media_file)[1].lower().lstrip(".")
+
+
+def _duplicate_redacted_media(etag: str, source: Media) -> Media | None:
+    query = Media.query.filter(Media.etag == etag, Media.deleted == False)
+    if source.bulletin_id is not None:
+        query = query.filter(Media.bulletin_id == source.bulletin_id)
+    elif source.actor_id is not None:
+        query = query.filter(Media.actor_id == source.actor_id)
+    return query.first()
+
+
 # Media dashboard page route
 @admin.route("/media/", defaults={"id": None})
 @admin.route("/media/<int:id>")
@@ -130,9 +192,11 @@ def api_medias_chunk() -> Response:
     """
     file = request.files["file"]
 
-    # to check if file is uploaded from media import tool
-    import_upload = "/import/media/" in request.referrer
-    # validate file extensions based on user and referrer
+    # Check if upload is from the media import tool (Admin-only extended extensions).
+    # The source param lives in the query string because Dropzone drops `params`
+    # on chunked POSTs, so a form-body check returns None on every chunk.
+    import_upload = request.args.get("source") == "import"
+    # validate file extensions based on user and source
     if import_upload:
         # uploads from media import tool
         # must be Admin user
@@ -179,6 +243,13 @@ def api_medias_chunk() -> Response:
     except ValueError:
         raise abort(400, body="Values provided were not in expected format")
 
+    # Enforce server-side upload size limit (config value is in MB)
+    max_size_mb = current_app.config.get("MEDIA_UPLOAD_MAX_FILE_SIZE", 1000)
+    if total_size > max_size_mb * 1024 * 1024:
+        return HTTPResponse.error(
+            f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+        )
+
     # validate dz_uuid
     if not safe_join(str(Media.media_file), dz_uuid):
         return HTTPResponse.error("Invalid Request", status=425)
@@ -195,6 +266,14 @@ def api_medias_chunk() -> Response:
     # Save the individual chunk
     with open(save_dir / secure_filename(str(current_chunk)), "wb") as f:
         file.save(f)
+
+    # Enforce size cap against actual bytes on disk (dztotalfilesize is untrusted)
+    actual_bytes = sum(p.stat().st_size for p in save_dir.iterdir() if p.is_file())
+    if actual_bytes > max_size_mb * 1024 * 1024:
+        shutil.rmtree(save_dir, ignore_errors=True)
+        return HTTPResponse.error(
+            f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+        )
 
     # See if we have all the chunks downloaded
     completed = current_chunk == total_chunks - 1
@@ -293,9 +372,12 @@ def api_medias_upload() -> Response:
         filename = Media.generate_file_name(file.filename)
         # filepath = (Media.media_dir/filename).as_posix()
 
-        response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
+        obj = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
 
-        etag = response.get()["ETag"].replace('"', "")
+        # obj is a boto3 s3.Object resource; .e_tag is populated from the PutObject
+        # response (wrapped in quotes per the S3 protocol). Reading it directly avoids
+        # an extra GetObject round trip that would otherwise stream the entire file back.
+        etag = obj.e_tag.strip('"')
 
         # check if file already exists
         if Media.query.filter(Media.etag == etag, Media.deleted == False).first():
@@ -306,6 +388,7 @@ def api_medias_upload() -> Response:
 
 # return signed url from s3 valid for some time
 @admin.route("/api/media/<filename>")
+@_require_media_access
 def serve_media(
     filename: str,
 ) -> Response:
@@ -393,6 +476,7 @@ def serve_media(
 
 
 @admin.route("/api/serve/media/<filename>")
+@_require_media_access
 def api_local_serve_media(
     filename: str,
 ) -> Response:
@@ -408,7 +492,16 @@ def api_local_serve_media(
 
     media = Media.query.filter(Media.media_file == filename).first()
 
-    if media and not current_user.can_access(media):
+    if media is None:
+        # Check if this is a recently uploaded file (grace period for upload flow)
+        filepath = safe_join(str(Media.media_dir), filename)
+        if filepath and os.path.exists(filepath):
+            mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
+            if datetime.now() - mtime <= GRACE_PERIOD:
+                return send_from_directory("media", filename)
+        return HTTPResponse.not_found("File not found")
+
+    if not current_user.can_access(media):
         Activity.create(
             current_user,
             Activity.ACTION_VIEW,
@@ -418,20 +511,20 @@ def api_local_serve_media(
             details="Unauthorized attempt to access restricted media file.",
         )
         return HTTPResponse.forbidden("Restricted Access")
-    else:
-        if media:
-            Activity.create(
-                current_user,
-                Activity.ACTION_VIEW,
-                Activity.STATUS_SUCCESS,
-                media.to_mini() if media else {"file": filename},
-                "media",
-            )
-        return send_from_directory("media", filename)
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_VIEW,
+        Activity.STATUS_SUCCESS,
+        media.to_mini(),
+        "media",
+    )
+    return send_from_directory("media", filename)
 
 
 @admin.route("/api/media/<int:id>/proxy")
 @auth_required()
+@_require_media_access
 def api_media_proxy(id: int) -> Response:
     """Proxy media file through Flask -- ensures same-origin inline display for PDFs."""
     media = Media.query.get(id)
@@ -465,14 +558,32 @@ def api_inline_medias_upload() -> Response:
     """
     try:
         f = request.files.get("file")
+        if not f:
+            return HTTPResponse.error("No file provided", status=400)
 
-        # final file
-        filename = Media.generate_file_name(f.filename)
+        # Validate file extension against allowed media types
+        allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
+        if not Media.validate_file_extension(f.filename, allowed_extensions):
+            return HTTPResponse.error("This file type is not allowed", status=415)
+
+        # Enforce upload size limit
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.seek(0)
+        max_size_mb = current_app.config.get("MEDIA_UPLOAD_MAX_FILE_SIZE", 1000)
+        if size > max_size_mb * 1024 * 1024:
+            return HTTPResponse.error(
+                f"File exceeds maximum allowed size of {max_size_mb} MB", status=413
+            )
+
+        # final file: opaque, unguessable name so inline media can't be
+        # enumerated/reconstructed by other users (BAY-01-020)
+        filename = Media.generate_inline_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
-        response = {"location": filename}
 
-        return HTTPResponse.success(data=response)
+        # TinyMCE requires a flat {"location": "..."} response, not wrapped in {"data": ...}
+        return jsonify({"location": filename})
     except Exception as e:
         logger.error(e, exc_info=True)
         return HTTPResponse.error("Request Failed", status=500)
@@ -497,6 +608,7 @@ def api_local_serve_inline_media(filename: str) -> Response:
 
 @admin.get("/api/media/<int:id>")
 @auth_required("session")
+@_require_media_access
 def api_media_get(id: int):
     """Get a single media item by ID with extraction and bulletin info."""
     media = Media.query.get(id)
@@ -509,8 +621,6 @@ def api_media_get(id: int):
     item = media.to_dict()
     ext = media.extraction
     ext_dict = ext.to_dict() if ext else None
-    if ext_dict and ext:
-        ext_dict["raw"] = ext.raw
     item["extraction"] = ext_dict
     item["ocr_status"] = ext.status if ext else "pending"
     if media.bulletin:
@@ -543,14 +653,14 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
     if media is None:
         return HTTPResponse.not_found("Media not found")
 
-    if not current_user.can_access(media):
+    if not current_user.can_edit(media):
         Activity.create(
             current_user,
             Activity.ACTION_VIEW,
             Activity.STATUS_DENIED,
             validated_data,
             "media",
-            details="Unauthorized attempt to update restricted media.",
+            details="Unauthorized attempt to update media outside edit boundary.",
         )
         return HTTPResponse.forbidden("Restricted Access")
 
@@ -566,6 +676,156 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
         return HTTPResponse.success(message=f"Media {id} updated")
     else:
         return HTTPResponse.error("Error updating Media", status=500)
+
+
+REDACTION_CATEGORY = "Redaction"
+
+
+def _redaction_category_id() -> int:
+    """Resolve (creating once if missing) the category that tags redacted copies."""
+    category = MediaCategory.find_by_title(REDACTION_CATEGORY)
+    if category is None:
+        category = MediaCategory(title=REDACTION_CATEGORY)
+        db.session.add(category)
+        db.session.flush()
+    return category.id
+
+
+@admin.post("/api/media/<int:id>/redact")
+@roles_accepted("Admin", "DA")
+def api_media_redact(id: int) -> Response:
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.not_found("Media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
+    payload = request.get_json(silent=True) or {}
+    pages = payload.get("pages", [])
+    title = (payload.get("title") or "").strip()
+    # Overwrite is only allowed on an existing redacted copy (never the immutable original).
+    overwrite = bool(payload.get("overwrite")) and media.redaction is not None
+    ext = _file_extension(media)
+
+    try:
+        src = _read_media_bytes(media)
+        if ext == "pdf":
+            out = redact_pdf_bytes(src, pages)
+            out_ext = "pdf"
+            out_type = "application/pdf"
+        elif ext in {"jpg", "jpeg", "png"} or (media.media_file_type or "").startswith("image/"):
+            orientation = media.orientation or 0
+            rects = [
+                rotate_rect_to_original(rect, orientation)
+                for page in pages
+                for rect in page.get("rects", [])
+            ]
+            out = redact_image_bytes(src, rects)
+            out_ext = "jpg"
+            out_type = "image/jpeg"
+        else:
+            return HTTPResponse.error("This file type cannot be redacted", status=415)
+    except RedactionError as e:
+        return HTTPResponse.error(str(e), status=400)
+    except FileNotFoundError:
+        return HTTPResponse.not_found("Media file not found")
+
+    etag = md5(out).hexdigest()
+
+    # Edit in place: re-burn onto the same redacted copy, overwriting its file and row.
+    # The original stays untouched, so this is always safe and reversible from the original.
+    if overwrite:
+        _write_media_bytes(media.media_file, out, out_type)
+        media.etag = etag
+        media.media_file_type = out_type
+        if title:
+            media.title = title
+        media.redaction.source_media_id = media.id
+        media.redaction.regions = pages
+        media.redaction.user_id = current_user.id
+        db.session.commit()
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            media.to_mini(),
+            "media",
+            details=f"Redacted copy {media.id} updated in place",
+        )
+        return HTTPResponse.success(data=media.to_dict())
+
+    if _duplicate_redacted_media(etag, media):
+        return HTTPResponse.error("Redacted media already exists", status=409)
+
+    filename = Media.generate_file_name(f"redacted.{out_ext}")
+    _write_media_bytes(filename, out, out_type)
+
+    redacted = Media(
+        media_file=filename,
+        media_file_type=out_type,
+        etag=etag,
+        title=title or f"{media.title or media.media_file} (redacted)",
+        title_ar=media.title_ar,
+        comments=media.comments,
+        comments_ar=media.comments_ar,
+        category=_redaction_category_id(),
+        time=media.time,
+        orientation=media.orientation,
+        user_id=current_user.id,
+        bulletin_id=media.bulletin_id,
+        actor_id=media.actor_id,
+    )
+    original_id = (
+        media.redaction.original_media_id
+        if media.redaction and media.redaction.original_media_id
+        else media.id
+    )
+    audit = MediaRedaction(
+        source_media_id=media.id,
+        original_media_id=original_id,
+        result_media=redacted,
+        regions=pages,
+        user_id=current_user.id,
+    )
+    db.session.add(redacted)
+    db.session.add(audit)
+    db.session.commit()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_CREATE,
+        Activity.STATUS_SUCCESS,
+        redacted.to_mini(),
+        "media",
+        details=f"Redacted copy created from media {media.id}",
+    )
+    return HTTPResponse.success(data=redacted.to_dict())
+
+
+@admin.delete("/api/media/<int:id>/redact")
+@roles_accepted("Admin", "DA")
+def api_media_redact_delete(id: int) -> Response:
+    # Soft-delete a redacted copy only. The immutable original is never touched here.
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.not_found("Media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+    if media.redaction is None:
+        return HTTPResponse.error("Not a redacted copy", status=400)
+
+    media.deleted = True
+    db.session.commit()
+
+    Activity.create(
+        current_user,
+        Activity.ACTION_DELETE,
+        Activity.STATUS_SUCCESS,
+        media.to_mini(),
+        "media",
+        details=f"Redacted copy {media.id} deleted",
+    )
+    return HTTPResponse.success(data={"id": media.id, "deleted": True})
 
 
 # OCR Extraction endpoints
@@ -636,8 +896,6 @@ def api_media_dashboard():
 def _media_dashboard_item(media):
     """Serialize a media item for the dashboard. Bypasses @check_roles since
     access is already enforced at the query level."""
-    from enferno.admin.models import MediaCategory
-
     media_category = MediaCategory.query.get(media.category) if media.category else None
     item = {
         "id": media.id,
@@ -698,11 +956,21 @@ def api_ocr_stats():
 
 
 @admin.get("/api/extraction/<int:extraction_id>")
+@auth_required("session")
+@_require_media_access
 def api_extraction_get(extraction_id: int):
     """Return full extraction data including text."""
     extraction = Extraction.query.get(extraction_id)
     if not extraction:
         return HTTPResponse.not_found()
+
+    # Check access via the parent media's bulletin/actor
+    media = Media.query.get(extraction.media_id)
+    if not media:
+        return HTTPResponse.not_found("Parent media not found")
+    if not current_user.can_access(media):
+        return HTTPResponse.forbidden("Restricted Access")
+
     return HTTPResponse.success(data=extraction.to_dict())
 
 
@@ -719,6 +987,14 @@ def api_extraction_update(extraction_id: int):
     extraction = Extraction.query.get(extraction_id)
     if not extraction:
         return HTTPResponse.not_found("Extraction not found")
+
+    media = Media.query.get(extraction.media_id)
+    if not media:
+        return HTTPResponse.not_found("Parent media not found")
+    # Editing extracted text mutates the item: require the assignment edit
+    # boundary, not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
+        return HTTPResponse.forbidden("Restricted Access")
 
     data = request.json or {}
     action = data.get("action")
@@ -768,7 +1044,7 @@ def api_extraction_update(extraction_id: int):
         details=detail_map.get(action),
     )
 
-    return jsonify(extraction.to_dict())
+    return jsonify(extraction.to_compact_dict())
 
 
 @admin.put("/api/media/<int:id>/orientation")
@@ -780,7 +1056,9 @@ def api_media_orientation(id: int):
     if not media:
         return HTTPResponse.not_found("Media not found")
 
-    if not current_user.can_access(media):
+    # Rotating media mutates the item: require the assignment edit boundary,
+    # not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     data = request.json or {}
@@ -843,7 +1121,9 @@ def api_ocr_process(media_id: int):
     media = db.session.get(Media, media_id)
     if not media:
         return HTTPResponse.not_found("Media not found")
-    if not current_user.can_access(media):
+    # Running OCR writes the item's extraction: require the assignment edit
+    # boundary, not just visibility (BAY-01-009).
+    if not current_user.can_edit(media):
         return HTTPResponse.forbidden("Restricted Access")
 
     result = process_media_extraction_task(media_id, force=True)
@@ -887,12 +1167,13 @@ def api_ocr_bulk():
     ocr_ext = current_app.config.get("OCR_EXT", [])
     ext_filters = [Media.media_file.ilike(f"%.{ext}") for ext in ocr_ext] if ocr_ext else []
 
-    # Build media ID list
+    # Build media ID list. Every path is scoped to the caller's access via
+    # _apply_media_access_filter so a non-admin can't OCR restricted items.
     if process_all and not media_ids:
         stmt = select(Media.id).outerjoin(Extraction).where(Extraction.id.is_(None))
         if ext_filters:
             stmt = stmt.where(or_(*ext_filters))
-        stmt = stmt.limit(limit)
+        stmt = _apply_media_access_filter(stmt).limit(limit)
         media_ids = list(db.session.scalars(stmt))
     elif bulletin_id and not media_ids:
         stmt = (
@@ -903,8 +1184,20 @@ def api_ocr_bulk():
         )
         if ext_filters:
             stmt = stmt.where(or_(*ext_filters))
-        stmt = stmt.limit(limit)
+        stmt = _apply_media_access_filter(stmt).limit(limit)
         media_ids = list(db.session.scalars(stmt))
+    elif media_ids:
+        # explicit list: drop any the caller can't access
+        stmt = _apply_media_access_filter(select(Media.id).where(Media.id.in_(media_ids)))
+        media_ids = list(db.session.scalars(stmt))
+
+    # OCR writes an extraction, so enforce the assignment edit boundary per
+    # item, matching the single-OCR endpoint (BAY-01-009). The query filter
+    # above only expresses visibility (can_access); can_edit needs the parent's
+    # assignment + status, so post-filter here. Admins always pass.
+    if media_ids and not current_user.has_role("Admin"):
+        candidates = db.session.scalars(select(Media).where(Media.id.in_(media_ids)))
+        media_ids = [m.id for m in candidates if current_user.can_edit(m)]
 
     if not media_ids:
         return HTTPResponse.error("No media to process")

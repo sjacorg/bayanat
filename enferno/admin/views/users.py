@@ -6,7 +6,7 @@ from uuid import uuid4
 from flask import Response, request, current_app, session
 from flask.templating import render_template
 from flask_security import logout_user
-from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
+from flask_security.decorators import current_user, roles_accepted, roles_required
 from flask_security.twofactor import tf_disable
 from sqlalchemy import or_
 
@@ -26,7 +26,7 @@ from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
-from . import admin, PER_PAGE
+from . import admin, PER_PAGE, fresh_auth
 
 logger = get_logger()
 
@@ -68,7 +68,7 @@ def api_users() -> Response:
 
 @admin.get("/users/", defaults={"id": None})
 @admin.get("/users/<int:id>")
-@auth_required(within=15, grace=0)
+@fresh_auth
 @roles_required("Admin")
 def users(id) -> str:
     """
@@ -88,7 +88,7 @@ def api_user_get(id) -> Response:
     :param id: id of the user
     :return: user data in json format + success or error in case of failure
     """
-    user = User.query.get(id)
+    user = db.session.get(User, id)
     if not user:
         return HTTPResponse.not_found("User not found")
     else:
@@ -115,7 +115,7 @@ def api_user_sessions(id: int) -> Any:
 
     try:
         # Fetch the user to ensure they exist and to collect their session tokens
-        user = User.query.get(id)
+        user = db.session.get(User, id)
         if not user:
             return HTTPResponse.not_found("User not found")
         sessions_paginated = (
@@ -158,6 +158,7 @@ def api_user_sessions(id: int) -> Any:
 
 
 @admin.delete("/api/session/logout")
+@fresh_auth
 @roles_required("Admin")
 def logout_session() -> Response:
     """
@@ -172,7 +173,7 @@ def logout_session() -> Response:
         return HTTPResponse.error("Invalid request. Please provide a session ID.")
     try:
         # Query the database to get the session token using the sessid
-        session_ = Session.query.get(sessid)
+        session_ = db.session.get(Session, sessid)
 
         if not session_:
             return HTTPResponse.not_found(f"Session ID {sessid} not found.")
@@ -201,6 +202,7 @@ def logout_session() -> Response:
 
 
 @admin.delete("/api/user/<int:user_id>/sessions/logout")
+@fresh_auth
 @roles_required("Admin")
 def logout_all_sessions(user_id: int) -> Any:
     """
@@ -213,7 +215,7 @@ def logout_all_sessions(user_id: int) -> Any:
         Tuple[Union[str, dict], int]: A response message and HTTP status code.
     """
     # Fetch the user to ensure they exist
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return HTTPResponse.not_found("User not found")
 
@@ -246,6 +248,7 @@ def logout_all_sessions(user_id: int) -> Any:
 
 
 @admin.delete("/api/user/revoke_2fa")
+@fresh_auth
 @roles_required("Admin")
 def revoke_2fa() -> Response:
     """
@@ -259,7 +262,7 @@ def revoke_2fa() -> Response:
     if not user_id:
         return HTTPResponse.error("User ID is required")
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return HTTPResponse.not_found("User not found")
 
@@ -273,6 +276,7 @@ def revoke_2fa() -> Response:
 
 
 @admin.post("/api/user/")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(UserRequestModel)
 def api_user_create(
@@ -353,6 +357,7 @@ def api_user_check(
 
 
 @admin.put("/api/user/")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(UserRequestModel)
 def api_user_update(
@@ -368,7 +373,7 @@ def api_user_update(
         - success/error string based on the operation result.
     """
     item = validated_data.get("item")
-    user = User.query.get(item.get("id"))
+    user = db.session.get(User, item.get("id"))
     if user is not None:
         u = validated_data.get("item")
         username = u.get("username")
@@ -432,6 +437,7 @@ def api_check_password(
 
 
 @admin.post("/api/user/force-reset")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(UserForceResetRequestModel)
 def api_user_force_reset(validated_data: dict) -> Response:
@@ -447,7 +453,7 @@ def api_user_force_reset(validated_data: dict) -> Response:
     item = validated_data.get("item")
     if not item or not (id := item.get("id")):
         return HTTPResponse.error("Bad Request")
-    user = User.query.get(id)
+    user = db.session.get(User, id)
     if not user:
         return HTTPResponse.not_found("User not found")
     if reset_key := user.security_reset_key:
@@ -459,6 +465,7 @@ def api_user_force_reset(validated_data: dict) -> Response:
 
 
 @admin.post("/api/user/force-reset-all")
+@fresh_auth
 @roles_required("Admin")
 def api_user_force_reset_all() -> Response:
     """
@@ -475,6 +482,7 @@ def api_user_force_reset_all() -> Response:
 
 
 @admin.delete("/api/user/<int:id>")
+@fresh_auth
 @roles_required("Admin")
 def api_user_delete(
     id: t.id,
@@ -488,7 +496,7 @@ def api_user_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    user = User.query.get(id)
+    user = db.session.get(User, id)
     if user is None:
         return HTTPResponse.not_found("User not found")
 
@@ -513,7 +521,7 @@ def api_user_delete(
 
 # Roles routes
 @admin.route("/roles/")
-@auth_required(within=15, grace=0)
+@fresh_auth
 @roles_required("Admin")
 def roles() -> str:
     """
@@ -554,6 +562,7 @@ def api_roles() -> Response:
 
 
 @admin.post("/api/role/")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(RoleRequestModel)
 def api_role_create(
@@ -588,6 +597,7 @@ def api_role_create(
 
 
 @admin.put("/api/role/<int:id>")
+@fresh_auth
 @roles_required("Admin")
 @validate_with(RoleRequestModel)
 def api_role_update(id: t.id, validated_data: dict) -> Response:
@@ -601,7 +611,7 @@ def api_role_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    role = Role.query.get(id)
+    role = db.session.get(Role, id)
     if role is None:
         return HTTPResponse.not_found("Role not found")
 
@@ -618,6 +628,7 @@ def api_role_update(id: t.id, validated_data: dict) -> Response:
 
 
 @admin.delete("/api/role/<int:id>")
+@fresh_auth
 @roles_required("Admin")
 def api_role_delete(
     id: t.id,
@@ -631,7 +642,7 @@ def api_role_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    role = Role.query.get(id)
+    role = db.session.get(Role, id)
 
     if role is None:
         return HTTPResponse.not_found("Role not found")
@@ -659,6 +670,7 @@ def api_role_delete(
 
 
 @admin.post("/api/role/import/")
+@fresh_auth
 @roles_required("Admin")
 def api_role_import() -> Response:
     """

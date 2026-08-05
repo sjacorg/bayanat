@@ -3,9 +3,11 @@ from pathlib import Path
 from typing import Any, Literal, Optional
 
 from celery import chord, group
+from celery.exceptions import SoftTimeLimitExceeded
 from werkzeug.utils import safe_join
 
 import enferno.utils.typing as t
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
 from enferno.data_import.models import DataImport
@@ -19,7 +21,7 @@ from enferno.utils.logging_utils import get_logger
 logger = get_logger("celery.tasks.data_import")
 
 
-@celery.task(rate_limit=10)
+@celery.task(rate_limit=10, soft_time_limit=600, time_limit=660)
 def etl_process_file(
     batch_id: t.id, file: str, meta: Any, user_id: t.id, data_import_id: t.id
 ) -> Optional[Literal["done"]]:
@@ -28,9 +30,22 @@ def etl_process_file(
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
         return "done"
+    except SoftTimeLimitExceeded:
+        log = db.session.get(DataImport, data_import_id)
+        log.fail(TimeoutError(f"etl_process_file exceeded soft_time_limit on {file}"))
+        raise
     except Exception as e:
-        log = DataImport.query.get(data_import_id)
-        log.fail(e)
+        # Roll back any half-applied transaction so the session is usable below.
+        # Without this, errors that poison the session (e.g. dropped DB connection)
+        # cause the fail-marker query to raise PendingRollbackError, masking the
+        # original exception and leaving the import stuck in "Pending".
+        db.session.rollback()
+        try:
+            log = db.session.get(DataImport, data_import_id)
+            if log:
+                log.fail(e)
+        except Exception:
+            logger.exception("Could not mark data import %s as failed", data_import_id)
         raise  # Re-raise for chord coordination
 
 
@@ -43,7 +58,7 @@ def batch_complete_notification(results: list, batch_id: str, user_id: int) -> N
     successful = [imp for imp in batch_imports if imp.status == "Ready"]
     failed = [imp for imp in batch_imports if imp.status == "Failed"]
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         logger.error(f"User {user_id} not found for batch completion notification")
         return
@@ -100,7 +115,7 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
         # Edge case: all files were duplicates or invalid
         Notification.send_notification_for_event(
             Constants.NotificationEvent.BATCH_STATUS,
-            User.query.get(user_id),
+            db.session.get(User, user_id),
             "Batch Import Complete",
             f"Batch {batch_id} had no valid files to process.",
         )

@@ -2,7 +2,7 @@
 
 import pandas as pd
 from urllib.parse import urlparse
-from flask import Flask, render_template, current_app
+from flask import Flask, render_template, current_app, request
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security import current_user
@@ -32,6 +32,7 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
+from enferno.utils.soft_delete import register_soft_delete
 from enferno.extensions import (
     db,
     migrate,
@@ -57,7 +58,7 @@ from enferno.user.models import User, Role
 from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.rate_limit_utils import ratelimit_handler
+from enferno.utils.rate_limit_utils import get_real_ip, ratelimit_handler
 
 logger = get_logger()
 
@@ -90,6 +91,19 @@ def create_app(config_object=Config):
     app = Flask(__name__)
     register_errorhandlers(app)
     app.config.from_object(config_object)
+
+    # Abort if critical secrets are missing or whitespace-only
+    if not app.config.get("TESTING"):
+        missing = [
+            k
+            for k in ("SECRET_KEY", "SECURITY_PASSWORD_SALT")
+            if not (app.config.get(k) or "").strip()
+        ]
+        if missing:
+            raise RuntimeError(
+                f"Refusing to start: {', '.join(missing)} not set. Check your .env file."
+            )
+
     register_constants(app)
     register_blueprints(app)
     register_extensions(app)
@@ -108,6 +122,7 @@ def register_extensions(app):
     """
     db.init_app(app)
     migrate.init_app(app, db)
+    register_soft_delete(db)
     # Skip debug toolbar when CSP is enabled (they conflict)
     if not app.config.get("CSP_ENABLED", False):
         debug_toolbar.init_app(app)
@@ -129,14 +144,56 @@ def register_extensions(app):
     security = Security(app, user_datastore, **security_options)
 
     session.init_app(app)
+
+    # Background polls (e.g. the notification poller) carry X-Silent-Poll and must
+    # not slide the server-side session, otherwise the idle timeout never fires.
+    from types import MethodType
+    from flask import request
+
+    def _should_set_storage(self, app, sess):
+        if request.headers.get("X-Silent-Poll") and not sess.modified:
+            return False
+        return sess.modified or app.config["SESSION_REFRESH_EACH_REQUEST"]
+
+    app.session_interface.should_set_storage = MethodType(
+        _should_set_storage, app.session_interface
+    )
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
+    app.jinja_env.globals["get_locale"] = get_locale
     rds.init_app(app)
     mail.init_app(app)
 
     limiter.init_app(app)
+    _apply_login_rate_limit(app)
 
     # Initialize Talisman with security headers
     register_talisman(app)
+
+
+def _apply_login_rate_limit(app):
+    """Stack per-username and per-IP Flask-Limiter limits on POST /login.
+
+    The /login view is owned by Flask-Security; we wrap it post-registration
+    so the same limiter / Redis storage / 429 handler used elsewhere applies.
+    """
+    login_view = app.view_functions.get("security.login")
+    if login_view is None:
+        return
+
+    def _username_key():
+        return f"login:user:{(request.form.get('username') or '').lower().strip()}"
+
+    wrapped = limiter.limit(
+        app.config["LOGIN_RATE_LIMIT_PER_USERNAME"],
+        key_func=_username_key,
+        methods=["POST"],
+    )(login_view)
+    wrapped = limiter.limit(
+        app.config["LOGIN_RATE_LIMIT_PER_IP"],
+        key_func=get_real_ip,
+        methods=["POST"],
+    )(wrapped)
+    app.view_functions["security.login"] = wrapped
 
 
 def register_talisman(app):
@@ -229,7 +286,7 @@ def register_talisman(app):
         # Other security headers
         force_https=app.config.get("FORCE_HTTPS", False),  # Don't force in dev
         force_https_permanent=False,
-        frame_options="DENY",
+        frame_options="SAMEORIGIN",
         strict_transport_security=app.config.get("FORCE_HTTPS", False),
         strict_transport_security_max_age=31536000,  # 1 year
         strict_transport_security_include_subdomains=True,
@@ -356,8 +413,10 @@ def register_commands(app):
     app.cli.add_command(commands.reset_all_passwords)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
+    app.cli.add_command(commands.doctor)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.ocr_cli)
+    app.cli.add_command(commands.export_cli)
 
 
 def register_errorhandlers(app):
@@ -391,7 +450,7 @@ def handle_uncaught_exception(e):
         error message
     """
     from werkzeug.exceptions import HTTPException
-    from flask import request, current_app
+    from flask import request
     from flask_security.decorators import current_user
 
     if isinstance(e, HTTPException) and e.code < 500:

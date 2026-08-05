@@ -3,7 +3,7 @@ import json
 from typing import Any, Optional
 
 import arrow
-from flask import current_app, has_app_context
+from flask import has_app_context
 from sqlalchemy import JSON
 
 from enferno.admin.models import Actor, Bulletin
@@ -55,15 +55,15 @@ class DataImport(db.Model, BaseMixin):
             "status": self.status,
             "data": self.data,
             "log": self.log,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
-            "created_at": DateHelper.serialize_datetime(self.created_at)
-            if self.created_at
-            else None,
-            "imported_at": DateHelper.serialize_datetime(self.imported_at)
-            if self.imported_at
-            else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
+            "created_at": (
+                DateHelper.serialize_datetime(self.created_at) if self.created_at else None
+            ),
+            "imported_at": (
+                DateHelper.serialize_datetime(self.imported_at) if self.imported_at else None
+            ),
         }
 
     def add_item(self, item_id: int) -> None:
@@ -82,9 +82,9 @@ class DataImport(db.Model, BaseMixin):
     def get_item(self) -> dict:
         """Return the item associated with the import log."""
         if self.table == "bulletin":
-            return Bulletin.query.get(self.item_id).to_compact()
+            return db.session.get(Bulletin, self.item_id).to_compact()
         if self.table == "actor":
-            return Actor.query.get(self.item_id).to_compact()
+            return db.session.get(Actor, self.item_id).to_compact()
 
     def add_file(self, file: str) -> None:
         """

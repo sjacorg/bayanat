@@ -18,6 +18,10 @@ const ActorSearchBox = Vue.defineComponent({
     roles: {
       type: Array,
     },
+    expandActivePanels: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['update:modelValue', 'search'],
 
@@ -68,6 +72,7 @@ const ActorSearchBox = Vue.defineComponent({
         } else {
           this.dyn = new Map();
         }
+        this.setActivePanels();
       },
       immediate: true
     }
@@ -88,6 +93,8 @@ const ActorSearchBox = Vue.defineComponent({
     (this.q?.dyn || []).forEach(field => {
       this.dyn.set(field.name, field)
     });
+
+    this.setActivePanels();
   },
 
   computed: {
@@ -191,6 +198,26 @@ const ActorSearchBox = Vue.defineComponent({
 
   
   methods: {
+    setActivePanels() {
+      if (!this.expandActivePanels) {
+        return;
+      }
+
+      this.$nextTick(() => {
+        const panels = [];
+        if (this.textSearchCount) panels.push('0');
+        if (this.dateCount) panels.push('1');
+        if (this.eventCount) panels.push('2');
+        if (this.personalInfoCount) panels.push('3');
+        if (this.classificationCount) panels.push('4');
+        if (this.workflowCount) panels.push('5');
+        if (this.locationCount) panels.push('6');
+        if (this.dynamicFieldCount) panels.push('7');
+
+        this.openPanels = panels.length ? panels : ['0'];
+      });
+    },
+
     fetchIdNumberTypes() {
       // If already loaded then exit
       if (this.idNumberTypes.length) return
@@ -808,28 +835,24 @@ const ActorSearchBox = Vue.defineComponent({
             <template v-if="$root.isFieldActiveByName('labels', { entityType: 'actor' })">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.LABELS_ }}</div>
               <v-card variant="outlined" class="mb-3 pa-3 border-thin">
-                <search-field
+                <label-search-field
                     v-model="q.labels"
-                    api="/admin/api/labels/"
-                    :query-params="{ typ: 'for_actor' }"
-                    item-title="title"
-                    item-value="id"
+                    :query-params="{ typ: 'for_actor', mode: 2 }"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.includeLabels_"
-                ></search-field>
+                ></label-search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
                   <v-checkbox :label="translations.any_" density="compact" v-model="q.oplabels" color="primary"
                               class="me-4" hide-details></v-checkbox>
                 </div>
-                <search-field
+                <label-search-field
                     v-model="q.exlabels"
-                    api="/admin/api/labels/"
-                    :query-params="{ typ: 'for_actor' }"
-                    item-title="title"
-                    item-value="id"
+                    :query-params="{ typ: 'for_actor', mode: 2 }"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.excludeLabels_"
-                ></search-field>
+                ></label-search-field>
                 <v-switch density="compact" color="primary" v-model="q.childlabels" :label="translations.includeChildLabels_" hide-details></v-switch>
               </v-card>
             </template>
@@ -838,28 +861,24 @@ const ActorSearchBox = Vue.defineComponent({
             <template v-if="$root.isFieldActiveByName('ver_labels', { entityType: 'actor' })">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-2 mt-2">{{ translations.VERIFIEDLABELS_ }}</div>
               <v-card variant="outlined" class="mb-3 pa-3 border-thin">
-                <search-field
+                <label-search-field
                     v-model="q.vlabels"
-                    api="/admin/api/labels/"
-                    :query-params="{ fltr: 'verified', typ: 'for_actor' }"
-                    item-title="title"
-                    item-value="id"
+                    :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.includeVerLabels_"
-                ></search-field>
+                ></label-search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
                   <v-checkbox :label="translations.any_" density="compact" v-model="q.opvlabels" color="primary"
                               class="me-4" hide-details></v-checkbox>
                 </div>
-                <search-field
+                <label-search-field
                     v-model="q.exvlabels"
-                    api="/admin/api/labels/"
-                    :query-params="{ fltr: 'verified', typ: 'for_actor' }"
-                    item-title="title"
-                    item-value="id"
+                    :query-params="{ fltr: 'verified', typ: 'for_actor', mode: 2 }"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.excludeVerLabels_"
-                ></search-field>
+                ></label-search-field>
                 <v-switch density="compact" color="primary" v-model="q.childverlabels" :label="translations.includeChildVerLabels_" hide-details></v-switch>
               </v-card>
             </template>

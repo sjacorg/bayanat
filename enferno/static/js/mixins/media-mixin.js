@@ -319,7 +319,6 @@ const mediaMixin = {
         this.editedItem.medias.splice(index, 1);
       }
     },
-
     closeMediaDialog() {
       this.destroyCrop();
       this.editedMedia.files = [];

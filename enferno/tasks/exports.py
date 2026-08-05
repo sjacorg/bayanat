@@ -2,7 +2,6 @@
 import os
 import shutil
 import time
-from datetime import datetime
 from typing import Any, Literal, Optional
 
 import boto3
@@ -11,10 +10,12 @@ from celery import chain
 from sqlalchemy import and_
 
 import enferno.utils.typing as t
+from enferno.extensions import db
 from enferno.admin.models import Actor, Bulletin, Incident
 from enferno.export.models import Export
 from enferno.tasks import BULK_CHUNK_SIZE, celery, cfg, chunk_list
-from enferno.utils.csv_utils import convert_list_attributes
+from enferno.utils.csv_utils import convert_list_attributes, escape_csv_formula_cell
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
 
@@ -34,7 +35,7 @@ def generate_export(export_id: t.id) -> Any:
     Returns:
         - chained tasks' result.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
 
     if export_request.file_format == "json":
         return chain(
@@ -51,6 +52,29 @@ def generate_export(export_id: t.id) -> Any:
         )()
     else:
         raise NotImplementedError(f"Unsupported export file format: {export_request.file_format!r}")
+
+
+def _accessible_items(requester, query_iter, export_id: t.id):
+    """Yield only the items the export requester is authorised to access.
+
+    Filters here mirror the per-record group check enforced on direct
+    GET endpoints. Without it the Celery export pipeline would happily
+    serialise restricted items the requester cannot open in the UI.
+    """
+    if not requester:
+        logger.warning("Export #%s has no requester; skipping all items", export_id)
+        return
+    for item in query_iter:
+        if requester.can_access(item):
+            yield item
+        else:
+            logger.warning(
+                "Export #%s skipped restricted %s id=%s for requester %s",
+                export_id,
+                item.__tablename__,
+                item.id,
+                requester.id,
+            )
 
 
 def clear_failed_export(export_request: Export) -> None:
@@ -83,24 +107,28 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
     Returns:
         - export_id if successful, False otherwise.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
+    requester = export_request.requester
 
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     dir_id = Export.generate_export_dir()
     try:
         for group in chunks:
             if export_request.table == "bulletin":
-                for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)):
+                rows = Bulletin.query.filter(Bulletin.id.in_(group))
+                for bulletin in _accessible_items(requester, rows, export_id):
                     pdf = PDFUtil(bulletin)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "actor":
-                for actor in Actor.query.filter(Actor.id.in_(group)):
+                rows = Actor.query.filter(Actor.id.in_(group))
+                for actor in _accessible_items(requester, rows, export_id):
                     pdf = PDFUtil(actor)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
             elif export_request.table == "incident":
-                for incident in Incident.query.filter(Incident.id.in_(group)):
+                rows = Incident.query.filter(Incident.id.in_(group))
+                for incident in _accessible_items(requester, rows, export_id):
                     pdf = PDFUtil(incident)
                     pdf.generate_pdf(f"{Export.export_dir}/{dir_id}/{pdf.filename}")
 
@@ -128,7 +156,8 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
     Returns:
         - export_id if successful, False otherwise.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
+    requester = export_request.requester
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
@@ -138,21 +167,17 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
             file.write(f'"{export_type}s": [ \n')
             for group in chunks:
                 if export_type == "bulletin":
-                    batch = ",".join(
-                        bulletin.to_json()
-                        for bulletin in Bulletin.query.filter(Bulletin.id.in_(group))
-                    )
-                    file.write(f"{batch}\n")
+                    rows = Bulletin.query.filter(Bulletin.id.in_(group))
                 elif export_type == "actor":
-                    batch = ",".join(
-                        actor.to_json() for actor in Actor.query.filter(Actor.id.in_(group))
-                    )
-                    file.write(f"{batch}\n")
+                    rows = Actor.query.filter(Actor.id.in_(group))
                 elif export_type == "incident":
-                    batch = ",".join(
-                        incident.to_json()
-                        for incident in Incident.query.filter(Incident.id.in_(group))
-                    )
+                    rows = Incident.query.filter(Incident.id.in_(group))
+                else:
+                    rows = []
+                batch = ",".join(
+                    item.to_json() for item in _accessible_items(requester, rows, export_id)
+                )
+                if batch:
                     file.write(f"{batch}\n")
                 # less db overhead
                 time.sleep(0.2)
@@ -179,26 +204,25 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
     Returns:
         - export_id if successful, False otherwise.
     """
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
+    requester = export_request.requester
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
 
     try:
         csv_df = pd.DataFrame()
-        for id in export_request.items:
-            if export_type == "bulletin":
-                bulletin = Bulletin.query.get(id)
+        if export_type == "bulletin":
+            rows = (b for i in export_request.items if (b := db.session.get(Bulletin, i)))
+            for bulletin in _accessible_items(requester, rows, export_id):
                 # adjust list attributes to normal dicts
                 adjusted = convert_list_attributes(bulletin.to_csv_dict())
                 # normalize
                 df = pd.json_normalize(adjusted)
-                if csv_df.empty:
-                    csv_df = df
-                else:
-                    csv_df = pd.merge(csv_df, df, how="outer")
+                csv_df = df if csv_df.empty else pd.merge(csv_df, df, how="outer")
 
-            elif export_type == "actor":
-                actor = Actor.query.get(id)
+        elif export_type == "actor":
+            rows = (a for i in export_request.items if (a := db.session.get(Actor, i)))
+            for actor in _accessible_items(requester, rows, export_id):
                 # adjust list attributes to normal dicts
                 actor_dict = convert_list_attributes(actor.to_csv_dict())
 
@@ -210,11 +234,10 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
 
                 # normalize the combined dict
                 df = pd.json_normalize(actor_dict)
-                if csv_df.empty:
-                    csv_df = df
-                else:
-                    csv_df = pd.concat([csv_df, df], ignore_index=True)
+                csv_df = df if csv_df.empty else pd.concat([csv_df, df], ignore_index=True)
 
+        # Neutralize spreadsheet formula injection before writing (BAY-01-024).
+        csv_df = csv_df.map(escape_csv_formula_cell)
         csv_df.to_csv(f"{file_path}.csv")
 
         export_request.file_id = dir_id
@@ -242,7 +265,7 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
     if previous_result is False:
         return False
 
-    export_request = Export.query.get(previous_result)
+    export_request = db.session.get(Export, previous_result)
 
     if not export_request:
         return False
@@ -263,9 +286,16 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
         # UI switch disabled, but just in case...
         return False
 
-    for item in items:
-        if item.medias:
-            media = item.medias[0]
+    if not cfg.FILESYSTEM_LOCAL:
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+            region_name=cfg.AWS_REGION,
+        )
+
+    for item in _accessible_items(export_request.requester, items, export_request.id):
+        for media in item.medias:
             target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"
 
             if cfg.FILESYSTEM_LOCAL:
@@ -280,12 +310,6 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
                     clear_failed_export(export_request)
                     return False  # to stop chain
             else:
-                s3 = boto3.client(
-                    "s3",
-                    aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
-                    region_name=cfg.AWS_REGION,
-                )
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
                 except Exception:
@@ -296,7 +320,7 @@ def generate_export_media(previous_result: int) -> t.id | Literal[False]:
                     clear_failed_export(export_request)
                     return False  # to stop chain
 
-        time.sleep(0.05)
+            time.sleep(0.05)
     return export_request.id
 
 
@@ -315,7 +339,7 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     if previous_result is False:
         return False
 
-    export_request = Export.query.get(previous_result)
+    export_request = db.session.get(Export, previous_result)
     logger.info(f"Generating Export #{export_request.id} ZIP archive")
 
     shutil.make_archive(
@@ -342,7 +366,7 @@ def export_cleanup_cron() -> None:
     """
     expired_exports = Export.query.filter(
         and_(
-            Export.expires_on < datetime.utcnow(),  # expiry time before now
+            Export.expires_on < DateHelper.utcnow(),  # expiry time before now
             Export.status != "Expired",
         )
     ).all()  # status is not expired

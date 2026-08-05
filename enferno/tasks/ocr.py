@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
-from enferno.extensions import rds
+from enferno.extensions import db, rds
 from enferno.tasks import celery
 from enferno.tasks.extraction import process_media_extraction_task
 from enferno.user.models import User
@@ -19,7 +19,7 @@ def ocr_single(
     if user_id:
         rds.srem(f"ocr_processing:{user_id}", media_id)
         if rds.scard(f"ocr_processing:{user_id}") == 0:
-            user = User.query.get(user_id)
+            user = db.session.get(User, user_id)
             if user:
                 Notification.send_notification_for_event(
                     Constants.NotificationEvent.BULK_OPERATION_STATUS,

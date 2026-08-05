@@ -26,6 +26,7 @@ class Eventtype(db.Model, BaseMixin):
     title_ar = db.Column(db.String)
     for_actor = db.Column(db.Boolean, default=False)
     for_bulletin = db.Column(db.Boolean, default=False)
+    for_incident = db.Column(db.Boolean, default=False)
     comments = db.Column(db.String)
 
     # custom serialization method
@@ -37,6 +38,7 @@ class Eventtype(db.Model, BaseMixin):
             "title_ar": self.title_ar or None,
             "for_actor": self.for_actor,
             "for_bulletin": self.for_bulletin,
+            "for_incident": self.for_incident,
             "comments": self.comments,
             "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }
@@ -60,6 +62,7 @@ class Eventtype(db.Model, BaseMixin):
         self.title_ar = json.get("title_ar", self.title_ar)
         self.for_actor = json.get("for_actor", self.for_actor)
         self.for_bulletin = json.get("for_bulletin", self.for_bulletin)
+        self.for_incident = json.get("for_incident", self.for_incident)
         self.comments = json.get("comments", self.comments)
 
         return self

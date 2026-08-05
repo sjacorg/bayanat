@@ -4,6 +4,7 @@ from flask import Response, request
 from flask_security.decorators import current_user, roles_required
 from sqlalchemy import or_
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Country, Ethnography, Dialect, IDNumberType, Activity
 from enferno.admin.models.Notification import Notification
@@ -98,7 +99,7 @@ def api_country_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    country = Country.query.get(id)
+    country = db.session.get(Country, id)
 
     if country:
         country.from_json(validated_data.get("item"))
@@ -131,7 +132,7 @@ def api_country_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    country = Country.query.get(id)
+    country = db.session.get(Country, id)
     if country is None:
         return HTTPResponse.not_found("Country not found")
 
@@ -235,7 +236,7 @@ def api_ethnography_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    ethnography = Ethnography.query.get(id)
+    ethnography = db.session.get(Ethnography, id)
 
     if ethnography:
         ethnography.from_json(validated_data.get("item"))
@@ -268,7 +269,7 @@ def api_ethnography_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    ethnography = Ethnography.query.get(id)
+    ethnography = db.session.get(Ethnography, id)
     if ethnography is None:
         return HTTPResponse.not_found("Ethnography not found")
 
@@ -368,7 +369,7 @@ def api_dialect_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    dialect = Dialect.query.get(id)
+    dialect = db.session.get(Dialect, id)
 
     if dialect:
         dialect.from_json(validated_data.get("item"))
@@ -401,7 +402,7 @@ def api_dialect_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    dialect = Dialect.query.get(id)
+    dialect = db.session.get(Dialect, id)
     if dialect is None:
         return HTTPResponse.not_found("Dialect not found")
 
@@ -502,7 +503,7 @@ def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    id_number_type = IDNumberType.query.get(id)
+    id_number_type = db.session.get(IDNumberType, id)
 
     if id_number_type:
         id_number_type.from_json(validated_data.get("item"))
@@ -535,7 +536,7 @@ def api_id_number_type_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    id_number_type = IDNumberType.query.get(id)
+    id_number_type = db.session.get(IDNumberType, id)
     if id_number_type is None:
         return HTTPResponse.not_found("ID Number Type not found")
 

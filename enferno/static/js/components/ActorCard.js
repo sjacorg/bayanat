@@ -27,11 +27,6 @@ const ActorCard = Vue.defineComponent({
       this.mapLocations = aggregateActorLocations(this.actor);
     },
 
-    getRelatedValues(item, actor) {
-      const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
-      return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
-    },
-
     translate_status(status) {
       return translate_status(status);
     },
@@ -49,6 +44,11 @@ const ActorCard = Vue.defineComponent({
         return this.$root.editAllowed(this.actor) && this.showEdit;
       }
       return false;
+    },
+    removeRedaction(redaction) {
+      if (typeof this.$root.removeRedaction === 'function') {
+        this.$root.removeRedaction(redaction);
+      }
     },
     loadRevisions() {
       this.hloading = true;
@@ -422,13 +422,14 @@ const ActorCard = Vue.defineComponent({
                 :renderer-id="mediaRendererId"
                 :media="$root.expandedByRenderer?.[mediaRendererId]?.media"
                 :media-type="$root.expandedByRenderer?.[mediaRendererId]?.mediaType"
+                :initial-orientation="$root.expandedByRenderer?.[mediaRendererId]?.media?.orientation || 0"
                 @ready="$root.onMediaRendererReady"
                 @fullscreen="$root.handleFullscreen(mediaRendererId)"
                 @close="$root.closeExpandedMedia(mediaRendererId)"
               ></inline-media-renderer>
 
               <v-card-text>
-                <media-grid prioritize-videos :medias="actor.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event})"></media-grid>
+                <media-grid prioritize-videos :medias="actor.medias" @media-click="$root.handleExpandedMedia({ rendererId: mediaRendererId, ...$event})" @remove-redaction="removeRedaction"></media-grid>
               </v-card-text>
             </v-card>
           </div>

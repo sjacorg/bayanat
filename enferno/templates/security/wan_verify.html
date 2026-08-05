@@ -41,7 +41,9 @@
             document.forms["wan-signin-response-form"].submit();
           } else {
             const error_element = document.getElementById("wan-errors");
-            error_element.innerHTML = `<em>${result.error_msg}</em>`;
+            const error_message = document.createElement("em");
+            error_message.textContent = result.error_msg;
+            error_element.replaceChildren(error_message);
           }
         });
     </script>

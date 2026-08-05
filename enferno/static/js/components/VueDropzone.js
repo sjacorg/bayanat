@@ -1,3 +1,5 @@
+Dropzone.autoDiscover = false;
+
 const VueDropzone = Vue.defineComponent({
   props: {
     options: {

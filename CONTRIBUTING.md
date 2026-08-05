@@ -79,38 +79,47 @@ The configuration for each tool is as follows:
 
 # Database Migrations
 
-All database migrations should be placed in `enferno/migrations/` using the following conventions:
+Bayanat uses [Alembic](https://alembic.sqlalchemy.org/) via Flask-Migrate for database migrations. Migration files live in `migrations/versions/`.
 
-### Naming Convention
+### Creating a New Migration
 
-Migration files should be prefixed with a timestamp in `YYYYMMDD_HHMMSS` format, followed by a descriptive name:
+After modifying SQLAlchemy models, auto-generate a migration:
 
-```
-enferno/migrations/
-├── 20250113_153045_add_users_table.sql
-├── 20250114_090012_add_index_to_x.sql
-└── 20250114_120501_update_email_constraint.sql
-```
-
-### Creating Migration Files
-
-You can generate the timestamp prefix using either:
-
-Python:
-```python
-from datetime import datetime
-timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-```
-
-Bash:
 ```bash
-date +"%Y%m%d_%H%M%S"
+uv run flask db migrate -m "short description of change"
 ```
 
-This naming convention ensures:
-- Clear chronological ordering of migrations
-- Prevents filename collisions when multiple developers create migrations
-- Makes it easy to track when changes were introduced
+Review the generated file in `migrations/versions/`, then apply:
+
+```bash
+uv run flask db upgrade
+```
+
+### Guidelines
+
+- Always review auto-generated migrations before committing. Alembic may miss some changes (e.g. constraint renames).
+- Use idempotent SQL (`IF NOT EXISTS`, `IF EXISTS`) when writing raw SQL in migrations.
+- Never edit a migration that has already been applied to production.
+
+### Keeping a Single Head
+
+Each migration hardcodes its parent in `down_revision`, so two branches that both add a
+migration will both claim the same parent. Git merges them cleanly because they touch
+different files, and the break only surfaces as `Multiple head revisions are present`
+when `flask db upgrade` runs on deploy.
+
+`tests/test_migrations.py` fails the build when a branch has more than one head. If it
+fires after merging `main` into your branch:
+
+- **Your migration has not been applied anywhere yet** (the normal case): edit its
+  `down_revision` to point at the new head. Check the head with
+  `uv run flask db heads`.
+- **It has already been applied on staging or production**, or the two migrations touch
+  the same tables and order matters: do not re-parent. Run `uv run flask db merge heads`
+  to create a merge revision instead.
+
+Note that only the first branch to merge keeps a valid parent. If another migration lands
+on `main` before yours, re-parent again onto the new head.
 
 # Tests
 

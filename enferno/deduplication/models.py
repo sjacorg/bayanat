@@ -6,9 +6,7 @@ from sqlalchemy import JSON
 from enferno.admin.models import Bulletin, Btob, Activity, Media
 from enferno.extensions import db, rds
 from enferno.utils.base import BaseMixin
-import os
 from enferno.settings import Config as CONFIG
-
 
 # Deduplication relation
 from enferno.user.models import User
@@ -71,10 +69,7 @@ class DedupRelation(db.Model, BaseMixin):
             None
         """
 
-        logger.info(
-            f"Match {self.id}: {self.query_video},{self.match_video}"
-        )
-
+        logger.info(f"Match {self.id}: {self.query_video},{self.match_video}")
 
         if self.distance > CONFIG.DEDUP_MAX_DISTANCE:
             self.status = 2
@@ -84,10 +79,14 @@ class DedupRelation(db.Model, BaseMixin):
 
             if b1 and b2:
                 while rds.sadd("dedup_processing", b1.id) == 0:
-                    logger.info(f"Match {self.match_id} Bulletin {b1.id} is busy. Sleeping for 2...")
+                    logger.info(
+                        f"Match {self.match_id} Bulletin {b1.id} is busy. Sleeping for 2..."
+                    )
                     time.sleep(2)
                 while rds.sadd("dedup_processing", b2.id) == 0:
-                    logger.info(f"Match {self.match_id} Bulletin {b2.id} is busy. Sleeping for 2...")
+                    logger.info(
+                        f"Match {self.match_id} Bulletin {b2.id} is busy. Sleeping for 2..."
+                    )
                     time.sleep(2)
 
                 logger.info(f"Processing match {self.match_id}...")
@@ -118,7 +117,7 @@ class DedupRelation(db.Model, BaseMixin):
 
                     # Save Bulletins and register activities
                     b1.create_revision()
-                    user = User.query.get(user_id)
+                    user = db.session.get(User, user_id)
                     Activity.create(
                         user,
                         Activity.ACTION_UPDATE,
@@ -153,4 +152,3 @@ class DedupRelation(db.Model, BaseMixin):
                 self.status = 4
         self.save()
         logger.info(f"Completed match {self.match_id}")
-

@@ -99,7 +99,7 @@ def process_graph_generation(
     """
     result_set = get_result_set(query_json, entity_type, type_map)
     rds.set(f"user{user_id}:graph:status", "pending")
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     graph_utils = GraphUtils(user)
     graph = merge_graphs(result_set, entity_type, graph_utils)
 

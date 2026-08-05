@@ -65,15 +65,21 @@
                                                             </v-col>
                                                         </v-row>
                                                         <v-row>
-                                                            <v-col cols="12" md="6">
+                                                            <v-col cols="12" md="4">
                                                                 <v-checkbox label="{{ _('For Actors') }}"
                                                                             v-model="editedItem.for_actor">
                                                                 </v-checkbox>
 
                                                             </v-col>
-                                                            <v-col cols="12" md="6">
+                                                            <v-col cols="12" md="4">
                                                                 <v-checkbox label="{{ _('For Bulletins') }}"
                                                                             v-model="editedItem.for_bulletin">
+                                                                </v-checkbox>
+
+                                                            </v-col>
+                                                            <v-col cols="12" md="4">
+                                                                <v-checkbox label="{{ _('For Incidents') }}"
+                                                                            v-model="editedItem.for_incident">
                                                                 </v-checkbox>
 
                                                             </v-col>
@@ -210,6 +216,7 @@
                     {title: "{{_('Title (ar)')}}", value: "title_ar"},
                     {title: "{{_('For Actors')}}", value: "for_actor"},
                     {title: "{{_('For Bulletins')}}", value: "for_bulletin"},
+                    {title: "{{_('For Incidents')}}", value: "for_incident"},
                     {title: "{{_('Comments')}}", value: "comments"},
                     {% if current_user.roles_in(['Admin','Mod']) %}
                         {title: "{{_('Actions')}}", value: "action", sortable: false}

@@ -350,6 +350,7 @@ areYouSure_: "{{ _('Are you sure?')}}",
 confirmation_: "{{ _('Confirmation')}}",
 areYouSureYouWantToProceed_: "{{ _('Are you sure you want to proceed?')}}",
 markAsRead_: "{{ _('Mark as read')}}",
+viewResults_: "{{ _('View results') }}",
 inApp_: "{{ _('In-app')}}",
 
 
@@ -361,11 +362,14 @@ originid_: "{{ _('Origin ID') }}",
 edit_: "{{ _('Edit') }}",
 visualize_: "{{ _('Visualize') }}",
 description_ : "{{ _('Description') }}",
+publicDescription_ : "{{ _('Public Description') }}",
 title_: "{{ _('Title') }}",
 originalTitle_: "{{ _('Original Title') }}",
 sources_: "{{ _('Sources') }}",
 labels_: "{{ _('Labels') }}",
 verifiedLabels_: "{{ _('Verified Labels') }}",
+labelPath_: "{{ _('Label Path') }}",
+moreLabels_: (count) => "{{ _('+{count} more') }}".replace("{count}", count),
 events_: "{{ _('Events') }}",
 media_: "{{ _('Media') }}",
 locations_: "{{ _('Locations') }}",
@@ -626,6 +630,11 @@ etag_ : "{{ _('File Hash') }}",
 filename_ : "{{ _('Filename') }}",
 previewNotAvailable_ : "{{ _('Preview not available') }}",
 downloadFile_ : "{{ _('Download file') }}",
+onlyRedactionsCanBeDeleted_: "{{ _('Only redactions can be deleted') }}",
+redact_: "{{ _('Redact') }}",
+youreAboutToDeleteARedactedCopy_: "{{ _('You\'re about to delete a redacted copy') }}",
+deletingTheRedactedCopyWillNotDeleteTheOriginalMedia_: "{{ _('Deleting this redacted copy will not delete the original media.') }}",
+deleteRedaction_: "{{ _('Delete Redaction') }}",
 
 // System Administration
 defaultsLoaded_: "{{ _('Default settings loaded. Click Save to apply changes.') }}",
@@ -843,4 +852,3 @@ translations['whisperModels'] = [
         {"en": "{{ model['model_label'] }}", "tr": "{{ _(model['model_label']) }}"},
     {% endfor %}
 ];
-

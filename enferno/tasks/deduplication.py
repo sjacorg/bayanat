@@ -2,7 +2,7 @@
 from sqlalchemy.sql.expression import func
 
 from enferno.deduplication.models import DedupRelation
-from enferno.extensions import rds
+from enferno.extensions import db, rds
 from enferno.tasks import celery, cfg
 from enferno.utils.logging_utils import get_logger
 
@@ -26,7 +26,7 @@ def process_dedup(id, user_id) -> None:
     Returns:
         None
     """
-    d = DedupRelation.query.get(id)
+    d = db.session.get(DedupRelation, id)
     if d:
         d.process(user_id)
         # detect final task and send a refresh message

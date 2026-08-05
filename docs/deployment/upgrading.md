@@ -1,32 +1,113 @@
 # Upgrading
 
-## Standard Upgrade
+## Upgrading to v4
 
-Pull the latest code and run database migrations:
+### Before You Start
 
-```bash
-cd /bayanat
-sudo -u bayanat git pull
-sudo -u bayanat uv sync --frozen
-sudo -u bayanat uv run flask db upgrade
-sudo systemctl restart bayanat bayanat-celery
-```
-
-`flask db upgrade` is idempotent. It detects what's already applied and skips it. Safe to run multiple times.
-
-## First-Time Alembic Upgrade
-
-If upgrading from a version before Alembic was introduced, the process is the same:
+1. **Back up your database:**
 
 ```bash
-sudo -u bayanat uv run flask db upgrade
+pg_dump <your-database-name> > bayanat-backup-$(date +%Y%m%d).sql
 ```
 
-The baseline migration consolidates all previous SQL migrations. It checks your database state and applies only what's missing, regardless of which version you're upgrading from.
+2. **Run diagnostics** from your Bayanat directory to check current health:
+
+```bash
+uv run flask doctor
+```
+
+Review the output. Fix any failures before proceeding.
 
 ::: tip
-You no longer need to manually apply SQL files from `enferno/migrations/`. The `flask db upgrade` command handles everything automatically.
+All commands below should be run from your Bayanat installation directory, as the user that owns the installation. Adapt paths and user context to match your setup.
 :::
+
+### Upgrade Steps
+
+```bash
+# 1. Pull the new code
+git fetch --tags
+git checkout v4.0.0
+
+# 2. Install updated dependencies
+uv sync --frozen
+
+# 3. Run database migrations
+uv run flask db upgrade
+
+# 4. Restart your application and worker processes
+```
+
+How you restart depends on your setup:
+- **systemd**: `sudo systemctl restart bayanat bayanat-celery`
+- **Docker**: see [Docker Upgrade](#docker-upgrade) below
+- **Other**: restart your WSGI server and Celery worker however you normally do
+
+### Verify the Upgrade
+
+```bash
+# Run diagnostics - all checks should pass
+uv run flask doctor
+
+# Confirm migrations are current
+uv run flask db current
+```
+
+Log in and verify the application works as expected.
+
+### What Changed in v4
+
+See the [changelog](https://github.com/sjacorg/bayanat/blob/main/CHANGELOG.md) for a full list. Key changes that affect the upgrade:
+
+- **Database migrations now use Alembic.** The `flask db upgrade` command replaces the old manual SQL files. You no longer need to apply SQL migrations manually.
+- **New dependencies.** `uv sync --frozen` installs everything needed.
+- **New CLI commands.** `flask doctor` checks installation health. `flask check-db-alignment` now shows Alembic migration status.
+
+### Troubleshooting
+
+**`flask db upgrade` fails:**
+
+The migration runs inside a transaction. If it fails, nothing is changed. Check the error message, fix the issue, and run `flask db upgrade` again. If you're stuck, share the error output with the development team.
+
+**Application won't start after upgrade:**
+
+Check your application logs. Common causes: missing dependency (re-run `uv sync --frozen`), config change needed (check `.env` against `.env-sample`).
+
+**`flask doctor` shows warnings after upgrade:**
+
+Warnings are non-critical. Common expected warnings:
+- "No Celery workers responding" - if you haven't restarted the worker yet
+- "MAIL_SERVER not configured" - if email isn't set up (optional)
+
+Failures (shown in red) need attention before the system is fully operational.
+
+---
+
+## Standard Upgrade (future versions)
+
+For routine upgrades after v4:
+
+```bash
+git pull
+uv sync --frozen
+uv run flask db upgrade
+```
+
+Then restart your application and worker processes.
+
+`flask db upgrade` is idempotent - safe to run multiple times. It detects what's already applied and skips it.
+
+## Docker Upgrade
+
+For Docker deployments, rebuild and restart:
+
+```bash
+docker-compose down
+docker-compose build
+docker-compose up -d
+```
+
+The container entrypoint runs database setup and migrations automatically on startup.
 
 ## Checking Status
 
@@ -39,15 +120,11 @@ uv run flask db current
 Check if your schema matches the models:
 
 ```bash
-uv run flask db check
+uv run flask check-db-alignment
 ```
 
-## Troubleshooting
+Run full diagnostics:
 
-**Migration fails partway through:**
-
-Alembic runs inside a transaction. If a migration fails, the entire revision is rolled back. Fix the issue and run `flask db upgrade` again.
-
-**Schema drift detected after upgrade:**
-
-Run `flask db check`. If it reports unexpected differences, this may indicate a manual schema change that wasn't captured in a migration. Contact the development team.
+```bash
+uv run flask doctor
+```

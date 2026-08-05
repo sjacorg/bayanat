@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from datetime import timedelta
+from urllib.parse import quote
 
 import bleach
 import redis
@@ -11,6 +12,7 @@ from enferno.utils.config_utils import ConfigManager
 from enferno.utils.dep_utils import dep_utils
 from enferno.admin.constants import Constants
 from enferno.utils.notification_config import NOTIFICATIONS_DEFAULT_CONFIG
+from enferno.utils.ocr import PROVIDERS as OCR_PROVIDERS
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -23,10 +25,28 @@ def uia_username_mapper(identity):
     return bleach.clean(identity, strip=True)
 
 
+def _read_version() -> str:
+    if env := os.environ.get("BAYANAT_VERSION"):
+        return env
+    try:
+        import tomllib
+
+        pyproject = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), os.pardir, "pyproject.toml"
+        )
+        with open(pyproject, "rb") as fh:
+            return tomllib.load(fh)["project"]["version"]
+    except Exception:
+        return "0.0.0"
+
+
 class Config(object):
     """Base configuration."""
 
     BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5000/")
+
+    # App version: pyproject.toml is the source of truth (BAYANAT_VERSION env overrides)
+    VERSION = _read_version()
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
@@ -45,23 +65,37 @@ class Config(object):
 
     if (POSTGRES_USER and POSTGRES_PASSWORD) or POSTGRES_HOST != "localhost":
         SQLALCHEMY_DATABASE_URI = (
-            f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}"
+            f"postgresql://{quote(POSTGRES_USER, safe='')}:{quote(POSTGRES_PASSWORD, safe='')}"
+            f"@{POSTGRES_HOST}/{POSTGRES_DB}"
         )
+    elif POSTGRES_USER:
+        # Socket connection as an explicit role: peer auth plus a pg_ident
+        # map lets the per-service OS users connect as the shared app role
+        # (BAY-01-032).
+        SQLALCHEMY_DATABASE_URI = f"postgresql://{quote(POSTGRES_USER, safe='')}@/{POSTGRES_DB}"
     else:
         SQLALCHEMY_DATABASE_URI = f"postgresql:///{POSTGRES_DB}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Validate pooled connections before use and recycle them periodically so
+    # workers don't hand out a dropped connection (Postgres idle timeouts,
+    # NAT/conntrack drops, restarts).
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": int(os.environ.get("SQLALCHEMY_POOL_RECYCLE", 300)),
+    }
 
     # Redis
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
-    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+    _redis_pw_quoted = quote(REDIS_PASSWORD, safe="")
+    REDIS_URL = f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/0"
 
     # Celery
     # Has to be in small case
-    celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/2"
-    result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/3"
+    celery_broker_url = f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/2"
+    result_backend = f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/3"
 
     # Security
     SECURITY_REGISTERABLE = manager.get_config("SECURITY_REGISTERABLE")
@@ -101,6 +135,12 @@ class Config(object):
     security_freshness_grace_period = manager.get_config("SECURITY_FRESHNESS_GRACE_PERIOD")
     SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=security_freshness_grace_period)
 
+    # Login brute-force throttle (Flask-Limiter, applied per-method=POST on /login).
+    LOGIN_RATE_LIMIT_PER_USERNAME = os.environ.get(
+        "LOGIN_RATE_LIMIT_PER_USERNAME", "10 per 15 minutes"
+    )
+    LOGIN_RATE_LIMIT_PER_IP = os.environ.get("LOGIN_RATE_LIMIT_PER_IP", "30 per 15 minutes")
+
     SECURITY_TWO_FACTOR_REQUIRED = manager.get_config("SECURITY_TWO_FACTOR_REQUIRED")
 
     SECURITY_PASSWORD_LENGTH_MIN = manager.get_config("SECURITY_PASSWORD_LENGTH_MIN")
@@ -132,8 +172,13 @@ class Config(object):
 
     # Session
     SESSION_TYPE = "redis"
-    SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/1")
-    PERMANENT_SESSION_LIFETIME = 3600
+    SESSION_REDIS = redis.from_url(f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/1")
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("SESSION_LIFETIME", 3600))
+
+    # Search: interactive statement timeout in seconds (0 disables the
+    # timeout-then-queue behavior) and the bound for background re-runs
+    SEARCH_TIMEOUT = int(os.environ.get("SEARCH_TIMEOUT", 30))
+    BACKGROUND_SEARCH_TIME_LIMIT = int(os.environ.get("BACKGROUND_SEARCH_TIME_LIMIT", 600))
 
     # Google 0Auth
     GOOGLE_OAUTH_ENABLED = manager.get_config("GOOGLE_OAUTH_ENABLED")
@@ -184,7 +229,16 @@ class Config(object):
     GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY") or manager.get_config(
         "GOOGLE_VISION_API_KEY"
     )
-    OCR_PROVIDER = os.environ.get("OCR_PROVIDER") or manager.get_config("OCR_PROVIDER")
+    OCR_PROVIDER = (
+        os.environ.get("OCR_PROVIDER") or manager.get_config("OCR_PROVIDER") or "google_vision"
+    )
+    if OCR_PROVIDER not in OCR_PROVIDERS:
+        import logging as _logging
+
+        _logging.getLogger("app_logger").warning(
+            "Invalid OCR_PROVIDER %r, falling back to google_vision", OCR_PROVIDER
+        )
+        OCR_PROVIDER = "google_vision"
     PDF_OCR_MAX_PAGES = int(os.environ.get("PDF_OCR_MAX_PAGES", 20))
     LLM_OCR_URL = os.environ.get("LLM_OCR_URL") or manager.get_config("LLM_OCR_URL")
     LLM_OCR_MODEL = os.environ.get("LLM_OCR_MODEL") or manager.get_config("LLM_OCR_MODEL")
@@ -343,6 +397,9 @@ class TestConfig:
     """Completely isolated test configuration - no external dependencies."""
 
     TESTING = True
+    VERSION = _read_version()
+    SEARCH_TIMEOUT = 0
+    BACKGROUND_SEARCH_TIME_LIMIT = 600
 
     # Flask Core Settings
     SECRET_KEY = "test-secret-key-not-for-production"
@@ -370,7 +427,7 @@ class TestConfig:
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
-    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+    REDIS_URL = f"redis://:{quote(REDIS_PASSWORD, safe='')}@{REDIS_HOST}:{REDIS_PORT}/0"
 
     # Celery - use in-memory for tests to avoid Redis dependency
     celery_broker_url = "memory://"
@@ -402,6 +459,10 @@ class TestConfig:
     SECURITY_MULTI_FACTOR_RECOVERY_CODES_N = 3
     SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS = None
     SECURITY_MULTI_FACTOR_RECOVERY_CODE_TTL = None
+
+    # Login throttle (Flask-Limiter, applied to security.login). Tighter in tests.
+    LOGIN_RATE_LIMIT_PER_USERNAME = "5 per 15 minutes"
+    LOGIN_RATE_LIMIT_PER_IP = "10 per 15 minutes"
     SECURITY_TWO_FACTOR_ENABLED_METHODS = ["authenticator"]
     SECURITY_TWO_FACTOR = True
     SECURITY_TWO_FACTOR_RESCUE_MAIL = "test@example.com"
@@ -470,7 +531,8 @@ class TestConfig:
     # Media & File Upload
     MEDIA_ALLOWED_EXTENSIONS = ["mp4", "webm", "jpg", "gif", "png", "pdf", "doc", "txt"]
     MEDIA_UPLOAD_MAX_FILE_SIZE = 1000
-    SHEETS_ALLOWED_EXTENSIONS = ["csv", "xls", "xlsx"]
+    # legacy binary .xls is unreadable by the pinned openpyxl engine; only xlsx/csv
+    SHEETS_ALLOWED_EXTENSIONS = ["csv", "xlsx"]
 
     # Data Tools
     ETL_TOOL = True

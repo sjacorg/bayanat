@@ -20,8 +20,14 @@ else:
     cfg = Config()
 
 celery = Celery("tasks", broker=cfg.celery_broker_url)
-# remove deprecated warning
-celery.conf.update({"accept_content": ["pickle", "json", "msgpack", "yaml"]})
+# Restrict to JSON only - pickle allows arbitrary code execution
+celery.conf.update(
+    {
+        "accept_content": ["json"],
+        "task_serializer": "json",
+        "result_serializer": "json",
+    }
+)
 celery.conf.update({"result_backend": os.environ.get("CELERY_RESULT_BACKEND", cfg.result_backend)})
 celery.conf.update(
     {
@@ -134,11 +140,22 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
             f"Backup periodic task is set up. Backups will run at 3:00 every {cfg.BACKUP_INTERVAL} day(s)."
         )
 
+    # Update-check periodic task (every 6 hours)
+    from enferno.tasks.maintenance import check_for_updates
+
+    sender.add_periodic_task(
+        6 * 60 * 60,
+        check_for_updates.s(),
+        name="Check for Updates",
+    )
+    logger.info("Update-check periodic task is set up (every 6h).")
+
     # session cleanup task
     sender.add_periodic_task(24 * 60 * 60, session_cleanup.s(), name="Session Cleanup Cron")
 
 
 # --- Import submodules so Celery discovers all tasks ---
+from enferno.tasks.background_search import background_search  # noqa: E402, F401
 from enferno.tasks.bulk_ops import (  # noqa: E402
     bulk_update_actors,
     bulk_update_bulletins,
@@ -169,10 +186,10 @@ from enferno.tasks.flowmap import generate_actor_flowmap  # noqa: E402
 from enferno.tasks.graph import generate_graph  # noqa: E402
 from enferno.tasks.maintenance import (  # noqa: E402
     activity_cleanup_cron,
+    check_for_updates,
     daily_backup_cron,
     regenerate_locations,
     reload_app,
-    reload_celery,
     session_cleanup,
 )
 from enferno.tasks.media_download import download_media_from_web  # noqa: E402
@@ -219,10 +236,10 @@ __all__ = [
     "generate_graph",
     # maintenance
     "activity_cleanup_cron",
+    "check_for_updates",
     "daily_backup_cron",
     "regenerate_locations",
     "reload_app",
-    "reload_celery",
     "session_cleanup",
     # media_download
     "download_media_from_web",

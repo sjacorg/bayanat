@@ -1,7 +1,7 @@
 import re
 import time
 from functools import cached_property
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Optional, Union
 
 import pandas as pd
 import gettext
@@ -27,6 +27,7 @@ from enferno.extensions import db
 
 from enferno.utils.base import DatabaseException
 from enferno.utils.date_helper import DateHelper
+from enferno.utils.validation_utils import sanitize_string
 from enferno.user.models import Role, User
 import enferno.utils.typing as t
 
@@ -95,7 +96,7 @@ class SheetImport:
         lang: str = "en",
     ):
         self.row = SheetImport.sheet_to_df(filepath, sheet).iloc[row_id]
-        self.data_import = DataImport.query.get(data_import_id)
+        self.data_import = db.session.get(DataImport, data_import_id)
         self.map = map
         self.batch_id = batch_id
         self.vmap = vmap
@@ -144,7 +145,7 @@ class SheetImport:
             - A dictionary containing the columns and the head of the file.
         """
         # read the file partially only for parsing purposes
-        df = pd.read_csv(filepath, keep_default_na=False)
+        df = pd.read_csv(filepath, keep_default_na=False, on_bad_lines="skip", index_col=False)
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
 
@@ -165,11 +166,13 @@ class SheetImport:
         Returns:
             - A dictionary containing the columns and the head of the file.
         """
-        df = pd.read_excel(filepath, sheet_name=sheet)
+        df = pd.read_excel(filepath, sheet_name=sheet, engine="openpyxl")
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
 
-        columns = df.columns.to_list()
+        # XLSX preserves numeric header cells as numeric column labels; coerce so the
+        # API contract (list[str]) holds regardless of header cell types.
+        columns = [str(c) for c in df.columns]
         # drop nan values before generating head rows
         df.fillna("", inplace=True)
         head = df.head().to_dict()
@@ -187,7 +190,7 @@ class SheetImport:
         Returns:
             - A list of the sheet names in the Excel file.
         """
-        xls = pd.ExcelFile(filepath)
+        xls = pd.ExcelFile(filepath, engine="openpyxl")
         return xls.sheet_names
 
     @staticmethod
@@ -202,8 +205,8 @@ class SheetImport:
         Returns:
             - A DataFrame containing the parsed data.
         """
-        if sheet:
-            df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False)
+        if isinstance(sheet, (str, int)):
+            df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False, engine="openpyxl")
         else:
             df = pd.read_csv(filepath, keep_default_na=False)
 
@@ -369,7 +372,9 @@ class SheetImport:
                 setattr(self.actor_profile, field, {"opts": [], "details": ""})
             else:
                 setattr(self.actor_profile, field, {"opts": "", "details": ""})
-        getattr(self.actor_profile, field)["details"] = str(value)
+        # Sanitize before persist: these MP detail fields are rendered as HTML
+        # downstream, same stored-XSS sink the report flagged (BAY-01-008/039).
+        getattr(self.actor_profile, field)["details"] = sanitize_string(str(value))
         flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")
 
@@ -484,7 +489,7 @@ class SheetImport:
 
         if tags:
             self.actor.tags = tags
-            self.data_import.add_to_log(f"Processed tags")
+            self.data_import.add_to_log("Processed tags")
         else:
             self.handle_mismatch("tags", value)
 
@@ -554,10 +559,10 @@ class SheetImport:
             description += "\n"
 
         if description:
-            self.actor_profile.description = description
+            self.actor_profile.description = sanitize_string(description)
             if old_description:
                 self.actor_profile.description += old_description
-        self.data_import.add_to_log(f"Processed description")
+        self.data_import.add_to_log("Processed description")
 
     def set_events(self, map_item: Any) -> None:
         """
@@ -639,7 +644,7 @@ class SheetImport:
                     self.actor.events.append(e)
                 else:
                     self.data_import.add_to_log(
-                        f"Invalid event. Skipped due to missing or invalid from_date or missing location"
+                        "Invalid event. Skipped due to missing or invalid from_date or missing location"
                     )
                     self.data_import.add_to_log(f"Event: {event}")
                     self.handle_mismatch("event", event)
@@ -672,7 +677,7 @@ class SheetImport:
             idn = {"type": idn_type, "number": idn_number}
 
             self.actor.id_number.append(idn)
-            self.data_import.add_to_log(f"Processed idnumber")
+            self.data_import.add_to_log("Processed idnumber")
 
     def set_reporters(self, map_item: Any) -> None:
         """
@@ -707,7 +712,10 @@ class SheetImport:
             None
         """
         self.data_import.add_to_log(f"Field value mismatch {field}.\n Appending to description.")
-        self.actor_profile.description += f"</p>\n<p>{field}: {str(value)}"
+        # Sanitize untrusted field/value before the v-html sink (BAY-01-039).
+        self.actor_profile.description += (
+            f"</p>\n<p>{sanitize_string(str(field))}: {sanitize_string(str(value))}"
+        )
 
     def gen_value(self, field: str) -> None:
         """
@@ -871,7 +879,7 @@ class SheetImport:
         for col in [col.name for col in ActorProfile.__table__.columns if col.comment == "MP"]:
             if getattr(self.actor_profile, col):
                 self.actor_profile.mode = 3
-                self.data_import.add_to_log(f"Changed Actor Profile to MP.")
+                self.data_import.add_to_log("Changed Actor Profile to MP.")
                 break
 
         # set actor names
@@ -892,7 +900,7 @@ class SheetImport:
             self.actor.create_revision()
 
             # Creating Activity
-            user = User.query.get(self.data_import.user_id)
+            user = db.session.get(User, self.data_import.user_id)
             Activity.create(
                 user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, self.actor.to_mini(), "actor"
             )
@@ -902,5 +910,5 @@ class SheetImport:
             self.data_import.success()
 
         except DatabaseException as e:
-            self.data_import.add_to_log(f"Failed to create Actor from row.")
+            self.data_import.add_to_log("Failed to create Actor from row.")
             self.data_import.fail(e)

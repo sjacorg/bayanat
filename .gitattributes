@@ -1,0 +1,2 @@
+# Vendored third-party library: collapse in diffs and exclude from language stats
+enferno/static/js/tinymce/** -diff linguist-vendored

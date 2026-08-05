@@ -3,7 +3,9 @@ from __future__ import annotations
 from flask import Response, request
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
+from sqlalchemy import or_
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Eventtype, Activity
 from enferno.admin.models.Notification import Notification
@@ -41,10 +43,10 @@ def api_eventtypes() -> Response:
     per_page = request.args.get("per_page", PER_PAGE, int)
 
     if q is not None:
-        query.append(Eventtype.title.ilike("%" + q + "%"))
+        query.append(or_(Eventtype.title.ilike(f"%{q}%"), Eventtype.title_ar.ilike(f"%{q}%")))
 
     typ = request.args.get("typ", None)
-    if typ and typ in ["for_bulletin", "for_actor"]:
+    if typ and typ in ["for_bulletin", "for_actor", "for_incident"]:
         query.append(getattr(Eventtype, typ) == True)
     result = (
         Eventtype.query.filter(*query)
@@ -106,7 +108,7 @@ def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    eventtype = Eventtype.query.get(id)
+    eventtype = db.session.get(Eventtype, id)
     if eventtype is None:
         return HTTPResponse.not_found("Event type not found")
 
@@ -138,7 +140,7 @@ def api_eventtype_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    eventtype = Eventtype.query.get(id)
+    eventtype = db.session.get(Eventtype, id)
     if eventtype is None:
         return HTTPResponse.not_found("Event type not found")
 

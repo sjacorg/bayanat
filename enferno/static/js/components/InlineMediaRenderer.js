@@ -24,6 +24,10 @@ const InlineMediaRenderer = Vue.defineComponent({
         type: Number,
         default: 0,
       },
+      usePdfCanvasRenderer: {
+        type: Boolean,
+        default: false,
+      },
     },
     emits: ['ready', 'fullscreen', 'close', 'orientation-changed'],
     data: () => ({
@@ -159,12 +163,13 @@ const InlineMediaRenderer = Vue.defineComponent({
             ref="playerContainer"
             class="h-100"
           ></div>
-          <pdf-viewer ref="pdfViewer" v-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
-          <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :initial-orientation="initialOrientation" :media="media" :media-type="mediaType" class="h-100" @orientation-changed="$emit('orientation-changed', $event)"></image-viewer>
-          <docx-viewer ref="docxViewer" v-if="mediaType === 'docx'" :media="media" class="w-100 h-100"></docx-viewer>
+          <pdf-viewer ref="pdfViewer" v-else-if="usePdfCanvasRenderer && mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
+          <native-pdf-viewer ref="pdfViewer" v-else-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></native-pdf-viewer>
+          <image-viewer ref="imageViewer" v-else-if="mediaType === 'image'" :initial-orientation="initialOrientation" :media="media" :media-type="mediaType" class="h-100" @orientation-changed="$emit('orientation-changed', $event)"></image-viewer>
+          <docx-viewer ref="docxViewer" v-else-if="mediaType === 'docx'" :media="media" class="w-100 h-100"></docx-viewer>
 
           <!-- Fallback for unknown file types -->
-          <div v-if="mediaType === 'unknown'" class="h-100 d-flex flex-column align-center justify-center bg-grey-lighten-2">
+          <div v-else-if="mediaType === 'unknown'" class="h-100 d-flex flex-column align-center justify-center bg-grey-lighten-2">
             <v-icon size="64" color="grey">mdi-file-download</v-icon>
             <div class="text-h6 mt-4 text-medium-emphasis">{{ translations.previewNotAvailable_ }}</div>
             <div class="text-caption text-medium-emphasis">{{ media.filename }}</div>

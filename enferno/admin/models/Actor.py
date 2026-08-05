@@ -10,7 +10,6 @@ from geoalchemy2 import Geography
 from sqlalchemy import ARRAY, func, event, DDL
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql import text
 
 import enferno.utils.typing as t
 from enferno.admin.models.Dialect import Dialect
@@ -29,7 +28,7 @@ from enferno.admin.models.tables import (
 )
 from enferno.admin.models.Country import Country
 from enferno.admin.models.Ethnography import Ethnography
-from enferno.admin.models.utils import check_roles
+from enferno.admin.models.utils import check_roles, can_view_media
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.csv_utils import convert_simple_relation, convert_complex_relation
@@ -159,14 +158,12 @@ class Actor(db.Model, BaseMixin):
 
     search = db.Column(
         db.Text,
-        db.Computed(
-            """
+        db.Computed("""
          (id)::text || ' ' ||
          COALESCE(name, ''::character varying) || ' ' ||
          COALESCE(name_ar, ''::character varying) || ' ' ||
          COALESCE(comments, ''::text)
-        """
-        ),
+        """),
     )
 
     __table_args__ = (
@@ -297,11 +294,7 @@ class Actor(db.Model, BaseMixin):
 
     @staticmethod
     def gen_full_name(first_name: str, last_name: str, middle_name: Optional[str] = None) -> str:
-        name = first_name
-        if middle_name:
-            name = name + " " + middle_name
-        name = name + " " + last_name
-        return name
+        return " ".join(part for part in (first_name, middle_name, last_name) if part)
 
     # populate actor object from json dict
     def from_json(self, json: dict[str, Any]) -> "Actor":
@@ -407,6 +400,39 @@ class Actor(db.Model, BaseMixin):
         else:
             self.origin_place_id = None
 
+        # Handling Actor Profiles
+        # Processed before any related object that commits the session (events, medias,
+        # relations): a mid-flow commit must never persist an actor without its profiles,
+        # since profile-less actors are invisible to search.
+        if "actor_profiles" in json:
+            existing_profile_ids = [profile.id for profile in self.actor_profiles]
+            new_profile_data = json["actor_profiles"]
+
+            # Update existing profiles or create new ones
+            for profile_data in new_profile_data:
+                if "id" in profile_data and profile_data["id"] in existing_profile_ids:
+                    # Update existing profile
+                    profile = next(
+                        (p for p in self.actor_profiles if p.id == profile_data["id"]), None
+                    )
+                    if profile:
+                        profile.from_json(profile_data)
+                else:
+                    # Create new profile
+                    new_profile = ActorProfile()
+                    new_profile = new_profile.from_json(profile_data)
+                    new_profile.actor = self
+                    self.actor_profiles.append(new_profile)
+
+            # Remove profiles that are no longer associated
+            for existing_id in existing_profile_ids:
+                if existing_id not in [p.get("id") for p in new_profile_data]:
+                    profile_to_remove = next(
+                        (p for p in self.actor_profiles if p.id == existing_id), None
+                    )
+                    if profile_to_remove:
+                        self.actor_profiles.remove(profile_to_remove)
+
         # Events
         if "events" in json:
             new_events = []
@@ -419,7 +445,7 @@ class Actor(db.Model, BaseMixin):
                     e.save()
                 else:
                     # event already exists, get a db instance and update it with new data
-                    e = Event.query.get(event["id"])
+                    e = db.session.get(Event, event["id"])
                     e.from_json(event)
                     e.save()
                 new_events.append(e)
@@ -459,111 +485,42 @@ class Actor(db.Model, BaseMixin):
 
         # Related Actors (actor_relations)
         if "actor_relations" in json:
-            # collect related actors ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["actor_relations"]:
-                actor = Actor.query.get(relation["actor"]["id"])
-
-                # Extra (check those actors exit)
-
-                if actor:
-                    rel_ids.append(actor.id)
-                    # this will update/create the relationship (will flush to db!)
-                    self.relate_actor(actor, relation=relation)
-
-                # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination actor not in the related ids
-
-            for r in self.actor_relations:
-                # get related actor (in or out)
-                rid = r.get_other_id(self.id)
-                if not (rid in rel_ids):
-                    r.delete()
-
-                    # -revision related
-                    Actor.query.get(rid).create_revision()
+            self.sync_relations(
+                json["actor_relations"],
+                Actor,
+                "actor",
+                self.relate_actor,
+                self.actor_relations,
+                lambda r: r.get_other_id(self.id),
+            )
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json:
-            # collect related bulletin ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["bulletin_relations"]:
-                bulletin = Bulletin.query.get(relation["bulletin"]["id"])
+            self.sync_relations(
+                json["bulletin_relations"],
+                Bulletin,
+                "bulletin",
+                self.relate_bulletin,
+                self.bulletin_relations,
+                lambda r: r.bulletin_id,
+            )
 
-                # Extra (check those bulletins exit)
-                if bulletin:
-                    rel_ids.append(bulletin.id)
-                    # this will update/create the relationship (will flush to db!)
-                    self.relate_bulletin(bulletin, relation=relation)
-
-            # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination bulletin not in the related ids
-            for r in self.bulletin_relations:
-                if not (r.bulletin_id in rel_ids):
-                    rel_bulletin = r.bulletin
-                    r.delete()
-
-                    # -revision related
-                    rel_bulletin.create_revision()
-
-        # Related Incidents (incidents_relations)
+        # Related Incidents (incident_relations)
         if "incident_relations" in json:
-            # collect related incident ids (helps with finding removed ones)
-            rel_ids = []
-            for relation in json["incident_relations"]:
-                incident = Incident.query.get(relation["incident"]["id"])
-                if incident:
-                    rel_ids.append(incident.id)
-                    # helper method to update/create the relationship (will flush to db)
-                    self.relate_incident(incident, relation=relation)
-
-            # Find out removed relations and remove them
-            # just loop existing relations and remove if the destination incident no in the related ids
-
-            for r in self.incident_relations:
-                # get related bulletin (in or out)
-                if not (r.incident_id in rel_ids):
-                    rel_incident = r.incident
-                    r.delete()
-
-                    # -revision related incident
-                    rel_incident.create_revision()
+            self.sync_relations(
+                json["incident_relations"],
+                Incident,
+                "incident",
+                self.relate_incident,
+                self.incident_relations,
+                lambda r: r.incident_id,
+            )
 
         if "comments" in json:
             self.comments = json["comments"]
 
         if "status" in json:
             self.status = json["status"]
-
-        # Handling Actor Profiles
-        if "actor_profiles" in json:
-            existing_profile_ids = [profile.id for profile in self.actor_profiles]
-            new_profile_data = json["actor_profiles"]
-
-            # Update existing profiles or create new ones
-            for profile_data in new_profile_data:
-                if "id" in profile_data and profile_data["id"] in existing_profile_ids:
-                    # Update existing profile
-                    profile = next(
-                        (p for p in self.actor_profiles if p.id == profile_data["id"]), None
-                    )
-                    if profile:
-                        profile.from_json(profile_data)
-                else:
-                    # Create new profile
-                    new_profile = ActorProfile()
-                    new_profile = new_profile.from_json(profile_data)
-                    new_profile.actor = self
-                    self.actor_profiles.append(new_profile)
-
-            # Remove profiles that are no longer associated
-            for existing_id in existing_profile_ids:
-                if existing_id not in [p.get("id") for p in new_profile_data]:
-                    profile_to_remove = next(
-                        (p for p in self.actor_profiles if p.id == existing_id), None
-                    )
-                    if profile_to_remove:
-                        self.actor_profiles.remove(profile_to_remove)
 
         # Dynamic fields: apply values via a central helper for simplicity
         try:
@@ -674,7 +631,7 @@ class Actor(db.Model, BaseMixin):
     # Helper method to handle logic of relating bulletin (from am actor)
     def relate_bulletin(
         self,
-        bulletin: "Bulletin",
+        bulletin: "Bulletin",  # noqa: F821
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
     ) -> None:
@@ -691,7 +648,7 @@ class Actor(db.Model, BaseMixin):
             self.save()
 
         # query order : (bulletin_id,actor_id)
-        existing_relation = Atob.query.get((bulletin.id, self.id))
+        existing_relation = db.session.get(Atob, (bulletin.id, self.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes
@@ -712,7 +669,7 @@ class Actor(db.Model, BaseMixin):
     # Helper method to handle logic of relating incidents (from an actor)
     def relate_incident(
         self,
-        incident: "Incident",
+        incident: "Incident",  # noqa: F821
         relation: Optional[dict[str, Any]] = None,
         create_revision: bool = True,
     ) -> None:
@@ -729,7 +686,7 @@ class Actor(db.Model, BaseMixin):
             self.save()
 
         # query order : (actor_id,incident_id)
-        existing_relation = Itoa.query.get((self.id, incident.id))
+        existing_relation = db.session.get(Itoa, (self.id, incident.id))
 
         if existing_relation:
             # Relationship exists :: Updating the attributes
@@ -770,9 +727,9 @@ class Actor(db.Model, BaseMixin):
             for event in self.events:
                 events_json.append(event.to_dict())
 
-        # medias json
+        # medias json (hidden from users without media access, BAY-01-012)
         medias_json = []
-        if self.medias and len(self.medias):
+        if can_view_media() and self.medias and len(self.medias):
             for media in self.medias:
                 medias_json.append(media.to_dict())
 
@@ -1105,8 +1062,7 @@ class Actor(db.Model, BaseMixin):
 
 
 # DDL event to create the validation function for fresh installs
-create_validation_function = DDL(
-    """
+create_validation_function = DDL("""
 CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -1135,14 +1091,11 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
-"""
-)
+""")
 
-drop_validation_function = DDL(
-    """
+drop_validation_function = DDL("""
 DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
-"""
-)
+""")
 
 # Register DDL events to ensure function exists for both fresh installs and migrations
 event.listen(Actor.__table__, "before_create", create_validation_function)

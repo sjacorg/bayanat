@@ -22,7 +22,6 @@ from bleach.css_sanitizer import CSSSanitizer, ALLOWED_CSS_PROPERTIES
 import pydantic_core
 from wtforms.validators import ValidationError as WTFormsValidationError
 
-
 # =============================================================================
 # WTForms-based Validation Functions
 # =============================================================================
@@ -33,11 +32,11 @@ def validate_no_html(data: str) -> None:
         return data
     # Reject HTML tags
     if re.search(r"<[^>]*>", data):
-        raise WTFormsValidationError(f"HTML tags are not allowed.")
+        raise WTFormsValidationError("HTML tags are not allowed.")
 
     # Reject HTML entities
     if unescape(data) != data:
-        raise WTFormsValidationError(f"HTML entities are not allowed.")
+        raise WTFormsValidationError("HTML entities are not allowed.")
 
 
 def validate_username(username: str) -> None:
@@ -46,17 +45,17 @@ def validate_username(username: str) -> None:
     """
     # validate length
     if not username or not username.strip():
-        raise WTFormsValidationError(f"Username cannot be empty.")
+        raise WTFormsValidationError("Username cannot be empty.")
     if len(username) > 32:
-        raise WTFormsValidationError(f"Username is too long (maximum 32 characters).")
+        raise WTFormsValidationError("Username is too long (maximum 32 characters).")
     # validate no html
     validate_no_html(username)
     # validate no whitespace
     if username != username.strip():
-        raise WTFormsValidationError(f"Username cannot contain leading or trailing whitespace.")
+        raise WTFormsValidationError("Username cannot contain leading or trailing whitespace.")
     # validate no special characters
     if not re.match(r"^[a-zA-Z0-9]+$", username):
-        raise WTFormsValidationError(f"Username can only contain letters and numbers.")
+        raise WTFormsValidationError("Username can only contain letters and numbers.")
 
 
 def validate_username_constraints(username: str) -> str:
@@ -111,7 +110,7 @@ def validate_webauthn_device_name(name: str) -> str:
     Validates a webauthn device name and returns a normalized version of it.
     """
     if not name or not name.strip():
-        raise WTFormsValidationError(f"Webauthn device name cannot be empty.")
+        raise WTFormsValidationError("Webauthn device name cannot be empty.")
     # validate no html
     validate_no_html(name)
 
@@ -119,12 +118,12 @@ def validate_webauthn_device_name(name: str) -> str:
     name = " ".join(name.split())
     # validate length
     if len(name) > 64:
-        raise WTFormsValidationError(f"Webauthn device name is too long (maximum 64 characters).")
+        raise WTFormsValidationError("Webauthn device name is too long (maximum 64 characters).")
     # allow unicode L, N, whitespace, _ and -
     for char in name:
         if char not in {"-", "_", " "} and unicodedata.category(char)[0] not in {"L", "N"}:
             raise WTFormsValidationError(
-                f"Webauthn device name can only contain letters, numbers, underscores, and hyphens."
+                "Webauthn device name can only contain letters, numbers, underscores, and hyphens."
             )
     return name
 

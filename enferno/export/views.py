@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 
-from flask import current_app, request, Response, Blueprint, json, send_from_directory
+from flask import request, Response, Blueprint, send_from_directory
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Activity
 from enferno.admin.models.Notification import Notification
@@ -163,12 +164,14 @@ def api_export_get(id: t.id) -> Response:
     Returns:
         - The export in json format / success or error.
     """
-    export = Export.query.get(id)
+    export = db.session.get(Export, id)
 
     if export is None:
         return HTTPResponse.not_found("Export not found")
-    else:
-        return HTTPResponse.success(data=export.to_dict(), message="Export retrieved successfully")
+    # Same ownership guard as the list/download routes (BAY-01-015).
+    if not current_user.has_role("Admin") and current_user.id != export.requester_id:
+        return HTTPResponse.forbidden("Forbidden")
+    return HTTPResponse.success(data=export.to_dict(), message="Export retrieved successfully")
 
 
 @export.post("/api/exports/")
@@ -221,7 +224,7 @@ def change_export_status() -> Response:
 
     if not export_id:
         return HTTPResponse.error("Invalid export request id", status=417)
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
 
     if not export_request:
         return HTTPResponse.not_found("Export request does not exist")
@@ -281,14 +284,14 @@ def update_expiry() -> Response:
     """
     export_id = request.json.get("exportId")
     new_date = request.json.get("expiry")
-    export_request = Export.query.get(export_id)
+    export_request = db.session.get(Export, export_id)
 
     if export_request.expired:
         return HTTPResponse.forbidden("Forbidden")
     else:
         try:
             export_request.set_expiry(new_date)
-        except Exception as e:
+        except Exception:
             return HTTPResponse.error("Invalid expiry date", status=417)
 
         if export_request.save():
@@ -309,7 +312,7 @@ def download_export_file() -> Response:
 
     try:
         export_id = Export.decrypt_unique_id(uid)
-        export = Export.query.get(export_id)
+        export = db.session.get(Export, export_id)
 
         # check permissions for download
         # either admin or user is requester

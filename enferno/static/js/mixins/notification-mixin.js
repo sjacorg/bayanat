@@ -126,6 +126,8 @@ const notificationMixin = {
       }
     },
     async loadNotifications(options) {
+      const { silent, ...loadOptions } = options || {};
+      options = loadOptions;
       const isFirstPage = options?.page === 1;
       const status = this.notifications.status;
 
@@ -153,7 +155,8 @@ const notificationMixin = {
         }
 
         const queryParams = new URLSearchParams(query);
-        const { data } = await axios.get(`/admin/api/notifications?${queryParams.toString()}`);
+        const config = silent ? { headers: { 'X-Silent-Poll': '1' } } : undefined;
+        const { data } = await axios.get(`/admin/api/notifications?${queryParams.toString()}`, config);
 
         if (!data) return;
 
@@ -255,7 +258,8 @@ const notificationMixin = {
       }
     },
     async refetchNotifications() {
-      this.loadNotifications({ page: 1 });
+      // Automatic background poll: must not slide the idle session timeout.
+      this.loadNotifications({ page: 1, silent: true });
     },
     decrementNotificationsCount() {
       if (this.notifications.unreadCount > 0) {

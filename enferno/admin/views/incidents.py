@@ -22,10 +22,11 @@ from enferno.extensions import rds, db
 from enferno.tasks import bulk_update_incidents
 from enferno.user.models import Role
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.background_search import apply_search_timeout, timeout_fallback
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
-from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles
+from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles, reject_if_review_locked
 
 
 # Incident fields routes
@@ -59,6 +60,7 @@ def incidents(id: Optional[t.id]) -> str:
 
 @admin.route("/api/incidents/", methods=["POST", "GET"])
 @validate_with(IncidentQueryRequestModel)
+@timeout_fallback("incident")
 def api_incidents(validated_data: dict) -> Response:
     """
     Returns incidents in JSON format, allows search and paging.
@@ -84,6 +86,7 @@ def api_incidents(validated_data: dict) -> Response:
     per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
+    apply_search_timeout()
     search = SearchUtils(q, cls="incident")
     base_query = search.get_query().options(
         selectinload(Incident.assigned_to),
@@ -162,15 +165,9 @@ def api_incidents(validated_data: dict) -> Response:
                     "title": item.title,
                     "title_ar": item.title_ar,
                     "status": item.status,
-                    "assigned_to": (
-                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                        if item.assigned_to
-                        else None
-                    ),
+                    "assigned_to": (item.assigned_to.to_compact() if item.assigned_to else None),
                     "first_peer_reviewer": (
-                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
-                        if item.first_peer_reviewer
-                        else None
+                        item.first_peer_reviewer.to_compact() if item.first_peer_reviewer else None
                     ),
                     "roles": (
                         [
@@ -266,7 +263,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
 
     if incident is not None:
         if not current_user.can_access(incident):
@@ -305,6 +302,10 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.forbidden("Restricted Access")
 
+        review_locked = reject_if_review_locked(incident, "incident", id)
+        if review_locked:
+            return review_locked
+
         incident = incident.from_json(validated_data["item"])
 
         # Create a revision using latest values
@@ -342,7 +343,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
     if incident is not None:
         if not current_user.can_access(incident):
             Activity.create(
@@ -445,7 +446,7 @@ def api_incident_get(
     Returns:
         - incident data in json format / success or error in case of failure.
     """
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
     if not incident:
         return HTTPResponse.not_found("Incident not found")
     else:
@@ -496,7 +497,7 @@ def incident_relations(id: t.id) -> Response:
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
         return HTTPResponse.error("Invalid class")
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
     if not incident:
         return HTTPResponse.not_found("Incident not found")
     items = []
@@ -568,7 +569,7 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
         return HTTPResponse.forbidden("User not allowed to self assign")
 
-    incident = Incident.query.get(id)
+    incident = db.session.get(Incident, id)
 
     if not current_user.can_access(incident):
         Activity.create(

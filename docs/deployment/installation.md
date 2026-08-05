@@ -6,6 +6,46 @@ Bayanat can be deployed natively on a Linux system or using Docker.
 Although this guide follows best security practices, you still need to secure the server itself (firewall, VPN, HTTPS, etc.).
 :::
 
+## Quick Install
+
+The fastest way to get Bayanat running on a fresh Ubuntu server. One command installs all dependencies, sets up the database, configures HTTPS, and starts the services.
+
+**Requirements:** Ubuntu 22.04+ with root access and a domain pointing to the server's IP.
+
+**With a domain (recommended, automatic HTTPS):**
+
+```bash
+curl -sL https://raw.githubusercontent.com/sjacorg/bayanat/main/bayanat | sudo bash -s install yourdomain.com
+```
+
+**Without a domain (HTTP only, for testing):**
+
+```bash
+curl -sL https://raw.githubusercontent.com/sjacorg/bayanat/main/bayanat | sudo bash -s install
+```
+
+This will:
+- Install system packages (PostgreSQL, Redis, Caddy, ffmpeg, etc.)
+- Create the `bayanat` system user
+- Set up the database
+- Clone the latest release into `/opt/bayanat/releases/`
+- Install Python dependencies via `uv`
+- Configure Caddy as a reverse proxy with automatic SSL
+- Set up systemd services for Bayanat and Celery
+- Start everything
+
+Once complete, the installer prints the initial `admin` username and a one-time generated password to the terminal. Open your domain in a browser, sign in with those credentials, then the setup wizard will guide you through configuring the application. Change the admin password from your account settings after first login.
+
+**Check status:**
+
+```bash
+sudo bayanat status
+```
+
+::: tip
+The quick installer uses a symlink-based release structure at `/opt/bayanat/` with shared configuration and media that persists across updates.
+:::
+
 ## Manual Installation
 
 The following steps are for Ubuntu. They should work on other Linux distributions with equivalent packages.
@@ -96,6 +136,7 @@ Create the database tables, roles, and default data. The create-exts flag create
 
 ```bash
 uv run flask create-db --create-exts
+uv run flask db stamp head
 ```
 
 ### Create Admin User
@@ -110,7 +151,7 @@ uv run flask install
 uv run flask run
 ```
 
-Access at [http://127.0.0.1:5000](http://127.0.0.1:5000). The setup wizard will guide further configuration.
+Access at [http://127.0.0.1:5000](http://127.0.0.1:5000). Sign in with the credentials printed by `flask install`, then the setup wizard will guide further configuration.
 
 ::: warning
 `flask run` is development mode only. Continue with the steps below for production.
@@ -203,14 +244,19 @@ sudo systemctl enable --now bayanat-celery
 Docker deployment is still in beta. For production, native deployment is recommended.
 :::
 
-After [configuring](/deployment/configuration) and generating a `.env` file:
+After [configuring](/deployment/configuration) and generating a `.env.docker` file:
 
 ```bash
-docker-compose up -d
+docker compose --env-file .env.docker up -d
 ```
 
-Install the admin user:
+The first startup creates an `admin` user and prints a generated
+password to the container logs. Retrieve it with:
 
 ```bash
-docker-compose exec bayanat uv run flask install
+docker compose --env-file .env.docker logs bayanat | grep -A4 "Generated password"
 ```
+
+If the auto-bootstrap was missed or the admin was deleted, run
+`docker compose --env-file .env.docker exec bayanat uv run flask install -u admin`
+to mint a fresh credential.

@@ -69,17 +69,18 @@ const ImageViewer = Vue.defineComponent({
         
         applyInitialRotation(lgInstance) {
             if (this.initialOrientation === 0) return;
-            
+
             const handler = (e) => {
                 const rotatePlugin = this.getRotatePlugin(lgInstance);
                 const index = e.detail.index;
-                
+
                 if (rotatePlugin?.rotateValuesList?.[index]) {
                     rotatePlugin.rotateValuesList[index].rotate = this.initialOrientation;
                     rotatePlugin.applyStyles();
+                    lgInstance.el.dispatchEvent(new CustomEvent('lgRotateRight', { detail: { rotate: this.initialOrientation } }));
                 }
             };
-            
+
             lgInstance.el.addEventListener('lgSlideItemLoad', handler, { once: true });
         },
         

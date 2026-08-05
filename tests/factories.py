@@ -224,6 +224,7 @@ class EventtypeFactory(factory.Factory):
     comments = factory.Faker("paragraph")
     for_actor = False
     for_bulletin = False
+    for_incident = False
     comments = factory.Faker("sentence")
 
 
@@ -553,6 +554,7 @@ def create_eventtype_for(request, session):
         eventtype = EventtypeFactory()
         eventtype.for_actor = entity_type.lower() == "actor"
         eventtype.for_bulletin = entity_type.lower() == "bulletin"
+        eventtype.for_incident = entity_type.lower() == "incident"
         session.add(eventtype)
         session.commit()
         request.addfinalizer(lambda: session.delete(eventtype))

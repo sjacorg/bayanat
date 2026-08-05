@@ -1,8 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 import arrow
 from dateutil.parser import parse
-from flask import current_app
 
 from enferno.utils.logging_utils import get_logger
 
@@ -11,6 +10,11 @@ logger = get_logger()
 
 class DateHelper:
     """Helper class for date operations."""
+
+    @staticmethod
+    def utcnow() -> datetime:
+        # Naive UTC datetime, matching the DB columns. Replaces deprecated datetime.utcnow().
+        return datetime.now(timezone.utc).replace(tzinfo=None)
 
     @staticmethod
     def serialize_datetime(dt: Any) -> Optional[str]:

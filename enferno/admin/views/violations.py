@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from flask import Response, request
 from flask_security.decorators import current_user, roles_accepted, roles_required
+from sqlalchemy import or_
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import PotentialViolation, ClaimedViolation, Activity
 from enferno.admin.models.Notification import Notification
@@ -32,7 +34,12 @@ def api_potentialviolations(page: int) -> Response:
     q = request.args.get("q", None)
     per_page = request.args.get("per_page", PER_PAGE, int)
     if q is not None:
-        query.append(PotentialViolation.title.ilike("%" + q + "%"))
+        query.append(
+            or_(
+                PotentialViolation.title.ilike(f"%{q}%"),
+                PotentialViolation.title_ar.ilike(f"%{q}%"),
+            )
+        )
     result = (
         PotentialViolation.query.filter(*query)
         .order_by(PotentialViolation.id)
@@ -92,7 +99,7 @@ def api_potentialviolation_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    potentialviolation = PotentialViolation.query.get(id)
+    potentialviolation = db.session.get(PotentialViolation, id)
     if potentialviolation is None:
         return HTTPResponse.not_found("Potential Violation not found")
 
@@ -124,7 +131,7 @@ def api_potentialviolation_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    potentialviolation = PotentialViolation.query.get(id)
+    potentialviolation = db.session.get(PotentialViolation, id)
     if potentialviolation is None:
         return HTTPResponse.not_found("Potential Violation not found")
 
@@ -178,7 +185,12 @@ def api_claimedviolations(page: int) -> Response:
     q = request.args.get("q", None)
     per_page = request.args.get("per_page", PER_PAGE, int)
     if q is not None:
-        query.append(ClaimedViolation.title.ilike("%" + q + "%"))
+        query.append(
+            or_(
+                ClaimedViolation.title.ilike(f"%{q}%"),
+                ClaimedViolation.title_ar.ilike(f"%{q}%"),
+            )
+        )
     result = (
         ClaimedViolation.query.filter(*query)
         .order_by(ClaimedViolation.id)
@@ -239,7 +251,7 @@ def api_claimedviolation_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    claimedviolation = ClaimedViolation.query.get(id)
+    claimedviolation = db.session.get(ClaimedViolation, id)
     if claimedviolation is None:
         return HTTPResponse.not_found("Claimed Violation not found")
 
@@ -271,7 +283,7 @@ def api_claimedviolation_delete(
     Returns:
         - success/error string based on the operation result.
     """
-    claimedviolation = ClaimedViolation.query.get(id)
+    claimedviolation = db.session.get(ClaimedViolation, id)
     if claimedviolation is None:
         return HTTPResponse.not_found("Claimed Violation not found")
 

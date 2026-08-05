@@ -71,7 +71,7 @@ class Btob(db.Model, BaseMixin):
 
         # with our id constraint set, just check if there is relation from the lower id to the upper id
         f, t = (a_id, b_id) if a_id < b_id else (b_id, a_id)
-        relation = Btob.query.get((f, t))
+        relation = db.session.get(Btob, (f, t))
         if relation:
             return relation
         else:

@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 {% block css %}
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css?v={{ config.VERSION }}">
 {% endblock %}
 {% block content %}
     {% include 'admin/partials/media_transcription_dialog.html' %}
@@ -48,6 +48,12 @@
 
                 <!-- Data Table -->
                 <v-card-text>
+                    <media-redactor
+                        v-model="redaction.dialog"
+                        :media="redaction.media"
+                        @redacted="onMediaRedacted"
+                    ></media-redactor>
+
                     <v-data-table-server
                             :height="tableHeight"
                             fixed-header
@@ -219,6 +225,22 @@
                         <template #item.updated_at="{ item }">
                             ${formatDate(item.updated_at)}
                         </template>
+
+                        <template #item.actions="{ item }">
+                            <v-tooltip location="top">
+                                <template v-slot:activator="{ props }">
+                                    <v-btn
+                                        v-bind="props"
+                                        icon="mdi-marker"
+                                        size="small"
+                                        variant="text"
+                                        :disabled="!canRedact(item)"
+                                        @click.stop="openRedactor(item)"
+                                    ></v-btn>
+                                </template>
+                                {{ _('Redact') }}
+                            </v-tooltip>
+                        </template>
                     </v-data-table-server>
 
                 </v-card-text>
@@ -227,20 +249,21 @@
     </v-main>
 
 {% endblock %} {% block js %}
-    <script src="/static/js/mixins/media-mixin.js"></script>
-    <script src="/static/js/mixins/ocr-mixin.js"></script>
-    <script src="/static/js/videojs/video.min.js"></script>
-    <script src="/static/js/components/SplitView.js"></script>
-    <script src="/static/js/components/OcrTextLayer.js"></script>
-    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
-    <script src="/static/js/components/PdfViewer.js"></script>
-    <script src="/static/js/components/DocxViewer.js"></script>
-    <script src="/static/js/components/ImageViewer.js"></script>
-    <script src="/static/js/components/UniField.js"></script>
-    <script src="/static/js/components/InlineMediaRenderer.js"></script>
-    <script src="/static/js/components/MediaThumbnail.js"></script>
-    <script src="/static/js/components/PopDateField.js"></script>
-    <script src="/static/js/components/PopDateRangeField.js"></script>
+    <script src="/static/js/mixins/media-mixin.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/mixins/ocr-mixin.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/videojs/video.min.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/SplitView.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaTranscriptionDialog.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PdfViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaRedactor.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/NativePdfViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/DocxViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ImageViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/UniField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaThumbnail.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PopDateField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PopDateRangeField.js?v={{ config.VERSION }}"></script>
     <script nonce="{{ csp_nonce() }}">
 
         const {createApp} = Vue;
@@ -255,6 +278,8 @@
                 drawer: drawer,
                 loading: true,
                 bulkLoading: false,
+                isCurrentUserAdmin: window.__isAdmin__ || false,
+                isCurrentUserDA: window.__isDA__ || false,
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 hasOcrProvider: Boolean('{{ config.OCR_PROVIDER }}'),
                 processingIds: new Set(), // Track media IDs being processed
@@ -270,7 +295,8 @@
                     { title: "{{_('Filename')}}", value: "filename" },
                     { title: "{{_('Bulletin')}}", value: "bulletin", sortable: false },
                     { title: "{{_('OCR Status')}}", value: "ocr_status" },
-                    { title: "{{_('Date')}}", value: "updated_at" }
+                    { title: "{{_('Date')}}", value: "updated_at" },
+                    { title: "{{_('Actions')}}", value: "actions", sortable: false, align: "end" }
                 ],
 
                 selected: [],
@@ -288,6 +314,10 @@
                     q: '',
                     bulletin_id: null,
                     dateRange: null
+                },
+                redaction: {
+                    dialog: false,
+                    media: null
                 },
                 lowWordCount: 20
             }),
@@ -497,6 +527,24 @@
                     // Also fetch processing IDs in case this item just finished
                     this.fetchProcessingIds();
                 },
+                canRedact(item) {
+                    if (!this.isCurrentUserAdmin && !this.isCurrentUserDA) return false;
+                    const fileType = item.fileType || '';
+                    const filename = item.filename || '';
+                    return fileType.includes('pdf')
+                        || fileType.includes('image')
+                        || /\.(pdf|jpe?g|png)$/i.test(filename);
+                },
+                openRedactor(item) {
+                    if (!this.canRedact(item)) return;
+                    this.redaction.media = item;
+                    this.redaction.dialog = true;
+                },
+                onMediaRedacted() {
+                    this.showSnack("{{ _('Redaction saved') }}");
+                    this.refresh(this.options);
+                    this.loadOCRStats();
+                },
                 loadOCRStats() {
                     api.get('/admin/api/ocr/stats').then(res => {
                         this.ocrStats = res?.data;
@@ -534,9 +582,10 @@
         });
 
         app.component('SplitView', SplitView);
-        app.component('OcrTextLayer', OcrTextLayer);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
         app.component('PdfViewer', PdfViewer);
+        app.component('MediaRedactor', MediaRedactor);
+        app.component('NativePdfViewer', NativePdfViewer);
         app.component('DocxViewer', DocxViewer);
         app.component('ImageViewer', ImageViewer);
         app.component('UniField', UniField);

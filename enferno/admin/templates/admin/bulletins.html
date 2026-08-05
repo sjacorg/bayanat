@@ -1,9 +1,9 @@
 {% extends 'layout.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="/static/css/dropzone.min.css">
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css">
-    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
+    <link rel="stylesheet" href="/static/js/dropzone/dropzone.min.css?v={{ config.VERSION }}">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css?v={{ config.VERSION }}">
+    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css?v={{ config.VERSION }}">
 
 {% endblock %}
 
@@ -11,6 +11,7 @@
 
 
     <v-main>
+        <media-redactor v-model="redaction.dialog" :media="redaction.media" @redacted="onRedactionSaved"></media-redactor>
         {% include 'admin/partials/media_transcription_dialog.html' %}
         {% include 'admin/partials/bulletin_advsearch.html' %}
         {% include 'admin/partials/bulletin_drawer.html' %}
@@ -370,88 +371,91 @@
 
 {% block js %}
     <script
-            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            src="/static/js/tinymce/tinymce.min.js?v={{ config.VERSION }}"
             referrerpolicy="origin"
     ></script>
 
-    <script src="/static/js/tinymce-vue.min.js"></script>
+    <script src="/static/js/tinymce-vue.min.js?v={{ config.VERSION }}"></script>
 
-    <script src="/static/js/mixins/related-search-mixin.js"></script>
-    <script src="/static/js/mixins/media-mixin.js"></script>
-    <script src="/static/js/mixins/relations-mixin.js"></script>
-    <script src="/static/js/mixins/form-builder-mixin.js"></script>
-    <script src="/static/js/mixins/ocr-mixin.js"></script>
-    <script src="/static/js/components/GeoMap.js"></script>
-    <script src="/static/js/components/UniField.js"></script>
-    <script src="/static/js/components/DualField.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
-    <script src="/static/js/components/SplitView.js"></script>
+    <script src="/static/js/mixins/related-search-mixin.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/mixins/media-mixin.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/mixins/relations-mixin.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/mixins/form-builder-mixin.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/mixins/ocr-mixin.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/GeoMap.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/UniField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/DualField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/LabelPath.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/SearchField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/LabelSearchField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/SplitView.js?v={{ config.VERSION }}"></script>
 
-    <script src="/static/js/components/RelatedBulletinsCard.js"></script>
-    <script src="/static/js/components/RelatedActorsCard.js"></script>
-    <script src="/static/js/components/RelatedIncidentsCard.js"></script>
+    <script src="/static/js/components/RelatedBulletinsCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/RelatedActorsCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/RelatedIncidentsCard.js?v={{ config.VERSION }}"></script>
 
-    <script src="/static/js/components/BulletinCard.js"></script>
-    <script src="/static/js/components/ActorProfiles.js"></script>
-    <script src="/static/js/components/ActorCard.js"></script>
-    <script src="/static/js/components/IncidentCard.js"></script>
+    <script src="/static/js/components/BulletinCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ActorProfiles.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ActorCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/IncidentCard.js?v={{ config.VERSION }}"></script>
 
-    <script src="/static/js/components/BulletinSearchBox.js"></script>
-    <script src="/static/js/components/ActorSearchBox.js"></script>
-    <script src="/static/js/components/IncidentSearchBox.js"></script>
-    <script src="/static/js/components/ShortActorDialog.js"></script>
+    <script src="/static/js/components/BulletinSearchBox.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ActorSearchBox.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/IncidentSearchBox.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ShortActorDialog.js?v={{ config.VERSION }}"></script>
 
 
 
-    <script src="/static/js/components/BulletinResult.js"></script>
-    <script src="/static/js/components/ActorResult.js"></script>
-    <script src="/static/js/components/IncidentResult.js"></script>
+    <script src="/static/js/components/BulletinResult.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ActorResult.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/IncidentResult.js?v={{ config.VERSION }}"></script>
 
-    <script src="/static/js/components/RelateBulletins.js"></script>
-    <script src="/static/js/components/RelateActors.js"></script>
-    <script src="/static/js/components/RelateIncidents.js"></script>
-    <script src="/static/js/components/RelateItemsTemplate.js"></script>
+    <script src="/static/js/components/RelateBulletins.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/RelateActors.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/RelateIncidents.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/RelateItemsTemplate.js?v={{ config.VERSION }}"></script>
 
-    <script src="/static/js/components/EventCard.js"></script>
-    <script src="/static/js/components/GlobalMap.js"></script>
-    <script src="/static/js/components/EntityFlowMap.js"></script>
-    <script src="/static/js/components/MobilityMap.js"></script>
-    <script src="/static/js/utils/MobilityMapUtils.js"></script>
-    <script src="/static/js/components/PopDateField.js"></script>
-    <script src="/static/js/components/PopDateTimeField.js"></script>
-    <script src="/static/js/components/PopDateRangeField.js"></script>
-    <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/MediaGrid.js"></script>
-    <script src="/static/js/components/MediaCard.js"></script>
-    <script src="/static/js/components/MediaThumbnail.js"></script>
-    <script src="/static/js/components/PreviewCard.js"></script>
-    <script src="/static/js/components/RelationEditorCard.js"></script>
+    <script src="/static/js/components/EventCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/GlobalMap.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/EntityFlowMap.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MobilityMap.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/utils/MobilityMapUtils.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PopDateField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PopDateTimeField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PopDateRangeField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/GeoLocations.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaGrid.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaRedactor.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaThumbnail.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PreviewCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/RelationEditorCard.js?v={{ config.VERSION }}"></script>
     
-    <script src="/static/js/components/InlineMediaRenderer.js"></script>
-    <script src="/static/js/components/ImageViewer.js"></script>
-    <script src="/static/js/components/PdfViewer.js"></script>
-    <script src="/static/js/components/DocxViewer.js"></script>
-    <script src="/static/js/components/SnapshotDialog.js"></script>
-    <script src="/static/js/components/Visualization.js"></script>
-    <script src="/static/js/force-graph.min.js"></script>
-    <script src="/static/js/dropzone.min.js"></script>
-    <script src="/static/js/components/VueDropzone.js"></script>
-    <script src="/static/js/components/IdNumberDynamicField.js"></script>
-    <script src="/static/js/components/EventsSection.js"></script>
-    <script src="/static/js/components/ReadMore.js"></script>
-    <script src="/static/js/components/FieldRenderer.js"></script>
-    <script src="/static/js/components/OcrTextLayer.js"></script>
-    <script src="/static/js/components/MediaTranscriptionDialog.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ImageViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/PdfViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/NativePdfViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/DocxViewer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/SnapshotDialog.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/Visualization.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/force-graph.min.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/dropzone/dropzone.min.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/VueDropzone.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/IdNumberDynamicField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/EventsSection.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/ReadMore.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/FieldRenderer.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MediaTranscriptionDialog.js?v={{ config.VERSION }}"></script>
 
 
-    <script src="/static/js/components/MissingPersonCard.js"></script>
-    <script src="/static/js/components/MissingPersonField.js"></script>
-    <script src="/static/js/components/MixYesNoField.js"></script>
-    <script src="/static/js/components/MixSelectField.js"></script>
-    <script src="/static/js/components/MixReportersField.js"></script>
+    <script src="/static/js/components/MissingPersonCard.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MissingPersonField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MixYesNoField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MixSelectField.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/components/MixReportersField.js?v={{ config.VERSION }}"></script>
 
-    <script src="/static/js/videojs/video.min.js"></script>
-    <script src="/static/js/croppr/croppr.min.js"></script>
+    <script src="/static/js/videojs/video.min.js?v={{ config.VERSION }}"></script>
+    <script src="/static/js/croppr/croppr.min.js?v={{ config.VERSION }}"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -477,6 +481,7 @@
                 data: () => ({
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
+                    redaction: { dialog: false, media: null },
 
                     valid: false,
                     leftDialogProps: {
@@ -674,6 +679,7 @@
                     editedIndex: -1,
                     editedItem: {
                         title: "",
+                        public_description: "",
                         events: [],
                         medias: [],
                         bulletin_relations: [],
@@ -683,6 +689,7 @@
                     defaultItem: {
                         title: "",
                         description: "",
+                        public_description: "",
 
                         // related events
                         events: [],
@@ -866,6 +873,18 @@
 
                 },
                 mounted: function () {
+                    // resume a completed background search from its notification link
+                    const bgsToken = new URLSearchParams(window.location.search).get('bgs');
+                    if (bgsToken) {
+                        axios.get(`/admin/api/background-search/${bgsToken}`).then(res => {
+                            const applyBgs = () => {
+                                if (this.loading) return setTimeout(applyBgs, 300);
+                                this.search = [{ ids: res.data.ids }];
+                                this.refresh();
+                            };
+                            applyBgs();
+                        }).catch(() => this.showSnack('Background search results have expired'));
+                    }
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
                         api.get('/admin/api/roles/').then(res => {
@@ -912,6 +931,43 @@
                         this.showOcrDialog(media.id);
                         this.refreshEditedMedia(media.id);
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
+                    },
+                    openRedactor(media) {
+                        this.redaction.media = media;
+                        this.redaction.dialog = true;
+                    },
+                    removeRedaction(redaction) {
+                        if (!redaction.isRedaction) {
+                            this.showSnack(window.translations.onlyRedactionsCanBeDeleted_);
+                            return;
+                        }
+                        api.delete(`/admin/api/media/${redaction.id}/redact`)
+                            .then(() => {
+                                this.onRedactionDeleted(redaction);
+                            })
+                            .catch(err => {
+                                this.showSnack(handleRequestError(err));
+                            });
+                    },
+                    refreshRedactionState() {
+                        const id = this.$route.params.id || this.bulletin?.id;
+                        if (id) {
+                            // Media redacted on bulletin drawer, refresh the bulletin to get the updated media list
+                            this.showBulletin(id);
+                        } else if (this.editedItem?.id) {
+                            // Media redacted on bulletin editor dialog, refresh the bulletin to get the updated media list
+                            api.get(`/admin/api/bulletin/${this.editedItem.id}`).then(response => {
+                                this.editedItem.medias = response.data?.medias;
+                            }).catch(err => this.showSnack(handleRequestError(err)));
+                        }
+                    },
+                    onRedactionSaved() {
+                        this.showSnack("{{ _('Redaction saved') }}");
+                        this.refreshRedactionState();
+                    },
+                    onRedactionDeleted() {
+                        this.showSnack("{{ _('Redaction deleted') }}");
+                        this.refreshRedactionState();
                     },
                     handleRoute({ initialLoad = false } = {}) {
                         if (this.$route.params.id) this.showBulletin(this.$route.params.id);
@@ -1142,6 +1198,10 @@
 
                         axios.post('/admin/api/bulletins/', requestData)
                             .then((response) => {
+                                if (response.status === 202) {
+                                    this.showSnack(response.data.message);
+                                    return;
+                                }
                                 const endTime = new Date()
                                 const duration = endTime - startTime
                                 this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
@@ -1343,29 +1403,9 @@
 
                     showBulletin(id) {
                         this.bulletinLoader = true
-                        
-                        // Save current s3urls before reload
-                        const s3urlCache = {};
-                        if (this.bulletin?.medias) {
-                            this.bulletin.medias.forEach(media => {
-                                if (media.s3url) {
-                                    s3urlCache[media.id] = media.s3url;
-                                }
-                            });
-                        }
-                        
                         api.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
                             this.bulletin = response.data;
                             this.bulletinDrawer = true;
-                            
-                            // Restore s3urls after reload
-                            if (this.bulletin?.medias) {
-                                this.bulletin.medias.forEach(media => {
-                                    if (s3urlCache[media.id]) {
-                                        media.s3url = s3urlCache[media.id];
-                                    }
-                                });
-                            }
                         }).catch(error => {
                             this.bulletinDrawer = false;
                         }).finally(() => {
@@ -1572,6 +1612,12 @@
 
                                     this.resetSwitchers();
                                     this.handleStatus(item);
+                                    this.applySameTypePerspective({
+                                        relationList: this.editedItem.bulletin_relations,
+                                        type: 'bulletin',
+                                        editedItemId: this.editedItem.id,
+                                        sameTypeInfo: this.btobInfo,
+                                    });
                                 })
 
 
@@ -1621,11 +1667,22 @@
                     },
 
                     save() {
+                        const bulletinRelations = this.editedItem.bulletin_relations
+                            ? this.editedItem.bulletin_relations.map((relation) => ({ ...relation }))
+                            : this.editedItem.bulletin_relations;
+                        this.applySameTypePerspective({
+                            relationList: bulletinRelations,
+                            type: 'bulletin',
+                            editedItemId: this.editedItem.id,
+                            sameTypeInfo: this.btobInfo,
+                        });
+                        const payload = { ...this.editedItem, bulletin_relations: bulletinRelations };
+
                         this.saving = true;
                         if (this.editedItem.id) {
                             //update record
                             api.put(`/admin/api/bulletin/${this.editedItem.id}`, {
-                                item: this.editedItem
+                                item: payload
                             }).then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();
@@ -1641,7 +1698,7 @@
                         } else {
                             //create new record
                             api.post("/admin/api/bulletin/", {
-                                item: this.editedItem
+                                item: payload
                             }).then(response => {
                                 this.items.unshift(response.data.item);
                                 this.totalCount += 1;
@@ -1756,6 +1813,8 @@
 
         app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
+        app.component('LabelSearchField', LabelSearchField);
+        app.component('LabelPathList', LabelPathList);
         app.component('UniField', UniField);
         app.component('DualField', DualField);
         app.component('LocationSearchField', LocationSearchField);
@@ -1793,6 +1852,7 @@
         app.component('MediaThumbnail', MediaThumbnail);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('NativePdfViewer', NativePdfViewer);
         app.component('DocxViewer', DocxViewer);
         app.component('SnapshotDialog', SnapshotDialog);
         app.component('PreviewCard', PreviewCard);
@@ -1812,7 +1872,7 @@
         app.component('IdNumberDynamicField', IdNumberDynamicField);
         app.component('EventsSection', EventsSection);
         app.component('FieldRenderer', FieldRenderer);
-        app.component('OcrTextLayer', OcrTextLayer);
+        app.component('MediaRedactor', MediaRedactor);
         app.component('MediaTranscriptionDialog', MediaTranscriptionDialog);
 
         app.use(router).use(vuetify);

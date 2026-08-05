@@ -22,10 +22,11 @@ from enferno.extensions import rds, db
 from enferno.tasks import bulk_update_bulletins
 from enferno.user.models import Role
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.background_search import apply_search_timeout, timeout_fallback
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
-from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles
+from . import admin, PER_PAGE, REL_PER_PAGE, can_assign_roles, reject_if_review_locked
 
 
 # Bulletin fields routes
@@ -51,6 +52,7 @@ def bulletins(id: Optional[t.id]) -> str:
 
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
 @validate_with(BulletinQueryRequestModel)
+@timeout_fallback("bulletin")
 def api_bulletins(validated_data: dict) -> Response:
     # Log search query
     q = validated_data.get("q", [{}])
@@ -67,6 +69,7 @@ def api_bulletins(validated_data: dict) -> Response:
     per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
+    apply_search_timeout()
     search = SearchUtils(q, "bulletin")
     base_query = search.get_query().options(
         selectinload(Bulletin.assigned_to),
@@ -139,15 +142,9 @@ def api_bulletins(validated_data: dict) -> Response:
                     "sjac_title": item.sjac_title,
                     "sjac_title_ar": item.sjac_title_ar,
                     "status": item.status,
-                    "assigned_to": (
-                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                        if item.assigned_to
-                        else None
-                    ),
+                    "assigned_to": (item.assigned_to.to_compact() if item.assigned_to else None),
                     "first_peer_reviewer": (
-                        {"id": item.first_peer_reviewer.id, "name": item.first_peer_reviewer.name}
-                        if item.first_peer_reviewer
-                        else None
+                        item.first_peer_reviewer.to_compact() if item.first_peer_reviewer else None
                     ),
                     "roles": (
                         [
@@ -241,7 +238,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
         - success/error string based on the operation result.
     """
 
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     if bulletin is not None:
         if not current_user.can_access(bulletin):
             Activity.create(
@@ -279,6 +276,16 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.forbidden("Restricted Access")
 
+        review_locked = reject_if_review_locked(bulletin, "bulletin", id)
+        if review_locked:
+            return review_locked
+
+        # Non-Admin owners cannot reassign or set reviewers via the normal update
+        # (BAY-01-022); assignment goes through the assign endpoint.
+        if not current_user.has_role("Admin"):
+            for field in ("assigned_to", "first_peer_reviewer", "second_peer_reviewer"):
+                validated_data["item"].pop(field, None)
+
         bulletin = bulletin.from_json(validated_data["item"])
 
         bulletin.create_revision()
@@ -310,7 +317,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
     Returns:
         - success/error string based on the operation result.
     """
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     if bulletin is not None:
         if not current_user.can_access(bulletin):
             Activity.create(
@@ -397,6 +404,7 @@ def api_bulletin_bulk_update(
     if not current_user.has_role("Admin"):
         # silently discard access roles
         bulk.pop("roles", None)
+        bulk.pop("rolesReplace", None)
 
     if ids and len(bulk):
         job = bulk_update_bulletins.delay(ids, bulk, current_user.id)
@@ -424,7 +432,7 @@ def api_bulletin_get(
     Returns:
         - bulletin in json format / success or error
     """
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     mode = request.args.get("mode", None)
     if not bulletin:
         return HTTPResponse.not_found("Bulletin not found")
@@ -478,7 +486,7 @@ def bulletin_relations(id: t.id) -> Response:
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
         return HTTPResponse.error("Invalid class", status=400)
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
     if not bulletin:
         return HTTPResponse.not_found("Bulletin not found")
     items = []
@@ -542,7 +550,7 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
         return HTTPResponse.forbidden("User not allowed to self assign")
 
-    bulletin = Bulletin.query.get(id)
+    bulletin = db.session.get(Bulletin, id)
 
     if not current_user.can_access(bulletin):
         Activity.create(

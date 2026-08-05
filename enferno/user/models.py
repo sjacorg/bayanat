@@ -1,6 +1,5 @@
 import json
 from typing import Any, Dict
-from datetime import datetime
 from uuid import uuid4
 
 from flask import current_app, session, has_app_context, has_request_context
@@ -19,6 +18,19 @@ from enferno.utils.logging_utils import get_logger
 
 # Redis key namespace to set flag for forcing password reset
 SECURITY_KEY_NAMESPACE = "security:user"
+
+# Workflow statuses in which the assigned DA may mutate the item.
+# Mirrors the frontend editAllowed() rule. Changes here must match
+# the editAllowed() helper in admin/templates/admin/{bulletins,actors,incidents}.html.
+EDITABLE_STATUSES = frozenset(
+    {
+        "Human Created",
+        "Assigned",
+        "Updated",
+        "Peer Reviewed",
+        "Revisited",
+    }
+)
 
 logger = get_logger()
 
@@ -227,13 +239,24 @@ class User(UserMixin, db.Model, BaseMixin):
     def set_security_reset_key(self) -> None:
         """Set the security reset key with a timestamp value"""
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(DateHelper.utcnow().timestamp())
         rds.set(key, timestamp)
 
     def unset_security_reset_key(self) -> None:
         """unSet the security reset key"""
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         rds.delete(key)
+
+    def set_password(self, password: str) -> None:
+        """Hash and set the user password, clearing any active force-reset flag.
+
+        Centralizing this on the model keeps the force-reset Redis flag in sync
+        with the stored hash, regardless of whether the password is written via
+        a CLI command or the admin UI. The web /change flow continues to clear
+        the flag via the `password_changed` signal.
+        """
+        self.password = hash_password(password)
+        self.unset_security_reset_key()
 
     def roles_in(self, roles: list) -> bool:
         chk = [self.has_role(r) for r in roles]
@@ -339,6 +362,34 @@ class User(UserMixin, db.Model, BaseMixin):
 
         return False
 
+    def can_edit(self, obj: Any) -> bool:
+        """
+        Check if the user can mutate (create/update) an entity.
+
+        Mirrors the frontend editAllowed() rule:
+          - Admin can always edit.
+          - Otherwise must hold DA role.
+          - For Bulletin/Actor/Incident: must be the assigned analyst AND
+            the item must be in an editable workflow status.
+          - For Media: inherit from the parent Bulletin/Actor.
+          - In all cases the user must first pass can_access() (visibility).
+        """
+        if not self.can_access(obj):
+            return False
+        if self.has_role("Admin"):
+            return True
+        if not self.has_role("DA"):
+            return False
+
+        if obj.__tablename__ == "media":
+            parent = obj.bulletin or obj.actor
+            return parent is not None and self.can_edit(parent)
+
+        if obj.__tablename__ in ("bulletin", "actor", "incident"):
+            return obj.assigned_to_id == self.id and obj.status in EDITABLE_STATUSES
+
+        return False
+
     def from_json(self, item: dict) -> "User":
         """
         Populate the User object from a JSON dictionary.
@@ -355,7 +406,7 @@ class User(UserMixin, db.Model, BaseMixin):
         # check password is not empty
         password = item.get("password")
         if password:
-            self.password = hash_password(password)
+            self.set_password(password)
 
         self.name = item.get("name")
 

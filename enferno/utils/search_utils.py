@@ -1,6 +1,6 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, func, text, select, literal_column, bindparam
+from sqlalchemy import or_, and_, func, text, select, literal_column, bindparam
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy import String, Integer, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -87,58 +87,43 @@ class SearchUtils:
             return set()
         return self._ocr_matched_ids & set(bulletin_ids)
 
+    def _combine_query_blocks(self, build_query):
+        """Fold query blocks left-to-right; each block's conditions are
+        grouped with AND before its op (and/or) combines it with the rest."""
+        combined = None
+        for block_q in self.search:
+            _, conditions = build_query(block_q)
+            if not conditions:
+                continue
+            block = and_(*conditions)
+            if combined is None:
+                combined = block
+            elif block_q.get("op", "or") == "and":
+                combined = and_(combined, block)
+            else:
+                combined = or_(combined, block)
+        return combined
+
     def get_query(self):
         """Get the query for the given class."""
         if self.cls == "bulletin":
             # Handle empty search - return all bulletins
             if not self.search:
                 return select(Bulletin)
-            # Get conditions from first query
-            main_stmt, conditions = self.bulletin_query(self.search[0])
-            final_conditions = conditions
-
-            # Handle nested queries by combining conditions
-            if len(self.search) > 1:
-                for i in range(1, len(self.search)):
-                    _, next_conditions = self.bulletin_query(self.search[i])
-                    op = self.search[i].get("op", "or")
-
-                    if op == "and":
-                        final_conditions.extend(next_conditions)
-                    elif op == "or":
-                        # Combine conditions with OR
-                        final_conditions = [or_(*conditions, *next_conditions)]
-
-            # Build final query with all conditions and default sorting
+            combined = self._combine_query_blocks(self.bulletin_query)
             result = select(Bulletin)
-            if final_conditions:
-                result = result.where(and_(*final_conditions))
+            if combined is not None:
+                result = result.where(combined)
             return result
 
         elif self.cls == "actor":
             # Handle empty search - return all actors
             if not self.search:
                 return select(Actor)
-            # Get conditions from first query
-            main_stmt, conditions = self.actor_query(self.search[0])
-            final_conditions = conditions
-
-            # Handle nested queries by combining conditions
-            if len(self.search) > 1:
-                for i in range(1, len(self.search)):
-                    _, next_conditions = self.actor_query(self.search[i])
-                    op = self.search[i].get("op", "or")
-
-                    if op == "and":
-                        final_conditions.extend(next_conditions)
-                    elif op == "or":
-                        # Combine conditions with OR
-                        final_conditions = [or_(*conditions, *next_conditions)]
-
-            # Build final query with all conditions and default sorting
+            combined = self._combine_query_blocks(self.actor_query)
             result = select(Actor)
-            if final_conditions:
-                result = result.where(and_(*final_conditions))
+            if combined is not None:
+                result = result.where(combined)
             return result
 
         elif self.cls == "incident":

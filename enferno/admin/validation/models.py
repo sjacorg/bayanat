@@ -14,7 +14,7 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.admin.models import Activity, AppConfig
+from enferno.admin.models import Activity
 from enferno.settings import Config
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
@@ -246,6 +246,7 @@ class BulletinValidationModel(StrictValidationModel):
     assigned_to: Optional[PartialUserModel] = None
     first_peer_reviewer: Optional[PartialUserModel] = None
     description: Optional[SanitizedField] = None
+    public_description: Optional[SanitizedField] = None
     comments: str = Field(min_length=1)
     source_link: str = Field(min_length=1)
     source_link_type: Optional[bool] = None
@@ -839,6 +840,7 @@ class EventtypeValidationModel(one_must_exist(["title", "title_ar"])):
     title_ar: Optional[str] = None
     for_actor: Optional[bool] = None
     for_bulletin: Optional[bool] = None
+    for_incident: Optional[bool] = None
     comments: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
@@ -1004,6 +1006,7 @@ class LocationQueryRequestModel(BaseValidationModel):
 
 class LocationAdminLevelValidationModel(StrictValidationModel):
     title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     code: int
     display_order: Optional[int] = None
     id: Optional[int] = None
@@ -1019,6 +1022,7 @@ class LocationAdminLevelRequestModel(BaseValidationModel):
 
 class LocationTypeValidationModel(StrictValidationModel):
     title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
     description: Optional[SanitizedField] = None
@@ -1704,7 +1708,7 @@ class ConfigValidationModel(StrictValidationModel):
                     raise ValueError(
                         "MEDIA_ALLOWED_EXTENSIONS and SHEETS_ALLOWED_EXTENSIONS must be lists of strings"
                     )
-                if len(ext) < 2 or len(ext) > 4:
+                if len(ext) < 2 or len(ext) > 5:
                     raise ValueError(
                         "Invalid value for MEDIA_ALLOWED_EXTENSIONS or SHEETS_ALLOWED_EXTENSIONS"
                     )
@@ -1916,6 +1920,10 @@ class FullConfigValidationModel(ConfigValidationModel):
     ETL_VID_EXT: list[str] = Field(default_factory=list)
     OCR_ENABLED: bool
     OCR_EXT: list[str] = Field(default_factory=list)
+    OCR_PROVIDER: str = "google_vision"
+    LLM_OCR_URL: Optional[str] = None
+    LLM_OCR_MODEL: Optional[str] = None
+    LLM_OCR_API_KEY: Optional[str] = None
     DEDUP_TOOL: bool
     MAPS_API_ENDPOINT: str
     DEDUP_LOW_DISTANCE: Optional[float] = Field(default=None, ge=0, le=1)
@@ -2081,7 +2089,11 @@ class WebImportValidationModel(StrictValidationModel):
         if domain.startswith("www."):
             domain = domain[4:]
         allowed_domains = Config.get("YTDLP_ALLOWED_DOMAINS")
-        if not any(domain.endswith(allowed) for allowed in allowed_domains):
+        # Match the registered domain or a real subdomain, not any suffix
+        # (BAY-01-014): plain endswith let "evilyoutube.com" pass "youtube.com".
+        if not any(
+            domain == allowed or domain.endswith("." + allowed) for allowed in allowed_domains
+        ):
             raise ValueError(f"Imports not allowed from {domain}")
 
         return str(v)
