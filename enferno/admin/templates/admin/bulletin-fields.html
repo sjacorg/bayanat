@@ -88,8 +88,9 @@
                 _('Add New') }}</v-btn>
         </div>
       </v-card-text>
-      <v-card-text class="text-caption text-medium-emphasis pt-0 pb-4">
-        {{ _('DEFAULT fields are built into Bayanat and can\'t be renamed or removed. CUSTOM fields are added by admins and can be fully edited.') }}
+      <v-card-text class="d-flex align-center text-caption text-medium-emphasis pt-0 pb-4">
+        <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
+        <span>{{ _('Default fields are locked. Custom fields are editable.') }}</span>
       </v-card-text>
 
       <div class="d-flex">
