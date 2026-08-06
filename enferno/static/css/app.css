@@ -1005,27 +1005,24 @@ div.jsondiffpatch-child-node-type-array:after {
     margin-bottom: 1em;
 }
 
-@property --newly-added-opacity {
-    syntax: '<number>';
-    inherits: false;
-    initial-value: 0;
-}
-
 .newly-added-field {
-    border-radius: 8px;
-    box-shadow: 0 0 0 4px transparent, 0 0 0 6px rgba(var(--v-theme-primary), var(--newly-added-opacity));
-    animation: newly-added-field-fade 2s ease-in-out both;
-    animation-delay: 400ms;
+    position: relative;
 }
 
-@keyframes newly-added-field-fade {
-    0%, 100% {
-        --newly-added-opacity: 0;
+.newly-added-field::after {
+    animation: newly-added-field-tint 2s ease-out 400ms both;
+    background-color: rgba(33, 150, 243, 0.14);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+@keyframes newly-added-field-tint {
+    0%, 70% {
+        opacity: 1;
     }
-    25%, 75% {
-        --newly-added-opacity: 1;
-    }
-    50% {
-        --newly-added-opacity: 0.35;
+    100% {
+        opacity: 0;
     }
 }
