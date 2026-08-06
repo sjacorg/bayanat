@@ -1,17 +1,15 @@
 <v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
 
-        <v-card class="rounded-0 overflow-hidden">
-            <v-toolbar
-                color="primary"
-                class="card-header"
-            >
-                <div class="w-sm-33 ml-4 d-none d-sm-flex">
-                    <v-toolbar-title>
-                        {{ _('Advanced Search') }}
-                    </v-toolbar-title>
-                </div>
+    <v-sheet>
+        <v-card class="rounded-0">
 
+            <v-card-title>
+                <v-btn icon="mdi-close" variant="text" class="float-right" @click="advSearchExpand=false"></v-btn>
+            </v-card-title>
+
+            <v-card-text>
                 <v-select ref="savedSearchDropdown"
+
                           :label="translations.loadExistingSearch_"
                           :items="searches"
                           item-title="name"
@@ -19,10 +17,7 @@
                           return-object
                           @click="loadSearchesFromAPI"
                           @click:clear="resetQuery"
-                            class="w-sm-33 flex-grow-1 mx-4"
-                            variant="solo"
-                            density="comfortable"
-                            hide-details="auto"
+
                           clearable
                           v-model="savedSearchSelection"
                 >
@@ -37,15 +32,6 @@
                         </v-list-item>
                     </template>
                 </v-select>
-
-                <div class="w-sm-33 mr-4 d-flex">
-                    <v-spacer></v-spacer>
-                    <v-btn icon="mdi-close" variant="text" class="float-right" @click="advSearchExpand=false"></v-btn>
-                </div>
-
-            </v-toolbar>
-
-            <v-card-text class="overflow-y-auto" style="height: calc(100vh - 187px);">
                 <v-expansion-panels accordion v-model="searchPanels">
                     <v-expansion-panel v-for="(q,i) in search"
 
@@ -121,6 +107,6 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+    </v-sheet>
 </v-dialog>
-
 

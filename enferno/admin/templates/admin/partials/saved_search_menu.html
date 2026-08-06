@@ -1,0 +1,43 @@
+<v-menu
+        location="bottom end"
+        offset="4"
+        :close-on-content-click="true"
+        @update:model-value="open => open && loadSearchesFromAPI()"
+>
+    <template #activator="{ props }">
+        <v-btn
+                v-bind="props"
+                aria-label="{{ _('Load Saved Searches') }}"
+                class="ms-1"
+                color="grey-darken-1"
+                density="compact"
+                icon
+                size="small"
+                variant="text"
+        >
+            <v-icon size="small">mdi-menu-down</v-icon>
+            <v-tooltip activator="parent" location="top" text="{{ _('Load Saved Searches') }}"></v-tooltip>
+        </v-btn>
+    </template>
+
+    <v-list
+            class="border rounded elevation-2"
+            density="compact"
+            width="420"
+            max-width="calc(100vw - 32px)"
+    >
+        <v-list-subheader>{{ _('Saved Searches') }}</v-list-subheader>
+        <v-list-item
+                v-if="!searches.length"
+                disabled
+                title="{{ _('No saved searches') }}"
+        ></v-list-item>
+        <v-list-item
+                v-for="item in searches"
+                :key="item.id"
+                :title="item.name"
+                :subtitle="countSavedSearchFilters(item.data) ? translations.activeFiltersCount_(countSavedSearchFilters(item.data)) : ''"
+                @click="applySavedSearch(item)"
+        ></v-list-item>
+    </v-list>
+</v-menu>
