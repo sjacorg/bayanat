@@ -271,7 +271,7 @@ const FieldListItem = Vue.defineComponent({
                                         hide-details
                                         clearable
                                     ></v-text-field>
-                                    <div class="text-caption text-medium-emphasis mt-1">{{ translations.helpTextDescription_ }}</div>
+                                    <div class="text-caption text-medium-emphasis text-start mt-1">{{ translations.helpTextDescription_ }}</div>
                                 </div>
                                 <v-number-input
                                     v-if="field.ui_component === 'input'"

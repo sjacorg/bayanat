@@ -163,9 +163,9 @@
                                     <div>{{ _('Search time: ') }}
                                         ${searchTime} {{ _('seconds') }}</div>
                                     {% if current_user.has_role("Admin") %}
-                                    <div class="d-none d-sm-flex align-center text-caption text-medium-emphasis">
-                                        <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
-                                        <span><strong>{{ _('Administrators:') }}</strong> {{ _('You can edit this form in Customize Database >') }} <a href="/admin/incident-fields/" class="text-decoration-underline">{{ _('Incident Form Builder') }}</a>.</span>
+                                    <div class="d-none d-sm-flex align-center ga-1 text-caption text-medium-emphasis">
+                                        <v-icon size="small" class="me-1">mdi-information-outline</v-icon>
+                                        <span>{{ _('Administrators: You can edit this form in Customize Database > Incident Form Builder.') }}</span>
                                     </div>
                                     {% endif %}
                                 </div>
