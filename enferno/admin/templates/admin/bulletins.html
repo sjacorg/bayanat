@@ -185,7 +185,7 @@
                                     <div>{{ _('Search time: ') }}
                                         ${searchTime} {{ _('seconds') }}</div>
                                     {% if current_user.has_role("Admin") %}
-                                    <div class="d-flex align-center text-caption text-medium-emphasis">
+                                    <div class="d-none d-sm-flex align-center text-caption text-medium-emphasis">
                                         <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
                                         <span><strong>{{ _('Administrators:') }}</strong> {{ _('You can edit this form in Customize Database >') }} <a href="/admin/bulletin-fields/" class="text-decoration-underline">{{ _('Bulletin Form Builder') }}</a>.</span>
                                     </div>
