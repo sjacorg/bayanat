@@ -36,7 +36,6 @@
                 v-for="item in searches"
                 :key="item.id"
                 :title="item.name"
-                :subtitle="countSavedSearchFilters(item.data) ? translations.activeFiltersCount_(countSavedSearchFilters(item.data)) : ''"
                 @click="applySavedSearch(item)"
         ></v-list-item>
     </v-list>
