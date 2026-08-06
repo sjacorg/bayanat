@@ -67,7 +67,7 @@
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn @click="search=[{}]" text>{{ _('Clear Search') }}</v-btn>
-                <v-btn class="mx-3" v-if="!savedSearchSelection" @click="saveQueryDialog=true"
+                <v-btn class="mx-3" v-if="!savedSearchSelection" @click="saveQueryDialog=true" 
                        >{{ _('Save Search') }}</v-btn>
                 <v-btn
                         v-if="savedSearchSelection"
@@ -107,3 +107,5 @@
 
     </v-sheet>
 </v-dialog>
+
+
