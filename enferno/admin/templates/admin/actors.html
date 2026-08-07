@@ -107,13 +107,25 @@
                                         @keydown.enter="doSearch"
                                         hide-details
                                         append-icon="mdi-ballot"
-                                        :append-inner-icon="searchEmpty ? '' : 'mdi-close'"
-                                        @click:append-inner="resetSearch"
                                         @click:append="toggleAdvSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                         :bg-color="searchBg"
-                                ></v-text-field>
+                                >
+                                    <template #append-inner>
+                                        <v-btn
+                                                v-if="!searchEmpty"
+                                                @click="resetSearch"
+                                                aria-label="{{ _('Clear Search') }}"
+                                                color="grey-darken-1"
+                                                density="compact"
+                                                icon="mdi-close"
+                                                size="small"
+                                                variant="text"
+                                        ></v-btn>
+                                        {% include 'admin/partials/saved_search_menu.html' %}
+                                    </template>
+                                </v-text-field>
 
 
                                 <v-spacer></v-spacer>
@@ -1296,7 +1308,12 @@
                         this.savedSearchSelection = Object.assign([], item);
                         this.search = Object.assign([], item.data);
                     }
-                    this.$refs.savedSearchDropdown.blur()
+                    this.$refs.savedSearchDropdown?.blur?.()
+                },
+
+                applySavedSearch(item) {
+                    this.loadSearch(item);
+                    this.doSearch();
                 },
 
 
@@ -1347,7 +1364,7 @@
                         .then(res => {
                             this.showSnack(res.data);
                             this.searches = this.searches.filter(item => item.id !== id);
-                            if (this.savedSearchSelection.id == id) {
+                            if (this.savedSearchSelection?.id == id) {
                                 this.savedSearchSelection = null;
                                 this.search = [{}];
                             }
