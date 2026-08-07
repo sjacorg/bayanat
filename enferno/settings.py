@@ -175,6 +175,11 @@ class Config(object):
     SESSION_REDIS = redis.from_url(f"redis://:{_redis_pw_quoted}@{REDIS_HOST}:{REDIS_PORT}/1")
     PERMANENT_SESSION_LIFETIME = int(os.environ.get("SESSION_LIFETIME", 3600))
 
+    # Search: interactive statement timeout in seconds (0 disables the
+    # timeout-then-queue behavior) and the bound for background re-runs
+    SEARCH_TIMEOUT = int(os.environ.get("SEARCH_TIMEOUT", 30))
+    BACKGROUND_SEARCH_TIME_LIMIT = int(os.environ.get("BACKGROUND_SEARCH_TIME_LIMIT", 600))
+
     # Google 0Auth
     GOOGLE_OAUTH_ENABLED = manager.get_config("GOOGLE_OAUTH_ENABLED")
     GOOGLE_CLIENT_ID = manager.get_config("GOOGLE_CLIENT_ID")
@@ -393,6 +398,8 @@ class TestConfig:
 
     TESTING = True
     VERSION = _read_version()
+    SEARCH_TIMEOUT = 0
+    BACKGROUND_SEARCH_TIME_LIMIT = 600
 
     # Flask Core Settings
     SECRET_KEY = "test-secret-key-not-for-production"

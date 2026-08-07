@@ -138,6 +138,12 @@ const NotificationsList = Vue.defineComponent({
                                 :style="getLineClampStyles(config.maxSubtitleLines)"
                                 v-text="notification?.message"
                                 />
+                                <a
+                                v-if="notification?.link"
+                                :href="notification.link"
+                                class="text-caption d-inline-block mt-1"
+                                v-text="translations.viewResults_"
+                                />
                                 <div class="d-flex justify-space-between align-center mt-2">
                                     <span dir="ltr" class="text-caption text-high-emphasis">{{ getDateFromNotification(notification) }}</span>
                                 </div>

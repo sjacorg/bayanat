@@ -183,5 +183,6 @@ from . import activity  # noqa: E402, F401
 from . import system  # noqa: E402, F401
 from . import logs  # noqa: E402, F401
 from . import notifications  # noqa: E402, F401
+from . import background_search  # noqa: E402, F401
 from . import dynamic_fields  # noqa: E402, F401
 from . import flowmap  # noqa: E402, F401
