@@ -134,6 +134,14 @@ class Notification(db.Model, BaseMixin):
         link=None,
     ):
         """Create notification for a specific user"""
+        # A task holding a stale user id resolves to None. Bail out here rather
+        # than let it reach the NOT NULL on user_id, where the failure surfaces
+        # as an IntegrityError far from its cause. send_email defaults to False,
+        # so the short-circuit below would never dereference user either.
+        if user is None:
+            logger.warning(f"Skipping notification '{title}': target user no longer exists")
+            return None
+
         # Determine if email should be enabled
         email_enabled = send_email and bool(user.email) and Config.get("MAIL_ENABLED")
 
