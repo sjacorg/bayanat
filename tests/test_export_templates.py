@@ -157,3 +157,30 @@ def test_build_dossier_revalidates_stored_blocks():
     template = FakeTemplate([{"type": "field_table", "config": {"fields": ["password_hash"]}}])
     with pytest.raises(ValueError):
         build_dossier(template, FakeActor(), FakeUser())
+
+
+def test_media_appendix_fails_closed():
+    """Only redaction results are surfaced; bare originals are excluded and flagged."""
+    from types import SimpleNamespace as NS
+
+    original = NS(id=1, redaction=None)
+    redacted = NS(
+        id=2,
+        redaction=NS(original_media_id=1, source_media_id=1),
+        media_file="doc-redacted.jpg",
+        media_file_type="image/jpeg",
+        title="doc",
+        title_ar="وثيقة",
+    )
+    bare = NS(id=3, redaction=None)
+    bulletin = NS(id=75, deleted=False, medias=[original, redacted, bare])
+
+    actor = FakeActor()
+    actor.related_bulletins = [NS(bulletin=bulletin)]
+    template = FakeTemplate([{"type": "media_appendix", "config": {}}])
+    context = build_dossier(template, actor, FakeUser())
+
+    block = context["blocks"][0]
+    assert [m["file"] for m in block["media"]] == ["doc-redacted.jpg"]
+    assert block["media"][0]["title"] == "وثيقة"
+    assert any("no redacted rendition" in m for m in context["missing"])

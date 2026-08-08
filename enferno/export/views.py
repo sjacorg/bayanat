@@ -526,8 +526,14 @@ def _render_dossier(
         if pdf_mode
         else "/static/img/sjac-logo.png"
     )
+    media_base = f"file://{current_app.root_path}/media/" if pdf_mode else "/admin/api/serve/media/"
     return render_template(
-        "dossier.html", show_toolbar=show_toolbar, pdf_mode=pdf_mode, logo_src=logo_src, **context
+        "dossier.html",
+        show_toolbar=show_toolbar,
+        pdf_mode=pdf_mode,
+        logo_src=logo_src,
+        media_base=media_base,
+        **context,
     )
 
 

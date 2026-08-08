@@ -40,7 +40,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { font-size: 14px; }
+html { font-size: 15px; }
 
 body {
     font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
@@ -48,6 +48,9 @@ body {
     line-height: 1.7;
     background: #e8e6e1;
 }
+
+/* Arabic script reads smaller than Latin at equal size and needs taller leading */
+html[dir="rtl"] body { line-height: 1.9; }
 
 /* Screen: emulate an A4 sheet */
 main.dossier {
@@ -225,6 +228,35 @@ html[dir="rtl"] .narrative {
 }
 
 .page-break { break-after: page; }
+
+/* Media appendix: redacted evidence renditions only */
+.media-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 0.75rem 0 1.5rem;
+}
+
+.media-item { margin: 0; break-inside: avoid; }
+
+.media-item img {
+    width: 100%;
+    border: 1px solid var(--line);
+}
+
+.media-item figcaption {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.media-doc {
+    border: 1px dashed var(--line);
+    padding: 1.2rem 0.8rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
+}
 
 /* Print. Every margin-box slot is claimed explicitly: author-defined boxes
    take precedence over the browser's default print headers/footers (date,

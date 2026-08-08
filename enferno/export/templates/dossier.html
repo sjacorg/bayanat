@@ -100,6 +100,21 @@
                 </div>
             </div>
 
+        {% elif block.type == 'media_appendix' %}
+            {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
+            <div class="media-grid">
+                {% for item in block.media %}
+                    <figure class="media-item">
+                        {% if item.is_image %}
+                            <img src="{{ media_base }}{{ item.file }}" alt="{{ item.title or '' }}">
+                        {% else %}
+                            <div class="media-doc"><bdi class="ltr">{{ item.file }}</bdi></div>
+                        {% endif %}
+                        <figcaption>{% if item.title %}{{ item.title }} &middot; {% endif %}{{ item.ref }}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+
         {% elif block.type == 'page_break' %}
             <div class="page-break"></div>
         {% endif %}

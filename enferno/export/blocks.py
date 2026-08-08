@@ -261,6 +261,7 @@ class DossierData:
         self.locale = locale
         self._related_actors = None
         self._related_bulletins = None
+        self._redacted_media = None
 
     @property
     def related_actors(self) -> list[dict]:
@@ -312,6 +313,53 @@ class DossierData:
                 )
             self._related_bulletins = sorted(rows, key=lambda r: r["id"])
         return self._related_bulletins
+
+    @property
+    def redacted_media(self) -> dict:
+        """Redacted renditions of evidence media, latest per original.
+
+        Fails closed: only media produced by the redaction tool is surfaced.
+        Originals without a redacted rendition are counted and reported as
+        gaps, never embedded. Interim selection until media carries an
+        explicit export-approved designation.
+        """
+        if self._redacted_media is None:
+            items = []
+            unredacted = 0
+            for relation in self.actor.bulletin_relations:
+                bulletin = relation.bulletin
+                if bulletin is None or bulletin.deleted or not self.user.can_access(bulletin):
+                    continue
+                latest = {}
+                original_ids = []
+                for media in bulletin.medias:
+                    redaction = media.redaction
+                    if redaction is None:
+                        original_ids.append(media.id)
+                        continue
+                    key = redaction.original_media_id or redaction.source_media_id
+                    if key not in latest or media.id > latest[key].id:
+                        latest[key] = media
+                unredacted += sum(1 for mid in original_ids if mid not in latest)
+                for media in sorted(latest.values(), key=lambda m: m.id):
+                    title = (
+                        media.title_ar if self.locale == "ar" else media.title
+                    ) or media.title_ar
+                    ref = (
+                        f"الدليل رقم {bulletin.id}"
+                        if self.locale == "ar"
+                        else f"Evidence #{bulletin.id}"
+                    )
+                    items.append(
+                        {
+                            "file": media.media_file,
+                            "is_image": (media.media_file_type or "").startswith("image/"),
+                            "title": title,
+                            "ref": ref,
+                        }
+                    )
+            self._redacted_media = {"media": items, "unredacted": unredacted}
+        return self._redacted_media
 
 
 # ---------------------------------------------------------------------------
@@ -406,6 +454,10 @@ def _v_narrative_box(config: dict) -> dict:
     if field and field not in ("description", "comments", "review"):
         raise ValueError("'field' must be one of description, comments, review")
     return {"title": _require_str(config, "title", MAX_TITLE), "field": field or None}
+
+
+def _v_media_appendix(config: dict) -> dict:
+    return {"title": _require_str(config, "title", MAX_TITLE)}
 
 
 def _v_page_break(config: dict) -> dict:
@@ -505,6 +557,19 @@ def _b_narrative_box(data: DossierData, config: dict) -> dict:
     }
 
 
+def _b_media_appendix(data: DossierData, config: dict) -> dict:
+    bundle = data.redacted_media
+    missing = []
+    if not bundle["media"]:
+        missing.append("No redacted evidence media to attach")
+    if bundle["unredacted"]:
+        missing.append(
+            f"{bundle['unredacted']} evidence media item(s) have no redacted rendition "
+            "and were excluded"
+        )
+    return {"title": config["title"], "media": bundle["media"], "missing": missing}
+
+
 def _b_page_break(data: DossierData, config: dict) -> dict:
     return {"missing": []}
 
@@ -522,6 +587,7 @@ BLOCK_TYPES: dict[str, dict] = {
     "events_timeline": {"validate": _v_events_timeline, "build": _b_events_timeline},
     "related_items_table": {"validate": _v_related_items, "build": _b_related_items},
     "narrative_box": {"validate": _v_narrative_box, "build": _b_narrative_box},
+    "media_appendix": {"validate": _v_media_appendix, "build": _b_media_appendix},
     "page_break": {"validate": _v_page_break, "build": _b_page_break},
 }
 

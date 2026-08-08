@@ -186,6 +186,12 @@
                                             ></v-select>
                                         </template>
 
+                                        <template v-else-if="block.type === 'media_appendix'">
+                                            <v-text-field v-model="block.config.title" variant="outlined"
+                                                          density="compact" :label="'{{ _('Section title (optional)') }}'"></v-text-field>
+                                            <span class="text-caption">{{ _('Only redacted renditions of evidence media are included. Originals are never exported.') }}</span>
+                                        </template>
+
                                         <template v-else-if="block.type === 'page_break'">
                                             <span class="text-caption">{{ _('Forces a new page when printed.') }}</span>
                                         </template>
@@ -289,6 +295,7 @@
                 events_timeline: {label: "{{ _('Events Timeline') }}", icon: 'mdi-timeline-clock'},
                 related_items_table: {label: "{{ _('Related Items') }}", icon: 'mdi-file-link'},
                 narrative_box: {label: "{{ _('Narrative Box') }}", icon: 'mdi-card-text'},
+                media_appendix: {label: "{{ _('Media Appendix') }}", icon: 'mdi-image-multiple'},
                 page_break: {label: "{{ _('Page Break') }}", icon: 'mdi-format-page-break'},
             },
             saving: false,
@@ -321,6 +328,7 @@
                     events_timeline: {title: '', order: 'asc', columns: ['date', 'title', 'comments']},
                     related_items_table: {title: '', columns: ['id', 'title', 'documentation_date', 'comment']},
                     narrative_box: {title: '', field: null},
+                    media_appendix: {title: ''},
                     page_break: {},
                 };
                 this.template.blocks.push({
