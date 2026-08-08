@@ -25,7 +25,6 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("entity_type", sa.String(length=32), server_default="actor", nullable=False),
-        sa.Column("locale", sa.String(length=8), server_default="ar", nullable=False),
         sa.Column("blocks", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("active", sa.Boolean(), server_default="false", nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=True),

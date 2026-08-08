@@ -209,7 +209,6 @@ class ExportTemplate(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     entity_type = db.Column(db.String(32), nullable=False, default="actor", server_default="actor")
-    locale = db.Column(db.String(8), nullable=False, default="ar", server_default="ar")
     blocks = db.Column(JSONB, nullable=False, default=list)
     # Inactive templates are usable by admins only (drafts); active ones are
     # open to anyone with export access. Saving is always live.
@@ -227,10 +226,6 @@ class ExportTemplate(db.Model, BaseMixin):
         if entity_type != "actor":
             raise ValueError("Only actor templates are supported")
         self.entity_type = entity_type
-        locale = json.get("locale", "ar")
-        if locale not in ("ar", "en"):
-            raise ValueError("Locale must be 'ar' or 'en'")
-        self.locale = locale
         self.blocks = validate_blocks(json.get("blocks"))
         self.active = bool(json.get("active", False))
         return self
@@ -241,7 +236,6 @@ class ExportTemplate(db.Model, BaseMixin):
             "class": self.__tablename__,
             "title": self.title,
             "entity_type": self.entity_type,
-            "locale": self.locale,
             "blocks": self.blocks or [],
             "active": self.active,
             "user": self.user.to_compact() if self.user else None,

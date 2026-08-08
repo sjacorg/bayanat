@@ -625,7 +625,7 @@ def build_dossier(template, actor, user) -> dict:
     related entities are access-filtered here via DossierData.
     """
     blocks = validate_blocks(template.blocks or [])
-    data = DossierData(actor, user, locale=template.locale)
+    data = DossierData(actor, user)
     built, missing, section = [], [], 0
     for block in blocks:
         context = BLOCK_TYPES[block["type"]]["build"](data, block["config"])
@@ -640,6 +640,6 @@ def build_dossier(template, actor, user) -> dict:
         "actor": actor,
         "blocks": built,
         "missing": missing,
-        "locale": template.locale,
-        "rtl": template.locale == "ar",
+        "locale": "ar",
+        "rtl": True,
     }

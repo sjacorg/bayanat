@@ -49,7 +49,6 @@ class FakeUser:
 class FakeTemplate:
     title = "Test dossier"
     entity_type = "actor"
-    locale = "ar"
 
     def __init__(self, blocks):
         self.blocks = blocks

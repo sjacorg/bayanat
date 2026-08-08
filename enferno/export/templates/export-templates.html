@@ -60,14 +60,6 @@
                                 :label="'{{ _('Title') }}'"
                         ></v-text-field>
 
-                        <v-select
-                                v-model="template.locale"
-                                :items="[{title: '{{ _('Arabic') }}', value: 'ar'}, {title: '{{ _('English') }}', value: 'en'}]"
-                                variant="outlined"
-                                density="compact"
-                                :label="'{{ _('Language') }}'"
-                        ></v-select>
-
                         <!-- Blocks -->
                         <div class="text-subtitle-2 mb-2">{{ _('Blocks') }}</div>
 
@@ -315,7 +307,7 @@
                 this.templates = res.data.items;
             },
             newTemplate() {
-                this.template = {id: null, title: '', locale: 'ar', active: false, blocks: []};
+                this.template = {id: null, title: '', active: false, blocks: []};
             },
             editTemplate(t) {
                 this.template = JSON.parse(JSON.stringify(t));
@@ -348,7 +340,6 @@
                 const item = {
                     title: this.template.title,
                     entity_type: 'actor',
-                    locale: this.template.locale,
                     active: this.template.active,
                     blocks: this.cleanBlocks(),
                 };
