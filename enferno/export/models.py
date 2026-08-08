@@ -211,20 +211,11 @@ class ExportTemplate(db.Model, BaseMixin):
     entity_type = db.Column(db.String(32), nullable=False, default="actor", server_default="actor")
     locale = db.Column(db.String(8), nullable=False, default="ar", server_default="ar")
     blocks = db.Column(JSONB, nullable=False, default=list)
-    published = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
-    # Immutable snapshot taken at publish time; rendering for export always uses
-    # this copy so a published template cannot change after review.
-    published_blocks = db.Column(JSONB)
+    # Inactive templates are usable by admins only (drafts); active ones are
+    # open to anyone with export access. Saving is always live.
+    active = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"), index=True)
     user = db.relationship("User", backref="export_templates", foreign_keys=[user_id])
-
-    @property
-    def render_blocks(self) -> list:
-        """Blocks used for dossier rendering: the published snapshot when
-        published, the working copy otherwise (previews)."""
-        if self.published and self.published_blocks is not None:
-            return self.published_blocks
-        return self.blocks or []
 
     def from_json(self, json: dict) -> "ExportTemplate":
         from enferno.export.blocks import validate_blocks
@@ -241,15 +232,7 @@ class ExportTemplate(db.Model, BaseMixin):
             raise ValueError("Locale must be 'ar' or 'en'")
         self.locale = locale
         self.blocks = validate_blocks(json.get("blocks"))
-        return self
-
-    def publish(self) -> "ExportTemplate":
-        self.published = True
-        self.published_blocks = self.blocks
-        return self
-
-    def unpublish(self) -> "ExportTemplate":
-        self.published = False
+        self.active = bool(json.get("active", False))
         return self
 
     def to_dict(self) -> dict:
@@ -260,7 +243,7 @@ class ExportTemplate(db.Model, BaseMixin):
             "entity_type": self.entity_type,
             "locale": self.locale,
             "blocks": self.blocks or [],
-            "published": self.published,
+            "active": self.active,
             "user": self.user.to_compact() if self.user else None,
             "updated_at": (
                 DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None

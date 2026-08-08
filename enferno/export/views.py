@@ -470,29 +470,6 @@ def api_template_update(id: t.id) -> Response:
     return HTTPResponse.error("Error saving template", status=417)
 
 
-@export.put("/api/template/<int:id>/publish")
-@roles_required("Admin")
-def api_template_publish(id: t.id) -> Response:
-    template = _get_template(id)
-    if template is None:
-        return HTTPResponse.not_found("Template not found")
-    publish = bool(request.json.get("published", True))
-    template.publish() if publish else template.unpublish()
-    if template.save():
-        Activity.create(
-            current_user,
-            Activity.ACTION_UPDATE,
-            Activity.STATUS_SUCCESS,
-            template.to_mini(),
-            ExportTemplate.__table__.name,
-        )
-        return HTTPResponse.success(
-            message=f"Template #{template.id} {'published' if publish else 'unpublished'}",
-            data={"item": template.to_dict()},
-        )
-    return HTTPResponse.error("Error saving template", status=417)
-
-
 @export.delete("/api/template/<int:id>")
 @roles_required("Admin")
 def api_template_delete(id: t.id) -> Response:
@@ -544,8 +521,8 @@ def dossier(template_id: t.id, actor_id: t.id) -> Response:
     template = _get_template(template_id)
     if template is None:
         return HTTPResponse.not_found("Template not found")
-    if not template.published and not current_user.has_role("Admin"):
-        return HTTPResponse.forbidden("Template is not published")
+    if not template.active and not current_user.has_role("Admin"):
+        return HTTPResponse.forbidden("Template is not active")
     actor = db.session.get(Actor, actor_id)
     if actor is None or actor.deleted:
         return HTTPResponse.not_found("Entity not found")

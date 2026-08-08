@@ -52,7 +52,7 @@ class FakeTemplate:
     locale = "ar"
 
     def __init__(self, blocks):
-        self.render_blocks = blocks
+        self.blocks = blocks
 
 
 # --- validation -------------------------------------------------------------

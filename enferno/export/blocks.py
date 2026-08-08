@@ -624,7 +624,7 @@ def build_dossier(template, actor, user) -> dict:
     The caller is responsible for authorizing `user` against `actor`;
     related entities are access-filtered here via DossierData.
     """
-    blocks = validate_blocks(template.render_blocks)
+    blocks = validate_blocks(template.blocks or [])
     data = DossierData(actor, user, locale=template.locale)
     built, missing, section = [], [], 0
     for block in blocks:

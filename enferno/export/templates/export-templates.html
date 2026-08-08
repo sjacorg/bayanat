@@ -26,7 +26,7 @@
                         >
                             <v-list-item-title>${ t.title }</v-list-item-title>
                             <template v-slot:append>
-                                <v-icon v-if="t.published" size="small" color="success">mdi-check-decagram</v-icon>
+                                <v-icon v-if="t.active" size="small" color="success">mdi-check-circle</v-icon>
                             </template>
                         </v-list-item>
                     </v-list>
@@ -41,12 +41,14 @@
                             ${ template.id ? '{{ _('Edit Template') }} #' + template.id : '{{ _('New Template') }}' }
                         </v-toolbar-title>
                         <v-spacer></v-spacer>
-                        <v-chip v-if="template.published" color="success" size="small" class="mx-2">
-                            {{ _('Published') }}
-                        </v-chip>
-                        <v-btn v-if="template.id" variant="text" size="small" @click="togglePublish">
-                            ${ template.published ? '{{ _('Unpublish') }}' : '{{ _('Publish') }}' }
-                        </v-btn>
+                        <v-switch
+                                v-model="template.active"
+                                color="success"
+                                density="compact"
+                                hide-details
+                                class="flex-grow-0 mx-2"
+                                :label="'{{ _('Active') }}'"
+                        ></v-switch>
                         <v-btn v-if="template.id" icon="mdi-delete" size="small" @click="deleteDialog = true"></v-btn>
                     </v-toolbar>
 
@@ -313,7 +315,7 @@
                 this.templates = res.data.items;
             },
             newTemplate() {
-                this.template = {id: null, title: '', locale: 'ar', published: false, blocks: []};
+                this.template = {id: null, title: '', locale: 'ar', active: false, blocks: []};
             },
             editTemplate(t) {
                 this.template = JSON.parse(JSON.stringify(t));
@@ -347,6 +349,7 @@
                     title: this.template.title,
                     entity_type: 'actor',
                     locale: this.template.locale,
+                    active: this.template.active,
                     blocks: this.cleanBlocks(),
                 };
                 try {
@@ -359,19 +362,11 @@
                     this.showSnack(res.data.message || "{{ _('Saved') }}");
                     const saved = res.data.item;
                     this.template.id = saved.id;
-                    this.template.published = saved.published;
+                    this.template.active = saved.active;
                     await this.refreshTemplates();
                 } finally {
                     this.saving = false;
                 }
-            },
-            async togglePublish() {
-                const res = await axios.put(`/export/api/template/${this.template.id}/publish`, {
-                    published: !this.template.published,
-                });
-                this.template.published = res.data.item.published;
-                this.showSnack(res.data.message);
-                await this.refreshTemplates();
             },
             async deleteTemplate() {
                 await axios.delete(`/export/api/template/${this.template.id}`);
