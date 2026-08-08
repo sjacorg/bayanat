@@ -3,6 +3,10 @@
 {% block content %}
 <v-main>
     <v-container fluid>
+        <v-tabs model-value="templates" color="primary" class="mb-2">
+            <v-tab value="requests" href="/export/dashboard/">{{ _('Requests') }}</v-tab>
+            <v-tab value="templates" href="/export/templates/">{{ _('Dossier Templates') }}</v-tab>
+        </v-tabs>
         <v-row>
 
             <!-- Templates list -->
