@@ -15,8 +15,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pytest:
+  pytest-shard:
+    name: pytest (${{ matrix.name }})
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: specialized
+            tests: tests/test_specialized.py
+          - name: lookups-users
+            tests: tests/test_lookup_crud.py tests/test_users.py
+          - name: remaining
+            tests: tests --ignore=tests/test_specialized.py --ignore=tests/test_lookup_crud.py --ignore=tests/test_users.py
     services:
       postgres:
         image: postgis/postgis:15-3.3
@@ -70,4 +81,15 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           REDIS_PASSWORD: ""
-        run: uv run pytest -v --durations=30
+        run: uv run pytest -v --durations=30 ${{ matrix.tests }}
+
+  pytest:
+    name: pytest
+    if: ${{ always() }}
+    needs: pytest-shard
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check pytest shards
+        env:
+          RESULT: ${{ needs.pytest-shard.result }}
+        run: test "$RESULT" = success
