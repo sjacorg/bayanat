@@ -63,4 +63,4 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           REDIS_PASSWORD: ""
-        run: uv run pytest -v
+        run: uv run pytest -v --durations=30
