@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_language }}" dir="{{ current_direction }}">
 <head>
     <meta charset="utf-8"/>
     <title>{{ _(' Setup Bayanat') }}</title>
@@ -446,6 +446,10 @@
         const {createVuetify} = Vuetify;
 
         const vuetify = createVuetify({
+            locale: {
+                locale: document.documentElement.lang,
+                fallback: 'en',
+            },
             theme: {
                 defaultTheme: 'light',
                 themes: {
