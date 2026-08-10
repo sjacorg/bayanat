@@ -50,6 +50,21 @@ Locations support hierarchical search. Selecting a parent location (e.g., a gove
 
 This is useful for queries that can't be expressed in a single search, such as "Bulletins from Damascus OR Aleppo that mention detention AND are assigned to me."
 
+## Long-Running Searches
+
+Searches over large datasets can take longer than the server allows for an interactive request. Rather than failing, these continue in the background.
+
+When this happens:
+
+1. A message appears saying the search is continuing in the background
+2. The search is re-run by a background worker without the interactive time limit
+3. A notification arrives when the results are ready
+4. Opening the notification returns you to the list with the results applied
+
+Results stay available for 24 hours, after which the notification link expires. Very large result sets are capped, and the notification shows a `+` after the count when this happens.
+
+Administrators can adjust the threshold, see [Configuration](/deployment/configuration).
+
 ## Saved Searches
 
 Save current search parameters for quick reuse:

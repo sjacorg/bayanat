@@ -86,6 +86,21 @@ Media files stored in `enferno/media/`.
 
 Configure the S3 bucket with correct policies, block public access, and set up CORS.
 
+## Search
+
+Interactive searches run under a database statement timeout. When a search exceeds it, the query is cancelled and re-run by a background worker instead of failing, and the user is notified when the results are ready. See [Search](/guide/search) for what this looks like in the interface.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SEARCH_TIMEOUT` | `30` | Seconds an interactive search may run before it is handed to the background. `0` disables the behaviour and searches run unbounded. |
+| `BACKGROUND_SEARCH_TIME_LIMIT` | `600` | Seconds the background re-run may take before it is abandoned. |
+
+Background searches require a running Celery worker. Without one, users receive the "continuing in the background" message but never get results.
+
+::: warning
+Lowering `SEARCH_TIMEOUT` far below the default sends ordinary searches to the background, including the initial page load of a list view. Raise it instead if legitimate searches are being deferred.
+:::
+
 ## Data Import
 
 Enable path scanning with `ETL_ALLOWED_PATH`.
