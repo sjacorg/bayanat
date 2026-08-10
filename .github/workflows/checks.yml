@@ -61,7 +61,7 @@ jobs:
           sudo apt-get install -yq libimage-exiftool-perl
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v9
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
