@@ -83,6 +83,29 @@ const MapVisualization = Vue.defineComponent({
   },
 
   computed: {
+    isRtl() {
+      return document.documentElement.dir === 'rtl';
+    },
+    viewportPadding() {
+      return {
+        [this.isRtl ? 'left' : 'right']: this.drawerWidth,
+        top: 64,
+      };
+    },
+    drawerToggleStyle() {
+      return {
+        [this.isRtl ? 'right' : 'left']: '-48px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        borderRadius: this.isRtl ? '0 12px 12px 0' : '12px 0 0 12px',
+      };
+    },
+    drawerToggleIcon() {
+      if (this.isRtl) {
+        return this.entities.drawer ? 'mdi-chevron-left' : 'mdi-chevron-right';
+      }
+      return this.entities.drawer ? 'mdi-chevron-right' : 'mdi-chevron-left';
+    },
     selectedEntityMapData() {
       if (!this.entities.selected) return null;
       if (this.entityLoader) return null;
@@ -487,7 +510,7 @@ const MapVisualization = Vue.defineComponent({
   template: `
     <v-dialog fullscreen class="map-visualization-dialog" :model-value="open">
       <v-toolbar color="primary">
-        <div class="w-33 ml-4">
+        <div class="w-33 ms-4">
           <v-toolbar-title>
             {{ translations.mapVisualization_ }}
           </v-toolbar-title>
@@ -523,7 +546,7 @@ const MapVisualization = Vue.defineComponent({
                   icon="mdi-tag-multiple"
                   variant="text"
                   density="compact"
-                  class="ml-4"
+                  class="ms-4"
                 />
               </template>
               {{ translations.showOrHideEventTypes_ }}
@@ -552,7 +575,7 @@ const MapVisualization = Vue.defineComponent({
           </v-list>
         </v-menu>
 
-        <div class="w-33 mr-4 d-flex">
+        <div class="w-33 me-4 d-flex">
           <v-spacer></v-spacer>
           <v-btn
             icon="mdi-close"
@@ -569,7 +592,7 @@ const MapVisualization = Vue.defineComponent({
           :locations="computedMapData.locations"
           :flows="computedMapData.flows"
           class="w-100 h-100"
-          :viewport-padding="{ right: drawerWidth, top: 64 }"
+          :viewport-padding="viewportPadding"
           :disable-clustering="Boolean(entities.selected)"
           :mode="Boolean(entities.selected) ? 'event' : null"
           @node-clicked="onNodeClicked"
@@ -601,15 +624,15 @@ const MapVisualization = Vue.defineComponent({
         <!-- DRAWER -->
         <v-navigation-drawer
           v-model="entities.drawer"
-          location="right"
+          location="end"
           :width="drawerWidth"
           :scrim="false"
           temporary
         >
           <!-- Toggle button -->
-          <v-card class="position-absolute pa-1" :style="{ left: '-48px', top: '50%', transform: 'translateY(-50%)', borderRadius: '12px 0 0 12px' }">
+          <v-card class="position-absolute pa-1" :style="drawerToggleStyle">
             <v-btn icon size="small" @click="toggleEntityDrawer()">
-              <v-icon>{{ entities.drawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
+              <v-icon>{{ drawerToggleIcon }}</v-icon>
             </v-btn>
           </v-card>
 
@@ -621,12 +644,12 @@ const MapVisualization = Vue.defineComponent({
               <!-- Header with back button + location name -->
               <div class="d-flex align-center py-3">
                 <v-btn
-                  icon="mdi-arrow-left"
+                  :icon="isRtl ? 'mdi-arrow-right' : 'mdi-arrow-left'"
                   size="small"
                   variant="text"
                   @click="backToAllActors"
                 />
-                <div class="ml-2">
+                <div class="ms-2">
                   <div class="text-subtitle-1 font-weight-bold" style="max-width: 280px;">
                     {{ locationActors.label }}
                   </div>
@@ -748,7 +771,7 @@ const MapVisualization = Vue.defineComponent({
             <!-- ========== DEFAULT QUERY ACTORS MODE ========== -->
             <template v-else>
               <div class="d-flex align-center py-3">
-                <v-icon class="mr-2">mdi-account-group</v-icon>
+                <v-icon class="me-2">mdi-account-group</v-icon>
                 <div>
                   <div class="text-subtitle-1 font-weight-bold">
                     {{ translations.actors_ ?? 'Actors' }}

@@ -40,8 +40,8 @@
                             v-bind="props"
                             v-if="showMapVisualize"
                             variant="elevated"
-                            class="mb-5 mr-5 position-absolute"
-                            style="right: 30px; bottom: 150px; z-index: 1000;"
+                            class="mb-5 me-5 position-absolute"
+                            style="inset-inline-end: 30px; bottom: 150px; z-index: 1000;"
                     ></v-btn>
                 </template>
             </v-tooltip>
@@ -55,8 +55,8 @@
                             v-if="showVisualize"
                             :loading="visualizeLoading"
                             variant="elevated"
-                            class="mb-5 mr-5 position-absolute "
-                            style="right: 30px; bottom: 90px; z-index: 1000;"
+                            class="mb-5 me-5 position-absolute "
+                            style="inset-inline-end: 30px; bottom: 90px; z-index: 1000;"
                             icon="mdi-graph"
                     >
 
@@ -795,6 +795,18 @@
                 },
             },
             mounted: function () {
+                // resume a completed background search from its notification link
+                const bgsToken = new URLSearchParams(window.location.search).get('bgs');
+                if (bgsToken) {
+                    axios.get(`/admin/api/background-search/${bgsToken}`).then(res => {
+                        const applyBgs = () => {
+                            if (this.loading) return setTimeout(applyBgs, 300);
+                            this.search = [{ ids: res.data.ids }];
+                            this.refresh();
+                        };
+                        applyBgs();
+                    }).catch(() => this.showSnack('Background search results have expired'));
+                }
                 // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
                     api.get('/admin/api/roles/').then(res => {
@@ -1180,6 +1192,10 @@
 
                     axios.post('/admin/api/actors/', requestData)
                         .then((response) => {
+                            if (response.status === 202) {
+                                this.showSnack(response.data.message);
+                                return;
+                            }
                             const endTime = new Date()
                             const duration = endTime - startTime
                             this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
