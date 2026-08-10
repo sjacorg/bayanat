@@ -41,9 +41,9 @@ const NotificationsList = Vue.defineComponent({
             return date.isValid() ? date.format('MM/DD/YYYY HH:mm') : '-';
         },
         getLineClampStyles(lines) {
-            if (!lines) return 'white-space: normal;'
+            if (!lines) return 'white-space: normal; text-align: match-parent;'
 
-            return `overflow: hidden; display: -webkit-box; -webkit-line-clamp: ${lines}; -webkit-box-orient: vertical; white-space: normal;`
+            return `overflow: hidden; display: -webkit-box; -webkit-line-clamp: ${lines}; -webkit-box-orient: vertical; white-space: normal; text-align: match-parent;`
         },
         getListItemColorProps(notification) {
             if (!notification) return
@@ -125,6 +125,7 @@ const NotificationsList = Vue.defineComponent({
                             </template>
 
                             <v-list-item-title
+                                dir="auto"
                                 :class="{ 'font-weight-bold': (!notification?.read_status || notification?.is_urgent) }"
                                 class="text-body-1"
                                 :style="getLineClampStyles(config.maxTitleLines)"
@@ -132,6 +133,7 @@ const NotificationsList = Vue.defineComponent({
                             />
                             <v-list-item-subtitle class="mt-1" opacity="100">
                                 <div
+                                dir="auto"
                                 class="text-caption text-high-emphasis"
                                 :style="getLineClampStyles(config.maxSubtitleLines)"
                                 v-text="notification?.message"
@@ -143,7 +145,7 @@ const NotificationsList = Vue.defineComponent({
                                 v-text="translations.viewResults_"
                                 />
                                 <div class="d-flex justify-space-between align-center mt-2">
-                                    <span class="text-caption text-high-emphasis">{{ getDateFromNotification(notification) }}</span>
+                                    <span dir="ltr" class="text-caption text-high-emphasis">{{ getDateFromNotification(notification) }}</span>
                                 </div>
                             </v-list-item-subtitle>
 

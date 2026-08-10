@@ -32,8 +32,8 @@
                             v-if="showVisualize"
                             :loading="visualizeLoading"
                             variant="elevated"
-                            class="mb-5 mr-5 position-absolute"
-                            style="right: 30px; bottom: 90px; z-index: 1000;"
+                            class="mb-5 me-5 position-absolute"
+                            style="inset-inline-end: 30px; bottom: 90px; z-index: 1000;"
                     ></v-btn>
                 </template>
             </v-tooltip>
@@ -108,11 +108,11 @@
                                             @click="webImportDlg = true"
                                             color="primary"
                                             variant="elevated"
+                                            prepend-icon="mdi-web"
                                             class="ma-2"
                                     >
-                                        <v-icon left>mdi-web</v-icon>
-                                            {{ _('Import from Web') }}
-                                        </v-btn>
+                                        {{ _('Import from Web') }}
+                                    </v-btn>
                                     {% endif %}
                                 {% endif %}
                                 {% include'admin/partials/bulletin_dialog.html' %}
@@ -489,7 +489,7 @@
                         'content-props': {
                             style: { width: '60%' },
                         },
-                        'content-class': 'absolute left-0',
+                        'content-class': 'absolute inset-inline-start-0',
                         fullscreen: true,
                         persistent: true,
                         'no-click-animation': true,
@@ -500,7 +500,7 @@
                         'content-props': {
                             style: { width: '60%', contain: 'none' },
                         },
-                        'content-class': 'absolute right-0 left-auto',
+                        'content-class': 'absolute inset-inline-end-0',
                         fullscreen: true,
                         persistent: true,
                         'no-click-animation': true,
