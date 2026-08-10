@@ -1,3 +1,11 @@
+const SESSION_CADENCE_MAX_MS = 120000;
+const SESSION_CADENCE_MIN_MS = 15000;
+const SESSION_WARNING_WINDOW_MAX_MS = 60000;
+const SESSION_COUNTDOWN_TICK_MS = 1000;
+const SESSION_KEEPALIVE_LOCK_TTL_MS = 10000;
+const SESSION_REFRESH_STORAGE_KEY = 'bayanat:last-session-refresh';
+const SESSION_KEEPALIVE_LOCK_STORAGE_KEY = 'bayanat:session-keepalive-lock';
+
 const sessionLifecycleMixin = {
   data: () => ({
     sessionWarningVisible: false,
@@ -15,11 +23,14 @@ const sessionLifecycleMixin = {
     },
     sessionRefreshCadenceMs() {
       if (!this.sessionLifetimeMs) return 0;
-      return Math.min(120000, Math.max(15000, Math.floor(this.sessionLifetimeMs / 3)));
+      return Math.min(
+        SESSION_CADENCE_MAX_MS,
+        Math.max(SESSION_CADENCE_MIN_MS, Math.floor(this.sessionLifetimeMs / 3))
+      );
     },
     sessionWarningWindowMs() {
       if (!this.sessionLifetimeMs) return 0;
-      return Math.min(60000, this.sessionLifetimeMs);
+      return Math.min(SESSION_WARNING_WINDOW_MAX_MS, this.sessionLifetimeMs);
     },
     sessionAuthPending() {
       return Boolean(this.isSignInDialogVisible || this.isReauthDialogVisible || this.isSignInDialogLoading);
@@ -36,9 +47,9 @@ const sessionLifecycleMixin = {
 
     this.sessionLifecycleIntervalId = setInterval(
       this.checkSessionLifecycle,
-      Math.min(15000, this.sessionRefreshCadenceMs)
+      Math.min(SESSION_CADENCE_MIN_MS, this.sessionRefreshCadenceMs)
     );
-    this.sessionCountdownIntervalId = setInterval(this.updateSessionWarning, 1000);
+    this.sessionCountdownIntervalId = setInterval(this.updateSessionWarning, SESSION_COUNTDOWN_TICK_MS);
   },
   beforeUnmount() {
     this.removeSessionActivityListeners();
@@ -78,27 +89,27 @@ const sessionLifecycleMixin = {
       this.checkSessionLifecycle();
     },
     recordSessionRefresh() {
-      this.setSessionStorageValue('bayanat:last-session-refresh', String(Date.now()));
+      this.setSessionStorageValue(SESSION_REFRESH_STORAGE_KEY, String(Date.now()));
       this.sessionInteractedSinceRefresh = false;
       this.sessionWarningVisible = false;
     },
     lastSessionRefreshAt() {
-      return Number(this.getSessionStorageValue('bayanat:last-session-refresh') || Date.now());
+      return Number(this.getSessionStorageValue(SESSION_REFRESH_STORAGE_KEY) || Date.now());
     },
     sessionKeepaliveLocked() {
       const now = Date.now();
-      const lock = this.getSessionStorageValue('bayanat:session-keepalive-lock') || '';
+      const lock = this.getSessionStorageValue(SESSION_KEEPALIVE_LOCK_STORAGE_KEY) || '';
       const lockedUntil = Number(lock.split(':')[0] || 0);
       if (lockedUntil > now) return true;
 
-      const nextLock = `${now + 10000}:${this.sessionTabId}`;
-      this.setSessionStorageValue('bayanat:session-keepalive-lock', nextLock);
-      return this.getSessionStorageValue('bayanat:session-keepalive-lock') !== nextLock;
+      const nextLock = `${now + SESSION_KEEPALIVE_LOCK_TTL_MS}:${this.sessionTabId}`;
+      this.setSessionStorageValue(SESSION_KEEPALIVE_LOCK_STORAGE_KEY, nextLock);
+      return this.getSessionStorageValue(SESSION_KEEPALIVE_LOCK_STORAGE_KEY) !== nextLock;
     },
     releaseSessionKeepaliveLock() {
-      const lock = this.getSessionStorageValue('bayanat:session-keepalive-lock') || '';
+      const lock = this.getSessionStorageValue(SESSION_KEEPALIVE_LOCK_STORAGE_KEY) || '';
       if (!lock.endsWith(`:${this.sessionTabId}`)) return;
-      this.removeSessionStorageValue('bayanat:session-keepalive-lock');
+      this.removeSessionStorageValue(SESSION_KEEPALIVE_LOCK_STORAGE_KEY);
     },
     getSessionStorageValue(key) {
       try {
@@ -146,7 +157,8 @@ const sessionLifecycleMixin = {
       try {
         await axios.get('/admin/api/session-check');
       } catch (error) {
-        // 401s are handled by the global axios interceptor.
+        // Any failure (401, network, timeout) is a no-op here; a real
+        // expiry is surfaced separately via the global 401 interceptor.
       } finally {
         this.releaseSessionKeepaliveLock();
       }
@@ -169,7 +181,8 @@ const sessionLifecycleMixin = {
         this.sessionStaySignedInLoading = true;
         await axios.get('/admin/api/session-check');
       } catch (error) {
-        // 401s are handled by the global axios interceptor.
+        // Any failure (401, network, timeout) is a no-op here; a real
+        // expiry is surfaced separately via the global 401 interceptor.
       } finally {
         this.sessionStaySignedInLoading = false;
       }
