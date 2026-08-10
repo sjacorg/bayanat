@@ -152,7 +152,7 @@ const ActorCard = Vue.defineComponent({
                         target="_blank" 
                         label
                         append-icon="mdi-open-in-new"
-                        class="ml-1">
+                        class="ms-2">
                         {{ actor.originid }}
 
                     </v-chip>
@@ -160,12 +160,12 @@ const ActorCard = Vue.defineComponent({
                 {{ translations.originid_ }}
             </v-tooltip>
 
-            <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"
+            <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ms-2"
                   @click="$emit('edit',actor)">
               {{ translations.edit_ }}
             </v-btn>
 
-            <v-btn size="small" class="ml-2" variant="tonal" prepend-icon="mdi-graph-outline"
+            <v-btn size="small" class="ms-2" variant="tonal" prepend-icon="mdi-graph-outline"
                   @click.stop="$root.$refs.viz.visualize(actor)">
               {{ translations.visualize_ }}
             </v-btn>
@@ -244,7 +244,7 @@ const ActorCard = Vue.defineComponent({
                   variant="text"
                   append-icon="mdi-open-in-new"
                   label
-                  class="white--text ml-1">
+                  class="white--text ms-1">
                   {{ actor.source_link }}
                   
                 </v-chip>

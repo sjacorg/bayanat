@@ -302,7 +302,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           :use-metadata="true"
                         ></inline-media-renderer>
                       </div>
-                      <v-btn v-if="orientation.showSaveButton" @click="saveOrientation" prepend-icon="mdi-check" :loading="orientation.saving" class="ma-2 position-absolute right-0 bottom-0" color="primary" style="zIndex: 3002;">{{ translations.saveOrientation_ }}</v-btn>
+                      <v-btn v-if="orientation.showSaveButton" @click="saveOrientation" prepend-icon="mdi-check" :loading="orientation.saving" class="ma-2 position-absolute inset-inline-end-0 bottom-0" color="primary" style="zIndex: 3002;">{{ translations.saveOrientation_ }}</v-btn>
                     </div>
                   </v-card-text>
                 </v-card>
@@ -331,7 +331,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                             class="px-1"
                           >
                             #{{ media.bulletin.id }}
-                            <v-icon size="small" class="ml-1">mdi-open-in-new</v-icon>
+                            <v-icon size="small" class="ms-1">mdi-open-in-new</v-icon>
                           </v-btn>
                         </div>
 
@@ -433,7 +433,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                     <div class="flex-1-1 d-flex flex-column" style="min-height: 0;">
                       <div v-if="hasText || editing" class="text-subtitle-2 mb-2 d-flex align-center">
                         {{ translations.extractedText_ }}
-                        <v-chip v-if="editing" color="warning" size="x-small" variant="tonal" class="ml-2">{{ translations.editing_ || 'Editing' }}</v-chip>
+                        <v-chip v-if="editing" color="warning" size="x-small" variant="tonal" class="ms-2">{{ translations.editing_ || 'Editing' }}</v-chip>
                         <v-spacer></v-spacer>
 
                         <!-- Edit / Cancel button -->
@@ -441,14 +441,14 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                           v-if="canEdit && !editing"
                           prepend-icon="mdi-pencil"
                           variant="outlined"
-                          class="border-thin mr-2"
+                          class="border-thin me-2"
                           @click="enterEditMode"
                         >{{ translations.edit_ || 'Edit' }}</v-btn>
 
                         <v-btn
                           v-if="editing"
                           variant="text"
-                          class="mr-2"
+                          class="me-2"
                           @click="cancelEdit"
                         >{{ translations.cancel_ || 'Cancel' }}</v-btn>
 
@@ -563,7 +563,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                               density="compact"
                               hide-details
                               :disabled="loading || saving || translation.loading"
-                              class="mr-4"
+                              class="me-4"
                               @update:model-value="translateText()"
                             ></v-select>
 
@@ -585,7 +585,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                   <v-expansion-panels v-if="revisionCount > 0" flat class="flex-0-0 mx-4 mb-2">
                     <v-expansion-panel>
                       <v-expansion-panel-title class="text-caption py-1" style="min-height: 36px;">
-                        <v-icon icon="mdi-history" size="small" class="mr-2"></v-icon>
+                        <v-icon icon="mdi-history" size="small" class="me-2"></v-icon>
                         {{ translations.revisions_ || 'Revisions' }} ({{ revisionCount }})
                       </v-expansion-panel-title>
                       <v-expansion-panel-text>
