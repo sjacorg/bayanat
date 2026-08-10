@@ -123,6 +123,7 @@ const formBuilderMixin = {
         this.formBuilder.dynamicFields[entityType][idx] = { ...event };
       } else {
         // Add new field
+        this.ui.search = '';
         event.justAdded = true;
         this.formBuilder.dynamicFields[entityType].push(event);
         this.$nextTick(() => {
