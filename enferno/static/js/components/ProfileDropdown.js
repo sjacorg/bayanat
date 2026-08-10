@@ -20,13 +20,8 @@ const ProfileDropdown = Vue.defineComponent({
   },
   computed: {
     appVersion() {
-      return window.__APP_VERSION__ || '';
-    },
-    hasReleaseLink() {
-      return this.appVersion && this.appVersion !== '0.0.0';
-    },
-    releaseUrl() {
-      return `https://github.com/sjacorg/bayanat/releases/tag/v${this.appVersion}`;
+      const v = window.__APP_VERSION__ || '';
+      return v === '0.0.0' ? '' : v;
     },
     normalizedEmail() {
       const e = (this.email || '').trim()
@@ -130,12 +125,9 @@ const ProfileDropdown = Vue.defineComponent({
           <v-list-item href="/logout">{{ translations.logout_ }}</v-list-item>
         </v-list>
 
-        <a v-if="hasReleaseLink" :href="releaseUrl" target="_blank" rel="noopener" class="d-block px-4 pb-3 text-caption text-medium-emphasis">
+        <a v-if="appVersion" href="https://github.com/sjacorg/bayanat/releases" target="_blank" rel="noopener" class="d-block px-4 pb-3 text-caption text-medium-emphasis">
           Bayanat v{{ appVersion }}
         </a>
-        <span v-else-if="appVersion" class="d-block px-4 pb-3 text-caption text-medium-emphasis">
-          Bayanat v{{ appVersion }}
-        </span>
       </v-card>
     </v-menu>
   `,
