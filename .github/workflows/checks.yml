@@ -44,6 +44,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install ExifTool
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -yq libimage-exiftool-perl
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
