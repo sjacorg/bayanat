@@ -91,7 +91,10 @@ def generate_user_roles() -> None:
     if not r:
         role = Role()
         role.name = "Admin"
-        role.description = "System Role"
+        role.description = (
+            "Full access to all items and actions, including Activity Monitor and user "
+            "management across the system."
+        )
         role.save()
 
     # create DA role, if not exists
@@ -99,7 +102,10 @@ def generate_user_roles() -> None:
     if not r:
         role = Role()
         role.name = "DA"
-        role.description = "System Role"
+        role.description = (
+            "User can view all items and edit only those assigned to them. User can "
+            "review assigned items for peer review."
+        )
         role.save()
 
     # create MOD role, if not exists
@@ -107,7 +113,7 @@ def generate_user_roles() -> None:
     if not r:
         role = Role()
         role.name = "Mod"
-        role.description = "System Role"
+        role.description = "User can manage system data, edit assigned items, and perform bulk updates."
         role.save()
 
 
