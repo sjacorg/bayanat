@@ -22,6 +22,7 @@ from enferno.extensions import rds, db
 from enferno.tasks import bulk_update_incidents
 from enferno.user.models import Role
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.background_search import apply_search_timeout, timeout_fallback
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
@@ -59,6 +60,7 @@ def incidents(id: Optional[t.id]) -> str:
 
 @admin.route("/api/incidents/", methods=["POST", "GET"])
 @validate_with(IncidentQueryRequestModel)
+@timeout_fallback("incident")
 def api_incidents(validated_data: dict) -> Response:
     """
     Returns incidents in JSON format, allows search and paging.
@@ -84,6 +86,7 @@ def api_incidents(validated_data: dict) -> Response:
     per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
+    apply_search_timeout()
     search = SearchUtils(q, cls="incident")
     base_query = search.get_query().options(
         selectinload(Incident.assigned_to),

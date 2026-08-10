@@ -155,9 +155,6 @@ const variables = {
     'z-1': '1',
     'z-100': '100',
 
-    // Position
-    'left-auto': 'auto',
-
     // Height
     'h-fit': 'fit-content',
 
@@ -166,6 +163,10 @@ const variables = {
     'pointer-events-auto': 'auto',
 }
 const vuetifyConfig = {
+    locale: {
+        locale: window.__lang__ || document.documentElement.lang,
+        fallback: 'en',
+    },
     defaults: {
         VRow: {
             dense: true,
