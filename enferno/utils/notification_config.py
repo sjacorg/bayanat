@@ -110,6 +110,11 @@ NOTIFICATIONS_DEFAULT_CONFIG = {
         "email_enabled": False,
         "category": Constants.NotificationCategories.UPDATE.value,
     },
+    NotificationEvent.BACKGROUND_SEARCH_STATUS.value: {
+        "in_app_enabled": True,
+        "email_enabled": False,
+        "category": Constants.NotificationCategories.UPDATE.value,
+    },
     NotificationEvent.NEW_ASSIGNMENT.value: {
         "in_app_enabled": True,
         "email_enabled": False,

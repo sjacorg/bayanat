@@ -63,6 +63,11 @@ def init_worker_process(**kwargs):
 # Class to run tasks within application's context
 class ContextTask(celery.Task):
     abstract = True
+    # Drop messages the broker has held for longer than a day. Task payloads
+    # carry row ids, so one queued against a database that has since moved on
+    # (a restored dump, a swapped dev DB) can only fail. Without this the
+    # backlog is immortal and re-runs on every worker start.
+    expires = 24 * 60 * 60
 
     def __call__(self, *args, **kwargs):
         global _flask_app
@@ -155,6 +160,7 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
 
 
 # --- Import submodules so Celery discovers all tasks ---
+from enferno.tasks.background_search import background_search  # noqa: E402, F401
 from enferno.tasks.bulk_ops import (  # noqa: E402
     bulk_update_actors,
     bulk_update_bulletins,

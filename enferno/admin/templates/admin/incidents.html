@@ -21,8 +21,8 @@
                             @click.stop="visualizeResults"
                             v-if="showVisualize"
                             :loading="visualizeLoading"
-                            class="mb-5 mr-5 position-absolute "
-                            style="right: 30px; bottom: 90px; z-index: 1000;"
+                            class="mb-5 me-5 position-absolute "
+                            style="inset-inline-end: 30px; bottom: 90px; z-index: 1000;"
                             icon="mdi-graph"
                     >
 
@@ -76,12 +76,24 @@
                                         hide-details
                                         append-icon="mdi-ballot"
                                         @click:append="toggleAdvSearch"
-                                        :append-inner-icon="searchEmpty ? '' : 'mdi-close'"
-                                        @click:append-inner="resetSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                         :bg-color="searchBg"
-                                ></v-text-field>
+                                >
+                                    <template #append-inner>
+                                        <v-btn
+                                                v-if="!searchEmpty"
+                                                @click="resetSearch"
+                                                aria-label="{{ _('Clear Search') }}"
+                                                color="grey-darken-1"
+                                                density="compact"
+                                                icon="mdi-close"
+                                                size="small"
+                                                variant="text"
+                                        ></v-btn>
+                                        {% include 'admin/partials/saved_search_menu.html' %}
+                                    </template>
+                                </v-text-field>
 
 
                                 <v-spacer></v-spacer>
@@ -697,6 +709,18 @@
 
             },
             mounted: function () {
+                // resume a completed background search from its notification link
+                const bgsToken = new URLSearchParams(window.location.search).get('bgs');
+                if (bgsToken) {
+                    axios.get(`/admin/api/background-search/${bgsToken}`).then(res => {
+                        const applyBgs = () => {
+                            if (this.loading) return setTimeout(applyBgs, 300);
+                            this.search = { ids: res.data.ids };
+                            this.refresh();
+                        };
+                        applyBgs();
+                    }).catch(() => this.showSnack('Background search results have expired'));
+                }
                 // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
                     api.get('/admin/api/roles/').then(res => {
@@ -944,6 +968,10 @@
 
                     axios.post('/admin/api/incidents/', requestData)
                         .then((response) => {
+                            if (response.status === 202) {
+                                this.showSnack(response.data.message);
+                                return;
+                            }
                             const endTime = new Date()
                             const duration = endTime - startTime
                             this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
@@ -1015,7 +1043,12 @@
                         this.savedSearchSelection = Object.assign([], item);
                         this.search = item.data;
                     }
-                    this.$refs.savedSearchDropdown.blur()
+                    this.$refs.savedSearchDropdown?.blur?.()
+                },
+
+                applySavedSearch(item) {
+                    this.loadSearch(item);
+                    this.doSearch();
                 },
 
 
@@ -1067,6 +1100,10 @@
                         .then(res => {
                             this.showSnack(res.data);
                             this.searches = this.searches.filter(item => item.id !== id);
+                            if (this.savedSearchSelection?.id == id) {
+                                this.savedSearchSelection = null;
+                                this.search = {};
+                            }
                         });
                 },
 

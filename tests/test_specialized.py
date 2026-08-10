@@ -1141,6 +1141,29 @@ class TestNotificationSettings:
                 assert config["enabled"] is True
                 assert config["email"] is True
 
+    def test_get_config_survives_an_event_missing_from_config(self, app, monkeypatch):
+        """An install whose config.json predates a new event must not crash.
+
+        ConfigManager.get_config returns config.json's NOTIFICATIONS dict
+        wholesale rather than deep-merging the defaults, so any event added in a
+        later release is absent for existing installs. The adapter must fall back
+        to its declared defaults instead of dereferencing None.
+        """
+        from enferno.admin.constants import Constants
+        from enferno.admin.models.Notification import get_notification_config
+
+        with app.app_context():
+            # Config.get reads current_app.config inside an app context, so this
+            # is what an install whose config.json predates the event looks like.
+            # setitem restores it afterwards; the app fixture is session-scoped.
+            monkeypatch.setitem(current_app.config, "NOTIFICATIONS", {})
+
+            config = get_notification_config("BACKGROUND_SEARCH_STATUS")
+
+            assert config["enabled"] is True
+            assert config["email"] is False
+            assert config["category"] == Constants.NotificationCategories.UPDATE.value
+
     def test_config_excludes_security_events(self, request, session):
         client = request.getfixturevalue("admin_client")
         resp = client.get("/admin/api/configuration/")

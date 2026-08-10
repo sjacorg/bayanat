@@ -61,6 +61,20 @@ const globalMixin = {
   beforeUnmount() {
     document.removeEventListener('global-axios-error', this.showSnack);
   },
+  computed: {
+    currentHelpLink() {
+      return contextualHelpLinks[this.$route?.name] || null;
+    },
+    currentHelpUrl() {
+      return this.currentHelpLink?.url || null;
+    },
+    currentHelpLabel() {
+      const translations = window.translations || {};
+      if (!this.currentHelpLink?.titleKey) return translations.userGuides_;
+      const title = translations[this.currentHelpLink.titleKey];
+      return translations.learnAbout_(title);
+    },
+  },
   methods: {
     /**
      * Format a date with Day.js supporting timezone, locale, and special formats.
