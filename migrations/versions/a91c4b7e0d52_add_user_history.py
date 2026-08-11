@@ -20,13 +20,13 @@ def upgrade():
     op.create_table(
         "user_history",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("target_user_id", sa.Integer(), nullable=False),
+        sa.Column("target_user_id", sa.Integer(), nullable=True),
         sa.Column("data", sa.JSON(), nullable=True),
         sa.Column("user_id", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.Column("deleted", sa.Boolean(), server_default="false", nullable=False),
-        sa.ForeignKeyConstraint(["target_user_id"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["target_user_id"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )

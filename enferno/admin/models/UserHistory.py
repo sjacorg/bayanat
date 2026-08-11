@@ -21,27 +21,23 @@ class UserHistory(db.Model, BaseMixin):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    # the user this revision describes. Users are hard deleted, and every user
-    # carries at least one revision, so cascade or deletion becomes impossible.
+    # The user this revision describes. Revisions outlive the account: this is
+    # an evidence platform, so a hard delete must not erase the record of what
+    # an account was allowed to do. The snapshot in `data` carries the id,
+    # username, name and email, so a detached row still identifies its subject.
     target_user_id = db.Column(
         db.Integer,
-        db.ForeignKey("user.id", ondelete="CASCADE"),
+        db.ForeignKey("user.id", ondelete="SET NULL"),
         index=True,
-        nullable=False,
     )
     target_user = db.relationship(
         "User",
-        backref=db.backref(
-            "history",
-            order_by="UserHistory.updated_at",
-            cascade="all, delete-orphan",
-            passive_deletes=True,
-        ),
+        backref=db.backref("history", order_by="UserHistory.updated_at"),
         foreign_keys=[target_user_id],
     )
     data = db.Column(JSON)
-    # user tracking, who made the change. Kept on their deletion so the trail
-    # of what happened to other accounts survives.
+    # user tracking, who made the change. Also kept on their deletion, so the
+    # trail of what they did to other accounts survives.
     user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"))
     user = db.relationship("User", backref="user_revisions", foreign_keys=[user_id])
 

@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 
 from enferno.admin.models import UserHistory
+from enferno.extensions import db
 from enferno.user.models import User
 from tests.factories import UserFactory
 
@@ -110,16 +111,30 @@ class TestUserHistoryRecording:
         snapshot = user.to_history_dict()
         assert [r["id"] for r in snapshot["roles"]] == sorted(r.id for r in roles)
 
-    def test_delete_cascades_revisions(self, session, users):
-        """A user carries revisions, so deletion must not be blocked by them."""
+    def test_delete_preserves_revisions(self, session, users):
+        """Evidence platform: deleting an account must not erase the record of
+        what it was allowed to do, nor be blocked by that record."""
         admin_user, _, _, _ = users
         user = UserFactory()
         user.fs_uniquifier = uuid4().hex
+        user.username = "doomed"
         session.add(user)
         session.commit()
         user.create_revision(user_id=admin_user.id)
         user_id = user.id
-        assert UserHistory.query.filter_by(target_user_id=user_id).count() == 1
+        revision_id = UserHistory.query.filter_by(target_user_id=user_id).one().id
 
+        # deletion still works, the revision does not block it
         assert user.delete() is True
-        assert UserHistory.query.filter_by(target_user_id=user_id).count() == 0
+
+        orphan = db.session.get(UserHistory, revision_id)
+        assert orphan is not None
+        assert orphan.target_user_id is None
+        # the snapshot still identifies its subject
+        assert orphan.data["id"] == user_id
+        assert orphan.data["username"] == "doomed"
+        # and still records who made the change
+        assert orphan.user_id == admin_user.id
+
+        db.session.delete(orphan)
+        db.session.commit()
