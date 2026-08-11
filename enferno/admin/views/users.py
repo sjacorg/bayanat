@@ -46,8 +46,20 @@ def api_users() -> Response:
     per_page = request.args.get("per_page", PER_PAGE, int)
     q = request.args.get("q")
     query = []
-    if q is not None:
-        query.append(User.name.ilike("%" + q + "%"))
+    if q:
+        term = f"%{q}%"
+        # username and email are masked for users who cannot view them, so
+        # searching them would leak values the caller is not allowed to see
+        if current_user.has_role("Admin") or current_user.view_usernames:
+            query.append(
+                or_(
+                    User.name.ilike(term),
+                    User.username.ilike(term),
+                    User.email.ilike(term),
+                )
+            )
+        else:
+            query.append(User.name.ilike(term))
     result = (
         User.query.filter(*query)
         .order_by(User.username)
