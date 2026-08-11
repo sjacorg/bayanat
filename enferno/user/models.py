@@ -447,7 +447,13 @@ class User(UserMixin, db.Model, BaseMixin):
             "username": self.username,
             "email": self.email,
             "active": self.active,
-            "roles": [{"id": role.id, "name": role.name} for role in self.roles],
+            # sorted so two snapshots of the same roles compare equal: the
+            # relationship has no order_by, so its order is whatever the join
+            # returns, and an unstable order would read as a change on diff
+            "roles": [
+                {"id": role.id, "name": role.name}
+                for role in sorted(self.roles, key=lambda r: r.id)
+            ],
             "view_usernames": self.view_usernames,
             "view_simple_history": self.view_simple_history,
             "view_full_history": self.view_full_history,

@@ -95,6 +95,21 @@ class TestUserHistoryRecording:
         assert "force_reset" not in snapshot
         assert "fs_uniquifier" not in snapshot
 
+    def test_role_order_is_stable(self, session):
+        """Unstable role order would read as a change when nothing changed."""
+        from enferno.user.models import Role
+
+        user = UserFactory()
+        user.fs_uniquifier = uuid4().hex
+        roles = Role.query.order_by(Role.id).limit(2).all()
+        assert len(roles) == 2
+        user.roles = list(reversed(roles))
+        session.add(user)
+        session.commit()
+
+        snapshot = user.to_history_dict()
+        assert [r["id"] for r in snapshot["roles"]] == sorted(r.id for r in roles)
+
     def test_delete_cascades_revisions(self, session, users):
         """A user carries revisions, so deletion must not be blocked by them."""
         admin_user, _, _, _ = users
