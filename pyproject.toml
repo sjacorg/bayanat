@@ -179,6 +179,7 @@ select = ["F"]  # pyflakes: unused imports, undefined names, syntax errors
 [tool.ruff.lint.per-file-ignores]
 "enferno/app.py" = ["F841"]       # security = Security() assigned for side effects
 "enferno/commands.py" = ["F811"]  # extract() name reused across CLI groups
+"enferno/admin/models/__init__.py" = ["F401"]  # re-export surface for the model package
 
 [dependency-groups]
 dev = [

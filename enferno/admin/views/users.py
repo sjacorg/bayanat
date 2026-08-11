@@ -311,6 +311,7 @@ def api_user_create(
     user.from_json(u)
     result = user.save()
     if result:
+        user.create_revision()
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
@@ -396,6 +397,7 @@ def api_user_update(
 
         user = user.from_json(u)
         if user.save():
+            user.create_revision()
             # Record activity
             Activity.create(
                 current_user,

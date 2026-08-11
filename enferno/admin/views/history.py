@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from flask import Response
-from flask_security.decorators import current_user
+from flask_security.decorators import current_user, roles_required
 from sqlalchemy import desc
 
 from enferno.admin.models import (
@@ -13,8 +13,10 @@ from enferno.admin.models import (
     Incident,
     IncidentHistory,
     LocationHistory,
+    UserHistory,
 )
 from enferno.extensions import db
+from enferno.user.models import User
 from enferno.utils.http_response import HTTPResponse
 import enferno.utils.typing as t
 from . import admin, require_view_history
@@ -143,6 +145,37 @@ def api_locationhistory(locationid: t.id) -> Response:
     result = (
         LocationHistory.query.filter_by(location_id=locationid)
         .order_by(desc(LocationHistory.created_at))
+        .all()
+    )
+    # For standardization
+    response = {"items": [item.to_dict() for item in result]}
+    return HTTPResponse.success(data=response)
+
+
+# User History Helpers
+
+
+@admin.route("/api/userhistory/<int:userid>")
+@roles_required("Admin")
+def api_userhistory(userid: t.id) -> Response:
+    """
+    Endpoint to get revision history of a user account.
+
+    Admin only: revisions carry account and permission state, and are not
+    gated by the view_history permissions used for content items.
+
+    Args:
+        - userid: id of the user.
+
+    Returns:
+        - json feed of the user's history / error.
+    """
+    if not db.session.get(User, userid):
+        return HTTPResponse.not_found("User not found")
+
+    result = (
+        UserHistory.query.filter_by(target_user_id=userid)
+        .order_by(desc(UserHistory.created_at))
         .all()
     )
     # For standardization

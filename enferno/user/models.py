@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
 from flask import current_app, session, has_app_context, has_request_context
@@ -431,6 +431,48 @@ class User(UserMixin, db.Model, BaseMixin):
         self.can_access_media = item.get("can_access_media", False)
         self.active = item.get("active")
         return self
+
+    def to_history_dict(self) -> dict:
+        """
+        Snapshot serializer for the revision history.
+
+        Deliberately not to_dict(): that one masks names via the secure_*
+        properties based on the acting user, and carries the live password
+        reset key. A stored revision must be neither viewer-dependent nor
+        hold secrets.
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "username": self.username,
+            "email": self.email,
+            "active": self.active,
+            "roles": [{"id": role.id, "name": role.name} for role in self.roles],
+            "view_usernames": self.view_usernames,
+            "view_simple_history": self.view_simple_history,
+            "view_full_history": self.view_full_history,
+            "can_self_assign": self.can_self_assign,
+            "can_edit_locations": self.can_edit_locations,
+            "can_export": self.can_export,
+            "can_import_web": self.can_import_web,
+            "can_access_media": self.can_access_media,
+        }
+
+    def create_revision(self, user_id: Optional[int] = None) -> None:
+        """
+        Store a snapshot of this user's account and permission state.
+
+        Args:
+            - user_id: id of the user making the change, defaults to the
+              current user. None when there is no acting user (CLI, install).
+        """
+        from enferno.admin.models import UserHistory
+
+        # current_user is unbound outside a request, so guard rather than
+        # attributing the change to an arbitrary user
+        if user_id is None and has_request_context():
+            user_id = getattr(current_user, "id", None)
+        UserHistory(target_user_id=self.id, data=self.to_history_dict(), user_id=user_id).save()
 
     @property
     def two_factor_devices(self) -> Dict[str, Any]:
