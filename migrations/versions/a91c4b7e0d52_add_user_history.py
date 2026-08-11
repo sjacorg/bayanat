@@ -34,6 +34,46 @@ def upgrade():
         op.f("ix_user_history_target_user_id"), "user_history", ["target_user_id"], unique=False
     )
 
+    # Baseline snapshot per existing user. A revision is only meaningful against
+    # the one before it, and user accounts are edited rarely, so without a
+    # baseline the first edit of each existing account would be undiffable
+    # for as long as that account goes untouched. user_id is left null: no
+    # acting user made this change. Mirrors User.to_history_dict().
+    op.execute("""
+        INSERT INTO user_history (target_user_id, data, user_id, created_at, updated_at, deleted)
+        SELECT
+            u.id,
+            json_build_object(
+                'id', u.id,
+                'name', u.name,
+                'username', u.username,
+                'email', u.email,
+                'active', u.active,
+                'roles', COALESCE(
+                    (
+                        SELECT json_agg(json_build_object('id', r.id, 'name', r.name) ORDER BY r.id)
+                        FROM roles_users ru
+                        JOIN role r ON r.id = ru.role_id
+                        WHERE ru.user_id = u.id
+                    ),
+                    '[]'::json
+                ),
+                'view_usernames', u.view_usernames,
+                'view_simple_history', u.view_simple_history,
+                'view_full_history', u.view_full_history,
+                'can_self_assign', u.can_self_assign,
+                'can_edit_locations', u.can_edit_locations,
+                'can_export', u.can_export,
+                'can_import_web', u.can_import_web,
+                'can_access_media', u.can_access_media
+            ),
+            NULL,
+            timezone('utc', now()),
+            timezone('utc', now()),
+            false
+        FROM "user" u
+        """)
+
 
 def downgrade():
     op.drop_index(op.f("ix_user_history_target_user_id"), table_name="user_history")
