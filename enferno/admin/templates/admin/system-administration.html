@@ -1432,7 +1432,6 @@
                     }).catch(e => {
                         console.error(e);
                         this.overlay = false;
-                        this.addToCallbackQueueIfReauthRequired(e, this.saveConfiguration);
                     }).finally(() => {
                         this.closeSaveDialog()
                     })

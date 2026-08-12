@@ -307,18 +307,72 @@ axios.defaults.headers.common['Accept'] = 'application/json';
 // Centralized API service - handles standardized responses transparently
 const api = {
     get: axios.get.bind(axios),
-    post: axios.post.bind(axios), 
+    post: axios.post.bind(axios),
     put: axios.put.bind(axios),
     delete: axios.delete.bind(axios)
 };
 
-//global axios response interceptor - handles standardized API responses and global error handling  
+// Requests whose own 401 must never be queued for replay: the auth endpoints
+// themselves (replaying a failed login makes no sense), and the session-check
+// probe used to test whether a session is alive again.
+const SESSION_REPLAY_EXCLUDED_PATHS = [
+    '/login',
+    '/verify',
+    '/tf-validate',
+    '/tf-select',
+    '/wan-signin',
+    '/csrf',
+    '/admin/api/session-check',
+];
+
+// Requests whose 401 must open the sign-in dialog but never be queued: the
+// silent notification poll marks itself so its failures don't get replayed
+// as a user-visible retried call once the user signs back in.
+function isSilentPollRequest(config) {
+    const headers = config?.headers;
+    if (!headers) return false;
+    if (typeof headers.get === 'function') return Boolean(headers.get('X-Silent-Poll'));
+    return Boolean(headers['X-Silent-Poll'] || headers['x-silent-poll']);
+}
+
+function isReplayExcluded(config) {
+    if (!config) return true;
+    if (config._sessionReplayed) return true;
+    if (isSilentPollRequest(config)) return true;
+    const url = config.url || '';
+    return SESSION_REPLAY_EXCLUDED_PATHS.some(path => url === path || url.startsWith(`${path}/`) || url.startsWith(`${path}?`));
+}
+
+// Requests dropped by a 401 mid-flight are queued here instead of being
+// rejected immediately, so a successful sign-in can replay them exactly
+// once and settle the original caller with the real outcome.
+const sessionReplayQueue = [];
+
+function queueForSessionReplay(config) {
+    return new Promise((resolve, reject) => {
+        sessionReplayQueue.push({ config, resolve, reject });
+    });
+}
+
+async function drainSessionReplayQueue() {
+    const pending = sessionReplayQueue.splice(0, sessionReplayQueue.length);
+    for (const { config, resolve, reject } of pending) {
+        try {
+            const replayConfig = { ...config, _sessionReplayed: true };
+            resolve(await axios.request(replayConfig));
+        } catch (error) {
+            reject(error);
+        }
+    }
+}
+
+//global axios response interceptor - handles standardized API responses and global error handling
 axios.interceptors.response.use(
     function (response) {
         const shouldFlatten =
             isPlainObject(response?.data?.data) &&
             !response?.config?.skipFlattening;
-    
+
         if (shouldFlatten) {
             return {
                 ...response,
@@ -328,18 +382,27 @@ axios.interceptors.response.use(
                 }
             };
         }
-    
+
       return response;
     },
     function (error) {
-        if (!error.config?.suppressGlobalErrorHandler) {
+        const isSessionExpiry = error?.response?.status === 401;
+        // A request about to be queued for replay isn't a failure yet, so
+        // it must not surface an error toast ahead of the real outcome.
+        const willReplay = isSessionExpiry && !isReplayExcluded(error.config);
+
+        if (!willReplay && !error.config?.suppressGlobalErrorHandler) {
             const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
             document.dispatchEvent(globalRequestErrorEvent);
         }
-        // Check for session expiration errors (401 Unauthorized)
-        if ([401].includes(error?.response?.status)) {
+
+        if (isSessionExpiry) {
             const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });
             document.dispatchEvent(authenticationRequiredEvent);
+
+            if (willReplay) {
+                return queueForSessionReplay(error.config);
+            }
         }
         return Promise.reject(error);
     },
