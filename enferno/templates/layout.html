@@ -76,7 +76,10 @@
             <v-card prepend-icon="mdi-clock-alert-outline" title="{{ _('Session Expiring Soon') }}" subtitle="{{ _('Your session is about to expire.') }}">
                 <v-card-text class="text-body-2">
                     {{ _('Stay signed in to continue working.') }}
-                    <div class="mt-2 text-caption text-medium-emphasis">
+                    <div v-if="sessionWarningChecking" class="mt-2 text-caption text-medium-emphasis">
+                        {{ _('Checking your session...') }}
+                    </div>
+                    <div v-else class="mt-2 text-caption text-medium-emphasis">
                         {{ _('Time remaining:') }} ${sessionWarningRemainingSeconds}s
                     </div>
                 </v-card-text>
@@ -88,7 +91,8 @@
                     <v-btn
                         color="primary"
                         variant="flat"
-                        :loading="sessionStaySignedInLoading"
+                        :disabled="sessionWarningChecking"
+                        :loading="sessionWarningChecking"
                         @click="staySignedIn"
                     >
                         {{ _('Stay signed in') }}

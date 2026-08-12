@@ -37,6 +37,9 @@ const sessionLifecycleMixin = {
     sessionAuthPending() {
       return Boolean(this.isSignInDialogVisible || this.isReauthDialogVisible || this.isSignInDialogLoading);
     },
+    sessionWarningChecking() {
+      return Boolean(this.sessionKeepaliveInFlight || this.sessionStaySignedInLoading);
+    },
   },
   mounted() {
     if (!window.__username__ || !this.sessionLifetimeMs) return;
@@ -179,17 +182,19 @@ const sessionLifecycleMixin = {
       this.sessionWarningRemainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
 
       if (remainingMs <= 0) {
-        this.sessionWarningVisible = false;
-
         // A keepalive or "Stay signed in" call already in flight is about
         // to prove the session alive (or genuinely dead, in which case its
         // own 401 reports expiry through the interceptor). Declaring
         // expiry here too, from stale timing read mid-request, would be a
         // false positive on a session that's actually fine.
-        if (this.sessionKeepaliveInFlight || this.sessionStaySignedInLoading) return;
+        if (this.sessionWarningChecking) {
+          this.sessionWarningVisible = true;
+          return;
+        }
 
         // Hand off to the sign-in dialog ourselves (once) rather than
         // leaving a page that looks fine over a session that's already dead.
+        this.sessionWarningVisible = false;
         if (!this.sessionExpiryReported) {
           this.sessionExpiryReported = true;
           document.dispatchEvent(new CustomEvent('authentication-required'));
@@ -200,7 +205,7 @@ const sessionLifecycleMixin = {
       this.sessionWarningVisible = remainingMs <= this.sessionWarningWindowMs;
     },
     async staySignedIn() {
-      if (this.sessionStaySignedInLoading) return;
+      if (this.sessionWarningChecking) return;
 
       try {
         this.sessionStaySignedInLoading = true;
