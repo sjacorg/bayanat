@@ -15,6 +15,7 @@ const sessionLifecycleMixin = {
     sessionCountdownIntervalId: null,
     sessionInteractedSinceRefresh: false,
     sessionLastInteractionAt: 0,
+    sessionExpiryReported: false,
     sessionTabId: `${Date.now()}-${Math.random()}`,
   }),
   computed: {
@@ -78,6 +79,7 @@ const sessionLifecycleMixin = {
     pauseSessionLifecycle() {
       this.sessionWarningVisible = false;
       this.sessionInteractedSinceRefresh = false;
+      this.sessionExpiryReported = false;
     },
     handleSessionVisibilityChange() {
       if (document.visibilityState !== 'visible') {
@@ -92,6 +94,7 @@ const sessionLifecycleMixin = {
       this.setSessionStorageValue(SESSION_REFRESH_STORAGE_KEY, String(Date.now()));
       this.sessionInteractedSinceRefresh = false;
       this.sessionWarningVisible = false;
+      this.sessionExpiryReported = false;
     },
     lastSessionRefreshAt() {
       return Number(this.getSessionStorageValue(SESSION_REFRESH_STORAGE_KEY) || Date.now());
@@ -171,8 +174,22 @@ const sessionLifecycleMixin = {
 
       const remainingMs = this.sessionLifetimeMs - (Date.now() - this.lastSessionRefreshAt());
       this.sessionWarningRemainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-      this.sessionWarningVisible =
-        remainingMs > 0 && remainingMs <= this.sessionWarningWindowMs;
+
+      if (remainingMs <= 0) {
+        // A session found expired here - whether the countdown was showing,
+        // the tab just woke from sleep, or it was backgrounded the whole
+        // time - must hand off to the sign-in dialog itself. Otherwise the
+        // page looks fine with a session that's actually already dead
+        // underneath it until some unrelated request happens to 401.
+        this.sessionWarningVisible = false;
+        if (!this.sessionExpiryReported) {
+          this.sessionExpiryReported = true;
+          document.dispatchEvent(new CustomEvent('authentication-required'));
+        }
+        return;
+      }
+
+      this.sessionWarningVisible = remainingMs <= this.sessionWarningWindowMs;
     },
     async staySignedIn() {
       if (this.sessionStaySignedInLoading) return;
