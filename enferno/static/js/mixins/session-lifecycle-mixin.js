@@ -16,6 +16,7 @@ const sessionLifecycleMixin = {
     sessionInteractedSinceRefresh: false,
     sessionLastInteractionAt: 0,
     sessionExpiryReported: false,
+    sessionKeepaliveInFlight: false,
     sessionTabId: `${Date.now()}-${Math.random()}`,
   }),
   computed: {
@@ -158,11 +159,13 @@ const sessionLifecycleMixin = {
       if (this.sessionKeepaliveLocked()) return;
 
       try {
+        this.sessionKeepaliveInFlight = true;
         await axios.get('/admin/api/session-check');
       } catch (error) {
         // Any failure (401, network, timeout) is a no-op here; a real
         // expiry is surfaced separately via the global 401 interceptor.
       } finally {
+        this.sessionKeepaliveInFlight = false;
         this.releaseSessionKeepaliveLock();
       }
     },
@@ -176,12 +179,17 @@ const sessionLifecycleMixin = {
       this.sessionWarningRemainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
 
       if (remainingMs <= 0) {
-        // A session found expired here - whether the countdown was showing,
-        // the tab just woke from sleep, or it was backgrounded the whole
-        // time - must hand off to the sign-in dialog itself. Otherwise the
-        // page looks fine with a session that's actually already dead
-        // underneath it until some unrelated request happens to 401.
         this.sessionWarningVisible = false;
+
+        // A keepalive or "Stay signed in" call already in flight is about
+        // to prove the session alive (or genuinely dead, in which case its
+        // own 401 reports expiry through the interceptor). Declaring
+        // expiry here too, from stale timing read mid-request, would be a
+        // false positive on a session that's actually fine.
+        if (this.sessionKeepaliveInFlight || this.sessionStaySignedInLoading) return;
+
+        // Hand off to the sign-in dialog ourselves (once) rather than
+        // leaving a page that looks fine over a session that's already dead.
         if (!this.sessionExpiryReported) {
           this.sessionExpiryReported = true;
           document.dispatchEvent(new CustomEvent('authentication-required'));
