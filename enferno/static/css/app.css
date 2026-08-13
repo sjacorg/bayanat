@@ -1034,18 +1034,29 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 /* Export template editor */
-.export-template-preview-id {
-    max-width: 140px;
-}
-
-.export-template-actions {
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-    bottom: 0;
-    position: sticky;
-    z-index: 3;
+.export-template-card {
+    max-height: calc(100vh - 154px);
 }
 
 .export-block-card--error {
     border-color: rgb(var(--v-theme-error)) !important;
     box-shadow: inset 3px 0 0 rgb(var(--v-theme-error));
+}
+
+.min-h-0 {
+    min-height: 0 !important;
+}
+
+.export-template-preview-id {
+    max-width: 140px;
+}
+
+@media (max-width: 959px) {
+    .export-template-card {
+        max-height: none;
+    }
+
+    .export-template-preview-id {
+        max-width: none;
+    }
 }

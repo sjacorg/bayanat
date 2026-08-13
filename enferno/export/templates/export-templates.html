@@ -2,7 +2,7 @@
 
 {% block content %}
 <v-main class="bg-background">
-    <v-container fluid class="pb-12">
+    <v-container fluid class="pb-0">
         <v-tabs model-value="templates" color="primary" class="mb-2">
             <v-tab value="requests" href="/export/dashboard/">{{ _('Requests') }}</v-tab>
             <v-tab value="templates" href="/export/templates/">{{ _('Dossier Templates') }}</v-tab>
@@ -11,13 +11,13 @@
 
             <!-- Templates list -->
             <v-col cols="12" md="3">
-                <v-card>
+                <v-card class="export-template-card d-flex flex-column">
                     <v-toolbar flat density="compact">
                         <v-toolbar-title>{{ _('Templates') }}</v-toolbar-title>
                         <v-spacer></v-spacer>
                         <v-btn icon="mdi-plus" color="primary" @click="newTemplate"></v-btn>
                     </v-toolbar>
-                    <v-list v-if="templates.length" density="compact" nav>
+                    <v-list v-if="templates.length" density="compact" nav class="flex-grow-1 min-h-0 overflow-y-auto">
                         <v-list-item
                                 v-for="t in templates"
                                 :key="t.id"
@@ -37,7 +37,7 @@
                             </template>
                         </v-list-item>
                     </v-list>
-                    <v-sheet v-else-if="!template" border rounded class="pa-6 text-center">
+                    <v-sheet v-else-if="!template" border rounded class="flex-grow-1 min-h-0 overflow-y-auto pa-6 text-center">
                         <v-icon color="medium-emphasis" size="36">mdi-file-document-plus-outline</v-icon>
                         <div class="text-body-2 mt-2">{{ _('No templates yet') }}</div>
                         <div class="text-caption text-medium-emphasis mt-1">
@@ -47,7 +47,7 @@
                             {{ _('New Template') }}
                         </v-btn>
                     </v-sheet>
-                    <v-list v-else density="compact" nav>
+                    <v-list v-else density="compact" nav class="flex-grow-1 min-h-0 overflow-y-auto">
                         <v-list-item disabled>
                             <v-list-item-title class="text-medium-emphasis">
                                 {{ _('Unsaved template') }}
@@ -59,12 +59,14 @@
 
             <!-- Editor -->
             <v-col cols="12" md="7" lg="6" v-if="template">
-                <v-card>
+                <v-card class="export-template-card d-flex flex-column">
                     <v-toolbar flat density="compact">
                         <v-toolbar-title>
                             ${ template.id ? '{{ _('Edit Template') }} #' + template.id : '{{ _('New Template') }}' }
                         </v-toolbar-title>
-                        <v-spacer></v-spacer>
+                    </v-toolbar>
+
+                    <v-card-actions class="bg-surface border-b">
                         <v-switch
                                 v-model="template.active"
                                 color="success"
@@ -73,10 +75,38 @@
                                 class="flex-grow-0 mx-2"
                                 :label="'{{ _('Active') }}'"
                         ></v-switch>
-                        <v-btn v-if="template.id" icon="mdi-delete" size="small" @click="deleteDialog = true"></v-btn>
-                    </v-toolbar>
+                        <v-spacer></v-spacer>
+                        <v-text-field
+                                v-model="previewEntityId"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                                class="export-template-preview-id"
+                                :label="'{{ _('Actor ID') }}'"
+                                :error="!!validationErrors.previewEntityId"
+                                @update:model-value="clearFieldError('previewEntityId')"
+                        ></v-text-field>
+                        <v-btn
+                                prepend-icon="mdi-open-in-new"
+                                variant="tonal"
+                                :loading="saving"
+                                @click="previewInTab"
+                        >
+                            {{ _('Preview') }}
+                        </v-btn>
+                        <v-btn color="primary" variant="flat" :loading="saving" @click="saveTemplate">
+                            {{ _('Save') }}
+                        </v-btn>
+                        <v-btn
+                                v-if="template.id"
+                                icon="mdi-delete"
+                                color="error"
+                                variant="text"
+                                @click="deleteDialog = true"
+                        ></v-btn>
+                    </v-card-actions>
 
-                    <v-card-text>
+                    <v-card-text class="flex-grow-1 min-h-0 overflow-y-auto">
                         <v-text-field
                                 v-model="template.title"
                                 variant="outlined"
@@ -296,28 +326,6 @@
                         </v-menu>
                     </v-card-text>
 
-                    <v-card-actions class="export-template-actions bg-surface">
-                        <v-text-field
-                                v-model="previewEntityId"
-                                variant="outlined"
-                                density="compact"
-                                hide-details
-                                class="export-template-preview-id"
-                                :label="'{{ _('Actor ID') }}'"
-                        ></v-text-field>
-                        <v-btn
-                                prepend-icon="mdi-open-in-new"
-                                variant="tonal"
-                                :loading="saving"
-                                @click="previewInTab"
-                        >
-                            {{ _('Preview') }}
-                        </v-btn>
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" variant="flat" :loading="saving" @click="saveTemplate">
-                            {{ _('Save') }}
-                        </v-btn>
-                    </v-card-actions>
                 </v-card>
             </v-col>
             <v-col cols="12" md="7" lg="6" v-else-if="templates.length">
@@ -528,6 +536,14 @@
                 this.$nextTick(() => {
                     const firstKey = Object.keys(this.validationErrors)[0];
                     if (!firstKey) return;
+                    if (firstKey === 'previewEntityId') {
+                        document.querySelector('.export-template-preview-id')?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                        });
+                        document.querySelector('.export-template-preview-id input')?.focus();
+                        return;
+                    }
                     const [blockId] = firstKey.split('.');
                     const block = this.template.blocks.find((b) => b.id === blockId);
                     if (block) block._open = true;
@@ -538,6 +554,16 @@
                         document.querySelector(selector)?.scrollIntoView({behavior: 'smooth', block: 'center'});
                     });
                 });
+            },
+            validatePreviewEntity() {
+                if (this.previewEntityId) return true;
+                this.validationErrors = {
+                    ...this.validationErrors,
+                    previewEntityId: "{{ _('Actor ID is required') }}",
+                };
+                this.showSnack("{{ _('Enter an actor ID to preview') }}");
+                this.scrollToFirstError();
+                return false;
             },
             async confirmDiscardChanges() {
                 if (!this.isDirty) return true;
@@ -605,10 +631,7 @@
                 await this.refreshTemplates();
             },
             async previewInTab() {
-                if (!this.previewEntityId) {
-                    this.showSnack("{{ _('Enter an actor ID to preview') }}");
-                    return;
-                }
+                if (!this.validatePreviewEntity()) return;
                 if (!this.validateTemplate()) return;
                 // open synchronously to survive popup blockers, then save and point it
                 const win = window.open('', '_blank');
