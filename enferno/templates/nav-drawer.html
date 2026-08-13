@@ -65,8 +65,22 @@
 
         {% if config.EXPORT_TOOL %}
             {% if current_user.has_role('Admin') or current_user.can_export %}
-                <v-list-item prepend-icon="mdi-file-export" title="{{ _('Exports') }}" href="/export/dashboard/"
-                             key="export"></v-list-item>
+                <v-list-group>
+                    <template v-slot:activator="{props}">
+                        <v-list-item v-bind="props" prepend-icon="mdi-file-export"
+                                     title="{{ _('Exports') }}"></v-list-item>
+                    </template>
+
+                    <v-list-item class="grey lighten-3" prepend-icon="mdi-format-list-bulleted"
+                                 title="{{ _('Requests') }}" href="/export/dashboard/"
+                                 key="export-requests"></v-list-item>
+
+                    {% if current_user.has_role('Admin') %}
+                        <v-list-item class="grey lighten-3" prepend-icon="mdi-file-document-edit"
+                                     title="{{ _('Dossier Templates') }}" href="/export/templates/"
+                                     key="export-templates"></v-list-item>
+                    {% endif %}
+                </v-list-group>
             {% endif %}
         {% endif %}
 

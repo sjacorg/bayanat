@@ -449,6 +449,7 @@ const routes = [
     {path: '/admin/activity/', name: 'activity', component: Vue.defineComponent({})},
     {path: '/export/dashboard/:id', name: 'export', component: Vue.defineComponent({})},
     {path: '/export/dashboard/', name: 'exports', component: Vue.defineComponent({})},
+    {path: '/export/templates/', name: 'export-templates', component: Vue.defineComponent({})},
     {path: '/import/log/:id', name: 'import-log', component: Vue.defineComponent({})},
     {path: '/import/log/', name: 'import-logs', component: Vue.defineComponent({})},
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
@@ -500,6 +501,7 @@ const contextualHelpLinks = {
     'deduplication-dashboard': { titleKey: 'videoDeduplication_', url: 'https://docs.bayanat.org/guide/deduplication.html' },
     exports: { titleKey: 'dataExport_', url: 'https://docs.bayanat.org/guide/data-export.html' },
     export: { titleKey: 'dataExport_', url: 'https://docs.bayanat.org/guide/data-export.html' },
+    'export-templates': { titleKey: 'dataExport_', url: 'https://docs.bayanat.org/guide/data-export.html' },
 };
 
 const router = createRouter({

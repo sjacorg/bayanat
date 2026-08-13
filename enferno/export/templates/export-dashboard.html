@@ -6,12 +6,6 @@
 
     <v-main>
         <v-container fluid>
-            {% if current_user.has_role('Admin') %}
-                <v-tabs model-value="requests" color="primary" class="mb-2">
-                    <v-tab value="requests" href="/export/dashboard/">{{ _('Requests') }}</v-tab>
-                    <v-tab value="templates" href="/export/templates/">{{ _('Dossier Templates') }}</v-tab>
-                </v-tabs>
-            {% endif %}
             <v-card>
                 <v-card-text>
 
