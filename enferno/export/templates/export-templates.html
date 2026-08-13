@@ -77,6 +77,7 @@
                         ></v-switch>
                         <v-spacer></v-spacer>
                         <v-text-field
+                                ref="previewEntityInput"
                                 v-model="previewEntityId"
                                 variant="outlined"
                                 density="compact"
@@ -97,17 +98,29 @@
                         <v-btn color="primary" variant="flat" :loading="saving" @click="saveTemplate">
                             {{ _('Save') }}
                         </v-btn>
-                        <v-btn
-                                v-if="template.id"
-                                icon="mdi-delete"
-                                color="error"
-                                variant="text"
-                                @click="deleteDialog = true"
-                        ></v-btn>
+                        <v-menu v-if="template.id">
+                            <template v-slot:activator="{ props }">
+                                <v-btn
+                                        v-bind="props"
+                                        icon="mdi-dots-vertical"
+                                        variant="text"
+                                ></v-btn>
+                            </template>
+                            <v-list density="compact">
+                                <v-list-item
+                                        prepend-icon="mdi-delete"
+                                        base-color="error"
+                                        @click="deleteDialog = true"
+                                >
+                                    <v-list-item-title>{{ _('Delete') }}</v-list-item-title>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
                     </v-card-actions>
 
                     <v-card-text class="flex-grow-1 min-h-0 overflow-y-auto">
                         <v-text-field
+                                ref="titleInput"
                                 v-model="template.title"
                                 variant="outlined"
                                 density="compact"
@@ -142,10 +155,10 @@
                         <draggable v-model="template.blocks" item-key="id" handle=".drag-handle">
                             <template #item="{element: block, index}">
                                 <v-card
+                                        :ref="`blockCard-${block.id}`"
                                         variant="outlined"
                                         class="mb-2 export-block-card"
                                         :class="{'export-block-card--error': blockHasErrors(block)}"
-                                        :data-block-id="block.id"
                                 >
                                     <v-card-title
                                             class="cursor-pointer d-flex align-center py-1 text-body-2"
@@ -449,15 +462,15 @@
                     media_appendix: {title: ''},
                     page_break: {},
                 };
+                const id = Date.now().toString(36);
                 this.template.blocks.push({
-                    id: Date.now().toString(36),
+                    id,
                     type,
                     config: JSON.parse(JSON.stringify(defaults[type])),
                     _open: true,
                 });
                 this.$nextTick(() => {
-                    const cards = document.querySelectorAll('.export-block-card');
-                    cards[cards.length - 1]?.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    this.scrollToRef(this.$refs[`blockCard-${id}`]);
                 });
             },
             toggleAllBlocks() {
@@ -532,26 +545,28 @@
                 }
                 return true;
             },
+            scrollToRef(ref) {
+                (ref?.$el || ref)?.scrollIntoView({behavior: 'smooth', block: 'center'});
+            },
             scrollToFirstError() {
                 this.$nextTick(() => {
                     const firstKey = Object.keys(this.validationErrors)[0];
                     if (!firstKey) return;
                     if (firstKey === 'previewEntityId') {
-                        document.querySelector('.export-template-preview-id')?.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center',
-                        });
-                        document.querySelector('.export-template-preview-id input')?.focus();
+                        this.scrollToRef(this.$refs.previewEntityInput);
+                        this.$refs.previewEntityInput?.focus?.();
+                        return;
+                    }
+                    if (firstKey === 'title') {
+                        this.scrollToRef(this.$refs.titleInput);
+                        this.$refs.titleInput?.focus?.();
                         return;
                     }
                     const [blockId] = firstKey.split('.');
                     const block = this.template.blocks.find((b) => b.id === blockId);
                     if (block) block._open = true;
                     this.$nextTick(() => {
-                        const selector = firstKey === 'title'
-                            ? '.v-input--error'
-                            : `[data-block-id="${blockId}"]`;
-                        document.querySelector(selector)?.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        this.scrollToRef(this.$refs[`blockCard-${blockId}`]);
                     });
                 });
             },
