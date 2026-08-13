@@ -13,7 +13,10 @@
 {% if show_toolbar %}
 <div class="toolbar no-print">
     <span class="toolbar-title">{{ template.title }} &middot; #{{ actor.id }}</span>
-    <button onclick="window.print()">{{ _('Save as PDF / Print') }}</button>
+    <span class="toolbar-actions">
+        <a href="/export/dossier/{{ template.id }}/{{ actor.id }}?format=pdf">{{ _('Download PDF') }}</a>
+        <button type="button" id="print-dossier">{{ _('Print') }}</button>
+    </span>
 </div>
 
 {% if missing %}
@@ -121,5 +124,12 @@
     {% endfor %}
 </main>
 
+{% if show_toolbar %}
+<script nonce="{{ csp_nonce() }}">
+    document.getElementById('print-dossier')?.addEventListener('click', () => {
+        window.print();
+    });
+</script>
+{% endif %}
 </body>
 </html>

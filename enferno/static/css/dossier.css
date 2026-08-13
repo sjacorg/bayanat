@@ -96,6 +96,12 @@ main.dossier {
 
 .toolbar-title { font-size: 0.9rem; color: #cfcabf; }
 
+.toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar a,
 .toolbar button {
     font: inherit;
     font-weight: 600;
@@ -105,8 +111,10 @@ main.dossier {
     border-radius: 999px;
     padding: 7px 22px;
     cursor: pointer;
+    text-decoration: none;
 }
 
+.toolbar a:hover,
 .toolbar button:hover { background: #275c4f; }
 
 .completeness {
