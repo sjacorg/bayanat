@@ -315,6 +315,10 @@ const api = {
 //global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
+        if (!hasSilentPollHeader(response?.config?.headers)) {
+            document.dispatchEvent(new CustomEvent('session-refreshed'));
+        }
+
         const shouldFlatten =
             isPlainObject(response?.data?.data) &&
             !response?.config?.skipFlattening;
@@ -344,6 +348,12 @@ axios.interceptors.response.use(
         return Promise.reject(error);
     },
 );
+
+function hasSilentPollHeader(headers) {
+    if (!headers) return false;
+    if (typeof headers.get === 'function') return Boolean(headers.get('X-Silent-Poll'));
+    return Boolean(headers['X-Silent-Poll'] || headers['x-silent-poll']);
+}
 
 function isPlainObject(val) {
     return val !== null && typeof val === 'object' && !Array.isArray(val);
@@ -459,6 +469,38 @@ const routes = [
     {path: '/dashboard/', name: 'dashboard', component: Vue.defineComponent({})},
 
 ];
+
+const contextualHelpLinks = {
+    dashboard: { titleKey: 'whatIsBayanat_', url: 'https://docs.bayanat.org/guide/what-is-bayanat.html' },
+    activity: { titleKey: 'activityMonitor_', url: 'https://docs.bayanat.org/guide/activity.html' },
+    actors: { titleKey: 'actors_', url: 'https://docs.bayanat.org/guide/actors.html' },
+    actor: { titleKey: 'actors_', url: 'https://docs.bayanat.org/guide/actors.html' },
+    'actor-fields': { titleKey: 'dynamicFields_', url: 'https://docs.bayanat.org/guide/dynamic-fields.html' },
+    bulletins: { titleKey: 'bulletins_', url: 'https://docs.bayanat.org/guide/bulletins.html' },
+    bulletin: { titleKey: 'bulletins_', url: 'https://docs.bayanat.org/guide/bulletins.html' },
+    'bulletin-fields': { titleKey: 'dynamicFields_', url: 'https://docs.bayanat.org/guide/dynamic-fields.html' },
+    incidents: { titleKey: 'incidents_', url: 'https://docs.bayanat.org/guide/incidents.html' },
+    incident: { titleKey: 'incidents_', url: 'https://docs.bayanat.org/guide/incidents.html' },
+    'incident-fields': { titleKey: 'dynamicFields_', url: 'https://docs.bayanat.org/guide/dynamic-fields.html' },
+    locations: { titleKey: 'locations_', url: 'https://docs.bayanat.org/guide/locations.html' },
+    location: { titleKey: 'locations_', url: 'https://docs.bayanat.org/guide/locations.html' },
+    labels: { titleKey: 'labels_', url: 'https://docs.bayanat.org/guide/labels.html' },
+    sources: { titleKey: 'sources_', url: 'https://docs.bayanat.org/guide/sources.html' },
+    eventtypes: { titleKey: 'events_', url: 'https://docs.bayanat.org/guide/events.html' },
+    roles: { titleKey: 'accessControl_', url: 'https://docs.bayanat.org/guide/access-control.html' },
+    users: { titleKey: 'permissions_', url: 'https://docs.bayanat.org/guide/permissions.html' },
+    user: { titleKey: 'permissions_', url: 'https://docs.bayanat.org/guide/permissions.html' },
+    medias: { titleKey: 'mediaManagement_', url: 'https://docs.bayanat.org/guide/media.html' },
+    media: { titleKey: 'mediaManagement_', url: 'https://docs.bayanat.org/guide/media.html' },
+    'account-security': { titleKey: 'accountSecurity_', url: 'https://docs.bayanat.org/guide/account-security.html' },
+    'import-media': { titleKey: 'mediaImport_', url: 'https://docs.bayanat.org/guide/media-import.html' },
+    'import-sheets': { titleKey: 'dataImport_', url: 'https://docs.bayanat.org/guide/data-import.html' },
+    'import-logs': { titleKey: 'dataImport_', url: 'https://docs.bayanat.org/guide/data-import.html' },
+    'import-log': { titleKey: 'dataImport_', url: 'https://docs.bayanat.org/guide/data-import.html' },
+    'deduplication-dashboard': { titleKey: 'videoDeduplication_', url: 'https://docs.bayanat.org/guide/deduplication.html' },
+    exports: { titleKey: 'dataExport_', url: 'https://docs.bayanat.org/guide/data-export.html' },
+    export: { titleKey: 'dataExport_', url: 'https://docs.bayanat.org/guide/data-export.html' },
+};
 
 const router = createRouter({
     history: createWebHistory(),

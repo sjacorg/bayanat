@@ -1009,3 +1009,25 @@ div.jsondiffpatch-child-node-type-array:after {
     margin-top: 1em;
     margin-bottom: 1em;
 }
+
+.newly-added-field {
+    position: relative;
+}
+
+.newly-added-field::after {
+    animation: newly-added-field-tint 2s ease-out 400ms both;
+    background-color: rgba(33, 150, 243, 0.14);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+@keyframes newly-added-field-tint {
+    0%, 70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
