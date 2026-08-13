@@ -559,7 +559,7 @@
                 if (this.previewEntityId) return true;
                 this.validationErrors = {
                     ...this.validationErrors,
-                    previewEntityId: "{{ _('Actor ID is required') }}",
+                    previewEntityId: true,
                 };
                 this.showSnack("{{ _('Enter an actor ID to preview') }}");
                 this.scrollToFirstError();
