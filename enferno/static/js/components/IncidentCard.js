@@ -1,10 +1,14 @@
 const IncidentCard = Vue.defineComponent({
+  components: { LabelPathList },
   props: ['incident', 'close', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   mounted() {
     this.$root.fetchDynamicFields({ entityType: 'incident' })
   },
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     async loadGeoMap() {
       this.geoMapLoading = true;
       this.geoMapOn = true;
@@ -116,12 +120,12 @@ const IncidentCard = Vue.defineComponent({
             {{ translations.id_ }} {{ incident.id }}
           </v-chip>
 
-          <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"
+          <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ms-2"
                  @click="$emit('edit',incident)">
             {{ translations.edit_ }}
           </v-btn>
 
-          <v-btn size="small" class="ml-2" variant="tonal" prepend-icon="mdi-graph-outline"
+          <v-btn size="small" class="ms-2" variant="tonal" prepend-icon="mdi-graph-outline"
                  @click.stop="$root.$refs.viz.visualize(incident)">
             {{ translations.visualize_ }}
           </v-btn>
@@ -216,9 +220,7 @@ const IncidentCard = Vue.defineComponent({
               <v-card class="ma-2">
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.labels_ }}</div>
-                  <div class="flex-chips">
-                    <v-chip class="flex-chip" v-for="label in incident.labels" :key="label.id">{{ label.title }}</v-chip>
-                  </div>
+                  <label-path-list :labels="incident.labels"></label-path-list>
                 </v-card-text>
               </v-card>
             </div>

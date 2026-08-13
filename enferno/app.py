@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+from babel import Locale
 from urllib.parse import urlparse
 from flask import Flask, render_template, current_app, request
 from flask_login import user_logged_in, user_logged_out
@@ -107,10 +108,26 @@ def create_app(config_object=Config):
     register_constants(app)
     register_blueprints(app)
     register_extensions(app)
+    register_template_context(app)
     register_shellcontext(app)
     register_commands(app)
     register_signals(app)
     return app
+
+
+def register_template_context(app):
+    @app.context_processor
+    def locale_context():
+        locale = str(get_locale())
+        direction = (
+            "rtl"
+            if Locale.parse(locale.replace("-", "_")).character_order == "right-to-left"
+            else "ltr"
+        )
+        return {
+            "current_language": locale.replace("_", "-"),
+            "current_direction": direction,
+        }
 
 
 def register_extensions(app):
@@ -159,6 +176,7 @@ def register_extensions(app):
         _should_set_storage, app.session_interface
     )
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
+    app.jinja_env.globals["get_locale"] = get_locale
     rds.init_app(app)
     mail.init_app(app)
 

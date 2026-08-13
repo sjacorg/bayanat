@@ -233,7 +233,7 @@ const ImageViewer = Vue.defineComponent({
         }
     },
     template: `
-        <div ref="imageViewer">
+        <div ref="imageViewer" dir="ltr">
             <a 
                 class="media-item h-100 block" 
                 :class="{ 'cursor-pointer': mode === 'click' }"

@@ -119,7 +119,7 @@
                                                     {{ _('Two factor authentication (2FA) adds an extra layer of protection to your Bayanat account by requiring a verification code from an authenticator app.') }}
                                                 </div>
                                             </div>
-                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                            <v-btn variant="outlined" class="border-thin ms-4"
                                                 :disabled="authMethods.twoFactor.loading">
                                                 ${'{{ _('Edit') if primary_method != 'none' else _('Setup') }}'}
                                             </v-btn>
@@ -156,13 +156,17 @@
                                             {% if primary_method == 'none' %}
                                             <div class="d-flex flex-column ga-6 py-2" style="max-width: 690px;">
                                                 <div>
-                                                    <span class="font-weight-medium mb-1">{{ _('Step 1') }}</span>&nbsp;
-                                                    <span class="text-medium-emphasis">{{ _('Open your authenticator app such as Google Authenticator, LastPass, or Authy.') }}</span>
+                                                    <div class="d-flex align-baseline ga-2">
+                                                        <span class="font-weight-medium text-no-wrap mb-1">{{ _('Step 1') }}</span>
+                                                        <span class="text-medium-emphasis">{{ _('Open your authenticator app such as Google Authenticator, LastPass, or Authy.') }}</span>
+                                                    </div>
                                                 </div>
 
                                                 <div>
-                                                    <span class="font-weight-medium mb-1">{{ _('Step 2') }}</span>&nbsp;
-                                                    <span class="text-medium-emphasis mb-3">{{ _('Scan the QR code or enter the setup key manually.') }}</span>
+                                                    <div class="d-flex align-baseline ga-2">
+                                                        <span class="font-weight-medium text-no-wrap mb-1">{{ _('Step 2') }}</span>
+                                                        <span class="text-medium-emphasis mb-3">{{ _('Scan the QR code or enter the setup key manually.') }}</span>
+                                                    </div>
                                                     <div id="qrcode" class="mt-6 mb-5 d-flex justify-center"></div>
                                                     <p class="text-body-2 text-medium-emphasis mb-1">{{ _('QR not working? Enter this code manually in your authenticator app.') }}</p>
                                                     <div class="d-flex align-center ga-2">
@@ -175,8 +179,10 @@
                                                 </div>
 
                                                 <div>
-                                                    <span class="font-weight-medium mb-1">{{ _('Step 3') }}</span>&nbsp;
-                                                    <span class="text-medium-emphasis mb-3">{{ _('Enter the six digit code from your authenticator app into Bayanat.') }}</span>
+                                                    <div class="d-flex align-baseline ga-2">
+                                                        <span class="font-weight-medium text-no-wrap mb-1">{{ _('Step 3') }}</span>
+                                                        <span class="text-medium-emphasis mb-3">{{ _('Enter the six digit code from your authenticator app into Bayanat.') }}</span>
+                                                    </div>
                                                 </div>
 
                                                 <v-text-field
@@ -219,7 +225,7 @@
                                                     {{ _('Security keys and passkeys let you sign in using a physical device or built‑in biometric authentication. They provide strong protection against phishing and unauthorized access.') }}
                                                 </div>
                                             </div>
-                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                            <v-btn variant="outlined" class="border-thin ms-4"
                                                 :disabled="authMethods.securityKeys.panel === 'open'">
                                                 ${'{{ _('Edit') if has_passkeys else _('Setup') }}'}
                                             </v-btn>
@@ -243,7 +249,7 @@
                                                 <div class="d-flex flex-column ga-2 mt-4">
                                                     {% for cred in registered_credentials %}
                                                     <v-card border flat class="pa-4 d-flex align-center">
-                                                        <v-icon icon="mdi-key" class="mr-3 text-medium-emphasis"></v-icon>
+                                                        <v-icon icon="mdi-key" class="me-3 text-medium-emphasis"></v-icon>
                                                         <div class="flex-grow-1">
                                                             <div class="text-body-1 font-weight-medium">{{ cred.name }}</div>
                                                             <div class="text-body-2 text-medium-emphasis">{{ _('Last Used') }}: {{ cred.lastuse }}</div>
@@ -271,8 +277,10 @@
                                             <div v-if="authMethods.securityKeys.registering" style="max-width: 560px">
                                                 <div class="d-flex flex-column ga-6">
                                                     <div>
-                                                        <span class="font-weight-medium">{{ _('Step 1') }}</span>&nbsp;
-                                                        <span class="text-medium-emphasis">{{ _('Give your device a nickname (e.g., "My Laptop" or "USB Key") so you can recognize it later.') }}</span>
+                                                        <div class="d-flex align-baseline ga-2">
+                                                            <span class="font-weight-medium text-no-wrap">{{ _('Step 1') }}</span>
+                                                            <span class="text-medium-emphasis">{{ _('Give your device a nickname (e.g., "My Laptop" or "USB Key") so you can recognize it later.') }}</span>
+                                                        </div>
                                                         <v-text-field
                                                             v-model="authMethods.securityKeys.deviceName"
                                                             class="mt-4"
@@ -293,15 +301,19 @@
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <span class="font-weight-medium">{{ _('Step 2') }}</span>&nbsp;
-                                                        <span class="text-medium-emphasis">{{ _('After clicking Continue, follow your browser\'s prompt to scan your fingerprint, face, or tap your USB key.') }}</span>
+                                                        <div class="d-flex align-baseline ga-2">
+                                                            <span class="font-weight-medium text-no-wrap">{{ _('Step 2') }}</span>
+                                                            <span class="text-medium-emphasis">{{ _('After clicking Continue, follow your browser\'s prompt to scan your fingerprint, face, or tap your USB key.') }}</span>
+                                                        </div>
                                                         <div v-if="authMethods.securityKeys.loading" class="d-flex align-center ga-2 mt-4">
                                                             <v-progress-circular indeterminate color="info" size="20" width="2"></v-progress-circular>{{ _('Verifying your security key...') }}
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <span class="font-weight-medium">{{ _('Step 3') }}</span>&nbsp;
-                                                        <span class="text-medium-emphasis">{{ _('Once your device confirms your identity, the setup is complete and your account is secure.') }}</span>
+                                                        <div class="d-flex align-baseline ga-2">
+                                                            <span class="font-weight-medium text-no-wrap">{{ _('Step 3') }}</span>
+                                                            <span class="text-medium-emphasis">{{ _('Once your device confirms your identity, the setup is complete and your account is secure.') }}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -323,7 +335,7 @@
                                                     {{ _('Recovery codes allow you to regain access to your Bayanat account if you lose your authenticator app or security key. Store them somewhere safe and accessible.') }}
                                                 </div>
                                             </div>
-                                            <v-btn variant="outlined" class="border-thin ml-4"
+                                            <v-btn variant="outlined" class="border-thin ms-4"
                                                 :disabled="authMethods.recoveryCodes.panel === 'open'">
                                                 ${authMethods.recoveryCodes.hasExisting ? '{{ _('View') }}' : '{{ _('Setup') }}'}
                                             </v-btn>
@@ -340,8 +352,10 @@
 
                                                 <!-- Step 1 -->
                                                 <div>
-                                                    <span class="font-weight-medium">{{ _('Step 1') }}</span>&nbsp;
-                                                    <span class="text-medium-emphasis">{{ _('Click the Generate Recovery Codes button to create a new set of backup codes.') }}</span>
+                                                    <div class="d-flex align-baseline ga-2">
+                                                        <span class="font-weight-medium text-no-wrap">{{ _('Step 1') }}</span>
+                                                        <span class="text-medium-emphasis">{{ _('Click the Generate Recovery Codes button to create a new set of backup codes.') }}</span>
+                                                    </div>
                                                     <div class="d-flex ga-2 mt-4">
                                                         <v-btn variant="outlined" class="border-thin"
                                                             @click="toggleRecoveryCodesPanel(undefined)">
@@ -357,8 +371,10 @@
 
                                                 <!-- Step 2 - codes appear here after generate/show -->
                                                 <div>
-                                                    <span class="font-weight-medium">{{ _('Step 2') }}</span>&nbsp;
-                                                    <span class="text-medium-emphasis">{{ _('Copy your codes and store them in a secure location (like a password manager or a locked physical safe).') }}</span>
+                                                    <div class="d-flex align-baseline ga-2">
+                                                        <span class="font-weight-medium text-no-wrap">{{ _('Step 2') }}</span>
+                                                        <span class="text-medium-emphasis">{{ _('Copy your codes and store them in a secure location (like a password manager or a locked physical safe).') }}</span>
+                                                    </div>
                                                     
                                                     <div v-if="authMethods.recoveryCodes.codes.length" class="mt-4">
                                                         <div class="d-flex flex-wrap ga-2 mb-3">
@@ -390,8 +406,10 @@
 
                                                 <!-- Step 3 -->
                                                 <div>
-                                                    <span class="font-weight-medium">{{ _('Step 3') }}</span>&nbsp;
-                                                    <span class="text-medium-emphasis">{{ _('Keep in mind that each code can only be used once. After a code is used, it becomes invalid.') }}</span>
+                                                    <div class="d-flex align-baseline ga-2">
+                                                        <span class="font-weight-medium text-no-wrap">{{ _('Step 3') }}</span>
+                                                        <span class="text-medium-emphasis">{{ _('Keep in mind that each code can only be used once. After a code is used, it becomes invalid.') }}</span>
+                                                    </div>
                                                 </div>
 
                                             </div>
@@ -408,7 +426,7 @@
     </div>
 </v-main>
 {% endblock %} {% block js %}
-<script src="/static/js/qrcodejs/qrcode.min.js"></script>
+<script src="/static/js/qrcodejs/qrcode.min.js?v={{ config.VERSION }}"></script>
 
 <script nonce="{{ csp_nonce() }}">
     const { createApp } = Vue;

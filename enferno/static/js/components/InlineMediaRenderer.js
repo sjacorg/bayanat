@@ -111,7 +111,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                 disable-spacing
               ></uni-field>
               <div v-if="media.filename" class="cursor-pointer">
-                <v-list-item class="text-caption ml-1 py-0">
+                <v-list-item class="text-caption ms-1 py-0">
                   <template v-slot:prepend>
                     <v-tooltip location="bottom">
                       <template v-slot:activator="{ props }">
@@ -131,7 +131,7 @@ const InlineMediaRenderer = Vue.defineComponent({
                 </v-list-item>
               </div>
               <div v-if="media.etag" class="d-flex align-center cursor-pointer">
-                <v-list-item class="text-caption ml-1 py-0 text-truncate">
+                <v-list-item class="text-caption ms-1 py-0 text-truncate">
                   <template v-slot:prepend>
                     <v-tooltip location="bottom">
                       <template v-slot:activator="{ props }">
@@ -153,8 +153,8 @@ const InlineMediaRenderer = Vue.defineComponent({
             </div>
           </div>
           <v-spacer></v-spacer>
-          <v-btn @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
-          <v-btn v-if="hideClose === false" icon="mdi-close" class="ml-2" size="small" @click="$emit('close')"></v-btn>
+          <v-btn @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ms-2" size="small"></v-btn>
+          <v-btn v-if="hideClose === false" icon="mdi-close" class="ms-2" size="small" @click="$emit('close')"></v-btn>
         </v-toolbar>
 
         <div :style="contentStyle">
