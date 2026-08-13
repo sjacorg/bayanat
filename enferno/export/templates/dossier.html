@@ -70,10 +70,22 @@
 
         {% elif block.type in ('family_members_table', 'related_items_table', 'events_timeline') %}
             {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
+            {% if block.type == 'related_items_table' %}
+                {% set detail_keys = ['notes', 'comment', 'comments', 'description', 'sources'] %}
+                {% set table_columns = block.columns | rejectattr('key', 'in', detail_keys) | list %}
+                {% set detail_columns = block.columns | selectattr('key', 'in', detail_keys) | list %}
+                {% if not table_columns %}
+                    {% set table_columns = block.columns %}
+                    {% set detail_columns = [] %}
+                {% endif %}
+            {% else %}
+                {% set table_columns = block.columns %}
+                {% set detail_columns = [] %}
+            {% endif %}
             <table class="data-table">
                 <thead>
                 <tr>
-                    {% for column in block.columns %}
+                    {% for column in table_columns %}
                         <th>{{ column.label }}</th>
                     {% endfor %}
                 </tr>
@@ -81,13 +93,35 @@
                 <tbody>
                 {% for row in block.rows %}
                     <tr>
-                        {% for column in block.columns %}
+                        {% for column in table_columns %}
                             <td {% if column.ltr %}class="ltr-cell"{% endif %}>{{ row[column.key] if row[column.key] is not none else '' }}</td>
                         {% endfor %}
                     </tr>
+                    {% if detail_columns %}
+                        {% set details = namespace(count=0) %}
+                        {% for column in detail_columns %}
+                            {% if row[column.key] %}
+                                {% set details.count = details.count + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if details.count %}
+                            <tr class="detail-row">
+                                <td colspan="{{ table_columns|length }}">
+                                    {% for column in detail_columns %}
+                                        {% if row[column.key] %}
+                                            <div class="detail-item">
+                                                <span class="detail-label">{{ column.label }}</span>
+                                                <span class="detail-value">{{ row[column.key] }}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
                 {% else %}
                     <tr>
-                        <td colspan="{{ block.columns|length }}" class="empty-row"></td>
+                        <td colspan="{{ table_columns|length }}" class="empty-row"></td>
                     </tr>
                 {% endfor %}
                 </tbody>

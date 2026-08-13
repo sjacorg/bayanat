@@ -204,6 +204,22 @@ tr { page-break-inside: avoid; }
 .data-table tbody tr:nth-child(even) td { background: var(--zebra); }
 .data-table td.empty-row { height: 30px; }
 
+.data-table .detail-row td {
+    background: #fafbf9;
+    color: var(--muted);
+    font-size: 0.84rem;
+    padding: 8px 12px;
+}
+
+.detail-item + .detail-item { margin-top: 4px; }
+
+.detail-label {
+    color: var(--accent-ink);
+    font-weight: 700;
+}
+
+.detail-label::after { content: ": "; }
+
 /* narrative callout: soft fill + accent side border
    (physical borders per direction: WeasyPrint lacks border-inline-start) */
 .narrative {
