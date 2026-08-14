@@ -455,6 +455,11 @@
                 this.mediaLoading = true;
                 try {
                     await this.saveTemplate();
+                    // no media block in this template -> nothing to review
+                    if (!this.template.blocks.some(b => b.type === 'media_appendix')) {
+                        window.open(`/export/dossier/${this.template.id}/${parseInt(this.previewEntityId)}`, '_blank');
+                        return;
+                    }
                     const res = await axios.get(`/export/api/dossier/media/${parseInt(this.previewEntityId)}`);
                     this.mediaItems = res.data;
                     this.mediaSelection = res.data.filter(m => m.redacted).map(m => m.id);
