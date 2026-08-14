@@ -304,7 +304,7 @@
                                         <template v-else-if="block.type === 'media_appendix'">
                                             <v-text-field v-model="block.config.title" variant="outlined"
                                                           density="compact" :label="'{{ _('Section title (optional)') }}'"></v-text-field>
-                                            <span class="text-caption">{{ _('Only redacted renditions of evidence media are included. Originals are never exported.') }}</span>
+                                            <span class="text-caption">{{ _('Only evidence media marked for dossier inclusion is exported.') }}</span>
                                         </template>
 
                                         <template v-else-if="block.type === 'page_break'">
