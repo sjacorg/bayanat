@@ -405,7 +405,6 @@
             previewEntityId: null,
             validationErrors: {},
             savedSnapshot: null,
-            suppressNavigationGuard: false,
         }),
         computed: {
             isDirty() {
@@ -421,11 +420,9 @@
             this.meta = meta.data;
             await this.refreshTemplates();
             window.addEventListener('beforeunload', this.beforeUnload);
-            document.addEventListener('click', this.guardDocumentNavigation, true);
         },
         beforeUnmount() {
             window.removeEventListener('beforeunload', this.beforeUnload);
-            document.removeEventListener('click', this.guardDocumentNavigation, true);
         },
         methods: {
             async refreshTemplates() {
@@ -591,19 +588,6 @@
                 const confirmationMessage = "{{ _('It looks like you have been editing something. If you leave before saving, your changes will be lost.') }}";
                 (e || window.event).returnValue = confirmationMessage;
                 return confirmationMessage;
-            },
-            async guardDocumentNavigation(e) {
-                if (this.suppressNavigationGuard || !this.isDirty) return;
-                const link = e.target.closest?.('a[href]');
-                if (!link || link.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                const nextUrl = new URL(link.href, window.location.href);
-                if (nextUrl.href === window.location.href || nextUrl.hash) return;
-                e.preventDefault();
-                e.stopPropagation();
-                if (await this.confirmDiscardChanges()) {
-                    this.suppressNavigationGuard = true;
-                    window.location.href = nextUrl.href;
-                }
             },
             async saveTemplate() {
                 if (!this.validateTemplate()) return false;
