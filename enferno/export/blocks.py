@@ -255,10 +255,12 @@ class DossierData:
     surface an item the requesting user cannot access directly.
     """
 
-    def __init__(self, actor, user, locale: str = "ar"):
+    def __init__(self, actor, user, locale: str = "ar", media_ids: Optional[set] = None):
         self.actor = actor
         self.user = user
         self.locale = locale
+        # Explicit DA selection from the media review step; None = auto-select.
+        self.media_ids = media_ids
         self._related_actors = None
         self._related_bulletins = None
         self._redacted_media = None
@@ -320,15 +322,22 @@ class DossierData:
 
         Fails closed: only media produced by the redaction tool is surfaced.
         Originals without a redacted rendition are counted and reported as
-        gaps, never embedded. Interim selection until media carries an
-        explicit export-approved designation.
+        gaps, never embedded. When the DA reviewed the selection explicitly
+        (``media_ids``), that selection is authoritative instead: any media of
+        an accessible related bulletin may be included, redacted or not.
         """
         if self._redacted_media is None:
             items = []
             unredacted = 0
+            curated = self.media_ids is not None
             for relation in self.actor.bulletin_relations:
                 bulletin = relation.bulletin
                 if bulletin is None or bulletin.deleted or not self.user.can_access(bulletin):
+                    continue
+                if curated:
+                    for media in sorted(bulletin.medias, key=lambda m: m.id):
+                        if media.id in self.media_ids:
+                            items.append(self._media_item(media, bulletin))
                     continue
                 latest = {}
                 original_ids = []
@@ -342,24 +351,19 @@ class DossierData:
                         latest[key] = media
                 unredacted += sum(1 for mid in original_ids if mid not in latest)
                 for media in sorted(latest.values(), key=lambda m: m.id):
-                    title = (
-                        media.title_ar if self.locale == "ar" else media.title
-                    ) or media.title_ar
-                    ref = (
-                        f"الدليل رقم {bulletin.id}"
-                        if self.locale == "ar"
-                        else f"Evidence #{bulletin.id}"
-                    )
-                    items.append(
-                        {
-                            "file": media.media_file,
-                            "is_image": (media.media_file_type or "").startswith("image/"),
-                            "title": title,
-                            "ref": ref,
-                        }
-                    )
-            self._redacted_media = {"media": items, "unredacted": unredacted}
+                    items.append(self._media_item(media, bulletin))
+            self._redacted_media = {"media": items, "unredacted": unredacted, "curated": curated}
         return self._redacted_media
+
+    def _media_item(self, media, bulletin) -> dict:
+        title = (media.title_ar if self.locale == "ar" else media.title) or media.title_ar
+        ref = f"الدليل رقم {bulletin.id}" if self.locale == "ar" else f"Evidence #{bulletin.id}"
+        return {
+            "file": media.media_file,
+            "is_image": (media.media_file_type or "").startswith("image/"),
+            "title": title,
+            "ref": ref,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -560,13 +564,17 @@ def _b_narrative_box(data: DossierData, config: dict) -> dict:
 def _b_media_appendix(data: DossierData, config: dict) -> dict:
     bundle = data.redacted_media
     missing = []
-    if not bundle["media"]:
-        missing.append("No redacted evidence media to attach")
-    if bundle["unredacted"]:
-        missing.append(
-            f"{bundle['unredacted']} evidence media item(s) have no redacted rendition "
-            "and were excluded"
-        )
+    if bundle["curated"]:
+        if not bundle["media"]:
+            missing.append("No evidence media selected for this dossier")
+    else:
+        if not bundle["media"]:
+            missing.append("No redacted evidence media to attach")
+        if bundle["unredacted"]:
+            missing.append(
+                f"{bundle['unredacted']} evidence media item(s) have no redacted rendition "
+                "and were excluded"
+            )
     return {"title": config["title"], "media": bundle["media"], "missing": missing}
 
 
@@ -618,14 +626,14 @@ def validate_blocks(blocks: Any) -> list[dict]:
     return normalized
 
 
-def build_dossier(template, actor, user) -> dict:
+def build_dossier(template, actor, user, media_ids: Optional[set] = None) -> dict:
     """Build the full render context for one dossier.
 
     The caller is responsible for authorizing `user` against `actor`;
     related entities are access-filtered here via DossierData.
     """
     blocks = validate_blocks(template.blocks or [])
-    data = DossierData(actor, user)
+    data = DossierData(actor, user, media_ids=media_ids)
     built, missing, section = [], [], 0
     for block in blocks:
         context = BLOCK_TYPES[block["type"]]["build"](data, block["config"])

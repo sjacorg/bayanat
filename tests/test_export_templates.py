@@ -183,3 +183,40 @@ def test_media_appendix_fails_closed():
     assert [m["file"] for m in block["media"]] == ["doc-redacted.jpg"]
     assert block["media"][0]["title"] == "وثيقة"
     assert any("no redacted rendition" in m for m in context["missing"])
+
+
+def test_media_appendix_honors_explicit_selection():
+    """An explicit DA selection overrides auto-selection: chosen originals are
+    included, unchosen redacted renditions are dropped, and no gap is reported."""
+    from types import SimpleNamespace as NS
+
+    original = NS(id=1, redaction=None)
+    redacted = NS(
+        id=2,
+        redaction=NS(original_media_id=1, source_media_id=1),
+        media_file="doc-redacted.jpg",
+        media_file_type="image/jpeg",
+        title="doc",
+        title_ar="وثيقة",
+    )
+    clean = NS(
+        id=3,
+        redaction=None,
+        media_file="clean-original.jpg",
+        media_file_type="image/jpeg",
+        title="clean",
+        title_ar="أصلية",
+    )
+    bulletin = NS(id=75, deleted=False, medias=[original, redacted, clean])
+
+    actor = FakeActor()
+    actor.related_bulletins = [NS(bulletin=bulletin)]
+    template = FakeTemplate([{"type": "media_appendix", "config": {}}])
+    context = build_dossier(template, actor, FakeUser(), media_ids={3})
+
+    block = context["blocks"][0]
+    assert [m["file"] for m in block["media"]] == ["clean-original.jpg"]
+    assert context["missing"] == []
+
+    empty = build_dossier(template, actor, FakeUser(), media_ids=set())
+    assert "No evidence media selected for this dossier" in empty["missing"]
