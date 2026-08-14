@@ -14,7 +14,7 @@ const toolbarContent = `
           </template>
           <span>{{ translations.category_ }}</span>
         </v-tooltip>
-        <v-tooltip v-if="media.id" location="bottom">
+        <v-tooltip v-if="enableDossierToggle && media.id" location="bottom">
           <template v-slot:activator="{ props }">
             <v-chip
               v-bind="props"
@@ -31,6 +31,9 @@ const toolbarContent = `
           </template>
           <span>{{ translations.includeInDossier_ }}</span>
         </v-tooltip>
+        <v-chip v-else-if="media.dossier" prepend-icon="mdi-file-check-outline" color="primary" variant="tonal" size="small" class="ml-1">
+          {{ translations.dossier_ }}
+        </v-chip>
 
         <v-spacer></v-spacer>
 
@@ -147,6 +150,10 @@ const MediaCard = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
+    enableDossierToggle: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['media-click', 'remove-redaction'],
   data() {
@@ -214,13 +221,16 @@ const MediaCard = Vue.defineComponent({
     }
   },
   methods: {
-    async toggleDossier() {
+    toggleDossier() {
+      return this.toggleDossierFor(this.media);
+    },
+    async toggleDossierFor(media) {
       this.dossierSaving = true;
       try {
-        await axios.put(`/admin/api/media/${this.media.id}`, {
-          item: { ...this.media, dossier: !this.media.dossier },
+        await axios.put(`/admin/api/media/${media.id}`, {
+          item: { ...media, dossier: !media.dossier },
         });
-        this.media.dossier = !this.media.dossier;
+        media.dossier = !media.dossier;
       } catch (err) {
         this.$root.showSnack(handleRequestError(err));
       } finally {
@@ -388,6 +398,19 @@ const MediaCard = Vue.defineComponent({
                     <template #activator="{ props: ttProps }">
                       <span v-bind="ttProps" class="text-truncate flex-grow-1 text-caption opacity-70">{{ redaction.title || redaction.filename }}</span>
                     </template>
+                  </v-tooltip>
+                  <v-tooltip v-if="redaction.dossier || (enableDossierToggle && redaction.id)" location="top">
+                    <template #activator="{ props: ttProps }">
+                      <v-icon
+                        v-bind="ttProps"
+                        icon="mdi-file-check-outline"
+                        size="18"
+                        :color="redaction.dossier ? 'primary' : 'grey'"
+                        :class="enableDossierToggle && redaction.id ? 'cursor-pointer' : ''"
+                        @click.stop="enableDossierToggle && redaction.id && toggleDossierFor(redaction)"
+                      ></v-icon>
+                    </template>
+                    <span>{{ translations.includeInDossier_ }}</span>
                   </v-tooltip>
                   <v-fade-transition>
                     <div v-if="isHovering && (isCurrentUserAdmin || isCurrentUserDA)" class="d-flex ga-1">
