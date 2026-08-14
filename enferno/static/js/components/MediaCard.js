@@ -14,9 +14,23 @@ const toolbarContent = `
           </template>
           <span>{{ translations.category_ }}</span>
         </v-tooltip>
-        <v-chip v-if="media.dossier" prepend-icon="mdi-file-check-outline" color="primary" variant="tonal" size="small" class="ml-1">
-          {{ translations.dossier_ }}
-        </v-chip>
+        <v-tooltip v-if="media.id" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-chip
+              v-bind="props"
+              prepend-icon="mdi-file-check-outline"
+              :color="media.dossier ? 'primary' : undefined"
+              :variant="media.dossier ? 'tonal' : 'text'"
+              size="small"
+              class="ml-1"
+              :disabled="dossierSaving"
+              @click.stop="toggleDossier"
+            >
+              {{ translations.dossier_ }}
+            </v-chip>
+          </template>
+          <span>{{ translations.includeInDossier_ }}</span>
+        </v-tooltip>
 
         <v-spacer></v-spacer>
 
@@ -154,6 +168,7 @@ const MediaCard = Vue.defineComponent({
       ocrLoading: false,
       expansionPanel: null,
       showRedactions: false,
+      dossierSaving: false,
     };
   },
   computed: {
@@ -199,6 +214,19 @@ const MediaCard = Vue.defineComponent({
     }
   },
   methods: {
+    async toggleDossier() {
+      this.dossierSaving = true;
+      try {
+        await axios.put(`/admin/api/media/${this.media.id}`, {
+          item: { ...this.media, dossier: !this.media.dossier },
+        });
+        this.media.dossier = !this.media.dossier;
+      } catch (err) {
+        this.$root.showSnack(handleRequestError(err));
+      } finally {
+        this.dossierSaving = false;
+      }
+    },
     handleMediaClick(payload) {
       // If media-thumbnail passes payload, use it; otherwise create it
       const clickPayload = payload || { media: this.media, mediaType: this.mediaType };

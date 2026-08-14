@@ -132,7 +132,10 @@ class Media(db.Model, BaseMixin):
         self.media_file = json["filename"] if "filename" in json else None
         self.etag = json.get("etag", None)
         self.time = json.get("time", None)
-        self.dossier = bool(json.get("dossier", False))
+        # only touch the flag when the payload carries it, so unrelated update
+        # paths can't silently clear a dossier designation
+        if json.get("dossier") is not None:
+            self.dossier = bool(json["dossier"])
         category = json.get("category", None)
         if category:
             self.category = category.get("id")
