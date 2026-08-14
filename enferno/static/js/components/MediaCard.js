@@ -18,7 +18,7 @@ const toolbarContent = `
           <template v-slot:activator="{ props }">
             <v-chip
               v-bind="props"
-              prepend-icon="mdi-file-check-outline"
+              :prepend-icon="media.dossier ? 'mdi-file-check-outline' : 'mdi-file-plus-outline'"
               :color="media.dossier ? 'primary' : undefined"
               :variant="media.dossier ? 'tonal' : 'text'"
               size="small"
@@ -403,7 +403,7 @@ const MediaCard = Vue.defineComponent({
                     <template #activator="{ props: ttProps }">
                       <v-icon
                         v-bind="ttProps"
-                        icon="mdi-file-check-outline"
+                        :icon="redaction.dossier ? 'mdi-file-check-outline' : 'mdi-file-plus-outline'"
                         size="18"
                         :color="redaction.dossier ? 'primary' : 'grey'"
                         :class="enableDossierToggle && redaction.id ? 'cursor-pointer' : ''"
