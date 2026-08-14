@@ -82,6 +82,9 @@ class Media(db.Model, BaseMixin):
 
     main = db.Column(db.Boolean, default=False)
 
+    # marked at redaction time as the rendition to include in dossier exports
+    dossier = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
+
     # custom serialization method
     @check_roles
     def to_dict(self) -> dict[str, Any]:
@@ -98,6 +101,7 @@ class Media(db.Model, BaseMixin):
             "time": getattr(self, "time", None),
             "duration": self.duration,
             "main": self.main,
+            "dossier": self.dossier,
             "orientation": self.orientation or 0,
             "updated_at": (
                 DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
@@ -128,6 +132,7 @@ class Media(db.Model, BaseMixin):
         self.media_file = json["filename"] if "filename" in json else None
         self.etag = json.get("etag", None)
         self.time = json.get("time", None)
+        self.dossier = bool(json.get("dossier", False))
         category = json.get("category", None)
         if category:
             self.category = category.get("id")

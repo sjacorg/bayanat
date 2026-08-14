@@ -231,15 +231,6 @@
                         >
                             {{ _('Preview') }}
                         </v-btn>
-                        <v-btn
-                                prepend-icon="mdi-file-check-outline"
-                                variant="tonal"
-                                color="primary"
-                                :loading="mediaLoading"
-                                @click="openMediaReview"
-                        >
-                            {{ _('Generate') }}
-                        </v-btn>
                         <v-spacer></v-spacer>
                         <v-btn color="primary" variant="flat" :loading="saving" @click="saveTemplate">
                             {{ _('Save') }}
@@ -250,65 +241,6 @@
 
         </v-row>
     </v-container>
-
-    <!-- Media review: DA confirms which evidence media the dossier includes -->
-    <v-dialog v-model="mediaDialog" max-width="680">
-        <v-card>
-            <v-card-title class="d-flex align-center">
-                {{ _('Review evidence media') }}
-                <v-spacer></v-spacer>
-                <span class="text-body-2 text-medium-emphasis">
-                    ${ mediaSelection.length } / ${ mediaItems.length } {{ _('selected') }}
-                </span>
-            </v-card-title>
-            <v-card-subtitle class="text-wrap">
-                {{ _('Redacted versions are pre-selected. Adjust the selection before generating the dossier.') }}
-            </v-card-subtitle>
-            <v-card-text style="max-height: 420px; overflow-y: auto">
-                <v-alert v-if="!mediaLoading && !mediaItems.length" type="info" variant="tonal" density="compact">
-                    {{ _('No media found in this person\'s related bulletins.') }}
-                </v-alert>
-                <v-list density="compact" select-strategy="leaf">
-                    <v-list-item
-                            v-for="m in mediaItems"
-                            :key="m.id"
-                            @click="toggleMedia(m.id)"
-                    >
-                        <template v-slot:prepend>
-                            <v-checkbox-btn
-                                    :model-value="mediaSelection.includes(m.id)"
-                                    @click.stop="toggleMedia(m.id)"
-                            ></v-checkbox-btn>
-                            <v-avatar rounded size="48" class="mr-3" color="grey-lighten-3">
-                                <v-img v-if="m.is_image" :src="`/admin/api/serve/media/${m.file}`" cover></v-img>
-                                <v-icon v-else icon="mdi-file-document-outline"></v-icon>
-                            </v-avatar>
-                        </template>
-                        <v-list-item-title>${ m.title || m.file }</v-list-item-title>
-                        <v-list-item-subtitle>
-                            {{ _('Bulletin') }} #${ m.bulletin_id }
-                        </v-list-item-subtitle>
-                        <template v-slot:append>
-                            <v-chip
-                                    size="x-small"
-                                    :color="m.redacted ? 'success' : 'warning'"
-                                    variant="tonal"
-                            >
-                                ${ m.redacted ? "{{ _('Redacted') }}" : "{{ _('Original') }}" }
-                            </v-chip>
-                        </template>
-                    </v-list-item>
-                </v-list>
-            </v-card-text>
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn @click="mediaDialog = false">{{ _('Cancel') }}</v-btn>
-                <v-btn color="primary" variant="flat" @click="generateWithSelection">
-                    {{ _('Generate Dossier') }}
-                </v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-dialog>
 
     <!-- Delete confirmation -->
     <v-dialog v-model="deleteDialog" max-width="420">
@@ -362,10 +294,6 @@
             },
             saving: false,
             deleteDialog: false,
-            mediaDialog: false,
-            mediaLoading: false,
-            mediaItems: [],
-            mediaSelection: [],
             previewEntityId: null,
         }),
         async mounted() {
@@ -446,37 +374,6 @@
                 const win = window.open('', '_blank');
                 await this.saveTemplate();
                 win.location = `/export/dossier/${this.template.id}/${parseInt(this.previewEntityId)}`;
-            },
-            async openMediaReview() {
-                if (!this.previewEntityId) {
-                    this.showSnack("{{ _('Enter an actor ID to preview') }}");
-                    return;
-                }
-                this.mediaLoading = true;
-                try {
-                    await this.saveTemplate();
-                    // no media block in this template -> nothing to review
-                    if (!this.template.blocks.some(b => b.type === 'media_appendix')) {
-                        window.open(`/export/dossier/${this.template.id}/${parseInt(this.previewEntityId)}`, '_blank');
-                        return;
-                    }
-                    const res = await axios.get(`/export/api/dossier/media/${parseInt(this.previewEntityId)}`);
-                    this.mediaItems = res.data;
-                    this.mediaSelection = res.data.filter(m => m.redacted).map(m => m.id);
-                    this.mediaDialog = true;
-                } finally {
-                    this.mediaLoading = false;
-                }
-            },
-            toggleMedia(id) {
-                const i = this.mediaSelection.indexOf(id);
-                if (i === -1) this.mediaSelection.push(id);
-                else this.mediaSelection.splice(i, 1);
-            },
-            generateWithSelection() {
-                const url = `/export/dossier/${this.template.id}/${parseInt(this.previewEntityId)}?media=${this.mediaSelection.join(',')}`;
-                this.mediaDialog = false;
-                window.open(url, '_blank');
             },
         },
     });

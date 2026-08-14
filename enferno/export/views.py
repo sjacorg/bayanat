@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from flask import request, jsonify, Response, Blueprint, send_from_directory
+from flask import request, Response, Blueprint, send_from_directory
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
 from enferno.extensions import db
@@ -489,46 +489,13 @@ def api_template_delete(id: t.id) -> Response:
     return HTTPResponse.error("Error deleting template", status=417)
 
 
-@export.get("/api/dossier/media/<int:actor_id>")
-@roles_required("Admin")
-def api_dossier_media(actor_id: t.id) -> Response:
-    """Candidate media for the dossier review step: every media file housed in
-    the actor's accessible related bulletins, flagged redacted or original."""
-    actor = db.session.get(Actor, actor_id)
-    if actor is None or actor.deleted:
-        return HTTPResponse.not_found("Entity not found")
-    if not current_user.can_access(actor):
-        return HTTPResponse.forbidden("Forbidden")
-    items = []
-    for relation in actor.bulletin_relations:
-        bulletin = relation.bulletin
-        if bulletin is None or bulletin.deleted or not current_user.can_access(bulletin):
-            continue
-        for media in sorted(bulletin.medias, key=lambda m: m.id):
-            items.append(
-                {
-                    "id": media.id,
-                    "bulletin_id": bulletin.id,
-                    "title": media.title_ar or media.title,
-                    "file": media.media_file,
-                    "is_image": (media.media_file_type or "").startswith("image/"),
-                    "redacted": media.redaction is not None,
-                }
-            )
-    return jsonify(items)
-
-
 def _render_dossier(
-    template: ExportTemplate,
-    actor: Actor,
-    show_toolbar: bool = True,
-    pdf_mode: bool = False,
-    media_ids: Optional[set] = None,
+    template: ExportTemplate, actor: Actor, show_toolbar: bool = True, pdf_mode: bool = False
 ) -> str:
     from flask import current_app
     from enferno.export.blocks import build_dossier
 
-    context = build_dossier(template, actor, current_user, media_ids=media_ids)
+    context = build_dossier(template, actor, current_user)
     # Browsers load the logo over HTTP; WeasyPrint reads it straight from disk
     # (the hardened fetcher allows file:// under the app root only).
     logo_src = (
@@ -562,18 +529,8 @@ def dossier(template_id: t.id, actor_id: t.id) -> Response:
     if not current_user.can_access(actor):
         return HTTPResponse.forbidden("Forbidden")
 
-    media_arg = request.args.get("media")
-    media_ids = None
-    if media_arg is not None:
-        try:
-            media_ids = {int(x) for x in media_arg.split(",") if x}
-        except ValueError:
-            return HTTPResponse.error("Invalid media selection", status=400)
-
     as_pdf = request.args.get("format") == "pdf"
-    html = _render_dossier(
-        template, actor, show_toolbar=not as_pdf, pdf_mode=as_pdf, media_ids=media_ids
-    )
+    html = _render_dossier(template, actor, show_toolbar=not as_pdf, pdf_mode=as_pdf)
     Activity.create(
         current_user,
         Activity.ACTION_DOWNLOAD if as_pdf else Activity.ACTION_VIEW,

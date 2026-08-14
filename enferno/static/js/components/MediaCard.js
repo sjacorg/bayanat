@@ -14,6 +14,9 @@ const toolbarContent = `
           </template>
           <span>{{ translations.category_ }}</span>
         </v-tooltip>
+        <v-chip v-if="media.dossier" prepend-icon="mdi-file-check-outline" color="primary" variant="tonal" size="small" class="ml-1">
+          {{ translations.dossier_ }}
+        </v-chip>
 
         <v-spacer></v-spacer>
 
