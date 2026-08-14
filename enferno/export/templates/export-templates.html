@@ -518,8 +518,13 @@
                     if (block.type === 'heading' && !String(config.text || '').trim()) {
                         errors[this.blockFieldKey(block, 'text')] = required;
                     }
-                    if (block.type === 'rich_text' && !String(config.html || '').replace(/<[^>]*>/g, '').trim()) {
-                        errors[this.blockFieldKey(block, 'html')] = required;
+                    if (block.type === 'rich_text') {
+                        const richTextContainer = document.createElement('div');
+                        richTextContainer.innerHTML = String(config.html || '');
+                        const richTextContent = String(richTextContainer.textContent || '').trim();
+                        if (!richTextContent) {
+                            errors[this.blockFieldKey(block, 'html')] = required;
+                        }
                     }
                     if (block.type === 'field_table' && (!Array.isArray(config.fields) || !config.fields.length)) {
                         errors[this.blockFieldKey(block, 'fields')] = required;
