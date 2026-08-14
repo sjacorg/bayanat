@@ -318,13 +318,17 @@ class DossierData:
     def redacted_media(self) -> dict:
         """Redacted renditions of evidence media, latest per original.
 
-        Fails closed: only media produced by the redaction tool is surfaced.
-        Originals without a redacted rendition are counted and reported as
-        gaps, never embedded. Interim selection until media carries an
-        explicit export-approved designation.
+        Media flagged "include in dossier" (``media.dossier``) is authoritative:
+        whoever created the redaction marked the correct rendition at that
+        moment, so the flagged set is used as-is, redacted or not. With no
+        flags anywhere, falls back to the fail-closed heuristic: only media
+        produced by the redaction tool is surfaced (latest per original), and
+        originals without a redacted rendition are counted as gaps, never
+        embedded.
         """
         if self._redacted_media is None:
-            items = []
+            flagged = []
+            heuristic = []
             unredacted = 0
             for relation in self.actor.bulletin_relations:
                 bulletin = relation.bulletin
@@ -332,7 +336,9 @@ class DossierData:
                     continue
                 latest = {}
                 original_ids = []
-                for media in bulletin.medias:
+                for media in sorted(bulletin.medias, key=lambda m: m.id):
+                    if media.dossier:
+                        flagged.append(self._media_item(media, bulletin))
                     redaction = media.redaction
                     if redaction is None:
                         original_ids.append(media.id)
@@ -342,24 +348,26 @@ class DossierData:
                         latest[key] = media
                 unredacted += sum(1 for mid in original_ids if mid not in latest)
                 for media in sorted(latest.values(), key=lambda m: m.id):
-                    title = (
-                        media.title_ar if self.locale == "ar" else media.title
-                    ) or media.title_ar
-                    ref = (
-                        f"الدليل رقم {bulletin.id}"
-                        if self.locale == "ar"
-                        else f"Evidence #{bulletin.id}"
-                    )
-                    items.append(
-                        {
-                            "file": media.media_file,
-                            "is_image": (media.media_file_type or "").startswith("image/"),
-                            "title": title,
-                            "ref": ref,
-                        }
-                    )
-            self._redacted_media = {"media": items, "unredacted": unredacted}
+                    heuristic.append(self._media_item(media, bulletin))
+            if flagged:
+                self._redacted_media = {"media": flagged, "unredacted": 0, "curated": True}
+            else:
+                self._redacted_media = {
+                    "media": heuristic,
+                    "unredacted": unredacted,
+                    "curated": False,
+                }
         return self._redacted_media
+
+    def _media_item(self, media, bulletin) -> dict:
+        title = (media.title_ar if self.locale == "ar" else media.title) or media.title_ar
+        ref = f"الدليل رقم {bulletin.id}" if self.locale == "ar" else f"Evidence #{bulletin.id}"
+        return {
+            "file": media.media_file,
+            "is_image": (media.media_file_type or "").startswith("image/"),
+            "title": title,
+            "ref": ref,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -560,13 +568,14 @@ def _b_narrative_box(data: DossierData, config: dict) -> dict:
 def _b_media_appendix(data: DossierData, config: dict) -> dict:
     bundle = data.redacted_media
     missing = []
-    if not bundle["media"]:
-        missing.append("No redacted evidence media to attach")
-    if bundle["unredacted"]:
-        missing.append(
-            f"{bundle['unredacted']} evidence media item(s) have no redacted rendition "
-            "and were excluded"
-        )
+    if not bundle["curated"]:
+        if not bundle["media"]:
+            missing.append("No redacted evidence media to attach")
+        if bundle["unredacted"]:
+            missing.append(
+                f"{bundle['unredacted']} evidence media item(s) have no redacted rendition "
+                "and were excluded"
+            )
     return {"title": config["title"], "media": bundle["media"], "missing": missing}
 
 

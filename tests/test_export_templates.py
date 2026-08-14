@@ -158,12 +158,19 @@ def test_build_dossier_revalidates_stored_blocks():
         build_dossier(template, FakeActor(), FakeUser())
 
 
+def _fake_media(**kwargs):
+    from types import SimpleNamespace as NS
+
+    defaults = {"redaction": None, "dossier": False}
+    return NS(**{**defaults, **kwargs})
+
+
 def test_media_appendix_fails_closed():
     """Only redaction results are surfaced; bare originals are excluded and flagged."""
     from types import SimpleNamespace as NS
 
-    original = NS(id=1, redaction=None)
-    redacted = NS(
+    original = _fake_media(id=1)
+    redacted = _fake_media(
         id=2,
         redaction=NS(original_media_id=1, source_media_id=1),
         media_file="doc-redacted.jpg",
@@ -171,7 +178,7 @@ def test_media_appendix_fails_closed():
         title="doc",
         title_ar="وثيقة",
     )
-    bare = NS(id=3, redaction=None)
+    bare = _fake_media(id=3)
     bulletin = NS(id=75, deleted=False, medias=[original, redacted, bare])
 
     actor = FakeActor()
@@ -183,3 +190,37 @@ def test_media_appendix_fails_closed():
     assert [m["file"] for m in block["media"]] == ["doc-redacted.jpg"]
     assert block["media"][0]["title"] == "وثيقة"
     assert any("no redacted rendition" in m for m in context["missing"])
+
+
+def test_media_appendix_dossier_flag_is_authoritative():
+    """Flagged media wins over the heuristic: an unflagged redaction is dropped,
+    a flagged clean original is included, and no gap is reported."""
+    from types import SimpleNamespace as NS
+
+    original = _fake_media(id=1)
+    redacted = _fake_media(
+        id=2,
+        redaction=NS(original_media_id=1, source_media_id=1),
+        media_file="doc-redacted.jpg",
+        media_file_type="image/jpeg",
+        title="doc",
+        title_ar="وثيقة",
+    )
+    clean = _fake_media(
+        id=3,
+        dossier=True,
+        media_file="clean-original.jpg",
+        media_file_type="image/jpeg",
+        title="clean",
+        title_ar="أصلية",
+    )
+    bulletin = NS(id=75, deleted=False, medias=[original, redacted, clean])
+
+    actor = FakeActor()
+    actor.related_bulletins = [NS(bulletin=bulletin)]
+    template = FakeTemplate([{"type": "media_appendix", "config": {}}])
+    context = build_dossier(template, actor, FakeUser())
+
+    block = context["blocks"][0]
+    assert [m["file"] for m in block["media"]] == ["clean-original.jpg"]
+    assert context["missing"] == []

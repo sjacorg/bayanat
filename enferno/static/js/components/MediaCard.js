@@ -14,6 +14,26 @@ const toolbarContent = `
           </template>
           <span>{{ translations.category_ }}</span>
         </v-tooltip>
+        <v-tooltip v-if="enableDossierToggle && media.id" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-chip
+              v-bind="props"
+              prepend-icon="mdi-file-check-outline"
+              :color="media.dossier ? 'primary' : undefined"
+              :variant="media.dossier ? 'tonal' : 'text'"
+              size="small"
+              class="ml-1"
+              :disabled="dossierSaving"
+              @click.stop="toggleDossier"
+            >
+              {{ translations.dossier_ }}
+            </v-chip>
+          </template>
+          <span>{{ translations.includeInDossier_ }}</span>
+        </v-tooltip>
+        <v-chip v-else-if="media.dossier" prepend-icon="mdi-file-check-outline" color="primary" variant="tonal" size="small" class="ml-1">
+          {{ translations.dossier_ }}
+        </v-chip>
 
         <v-spacer></v-spacer>
 
@@ -130,6 +150,10 @@ const MediaCard = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
+    enableDossierToggle: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['media-click', 'remove-redaction'],
   data() {
@@ -151,6 +175,7 @@ const MediaCard = Vue.defineComponent({
       ocrLoading: false,
       expansionPanel: null,
       showRedactions: false,
+      dossierSaving: false,
     };
   },
   computed: {
@@ -196,6 +221,22 @@ const MediaCard = Vue.defineComponent({
     }
   },
   methods: {
+    toggleDossier() {
+      return this.toggleDossierFor(this.media);
+    },
+    async toggleDossierFor(media) {
+      this.dossierSaving = true;
+      try {
+        await axios.put(`/admin/api/media/${media.id}`, {
+          item: { ...media, dossier: !media.dossier },
+        });
+        media.dossier = !media.dossier;
+      } catch (err) {
+        this.$root.showSnack(handleRequestError(err));
+      } finally {
+        this.dossierSaving = false;
+      }
+    },
     handleMediaClick(payload) {
       // If media-thumbnail passes payload, use it; otherwise create it
       const clickPayload = payload || { media: this.media, mediaType: this.mediaType };
@@ -357,6 +398,19 @@ const MediaCard = Vue.defineComponent({
                     <template #activator="{ props: ttProps }">
                       <span v-bind="ttProps" class="text-truncate flex-grow-1 text-caption opacity-70">{{ redaction.title || redaction.filename }}</span>
                     </template>
+                  </v-tooltip>
+                  <v-tooltip v-if="redaction.dossier || (enableDossierToggle && redaction.id)" location="top">
+                    <template #activator="{ props: ttProps }">
+                      <v-icon
+                        v-bind="ttProps"
+                        icon="mdi-file-check-outline"
+                        size="18"
+                        :color="redaction.dossier ? 'primary' : 'grey'"
+                        :class="enableDossierToggle && redaction.id ? 'cursor-pointer' : ''"
+                        @click.stop="enableDossierToggle && redaction.id && toggleDossierFor(redaction)"
+                      ></v-icon>
+                    </template>
+                    <span>{{ translations.includeInDossier_ }}</span>
                   </v-tooltip>
                   <v-fade-transition>
                     <div v-if="isHovering && (isCurrentUserAdmin || isCurrentUserDA)" class="d-flex ga-1">
