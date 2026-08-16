@@ -169,12 +169,33 @@ then
     echo "" >> ./$env_file
 fi
 
-if [ "$deployment" = "d" -a ! -f config.json ]
+if [ "$deployment" = "d" ]
 then
-    # config.json is bind-mounted into the containers. Docker would create it
-    # as a directory if it did not exist, and the app would fail to read it.
-    echo "Creating config.json from config.sample.json"
-    cp config.sample.json config.json
+    if [ ! -f config.json ]
+    then
+        # config.json is bind-mounted into the containers. Docker would create
+        # it as a directory if it did not exist, and the app would fail to
+        # read it.
+        echo "Creating config.json from config.sample.json"
+        cp config.sample.json config.json
+    fi
+
+    # The containers run as uid 1000 (see the useradd in flask/Dockerfile).
+    # On Linux, bind mounts keep the host's ownership, so every path the app
+    # writes to must belong to that uid or it cannot even open its log file.
+    # Docker creates missing bind-mount sources as root, so create them first.
+    echo "Preparing writable directories for the container user"
+    mkdir -p logs backups enferno/imports "$media_path"
+    if ! chown -R 1000 logs backups enferno/imports "$media_path" config.json 2>/dev/null
+    then
+        echo ""
+        echo "WARNING: could not change ownership of the data directories."
+        echo "The application runs as uid 1000 and will fail to start without"
+        echo "write access. Run this before 'docker compose up -d':"
+        echo ""
+        echo "  sudo chown -R 1000 logs backups enferno/imports $media_path config.json"
+        echo ""
+    fi
 fi
 
 echo "Completed environment file generation"

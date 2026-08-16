@@ -323,6 +323,20 @@ docker compose -f docker-compose-test.yml up
 port 80 to validate. Confirm the `A` record resolves to the host and that no
 firewall blocks 80 or 443, then check `docker compose logs caddy`.
 
+**`bayanat` restarts in a loop with `PermissionError: '/app/logs/bayanat.log'`.**
+The containers run as uid 1000, and on Linux a bind mount keeps the host's
+ownership, so directories owned by root are not writable by the application.
+`gen-env.sh -d` sets this up for you; if you created the directories by hand,
+or copied the deployment from elsewhere, fix the ownership and restart:
+
+```bash
+sudo chown -R 1000 logs backups enferno/imports enferno/media config.json
+docker compose up -d
+```
+
+Docker Desktop on macOS remaps ownership and hides this, so a deployment that
+works on a developer laptop can still fail on a Linux server.
+
 **`bayanat` never becomes healthy.** Its health check calls `/health`, which
 touches both PostgreSQL and Redis. Check `docker compose logs bayanat` for
 connection errors, and confirm `POSTGRES_PASSWORD` and `REDIS_PASSWORD` in
