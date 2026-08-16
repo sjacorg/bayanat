@@ -240,6 +240,12 @@ sudo systemctl enable --now bayanat-celery
 
 ## Docker
 
+::: tip
+Native installation, above, is the recommended path for most deployments.
+Docker is a good way to evaluate Bayanat, and a reasonable choice if your
+organisation already runs containers.
+:::
+
 Docker Compose brings up the whole stack, including PostgreSQL, Redis and a
 Caddy edge with automatic HTTPS:
 
