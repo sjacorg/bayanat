@@ -273,7 +273,7 @@ Also note:
 - Images are pinned by digest and run as non-root.
 - `REDIS_PASSWORD` must be set in your `.env`.
 
-See [Docker Deployment](/deployment/docker) for the full guide.
+See [Docker Deployment](/deployment/docker#upgrading) for verification and rollback steps, and the rest of that page for the full guide.
 
 ### After upgrading, on every path
 
