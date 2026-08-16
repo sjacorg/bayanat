@@ -1,15 +1,27 @@
 # Docker Deployment
 
-Docker Compose is a supported production deployment path. It stands up the
-whole stack (PostgreSQL with PostGIS, Redis, the Flask app, two Celery
-workers, and a Caddy edge with automatic HTTPS) from one command, and it
-upgrades with another.
+Docker Compose stands up the whole stack (PostgreSQL with PostGIS, Redis, the
+Flask app, two Celery workers, and a Caddy edge with automatic HTTPS) from one
+command, and upgrades with another. It is the quickest way to evaluate
+Bayanat, and it is a reasonable choice for an organisation that already runs
+containers in production.
 
-Choose this path if your organisation already runs containers, or if you want
-the database and Redis managed for you. Choose the
-[native installation](/deployment/installation) if you want the app installed
-directly on the host under systemd, or if you need to point Bayanat at a
-database you already operate.
+::: tip Recommended path
+For most deployments we recommend the
+[native installation](/deployment/installation).
+`bayanat install yourdomain.com` is a single command, it is the configuration
+the project runs and tests in production, and it has operational tooling the
+Docker path does not: `bayanat update` takes an automatic pre-upgrade database
+snapshot, with `bayanat snapshots` and `bayanat restore` to roll back, plus
+`bayanat status`.
+
+Under Docker your rollback point is the dump you take yourself before an
+upgrade, as described below.
+:::
+
+Docker is the better fit when your organisation standardises on containers,
+when you want PostgreSQL and Redis managed for you, or when you are trying
+Bayanat out and want to remove it cleanly afterwards.
 
 ## Requirements
 
@@ -218,6 +230,28 @@ docker compose exec bayanat flask doctor
 # Database shell
 docker compose exec postgres psql -U bayanat bayanat
 ```
+
+### Stopping and Removing
+
+```bash
+# Stop the stack. Data is kept, `up -d` brings it back as it was.
+docker compose down
+```
+
+To remove an evaluation completely, delete the volumes as well:
+
+```bash
+docker compose down -v
+```
+
+::: danger
+`down -v` destroys the database, the Redis data and the issued certificates.
+There is no undo. Take a dump first if there is anything in the deployment you
+want to keep.
+:::
+
+Media is not stored in a volume. It stays on the host at `MEDIA_PATH`
+(default `./enferno/media`) and must be deleted separately.
 
 ## Configuration
 
