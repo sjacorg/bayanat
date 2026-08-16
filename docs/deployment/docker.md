@@ -258,12 +258,29 @@ Media is not stored in a volume. It stays on the host at `MEDIA_PATH`
 Three sources, in the order Bayanat merges them:
 
 1. `.env` on the host, mounted read-only into the app and worker containers.
-   Secrets and infrastructure settings. Changing it needs
-   `docker compose up -d` to take effect.
+   Secrets and infrastructure settings.
 2. `config.json` on the host, mounted read-write. Feature toggles, mail, media
    and map settings, editable from the System Administration dashboard.
-   Changing it needs a restart of `bayanat` and the workers.
 3. Hardcoded defaults in `enferno/settings.py`.
+
+::: warning Applying a change to `.env`
+After editing `.env`, run:
+
+```bash
+docker compose up -d --force-recreate bayanat celery celery-ocr
+```
+
+Plain `docker compose up -d` is not enough, and neither is `restart`. Both
+files are mounted individually rather than as a directory, and most editors
+(and `sed -i`) save by writing a new file and renaming it over the old one.
+The container stays attached to the original file, so it keeps reading the
+old settings, silently, until it is recreated. Editing in place with
+`nano` avoids this, but recreating is the reliable habit.
+
+The same applies to `config.json` when you edit it on the host. Changes made
+through the System Administration dashboard are written by the application
+itself and only need a restart of `bayanat` and the workers.
+:::
 
 Tuning knobs specific to this deployment, all optional in `.env`:
 
