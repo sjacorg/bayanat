@@ -1,3 +1,15 @@
+# Production stack. See docs/deployment/docker.md.
+# Compose reads ./.env for both variable substitution here and the app's
+# own configuration, so there is a single file to generate and back up.
+
+x-logging: &logging
+  # json-file grows without bound by default; a long-running deployment
+  # will fill the host disk with container logs otherwise.
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
 services:
   postgres:
     container_name: postgres
@@ -6,6 +18,8 @@ services:
     # postgis/postgis publishes amd64 only; runs emulated on ARM hosts
     platform: linux/amd64
     user: postgres
+    restart: unless-stopped
+    logging: *logging
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -28,9 +42,10 @@ services:
     container_name: redis
     image: 'redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99'
     user: redis
+    restart: unless-stopped
+    logging: *logging
     expose:
       - '6379'
-    # password is read from the mounted secret, never passed via argv
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     # password is written to a config file in-container, never passed via argv
@@ -54,13 +69,23 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=flask
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      - UWSGI_PROCESSES=${UWSGI_PROCESSES:-4}
+      - UWSGI_THREADS=${UWSGI_THREADS:-2}
+      - UWSGI_HARAKIRI=${UWSGI_HARAKIRI:-300}
     volumes:
-      - '${PWD}/backups:/app/backups/:rw'
+      - './backups:/app/backups/:rw'
       - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media/:rw'
-      - '${PWD}/enferno/imports:/app/enferno/imports/:rw'
-      - '${PWD}/logs/:/app/logs/:rw'
-      - '${PWD}/config.json:/app/config.json:rw'
-      - '${PWD}/${ENV_FILE:-.env.docker}:/app/.env:ro'
+      - './enferno/imports:/app/enferno/imports/:rw'
+      - './logs/:/app/logs/:rw'
+      - './config.json:/app/config.json:rw'
+      # Deliberately not configurable. Compose substitutes the variables above
+      # from ./.env, so pointing the app at a different file would let the two
+      # diverge and hand the app credentials the database was never created
+      # with. To run a second stack, use a second checkout.
+      - './.env:/app/.env:ro'
     depends_on:
       postgres:
         condition: service_healthy
@@ -73,6 +98,15 @@ services:
       - no-new-privileges:true
     expose:
       - '5000'
+    healthcheck:
+      # /health touches both the database and Redis, so a green check means
+      # the app can actually serve, not merely that the port is open.
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health').read()" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      # First boot runs create-db and the admin bootstrap before uWSGI listens.
+      start_period: 120s
 
   celery:
     container_name: celery
@@ -81,6 +115,8 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=celery
+    restart: unless-stopped
+    logging: *logging
     volumes_from:
       - bayanat
     read_only: true
@@ -101,6 +137,8 @@ services:
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=celery-ocr
+    restart: unless-stopped
+    logging: *logging
     volumes_from:
       - bayanat
     read_only: true
@@ -114,27 +152,41 @@ services:
       redis:
         condition: service_healthy
 
-  nginx:
-    container_name: nginx
-    restart: always
-    build:
-      context: ./nginx
+  caddy:
+    container_name: caddy
+    image: 'caddy:2.10-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d'
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      - DOMAIN=${DOMAIN:-:80}
     ports:
-      - '80:8080'
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
     volumes:
+      - './caddy/Caddyfile:/etc/caddy/Caddyfile:ro'
       - './enferno/static/:/app/static/:ro'
+      # Issued certificates. Losing this volume means re-issuing on every
+      # restart, which will hit Let's Encrypt rate limits.
+      - 'caddy_data:/data:rw'
+      - 'caddy_config:/config:rw'
     depends_on:
-      - bayanat
+      bayanat:
+        condition: service_healthy
     read_only: true
     security_opt:
       - no-new-privileges:true
     tmpfs:
       - /tmp
     healthcheck:
-      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz" ]
+      # The site's own /healthz only answers on the configured DOMAIN, so probe
+      # Caddy's local admin API instead, which is host-independent.
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/" ]
       interval: 10s
       retries: 5
 
 volumes:
   redis_data:
   postgres_data:
+  caddy_data:
+  caddy_config:

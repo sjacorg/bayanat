@@ -3,9 +3,13 @@ echo "Bayanat Environment Generation Script"
 
 deployment=""
 env_file=.env
+domain=""
 
-while getopts "dne:o" option; do
+while getopts "dne:oD:" option; do
     case $option in
+        D | domain)
+            domain="$OPTARG"
+        ;;
         d | docker)
             deployment="d"
             media_path=./enferno/media/
@@ -109,6 +113,28 @@ then
 fi
 
 
+# Only prompt on a terminal. This script runs unattended in CI
+# (.github/workflows/run-tests.yml), where a blocking read would hang the job.
+if [ "$deployment" = "d" -a -z "$domain" -a -t 0 ]
+then
+    echo ""
+    echo "Enter the domain Bayanat will be served on, e.g. bayanat.example.org."
+    echo "Caddy will request a Let's Encrypt certificate for it automatically."
+    echo "Leave blank to serve plain HTTP on port 80 (local use, or when you"
+    echo "already run a TLS-terminating proxy in front of this stack)."
+    read -e -p "Domain: " domain
+fi
+
+# A real domain means Caddy terminates TLS, so the app must mark its session
+# cookie secure and redirect to HTTPS. Without one it would lock itself out.
+if [ -z "$domain" ]
+then
+    domain=":80"
+    force_https="False"
+else
+    force_https="True"
+fi
+
 echo "Generating secrets and environment file"
 echo "FLASK_APP=run.py" > ./$env_file
 echo "FLASK_DEBUG=0" >> ./$env_file
@@ -126,6 +152,11 @@ echo "" >> ./$env_file
 
 if [ "$deployment" = "d" ]
 then
+    echo "DOMAIN='$domain'" >> ./$env_file
+    echo "SECURE_COOKIES=$force_https" >> ./$env_file
+    echo "FORCE_HTTPS=$force_https" >> ./$env_file
+    echo "" >> ./$env_file
+
     echo "MEDIA_PATH='$media_path'" >> ./$env_file
     echo "POSTGRES_USER=bayanat" >> ./$env_file
     echo "POSTGRES_PASSWORD='$(openssl rand -hex 32)'" >> ./$env_file
@@ -136,6 +167,14 @@ then
     echo "PYTHONUNBUFFERED=True" >> ./$env_file
     echo "REDIS_AOF_ENABLED=no" >> ./$env_file
     echo "" >> ./$env_file
+fi
+
+if [ "$deployment" = "d" -a ! -f config.json ]
+then
+    # config.json is bind-mounted into the containers. Docker would create it
+    # as a directory if it did not exist, and the app would fail to read it.
+    echo "Creating config.json from config.sample.json"
+    cp config.sample.json config.json
 fi
 
 echo "Completed environment file generation"
