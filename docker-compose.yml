@@ -101,7 +101,10 @@ services:
     healthcheck:
       # /health touches both the database and Redis, so a green check means
       # the app can actually serve, not merely that the port is open.
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health').read()" ]
+      # X-Forwarded-Proto is required: with FORCE_HTTPS=True the app redirects
+      # any request it believes arrived over plain HTTP, and nothing serves
+      # HTTPS inside the container, so without it the check can never pass.
+      test: [ "CMD", "python", "-c", "import urllib.request as u; u.urlopen(u.Request('http://127.0.0.1:5000/health', headers={'X-Forwarded-Proto': 'https'})).read()" ]
       interval: 10s
       timeout: 5s
       retries: 12
