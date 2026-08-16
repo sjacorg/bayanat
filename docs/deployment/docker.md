@@ -78,14 +78,24 @@ docker compose logs bayanat | grep "Generated password"
 Sign in at your domain with `admin` and that password. The setup wizard runs
 after first login. Change the password from your account settings afterwards.
 
-If the password scrolled past or the admin account was deleted, generate a
-fresh one:
+Record the password before you recreate the container. It is printed once, to
+that container's log, and `docker compose up -d --force-recreate` replaces the
+container and discards it.
+
+If the admin account was deleted, recreate it:
 
 ```bash
 docker compose exec bayanat flask install -u admin
 ```
 
-The command exits without changing anything if an admin already exists.
+That command refuses to act when an admin already exists. To set a new
+password for an existing account, reset it instead:
+
+```bash
+docker compose exec bayanat flask reset -u admin
+```
+
+It prompts for the new password twice and enforces the password policy.
 
 ## What Runs
 
