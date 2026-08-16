@@ -99,15 +99,19 @@ Then restart your application and worker processes.
 
 ## Docker Upgrade
 
-For Docker deployments, rebuild and restart:
+For Docker deployments, back up first, then pull, rebuild and restart:
 
 ```bash
-docker-compose down
-docker-compose build
-docker-compose up -d
+docker compose exec -T postgres pg_dump -Fc -U bayanat bayanat \
+  > ~/bayanat-$(date +%F).dump
+git fetch --tags && git checkout v4.0.0
+docker compose build
+docker compose up -d
 ```
 
-The container entrypoint runs database setup and migrations automatically on startup.
+The container entrypoint runs database setup and migrations automatically on startup. There is no need to bring the stack down first.
+
+See [Docker Deployment](/deployment/docker#upgrading) for verification and rollback steps.
 
 ## Checking Status
 

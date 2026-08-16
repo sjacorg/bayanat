@@ -240,23 +240,20 @@ sudo systemctl enable --now bayanat-celery
 
 ## Docker
 
-::: warning Beta
-Docker deployment is still in beta. For production, native deployment is recommended.
-:::
-
-After [configuring](/deployment/configuration) and generating a `.env.docker` file:
+Docker Compose brings up the whole stack, including PostgreSQL, Redis and a
+Caddy edge with automatic HTTPS:
 
 ```bash
-docker compose --env-file .env.docker up -d
+./gen-env.sh -d
+docker compose up -d
 ```
 
 The first startup creates an `admin` user and prints a generated
 password to the container logs. Retrieve it with:
 
 ```bash
-docker compose --env-file .env.docker logs bayanat | grep -A4 "Generated password"
+docker compose logs bayanat | grep "Generated password"
 ```
 
-If the auto-bootstrap was missed or the admin was deleted, run
-`docker compose --env-file .env.docker exec bayanat uv run flask install -u admin`
-to mint a fresh credential.
+See [Docker Deployment](/deployment/docker) for the full guide, including
+upgrades, backups and rollback.
