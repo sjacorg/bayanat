@@ -61,7 +61,10 @@ const validationRules = {
             try {
               if (v === initialUsername) return onResponse(true), resolve(true);
       
-              await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
+              await axios.post('/admin/api/checkuser/', { item: v }, {
+                suppressGlobalErrorHandler: true,
+                suppressSessionReplay: true
+              });
               onResponse(true);
               resolve(true);
             } catch (err) {
@@ -90,7 +93,10 @@ const validationRules = {
       
             passwordCheckTimeout = setTimeout(async () => {
               try {
-                await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
+                await axios.post('/admin/api/password/', { password: v }, {
+                  suppressGlobalErrorHandler: true,
+                  suppressSessionReplay: true
+                });
                 onResponse(true);
                 resolve(true);
             } catch (err) {
@@ -337,10 +343,22 @@ function isSilentPollRequest(config) {
 
 function isReplayExcluded(config) {
     if (!config) return true;
+    if (config.suppressSessionReplay) return true;
     if (config._sessionReplayed) return true;
     if (isSilentPollRequest(config)) return true;
     const url = config.url || '';
     return SESSION_REPLAY_EXCLUDED_PATHS.some(path => url === path || url.startsWith(`${path}/`) || url.startsWith(`${path}?`));
+}
+
+function isReplayableMutation(config) {
+    return ['post', 'put', 'patch', 'delete'].includes((config?.method || 'get').toLowerCase());
+}
+
+// A 401 carrying reauth_required is a freshness/step-up challenge, not a
+// plain expired session: the caller must consciously redo the privileged
+// action after proving freshness, so it is never auto-replayed.
+function isReauthRequiredResponse(error) {
+    return Boolean(error?.response?.data?.response?.reauth_required);
 }
 
 // Requests dropped by a 401 mid-flight are queued here instead of being
@@ -354,16 +372,14 @@ function queueForSessionReplay(config) {
     });
 }
 
-async function drainSessionReplayQueue() {
+function drainSessionReplayQueue() {
     const pending = sessionReplayQueue.splice(0, sessionReplayQueue.length);
-    for (const { config, resolve, reject } of pending) {
-        try {
+    return Promise.allSettled(
+        pending.map(({ config, resolve, reject }) => {
             const replayConfig = { ...config, _sessionReplayed: true };
-            resolve(await axios.request(replayConfig));
-        } catch (error) {
-            reject(error);
-        }
-    }
+            return axios.request(replayConfig).then(resolve, reject);
+        }),
+    );
 }
 
 //global axios response interceptor - handles standardized API responses and global error handling
@@ -389,7 +405,11 @@ axios.interceptors.response.use(
         const isSessionExpiry = error?.response?.status === 401;
         // A request about to be queued for replay isn't a failure yet, so
         // it must not surface an error toast ahead of the real outcome.
-        const willReplay = isSessionExpiry && !isReplayExcluded(error.config);
+        const willReplay =
+            isSessionExpiry &&
+            isReplayableMutation(error.config) &&
+            !isReplayExcluded(error.config) &&
+            !isReauthRequiredResponse(error);
 
         if (!willReplay && !error.config?.suppressGlobalErrorHandler) {
             const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });

@@ -23,12 +23,17 @@ const reauthMixin = {
     async onVisibilityChange() {
       if (document.visibilityState !== 'visible') return; // only run when tab becomes active
 
-      // Only check if dialog is visible
-      if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
-      
+      if (!this.isSignInDialogVisible && !this.isReauthDialogVisible) return;
+
+      // A session-check only proves the session exists; it cannot prove a
+      // freshness reauth requirement was satisfied. So it may auto-close the
+      // plain sign-in dialog, but the freshness reauth dialog must still be
+      // completed in this tab even if the underlying session is valid.
+      if (this.isReauthDialogVisible) return;
+
       try {
         await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
-        this.resetState(); // Session restored - close dialog
+        this.completeAuthentication();
       } catch (error) {
         // Still expired - keep dialog open
       }
@@ -59,6 +64,10 @@ const reauthMixin = {
       this.twoFaSelectForm = null;
       this.verificationCode = null;
       this.signInStep = 'sign-in';
+    },
+    completeAuthentication() {
+      this.resetState();
+      drainSessionReplayQueue();
     },
     async signIn() {
       try {
@@ -179,8 +188,7 @@ const reauthMixin = {
       }
 
       this.showSnack('Authentication successful');
-      this.resetState();
-      drainSessionReplayQueue();
+      this.completeAuthentication();
     },
     async select2FAMethod() {
       try {
