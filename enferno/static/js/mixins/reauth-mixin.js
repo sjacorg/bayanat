@@ -32,9 +32,17 @@ const reauthMixin = {
       if (!this.isSignInDialogVisible && !this.isReauthDialogVisible) return;
 
       // Same reasoning as onVisibilityChange: a sibling tab signing in only
-      // proves the session exists, not that this tab's freshness reauth
+      // proves *a* session exists, not that this tab's freshness reauth
       // requirement was satisfied.
       if (this.isReauthDialogVisible) return;
+
+      // A different account signing in elsewhere is not this tab's session
+      // coming back - completing here would replay this tab's pending
+      // requests (e.g. an unsaved bulletin) under the other account's
+      // cookie. Only self-close when the restored session matches who this
+      // tab was signed in as.
+      const [restoredUsername] = event.newValue.split('|');
+      if (!this.isSameUsername(restoredUsername, window.__username__)) return;
 
       this.completeAuthentication();
     },
@@ -50,7 +58,15 @@ const reauthMixin = {
       if (this.isReauthDialogVisible) return;
 
       try {
-        await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
+        const response = await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
+
+        // The browser's cookie jar is shared across tabs: if a different
+        // account signed in here since this tab loaded, session-check now
+        // succeeds under that other account. That is not this tab's session
+        // coming back, and completing here would replay this tab's pending
+        // requests (e.g. an unsaved bulletin) under someone else's account.
+        if (!this.isSameUsername(response?.data?.username, window.__username__)) return;
+
         this.completeAuthentication();
       } catch (error) {
         // Still expired - keep dialog open
@@ -212,8 +228,13 @@ const reauthMixin = {
     broadcastSessionRestored() {
       try {
         // Value must change on every write so sibling tabs' storage listeners
-        // fire even if a previous signal was never cleared.
-        localStorage.setItem(SESSION_RESTORED_STORAGE_KEY, String(Date.now()));
+        // fire even if a previous signal was never cleared. Username is
+        // included so sibling tabs can tell a same-account restore (safe to
+        // auto-complete) apart from a different account signing in on this
+        // browser (must not silently replay this tab's pending requests
+        // under someone else's session).
+        const username = this.signInForm.username || window.__username__ || '';
+        localStorage.setItem(SESSION_RESTORED_STORAGE_KEY, `${Date.now()}|${username}`);
       } catch (error) {
         // Storage unavailable; other tabs simply won't self-close their dialog.
       }
@@ -288,6 +309,12 @@ const reauthMixin = {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);
 
       return reauthRequired;
+    },
+    isSameUsername(a, b) {
+      // Login is case-insensitive server-side (SECURITY_USER_IDENTITY_ATTRIBUTES),
+      // so "Alice" typed at sign-in and a stored "alice" are the same account.
+      if (!a || !b) return false;
+      return a.toLowerCase() === b.toLowerCase();
     }
   },
 };
