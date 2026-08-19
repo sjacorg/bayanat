@@ -78,7 +78,7 @@
                                         </template>
 
                                         <template v-slot:item.action="{ item }">
-                                            <v-btn icon="mdi-pencil" density="compact" class="mr-2" @click="editItem(item)"></v-btn>
+                                            <v-btn icon="mdi-pencil" density="compact" class="me-2" @click="editItem(item)"></v-btn>
                                             <v-btn icon="mdi-delete-sweep" density="compact" @click="deleteItem(item)"></v-btn>
                                         </template>
 
@@ -100,12 +100,14 @@
                                                 <v-icon size="small">${ item.for_bulletin || item.for_actor || item.for_incident || item.for_offline ? 'mdi-label' : 'mdi-folder-outline' }</v-icon>
                                             </template>
                                             <template v-slot:append="{ item }">
-                                                <v-chip v-if="item.for_bulletin" size="default" class="mr-2">&nbsp;B&nbsp;</v-chip>
-                                                <v-chip v-if="item.for_actor" size="default" class="mr-2">&nbsp;A&nbsp;</v-chip>
-                                                <v-chip v-if="item.for_incident" size="default" class="mr-2">&nbsp;I&nbsp;</v-chip>
-                                                <v-chip v-if="item.for_offline" size="default" class="mr-2">&nbsp;O&nbsp;</v-chip>
-                                                <v-icon class="ml-4" @click="editItem(item)">mdi-pencil</v-icon>
-                                                <v-icon class="ml-4 mr-10" @click="deleteItem(item)">mdi-delete-sweep</v-icon>
+                                                <div class="d-flex align-center ga-2">
+                                                    <v-chip v-if="item.for_bulletin" size="default">B</v-chip>
+                                                    <v-chip v-if="item.for_actor" size="default">A</v-chip>
+                                                    <v-chip v-if="item.for_incident" size="default">I</v-chip>
+                                                    <v-chip v-if="item.for_offline" size="default">O</v-chip>
+                                                    <v-icon class="ms-2" @click="editItem(item)">mdi-pencil</v-icon>
+                                                    <v-icon class="me-10" @click="deleteItem(item)">mdi-delete-sweep</v-icon>
+                                                </div>
                                             </template>
                                         </v-treeview>
                                         <div v-else-if="treeLoading" class="text-center pa-4">

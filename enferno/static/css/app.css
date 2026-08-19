@@ -305,6 +305,10 @@ button.swh {
     float: right;
 }
 
+[dir="rtl"] .vue-query-builder button.pull-right {
+    float: left;
+}
+
 
 .smaller {
     transform: scale(0.9);
@@ -863,7 +867,8 @@ div.jsondiffpatch-child-node-type-array:after {
 .overflow-unset { overflow: var(--v-overflow-unset); }
 .z-1 { z-index: var(--v-z-1); }
 .z-100 { z-index: var(--v-z-100); }
-.left-auto { left: var(--v-left-auto) !important; }
+.inset-inline-start-0 { inset-inline-start: 0 !important; }
+.inset-inline-end-0 { inset-inline-end: 0 !important; }
 .h-fit { height: var(--v-h-fit); }
 .pointer-events-none { pointer-events: var(--v-pointer-events-none) !important; }
 .pointer-events-auto { pointer-events: var(--v-pointer-events-auto) !important; }
@@ -1003,4 +1008,26 @@ div.jsondiffpatch-child-node-type-array:after {
 .docx-preview p {
     margin-top: 1em;
     margin-bottom: 1em;
+}
+
+.newly-added-field {
+    position: relative;
+}
+
+.newly-added-field::after {
+    animation: newly-added-field-tint 2s ease-out 400ms both;
+    background-color: rgba(33, 150, 243, 0.14);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+@keyframes newly-added-field-tint {
+    0%, 70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }

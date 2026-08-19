@@ -21,8 +21,8 @@
                             @click.stop="visualizeResults"
                             v-if="showVisualize"
                             :loading="visualizeLoading"
-                            class="mb-5 mr-5 position-absolute "
-                            style="right: 30px; bottom: 90px; z-index: 1000;"
+                            class="mb-5 me-5 position-absolute "
+                            style="inset-inline-end: 30px; bottom: 90px; z-index: 1000;"
                             icon="mdi-graph"
                     >
 
@@ -76,12 +76,24 @@
                                         hide-details
                                         append-icon="mdi-ballot"
                                         @click:append="toggleAdvSearch"
-                                        :append-inner-icon="searchEmpty ? '' : 'mdi-close'"
-                                        @click:append-inner="resetSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                         :bg-color="searchBg"
-                                ></v-text-field>
+                                >
+                                    <template #append-inner>
+                                        <v-btn
+                                                v-if="!searchEmpty"
+                                                @click="resetSearch"
+                                                aria-label="{{ _('Clear Search') }}"
+                                                color="grey-darken-1"
+                                                density="compact"
+                                                icon="mdi-close"
+                                                size="small"
+                                                variant="text"
+                                        ></v-btn>
+                                        {% include 'admin/partials/saved_search_menu.html' %}
+                                    </template>
+                                </v-text-field>
 
 
                                 <v-spacer></v-spacer>
@@ -159,10 +171,18 @@
 
                         <template #bottom>
                             <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
-                                <div>{{ _('Search time: ') }}
-                                    ${searchTime} {{ _('seconds') }}</div>
+                                <div class="d-flex align-center ga-4">
+                                    <div>{{ _('Search time: ') }}
+                                        ${searchTime} {{ _('seconds') }}</div>
+                                    {% if current_user.has_role("Admin") %}
+                                    <div class="d-none d-sm-flex align-center ga-1 text-caption text-medium-emphasis">
+                                        <v-icon size="small" class="me-1">mdi-information-outline</v-icon>
+                                        <span>{{ _('Administrators: You can edit this form in Customize Database > Incident Form Builder.') }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
                                 <div>
-                        
+
                                     <div class="d-flex flex-row align-center ga-2">
                                         <div class="d-flex flex-row align-center ga-2">
                                             {{ _('Items per page:') }}
@@ -1031,7 +1051,12 @@
                         this.savedSearchSelection = Object.assign([], item);
                         this.search = item.data;
                     }
-                    this.$refs.savedSearchDropdown.blur()
+                    this.$refs.savedSearchDropdown?.blur?.()
+                },
+
+                applySavedSearch(item) {
+                    this.loadSearch(item);
+                    this.doSearch();
                 },
 
 
@@ -1083,6 +1108,10 @@
                         .then(res => {
                             this.showSnack(res.data);
                             this.searches = this.searches.filter(item => item.id !== id);
+                            if (this.savedSearchSelection?.id == id) {
+                                this.savedSearchSelection = null;
+                                this.search = {};
+                            }
                         });
                 },
 
