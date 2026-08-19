@@ -144,7 +144,7 @@ const BulletinCard = Vue.defineComponent({
                       target="_blank" 
                       label
                       append-icon="mdi-open-in-new"
-                      class="ml-1">
+                      class="ms-2">
                       {{ bulletin.originid }}
 
                   </v-chip>
@@ -152,12 +152,12 @@ const BulletinCard = Vue.defineComponent({
               {{ translations.originid_ }}
           </v-tooltip>
 
-          <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"
+          <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ms-2"
                  @click="$emit('edit',bulletin)">
             {{ translations.edit_ }}
           </v-btn>
 
-          <v-btn size="small" class="ml-2" variant="tonal" prepend-icon="mdi-graph-outline"
+          <v-btn size="small" class="ms-2" variant="tonal" prepend-icon="mdi-graph-outline"
                  @click.stop="$root.$refs.viz.visualize(bulletin)">
             {{ translations.visualize_ }}
           </v-btn>
@@ -237,7 +237,7 @@ const BulletinCard = Vue.defineComponent({
                 variant="text"
                 append-icon="mdi-open-in-new"
                 label
-                class="white--text ml-1">
+                class="white--text ms-1">
                 {{ bulletin.source_link }}
                 
               </v-chip>
