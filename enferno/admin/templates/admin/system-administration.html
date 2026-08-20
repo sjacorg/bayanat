@@ -335,7 +335,7 @@
                                                 hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
                                                 suffix="minutes" v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-security-freshness-grace">
                                             <v-text-field v-bind="inputProps" class="mb-9" type="number" label="{{ _('Security freshness grace period') }}"
                                                 persistent-hint
                                                 hint="{{ _('Re-authentication will require a second factor after this period.') }}"
@@ -384,7 +384,7 @@
                     
                                     <h4 id="setting-activity-items" class="subtitle-2 mb-3">{{ _('Items') }}</h4>
                                     <v-row>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-create">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Items created') }}</strong>{{ _(' by users.') }}
                                             </div>
                                             <v-switch persistent-hint
@@ -392,7 +392,7 @@
                                                 v-model="eitem.ACTIVITIES['CREATE']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-view">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Items viewed') }}</strong>{{ _(' by users.') }}
                                             </div>
                                             <v-switch persistent-hint
@@ -400,7 +400,7 @@
                                                 v-model="eitem.ACTIVITIES['VIEW']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-update">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Items edited') }}</strong>{{ _(' by users.') }}
                                             </div>
                                             <v-switch persistent-hint
@@ -408,7 +408,7 @@
                                                 v-model="eitem.ACTIVITIES['UPDATE']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-delete">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Items deleted') }}</strong>{{ _(' by users.') }}
                                             </div>
                                             <v-switch persistent-hint
@@ -416,7 +416,7 @@
                                                 v-model="eitem.ACTIVITIES['DELETE']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-review">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Items reviewed') }}</strong>{{ _(' by users.') }}
                                             </div>
                                             <v-switch persistent-hint
@@ -424,7 +424,7 @@
                                                 v-model="eitem.ACTIVITIES['REVIEW']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-self-assign">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Items self-assigned') }}</strong>{{ _(' by users.')
                                                 }}</div>
                                             <v-switch persistent-hint
@@ -438,7 +438,7 @@
                     
                                     <h4 id="setting-activity-export" class="subtitle-2 mb-3">{{ _('Export') }}</h4>
                                     <v-row>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-request">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Export requests made') }}</strong>{{ _(' by
                                                 users.') }}</div>
                                             <v-switch persistent-hint
@@ -446,7 +446,7 @@
                                                 v-model="eitem.ACTIVITIES['REQUEST']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-approve">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Export requests approved') }}</strong>{{ _(' by
                                                 admins.') }}</div>
                                             <v-switch persistent-hint
@@ -454,7 +454,7 @@
                                                 v-model="eitem.ACTIVITIES['APPROVE']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-reject">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Export requests rejected') }}</strong>{{ _(' by
                                                 admins.') }}</div>
                                             <v-switch persistent-hint
@@ -462,7 +462,7 @@
                                                 v-model="eitem.ACTIVITIES['REJECT']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-download">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Export requests downloaded') }}</strong>{{ _(' by
                                                 users.') }}</div>
                                             <v-switch persistent-hint
@@ -471,19 +471,19 @@
                                             </v-switch>
                                         </v-col>
                                     </v-row>
-                    
+
                                     <v-divider class="my-6"></v-divider>
-                    
+
                                     <h4 id="setting-activity-auth" class="subtitle-2 mb-3">{{ _('Authentication') }}</h4>
                                     <v-row>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-login">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Logins') }}</strong>{{ _(' by users.') }}</div>
                                             <v-switch persistent-hint
                                                 hint="{{ _('This setting will enable logging all user login activities.') }}"
                                                 v-model="eitem.ACTIVITIES['LOGIN']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-logout">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Logouts') }}</strong>{{ _(' by users.') }}</div>
                                             <v-switch persistent-hint
                                                 hint="{{ _('This setting will enable logging all user logout activities. Note: only explicit logout will be logged, users closing their browsers without logging out will not for example.') }}"
@@ -491,12 +491,12 @@
                                             </v-switch>
                                         </v-col>
                                     </v-row>
-                    
+
                                     <v-divider class="my-6"></v-divider>
-                    
+
                                     <h4 id="setting-activity-other" class="subtitle-2 mb-3">{{ _('Other actions') }}</h4>
                                     <v-row>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-search">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Search queries made') }}</strong>{{ _(' by users.')
                                                 }}</div>
                                             <v-switch persistent-hint
@@ -505,7 +505,7 @@
                                             </v-switch>
                                         </v-col>
 
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-upload">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Files uploaded') }}</strong>{{ _(' by users.') }}
                                             </div>
                                             <v-switch persistent-hint
@@ -513,7 +513,7 @@
                                                 v-model="eitem.ACTIVITIES['UPLOAD']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
+                                        <v-col cols="12" lg="4" id="setting-activity-bulk">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Bulk operations queued') }}</strong>{{ _(' by
                                                 users.') }}</div>
                                             <v-switch persistent-hint
@@ -838,7 +838,7 @@
                                         <p class="text-caption mb-1">{{ _('These notifications are sent to users about important changes to their accounts and new task assignments.') }}</p>
                                     </div>
                                     <v-row class="ml-n5">
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-login-new-ip">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Login from new IP') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
@@ -847,8 +847,8 @@
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user logs in from a new IP address.')
                                                 }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-password">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Password') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
@@ -856,8 +856,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user changes their password.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-2fa">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Two-factor authentication') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
@@ -865,8 +865,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user sets up, updates or removes 2FA.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-recovery-codes">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Recovery codes') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
@@ -875,7 +875,7 @@
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user generates new recovery codes.') }}</p>
                                         </v-col>
 
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-new-assignment">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New assignment') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -886,8 +886,8 @@
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify user when they are assigned a new task.') }}
                                             </p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-review-needed">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Review needed') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -898,8 +898,8 @@
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify user when their review is requested.') }}
                                             </p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-web-import-status">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Web Import status') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -920,7 +920,7 @@
                                     </div>
                                     <h4 class="text-subtitle-1 font-weight-bold mb-1 mt-6">{{ _('Security') }}</h4>
                                     <v-row class="ml-n5">
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-new-user">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New user') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -930,8 +930,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a new user account is created.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-update-user">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('User updates') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -941,8 +941,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when an existing user is updated.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-new-group">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New group') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -952,8 +952,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a new group is created.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-system-settings-change">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('System settings change') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -963,8 +963,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when system settings are updated.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-unauthorized-action">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Unauthorized action') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -974,8 +974,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('An unauthorized action is attempted.')}}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-admin-credentials-change">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Admin security credentials change') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -985,8 +985,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when an administrator updates their security credentials.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-item-deleted">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Deleted items') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -998,10 +998,10 @@
                                             </p>
                                         </v-col>
                                     </v-row>
-                                
-                                    <h4 class="text-subtitle-1 font-weight-bold mb-1 mt-6">{{ _('Export') }}</h4>
+
+                                    <h4 id="setting-notifications-export" class="text-subtitle-1 font-weight-bold mb-1 mt-6">{{ _('Export') }}</h4>
                                     <v-row class="ml-n5">
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-new-export">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New request') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -1011,8 +1011,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a new export request is created.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-export-approved">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Approved request') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -1023,10 +1023,10 @@
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when an export request is approved.') }}</p>
                                         </v-col>
                                     </v-row>
-                                
-                                    <h4 class="text-subtitle-1 font-weight-bold mb-1 mt-6">{{ _('Media and Sheet Import') }}</h4>
+
+                                    <h4 id="setting-notifications-import" class="text-subtitle-1 font-weight-bold mb-1 mt-6">{{ _('Media and Sheet Import') }}</h4>
                                     <v-row class="ml-n5">
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-new-batch">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New batch') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -1045,7 +1045,7 @@
                                         <p class="text-caption mb-1">{{ _('Notifications sent to individual administrators about the results of actions they initiated.') }}</p>
                                     </div>
                                     <v-row class="ml-n5">
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-batch-status">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Import batch status') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -1055,8 +1055,8 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify about the results of their Media or Sheets Import batches.') }}</p>
                                         </v-col>
-                                
-                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+
+                                        <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4" id="setting-notif-bulk-operation-status">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Bulk operations status') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -1066,7 +1066,7 @@
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify about the status of their bulk operations.') }}</p>
                                         </v-col>
-                                    </v-row>                                   
+                                    </v-row>
                                 </v-card>
                             </div>
                             
@@ -1247,6 +1247,7 @@
         const {createVuetify} = Vuetify;
         const vuetify = createVuetify(vuetifyConfig);
 
+        const SETTINGS_SEARCH_RESULTS_LIMIT = 24;
 
         const app = createApp({
             delimiters: delimiters,
@@ -1317,129 +1318,129 @@
                 },
                 settingsSearchMap: [
                     { id: 'items_per_page', tab: 'general', section: "{{ _('Interface defaults') }}", label: "{{ _('Items per page options') }}", anchorId: 'setting-items-per-page-options', keywords: ["{{ _('table') }}", "{{ _('pagination') }}", "{{ _('list') }}"] },
-                    { id: 'video_rate', tab: 'general', section: "{{ _('Interface defaults') }}", label: "{{ _('Video playback rate') }}", anchorId: 'setting-video-playback-rate', keywords: ["{{ _('media') }}", "{{ _('speed') }}", "{{ _('video') }}"] },
-                    { id: 'default_language', tab: 'general', section: "{{ _('Localization') }}", label: "{{ _('Default language') }}", anchorId: 'setting-default-language', keywords: ["{{ _('locale') }}", "{{ _('translation') }}", "{{ _('language') }}"] },
+                    { id: 'video_rate', tab: 'general', section: "{{ _('Interface defaults') }}", label: "{{ _('Video playback rate') }}", anchorId: 'setting-video-playback-rate', keywords: ["{{ _('media') }}", "{{ _('speed') }}"] },
+                    { id: 'default_language', tab: 'general', section: "{{ _('Localization') }}", label: "{{ _('Default language') }}", anchorId: 'setting-default-language', keywords: ["{{ _('locale') }}", "{{ _('translation') }}"] },
                     { id: 'dedup_tool', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool', keywords: ["{{ _('matching') }}", "{{ _('duplicates') }}"] },
-                    { id: 'dedup_low_distance', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication low distance') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('dedup') }}", "{{ _('distance') }}", "{{ _('threshold') }}"] },
-                    { id: 'dedup_max_distance', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication max distance') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('dedup') }}", "{{ _('distance') }}", "{{ _('threshold') }}"] },
-                    { id: 'dedup_batch_size', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication batch size') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('dedup') }}", "{{ _('batch') }}", "{{ _('performance') }}"] },
-                    { id: 'dedup_interval', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication interval') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('dedup') }}", "{{ _('interval') }}", "{{ _('performance') }}"] },
-                    { id: 'adv_analysis', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Advanced analysis features') }}", anchorId: 'setting-advanced-analysis', keywords: ["{{ _('analysis') }}", "{{ _('features') }}"] },
+                    { id: 'dedup_low_distance', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication low distance') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('threshold') }}"] },
+                    { id: 'dedup_max_distance', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication max distance') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('threshold') }}"] },
+                    { id: 'dedup_batch_size', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication batch size') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('performance') }}"] },
+                    { id: 'dedup_interval', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Deduplication interval') }}", anchorId: 'setting-dedup-tool', requires: { label: "{{ _('Deduplication tool') }}", anchorId: 'setting-dedup-tool' }, keywords: ["{{ _('performance') }}"] },
+                    { id: 'adv_analysis', tab: 'general', section: "{{ _('Data quality and analysis') }}", label: "{{ _('Advanced analysis features') }}", anchorId: 'setting-advanced-analysis', keywords: [] },
 
-                    { id: 'storage_backend', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('Local Filesystem / S3 Storage') }}", anchorId: 'setting-storage-backend', keywords: ["{{ _('files') }}", "{{ _('s3') }}", "{{ _('bucket') }}"] },
-                    { id: 's3_bucket', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('S3 Bucket Name') }}", anchorId: 'setting-s3-bucket', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["{{ _('s3') }}", "{{ _('aws') }}", "{{ _('storage') }}", "{{ _('bucket') }}"] },
-                    { id: 'aws_access_key_id', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Access Key ID') }}", anchorId: 'setting-aws-access-key-id', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["{{ _('s3') }}", "{{ _('aws') }}", "{{ _('storage') }}", "{{ _('access') }}", "{{ _('key') }}", "{{ _('id') }}"] },
-                    { id: 'aws_secret_access_key', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Secret Access Key') }}", anchorId: 'setting-aws-secret-access-key', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["{{ _('s3') }}", "{{ _('aws') }}", "{{ _('storage') }}", "{{ _('secret') }}", "{{ _('key') }}"] },
-                    { id: 'aws_region', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Region') }}", anchorId: 'setting-aws-region', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["{{ _('s3') }}", "{{ _('aws') }}", "{{ _('storage') }}", "{{ _('region') }}"] },
-                    { id: 'media_extensions', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Allowed Media Extensions') }}", anchorId: 'setting-media-allowed-extensions', keywords: ["{{ _('upload') }}", "{{ _('extensions') }}", "{{ _('files') }}"] },
-                    { id: 'media_size', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Media Max Upload Size') }}", anchorId: 'setting-media-max-upload-size', keywords: ["{{ _('upload') }}", "{{ _('size') }}", "{{ _('limit') }}"] },
+                    { id: 'storage_backend', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('Local Filesystem / S3 Storage') }}", anchorId: 'setting-storage-backend', keywords: ["{{ _('bucket') }}"] },
+                    { id: 's3_bucket', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('S3 Bucket Name') }}", anchorId: 'setting-s3-bucket', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["aws"] },
+                    { id: 'aws_access_key_id', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Access Key ID') }}", anchorId: 'setting-aws-access-key-id', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["s3"] },
+                    { id: 'aws_secret_access_key', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Secret Access Key') }}", anchorId: 'setting-aws-secret-access-key', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["s3"] },
+                    { id: 'aws_region', tab: 'storage', section: "{{ _('Storage backend') }}", label: "{{ _('AWS Region') }}", anchorId: 'setting-aws-region', requires: { label: "{{ _('S3 Storage') }}", anchorId: 'setting-storage-backend' }, keywords: ["s3"] },
+                    { id: 'media_extensions', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Allowed Media Extensions') }}", anchorId: 'setting-media-allowed-extensions', keywords: ["{{ _('files') }}"] },
+                    { id: 'media_size', tab: 'storage', section: "{{ _('Upload restrictions') }}", label: "{{ _('Media Max Upload Size') }}", anchorId: 'setting-media-max-upload-size', keywords: ["{{ _('limit') }}"] },
 
-                    { id: 'password_min_len', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Minimum Length') }}", anchorId: 'setting-password-min-length', keywords: ["{{ _('password') }}", "{{ _('security') }}"] },
-                    { id: 'password_strength', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Strength') }}", anchorId: 'setting-password-strength', keywords: ["{{ _('zxcvbn') }}", "{{ _('security') }}"] },
-                    { id: 'force_2fa', tab: 'security', section: "{{ _('Two Factor Authentication Policies') }}", label: "{{ _('Force 2FA enrollment') }}", anchorId: 'setting-force-2fa', keywords: ["{{ _('2fa') }}", "{{ _('mfa') }}", "{{ _('security') }}"] },
-                    { id: 'disallow_sessions', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Disallow multiple concurrent sessions') }}", anchorId: 'setting-disallow-multiple-sessions', keywords: ["{{ _('session') }}", "{{ _('login') }}", "{{ _('devices') }}"] },
-                    { id: 'session_retention', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Session Data Retention Period') }}", anchorId: 'setting-session-retention', keywords: ["{{ _('session') }}", "{{ _('retention') }}", "{{ _('days') }}"] },
-                    { id: 'recaptcha_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha enabled') }}", anchorId: 'setting-recaptcha-enabled', keywords: ["{{ _('captcha') }}", "{{ _('bot') }}", "{{ _('login') }}"] },
-                    { id: 'recaptcha_public_key', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha Public Key') }}", anchorId: 'setting-recaptcha-enabled', requires: { label: "{{ _('Recaptcha') }}", anchorId: 'setting-recaptcha-enabled' }, keywords: ["{{ _('recaptcha') }}", "{{ _('site key') }}", "{{ _('captcha') }}"] },
-                    { id: 'recaptcha_private_key', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha Private Key') }}", anchorId: 'setting-recaptcha-enabled', requires: { label: "{{ _('Recaptcha') }}", anchorId: 'setting-recaptcha-enabled' }, keywords: ["{{ _('recaptcha') }}", "{{ _('secret key') }}", "{{ _('captcha') }}"] },
-                    { id: 'google_oauth_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Enable Google OAuth') }}", anchorId: 'setting-google-oauth-enabled', keywords: ["{{ _('sso') }}", "{{ _('oauth') }}", "{{ _('google') }}"] },
-                    { id: 'google_client_id', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Google Client ID') }}", anchorId: 'setting-google-oauth-enabled', requires: { label: "{{ _('Google OAuth') }}", anchorId: 'setting-google-oauth-enabled' }, keywords: ["{{ _('oauth') }}", "{{ _('google') }}", "{{ _('client') }}"] },
-                    { id: 'google_client_secret', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Google Client Secret') }}", anchorId: 'setting-google-oauth-enabled', requires: { label: "{{ _('Google OAuth') }}", anchorId: 'setting-google-oauth-enabled' }, keywords: ["{{ _('oauth') }}", "{{ _('google') }}", "{{ _('secret') }}"] },
-                    { id: 'google_discovery_url', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Google Discovery URL') }}", anchorId: 'setting-google-oauth-enabled', requires: { label: "{{ _('Google OAuth') }}", anchorId: 'setting-google-oauth-enabled' }, keywords: ["{{ _('oauth') }}", "{{ _('google') }}", "{{ _('oidc') }}"] },
+                    { id: 'password_min_len', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Minimum Length') }}", anchorId: 'setting-password-min-length', keywords: ["{{ _('security') }}"] },
+                    { id: 'password_strength', tab: 'security', section: "{{ _('Credential policies') }}", label: "{{ _('Password Strength') }}", anchorId: 'setting-password-strength', keywords: ["zxcvbn", "{{ _('security') }}"] },
+                    { id: 'force_2fa', tab: 'security', section: "{{ _('Two Factor Authentication Policies') }}", label: "{{ _('Force 2FA enrollment') }}", anchorId: 'setting-force-2fa', keywords: ["mfa", "{{ _('security') }}"] },
+                    { id: 'disallow_sessions', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Disallow multiple concurrent sessions') }}", anchorId: 'setting-disallow-multiple-sessions', keywords: ["{{ _('login') }}", "{{ _('devices') }}"] },
+                    { id: 'session_retention', tab: 'security', section: "{{ _('Session policies') }}", label: "{{ _('Session Data Retention Period') }}", anchorId: 'setting-session-retention', keywords: ["{{ _('days') }}"] },
+                    { id: 'recaptcha_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha enabled') }}", anchorId: 'setting-recaptcha-enabled', keywords: ["{{ _('bot') }}"] },
+                    { id: 'recaptcha_public_key', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha Public Key') }}", anchorId: 'setting-recaptcha-enabled', requires: { label: "{{ _('Recaptcha') }}", anchorId: 'setting-recaptcha-enabled' }, keywords: ["{{ _('site key') }}"] },
+                    { id: 'recaptcha_private_key', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Recaptcha Private Key') }}", anchorId: 'setting-recaptcha-enabled', requires: { label: "{{ _('Recaptcha') }}", anchorId: 'setting-recaptcha-enabled' }, keywords: ["{{ _('secret key') }}"] },
+                    { id: 'google_oauth_enabled', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Enable Google OAuth') }}", anchorId: 'setting-google-oauth-enabled', keywords: ["sso"] },
+                    { id: 'google_client_id', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Google Client ID') }}", anchorId: 'setting-google-oauth-enabled', requires: { label: "{{ _('Google OAuth') }}", anchorId: 'setting-google-oauth-enabled' }, keywords: ["oauth"] },
+                    { id: 'google_client_secret', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Google Client Secret') }}", anchorId: 'setting-google-oauth-enabled', requires: { label: "{{ _('Google OAuth') }}", anchorId: 'setting-google-oauth-enabled' }, keywords: ["oauth"] },
+                    { id: 'google_discovery_url', tab: 'security', section: "{{ _('Login protection and sign-in providers') }}", label: "{{ _('Google Discovery URL') }}", anchorId: 'setting-google-oauth-enabled', requires: { label: "{{ _('Google OAuth') }}", anchorId: 'setting-google-oauth-enabled' }, keywords: ["oauth", "oidc"] },
                     { id: 'security_freshness', tab: 'security', section: "{{ _('Re-authentication windows') }}", label: "{{ _('Security freshness') }}", anchorId: 'setting-security-freshness', keywords: ["{{ _('reauth') }}", "{{ _('timeout') }}", "{{ _('minutes') }}"] },
-                    { id: 'security_freshness_grace', tab: 'security', section: "{{ _('Re-authentication windows') }}", label: "{{ _('Security freshness grace period') }}", anchorId: 'setting-security-freshness', keywords: ["{{ _('reauth') }}", "{{ _('grace') }}", "{{ _('2fa') }}"] },
+                    { id: 'security_freshness_grace', tab: 'security', section: "{{ _('Re-authentication windows') }}", label: "{{ _('Security freshness grace period') }}", anchorId: 'setting-security-freshness-grace', keywords: ["{{ _('reauth') }}", "2fa"] },
 
-                    { id: 'restrictive_access', tab: 'control', section: "{{ _('Default access behavior') }}", label: "{{ _('Restrictive access control') }}", anchorId: 'setting-restrictive-access-control', keywords: ["{{ _('permissions') }}", "{{ _('default access') }}"] },
+                    { id: 'restrictive_access', tab: 'control', section: "{{ _('Default access behavior') }}", label: "{{ _('Restrictive access control') }}", anchorId: 'setting-restrictive-access-control', keywords: ["{{ _('permissions') }}"] },
                     { id: 'non_admin_restrict', tab: 'control', section: "{{ _('Default access behavior') }}", label: "{{ _('Allow non-admin users to restrict new items') }}", anchorId: 'setting-non-admin-restrict', keywords: ["{{ _('permissions') }}", "{{ _('item restriction') }}"] },
 
-                    { id: 'activity_items', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items activity logging') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('logging') }}", "{{ _('audit') }}", "{{ _('items') }}"] },
-                    { id: 'activity_create', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items created') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('create') }}", "{{ _('logging') }}", "{{ _('audit') }}"] },
-                    { id: 'activity_view', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items viewed') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('view') }}", "{{ _('logging') }}", "{{ _('audit') }}"] },
-                    { id: 'activity_update', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items edited') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('edit') }}", "{{ _('update') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_delete', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items deleted') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('delete') }}", "{{ _('logging') }}", "{{ _('audit') }}"] },
-                    { id: 'activity_review', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items reviewed') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('review') }}", "{{ _('peer') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_self_assign', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items self-assigned') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('assign') }}", "{{ _('self') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_items', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items activity logging') }}", anchorId: 'setting-activity-items', keywords: ["{{ _('audit') }}"] },
+                    { id: 'activity_create', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items created') }}", anchorId: 'setting-activity-create', keywords: ["{{ _('logging') }}", "{{ _('audit') }}"] },
+                    { id: 'activity_view', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items viewed') }}", anchorId: 'setting-activity-view', keywords: ["{{ _('logging') }}", "{{ _('audit') }}"] },
+                    { id: 'activity_update', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items edited') }}", anchorId: 'setting-activity-update', keywords: ["{{ _('update') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_delete', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items deleted') }}", anchorId: 'setting-activity-delete', keywords: ["{{ _('logging') }}", "{{ _('audit') }}"] },
+                    { id: 'activity_review', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items reviewed') }}", anchorId: 'setting-activity-review', keywords: ["{{ _('peer') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_self_assign', tab: 'logging', section: "{{ _('Items') }}", label: "{{ _('Items self-assigned') }}", anchorId: 'setting-activity-self-assign', keywords: ["{{ _('logging') }}"] },
 
-                    { id: 'activity_export', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export activity logging') }}", anchorId: 'setting-activity-export', keywords: ["{{ _('logging') }}", "{{ _('audit') }}", "{{ _('export') }}"] },
-                    { id: 'activity_request', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests made') }}", anchorId: 'setting-activity-export', keywords: ["{{ _('export') }}", "{{ _('request') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_approve', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests approved') }}", anchorId: 'setting-activity-export', keywords: ["{{ _('export') }}", "{{ _('approve') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_reject', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests rejected') }}", anchorId: 'setting-activity-export', keywords: ["{{ _('export') }}", "{{ _('reject') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_download', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests downloaded') }}", anchorId: 'setting-activity-export', keywords: ["{{ _('export') }}", "{{ _('download') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_export', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export activity logging') }}", anchorId: 'setting-activity-export', keywords: ["{{ _('audit') }}"] },
+                    { id: 'activity_request', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests made') }}", anchorId: 'setting-activity-request', keywords: ["{{ _('logging') }}"] },
+                    { id: 'activity_approve', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests approved') }}", anchorId: 'setting-activity-approve', keywords: ["{{ _('logging') }}"] },
+                    { id: 'activity_reject', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests rejected') }}", anchorId: 'setting-activity-reject', keywords: ["{{ _('logging') }}"] },
+                    { id: 'activity_download', tab: 'logging', section: "{{ _('Export') }}", label: "{{ _('Export requests downloaded') }}", anchorId: 'setting-activity-download', keywords: ["{{ _('logging') }}"] },
 
-                    { id: 'activity_auth', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Authentication activity logging') }}", anchorId: 'setting-activity-auth', keywords: ["{{ _('logging') }}", "{{ _('login') }}", "{{ _('logout') }}"] },
-                    { id: 'activity_login', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Logins') }}", anchorId: 'setting-activity-auth', keywords: ["{{ _('login') }}", "{{ _('sign in') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_logout', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Logouts') }}", anchorId: 'setting-activity-auth', keywords: ["{{ _('logout') }}", "{{ _('sign out') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_auth', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Authentication activity logging') }}", anchorId: 'setting-activity-auth', keywords: ["{{ _('login') }}", "{{ _('logout') }}"] },
+                    { id: 'activity_login', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Logins') }}", anchorId: 'setting-activity-login', keywords: ["{{ _('sign in') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_logout', tab: 'logging', section: "{{ _('Authentication') }}", label: "{{ _('Logouts') }}", anchorId: 'setting-activity-logout', keywords: ["{{ _('sign out') }}", "{{ _('logging') }}"] },
 
                     { id: 'activity_other', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Other actions logging') }}", anchorId: 'setting-activity-other', keywords: ["{{ _('search') }}", "{{ _('upload') }}", "{{ _('bulk') }}"] },
-                    { id: 'activity_search', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Search queries made') }}", anchorId: 'setting-activity-other', keywords: ["{{ _('search') }}", "{{ _('query') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_upload', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Files uploaded') }}", anchorId: 'setting-activity-other', keywords: ["{{ _('upload') }}", "{{ _('files') }}", "{{ _('logging') }}"] },
-                    { id: 'activity_bulk', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Bulk operations queued') }}", anchorId: 'setting-activity-other', keywords: ["{{ _('bulk') }}", "{{ _('batch') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_search', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Search queries made') }}", anchorId: 'setting-activity-search', keywords: ["{{ _('query') }}", "{{ _('logging') }}"] },
+                    { id: 'activity_upload', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Files uploaded') }}", anchorId: 'setting-activity-upload', keywords: ["{{ _('logging') }}"] },
+                    { id: 'activity_bulk', tab: 'logging', section: "{{ _('Other actions') }}", label: "{{ _('Bulk operations queued') }}", anchorId: 'setting-activity-bulk', keywords: ["{{ _('batch') }}", "{{ _('logging') }}"] },
 
-                    { id: 'activity_retention', tab: 'logging', section: "{{ _('Retention period') }}", label: "{{ _('Activity Retention Period') }}", anchorId: 'setting-activity-retention', keywords: ["{{ _('retention') }}", "{{ _('cleanup') }}", "{{ _('days') }}"] },
+                    { id: 'activity_retention', tab: 'logging', section: "{{ _('Retention period') }}", label: "{{ _('Activity Retention Period') }}", anchorId: 'setting-activity-retention', keywords: ["{{ _('cleanup') }}", "{{ _('days') }}"] },
 
-                    { id: 'media_import_tool', tab: 'import', section: "{{ _('Ingestion pipelines') }}", label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool', keywords: ["{{ _('etl') }}", "{{ _('import') }}", "{{ _('media') }}"] },
-                    { id: 'import_path_scanning', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Media Import path scanning') }}", anchorId: 'setting-import-path-scanning', requires: { label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool' }, keywords: ["{{ _('path') }}", "{{ _('scan') }}", "{{ _('security') }}"] },
-                    { id: 'etl_vid_ext', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Allowed Media Import Extensions') }}", anchorId: 'setting-import-path-scanning', requires: { label: "{{ _('Media Import path scanning') }}", anchorId: 'setting-import-path-scanning' }, keywords: ["{{ _('extensions') }}", "{{ _('etl') }}", "{{ _('files') }}"] },
-                    { id: 'transcription_enabled', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Enable transcription') }}", anchorId: 'setting-transcription-enabled', requires: { label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool' }, keywords: ["{{ _('whisper') }}", "{{ _('audio') }}", "{{ _('transcript') }}"] },
-                    { id: 'whisper_model', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Whisper Model') }}", anchorId: 'setting-transcription-enabled', requires: { label: "{{ _('Transcription') }}", anchorId: 'setting-transcription-enabled' }, keywords: ["{{ _('whisper') }}", "{{ _('model') }}", "{{ _('transcription') }}"] },
-                    { id: 'sheet_import', tab: 'import', section: "{{ _('Sheet Import') }}", label: "{{ _('Sheet Import') }}", anchorId: 'setting-sheet-import', keywords: ["{{ _('spreadsheet') }}", "{{ _('excel') }}", "{{ _('import') }}"] },
-                    { id: 'sheets_allowed_extensions', tab: 'import', section: "{{ _('Sheet Import') }}", label: "{{ _('Allowed Sheets Extensions') }}", anchorId: 'setting-sheet-import', requires: { label: "{{ _('Sheet Import') }}", anchorId: 'setting-sheet-import' }, keywords: ["{{ _('spreadsheet') }}", "{{ _('extensions') }}", "{{ _('csv') }}"] },
-                    { id: 'web_import', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import') }}", anchorId: 'setting-web-import', keywords: ["{{ _('yt-dlp') }}", "{{ _('url') }}", "{{ _('media import') }}"] },
-                    { id: 'web_import_proxy', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import proxy') }}", anchorId: 'setting-web-import', requires: { label: "{{ _('Web Import') }}", anchorId: 'setting-web-import' }, keywords: ["{{ _('proxy') }}", "{{ _('socks5') }}", "{{ _('yt-dlp') }}"] },
-                    { id: 'ytdlp_allowed_domains', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Allowed domains') }}", anchorId: 'setting-web-import', requires: { label: "{{ _('Web Import') }}", anchorId: 'setting-web-import' }, keywords: ["{{ _('domains') }}", "{{ _('allowlist') }}", "{{ _('yt-dlp') }}"] },
-                    { id: 'ytdlp_cookies', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import cookies') }}", anchorId: 'setting-web-import', requires: { label: "{{ _('Web Import') }}", anchorId: 'setting-web-import' }, keywords: ["{{ _('cookies') }}", "{{ _('auth') }}", "{{ _('yt-dlp') }}"] },
+                    { id: 'media_import_tool', tab: 'import', section: "{{ _('Ingestion pipelines') }}", label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool', keywords: ["etl"] },
+                    { id: 'import_path_scanning', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Media Import path scanning') }}", anchorId: 'setting-import-path-scanning', requires: { label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool' }, keywords: ["{{ _('security') }}"] },
+                    { id: 'etl_vid_ext', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Allowed Media Import Extensions') }}", anchorId: 'setting-import-path-scanning', requires: { label: "{{ _('Media Import path scanning') }}", anchorId: 'setting-import-path-scanning' }, keywords: ["etl", "{{ _('files') }}"] },
+                    { id: 'transcription_enabled', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Enable transcription') }}", anchorId: 'setting-transcription-enabled', requires: { label: "{{ _('Media Import tool') }}", anchorId: 'setting-media-import-tool' }, keywords: ["whisper", "{{ _('audio') }}"] },
+                    { id: 'whisper_model', tab: 'import', section: "{{ _('Media Import tool') }}", label: "{{ _('Whisper Model') }}", anchorId: 'setting-transcription-enabled', requires: { label: "{{ _('Transcription') }}", anchorId: 'setting-transcription-enabled' }, keywords: ["{{ _('transcription') }}"] },
+                    { id: 'sheet_import', tab: 'import', section: "{{ _('Sheet Import') }}", label: "{{ _('Sheet Import') }}", anchorId: 'setting-sheet-import', keywords: ["{{ _('spreadsheet') }}", "{{ _('excel') }}"] },
+                    { id: 'sheets_allowed_extensions', tab: 'import', section: "{{ _('Sheet Import') }}", label: "{{ _('Allowed Sheets Extensions') }}", anchorId: 'setting-sheet-import', requires: { label: "{{ _('Sheet Import') }}", anchorId: 'setting-sheet-import' }, keywords: ["{{ _('spreadsheet') }}", "csv"] },
+                    { id: 'web_import', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import') }}", anchorId: 'setting-web-import', keywords: ["yt-dlp", "url", "{{ _('media import') }}"] },
+                    { id: 'web_import_proxy', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import proxy') }}", anchorId: 'setting-web-import', requires: { label: "{{ _('Web Import') }}", anchorId: 'setting-web-import' }, keywords: ["socks5", "yt-dlp"] },
+                    { id: 'ytdlp_allowed_domains', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Allowed domains') }}", anchorId: 'setting-web-import', requires: { label: "{{ _('Web Import') }}", anchorId: 'setting-web-import' }, keywords: ["{{ _('allowlist') }}", "yt-dlp"] },
+                    { id: 'ytdlp_cookies', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import cookies') }}", anchorId: 'setting-web-import', requires: { label: "{{ _('Web Import') }}", anchorId: 'setting-web-import' }, keywords: ["{{ _('auth') }}", "yt-dlp"] },
 
-                    { id: 'ocr_import', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('Import-time OCR (Tesseract)') }}", anchorId: 'setting-import-ocr', keywords: ["{{ _('ocr') }}", "{{ _('tesseract') }}", "{{ _('text extraction') }}"] },
-                    { id: 'ocr_extensions', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('OCR Extensions') }}", anchorId: 'setting-ocr-extensions', requires: { label: "{{ _('Tesseract OCR') }}", anchorId: 'setting-import-ocr' }, keywords: ["{{ _('ocr') }}", "{{ _('extensions') }}", "{{ _('tesseract') }}"] },
-                    { id: 'ocr_provider', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Provider') }}", anchorId: 'setting-ocr-provider', keywords: ["{{ _('vision') }}", "{{ _('llm') }}", "{{ _('ocr') }}"] },
-                    { id: 'vision_api_key', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Google Cloud API Key') }}", anchorId: 'setting-google-vision-api-key', requires: { label: "{{ _('Google Vision') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('vision') }}", "{{ _('ocr') }}", "{{ _('translation') }}"] },
-                    { id: 'llm_ocr_url', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM Endpoint URL') }}", anchorId: 'setting-llm-ocr-url', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('llm') }}", "{{ _('endpoint') }}", "{{ _('url') }}", "{{ _('ocr') }}"] },
-                    { id: 'llm_ocr_model', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM Model') }}", anchorId: 'setting-llm-ocr-model', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('llm') }}", "{{ _('model') }}", "{{ _('ocr') }}"] },
-                    { id: 'llm_ocr_api_key', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM API Key') }}", anchorId: 'setting-llm-ocr-api-key', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('llm') }}", "{{ _('api key') }}", "{{ _('ocr') }}", "{{ _('credentials') }}"] },
+                    { id: 'ocr_import', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('Import-time OCR (Tesseract)') }}", anchorId: 'setting-import-ocr', keywords: ["{{ _('text extraction') }}"] },
+                    { id: 'ocr_extensions', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('OCR Extensions') }}", anchorId: 'setting-ocr-extensions', requires: { label: "{{ _('Tesseract OCR') }}", anchorId: 'setting-import-ocr' }, keywords: [] },
+                    { id: 'ocr_provider', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Provider') }}", anchorId: 'setting-ocr-provider', keywords: ["{{ _('vision') }}", "llm"] },
+                    { id: 'vision_api_key', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Google Cloud API Key') }}", anchorId: 'setting-google-vision-api-key', requires: { label: "{{ _('Google Vision') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('vision') }}", "{{ _('translation') }}"] },
+                    { id: 'llm_ocr_url', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM Endpoint URL') }}", anchorId: 'setting-llm-ocr-url', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: [] },
+                    { id: 'llm_ocr_model', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM Model') }}", anchorId: 'setting-llm-ocr-model', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: [] },
+                    { id: 'llm_ocr_api_key', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM API Key') }}", anchorId: 'setting-llm-ocr-api-key', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('credentials') }}"] },
 
                     { id: 'export_tool', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export system') }}", anchorId: 'setting-export-tool', keywords: ["{{ _('exports') }}", "{{ _('requests') }}"] },
-                    { id: 'export_expiry', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export Expiry Time') }}", anchorId: 'setting-export-expiry-time', requires: { label: "{{ _('Export system') }}", anchorId: 'setting-export-tool' }, keywords: ["{{ _('expiry') }}", "{{ _('retention') }}", "{{ _('hours') }}"] },
+                    { id: 'export_expiry', tab: 'export', section: "{{ _('Export system') }}", label: "{{ _('Export Expiry Time') }}", anchorId: 'setting-export-expiry-time', requires: { label: "{{ _('Export system') }}", anchorId: 'setting-export-tool' }, keywords: ["{{ _('retention') }}", "{{ _('hours') }}"] },
 
-                    { id: 'map_endpoint', tab: 'maps', section: "{{ _('Map tiles provider') }}", label: "{{ _('Map API endpoint') }}", anchorId: 'setting-map-api-endpoint', keywords: ["{{ _('maps') }}", "{{ _('osm') }}", "{{ _('tiles') }}"] },
-                    { id: 'google_maps_api', tab: 'maps', section: "{{ _('Satellite Imagery') }}", label: "{{ _('Google Maps API Key') }}", anchorId: 'setting-google-maps-api-key', keywords: ["{{ _('maps') }}", "{{ _('satellite') }}", "{{ _('google') }}"] },
-                    { id: 'map_default_position', tab: 'maps', section: "{{ _('Default Map Position') }}", label: "{{ _('Default Map Position') }}", anchorId: 'setting-map-default-position', keywords: ["{{ _('coordinates') }}", "{{ _('center') }}", "{{ _('default map') }}"] },
+                    { id: 'map_endpoint', tab: 'maps', section: "{{ _('Map tiles provider') }}", label: "{{ _('Map API endpoint') }}", anchorId: 'setting-map-api-endpoint', keywords: ["{{ _('maps') }}", "osm"] },
+                    { id: 'google_maps_api', tab: 'maps', section: "{{ _('Satellite Imagery') }}", label: "{{ _('Google Maps API Key') }}", anchorId: 'setting-google-maps-api-key', keywords: [] },
+                    { id: 'map_default_position', tab: 'maps', section: "{{ _('Default Map Position') }}", label: "{{ _('Default Map Position') }}", anchorId: 'setting-map-default-position', keywords: ["{{ _('coordinates') }}", "{{ _('center') }}"] },
 
-                    { id: 'postal_code_generation', tab: 'locations', section: "{{ _('Location') }}", label: "{{ _('Include postal code generation settings') }}", anchorId: 'setting-include-postal-code', keywords: ["{{ _('location') }}", "{{ _('postal code') }}"] },
+                    { id: 'postal_code_generation', tab: 'locations', section: "{{ _('Location') }}", label: "{{ _('Include postal code generation settings') }}", anchorId: 'setting-include-postal-code', keywords: [] },
 
-                    { id: 'notifications_users', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Notifications for users') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('notification') }}", "{{ _('users') }}"] },
-                    { id: 'notif_login_new_ip', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Login from new IP') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('ip') }}", "{{ _('login') }}", "{{ _('alert') }}"] },
-                    { id: 'notif_password', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Password') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('password') }}", "{{ _('change') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_2fa', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Two-factor authentication') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('2fa') }}", "{{ _('mfa') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_recovery_codes', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Recovery codes') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('recovery') }}", "{{ _('codes') }}", "{{ _('2fa') }}"] },
-                    { id: 'notif_new_assignment', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('New assignment') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('task') }}", "{{ _('assign') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_review_needed', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Review needed') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('review') }}", "{{ _('request') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_web_import_status', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Web Import status') }}", anchorId: 'setting-notifications-users', keywords: ["{{ _('web import') }}", "{{ _('yt-dlp') }}", "{{ _('notification') }}"] },
+                    { id: 'notifications_users', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Notifications for users') }}", anchorId: 'setting-notifications-users', keywords: [] },
+                    { id: 'notif_login_new_ip', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Login from new IP') }}", anchorId: 'setting-notif-login-new-ip', keywords: ["{{ _('alert') }}"] },
+                    { id: 'notif_password', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Password') }}", anchorId: 'setting-notif-password', keywords: ["{{ _('change') }}"] },
+                    { id: 'notif_2fa', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Two-factor authentication') }}", anchorId: 'setting-notif-2fa', keywords: ["2fa", "mfa"] },
+                    { id: 'notif_recovery_codes', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Recovery codes') }}", anchorId: 'setting-notif-recovery-codes', keywords: ["2fa"] },
+                    { id: 'notif_new_assignment', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('New assignment') }}", anchorId: 'setting-notif-new-assignment', keywords: ["{{ _('task') }}"] },
+                    { id: 'notif_review_needed', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Review needed') }}", anchorId: 'setting-notif-review-needed', keywords: ["{{ _('request') }}"] },
+                    { id: 'notif_web_import_status', tab: 'notifications', section: "{{ _('Notifications for users') }}", label: "{{ _('Web Import status') }}", anchorId: 'setting-notif-web-import-status', keywords: ["yt-dlp"] },
 
-                    { id: 'notifications_admins_all', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Notifications for all administrators') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('notification') }}", "{{ _('admins') }}"] },
-                    { id: 'notif_new_user', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('New user') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('user') }}", "{{ _('account') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_update_user', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('User updates') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('user') }}", "{{ _('update') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_new_group', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('New group') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('group') }}", "{{ _('role') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_system_settings_change', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('System settings change') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('settings') }}", "{{ _('change') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_unauthorized_action', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Unauthorized action') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('unauthorized') }}", "{{ _('security') }}", "{{ _('alert') }}"] },
-                    { id: 'notif_admin_credentials_change', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Admin security credentials change') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('admin') }}", "{{ _('credentials') }}", "{{ _('security') }}"] },
-                    { id: 'notif_item_deleted', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Deleted items') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('delete') }}", "{{ _('items') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_new_export', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('New export request') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('export') }}", "{{ _('request') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_export_approved', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Approved export request') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('export') }}", "{{ _('approve') }}", "{{ _('notification') }}"] },
-                    { id: 'notif_new_batch', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('New import batch') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('import') }}", "{{ _('batch') }}", "{{ _('notification') }}"] },
+                    { id: 'notifications_admins_all', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Notifications for all administrators') }}", anchorId: 'setting-notifications-admins-all', keywords: ["{{ _('admins') }}"] },
+                    { id: 'notif_new_user', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('New user') }}", anchorId: 'setting-notif-new-user', keywords: ["{{ _('account') }}"] },
+                    { id: 'notif_update_user', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('User updates') }}", anchorId: 'setting-notif-update-user', keywords: [] },
+                    { id: 'notif_new_group', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('New group') }}", anchorId: 'setting-notif-new-group', keywords: ["{{ _('role') }}"] },
+                    { id: 'notif_system_settings_change', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('System settings change') }}", anchorId: 'setting-notif-system-settings-change', keywords: [] },
+                    { id: 'notif_unauthorized_action', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Unauthorized action') }}", anchorId: 'setting-notif-unauthorized-action', keywords: ["{{ _('security') }}", "{{ _('alert') }}"] },
+                    { id: 'notif_admin_credentials_change', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Admin security credentials change') }}", anchorId: 'setting-notif-admin-credentials-change', keywords: [] },
+                    { id: 'notif_item_deleted', tab: 'notifications', section: "{{ _('Notifications for all administrators') }}", label: "{{ _('Deleted items') }}", anchorId: 'setting-notif-item-deleted', keywords: [] },
+                    { id: 'notif_new_export', tab: 'notifications', section: "{{ _('Export') }}", label: "{{ _('New export request') }}", anchorId: 'setting-notif-new-export', keywords: ["{{ _('notification') }}"] },
+                    { id: 'notif_export_approved', tab: 'notifications', section: "{{ _('Export') }}", label: "{{ _('Approved export request') }}", anchorId: 'setting-notif-export-approved', keywords: ["{{ _('notification') }}"] },
+                    { id: 'notif_new_batch', tab: 'notifications', section: "{{ _('Media and Sheet Import') }}", label: "{{ _('New import batch') }}", anchorId: 'setting-notif-new-batch', keywords: ["{{ _('notification') }}"] },
 
-                    { id: 'notifications_admins', tab: 'notifications', section: "{{ _('Notifications for administrators') }}", label: "{{ _('Notifications for administrators') }}", anchorId: 'setting-notifications-admins', keywords: ["{{ _('notification') }}", "{{ _('admin') }}"] },
-                    { id: 'notif_batch_status', tab: 'notifications', section: "{{ _('Notifications for administrators') }}", label: "{{ _('Import batch status') }}", anchorId: 'setting-notifications-admins', keywords: ["{{ _('import') }}", "{{ _('batch') }}", "{{ _('status') }}"] },
-                    { id: 'notif_bulk_operation_status', tab: 'notifications', section: "{{ _('Notifications for administrators') }}", label: "{{ _('Bulk operations status') }}", anchorId: 'setting-notifications-admins', keywords: ["{{ _('bulk') }}", "{{ _('operations') }}", "{{ _('status') }}"] },
+                    { id: 'notifications_admins', tab: 'notifications', section: "{{ _('Notifications for administrators') }}", label: "{{ _('Notifications for administrators') }}", anchorId: 'setting-notifications-admins', keywords: [] },
+                    { id: 'notif_batch_status', tab: 'notifications', section: "{{ _('Notifications for administrators') }}", label: "{{ _('Import batch status') }}", anchorId: 'setting-notif-batch-status', keywords: [] },
+                    { id: 'notif_bulk_operation_status', tab: 'notifications', section: "{{ _('Notifications for administrators') }}", label: "{{ _('Bulk operations status') }}", anchorId: 'setting-notif-bulk-operation-status', keywords: [] },
 
-                    { id: 'mail_enabled', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Enable Mail System') }}", anchorId: 'setting-mail-enabled', keywords: ["{{ _('mail') }}", "{{ _('smtp') }}", "{{ _('email') }}"] },
-                    { id: 'mail_server', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Server') }}", anchorId: 'setting-mail-server', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('smtp') }}", "{{ _('host') }}"] },
-                    { id: 'mail_port', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Port') }}", anchorId: 'setting-mail-port', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('smtp') }}", "{{ _('port') }}"] },
-                    { id: 'mail_default_sender', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Default Sender') }}", anchorId: 'setting-mail-default-sender', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('sender') }}", "{{ _('from') }}"] },
-                    { id: 'mail_allowed_domains', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Allowed Email Domains') }}", anchorId: 'setting-mail-allowed-domains', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('email') }}", "{{ _('domains') }}", "{{ _('allowlist') }}"] },
-                    { id: 'mail_tls', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Use TLS') }}", anchorId: 'setting-mail-tls', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('tls') }}", "{{ _('transport') }}", "{{ _('layer') }}", "{{ _('security') }}"] },
-                    { id: 'mail_ssl', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Use SSL') }}", anchorId: 'setting-mail-ssl', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('ssl') }}", "{{ _('secure') }}", "{{ _('sockets') }}", "{{ _('layer') }}"] },
-                    { id: 'mail_user', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail User') }}", anchorId: 'setting-mail-username', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('user') }}", "{{ _('account') }}", "{{ _('credentials') }}"] },
-                    { id: 'mail_password', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Password') }}", anchorId: 'setting-mail-password', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('password') }}", "{{ _('account') }}", "{{ _('credentials') }}"] },
+                    { id: 'mail_enabled', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Enable Mail System') }}", anchorId: 'setting-mail-enabled', keywords: ["smtp", "{{ _('email') }}"] },
+                    { id: 'mail_server', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Server') }}", anchorId: 'setting-mail-server', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["smtp", "{{ _('host') }}"] },
+                    { id: 'mail_port', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Port') }}", anchorId: 'setting-mail-port', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["smtp"] },
+                    { id: 'mail_default_sender', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Default Sender') }}", anchorId: 'setting-mail-default-sender', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('from') }}"] },
+                    { id: 'mail_allowed_domains', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Allowed Email Domains') }}", anchorId: 'setting-mail-allowed-domains', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('allowlist') }}"] },
+                    { id: 'mail_tls', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Use TLS') }}", anchorId: 'setting-mail-tls', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('layer') }}", "{{ _('security') }}"] },
+                    { id: 'mail_ssl', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Use SSL') }}", anchorId: 'setting-mail-ssl', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('secure') }}", "{{ _('sockets') }}", "{{ _('layer') }}"] },
+                    { id: 'mail_user', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail User') }}", anchorId: 'setting-mail-username', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('account') }}", "{{ _('credentials') }}"] },
+                    { id: 'mail_password', tab: 'mail', section: "{{ _('Mail transport') }}", label: "{{ _('Mail Password') }}", anchorId: 'setting-mail-password', requires: { label: "{{ _('Mail System') }}", anchorId: 'setting-mail-enabled' }, keywords: ["{{ _('account') }}", "{{ _('credentials') }}"] },
                 ],
 
 
@@ -1476,6 +1477,7 @@
                 tab(newTab) {
                     const fullPath = `${window.location.pathname}${window.location.search}`
                     this.$router.push(`${fullPath}#${newTab}`)
+                    this.$nextTick(() => this.warnAboutDeadAnchors(newTab));
                 }
             },
 
@@ -1491,6 +1493,8 @@
                         this.tab = nextTab;
                     }
                 })
+
+                this.$nextTick(() => this.warnAboutDeadAnchors(this.tab));
             },
 
             computed: {
@@ -1514,13 +1518,13 @@
                     }));
 
                     if (!query) {
-                        return items.slice(0, 12);
+                        return items.slice(0, SETTINGS_SEARCH_RESULTS_LIMIT);
                     }
 
                     const terms = query.split(/\s+/).filter(Boolean);
                     return items
                         .filter(setting => terms.every(term => setting.normalizedHaystack.includes(term)))
-                        .slice(0, 24);
+                        .slice(0, SETTINGS_SEARCH_RESULTS_LIMIT);
                 },
                 hasChanges() {
                     return DiffTool.hasDiff(this.exconfig, this.eitem);
@@ -1542,6 +1546,21 @@
                         .toLocaleLowerCase()
                         .replace(/\s+/g, ' ')
                         .trim();
+                },
+                warnAboutDeadAnchors(tabKey) {
+                    // settingsSearchMap entries are v-if gated per tab, so an
+                    // anchorId can only be checked against the DOM once its
+                    // own tab has actually rendered.
+                    this.settingsSearchMap
+                        .filter(setting => setting.tab === tabKey)
+                        .forEach(setting => {
+                            if (!document.getElementById(setting.anchorId)) {
+                                console.warn(`settingsSearchMap: no element with id="${setting.anchorId}" for setting "${setting.id}" (tab "${tabKey}")`);
+                            }
+                            if (setting.requires && !document.getElementById(setting.requires.anchorId)) {
+                                console.warn(`settingsSearchMap: no element with id="${setting.requires.anchorId}" (requires.anchorId) for setting "${setting.id}" (tab "${tabKey}")`);
+                            }
+                        });
                 },
                 loadWhisperModels(){
                     api.get('/import/api/whisper/models/').then(res => {
@@ -1575,16 +1594,7 @@
                             const requiresTarget = document.getElementById(setting.requires.anchorId);
                             if (requiresTarget) {
                                 requiresTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                if (typeof requiresTarget.animate === 'function') {
-                                    requiresTarget.animate(
-                                        [
-                                            { backgroundColor: 'rgba(var(--v-theme-primary), 0.28)', boxShadow: '0 0 0 2px rgba(var(--v-theme-primary), 0.55)' },
-                                            { backgroundColor: 'rgba(var(--v-theme-primary), 0.12)', boxShadow: '0 0 0 1px rgba(var(--v-theme-primary), 0.30)' },
-                                            { backgroundColor: 'transparent', boxShadow: '0 0 0 0 rgba(var(--v-theme-primary), 0)' },
-                                        ],
-                                        { duration: 1400, easing: 'ease-out' }
-                                    );
-                                }
+                                this.highlightElement(requiresTarget);
                             }
                             this.$root.showSnack(this.translations.settingHiddenRequires_.replace('{label}', setting.label).replace('{requires}', setting.requires.label));
                         } else {
@@ -1595,25 +1605,19 @@
                     }
 
                     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    if (typeof target.animate === 'function') {
-                        target.animate(
-                            [
-                                {
-                                    backgroundColor: 'rgba(var(--v-theme-primary), 0.28)',
-                                    boxShadow: '0 0 0 2px rgba(var(--v-theme-primary), 0.55)',
-                                },
-                                {
-                                    backgroundColor: 'rgba(var(--v-theme-primary), 0.12)',
-                                    boxShadow: '0 0 0 1px rgba(var(--v-theme-primary), 0.30)',
-                                },
-                                {
-                                    backgroundColor: 'transparent',
-                                    boxShadow: '0 0 0 0 rgba(var(--v-theme-primary), 0)',
-                                },
-                            ],
-                            { duration: 1400, easing: 'ease-out' }
-                        );
-                    }
+                    this.highlightElement(target);
+                },
+                highlightElement(el) {
+                    if (typeof el.animate !== 'function') return;
+
+                    el.animate(
+                        [
+                            { backgroundColor: 'rgba(var(--v-theme-primary), 0.28)', boxShadow: '0 0 0 2px rgba(var(--v-theme-primary), 0.55)' },
+                            { backgroundColor: 'rgba(var(--v-theme-primary), 0.12)', boxShadow: '0 0 0 1px rgba(var(--v-theme-primary), 0.30)' },
+                            { backgroundColor: 'transparent', boxShadow: '0 0 0 0 rgba(var(--v-theme-primary), 0)' },
+                        ],
+                        { duration: 1400, easing: 'ease-out' }
+                    );
                 },
 
                 loadDefaults() {
