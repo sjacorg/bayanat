@@ -280,7 +280,9 @@
                         this.imDialog = false;
                         this.refresh();
                         this.showSnack(response.data);
-                    })
+                    }).catch(error => {
+                        this.showSnack(error?.response?.data);
+                    });
                 },
 
                 newItem() {
@@ -323,12 +325,13 @@
 
                 save() {
                     if (!this.isNewRecord) {
-                        Object.assign(this.items[this.editedIndex], this.editedItem);
                         api.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh()
                                 this.close();
+                            }).catch(error => {
+                                this.showSnack(error?.response?.data);
                             });
                     } else {
                         api
@@ -337,6 +340,8 @@
                                 this.showSnack(response.data);
                                 this.refresh()
                                 this.close()
+                            }).catch(error => {
+                                this.showSnack(error?.response?.data);
                             });
                     }
                 }
