@@ -666,15 +666,17 @@
                                     <p class="text-caption text-medium-emphasis mb-3">
                                         {{ _('Extracts text from uploaded documents and images during data import. Runs locally via the Tesseract system package, no API key required.') }}
                                     </p>
-                                    <v-switch persistent-hint
-                                        hint="{{ _('Enable Tesseract OCR on import for the file extensions listed below.') }}"
-                                        {% if not config.HAS_TESSERACT %}
-                                        disabled
-                                        :value="false"
-                                        {% else %}
-                                        v-model="eitem.OCR_ENABLED"
-                                        {% endif %}
-                                    ></v-switch>
+                                    <div id="setting-ocr-enabled">
+                                        <v-switch persistent-hint
+                                            hint="{{ _('Enable Tesseract OCR on import for the file extensions listed below.') }}"
+                                            {% if not config.HAS_TESSERACT %}
+                                            disabled
+                                            :value="false"
+                                            {% else %}
+                                            v-model="eitem.OCR_ENABLED"
+                                            {% endif %}
+                                        ></v-switch>
+                                    </div>
 
                                     {% if not config.HAS_TESSERACT %}
                                     <v-alert type="warning" class="my-6" icon="mdi-alert">
@@ -1391,7 +1393,7 @@
                     { id: 'ytdlp_cookies', tab: 'import', section: "{{ _('Web import') }}", label: "{{ _('Web import cookies') }}", anchorId: 'setting-web-import', requires: { label: "{{ _('Web Import') }}", anchorId: 'setting-web-import' }, keywords: ["{{ _('auth') }}", "yt-dlp"] },
 
                     { id: 'ocr_import', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('Import-time OCR (Tesseract)') }}", anchorId: 'setting-import-ocr', keywords: ["{{ _('text extraction') }}"] },
-                    { id: 'ocr_extensions', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('OCR Extensions') }}", anchorId: 'setting-ocr-extensions', requires: { label: "{{ _('Tesseract OCR') }}", anchorId: 'setting-import-ocr' }, keywords: [] },
+                    { id: 'ocr_extensions', tab: 'ocr', section: "{{ _('Import-time OCR (Tesseract)') }}", label: "{{ _('OCR Extensions') }}", anchorId: 'setting-ocr-extensions', requires: { label: "{{ _('Tesseract OCR') }}", anchorId: 'setting-ocr-enabled' }, keywords: [] },
                     { id: 'ocr_provider', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Provider') }}", anchorId: 'setting-ocr-provider', keywords: ["{{ _('vision') }}", "llm"] },
                     { id: 'vision_api_key', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('Google Cloud API Key') }}", anchorId: 'setting-google-vision-api-key', requires: { label: "{{ _('Google Vision') }}", anchorId: 'setting-ocr-provider' }, keywords: ["{{ _('vision') }}", "{{ _('translation') }}"] },
                     { id: 'llm_ocr_url', tab: 'ocr', section: "{{ _('On-demand OCR Provider') }}", label: "{{ _('LLM Endpoint URL') }}", anchorId: 'setting-llm-ocr-url', requires: { label: "{{ _('LLM OCR provider') }}", anchorId: 'setting-ocr-provider' }, keywords: [] },
