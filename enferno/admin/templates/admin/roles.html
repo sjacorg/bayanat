@@ -33,7 +33,7 @@
 
                                         >{{ _('New Group') }}</v-btn>
 
-                                        <v-dialog v-model="dialog" max-width="770px" @after-leave="resetState()">
+                                        <v-dialog v-model="dialog" max-width="770px" @after-leave="resetGroupFormState()">
                                             <v-card>
                                                 <v-card-title class="px-5 py-7">
                                                     <span class="headline">${ formTitle }</span>
@@ -316,7 +316,7 @@
                     this.dialog = false;
                 },
 
-                resetState() {
+                resetGroupFormState() {
                     this.dialog = false;
                     this.editedItem = Object.assign({}, this.defaultItem);
                     this.editedIndex = -1;
