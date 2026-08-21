@@ -3,7 +3,7 @@
 # bayanat - CLI for installing and managing Bayanat
 # Usage: bayanat <command> [options]
 #
-set -euo pipefail
+set -Eeuo pipefail
 
 readonly SCRIPT_VERSION="1.3.0"
 readonly BAYANAT_ROOT="/opt/bayanat"
@@ -947,28 +947,36 @@ _install_deps() {
     chmod -R o-rwx,g-w "$RELEASES_DIR/$tag/.venv"
 }
 
-_db_exists() {
-    sudo -u postgres psql -tAlq 2>/dev/null | cut -d'|' -f1 | grep -qx bayanat
-}
-
 _db_is_fresh() {
-    # True only when we can PROVE the database is a fresh install: it does not
-    # exist yet, or it exists with no tables at all. Anything else - an
-    # populated database, an unreadable one, a psql that will not answer - is
-    # treated as existing, because the caller stamps Alembic head on the
-    # strength of this answer and a wrong "fresh" silently marks every
-    # unapplied migration as applied.
-    if ! _db_exists; then
-        return 0
-    fi
-    local tables
-    tables=$(sudo -u postgres psql -tAd bayanat -c \
-        "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';" \
-        2>/dev/null) || die "Cannot inspect the bayanat database" \
+    # True only when we can PROVE this is a fresh install: no bayanat database,
+    # or one holding none of Bayanat's own tables. Deliberately keyed on named
+    # application tables rather than "any table": _setup_database creates the
+    # PostGIS extension first, and PostGIS brings its own spatial_ref_sys, so
+    # a genuinely fresh database is never empty by the time we look.
+    # A PostgreSQL that will not answer is a hard error, never a "fresh"
+    # verdict - the caller stamps Alembic head on the strength of this answer,
+    # and a wrong "fresh" marks every unapplied migration as applied.
+    local out rc
+    out=$(sudo -u postgres psql -tAd postgres -c \
+        "SELECT 1 FROM pg_database WHERE datname='bayanat';" 2>&1)
+    rc=$?
+    if (( rc != 0 )); then
+        die "Cannot query PostgreSQL: ${out}" \
             "Fix PostgreSQL access and re-run; refusing to guess whether this is a fresh install"
-    tables="${tables//[[:space:]]/}"
-    [[ "$tables" =~ ^[0-9]+$ ]] || die "Unexpected table count from PostgreSQL: '$tables'"
-    (( tables == 0 ))
+    fi
+    [[ "${out//[[:space:]]/}" == "1" ]] || return 0
+
+    out=$(sudo -u postgres psql -tAd bayanat -c \
+        "SELECT count(*) FROM information_schema.tables
+          WHERE table_name IN ('bulletin','actor','incident','user','alembic_version');" 2>&1)
+    rc=$?
+    if (( rc != 0 )); then
+        die "Cannot inspect the bayanat database: ${out}" \
+            "Fix PostgreSQL access and re-run; refusing to guess whether this is a fresh install"
+    fi
+    out="${out//[[:space:]]/}"
+    [[ "$out" =~ ^[0-9]+$ ]] || die "Unexpected table count from PostgreSQL: '$out'"
+    (( out == 0 ))
 }
 
 _init_database() {
@@ -1261,6 +1269,19 @@ cmd_install() {
 
     _verify_service_health
 
+    # A fresh install is provisioned hardened; record it so `harden` is a
+    # no-op and `status` reports the layout correctly. Gated on the app
+    # actually answering: _verify_service_health only warns when the socket
+    # probe never goes green, and a marker written over an install that never
+    # came up would suppress the very `harden` run that could fix it.
+    if _socket_health; then
+        printf '%s\n' "$LAYOUT_VERSION" > "$LAYOUT_MARKER"
+        chmod 644 "$LAYOUT_MARKER"
+    else
+        warn "Application never answered; not recording the hardened-layout marker"
+        warn "Once it is up, confirm with: bayanat status"
+    fi
+
     local access_url
     if [[ "$domain" == "localhost" ]]; then
         access_url="http://$(hostname -I | awk '{print $1}')"
@@ -1337,6 +1358,348 @@ _ensure_runtime_layout() {
     fi
 }
 
+# --- Layout hardening ---
+
+# Bumped when the hardened layout changes in a way that needs re-applying.
+readonly LAYOUT_VERSION="1"
+readonly LAYOUT_MARKER="$STATE_DIR/layout"
+
+_is_hardened() {
+    [[ -f "$LAYOUT_MARKER" ]] && [[ "$(cat "$LAYOUT_MARKER" 2>/dev/null)" == "$LAYOUT_VERSION" ]]
+}
+
+# Every file the hardening rewrites. Restoring all of these returns the box to
+# its pre-harden configuration.
+_harden_files() {
+    local pg_hba pg_ident
+    pg_hba=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1)
+    pg_ident=$(find /etc/postgresql -name pg_ident.conf 2>/dev/null | head -1)
+    printf '%s\n' \
+        /etc/systemd/system/bayanat.service \
+        /etc/systemd/system/bayanat-celery.service \
+        /etc/systemd/system/bayanat-celery-restart.path \
+        /etc/systemd/system/bayanat-celery-restart.service \
+        /etc/caddy/Caddyfile \
+        /etc/redis/redis.conf \
+        /etc/sudoers.d/bayanat \
+        "$SHARED_DIR/.env" \
+        "$SHARED_DIR/uwsgi-prod.ini" \
+        "$pg_hba" \
+        "$pg_ident" \
+        | grep -v '^$'
+}
+
+_harden_backup() {
+    # Copies every target file into a timestamped dir with a manifest mapping
+    # the copy back to its original path. Files that do NOT exist are recorded
+    # as ABSENT so a restore removes anything the hardening created. Echoes
+    # the dir on stdout.
+    local dir
+    dir="$STATE_DIR/harden-backup-$(date -u +%Y%m%d-%H%M%S)-$$"
+    mkdir -p "$dir"
+    chmod 700 "$dir"
+    local f i=0 n=0
+    while IFS= read -r f; do
+        i=$((i + 1))
+        if [[ -f "$f" ]]; then
+            cp -p "$f" "$dir/$i.file"
+            printf '%s\t%s\t%s\t%s\n' "$i.file" "$f" \
+                "$(stat -c '%U:%G' "$f")" "$(stat -c '%a' "$f")" >> "$dir/manifest"
+            n=$((n + 1))
+        else
+            printf 'ABSENT\t%s\t-\t-\n' "$f" >> "$dir/manifest"
+        fi
+    done < <(_harden_files)
+
+    # Unit enablement is state the hardening changes (systemctl enable) and
+    # copying unit files back does not restore it.
+    local unit
+    local state
+    for unit in bayanat bayanat-celery bayanat-celery-restart.path; do
+        state=$(systemctl is-enabled "$unit" 2>/dev/null) || state="unknown"
+        [[ "$state" == "unknown" ]] && \
+            warn "Could not read enablement state of $unit; a restore will leave it as-is"
+        printf '%s\t%s\n' "$unit" "$state" >> "$dir/enablement"
+    done
+
+    # PostgreSQL grants are not file state. Capture the CURRENT attributes and
+    # write the exact statements that put them back, so a revert does not rely
+    # on remembering what they were.
+    local attrs pub_connect
+    attrs=$(sudo -u postgres psql -tA -c \
+        "SELECT rolsuper, rolcreatedb, rolcreaterole, rolreplication
+           FROM pg_roles WHERE rolname='$APP_USER';" 2>/dev/null) || attrs=""
+    pub_connect=$(sudo -u postgres psql -tA -c \
+        "SELECT has_database_privilege('public','bayanat','CONNECT');" 2>/dev/null) || pub_connect=""
+    {
+        echo "Pre-harden database state for role '$APP_USER'."
+        if [[ -n "$attrs" ]]; then
+            IFS='|' read -r r_super r_createdb r_createrole r_repl <<< "$attrs"
+            printf 'To restore role attributes:\n'
+            printf "  sudo -u postgres psql -c 'ALTER ROLE \"%s\" %s %s %s %s;'\n" \
+                "$APP_USER" \
+                "$([[ $r_super == t ]] && echo SUPERUSER || echo NOSUPERUSER)" \
+                "$([[ $r_createdb == t ]] && echo CREATEDB || echo NOCREATEDB)" \
+                "$([[ $r_createrole == t ]] && echo CREATEROLE || echo NOCREATEROLE)" \
+                "$([[ $r_repl == t ]] && echo REPLICATION || echo NOREPLICATION)"
+        else
+            echo "WARNING: could not read role attributes before hardening."
+        fi
+        if [[ "$pub_connect" == "t" ]]; then
+            echo "PUBLIC held CONNECT on the bayanat database. To restore:"
+            echo "  sudo -u postgres psql -c 'GRANT CONNECT ON DATABASE bayanat TO PUBLIC;'"
+        elif [[ "$pub_connect" == "f" ]]; then
+            echo "PUBLIC did not hold CONNECT before hardening; nothing to restore."
+        else
+            echo "WARNING: could not read the PUBLIC CONNECT grant before hardening."
+        fi
+    } > "$dir/REVERT-DB.txt"
+
+    log "Backed up $n config files to $dir" >&2
+    echo "$dir"
+}
+
+_harden_restore() {
+    # Puts every backed-up file back and restarts what reads them. Runs with
+    # errexit OFF and collects failures: a restore that stops on its first
+    # error is worse than no restore at all, so every entry is attempted and
+    # anything that could not be put back is reported by path.
+    local dir="$1"
+    [[ -f "$dir/manifest" ]] || { warn "No manifest in $dir; cannot restore"; return 1; }
+    warn "Restoring pre-harden configuration from $dir"
+
+    set +e
+    local copy orig owner mode failed=0
+    while IFS=$'\t' read -r copy orig owner mode; do
+        if [[ "$copy" == "ABSENT" ]]; then
+            # The hardening may have created this file; it did not exist before.
+            if [[ -f "$orig" ]]; then
+                rm -f "$orig" || { warn "RESTORE FAILED to remove: $orig"; failed=1; }
+            fi
+        elif ! cp "$dir/$copy" "$orig"; then
+            warn "RESTORE FAILED for: $orig (copy kept at $dir/$copy)"
+            failed=1
+        else
+            # Ownership comes from the manifest, not the copy: the backup dir
+            # sits under $STATE_DIR and is chowned to root by _secure_state_dir.
+            chown "$owner" "$orig" || { warn "RESTORE FAILED to chown $orig to $owner"; failed=1; }
+            chmod "$mode" "$orig" || { warn "RESTORE FAILED to chmod $orig to $mode"; failed=1; }
+        fi
+    done < "$dir/manifest"
+
+    # Unit files the hardening introduced are also enabled by it; drop the
+    # enablement symlinks for any unit that is no longer on disk.
+    local unit state
+    for unit in bayanat-celery-restart.path bayanat-celery-restart.service; do
+        if [[ ! -f "/etc/systemd/system/$unit" ]]; then
+            # systemctl disable needs the unit file, which the restore above
+            # has already removed; drop the wants/ symlinks directly.
+            rm -f /etc/systemd/system/*.wants/"$unit" \
+                || { warn "RESTORE FAILED to unlink: $unit"; failed=1; }
+        fi
+    done
+
+    # Put recorded enablement back for units that still exist.
+    if [[ -f "$dir/enablement" ]]; then
+        while IFS=$'\t' read -r unit state; do
+            [[ -f "/etc/systemd/system/$unit" ]] || continue
+            case "$state" in
+                enabled)  systemctl enable "$unit" 2>/dev/null \
+                              || { warn "RESTORE FAILED to enable: $unit"; failed=1; } ;;
+                disabled) systemctl disable "$unit" 2>/dev/null \
+                              || { warn "RESTORE FAILED to disable: $unit"; failed=1; } ;;
+                *)        warn "Enablement of $unit was unreadable at backup time; left as-is" ;;
+            esac
+        done < "$dir/enablement"
+    fi
+
+    local unit_cmd
+    for unit_cmd in "daemon-reload" "reload postgresql" "restart redis-server" \
+                    "restart caddy" "start bayanat" "start bayanat-celery"; do
+        # shellcheck disable=SC2086
+        if ! systemctl $unit_cmd; then
+            warn "RESTORE FAILED: systemctl $unit_cmd"
+            failed=1
+        fi
+    done
+    set -e
+
+    if (( failed )); then
+        warn "Restore completed with errors; inspect the items listed above against $dir"
+        return 1
+    fi
+    # Restored: config files, unit files, unit enablement. NOT restored: the
+    # service accounts (additive), the shared/runtime dirs (additive), and the
+    # database role/grant tightening, which IS subtractive - $dir/REVERT-DB.txt
+    # carries the exact statements to undo it.
+    warn "Config files and unit state restored. Service accounts and shared dirs are left in place."
+    warn "Database grants were tightened and are NOT reverted; see $dir/REVERT-DB.txt"
+    return 0
+}
+
+_caddy_domain() {
+    # Recover the site address from the existing Caddyfile so hardening does
+    # not need the domain passed again. ':80' means the localhost install.
+    local addr
+    addr=$(grep -m1 -E '^[^[:space:]#].*\{[[:space:]]*$' /etc/caddy/Caddyfile 2>/dev/null \
+        | sed 's/[[:space:]]*{[[:space:]]*$//' | tr -d ' ')
+    if [[ -z "$addr" || "$addr" == ":80" ]]; then
+        echo localhost
+    else
+        echo "${addr#https://}"
+    fi
+}
+
+_harden_release_tree() {
+    # Existing releases were created app-writable. Make them root-owned and
+    # non-writable by the group so a compromised service cannot alter code.
+    # -h so the symlinks into shared/ are retargeted, not followed.
+    chown -Rh root:"$APP_GROUP" "$RELEASES_DIR" || return 1
+    chmod -R g-w,o-rwx "$RELEASES_DIR" || return 1
+}
+
+_verify_service_users() {
+    # A pre-existing account with the wrong group or a login shell would pass
+    # a naive existence check and then fail to read the root-owned tree.
+    local u
+    for u in "$WEB_USER" "$CELERY_USER"; do
+        id -nG "$u" | tr ' ' '\n' | grep -qx "$APP_GROUP" \
+            || die "$u is not in the $APP_GROUP group" "usermod -aG $APP_GROUP $u"
+        [[ "$(getent passwd "$u" | cut -d: -f7)" == "/usr/sbin/nologin" ]] \
+            || warn "$u has a login shell; expected /usr/sbin/nologin"
+    done
+}
+
+_ensure_env_db_identity() {
+    # Older installs left POSTGRES_* out of .env entirely: the app ran as the
+    # same OS user as the database role, so libpq's default was correct. Under
+    # the split service accounts that default resolves to bayanat-web, which is
+    # not a role, and every query fails. Write the identity explicitly.
+    # POSTGRES_PASSWORD is deliberately NOT set: an empty password is what
+    # selects the socket + peer-auth branch in settings.py.
+    local env_file="$SHARED_DIR/.env" key val kv
+    for kv in "POSTGRES_USER=$APP_USER" "POSTGRES_DB=bayanat" "POSTGRES_HOST=localhost"; do
+        key="${kv%%=*}"; val="${kv#*=}"
+        if ! grep -qE "^${key}=" "$env_file"; then
+            printf "%s='%s'\n" "$key" "$val" >> "$env_file"
+            log "Added $key to .env"
+        fi
+    done
+}
+
+cmd_harden() {
+    # Migrates an install provisioned before the least-privilege layout
+    # (BAY-01-027/030/031/032/033) onto it. Deliberately NOT part of `update`:
+    # this rewrites pg_hba.conf, redis.conf, the systemd units and the
+    # Caddyfile, and a code update should never be able to leave those
+    # half-written. Runs with the services stopped, verifies health, and
+    # restores every file it touched if the verification fails.
+    require_root
+    [[ -L "$CURRENT_LINK" ]] || die "Bayanat is not installed"
+
+    if _is_hardened && [[ "${1:-}" != "--force" ]]; then
+        log "Already on hardened layout (version $LAYOUT_VERSION)"
+        return 0
+    fi
+
+    # The hardened layout runs the app as bayanat-web/bayanat-celery over the
+    # local PostgreSQL socket. Only a release whose settings put the role in
+    # the connection URI survives that: an older release omits it, libpq then
+    # defaults to the OS user, and every query fails with
+    # 'role "bayanat-web" does not exist'. Capability check, not a version
+    # comparison, so it stays true regardless of tag naming.
+    if ! grep -q 'postgresql://{quote(POSTGRES_USER' "$CURRENT_LINK/enferno/settings.py" 2>/dev/null; then
+        die "The active release ($(current_version)) does not support the hardened layout" \
+            "It connects to PostgreSQL as the OS user. Run 'bayanat update' first, then re-run harden."
+    fi
+
+    # Redis auth is asserted from shared/.env. Without a readable .env the run
+    # would generate a password, apply it to Redis and have nowhere to record
+    # it, leaving the app unable to reach its broker.
+    [[ -f "$SHARED_DIR/.env" ]] || die "Missing $SHARED_DIR/.env" \
+        "Hardening asserts the Redis password from .env; restore it first"
+
+    local domain backup_dir
+    domain=$(_caddy_domain)
+    log "Hardening layout for: $domain"
+
+    mkdir -p "$STATE_DIR"
+    _secure_state_dir
+    backup_dir=$(_harden_backup)
+
+    # Any failure from here on puts the original configuration back.
+    trap 'trap - ERR; _harden_restore "$backup_dir" || true; die "Hardening failed; configuration restored"' ERR
+
+    # Must be verified, not attempted: Redis gets a password and PostgreSQL
+    # changes authentication below, and a service still running through that
+    # loses its broker and its database connection.
+    log "Stopping services"
+    systemctl stop bayanat bayanat-celery || true
+    local svc
+    for svc in bayanat bayanat-celery; do
+        systemctl is-active --quiet "$svc" \
+            && die "$svc is still running; refusing to reconfigure underneath it" \
+                "Stop it by hand (systemctl stop $svc) and re-run"
+    done
+
+    _setup_app_user
+    _verify_service_users
+    _setup_database
+    _setup_redis
+    _ensure_env_db_identity
+    _ensure_runtime_layout
+
+    # Legacy releases keep some app-written dirs (imports, exports) as real
+    # directories inside the release. The hardened tree is read-only for the
+    # services, so they have to become symlinks into shared/ before the
+    # tightening at the end of this function, or imports and exports break.
+    local tag
+    tag=$(current_version) || die "Cannot determine the active release"
+    _link_shared "$tag"
+
+    _install_uwsgi_config
+    _install_systemd
+    _configure_caddy "$domain"
+
+    # Services no longer get any sudo grant (BAY-01-032); drop the file a
+    # previous install may have written.
+    rm -f /etc/sudoers.d/bayanat
+
+    _set_permissions
+    systemctl daemon-reload
+    systemctl enable --now bayanat bayanat-celery bayanat-celery-restart.path
+    systemctl restart caddy
+
+    if ! _wait_healthy 60; then
+        trap - ERR
+        _harden_restore "$backup_dir"
+        die "Hardened layout failed its health check; configuration restored" \
+            "Check: journalctl -u bayanat -n 50"
+    fi
+
+    trap - ERR
+
+    # Only now, past the point where a restore could be needed. The legacy
+    # release binds its uWSGI socket inside its own release directory, so a
+    # tree tightened before the probe would leave a restored old release
+    # unable to start.
+    if ! _harden_release_tree; then
+        # The layout is otherwise applied and the app is healthy, but the marker
+        # is deliberately withheld so the next run re-applies and this does not
+        # read as a clean success.
+        die "Layout applied but release tree could not be tightened" \
+            "Re-run: bayanat harden --force"
+    fi
+
+    # The layout IS applied at this point; a marker write failure must not be
+    # reported as a hardening failure, only as lost idempotency.
+    if ! printf '%s\n' "$LAYOUT_VERSION" > "$LAYOUT_MARKER" || ! chmod 644 "$LAYOUT_MARKER"; then
+        warn "Could not write $LAYOUT_MARKER; the layout is applied but 'harden' will run again"
+    fi
+    log "SUCCESS: hardened layout applied"
+    log "Backup of the previous configuration: $backup_dir"
+}
+
 cmd_update() {
     local flag="${1:-}"
     case "$flag" in
@@ -1372,6 +1735,18 @@ cmd_update() {
     do_prepare "$target"
     do_migrate
     do_switch_verify
+
+    # Code-only by design: `update` never rewrites system configuration.
+    # Surface the legacy layout loudly so an install cannot drift along
+    # unhardened without anyone noticing.
+    if ! _is_hardened; then
+        warn ""
+        warn "This install is NOT on the hardened layout."
+        warn "The web and worker still share one account, the release tree is"
+        warn "app-writable, and Redis may be unauthenticated (BAY-01-027/030/031/032)."
+        warn "Migrate with:  bayanat harden"
+        warn ""
+    fi
 }
 
 # --- Status ---
@@ -1393,6 +1768,12 @@ cmd_status() {
         echo "Status: up to date"
     else
         echo "Status: update available"
+    fi
+
+    if _is_hardened; then
+        echo "Layout: hardened (v$LAYOUT_VERSION)"
+    else
+        echo "Layout: legacy - run 'bayanat harden' to migrate"
     fi
 
     echo ""
@@ -1426,6 +1807,8 @@ Commands:
   update [<tag>]      Update Bayanat to <tag> (default: latest release)
   update --check      Show current vs latest; no changes
   update --recover    Recover from a stuck update state file
+  harden              Migrate an older install onto the hardened layout
+  harden --force      Re-apply the hardened layout
   snapshots           List pre-update snapshots
   restore <name>      Restore a pre-update snapshot (prompts confirmation)
   status              Show version, services, and update state
@@ -1441,6 +1824,7 @@ EOF
 case "${1:-}" in
     install)    shift; cmd_install "$@" ;;
     update)     shift; cmd_update "$@" ;;
+    harden)     shift; cmd_harden "$@" ;;
     snapshots)  require_root; list_snapshots ;;
     restore)    require_root; [[ -n "${2:-}" ]] || die "usage: bayanat restore <snapshot-name>"; restore_pg "$2" ;;
     status)     cmd_status ;;
