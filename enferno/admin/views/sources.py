@@ -11,6 +11,7 @@ from enferno.admin.models import Source, Activity
 from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.models import SourceRequestModel
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE
@@ -48,7 +49,7 @@ def api_sources() -> Response:
         words = q.split(" ")
         for word in words:
             query = query.filter(
-                or_(Source.title.ilike(f"%{word}%"), Source.title_ar.ilike(f"%{word}%"))
+                or_(like_contains(Source.title, word), like_contains(Source.title_ar, word))
             )
 
         sources = query.all()
