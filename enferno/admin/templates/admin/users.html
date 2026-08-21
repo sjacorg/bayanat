@@ -28,7 +28,7 @@
                                         density="compact"
                                         clearable
                                         @click:clear="resetSearch"
-                                        v-model="q"
+                                        v-model.trim="q"
                                         label="{{ _('Search') }}"
                                         @keydown.enter="refresh()"
                                 ></v-text-field>
