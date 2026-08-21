@@ -947,8 +947,44 @@ _install_deps() {
     chmod -R o-rwx,g-w "$RELEASES_DIR/$tag/.venv"
 }
 
+_db_exists() {
+    sudo -u postgres psql -tAlq 2>/dev/null | cut -d'|' -f1 | grep -qx bayanat
+}
+
+_db_is_fresh() {
+    # True only when we can PROVE the database is a fresh install: it does not
+    # exist yet, or it exists with no tables at all. Anything else - an
+    # populated database, an unreadable one, a psql that will not answer - is
+    # treated as existing, because the caller stamps Alembic head on the
+    # strength of this answer and a wrong "fresh" silently marks every
+    # unapplied migration as applied.
+    if ! _db_exists; then
+        return 0
+    fi
+    local tables
+    tables=$(sudo -u postgres psql -tAd bayanat -c \
+        "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';" \
+        2>/dev/null) || die "Cannot inspect the bayanat database" \
+            "Fix PostgreSQL access and re-run; refusing to guess whether this is a fresh install"
+    tables="${tables//[[:space:]]/}"
+    [[ "$tables" =~ ^[0-9]+$ ]] || die "Unexpected table count from PostgreSQL: '$tables'"
+    (( tables == 0 ))
+}
+
 _init_database() {
     local tag="$1"
+
+    # Never stamp a database that is already under migration control. Stamping
+    # head on a database sitting on an older revision marks every unapplied
+    # migration as done without running it, drifting the schema silently and
+    # permanently. Guards against re-running `install` on an existing box to
+    # pick up layout changes; `update` is the supported path for that.
+    if ! _db_is_fresh; then
+        warn "Database already exists and is not empty; skipping create-db/import-data/stamp"
+        warn "To upgrade an existing install run: bayanat update [<tag>]"
+        return 0
+    fi
+
     log "Initializing database..."
     flask_run "$tag" create-db --create-exts
     flask_run "$tag" import-data
