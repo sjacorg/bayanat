@@ -197,7 +197,7 @@ const FieldListItem = Vue.defineComponent({
                     </div>
                 </div>
 
-                <div v-if="!editingMode" :class="['h-100', {'cursor-pointer': !dragging, 'newly-added-field': field.justAdded }]" @click="openEditMode">
+                <div v-if="!editingMode" :class="['h-100', {'cursor-pointer': !dragging, 'temporary-highlight': field.justAdded }]" @click="openEditMode">
                     <div class="h-100 pointer-events-none">
                         <component :is="componentProps.component" v-bind="componentProps">
                             <template #append-inner>
