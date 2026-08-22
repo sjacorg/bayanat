@@ -33,7 +33,12 @@ sudo journalctl -u bayanat -u bayanat-celery -f
 
 ## What the admin interface shows
 
-The interface is read-only for updates. It never applies one.
+The interface is read-only for updates. It never applies one, and this is a
+deliberate security boundary rather than a missing feature: a web-reachable
+update turns an authenticated admin session into root-level code execution on
+the host, because the trigger would need a passwordless sudo grant to something
+that installs and runs new code. Applying updates from the shell removes that
+path entirely. The same reasoning keeps restores on the CLI.
 
 - A background check runs every 6 hours and caches the latest published
   release.
