@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from flask import Response
+from flask_babel import gettext
 from flask_security.decorators import current_user
 from sqlalchemy import desc
 
@@ -30,7 +31,7 @@ def _deny_history(parent_label: str, parent_id: int) -> Response:
         parent_label,
         details=f"Unauthorized attempt to view history of restricted {parent_label} {parent_id}.",
     )
-    return HTTPResponse.forbidden("Restricted Access")
+    return HTTPResponse.forbidden(gettext("Restricted Access"))
 
 
 # Bulletin History Helpers
@@ -50,7 +51,7 @@ def api_bulletinhistory(bulletinid: t.id) -> Response:
     """
     bulletin = db.session.get(Bulletin, bulletinid)
     if not bulletin:
-        return HTTPResponse.not_found("Bulletin not found")
+        return HTTPResponse.not_found(gettext("Bulletin not found"))
     if not current_user.can_access(bulletin):
         return _deny_history("bulletin", bulletinid)
 
@@ -82,7 +83,7 @@ def api_actorhistory(actorid: t.id) -> Response:
     """
     actor = db.session.get(Actor, actorid)
     if not actor:
-        return HTTPResponse.not_found("Actor not found")
+        return HTTPResponse.not_found(gettext("Actor not found"))
     if not current_user.can_access(actor):
         return _deny_history("actor", actorid)
 
@@ -111,7 +112,7 @@ def api_incidenthistory(incidentid: t.id) -> Response:
     """
     incident = db.session.get(Incident, incidentid)
     if not incident:
-        return HTTPResponse.not_found("Incident not found")
+        return HTTPResponse.not_found(gettext("Incident not found"))
     if not current_user.can_access(incident):
         return _deny_history("incident", incidentid)
 
