@@ -1,0 +1,49 @@
+# CodeRabbit configuration
+# Docs: https://docs.coderabbit.ai/reference/yaml-template
+#
+# Kept in the repo rather than the CodeRabbit dashboard so the review policy is
+# versioned and reviewable like any other config.
+
+language: en-US
+
+reviews:
+  # Balanced feedback. "assertive" is noticeably nitpicky on a codebase this
+  # size; "quiet" drops too much to be worth the round trip.
+  profile: chill
+
+  # Advisory only. This must never gate a merge: it is non-deterministic, and a
+  # required check that an LLM can fail at random is worse than no check.
+  request_changes_workflow: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  path_filters:
+    # Vendored third-party JavaScript. We never hand-edit these; they change
+    # only by wholesale upgrade, so there is nothing for a reviewer to say.
+    # Library CVEs are retire.js's job, not the reviewer's.
+    - "!enferno/static/js/tinymce/**"
+    - "!enferno/static/js/videojs/**"
+    - "!enferno/static/js/lightgallery/**"
+    - "!enferno/static/js/jsondiffpatch/**"
+    - "!enferno/static/js/dropzone/**"
+    - "!enferno/static/js/pdf.js/**"
+    - "!enferno/static/js/croppr/**"
+    - "!enferno/static/js/qrcodejs/**"
+    - "!enferno/static/js/jszip/**"
+    - "!enferno/static/js/docx-preview/**"
+    - "!enferno/static/js/leaflet*.js"
+    - "!enferno/static/js/Leaflet.*.js"
+    - "!enferno/static/js/vue*.js"
+    - "!enferno/static/js/vuedraggable.umd.js"
+    - "!enferno/static/js/tinymce-vue.min.js"
+    - "!**/*.min.js"
+    - "!**/*.min.mjs"
+    # Generated or machine-managed files
+    - "!enferno/translations/**"
+    - "!uv.lock"
+    - "!docs/package-lock.json"
+    - "!migrations/versions/**"
