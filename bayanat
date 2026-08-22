@@ -85,6 +85,13 @@ latest_remote_tag() {
         | head -1 | sed 's/.*refs\/tags\///'
 }
 
+_release_major() {
+    # Major version of a release tag, or 0 when it cannot be parsed.
+    local v="${1#v}"
+    v="${v%%.*}"
+    if [[ "$v" =~ ^[0-9]+$ ]]; then echo "$v"; else echo 0; fi
+}
+
 current_version() {
     [[ -L "$CURRENT_LINK" ]] || return 1
     basename "$(readlink "$CURRENT_LINK")"
@@ -340,6 +347,19 @@ recover_state() {
             release_lock
             ;;
         MIGRATE_DONE)
+            # The database is already on the new schema; only the symlink swap
+            # is outstanding. A pre-v5 release cannot serve against that schema
+            # and has no /health endpoint to probe, so leave it stopped and let
+            # the caller re-run the update, which resumes at the swap.
+            local prev_tag
+            prev_tag=$(read_field previous || true)
+            if (( $(_release_major "$prev_tag") < 5 )); then
+                warn "Recovery: MIGRATE_DONE — database is on the new schema; leaving services stopped"
+                warn "Re-run the update to finish the switch, or restore the pre-update snapshot"
+                clear_state
+                release_lock
+                return 0
+            fi
             log "Recovery: MIGRATE_DONE — starting services on previous release"
             systemctl start bayanat bayanat-celery
             if _wait_healthy 60; then
@@ -579,6 +599,22 @@ rollback_code() {
     write_state ROLLBACK "Reverting symlink to $prev"
     systemctl stop bayanat bayanat-celery || true
     swap_symlink "$RELEASES_DIR/$prev"
+
+    # Releases before v5.0.0 have no /health endpoint, so _wait_healthy can
+    # never pass against one and a rollback that worked would be reported as a
+    # failure. Reverting the code is also not a complete recovery by itself:
+    # the database has already been migrated to the new schema and migrations
+    # are not reversible, so starting the old release against it would be
+    # worse than staying down. Stop with the one correct next step instead.
+    if (( $(_release_major "$prev") < 5 )); then
+        export STATE_ERROR_JSON='"code reverted to a pre-v5 release; the database still holds the new schema"'
+        write_state NEEDS_INTERVENTION \
+            "Code reverted to $prev; services left stopped. Restore the pre-update snapshot to finish: bayanat restore ${STATE_SNAPSHOT:-<snapshot>}"
+        warn "Rolled back to $prev but left services stopped: the database is on the new schema."
+        warn "Finish the recovery with: bayanat restore ${STATE_SNAPSHOT:-<snapshot>}"
+        exit 2
+    fi
+
     systemctl start bayanat bayanat-celery
     if _wait_healthy 60; then
         export STATE_PROGRESS="Rolled back to $prev"
