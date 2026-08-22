@@ -8,7 +8,7 @@ from flask.templating import render_template
 from flask_security import logout_user
 from flask_security.decorators import current_user, roles_accepted, roles_required
 from flask_security.twofactor import tf_disable
-from sqlalchemy import or_
+from sqlalchemy import false, or_
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import Activity
@@ -21,7 +21,7 @@ from enferno.admin.validation.models import (
     RoleRequestModel,
 )
 from enferno.extensions import db
-from enferno.user.models import User, Role, Session
+from enferno.user.models import User, Role, Session, can_view_usernames
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.validation_utils import validate_with
@@ -47,10 +47,12 @@ def api_users() -> Response:
     q = request.args.get("q")
     query = []
     if q:
-        term = f"%{q}%"
-        # username and email are masked for users who cannot view them, so
-        # searching them would leak values the caller is not allowed to see
-        if current_user.has_role("Admin") or current_user.view_usernames:
+        # name, username and email are all masked by to_compact() for callers
+        # without this permission. Filtering on a masked field turns the list
+        # into an oracle: ilike is a substring match and the response carries a
+        # total, so a caller could reconstruct the values a row at a time.
+        if can_view_usernames():
+            term = f"%{q}%"
             query.append(
                 or_(
                     User.name.ilike(term),
@@ -59,7 +61,7 @@ def api_users() -> Response:
                 )
             )
         else:
-            query.append(User.name.ilike(term))
+            query.append(false())
     result = (
         User.query.filter(*query)
         .order_by(User.username)

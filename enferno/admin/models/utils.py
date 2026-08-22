@@ -70,15 +70,12 @@ def check_history_access(method):
     data history. Also masks usernames if user lacks view_usernames permission.
     """
 
+    from enferno.user.models import can_view_usernames
+
     def can_view_full():
         if not has_request_context():
             return True  # CLI/Celery - trusted
         return current_user.view_full_history
-
-    def can_view_usernames():
-        if not has_request_context():
-            return True  # CLI/Celery - trusted
-        return current_user.view_usernames or current_user.has_role("Admin")
 
     def sanitize_data(data):
         if data is None or can_view_usernames():

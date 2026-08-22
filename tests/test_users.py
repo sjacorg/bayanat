@@ -793,13 +793,21 @@ class TestUserSearch:
         session.delete(mod)
         session.commit()
 
-    def test_hidden_identifiers_are_not_searchable(self, blind_mod_client, searchable):
-        """A user who cannot see usernames must not be able to probe them."""
-        resp = blind_mod_client.get("/admin/api/users/?q=zainab@example.org", headers=HEADERS)
-        assert resp.status_code == 200
-        assert resp.json["data"]["items"] == []
+    @pytest.mark.parametrize("probe", ["zainab@example.org", "zhaddad", "Zainab"])
+    def test_hidden_identifiers_are_not_searchable(self, blind_mod_client, searchable, probe):
+        """A caller who cannot see identifiers must not be able to probe them.
 
-        # the name is still searchable, as it was before
-        resp = blind_mod_client.get("/admin/api/users/?q=Zainab", headers=HEADERS)
+        name is masked by secure_name on the same condition as username/email,
+        so it is gated too: searching it would otherwise reveal a value the
+        caller is not allowed to read.
+        """
+        resp = blind_mod_client.get(f"/admin/api/users/?q={probe}", headers=HEADERS)
         assert resp.status_code == 200
-        assert resp.json["data"]["total"] == 1
+        assert resp.json["data"]["items"] == [], f"search leaked existence of {probe}"
+        assert resp.json["data"]["total"] == 0
+
+    def test_unprivileged_list_without_search_is_unchanged(self, blind_mod_client, searchable):
+        """Only the filter is denied. The masked list itself still works."""
+        resp = blind_mod_client.get("/admin/api/users/", headers=HEADERS)
+        assert resp.status_code == 200
+        assert resp.json["data"]["total"] > 1
