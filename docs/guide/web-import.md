@@ -8,6 +8,24 @@ This is distinct from [Data Import](/guide/data-import), which loads spreadsheet
 
 Hundreds of sites are supported, including YouTube, Twitter/X, Facebook, and Telegram. See yt-dlp's [supported sites list](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).
 
+## JavaScript Runtime
+
+YouTube serves media behind a JavaScript challenge. yt-dlp needs a JavaScript runtime installed on the server to solve it. Without one it warns that extraction is deprecated and downloads fail with `HTTP Error 403: Forbidden` even when the proxy and cookies are correct.
+
+Install Deno, the runtime yt-dlp looks for by default:
+
+```bash
+curl -fsSL https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip -o /tmp/deno.zip
+sudo unzip -o /tmp/deno.zip -d /usr/local/bin
+sudo chmod 755 /usr/local/bin/deno
+```
+
+Restart the Celery worker afterwards so it picks up the new binary.
+
+::: tip Keep yt-dlp current
+Large platforms change their extraction logic often, and a yt-dlp release more than a few weeks old is a common cause of sudden download failures. Upgrading yt-dlp is the first thing to try when imports that used to work start failing.
+:::
+
 ## Enabling Web Import
 
 Web import is configured under **System Administration → Web import**. Toggle it on to reveal three settings:
