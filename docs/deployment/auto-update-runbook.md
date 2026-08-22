@@ -1,32 +1,47 @@
 # Bayanat Auto-Update Runbook
 
-Short operator reference for the `bayanat update` flow. Design notes live
-in the development spec (not shipped with the repo).
+Short operator reference for the `bayanat update` flow.
+
+::: warning Requires v5.0.0 or later
+Releases before v5.0.0 do not ship an `update` command. Getting an older install
+onto v5 is a one-time manual step, documented in
+[Upgrading](/deployment/upgrading#upgrading-to-v5).
+:::
 
 ## Triggering an update
 
-- **One-click from UI:** an admin-role user clicks "Update now" from the
-  "Update available: X.Y.Z" banner in the nav bar.
-- **From the shell (as root):** `sudo bayanat update [<tag>]`
-  (defaults to the latest GitHub release). The CLI requires root to stop
-  / start services, write `/opt/bayanat`, and take snapshots.
-- **Check only (no changes, no root):** `sudo -u bayanat bayanat update --check`.
-
-The update runs as `bayanat-update.service`, a transient systemd unit
-that outlives Flask restarts, SSH disconnects, and browser closes. Tail
-live logs with:
+Updates are applied from the shell, as root:
 
 ```
-sudo journalctl -u bayanat-update -f
+sudo bayanat update [<tag>]     # defaults to the latest release
 ```
 
-## Opt-in auto-apply for patch releases
+Root is required to stop and start services, write to `/opt/bayanat`, and take
+snapshots. To see what an update would move you to without changing anything:
 
-In the admin UI under System Administration, toggle "Auto-apply patch
-releases" on. With the toggle on, any bump within the same minor line
-(e.g. `4.1.0` to `4.1.1`) installs silently every 6 hours via the same
-pipeline. Minor and major bumps (e.g. `4.1.x` to `4.2.0`) always notify
-and wait for a manual click.
+```
+bayanat update --check
+```
+
+The update runs in the foreground and prints each phase as it goes. It is not
+backgrounded, so run it inside `tmux` or `screen` on a connection you do not
+trust to stay up. Service logs during the window:
+
+```
+sudo journalctl -u bayanat -u bayanat-celery -f
+```
+
+## What the admin interface shows
+
+The interface is read-only for updates. It never applies one.
+
+- A background check runs every 6 hours and caches the latest published
+  release.
+- Administrators get a notification when a newer release appears, and a chip in
+  the navigation bar linking to its release notes.
+- The snapshots page lists pre-update snapshots. Restoring stays on the CLI,
+  deliberately: a restore drops and recreates tables and should not be one
+  click away in a browser.
 
 ## Expected timing
 
@@ -46,7 +61,7 @@ retry automatically; partners see a brief "service unavailable" view.
 ## Release verification
 
 The updater downloads each release as a signed tarball and verifies it against
-SJAC's pinned minisign key before installing (BAY-01-017). An unsigned or
+a pinned minisign key before installing. An unsigned or
 tampered release is refused during PREPARE with `Release <tag> is unsigned` or
 `Signature verification FAILED`, and nothing is installed. If you hit this on a
 legitimate release, the release is missing its `.minisig` asset; see
@@ -60,18 +75,25 @@ Nothing to do. Services restart on the previous release automatically.
 The UI shows the `error` field. Report the broken release; the previous
 version keeps running.
 
-### Health probe failed after swap (auto-rollback succeeded)
+### Health check failed after swap (rollback succeeded)
 
 Nothing to do. The updater reverted the symlink and restarted on the
 previous release. The pre-update snapshot is retained at
 `/opt/bayanat/shared/backups/`.
 
+One exception: if the previous release predates v5.0.0, the updater reverts the
+symlink but leaves the services stopped and reports NEEDS_INTERVENTION. That is
+deliberate. The database has already been migrated, and an older release running
+against a newer schema is worse than being down. Restore the snapshot it names
+to finish the recovery.
+
 ### NEEDS_INTERVENTION
 
-This state only happens when two independent failures compound: the new
-release was broken AND rolling back did not reach a healthy state. The
-maintenance flag stays up so users see a 502 instead of raw errors.
-Recover:
+Reached when the new release was broken and reverting the code did not, on its
+own, produce a healthy install: either the previous release also failed its
+health check, or it predates v5.0.0 and cannot serve the migrated schema.
+Services are left stopped, so the web server returns 502 rather than exposing a
+half-working application. Recover:
 
 ```
 sudo -u bayanat bayanat status            # read-only; confirm state
@@ -111,17 +133,6 @@ sudo bayanat update --recover
 | `/opt/bayanat/shared/backups/` | Pre-update snapshots |
 | `/health` (Flask endpoint) | 200 = DB + Redis reachable |
 
-## Admin UI surface
-
-The UI is read-only for updates: it surfaces availability but never applies
-an update. Updates run from the CLI as root (`sudo bayanat update`).
-
-- Nav-bar banner chip: shows when `latest != current`, with the CLI command
-  to run on the server
-- Status: `/admin/api/updates/status` reflects a CLI-initiated update's state
-- Snapshots page: `/admin/snapshots/` (read-only list; restore stays on
-  the CLI)
-
 ## Manual CLI reference
 
 Commands marked `(root)` require `sudo bayanat ...`; the others can run
@@ -131,6 +142,7 @@ as the app user via `sudo -u bayanat bayanat ...`.
 bayanat update [<tag>]       (root)  default: latest GitHub release
 bayanat update --check               show current vs latest; no changes
 bayanat update --recover     (root)  recover a stuck state file
+bayanat harden               (root)  migrate an older install onto the hardened layout
 bayanat snapshots            (root)  list pre-update snapshots
 bayanat restore <name>       (root)  interactive restore from a snapshot
 bayanat status                       version + services + update state

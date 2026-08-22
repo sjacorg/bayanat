@@ -81,6 +81,8 @@ export default withMermaid(
               { text: "Database Migrations", link: "/deployment/migrations" },
               { text: "Docker", link: "/deployment/docker" },
               { text: "Backups", link: "/deployment/backups" },
+              { text: "Auto-Update Runbook", link: "/deployment/auto-update-runbook" },
+              { text: "Release Signing", link: "/deployment/release-signing" },
             ],
           },
         ],

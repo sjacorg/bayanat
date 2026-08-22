@@ -28,7 +28,7 @@ This will:
 - Install system packages (PostgreSQL, Redis, Caddy, ffmpeg, etc.)
 - Create the `bayanat` system user
 - Set up the database
-- Clone the latest release into `/opt/bayanat/releases/`
+- Download the latest release as a signed tarball, verify its signature, and unpack it into `/opt/bayanat/releases/`
 - Install Python dependencies via `uv`
 - Configure Caddy as a reverse proxy with automatic SSL
 - Set up systemd services for Bayanat and Celery
