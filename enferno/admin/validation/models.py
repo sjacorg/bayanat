@@ -975,7 +975,11 @@ class PartialLocationTypeModel(BaseValidationModel):
 
 class PartialAdminLevelModel(BaseValidationModel):
     id: int
-    code: int
+    code: Optional[int] = None
+
+
+class PartialLocationHierarchyModel(BaseValidationModel):
+    id: int
 
 
 class PartialCountryModel(BaseValidationModel):
@@ -984,6 +988,10 @@ class PartialCountryModel(BaseValidationModel):
 
 class LocationQueryValidationModel(StrictValidationModel):
     lvl: Optional[int] = None
+    # scopes `lvl` to one hierarchy, null resolves the legacy global levels
+    hierarchy_id: Optional[int] = None
+    # admin level id whose eligible parent locations are wanted
+    parent_of: Optional[int] = None
     title: Optional[str] = None
     tsv: Optional[str] = None
     latlng: Optional[LatLngRadiusModel] = None
@@ -1010,14 +1018,30 @@ class LocationAdminLevelValidationModel(StrictValidationModel):
     code: int
     display_order: Optional[int] = None
     id: Optional[int] = None
+    # null scopes the level to the legacy global set. `hierarchy` and
+    # `hierarchy_title` are accepted so a serialized level can be sent straight back
+    hierarchy_id: Optional[int] = None
+    hierarchy: Optional[PartialLocationHierarchyModel] = None
+    hierarchy_title: Optional[str] = None
 
 
 class LocationAdminLevelReorderRequestModel(BaseValidationModel):
     order: list[int]
+    hierarchy_id: Optional[int] = None
 
 
 class LocationAdminLevelRequestModel(BaseValidationModel):
     item: LocationAdminLevelValidationModel
+
+
+class LocationHierarchyValidationModel(StrictValidationModel):
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    id: Optional[int] = None
+
+
+class LocationHierarchyRequestModel(BaseValidationModel):
+    item: LocationHierarchyValidationModel
 
 
 class LocationTypeValidationModel(StrictValidationModel):

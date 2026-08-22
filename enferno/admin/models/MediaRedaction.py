@@ -32,7 +32,9 @@ class MediaRedaction(db.Model, BaseMixin):
 
     source_media = db.relationship("Media", foreign_keys=[source_media_id])
     original_media = db.relationship("Media", foreign_keys=[original_media_id])
-    result_media = db.relationship("Media", foreign_keys=[result_media_id], backref=db.backref("redaction", uselist=False))
+    result_media = db.relationship(
+        "Media", foreign_keys=[result_media_id], backref=db.backref("redaction", uselist=False)
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {

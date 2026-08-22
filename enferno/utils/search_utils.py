@@ -1,6 +1,6 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, and_, func, text, select, literal_column, bindparam
+from sqlalchemy import or_, and_, false, func, text, select, literal_column, bindparam
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy import String, Integer, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -1499,14 +1499,37 @@ class SearchUtils:
                 # Handle the error or return, as 'lvl' should be an integer
                 return None
 
-            # Directly check if 'lvl' exists in the database and get the object (one query)
+            # level codes are unique within a hierarchy only, so scope the lookup;
+            # a request without a hierarchy resolves against the legacy global levels
             admin_level = db.session.scalar(
-                select(LocationAdminLevel).where(LocationAdminLevel.code == lvl)
+                select(LocationAdminLevel).where(
+                    LocationAdminLevel.code == lvl,
+                    LocationAdminLevel.hierarchy_id.is_not_distinct_from(q.get("hierarchy_id")),
+                )
             )
 
             if admin_level:
                 # If the specific location type exists, add it to the query
                 query.append(Location.admin_level == admin_level)
+
+        # restrict to locations eligible as parents of the given admin level: anything
+        # on a higher rung of the same ladder. Ordering is by code, which is immutable,
+        # not by display_order, which admins reorder to change how the text reads.
+        # Every rung above is offered rather than only the one directly above, because
+        # a partner dataset may legitimately omit a rung.
+        if parent_of := q.get("parent_of"):
+            level = db.session.get(LocationAdminLevel, parent_of)
+            above = (
+                level
+                and db.session.scalars(
+                    select(LocationAdminLevel.id).where(
+                        LocationAdminLevel.hierarchy_id.is_not_distinct_from(level.hierarchy_id),
+                        LocationAdminLevel.code < level.code,
+                    )
+                ).all()
+            )
+            # the top rung of a ladder has nothing that can parent it
+            query.append(Location.admin_level_id.in_(above) if above else false())
 
         if title := q.get("title"):
             words = title.split(" ")
@@ -1540,7 +1563,7 @@ class SearchUtils:
 
         # admin levels
         admin_level = q.get("admin_level", None)
-        if admin_level and (admin_level_id := admin_level.get("code")):
+        if admin_level and (admin_level_id := admin_level.get("id")):
             query.append(Location.admin_level_id == admin_level_id)
 
         # country

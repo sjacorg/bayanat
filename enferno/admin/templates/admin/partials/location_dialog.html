@@ -51,6 +51,23 @@
                         </v-col>
                     </v-row>
 
+                    <v-row v-if="hierarchies.length">
+                        <v-col cols="12" md="5">
+                            <search-field
+                                clearable
+                                api="/admin/api/location-hierarchies/"
+                                item-title="title"
+                                item-value="id"
+                                v-model="hierarchy"
+                                @update:model-value="onHierarchyChange"
+                                :multiple="false"
+                                hint="{{ _('Leave empty to use the default admin levels') }}"
+                                persistent-hint
+                                label="{{ _('Hierarchy') }}">
+                            </search-field>
+                        </v-col>
+                    </v-row>
+
                     <v-row>
                         <v-col cols="12" md="5">
                                 <search-field
@@ -72,6 +89,7 @@
                                     api="/admin/api/location-admin-levels/"
                                     item-title="title"
                                     item-value="id"
+                                    :query-params="levelQueryParams"
                                     :disabled="editedItem.location_type?.title!=='Administrative Location'"
                                     v-model="editedItem.admin_level"
                                     @update:model-value="restrictSearch"

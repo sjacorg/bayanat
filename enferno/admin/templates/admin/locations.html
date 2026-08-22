@@ -107,6 +107,17 @@
                                             </v-toolbar>
                                         </template>
 
+                                        <template v-slot:item.admin_level.title="{ item }">
+                                            <div v-if="item.admin_level">
+                                                <bdi>${item.admin_level.title}</bdi>
+                                                <!-- a level title alone is ambiguous once two ladders
+                                                     both carry, say, a Governorate -->
+                                                <div v-if="hierarchies.length" class="text-caption text-medium-emphasis">
+                                                    <bdi>${item.admin_level.hierarchy_title || "{{ _('Default') }}"}</bdi>
+                                                </div>
+                                            </div>
+                                        </template>
+
                                         <template v-slot:item.parent.title="{ item }">
                                             <div v-if="item.parent">
                                                 <v-btn  size="x-small" variant="plain">
@@ -221,6 +232,10 @@
                 editedIndex: -1,
 
                 locQueryParams: {},
+                // transient editor scope: a location derives its hierarchy from
+                // its admin level, nothing is stored on the location itself
+                hierarchy: null,
+                hierarchies: [],
                 editedItem: {
                     title: "",
                     parent: {
@@ -242,6 +257,9 @@
             computed: {
                 formTitle() {
                     return !this.editedItem.id ? "{{_('New Location')}}" : "{{_('Edit Location')}}";
+                },
+                levelQueryParams() {
+                    return {hierarchy_id: this.hierarchy?.id ?? 'null'};
                 }
             },
 
@@ -272,6 +290,9 @@
 
             mounted: function () {
 
+                api.get('/admin/api/location-hierarchies/?per_page=100')
+                    .then(response => this.hierarchies = response.data.items)
+                    .catch(console.error);
 
                 if (this.$route.params.id) {
                     this.showLocation(this.$route.params.id);
@@ -352,19 +373,28 @@
                         this.showSnack(handleRequestError(error));
                     });
                 },
+                onHierarchyChange() {
+                    this.editedItem.admin_level = null;
+                    this.editedItem.parent = null;
+                    this.locQueryParams = {};
+                },
+
                 restrictSearch() {
-                    if (this.editedItem.location_type?.title === 'Administrative Location' 
-                        && !!this.editedItem.admin_level
-                    ) {
-                        const restrict = this.editedItem.admin_level.code - 1;
-                        if (this.editedItem.parent?.admin_level.code !== restrict) {
-                            // clear parent location
-                            this.editedItem.parent = null;
-                        }
-                        this.locQueryParams = {lvl: restrict};
-                    } else {
+                    const level = this.editedItem.admin_level;
+                    if (this.editedItem.location_type?.title !== 'Administrative Location' || !level) {
                         this.locQueryParams = {};
+                        return;
                     }
+                    // eligible parents are resolved server side, so nothing here assumes
+                    // a parent sits at this level's code minus one. Compare code, not
+                    // display_order: display_order is the address format an admin can
+                    // reorder, and using it would drop the parent of a valid location.
+                    const parentLevel = this.editedItem.parent?.admin_level;
+                    const sameHierarchy = (parentLevel?.hierarchy?.id ?? null) === (level.hierarchy?.id ?? null);
+                    if (parentLevel && (!sameHierarchy || parentLevel.code >= level.code)) {
+                        this.editedItem.parent = null;
+                    }
+                    this.locQueryParams = {parent_of: level.id};
                 },
 
                 has_role(user, role) {
@@ -433,6 +463,7 @@
                 newItem() {
 
                     this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                    this.hierarchy = null;
                     this.dialog = true;
                     this.$nextTick(() => {
                         this.locationKey += 1;
@@ -444,6 +475,8 @@
                     this.locationDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = Object.assign({}, item);
+                    // a location has no hierarchy of its own, it is read back off its level
+                    this.hierarchy = item.admin_level?.hierarchy || item.parent?.admin_level?.hierarchy || null;
                     this.restrictSearch()
                     this.dialog = true;
                     this.$nextTick(() => {
