@@ -286,8 +286,7 @@ write_state() {
   "updated_at": "$(_now_iso)",
   "progress_text": "${STATE_PROGRESS:-}",
   "error": ${STATE_ERROR_JSON:-null},
-  "pid": $$,
-  "unit": "${BAYANAT_UPDATE_UNIT:-bayanat-update.service}"
+  "pid": $$
 }
 EOF
     mv -Tf "$tmp" "$STATE_FILE"

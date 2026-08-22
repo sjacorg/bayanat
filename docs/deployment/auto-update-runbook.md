@@ -107,7 +107,7 @@ sudo bayanat restore pre-<ts>.dump        # restores DB (needs root)
 sudo systemctl start bayanat bayanat-celery
 ```
 
-Then file a bug with journal logs from `journalctl -u bayanat-update`.
+Then file a bug with the update output and `journalctl -u bayanat -u bayanat-celery`.
 
 ### Stuck state (process died, state file orphaned)
 
