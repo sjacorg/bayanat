@@ -108,7 +108,7 @@ def api_labels() -> Response:
 
 
 @admin.route("/api/labels/tree")
-@roles_accepted("Admin", "Mod")
+@roles_accepted("Admin", "Mod", "DA")
 def api_labels_tree() -> Response:
     """Return labels as nested tree structure for admin tree view."""
     verified_param = request.args.get("verified", None)
