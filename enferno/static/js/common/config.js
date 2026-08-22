@@ -61,7 +61,10 @@ const validationRules = {
             try {
               if (v === initialUsername) return onResponse(true), resolve(true);
       
-              await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
+              await axios.post('/admin/api/checkuser/', { item: v }, {
+                suppressGlobalErrorHandler: true,
+                suppressSessionReplay: true
+              });
               onResponse(true);
               resolve(true);
             } catch (err) {
@@ -90,7 +93,10 @@ const validationRules = {
       
             passwordCheckTimeout = setTimeout(async () => {
               try {
-                await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
+                await axios.post('/admin/api/password/', { password: v }, {
+                  suppressGlobalErrorHandler: true,
+                  suppressSessionReplay: true
+                });
                 onResponse(true);
                 resolve(true);
             } catch (err) {
@@ -307,12 +313,76 @@ axios.defaults.headers.common['Accept'] = 'application/json';
 // Centralized API service - handles standardized responses transparently
 const api = {
     get: axios.get.bind(axios),
-    post: axios.post.bind(axios), 
+    post: axios.post.bind(axios),
     put: axios.put.bind(axios),
     delete: axios.delete.bind(axios)
 };
 
-//global axios response interceptor - handles standardized API responses and global error handling  
+// Requests whose own 401 must never be queued for replay: the auth endpoints
+// themselves (replaying a failed login makes no sense), and the session-check
+// probe used to test whether a session is alive again.
+const SESSION_REPLAY_EXCLUDED_PATHS = [
+    '/login',
+    '/verify',
+    '/tf-validate',
+    '/tf-select',
+    '/wan-signin',
+    '/csrf',
+    '/admin/api/session-check',
+];
+
+// Requests whose 401 must open the sign-in dialog but never be queued: the
+// silent notification poll marks itself so its failures don't get replayed
+// as a user-visible retried call once the user signs back in.
+function isSilentPollRequest(config) {
+    const headers = config?.headers;
+    if (!headers) return false;
+    if (typeof headers.get === 'function') return Boolean(headers.get('X-Silent-Poll'));
+    return Boolean(headers['X-Silent-Poll'] || headers['x-silent-poll']);
+}
+
+function isReplayExcluded(config) {
+    if (!config) return true;
+    if (config.suppressSessionReplay) return true;
+    if (config._sessionReplayed) return true;
+    if (isSilentPollRequest(config)) return true;
+    const url = config.url || '';
+    return SESSION_REPLAY_EXCLUDED_PATHS.some(path => url === path || url.startsWith(`${path}/`) || url.startsWith(`${path}?`));
+}
+
+function isReplayableMutation(config) {
+    return ['post', 'put', 'patch', 'delete'].includes((config?.method || 'get').toLowerCase());
+}
+
+// A 401 carrying reauth_required is a freshness/step-up challenge, not a
+// plain expired session: the caller must consciously redo the privileged
+// action after proving freshness, so it is never auto-replayed.
+function isReauthRequiredResponse(error) {
+    return Boolean(error?.response?.data?.response?.reauth_required);
+}
+
+// Requests dropped by a 401 mid-flight are queued here instead of being
+// rejected immediately, so a successful sign-in can replay them exactly
+// once and settle the original caller with the real outcome.
+const sessionReplayQueue = [];
+
+function queueForSessionReplay(config) {
+    return new Promise((resolve, reject) => {
+        sessionReplayQueue.push({ config, resolve, reject });
+    });
+}
+
+function drainSessionReplayQueue() {
+    const pending = sessionReplayQueue.splice(0, sessionReplayQueue.length);
+    return Promise.allSettled(
+        pending.map(({ config, resolve, reject }) => {
+            const replayConfig = { ...config, _sessionReplayed: true };
+            return axios.request(replayConfig).then(resolve, reject);
+        }),
+    );
+}
+
+//global axios response interceptor - handles standardized API responses and global error handling
 axios.interceptors.response.use(
     function (response) {
         if (!hasSilentPollHeader(response?.config?.headers)) {
@@ -322,7 +392,7 @@ axios.interceptors.response.use(
         const shouldFlatten =
             isPlainObject(response?.data?.data) &&
             !response?.config?.skipFlattening;
-    
+
         if (shouldFlatten) {
             return {
                 ...response,
@@ -332,18 +402,31 @@ axios.interceptors.response.use(
                 }
             };
         }
-    
+
       return response;
     },
     function (error) {
-        if (!error.config?.suppressGlobalErrorHandler) {
+        const isSessionExpiry = error?.response?.status === 401;
+        // A request about to be queued for replay isn't a failure yet, so
+        // it must not surface an error toast ahead of the real outcome.
+        const willReplay =
+            isSessionExpiry &&
+            isReplayableMutation(error.config) &&
+            !isReplayExcluded(error.config) &&
+            !isReauthRequiredResponse(error);
+
+        if (!willReplay && !error.config?.suppressGlobalErrorHandler) {
             const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
             document.dispatchEvent(globalRequestErrorEvent);
         }
-        // Check for session expiration errors (401 Unauthorized)
-        if ([401].includes(error?.response?.status)) {
+
+        if (isSessionExpiry) {
             const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });
             document.dispatchEvent(authenticationRequiredEvent);
+
+            if (willReplay) {
+                return queueForSessionReplay(error.config);
+            }
         }
         return Promise.reject(error);
     },

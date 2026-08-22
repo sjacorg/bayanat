@@ -565,7 +565,10 @@
 
                 checkUsername:
                     debounce(function (evt) {
-                        api.post('/admin/api/checkuser/', {item: this.editedItem.username}, { suppressGlobalErrorHandler: true }).then(
+                        api.post('/admin/api/checkuser/', {item: this.editedItem.username}, {
+                            suppressGlobalErrorHandler: true,
+                            suppressSessionReplay: true
+                        }).then(
                             res => {
 
                             }

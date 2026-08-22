@@ -14,7 +14,6 @@ const reauthMixin = {
     twoFaSelectForm: null,
     verificationCode: null,
     signInStep: 'sign-in',
-    callbackQueue: []
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
@@ -30,19 +29,45 @@ const reauthMixin = {
       // sign-in in one tab needs an explicit cross-tab signal to close the
       // others' dialogs instead of waiting on a focus change that won't come.
       if (event.key !== SESSION_RESTORED_STORAGE_KEY || !event.newValue) return;
-      if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
+      if (!this.isSignInDialogVisible && !this.isReauthDialogVisible) return;
 
-      this.resetState();
+      // Same reasoning as onVisibilityChange: a sibling tab signing in only
+      // proves *a* session exists, not that this tab's freshness reauth
+      // requirement was satisfied.
+      if (this.isReauthDialogVisible) return;
+
+      // A different account signing in elsewhere is not this tab's session
+      // coming back - completing here would replay this tab's pending
+      // requests (e.g. an unsaved bulletin) under the other account's
+      // cookie. Only self-close when the restored session matches who this
+      // tab was signed in as.
+      const [restoredUsername] = event.newValue.split('|');
+      if (!this.isSameUsername(restoredUsername, window.__username__)) return;
+
+      this.completeAuthentication();
     },
     async onVisibilityChange() {
       if (document.visibilityState !== 'visible') return; // only run when tab becomes active
 
-      // Only check if dialog is visible
-      if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
-      
+      if (!this.isSignInDialogVisible && !this.isReauthDialogVisible) return;
+
+      // A session-check only proves the session exists; it cannot prove a
+      // freshness reauth requirement was satisfied. So it may auto-close the
+      // plain sign-in dialog, but the freshness reauth dialog must still be
+      // completed in this tab even if the underlying session is valid.
+      if (this.isReauthDialogVisible) return;
+
       try {
-        await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
-        this.resetState(); // Session restored - close dialog
+        const response = await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
+
+        // The browser's cookie jar is shared across tabs: if a different
+        // account signed in here since this tab loaded, session-check now
+        // succeeds under that other account. That is not this tab's session
+        // coming back, and completing here would replay this tab's pending
+        // requests (e.g. an unsaved bulletin) under someone else's account.
+        if (!this.isSameUsername(response?.data?.username, window.__username__)) return;
+
+        this.completeAuthentication();
       } catch (error) {
         // Still expired - keep dialog open
       }
@@ -73,6 +98,10 @@ const reauthMixin = {
       this.twoFaSelectForm = null;
       this.verificationCode = null;
       this.signInStep = 'sign-in';
+    },
+    completeAuthentication() {
+      this.resetState();
+      drainSessionReplayQueue();
     },
     async signIn() {
       try {
@@ -121,9 +150,6 @@ const reauthMixin = {
 
         // Handle success
         this.handleLoginResponse();
-
-        // Run callbacks in queue
-        await this.executeCallbackQueue();
       } catch (err) {
         this.signInErrorMessage = handleRequestError(err);
       } finally {
@@ -197,13 +223,18 @@ const reauthMixin = {
 
       this.showSnack('Authentication successful');
       this.broadcastSessionRestored();
-      this.resetState();
+      this.completeAuthentication();
     },
     broadcastSessionRestored() {
       try {
         // Value must change on every write so sibling tabs' storage listeners
-        // fire even if a previous signal was never cleared.
-        localStorage.setItem(SESSION_RESTORED_STORAGE_KEY, String(Date.now()));
+        // fire even if a previous signal was never cleared. Username is
+        // included so sibling tabs can tell a same-account restore (safe to
+        // auto-complete) apart from a different account signing in on this
+        // browser (must not silently replay this tab's pending requests
+        // under someone else's session).
+        const username = this.signInForm.username || window.__username__ || '';
+        localStorage.setItem(SESSION_RESTORED_STORAGE_KEY, `${Date.now()}|${username}`);
       } catch (error) {
         // Storage unavailable; other tabs simply won't self-close their dialog.
       }
@@ -274,25 +305,16 @@ const reauthMixin = {
 
       return csrfToken;
     },
-    addToCallbackQueueIfReauthRequired(error, callbacks) {
-      if (!this.isReauthRequired(error)) return;
-
-      if (Array.isArray(callbacks)) {
-          callbacks.forEach(callback => this.callbackQueue.push(callback));
-      } else {
-          this.callbackQueue.push(callbacks);
-      }
-    },
-    async executeCallbackQueue() {
-      for (const callback of this.callbackQueue) {
-        await callback();
-      }
-      this.callbackQueue = [];
-    },
     isReauthRequired(evt) {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);
 
       return reauthRequired;
+    },
+    isSameUsername(a, b) {
+      // Login is case-insensitive server-side (SECURITY_USER_IDENTITY_ATTRIBUTES),
+      // so "Alice" typed at sign-in and a stored "alice" are the same account.
+      if (!a || !b) return false;
+      return a.toLowerCase() === b.toLowerCase();
     }
   },
 };

@@ -315,8 +315,13 @@ def api_session_check() -> Response:
     Lightweight endpoint to check if current session is still valid.
     Used by frontend to detect when session is restored after expiration.
 
+    Username is included so a tab can tell its own session being restored
+    apart from a *different* account having signed in on the same browser
+    (shared cookie jar) - the latter must not be treated as this tab's
+    session coming back.
+
     Returns:
         - 200: Session is valid
         - 401: Session expired (handled by auth decorator)
     """
-    return jsonify({"status": "valid"})
+    return jsonify({"status": "valid", "username": current_user.username})

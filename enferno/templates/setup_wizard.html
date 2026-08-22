@@ -543,7 +543,7 @@
 
                 importDefaultData() {
                     this.loading = true;
-                    api.post('/api/import-data')
+                    api.post('/api/import-data', undefined, { suppressSessionReplay: true })
                         .then(response => {
                             this.dataImported = true;
                             this.step = 5; // Move to the next step only if import is successful
@@ -575,7 +575,7 @@
 
                 reloadApp() {
                     this.overlay = true;
-                    api.post('/admin/api/reload/')
+                    api.post('/admin/api/reload/', undefined, { suppressSessionReplay: true })
                     this.waitForReload();
                 },
 
@@ -583,7 +583,7 @@
                     this.loading = true;
                     api.put('/api/complete-setup/', {
                         conf: this.cfg
-                    })
+                    }, { suppressSessionReplay: true })
                     .then(response => {
                         this.reloadApp();
                     })
