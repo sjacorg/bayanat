@@ -294,8 +294,11 @@ uv run flask ocr purge-raw --dry-run
 uv run flask ocr purge-raw
 ```
 
-**Review new settings** in `.env-sample` against your `.env`. All are optional
-and have defaults.
+**Review new settings.** All are optional and have defaults; see
+[Configuration](/deployment/configuration) for the full reference. The ones
+most likely to matter after this upgrade are `SEARCH_TIMEOUT` and
+`BACKGROUND_SEARCH_TIME_LIMIT`, the login throttles and `SESSION_LIFETIME`, and
+`BAYANAT_CONFIG_FILE` if you deploy releases as read-only trees.
 
 **Log in and check** the dashboard footer, which shows the running version.
 
