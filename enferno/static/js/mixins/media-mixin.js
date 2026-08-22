@@ -2,6 +2,7 @@ const getDefaultMedia = () => ({
   title: '',
   files: [],
   category: null,
+  dossier: false,
 })
 
 const mediaMixin = {
@@ -337,6 +338,7 @@ const mediaMixin = {
         item.title = this.editedMedia.title;
         item.title_ar = this.editedMedia.title_ar;
         item.category = this.editedMedia.category;
+        item.dossier = this.editedMedia.dossier;
         item.fileType = file.type;
         item.filename = response.data.filename;
         item.uuid = file.upload.uuid;

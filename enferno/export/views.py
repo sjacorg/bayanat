@@ -6,9 +6,9 @@ from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
 from enferno.extensions import db
 from enferno.admin.constants import Constants
-from enferno.admin.models import Activity
+from enferno.admin.models import Activity, Actor
 from enferno.admin.models.Notification import Notification
-from enferno.export.models import Export
+from enferno.export.models import Export, ExportTemplate
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
@@ -341,3 +341,224 @@ def download_export_file() -> Response:
     except Exception as e:
         logger.error(f"Unable to decrypt export request uid {e}")
         return HTTPResponse.not_found("Unable to decrypt export request uid")
+
+
+# ---------------------------------------------------------------------------
+# Dossier export templates (smart blocks)
+# ---------------------------------------------------------------------------
+
+
+def _get_template(id: t.id) -> Optional[ExportTemplate]:
+    template = db.session.get(ExportTemplate, id)
+    if template is None or template.deleted:
+        return None
+    return template
+
+
+@export.route("/templates/")
+@roles_required("Admin")
+def templates_editor() -> str:
+    """Render the dossier template editor page."""
+    return render_template("export-templates.html")
+
+
+@export.get("/api/templates/meta")
+@roles_required("Admin")
+def api_templates_meta() -> Response:
+    """Editor metadata: field whitelist, relation types, and column choices."""
+    from enferno.admin.models import AtoaInfo
+    from enferno.admin.models.DynamicField import DynamicField
+    from enferno.export.blocks import (
+        ACTOR_FIELDS,
+        EVENT_COLUMNS,
+        RELATED_ACTOR_COLUMNS,
+        RELATED_BULLETIN_COLUMNS,
+    )
+
+    fields = [
+        {"key": key, "label": spec["label"], "label_ar": spec["label_ar"]}
+        for key, spec in ACTOR_FIELDS.items()
+    ]
+    fields += [
+        {"key": f"dyn:{field.name}", "label": field.title, "label_ar": field.title}
+        for field in DynamicField.query.filter_by(entity_type="actor", active=True, core=False)
+    ]
+    relation_types = [
+        {"id": info.id, "title": info.title_tr or info.title}
+        for info in AtoaInfo.query.filter(AtoaInfo.deleted == False).order_by(
+            AtoaInfo.id
+        )  # noqa: E712
+    ]
+    columns = {
+        "family_members_table": [
+            {"key": k, "label": v["label"]} for k, v in RELATED_ACTOR_COLUMNS.items()
+        ],
+        "related_items_table": [
+            {"key": k, "label": v["label"]} for k, v in RELATED_BULLETIN_COLUMNS.items()
+        ],
+        "events_timeline": [{"key": k, "label": v["label"]} for k, v in EVENT_COLUMNS.items()],
+    }
+    return HTTPResponse.success(
+        data={"fields": fields, "relation_types": relation_types, "columns": columns}
+    )
+
+
+@export.post("/api/templates/")
+@roles_required("Admin")
+def api_templates() -> Response:
+    """Paged list of dossier templates."""
+    page = request.json.get("page", 1)
+    per_page = request.json.get("per_page", PER_PAGE)
+    result = (
+        ExportTemplate.query.filter(ExportTemplate.deleted == False)  # noqa: E712
+        .order_by(-ExportTemplate.id)
+        .paginate(page=page, per_page=per_page, count=True)
+    )
+    return HTTPResponse.success(
+        data={
+            "items": [item.to_dict() for item in result.items],
+            "perPage": per_page,
+            "total": result.total,
+        }
+    )
+
+
+@export.post("/api/template/")
+@roles_required("Admin")
+def api_template_create() -> Response:
+    template = ExportTemplate()
+    try:
+        template.from_json(request.json.get("item") or {})
+    except ValueError as e:
+        return HTTPResponse.error(str(e), status=417)
+    template.user = current_user
+    if template.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            template.to_mini(),
+            ExportTemplate.__table__.name,
+        )
+        return HTTPResponse.created(
+            message=f"Template #{template.id} created", data={"item": template.to_dict()}
+        )
+    return HTTPResponse.error("Error creating template", status=417)
+
+
+@export.put("/api/template/<int:id>")
+@roles_required("Admin")
+def api_template_update(id: t.id) -> Response:
+    template = _get_template(id)
+    if template is None:
+        return HTTPResponse.not_found("Template not found")
+    try:
+        template.from_json(request.json.get("item") or {})
+    except ValueError as e:
+        return HTTPResponse.error(str(e), status=417)
+    if template.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            template.to_mini(),
+            ExportTemplate.__table__.name,
+        )
+        return HTTPResponse.success(
+            message=f"Template #{template.id} updated", data={"item": template.to_dict()}
+        )
+    return HTTPResponse.error("Error saving template", status=417)
+
+
+@export.delete("/api/template/<int:id>")
+@roles_required("Admin")
+def api_template_delete(id: t.id) -> Response:
+    template = _get_template(id)
+    if template is None:
+        return HTTPResponse.not_found("Template not found")
+    template.deleted = True
+    if template.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            template.to_mini(),
+            ExportTemplate.__table__.name,
+        )
+        return HTTPResponse.success(message=f"Template #{template.id} deleted")
+    return HTTPResponse.error("Error deleting template", status=417)
+
+
+def _render_dossier(
+    template: ExportTemplate, actor: Actor, show_toolbar: bool = True, pdf_mode: bool = False
+) -> str:
+    from flask import current_app
+    from enferno.export.blocks import build_dossier
+
+    context = build_dossier(template, actor, current_user)
+    # Browsers load the logo over HTTP; WeasyPrint reads it straight from disk
+    # (the hardened fetcher allows file:// under the app root only).
+    logo_src = (
+        f"file://{current_app.root_path}/static/img/sjac-logo.png"
+        if pdf_mode
+        else "/static/img/sjac-logo.png"
+    )
+    media_base = f"file://{current_app.root_path}/media/" if pdf_mode else "/admin/api/serve/media/"
+    return render_template(
+        "dossier.html",
+        show_toolbar=show_toolbar,
+        pdf_mode=pdf_mode,
+        logo_src=logo_src,
+        media_base=media_base,
+        **context,
+    )
+
+
+@export.get("/dossier/<int:template_id>/<int:actor_id>")
+def dossier(template_id: t.id, actor_id: t.id) -> Response:
+    """Render a dossier from a saved template: HTML with a print button, or
+    PDF via WeasyPrint with ?format=pdf (both use the same HTML)."""
+    template = _get_template(template_id)
+    if template is None:
+        return HTTPResponse.not_found("Template not found")
+    if not template.active and not current_user.has_role("Admin"):
+        return HTTPResponse.forbidden("Template is not active")
+    actor = db.session.get(Actor, actor_id)
+    if actor is None or actor.deleted:
+        return HTTPResponse.not_found("Entity not found")
+    if not current_user.can_access(actor):
+        return HTTPResponse.forbidden("Forbidden")
+
+    as_pdf = request.args.get("format") == "pdf"
+    html = _render_dossier(template, actor, show_toolbar=not as_pdf, pdf_mode=as_pdf)
+    Activity.create(
+        current_user,
+        Activity.ACTION_DOWNLOAD if as_pdf else Activity.ACTION_VIEW,
+        Activity.STATUS_SUCCESS,
+        {"template_id": template.id, "actor_id": actor.id, "class": "dossier"},
+        ExportTemplate.__table__.name,
+    )
+    if not as_pdf:
+        return Response(html, mimetype="text/html")
+
+    from flask import current_app
+    from weasyprint import CSS, HTML
+    from enferno.utils.pdf_utils import _safe_url_fetcher
+
+    stylesheet = CSS(filename=f"{current_app.root_path}/static/css/dossier.css")
+    # WeasyPrint-only: running document title in the footer (string() is not
+    # supported by browsers, so it stays out of the shared stylesheet).
+    running_title = CSS(
+        string="@page { @bottom-left { content: string(doctitle); "
+        'font-family: "IBM Plex Sans Arabic", sans-serif; font-size: 8.5px; color: #6f6a60; } }'
+    )
+    pdf = HTML(string=html, url_fetcher=_safe_url_fetcher).write_pdf(
+        stylesheets=[stylesheet, running_title]
+    )
+    return Response(
+        pdf,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=dossier-{template.id}-{actor.id}.pdf"
+        },
+    )

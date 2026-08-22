@@ -234,6 +234,7 @@ class PartialMediaModel(BaseValidationModel):
     etag: Optional[str] = None
     time: Optional[Any] = None
     category: Optional[PartialMediaCategoryModel] = None
+    dossier: Optional[bool] = None
 
 
 class BulletinValidationModel(StrictValidationModel):
