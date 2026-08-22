@@ -728,3 +728,86 @@ class TestRevoke2FA:
             assert found_user.tf_phone_number == target.tf_phone_number
             assert found_user.tf_primary_method == target.tf_primary_method
             assert len(new_wa) == 1
+
+
+# =========================================================================
+# GET /admin/api/users/ - search
+# =========================================================================
+
+
+class TestUserSearch:
+    @pytest.fixture
+    def searchable(self, session):
+        user = UserFactory()
+        user.fs_uniquifier = uuid4().hex
+        user.name = "Zainab Haddad"
+        user.username = "zhaddad"
+        user.email = "zainab@example.org"
+        session.add(user)
+        session.commit()
+        yield user
+        session.delete(user)
+        session.commit()
+
+    def _usernames(self, resp):
+        return [item["username"] for item in resp.json["data"]["items"]]
+
+    @pytest.mark.parametrize("term", ["Zainab", "zhaddad", "zainab@example.org"])
+    def test_admin_searches_name_username_and_email(self, admin_client, searchable, term):
+        resp = admin_client.get(f"/admin/api/users/?q={term}", headers=HEADERS)
+        assert resp.status_code == 200
+        assert self._usernames(resp) == ["zhaddad"]
+
+    def test_search_is_case_insensitive_and_partial(self, admin_client, searchable):
+        resp = admin_client.get("/admin/api/users/?q=HADD", headers=HEADERS)
+        assert resp.status_code == 200
+        assert "zhaddad" in self._usernames(resp)
+
+    def test_no_match_returns_empty(self, admin_client, searchable):
+        resp = admin_client.get("/admin/api/users/?q=nobodyhere", headers=HEADERS)
+        assert resp.status_code == 200
+        assert resp.json["data"]["items"] == []
+        assert resp.json["data"]["total"] == 0
+
+    def test_blank_query_does_not_filter(self, admin_client, searchable):
+        resp = admin_client.get("/admin/api/users/?q=", headers=HEADERS)
+        assert resp.status_code == 200
+        assert resp.json["data"]["total"] > 1
+
+    @pytest.fixture
+    def blind_mod_client(self, app, session, isolated_session_store):
+        """A Mod who cannot view usernames. Built fresh rather than by mutating
+        the shared fixture, since current_user does not see test-session edits."""
+        from enferno.user.models import Role
+
+        mod = User(username="TestBlindMod", password="password", active=1)
+        mod.name = "BlindMod"
+        mod.fs_uniquifier = uuid4().hex
+        mod.view_usernames = False
+        mod.roles.append(Role.query.filter(Role.name == "Mod").first())
+        session.add(mod)
+        session.commit()
+        with app.app_context():
+            with app.test_client(user=mod) as client:
+                yield client
+        session.delete(mod)
+        session.commit()
+
+    @pytest.mark.parametrize("probe", ["zainab@example.org", "zhaddad", "Zainab"])
+    def test_hidden_identifiers_are_not_searchable(self, blind_mod_client, searchable, probe):
+        """A caller who cannot see identifiers must not be able to probe them.
+
+        name is masked by secure_name on the same condition as username/email,
+        so it is gated too: searching it would otherwise reveal a value the
+        caller is not allowed to read.
+        """
+        resp = blind_mod_client.get(f"/admin/api/users/?q={probe}", headers=HEADERS)
+        assert resp.status_code == 200
+        assert resp.json["data"]["items"] == [], f"search leaked existence of {probe}"
+        assert resp.json["data"]["total"] == 0
+
+    def test_unprivileged_list_without_search_is_unchanged(self, blind_mod_client, searchable):
+        """Only the filter is denied. The masked list itself still works."""
+        resp = blind_mod_client.get("/admin/api/users/", headers=HEADERS)
+        assert resp.status_code == 200
+        assert resp.json["data"]["total"] > 1
