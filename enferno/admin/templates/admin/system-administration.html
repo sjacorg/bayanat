@@ -1763,11 +1763,10 @@
                     this.preprocessConfig();
                     api.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
                         this.reloadApp();
+                        this.closeSaveDialog()
                     }).catch(e => {
                         console.error(e);
                         this.overlay = false;
-                    }).finally(() => {
-                        this.closeSaveDialog()
                     })
                 },
 
