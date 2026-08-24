@@ -195,9 +195,9 @@ sudo bayanat status      # Layout: hardened
 ```
 
 ::: danger Do not re-run the installer
-Re-running `bayanat install` on an existing install is not how you pick up the
-new layout. Use `bayanat harden`. `install` refuses to re-initialize a
-populated database, but it is still the wrong tool.
+`bayanat install` provisions a new machine. It is not a repair or an upgrade,
+and it refuses to run over an existing install. Use `bayanat update` to change
+version and `bayanat harden` to apply the layout.
 :::
 
 Re-running `harden` on an already hardened install does nothing. `harden --force`

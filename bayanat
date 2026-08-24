@@ -1245,6 +1245,19 @@ _install_self() {
 cmd_install() {
     local domain="${1:-localhost}"
     require_root
+
+    # `install` provisions a new box and nothing else. Re-running it over a
+    # working install is not a repair or an upgrade: it fetches the latest
+    # release and swaps `current` to it WITHOUT running migrations (database
+    # init is skipped once the schema exists), and it rewrites the Caddyfile
+    # from $domain, which defaults to localhost and would take a production
+    # site down. Keyed on the `current` symlink, so an install that died before
+    # activating a release can still be re-run.
+    if [[ -L "$CURRENT_LINK" ]]; then
+        die "Bayanat is already installed at $BAYANAT_ROOT (running $(current_version))" \
+            "Use 'bayanat update [<tag>]' to change version, or 'bayanat harden' to apply the current layout."
+    fi
+
     preflight_checks
 
     log "Installing Bayanat for: $domain"
