@@ -51,7 +51,8 @@ const reauthMixin = {
         this.isSignInDialogVisible = false;
         this.isReauthDialogVisible = true;
       } else {
-        if (this.isSignInDialogVisible || this.isReauthDialogVisible) return;
+        if (this.isSignInDialogVisible) return;
+        this.isReauthDialogVisible = false;
         this.isSignInDialogVisible = true;
       }
 
@@ -301,7 +302,10 @@ const reauthMixin = {
       if (!this.signInForm.password) return false;
 
       const submittedUsername = (this.signInForm.username || '').trim();
-      return !submittedUsername || submittedUsername === window.__username__;
+      if (submittedUsername && submittedUsername !== window.__username__) return false;
+
+      const message = handleRequestError(error).toLowerCase();
+      return message.includes('authenticated') || message.includes('logged in');
     },
     isReauthRequired(evt) {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);

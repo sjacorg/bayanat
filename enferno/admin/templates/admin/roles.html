@@ -281,7 +281,7 @@
                         this.refresh();
                         this.showSnack(response.data);
                     }).catch(error => {
-                        this.showSnack(error?.response?.data);
+                        this.showSnack(handleRequestError(error));
                     });
                 },
 
@@ -331,7 +331,7 @@
                                 this.refresh()
                                 this.close();
                             }).catch(error => {
-                                this.showSnack(error?.response?.data);
+                                this.showSnack(handleRequestError(error));
                             });
                     } else {
                         api
@@ -341,7 +341,7 @@
                                 this.refresh()
                                 this.close()
                             }).catch(error => {
-                                this.showSnack(error?.response?.data);
+                                this.showSnack(handleRequestError(error));
                             });
                     }
                 }

@@ -1767,6 +1767,7 @@
                     }).catch(e => {
                         console.error(e);
                         this.overlay = false;
+                        this.showSnack(handleRequestError(e));
                     })
                 },
 
