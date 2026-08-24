@@ -3,7 +3,7 @@ Tests for get_modified_date() on Actor, Bulletin and Incident.
 
 The method returns the timestamp of the entity's most recent revision, falling
 back to the entity's own updated_at when it has no revisions. It must do so
-without loading the history collection: each revision carries a full JSONB
+without loading the history collection: each revision carries a full JSON
 snapshot in `data`, so materialising them to read one timestamp reads the
 entire revision history of the entity.
 """
