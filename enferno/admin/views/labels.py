@@ -12,6 +12,7 @@ from enferno.admin.models import Label, Activity
 from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.models import LabelRequestModel
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE
@@ -45,7 +46,7 @@ def api_labels() -> Response:
         words = q.split(" ")
         query.extend(
             [
-                or_(Label.title.ilike(f"%{word}%"), Label.title_ar.ilike(f"%{word}%"))
+                or_(like_contains(Label.title, word), like_contains(Label.title_ar, word))
                 for word in words
             ]
         )

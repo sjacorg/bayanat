@@ -2,7 +2,7 @@
       v-model="locationDrawer"
       clipped
       fixed
-      location="right"
+      location="end"
       temporary
       width="520"
       app
@@ -18,4 +18,4 @@
 
       
        <location-card :close="true" v-if="locationDrawer && location" :show-edit="true" @edit="editItem" :log="true" @close="locationDrawer=false" :location="location"></location-card>
-    </v-navigation-drawer>  
+    </v-navigation-drawer>

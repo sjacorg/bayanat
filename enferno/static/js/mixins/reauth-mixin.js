@@ -1,3 +1,5 @@
+const SESSION_RESTORED_STORAGE_KEY = 'bayanat:session-restored';
+
 const reauthMixin = {
   data: () => ({
     isSignInDialogLoading: false,
@@ -16,11 +18,22 @@ const reauthMixin = {
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
+    window.addEventListener('storage', this.onSessionRestoredElsewhere);
   },
   beforeUnmount() {
     document.removeEventListener('authentication-required', this.showLoginDialog);
+    window.removeEventListener('storage', this.onSessionRestoredElsewhere);
   },
   methods: {
+    onSessionRestoredElsewhere(event) {
+      // Split-screen tabs never fire visibilitychange on each other, so a
+      // sign-in in one tab needs an explicit cross-tab signal to close the
+      // others' dialogs instead of waiting on a focus change that won't come.
+      if (event.key !== SESSION_RESTORED_STORAGE_KEY || !event.newValue) return;
+      if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
+
+      this.resetState();
+    },
     async onVisibilityChange() {
       if (document.visibilityState !== 'visible') return; // only run when tab becomes active
 
@@ -183,7 +196,17 @@ const reauthMixin = {
       }
 
       this.showSnack('Authentication successful');
+      this.broadcastSessionRestored();
       this.resetState();
+    },
+    broadcastSessionRestored() {
+      try {
+        // Value must change on every write so sibling tabs' storage listeners
+        // fire even if a previous signal was never cleared.
+        localStorage.setItem(SESSION_RESTORED_STORAGE_KEY, String(Date.now()));
+      } catch (error) {
+        // Storage unavailable; other tabs simply won't self-close their dialog.
+      }
     },
     async select2FAMethod() {
       try {

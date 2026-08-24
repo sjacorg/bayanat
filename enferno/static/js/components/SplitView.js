@@ -44,6 +44,9 @@ const SplitView = Vue.defineComponent({
     isHandleHighlighted() {
       return this.isDragging || this.isHovering;
     },
+    isRtl() {
+      return document.documentElement.dir === 'rtl';
+    },
   },
   mounted() {
     this.ro = new ResizeObserver(() => {
@@ -82,10 +85,13 @@ const SplitView = Vue.defineComponent({
     leaveHandle() {
       this.isHovering = false;
     },
+    getInlineStartX(e) {
+      const bounds = this.$el.getBoundingClientRect();
+      return this.isRtl ? bounds.right - e.clientX : e.clientX - bounds.left;
+    },
     startDrag(e) {
       if (e.button !== 0) return;
-      const bounds = this.$el.getBoundingClientRect();
-      this.currentX = e.clientX - bounds.left;
+      this.currentX = this.getInlineStartX(e);
       this.isDragging = true;
       document.addEventListener('mousemove', this.queueDragFrame);
       document.addEventListener('mouseup', this.stopDrag);
@@ -103,8 +109,7 @@ const SplitView = Vue.defineComponent({
     },
     queueDragFrame(e) {
       if (!this.isDragging) return;
-      const bounds = this.$el.getBoundingClientRect();
-      this.currentX = e.clientX - bounds.left;
+      this.currentX = this.getInlineStartX(e);
       if (!this.frameRequested) {
         this.frameRequested = true;
         requestAnimationFrame(this.doDrag);
