@@ -33,7 +33,7 @@
 
                                         >{{ _('New Group') }}</v-btn>
 
-                                        <v-dialog v-model="dialog" max-width="770px" @after-leave="resetState()">
+                                        <v-dialog v-model="dialog" max-width="770px" @after-leave="resetGroupFormState()">
                                             <v-card>
                                                 <v-card-title class="px-5 py-7">
                                                     <span class="headline">${ formTitle }</span>
@@ -280,7 +280,9 @@
                         this.imDialog = false;
                         this.refresh();
                         this.showSnack(response.data);
-                    })
+                    }).catch(error => {
+                        this.showSnack(error?.response?.data);
+                    });
                 },
 
                 newItem() {
@@ -314,7 +316,7 @@
                     this.dialog = false;
                 },
 
-                resetState() {
+                resetGroupFormState() {
                     this.dialog = false;
                     this.editedItem = Object.assign({}, this.defaultItem);
                     this.editedIndex = -1;
@@ -323,12 +325,13 @@
 
                 save() {
                     if (!this.isNewRecord) {
-                        Object.assign(this.items[this.editedIndex], this.editedItem);
                         api.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh()
                                 this.close();
+                            }).catch(error => {
+                                this.showSnack(error?.response?.data);
                             });
                     } else {
                         api
@@ -337,6 +340,8 @@
                                 this.showSnack(response.data);
                                 this.refresh()
                                 this.close()
+                            }).catch(error => {
+                                this.showSnack(error?.response?.data);
                             });
                     }
                 }
