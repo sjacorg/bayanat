@@ -106,16 +106,6 @@ const reauthMixin = {
         // Handle success
         this.handleLoginResponse(signInResponse?.data?.response);
       } catch (err) {
-        if (this.shouldVerifyInsteadOfLogin(err)) {
-          try {
-            await this.verifyCurrentSession();
-            this.handleLoginResponse();
-          } catch (verifyErr) {
-            this.signInErrorMessage = handleRequestError(verifyErr);
-          }
-          return;
-        }
-
         this.signInErrorMessage = handleRequestError(err);
       } finally {
         this.isSignInDialogLoading = false;
@@ -294,18 +284,6 @@ const reauthMixin = {
         csrf_token: csrfToken,
         password: this.signInForm.password
       }, { suppressGlobalErrorHandler: true });
-    },
-    shouldVerifyInsteadOfLogin(error) {
-      if (error?.response?.status !== 400) return false;
-      if (!this.isSignInDialogVisible || this.isReauthDialogVisible) return false;
-      if (!window.__username__) return false;
-      if (!this.signInForm.password) return false;
-
-      const submittedUsername = (this.signInForm.username || '').trim();
-      if (submittedUsername && submittedUsername !== window.__username__) return false;
-
-      const message = handleRequestError(error).toLowerCase();
-      return message.includes('authenticated') || message.includes('logged in');
     },
     isReauthRequired(evt) {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);
