@@ -14,7 +14,6 @@ const reauthMixin = {
     twoFaSelectForm: null,
     verificationCode: null,
     signInStep: 'sign-in',
-    callbackQueue: []
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
@@ -121,9 +120,6 @@ const reauthMixin = {
 
         // Handle success
         this.handleLoginResponse();
-
-        // Run callbacks in queue
-        await this.executeCallbackQueue();
       } catch (err) {
         this.signInErrorMessage = handleRequestError(err);
       } finally {
@@ -273,21 +269,6 @@ const reauthMixin = {
       if (!csrfToken) this.signInErrorMessage = "Failed to retrieve CSRF token.";
 
       return csrfToken;
-    },
-    addToCallbackQueueIfReauthRequired(error, callbacks) {
-      if (!this.isReauthRequired(error)) return;
-
-      if (Array.isArray(callbacks)) {
-          callbacks.forEach(callback => this.callbackQueue.push(callback));
-      } else {
-          this.callbackQueue.push(callbacks);
-      }
-    },
-    async executeCallbackQueue() {
-      for (const callback of this.callbackQueue) {
-        await callback();
-      }
-      this.callbackQueue = [];
     },
     isReauthRequired(evt) {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);
