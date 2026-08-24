@@ -1758,6 +1758,14 @@ cmd_update() {
             ;;
     esac
     require_root
+    # `update` manages installs created by `bayanat install` and nothing else.
+    # Without this, a manual or Docker deployment that reasonably tries the CLI
+    # gets /opt/bayanat directories and a stray .env created by
+    # _ensure_runtime_layout, then dies at the service check with "Service
+    # bayanat is not running", which reads as a crashed service rather than the
+    # wrong tool. Mirrors the same guard in cmd_harden.
+    [[ -L "$CURRENT_LINK" ]] || die "No installer-managed Bayanat install found at $BAYANAT_ROOT" \
+        "'bayanat update' only manages installs created by 'bayanat install'. For a manual or Docker deployment, follow the Upgrading page in the Bayanat documentation."
     recover_state
     _ensure_runtime_layout
     local target="${1:-}"
