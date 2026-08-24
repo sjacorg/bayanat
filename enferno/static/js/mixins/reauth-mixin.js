@@ -1,4 +1,5 @@
 const SESSION_RESTORED_STORAGE_KEY = 'bayanat:session-restored';
+const AUTH_RESTORED_SUPPRESS_MS = 2000;
 
 const reauthMixin = {
   data: () => ({
@@ -14,6 +15,8 @@ const reauthMixin = {
     twoFaSelectForm: null,
     verificationCode: null,
     signInStep: 'sign-in',
+    authRestoredSuppressUntil: 0,
+    callbackQueue: []
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
@@ -31,7 +34,7 @@ const reauthMixin = {
       if (event.key !== SESSION_RESTORED_STORAGE_KEY || !event.newValue) return;
       if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
 
-      this.resetState();
+      this.closeAuthDialogsAfterSuccess();
     },
     async onVisibilityChange() {
       if (document.visibilityState !== 'visible') return; // only run when tab becomes active
@@ -41,12 +44,17 @@ const reauthMixin = {
       
       try {
         await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
-        this.resetState(); // Session restored - close dialog
+        this.closeAuthDialogsAfterSuccess(); // Session restored - close dialog
       } catch (error) {
         // Still expired - keep dialog open
       }
     },
     showLoginDialog(event) {
+      // UI-only debounce: after successful auth, stale session lifecycle events
+      // can still arrive and immediately reopen the dialog. Server auth remains
+      // authoritative; this only suppresses modal reopen noise.
+      if (Date.now() < this.authRestoredSuppressUntil) return;
+
       if (this.isReauthRequired(event?.detail)) {
         this.isReauthDialogVisible = true;
       } else {
@@ -73,10 +81,26 @@ const reauthMixin = {
       this.verificationCode = null;
       this.signInStep = 'sign-in';
     },
+    closeAuthDialogsAfterSuccess() {
+      // Give already-dispatched authentication-required events a short window
+      // to drain after the server has accepted the password.
+      this.authRestoredSuppressUntil = Date.now() + AUTH_RESTORED_SUPPRESS_MS;
+      this.resetState();
+
+      if (typeof this.recordSessionRefresh === 'function') {
+        this.recordSessionRefresh();
+      }
+
+      this.$nextTick?.(() => {
+        this.isSignInDialogVisible = false;
+        this.isReauthDialogVisible = false;
+      });
+    },
     async signIn() {
       try {
         if (this.isSignInDialogLoading) return;
         this.isSignInDialogLoading = true;
+        this.signInErrorMessage = null;
 
         if (!this.signInForm.username || !this.signInForm.password) {
           return this.signInErrorMessage = "Username and password are required.";
@@ -88,11 +112,24 @@ const reauthMixin = {
         this.signInForm.csrf_token = csrfToken;
 
         // Submit login request
-        const signInResponse = await axios.post('/login', this.signInForm);
+        const signInResponse = await axios.post('/login', this.signInForm, {
+          suppressGlobalErrorHandler: true
+        });
 
         // Handle success
         this.handleLoginResponse(signInResponse?.data?.response);
       } catch (err) {
+        if (this.shouldVerifyInsteadOfLogin(err)) {
+          try {
+            await this.verifyCurrentSession();
+            this.handleLoginResponse();
+            await this.executeCallbackQueue();
+          } catch (verifyErr) {
+            this.signInErrorMessage = handleRequestError(verifyErr);
+          }
+          return;
+        }
+
         this.signInErrorMessage = handleRequestError(err);
       } finally {
         this.isSignInDialogLoading = false;
@@ -102,21 +139,13 @@ const reauthMixin = {
       try {
         if (this.isSignInDialogLoading) return;
         this.isSignInDialogLoading = true;
+        this.signInErrorMessage = null;
 
         if (!this.signInForm.password) {
           return this.signInErrorMessage = "Password is required.";
         }
 
-        // Fetch the CSRF token
-        const csrfToken = await this.getCsrfToken();
-        if (!csrfToken) return;
-        this.signInForm.csrf_token = csrfToken;
-
-        // Submit login request
-        await axios.post('/verify', {
-          csrf_token: csrfToken,
-          password: this.signInForm.password
-        });
+        await this.verifyCurrentSession();
 
         // Handle success
         this.handleLoginResponse();
@@ -191,9 +220,9 @@ const reauthMixin = {
         return this.signInStep = loginResponse?.tf_setup_methods?.find(Boolean)
       }
 
-      this.showSnack('Authentication successful');
+      this.closeAuthDialogsAfterSuccess();
       this.broadcastSessionRestored();
-      this.resetState();
+      this.showSnack('Authentication successful');
     },
     broadcastSessionRestored() {
       try {
@@ -269,6 +298,40 @@ const reauthMixin = {
       if (!csrfToken) this.signInErrorMessage = "Failed to retrieve CSRF token.";
 
       return csrfToken;
+    },
+    async verifyCurrentSession() {
+      const csrfToken = await this.getCsrfToken();
+      if (!csrfToken) throw new Error("Failed to retrieve CSRF token.");
+      this.signInForm.csrf_token = csrfToken;
+
+      await axios.post('/verify', {
+        csrf_token: csrfToken,
+        password: this.signInForm.password
+      }, { suppressGlobalErrorHandler: true });
+    },
+    shouldVerifyInsteadOfLogin(error) {
+      if (error?.response?.status !== 400) return false;
+      if (!this.isSignInDialogVisible || this.isReauthDialogVisible) return false;
+      if (!window.__username__) return false;
+      if (!this.signInForm.password) return false;
+
+      const submittedUsername = (this.signInForm.username || '').trim();
+      return !submittedUsername || submittedUsername === window.__username__;
+    },
+    addToCallbackQueueIfReauthRequired(error, callbacks) {
+      if (!this.isReauthRequired(error)) return;
+
+      if (Array.isArray(callbacks)) {
+          callbacks.forEach(callback => this.callbackQueue.push(callback));
+      } else {
+          this.callbackQueue.push(callbacks);
+      }
+    },
+    async executeCallbackQueue() {
+      for (const callback of this.callbackQueue) {
+        await callback();
+      }
+      this.callbackQueue = [];
     },
     isReauthRequired(evt) {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);

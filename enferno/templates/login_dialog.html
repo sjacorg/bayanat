@@ -51,6 +51,7 @@
                     size="large"
                     block
                     variant="flat"
+                    :disabled="isSignInDialogLoading"
                     :loading="isSignInDialogLoading"
                 ></v-btn>
             </v-card-actions>
@@ -91,7 +92,7 @@
                     size="large"
                     block
                     variant="flat"
-                    :disabled="!twoFaSelectForm"
+                    :disabled="!twoFaSelectForm || isSignInDialogLoading"
                     :loading="isSignInDialogLoading"
                 ></v-btn>
             </v-card-actions>
@@ -124,7 +125,7 @@
     
             <v-card-actions>
                 <v-btn type="submit" color="primary" text="{{ _('Submit') }}" size="large" block variant="flat"
-                    :loading="isSignInDialogLoading"></v-btn>
+                    :disabled="isSignInDialogLoading" :loading="isSignInDialogLoading"></v-btn>
             </v-card-actions>
         </v-card>
     </v-form>
@@ -145,7 +146,7 @@
             </v-card-text>
     
             <v-card-actions>
-                <v-btn type="submit" color="primary" text="{{ _('Authenticate') }}" size="large" block variant="flat" :loading="isSignInDialogLoading"></v-btn>
+                <v-btn type="submit" color="primary" text="{{ _('Authenticate') }}" size="large" block variant="flat" :disabled="isSignInDialogLoading" :loading="isSignInDialogLoading"></v-btn>
             </v-card-actions>
         </v-card>
     </v-form>
