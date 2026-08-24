@@ -15,8 +15,7 @@ const reauthMixin = {
     twoFaSelectForm: null,
     verificationCode: null,
     signInStep: 'sign-in',
-    authRestoredSuppressUntil: 0,
-    callbackQueue: []
+    authRestoredSuppressUntil: 0
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
@@ -90,11 +89,6 @@ const reauthMixin = {
       if (typeof this.recordSessionRefresh === 'function') {
         this.recordSessionRefresh();
       }
-
-      this.$nextTick?.(() => {
-        this.isSignInDialogVisible = false;
-        this.isReauthDialogVisible = false;
-      });
     },
     async signIn() {
       try {
@@ -123,7 +117,6 @@ const reauthMixin = {
           try {
             await this.verifyCurrentSession();
             this.handleLoginResponse();
-            await this.executeCallbackQueue();
           } catch (verifyErr) {
             this.signInErrorMessage = handleRequestError(verifyErr);
           }
@@ -317,21 +310,6 @@ const reauthMixin = {
 
       const submittedUsername = (this.signInForm.username || '').trim();
       return !submittedUsername || submittedUsername === window.__username__;
-    },
-    addToCallbackQueueIfReauthRequired(error, callbacks) {
-      if (!this.isReauthRequired(error)) return;
-
-      if (Array.isArray(callbacks)) {
-          callbacks.forEach(callback => this.callbackQueue.push(callback));
-      } else {
-          this.callbackQueue.push(callbacks);
-      }
-    },
-    async executeCallbackQueue() {
-      for (const callback of this.callbackQueue) {
-        await callback();
-      }
-      this.callbackQueue = [];
     },
     isReauthRequired(evt) {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);
