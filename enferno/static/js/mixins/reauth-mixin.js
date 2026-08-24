@@ -1,5 +1,4 @@
 const SESSION_RESTORED_STORAGE_KEY = 'bayanat:session-restored';
-const AUTH_RESTORED_SUPPRESS_MS = 2000;
 
 const reauthMixin = {
   data: () => ({
@@ -14,8 +13,7 @@ const reauthMixin = {
     },
     twoFaSelectForm: null,
     verificationCode: null,
-    signInStep: 'sign-in',
-    authRestoredSuppressUntil: 0
+    signInStep: 'sign-in'
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
@@ -49,14 +47,11 @@ const reauthMixin = {
       }
     },
     showLoginDialog(event) {
-      // UI-only debounce: after successful auth, stale session lifecycle events
-      // can still arrive and immediately reopen the dialog. Server auth remains
-      // authoritative; this only suppresses modal reopen noise.
-      if (Date.now() < this.authRestoredSuppressUntil) return;
-
       if (this.isReauthRequired(event?.detail)) {
+        this.isSignInDialogVisible = false;
         this.isReauthDialogVisible = true;
       } else {
+        if (this.isSignInDialogVisible || this.isReauthDialogVisible) return;
         this.isSignInDialogVisible = true;
       }
 
@@ -81,9 +76,6 @@ const reauthMixin = {
       this.signInStep = 'sign-in';
     },
     closeAuthDialogsAfterSuccess() {
-      // Give already-dispatched authentication-required events a short window
-      // to drain after the server has accepted the password.
-      this.authRestoredSuppressUntil = Date.now() + AUTH_RESTORED_SUPPRESS_MS;
       this.resetState();
 
       if (typeof this.recordSessionRefresh === 'function') {
