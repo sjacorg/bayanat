@@ -224,3 +224,16 @@ def test_media_appendix_dossier_flag_is_authoritative():
     block = context["blocks"][0]
     assert [m["file"] for m in block["media"]] == ["clean-original.jpg"]
     assert context["missing"] == []
+
+
+def test_narrative_box_rejects_workflow_fields(monkeypatch):
+    import enferno.export.blocks as blocks
+
+    monkeypatch.setattr(blocks, "narrative_fields", lambda: {"dossier_notes": "Dossier notes"})
+    for field in ("comments", "review"):
+        with pytest.raises(ValueError):
+            validate_blocks([{"type": "narrative_box", "config": {"title": "x", "field": field}}])
+    ok = validate_blocks(
+        [{"type": "narrative_box", "config": {"title": "x", "field": "dossier_notes"}}]
+    )
+    assert ok[0]["config"]["field"] == "dossier_notes"

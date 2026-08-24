@@ -359,7 +359,9 @@ def _get_template(id: t.id) -> Optional[ExportTemplate]:
 @roles_required("Admin")
 def templates_editor() -> str:
     """Render the dossier template editor page."""
-    return render_template("export-templates.html")
+    from enferno.export.blocks import narrative_fields
+
+    return render_template("export-templates.html", narrative_fields=narrative_fields())
 
 
 @export.get("/api/templates/meta")

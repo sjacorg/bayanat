@@ -295,7 +295,7 @@
                                                           density="compact" :label="'{{ _('Box title') }}'"></v-text-field>
                                             <v-select
                                                     v-model="block.config.field"
-                                                    :items="[{title: '{{ _('Empty (manual fill)') }}', value: null}, {title: '{{ _('Profile description') }}', value: 'description'}, {title: '{{ _('Comments') }}', value: 'comments'}]"
+                                                    :items="[{title: '{{ _('Empty (manual fill)') }}', value: null}, {title: '{{ _('Profile description') }}', value: 'description'}{% for name, label in narrative_fields.items() %}, {title: {{ label|tojson }}, value: {{ name|tojson }}}{% endfor %}]"
                                                     variant="outlined" density="compact"
                                                     :label="'{{ _('Content source') }}'"
                                             ></v-select>

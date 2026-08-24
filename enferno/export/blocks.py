@@ -457,10 +457,24 @@ def _v_related_items(config: dict) -> dict:
     }
 
 
+def narrative_fields() -> dict[str, str]:
+    """Admin-defined long-text dynamic fields on actor, {name: label}."""
+    from enferno.admin.models.DynamicField import DynamicField
+
+    return {
+        f.name: f.title
+        for f in DynamicField.query.filter_by(entity_type="actor", active=True, core=False)
+        .filter(DynamicField.field_type.in_([DynamicField.TEXT, DynamicField.LONG_TEXT]))
+        .order_by(DynamicField.sort_order)
+    }
+
+
 def _v_narrative_box(config: dict) -> dict:
     field = config.get("field")
-    if field and field not in ("description", "comments", "review"):
-        raise ValueError("'field' must be one of description, comments, review")
+    # Revision comments and peer review are workflow fields, never dossier
+    # content; only the profile description or a custom text field qualifies.
+    if field and field != "description" and field not in narrative_fields():
+        raise ValueError("'field' must be description or an active actor text field")
     return {"title": _require_str(config, "title", MAX_TITLE), "field": field or None}
 
 
@@ -551,7 +565,9 @@ def _b_narrative_box(data: DossierData, config: dict) -> dict:
         # with the dossier profile.
         text = sanitize_dossier_html(text) if text else None
     elif config["field"]:
-        text = getattr(data.actor, config["field"], None)
+        from enferno.admin.models.DynamicField import DynamicField
+
+        text = DynamicField.extract_values_for(data.actor).get(config["field"])
     missing = (
         [f"Narrative '{config.get('title') or config['field'] or ''}' is empty"]
         if config["field"] and not text
