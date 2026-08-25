@@ -268,7 +268,12 @@ restore_pg() {
             # all and nothing to restore from, which is strictly worse than
             # the state we were asked to recover.
             local staging="${db}_restore_$$"
-            sudo -u postgres pg_restore --list "$path" >/dev/null 2>&1 \
+            # Redirect rather than passing the path: the backups directory is
+            # root:$APP_GROUP 2770 and the postgres user is not in that group,
+            # so handing it the filename fails with a permission error that
+            # looks exactly like a corrupt archive. Root opens the file here,
+            # the same way the restore below does.
+            sudo -u postgres pg_restore --list < "$path" >/dev/null 2>&1 \
                 || die "Snapshot $name is not a readable pg_dump archive" \
                        "Nothing was changed. Check the file and try another snapshot."
             sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
