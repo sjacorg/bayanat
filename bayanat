@@ -930,20 +930,19 @@ _fetch_release() {
     # Releases are root-owned and read-only for the service accounts
     # (BAY-01-030/032): group gets read+exec via $APP_GROUP, no write, and
     # "other" is locked out.
-    chown -R root:"$APP_GROUP" "$dest"
-    chmod -R o-rwx "$dest"
-
-    # Dropping group write is correct for a fresh install (no `current` yet)
-    # and for an already-hardened one, but NOT while updating a legacy install:
-    # a pre-v5 layout binds its uWSGI socket at $CURRENT_LINK/bayanat.sock,
-    # inside the release directory, so removing group write leaves uwsgi dying
-    # with "bind(): Permission denied" and the box down between `update` and
-    # `harden`. `harden` tightens the tree itself once the socket has moved to
-    # /run/bayanat.
     if [[ ! -L "$CURRENT_LINK" ]] || _is_hardened; then
-        chmod -R g-w "$dest"
+        chown -R root:"$APP_GROUP" "$dest"
+        chmod -R o-rwx,g-w "$dest"
     else
-        log "Legacy layout: leaving $tag group-writable until 'bayanat harden' runs"
+        # Updating a still-legacy install. A pre-v5 layout binds its uWSGI
+        # socket at $CURRENT_LINK/bayanat.sock, INSIDE the release directory,
+        # so a root-owned release leaves uwsgi dying with "bind(): Permission
+        # denied" and the box down between `update` and `harden`. Reproduce
+        # the ownership such a box already uses; `_harden_release_tree` takes
+        # the tree back to root once the socket has moved to /run/bayanat.
+        chown -R "$APP_USER":"$APP_GROUP" "$dest"
+        chmod -R o-rwx "$dest"
+        log "Legacy layout: $tag stays owned by $APP_USER until 'bayanat harden' runs"
     fi
 }
 
