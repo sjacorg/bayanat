@@ -262,9 +262,26 @@ restore_pg() {
             # --role switches to the unprivileged app role, which cannot create
             # extensions, and the restore then silently completes a database
             # with no PostGIS in it.
+            # Restore into a scratch database and only swap it in once that
+            # has fully succeeded. Dropping the live database first would mean
+            # a corrupt or truncated dump leaves the box with NO database at
+            # all and nothing to restore from, which is strictly worse than
+            # the state we were asked to recover.
+            local staging="${db}_restore_$$"
+            sudo -u postgres pg_restore --list "$path" >/dev/null 2>&1 \
+                || die "Snapshot $name is not a readable pg_dump archive" \
+                       "Nothing was changed. Check the file and try another snapshot."
+            sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+            sudo -u postgres createdb "$staging" -O "$user" \
+                || die "Could not create the staging database; nothing was changed"
+            if ! sudo -u postgres pg_restore -d "$staging" < "$path"; then
+                sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+                die "Restore into the staging database failed; the live database is untouched"
+            fi
+            # Swap: the live database is only dropped once a complete restored
+            # copy exists alongside it.
             sudo -u postgres dropdb --force "$db" \
-                && sudo -u postgres createdb "$db" -O "$user" \
-                && sudo -u postgres pg_restore -d "$db" < "$path"
+                && sudo -u postgres psql -qc "ALTER DATABASE \"$staging\" RENAME TO \"$db\";"
         else
             # No local superuser, so extensions in the dump cannot be
             # recreated. Say so rather than reporting a clean restore.
@@ -376,14 +393,23 @@ recover_state() {
             # is outstanding. A pre-v5 release cannot serve against that schema
             # and has no /health endpoint to probe, so leave it stopped and let
             # the caller re-run the update, which resumes at the swap.
-            local prev_tag
+            local prev_tag snap_name
             prev_tag=$(read_field previous || true)
+            snap_name=$(read_field snapshot || true)
             if (( $(_release_major "$prev_tag") < 5 )); then
-                warn "Recovery: MIGRATE_DONE — database is on the new schema; leaving services stopped"
-                warn "Re-run the update to finish the switch, or restore the pre-update snapshot"
-                clear_state
+                # The database is already on the new schema and $prev_tag cannot
+                # serve it, so the services stay stopped. Do NOT clear the state
+                # and claim recovery: update_preflight refuses to run while a
+                # service is inactive, so a "re-run the update" instruction would
+                # be a dead end. Restoring the snapshot is the only route that
+                # actually works, so say exactly that and keep the metadata.
+                export STATE_ERROR_JSON='"migrated to the new schema but not switched; '"$prev_tag"' cannot serve it"'
+                write_state NEEDS_INTERVENTION "Restore the pre-update snapshot, then re-run the update"
+                warn "Database is on the new schema and $prev_tag cannot run against it."
+                warn "Recover with: bayanat restore ${snap_name:-<snapshot>}"
+                warn "Then: bayanat update --recover, and run the update again."
                 release_lock
-                return 0
+                exit 2
             fi
             log "Recovery: MIGRATE_DONE — starting services on previous release"
             systemctl start bayanat bayanat-celery
@@ -409,6 +435,18 @@ recover_state() {
             local snap prev
             snap=$(read_field snapshot || true)
             prev=$(read_field previous || true)
+            # An implicit call (from `update`) must refuse: the box needs a
+            # human. An explicit `update --recover` IS that human saying they
+            # have dealt with it, so let it clear the flag. Without this the
+            # only way out is deleting state/update.json by hand, which no
+            # documentation tells anyone to do.
+            if [[ "${RECOVER_EXPLICIT:-0}" == "1" ]]; then
+                warn "Clearing NEEDS_INTERVENTION (snapshot: ${snap:-none}, previous: ${prev:-unknown})"
+                warn "Confirm the database and the active release agree before updating again."
+                clear_state
+                release_lock
+                return 0
+            fi
             die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: bayanat snapshots"
             ;;
         MIGRATE|SWITCH|ROLLBACK)
@@ -1017,6 +1055,20 @@ _link_shared() {
     local d
     for d in media exports imports; do
         if [[ -d "$release/enferno/$d" ]] && [[ ! -L "$release/enferno/$d" ]]; then
+            # A real directory here means a pre-v5 release that kept this path
+            # inside the tree, and on a live box it holds the operator's files.
+            # `harden` calls this against the ACTIVE release, so deleting it
+            # outright destroys data that no backup covers. Move anything
+            # present into shared/ first; only then replace it with the link.
+            mkdir -p "$SHARED_DIR/$d"
+            if [[ -n "$(ls -A "$release/enferno/$d" 2>/dev/null)" ]]; then
+                log "Moving existing enferno/$d into $SHARED_DIR/$d"
+                # -n: never overwrite a file already in shared/, which is the
+                # authoritative copy once the link exists.
+                cp -an "$release/enferno/$d/." "$SHARED_DIR/$d/" 2>/dev/null || \
+                    die "Could not preserve $release/enferno/$d before linking it into shared/" \
+                        "Copy it aside by hand and re-run"
+            fi
             rm -rf "$release/enferno/$d"
         fi
         ln -sfn "$SHARED_DIR/$d" "$release/enferno/$d"
@@ -1864,7 +1916,7 @@ cmd_update() {
             ;;
         --recover)
             require_root
-            recover_state
+            RECOVER_EXPLICIT=1 recover_state
             return 0
             ;;
     esac
