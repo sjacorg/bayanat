@@ -37,6 +37,39 @@ logger = get_logger()
 # helper methods
 
 
+LIKE_ESCAPE = "\\"
+
+
+def escape_like(term: str) -> str:
+    """
+    Escape SQL LIKE wildcards so user input is matched literally.
+
+    Without this, a search for "15%" or "case_1" is interpreted by Postgres as a
+    wildcard pattern and returns a superset of the intended results.
+
+    Args:
+        - term: raw user input.
+
+    Returns:
+        - The term with `\\`, `%` and `_` escaped, to be used with LIKE_ESCAPE.
+    """
+    return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def like_contains(column: ColumnElement, term: str) -> BinaryExpression:
+    """
+    Case-insensitive substring match treating wildcards in `term` literally.
+
+    Args:
+        - column: the column to search on.
+        - term: raw user input.
+
+    Returns:
+        - An ILIKE expression matching rows containing the term.
+    """
+    return column.ilike(f"%{escape_like(term)}%", escape=LIKE_ESCAPE)
+
+
 def date_between_query(field: ColumnElement, dates: list) -> BinaryExpression:
     """
     Create a date range query for a given field using proper timestamp ranges.
@@ -186,7 +219,7 @@ class SearchUtils:
                 escaped = re.escape(term)
                 cond = column.op("~*")(f"\\y{escaped}\\y")
             else:
-                cond = column.ilike(f"%{term}%")
+                cond = like_contains(column, term)
 
             result.append(~cond if negate else cond)
         return result
@@ -280,7 +313,8 @@ class SearchUtils:
                             param_key = f"{name}_contains_{len(conditions)}"
                             conditions.append(
                                 literal_column(name, type_=String()).ilike(
-                                    bindparam(param_key, f"%{value_str}%")
+                                    bindparam(param_key, f"%{escape_like(value_str)}%"),
+                                    escape=LIKE_ESCAPE,
                                 )
                             )
                         continue
@@ -331,7 +365,8 @@ class SearchUtils:
                                 param_key = f"{name}_contains_{len(conditions)}"
                                 conditions.append(
                                     func.array_to_string(array_col, " ").ilike(
-                                        bindparam(param_key, f"%{lookup}%")
+                                        bindparam(param_key, f"%{escape_like(lookup)}%"),
+                                        escape=LIKE_ESCAPE,
                                     )
                                 )
                         elif op == "eq":
@@ -386,7 +421,7 @@ class SearchUtils:
                 # Store for OCR match detection (used by get_ocr_matched_ids)
                 self.tsv_words = words
                 # Fast path: bulletin.search - individual ILIKEs enable GIN trigram index (200x faster)
-                bulletin_conditions = [Bulletin.search.ilike(f"%{word}%") for word in words]
+                bulletin_conditions = [like_contains(Bulletin.search, word) for word in words]
 
                 # Execute OCR query once and cache matching bulletin IDs
                 # This avoids running the expensive ILIKE scan as a subquery inside OR
@@ -397,7 +432,7 @@ class SearchUtils:
                 )
                 for word in words:
                     ocr_query = ocr_query.where(
-                        Extraction.search_text.ilike(f"%{normalize_arabic(word)}%")
+                        like_contains(Extraction.search_text, normalize_arabic(word))
                     )
                 result = db.session.execute(ocr_query)
                 self._ocr_matched_ids = {row[0] for row in result}
@@ -449,7 +484,7 @@ class SearchUtils:
         # Origin ID
         originid = (q.get("originid") or "").strip()
         if originid:
-            condition = Bulletin.originid.ilike(f"%{originid}%")
+            condition = like_contains(Bulletin.originid, originid)
             conditions.append(condition)
 
         # Tags - OPTIMIZED APPROACH respecting UI checkboxes
@@ -463,7 +498,7 @@ class SearchUtils:
             else:
                 # User wants partial matching - use ILIKE for wildcard behavior
                 tag_conditions = [
-                    func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref
+                    like_contains(func.array_to_string(Bulletin.tags, " "), r) for r in ref
                 ]
 
             # "Any" checkbox controls AND vs OR between multiple tags
@@ -482,7 +517,7 @@ class SearchUtils:
                 ]
             else:
                 tag_conditions = [
-                    ~func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in exref
+                    ~like_contains(func.array_to_string(Bulletin.tags, " "), r) for r in exref
                 ]
 
             opexref = q.get("opExTags")
@@ -741,8 +776,8 @@ class SearchUtils:
                 for word in words:
                     qsearch.append(
                         or_(
-                            Actor.search.ilike(f"%{word}%"),
-                            ActorProfile.search.ilike(f"%{word}%"),
+                            like_contains(Actor.search, word),
+                            like_contains(ActorProfile.search, word),
                         )
                     )
 
@@ -765,11 +800,11 @@ class SearchUtils:
                     # Remove quotes and treat as exact phrase
                     phrase = cleaned_extsv[1:-1].strip()
                     if phrase:
-                        actor_exclude = Actor.search.notilike(f"%{phrase}%")
+                        actor_exclude = ~like_contains(Actor.search, phrase)
                         profile_exclude_subquery = (
                             select(Actor.id)
                             .join(Actor.actor_profiles)
-                            .where(ActorProfile.search.ilike(f"%{phrase}%"))
+                            .where(like_contains(ActorProfile.search, phrase))
                         )
                         profile_exclude = ~Actor.id.in_(profile_exclude_subquery)
                         conditions.extend([actor_exclude, profile_exclude])
@@ -782,8 +817,8 @@ class SearchUtils:
                             # Exclude if word matches in either Actor.search OR ActorProfile.search
                             exclude_conditions.append(
                                 or_(
-                                    Actor.search.ilike(f"%{word}%"),
-                                    ActorProfile.search.ilike(f"%{word}%"),
+                                    like_contains(Actor.search, word),
+                                    like_contains(ActorProfile.search, word),
                                 )
                             )
 
@@ -814,8 +849,8 @@ class SearchUtils:
                 else:
                     term_conds.append(
                         or_(
-                            Actor.search.ilike(f"%{term}%"),
-                            ActorProfile.search.ilike(f"%{term}%"),
+                            like_contains(Actor.search, term),
+                            like_contains(ActorProfile.search, term),
                         )
                     )
             if term_conds:
@@ -846,8 +881,8 @@ class SearchUtils:
                 else:
                     ex_conds.append(
                         or_(
-                            Actor.search.ilike(f"%{term}%"),
-                            ActorProfile.search.ilike(f"%{term}%"),
+                            like_contains(Actor.search, term),
+                            like_contains(ActorProfile.search, term),
                         )
                     )
             if ex_conds:
@@ -866,42 +901,48 @@ class SearchUtils:
         # Origin ID
         originid = (q.get("originid") or "").strip()
         if originid:
-            condition = Actor.actor_profiles.any(ActorProfile.originid.ilike(f"%{originid}%"))
+            condition = Actor.actor_profiles.any(like_contains(ActorProfile.originid, originid))
             conditions.append(condition)
 
         # Nickname
         if search := q.get("nickname"):
             conditions.append(
-                or_(Actor.nickname.ilike(f"%{search}%"), Actor.nickname_ar.ilike(f"%{search}%"))
+                or_(like_contains(Actor.nickname, search), like_contains(Actor.nickname_ar, search))
             )
 
         # First name
         if search := q.get("first_name"):
             conditions.append(
-                or_(Actor.first_name.ilike(f"%{search}%"), Actor.first_name_ar.ilike(f"%{search}%"))
+                or_(
+                    like_contains(Actor.first_name, search),
+                    like_contains(Actor.first_name_ar, search),
+                )
             )
 
         # Middle name
         if search := q.get("middle_name"):
             conditions.append(
                 or_(
-                    Actor.middle_name.ilike(f"%{search}%"),
-                    Actor.middle_name_ar.ilike(f"%{search}%"),
+                    like_contains(Actor.middle_name, search),
+                    like_contains(Actor.middle_name_ar, search),
                 )
             )
 
         # Last name
         if search := q.get("last_name"):
             conditions.append(
-                or_(Actor.last_name.ilike(f"%{search}%"), Actor.last_name_ar.ilike(f"%{search}%"))
+                or_(
+                    like_contains(Actor.last_name, search),
+                    like_contains(Actor.last_name_ar, search),
+                )
             )
 
         # Father name
         if search := q.get("father_name"):
             conditions.append(
                 or_(
-                    Actor.father_name.ilike(f"%{search}%"),
-                    Actor.father_name_ar.ilike(f"%{search}%"),
+                    like_contains(Actor.father_name, search),
+                    like_contains(Actor.father_name_ar, search),
                 )
             )
 
@@ -909,8 +950,8 @@ class SearchUtils:
         if search := q.get("mother_name"):
             conditions.append(
                 or_(
-                    Actor.mother_name.ilike(f"%{search}%"),
-                    Actor.mother_name_ar.ilike(f"%{search}%"),
+                    like_contains(Actor.mother_name, search),
+                    like_contains(Actor.mother_name_ar, search),
                 )
             )
 
@@ -1043,7 +1084,7 @@ class SearchUtils:
                 ]
             else:
                 tag_conditions = [
-                    func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in tags
+                    like_contains(func.array_to_string(Actor.tags, " "), r) for r in tags
                 ]
 
             # any operator
@@ -1063,7 +1104,7 @@ class SearchUtils:
                 ]
             else:
                 tag_conditions = [
-                    ~func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in extags
+                    ~like_contains(func.array_to_string(Actor.tags, " "), r) for r in extags
                 ]
 
             # get all operator
@@ -1186,15 +1227,21 @@ class SearchUtils:
 
         # Occupation
         if occupation := q.get("occupation", None):
-            search = "%{}%".format(occupation)
             conditions.append(
-                or_(Actor.occupation.ilike(search), Actor.occupation_ar.ilike(search))
+                or_(
+                    like_contains(Actor.occupation, occupation),
+                    like_contains(Actor.occupation_ar, occupation),
+                )
             )
 
         # Position
         if position := q.get("position", None):
-            search = "%{}%".format(position)
-            conditions.append(or_(Actor.position.ilike(search), Actor.position_ar.ilike(search)))
+            conditions.append(
+                or_(
+                    like_contains(Actor.position, position),
+                    like_contains(Actor.position_ar, position),
+                )
+            )
 
         # Spoken Dialects
         if dialects := q.get("dialects", None):
@@ -1284,7 +1331,9 @@ class SearchUtils:
         if tsv := q.get("tsv"):
             words = tsv.split(" ")
             # Use individual ILIKE conditions instead of ILIKE ALL() to enable GIN trigram index usage
-            word_conditions = [Incident.search.ilike(f"%{word}%") for word in words if word.strip()]
+            word_conditions = [
+                like_contains(Incident.search, word) for word in words if word.strip()
+            ]
             if word_conditions:
                 conditions.extend(word_conditions)
 
@@ -1295,7 +1344,7 @@ class SearchUtils:
             # Use individual indexed searches instead of notilike(all_())
             exclude_conditions = []
             for word in words:
-                exclude_conditions.append(Incident.search.ilike(f"%{word}%"))
+                exclude_conditions.append(like_contains(Incident.search, word))
 
             # Create subquery of IDs to exclude using individual indexed searches
             if exclude_conditions:
@@ -1513,8 +1562,8 @@ class SearchUtils:
             # search for bilingual title columns
             qsearch = [
                 or_(
-                    Location.title.ilike("%{}%".format(word)),
-                    Location.title_ar.ilike("%{}%".format(word)),
+                    like_contains(Location.title, word),
+                    like_contains(Location.title_ar, word),
                 )
                 for word in words
             ]
@@ -1524,7 +1573,7 @@ class SearchUtils:
         if tsv := q.get("tsv"):
             words = tsv.split(" ")
             # search for bilingual title columns
-            qsearch = [Location.description.ilike("%{}%".format(word)) for word in words]
+            qsearch = [like_contains(Location.description, word) for word in words]
 
             query.extend(qsearch)
 
@@ -1553,13 +1602,15 @@ class SearchUtils:
         # tags
         tags = q.get("tags")
         if tags:
-            search = ["%" + r + "%" for r in tags]
             # get search operator
             op = q.get("optags", False)
+            tag_conditions = (
+                like_contains(func.array_to_string(Location.tags, ""), r) for r in tags
+            )
             if op:
-                query.append(or_(func.array_to_string(Location.tags, "").ilike(r) for r in search))
+                query.append(or_(*tag_conditions))
             else:
-                query.append(and_(func.array_to_string(Location.tags, "").ilike(r) for r in search))
+                query.append(and_(*tag_conditions))
 
         return query
 
