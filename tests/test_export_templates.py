@@ -227,9 +227,10 @@ def test_media_appendix_dossier_flag_is_authoritative():
 
 
 def test_narrative_box_rejects_workflow_fields(monkeypatch):
-    import enferno.export.blocks as blocks
-
-    monkeypatch.setattr(blocks, "narrative_fields", lambda: {"dossier_notes": "Dossier notes"})
+    monkeypatch.setattr(
+        "enferno.export.blocks.narrative_fields",
+        lambda: {"dossier_notes": "Dossier notes"},
+    )
     for field in ("comments", "review"):
         with pytest.raises(ValueError):
             validate_blocks([{"type": "narrative_box", "config": {"title": "x", "field": field}}])

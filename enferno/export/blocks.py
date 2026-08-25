@@ -183,7 +183,7 @@ ACTOR_FIELDS: dict[str, dict] = {
     "id_number": {
         "label": "ID numbers",
         "label_ar": "الأرقام الثبوتية",
-        "get": lambda a: _id_numbers(a),
+        "get": _id_numbers,
     },
     "tags": {
         "label": "Tags",
