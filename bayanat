@@ -641,6 +641,9 @@ do_prepare() {
     update_preflight
     _fetch_release "$target"
     _install_deps "$target"
+    # Before linking the new release at the shared paths: the outgoing release
+    # may hold app data inside its own tree (pre-v5 layout).
+    _migrate_legacy_app_dirs "$current"
     _link_shared "$target"
     export STATE_TARGET="$target"
     export STATE_PREVIOUS="$current"
@@ -1086,6 +1089,32 @@ EOF
 }
 
 _now_stamp() { date -u +%Y%m%d-%H%M%S; }
+
+_migrate_legacy_app_dirs() {
+    # A pre-v5 release keeps enferno/imports and enferno/exports as REAL
+    # directories inside the release (only media was symlinked into shared/).
+    # The v5 release symlinks all three, so without this step an upgraded box
+    # points at an empty shared/imports and shared/exports while the operator's
+    # files sit orphaned in the outgoing release directory: not deleted, but
+    # invisible to the application.
+    #
+    # Copies, never moves: the outgoing release keeps its copy, so a rollback
+    # to it still finds its files. `cp -an` never overwrites anything already
+    # in shared/.
+    local prev="$1"
+    [[ -n "$prev" && -d "$RELEASES_DIR/$prev" ]] || return 0
+    local d src
+    for d in media imports exports; do
+        src="$RELEASES_DIR/$prev/enferno/$d"
+        [[ -d "$src" && ! -L "$src" ]] || continue
+        [[ -n "$(ls -A "$src" 2>/dev/null)" ]] || continue
+        mkdir -p "$SHARED_DIR/$d"
+        log "Migrating $prev/enferno/$d into $SHARED_DIR/$d"
+        cp -an "$src/." "$SHARED_DIR/$d/" 2>/dev/null \
+            || die "Could not migrate $src into $SHARED_DIR/$d" \
+                   "Your files are intact at $src; copy them across and re-run"
+    done
+}
 
 _link_shared() {
     # $2 = "preserve" when the release directory is LIVE and may hold the
