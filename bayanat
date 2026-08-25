@@ -415,6 +415,10 @@ release_lock() {
 # --- Recovery dispatch ---
 
 recover_state() {
+    # The caller holds the lock for the whole command, so this function no
+    # longer takes or releases it. It used to release the lock on its way out,
+    # which under the flock scheme would hand the box to a second process
+    # mid-recovery.
     local phase
     phase=$(read_phase)
     case "$phase" in
@@ -429,7 +433,6 @@ recover_state() {
                 rm -rf "$RELEASES_DIR/$target.partial" "$RELEASES_DIR/$target"
             fi
             clear_state
-            release_lock
             ;;
         MIGRATE_DONE)
             # The database is already on the new schema; only the symlink swap
@@ -451,7 +454,6 @@ recover_state() {
                 warn "Database is on the new schema and $prev_tag cannot run against it."
                 warn "Recover with: bayanat restore ${snap_name:-<snapshot>}"
                 warn "Then: bayanat update --recover, and run the update again."
-                release_lock
                 exit 2
             fi
             log "Recovery: MIGRATE_DONE — starting services on previous release"
@@ -459,7 +461,6 @@ recover_state() {
             if _wait_healthy 60; then
                 log "Recovery OK; operator should re-run update to finish"
                 clear_state
-                release_lock
             else
                 STATE_ERROR_JSON='"MIGRATE_DONE recovery: previous release unhealthy"'
                 write_state NEEDS_INTERVENTION "Services unhealthy after recovery; restore snapshot manually"
@@ -472,7 +473,6 @@ recover_state() {
             ;;
         SUCCESS|ROLLED_BACK)
             clear_state
-            release_lock
             ;;
         NEEDS_INTERVENTION)
             local snap prev
@@ -487,7 +487,6 @@ recover_state() {
                 warn "Clearing NEEDS_INTERVENTION (snapshot: ${snap:-none}, previous: ${prev:-unknown})"
                 warn "Confirm the database and the active release agree before updating again."
                 clear_state
-                release_lock
                 return 0
             fi
             die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: bayanat snapshots"
@@ -499,7 +498,6 @@ recover_state() {
                 warn "Services healthy but update was interrupted mid-$phase"
                 warn "DB schema state is uncertain; re-run 'bayanat update' to finish"
                 clear_state
-                release_lock
             else
                 export STATE_ERROR_JSON="\"interrupted during $phase; services unhealthy\""
                 write_state NEEDS_INTERVENTION "Update interrupted mid-$phase; manual recovery required"
@@ -509,7 +507,6 @@ recover_state() {
         *)
             warn "Unknown phase '$phase' — clearing and starting fresh"
             clear_state
-            release_lock
             ;;
     esac
 }
@@ -2007,7 +2004,11 @@ cmd_update() {
             ;;
         --recover)
             require_root
+            # Recovery mutates state exactly like an update does, so it takes
+            # the same lock. Without this it could run against a live update.
+            acquire_lock
             RECOVER_EXPLICIT=1 recover_state
+            release_lock
             return 0
             ;;
     esac
@@ -2020,11 +2021,12 @@ cmd_update() {
     # wrong tool. Mirrors the same guard in cmd_harden.
     [[ -L "$CURRENT_LINK" ]] || die "No installer-managed Bayanat install found at $BAYANAT_ROOT" \
         "'bayanat update' only manages installs created by 'bayanat install'. For a manual or Docker deployment, follow the Upgrading page in the Bayanat documentation."
-    recover_state
-    # Everything below mutates the box: _ensure_runtime_layout creates
-    # directories, update_preflight can install packages, do_prepare writes
-    # releases. recover_state runs first because it is what clears a stale lock.
+    # Before recover_state, not after: recovery itself rewrites update.json,
+    # deletes partial releases and starts and stops services. Nothing has to
+    # run first any more -- the old ordering existed so recover_state could
+    # clear a stale lock, and under flock a stale lock cannot exist.
     acquire_lock
+    recover_state
     _ensure_runtime_layout
     local target="${1:-}"
     if [[ -z "$target" ]]; then
