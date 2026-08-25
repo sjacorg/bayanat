@@ -583,7 +583,16 @@ do_switch_verify() {
     export STATE_PROGRESS="Swapping to $target"
     write_state SWITCH "Swapping current -> $target"
     swap_symlink "$RELEASES_DIR/$target"
-    systemctl start bayanat bayanat-celery
+    # Not `systemctl start ...` bare: under `set -e` a failed start aborts the
+    # script outright, skipping the rollback below and leaving the state file
+    # on SWITCH with the lock still held. A release that cannot even start is
+    # exactly when the rollback is needed.
+    if ! systemctl start bayanat bayanat-celery; then
+        warn "Services failed to start on $target"
+        journalctl -u bayanat -n 20 --no-pager >&2 || true
+        rollback_code
+        return 1
+    fi
     write_state SWITCH_DONE "Verifying new release"
     export STATE_PROGRESS="Waiting for health probe"
     if _wait_healthy 60; then
@@ -922,7 +931,20 @@ _fetch_release() {
     # (BAY-01-030/032): group gets read+exec via $APP_GROUP, no write, and
     # "other" is locked out.
     chown -R root:"$APP_GROUP" "$dest"
-    chmod -R o-rwx,g-w "$dest"
+    chmod -R o-rwx "$dest"
+
+    # Dropping group write is correct for a fresh install (no `current` yet)
+    # and for an already-hardened one, but NOT while updating a legacy install:
+    # a pre-v5 layout binds its uWSGI socket at $CURRENT_LINK/bayanat.sock,
+    # inside the release directory, so removing group write leaves uwsgi dying
+    # with "bind(): Permission denied" and the box down between `update` and
+    # `harden`. `harden` tightens the tree itself once the socket has moved to
+    # /run/bayanat.
+    if [[ ! -L "$CURRENT_LINK" ]] || _is_hardened; then
+        chmod -R g-w "$dest"
+    else
+        log "Legacy layout: leaving $tag group-writable until 'bayanat harden' runs"
+    fi
 }
 
 _generate_env() {
