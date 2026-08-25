@@ -236,7 +236,13 @@ restore_pg() {
         local user="${POSTGRES_USER:-$APP_USER}"
         local db="${POSTGRES_DB:-$APP_USER}"
         local host="${POSTGRES_HOST:-localhost}"
-        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
+        # Branch on whether a LOCAL superuser is reachable, not on whether a
+        # password is configured. A pre-v5 install sets POSTGRES_PASSWORD even
+        # though its cluster is on the same host, and the password branch
+        # restores as the unprivileged app role, which cannot run CREATE
+        # EXTENSION. The restore then "succeeds" into a database with no
+        # PostGIS in it, which is worse than failing outright.
+        if sudo -u postgres psql -tAc 'SELECT 1' >/dev/null 2>&1; then
             # Drop and recreate the database rather than pg_restore --clean.
             # --clean only drops the objects the dump is about to recreate, so
             # anything the dump does not know about SURVIVES. After a failed
@@ -260,6 +266,10 @@ restore_pg() {
                 && sudo -u postgres createdb "$db" -O "$user" \
                 && sudo -u postgres pg_restore -d "$db" < "$path"
         else
+            # No local superuser, so extensions in the dump cannot be
+            # recreated. Say so rather than reporting a clean restore.
+            warn "No local PostgreSQL superuser; restoring as $user over TCP"
+            warn "Extensions in the dump (postgis, pg_trgm) may not be restored"
             PGPASSWORD="${POSTGRES_PASSWORD:-}" \
                 pg_restore --clean --if-exists \
                     -h "$host" \
