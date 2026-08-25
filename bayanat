@@ -473,6 +473,22 @@ _wait_healthy() {
 update_preflight() {
     preflight_checks
     _verify_service_health
+
+    # Releases before v5 were installed by a CLI that did not verify
+    # signatures, so those boxes have no minisign. Without this, the first
+    # update on every pre-v5 install dies inside _fetch_release reporting that
+    # the signature FAILED, which tells the operator their release was tampered
+    # with when the tool is simply missing. Install it before anything is
+    # touched; a failure here still aborts with an accurate message.
+    if ! command -v minisign >/dev/null; then
+        log "minisign not present (pre-v5 install); installing it"
+        DEBIAN_FRONTEND=noninteractive apt-get update -qq \
+            && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq minisign \
+            || die "Could not install minisign, which is required to verify the release signature" \
+                   "Install it manually and retry: apt-get install -y minisign"
+        command -v minisign >/dev/null \
+            || die "minisign is still not on PATH after installation"
+    fi
     command -v pg_dump >/dev/null || die "pg_dump not in PATH"
     command -v pg_restore >/dev/null || die "pg_restore not in PATH"
     # pg_dump major version must match Postgres server major version
@@ -885,6 +901,9 @@ _fetch_release() {
                "Refusing to install unverified code. Update manually only if you trust this release."
 
     log "Verifying signature against the SJAC release key..."
+    command -v minisign >/dev/null \
+        || die "minisign is not installed, so the release signature cannot be verified" \
+               "Install it and retry: apt-get install -y minisign"
     minisign -Vm "$tmp/$asset" -P "$RELEASE_PUBKEY" \
         || die "Signature verification FAILED for $tag" \
                "The tarball does not match SJAC's signing key. Refusing to install."
