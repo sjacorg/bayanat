@@ -1068,6 +1068,8 @@ REDIS_PASSWORD='$REDIS_PW'
 EOF
 }
 
+_now_stamp() { date -u +%Y%m%d-%H%M%S; }
+
 _link_shared() {
     local tag="$1"
     local release="$RELEASES_DIR/$tag"
@@ -1082,18 +1084,29 @@ _link_shared() {
             # A real directory here means a pre-v5 release that kept this path
             # inside the tree, and on a live box it holds the operator's files.
             # `harden` calls this against the ACTIVE release, so deleting it
-            # outright destroys data that no backup covers. Move anything
-            # present into shared/ first; only then replace it with the link.
-            mkdir -p "$SHARED_DIR/$d"
-            if [[ -n "$(ls -A "$release/enferno/$d" 2>/dev/null)" ]]; then
-                log "Moving existing enferno/$d into $SHARED_DIR/$d"
-                # -n: never overwrite a file already in shared/, which is the
-                # authoritative copy once the link exists.
-                cp -an "$release/enferno/$d/." "$SHARED_DIR/$d/" 2>/dev/null || \
-                    die "Could not preserve $release/enferno/$d before linking it into shared/" \
-                        "Copy it aside by hand and re-run"
+            # destroys data that no backup covers.
+            #
+            # Nothing is deleted. The directory is MOVED aside first (a rename,
+            # so it costs nothing and cannot half-fail), then its contents are
+            # copied into shared/ without overwriting anything already there.
+            # A file that collides therefore survives in the quarantine copy
+            # instead of being silently dropped, which is what a copy-then-
+            # delete would do: `cp -n` skips the collision and reports success,
+            # and the delete then takes the only remaining copy with it.
+            if [[ -z "$(ls -A "$release/enferno/$d" 2>/dev/null)" ]]; then
+                rmdir "$release/enferno/$d" 2>/dev/null || rm -rf "$release/enferno/$d"
+            else
+                local quarantine="$SHARED_DIR/${d}.pre-harden-$(_now_stamp)"
+                mv "$release/enferno/$d" "$quarantine" \
+                    || die "Could not move $release/enferno/$d aside" \
+                           "Move it by hand and re-run"
+                mkdir -p "$SHARED_DIR/$d"
+                cp -an "$quarantine/." "$SHARED_DIR/$d/" 2>/dev/null \
+                    || die "Could not copy $quarantine into $SHARED_DIR/$d" \
+                           "Your files are intact at $quarantine; copy them across and re-run"
+                log "Previous enferno/$d preserved at $quarantine"
+                log "  (anything already in $SHARED_DIR/$d was kept; delete the copy once verified)"
             fi
-            rm -rf "$release/enferno/$d"
         fi
         ln -sfn "$SHARED_DIR/$d" "$release/enferno/$d"
     done
