@@ -1667,6 +1667,18 @@ cmd_harden() {
     [[ -f "$SHARED_DIR/.env" ]] || die "Missing $SHARED_DIR/.env" \
         "Hardening asserts the Redis password from .env; restore it first"
 
+    # An update swaps the `current` symlink and may be part-way through a
+    # migration; hardening rewrites the service units and both authentication
+    # backends underneath it. Refuse rather than interleave two root operations
+    # on the same install. The phase check also catches an update that died
+    # part-way and left no live process behind.
+    local update_phase
+    update_phase=$(read_phase)
+    [[ "$update_phase" == "IDLE" ]] || die "An update is in progress or needs attention (state: $update_phase)" \
+        "Check 'bayanat status'; recover with 'bayanat update --recover' before hardening"
+    # Same lock the updater takes, so the refusal works in both directions.
+    acquire_lock
+
     local domain backup_dir
     domain=$(_caddy_domain)
     log "Hardening layout for: $domain"
@@ -1691,7 +1703,8 @@ cmd_harden() {
               warn "Hardening did not complete; restoring the previous configuration"
               _harden_restore "$HARDEN_BACKUP_DIR" || true
               warn "Configuration restored from $HARDEN_BACKUP_DIR"
-          fi' EXIT INT TERM
+          fi
+          release_lock' EXIT INT TERM
 
     # Must be verified, not attempted: Redis gets a password and PostgreSQL
     # changes authentication below, and a service still running through that
@@ -1744,6 +1757,7 @@ cmd_harden() {
     # tearing down a working install.
     HARDEN_OK=1
     trap - EXIT INT TERM
+    release_lock
 
     # Only now, past the point where a restore could be needed. The legacy
     # release binds its uWSGI socket inside its own release directory, so a
