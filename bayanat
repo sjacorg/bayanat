@@ -641,9 +641,6 @@ do_prepare() {
     update_preflight
     _fetch_release "$target"
     _install_deps "$target"
-    # Before linking the new release at the shared paths: the outgoing release
-    # may hold app data inside its own tree (pre-v5 layout).
-    _migrate_legacy_app_dirs "$current"
     _link_shared "$target"
     export STATE_TARGET="$target"
     export STATE_PREVIOUS="$current"
@@ -660,6 +657,15 @@ do_migrate() {
     export STATE_PROGRESS="Stopping services"
     write_state MIGRATE "Stopping services for maintenance window"
     systemctl stop bayanat bayanat-celery
+
+    # Only now, with the application stopped. A pre-v5 release keeps
+    # enferno/imports and enferno/exports inside its own tree, and copying them
+    # while the app is still serving races with it: a file written during the
+    # copy can be missed, and `cp -an` would then skip it on any retry because
+    # a same-named file already exists in shared/. The maintenance window is
+    # the only point at which the outgoing release's data is quiescent.
+    export STATE_PROGRESS="Migrating app directories into shared"
+    _migrate_legacy_app_dirs "$prev"
     log "MIGRATE: pruning old snapshots"
     prune_snapshots
     export STATE_PROGRESS="Taking pre-update snapshot"
