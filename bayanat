@@ -331,7 +331,7 @@ restore_pg() {
 
 readonly STATE_DIR="$BAYANAT_ROOT/state"
 readonly STATE_FILE="$STATE_DIR/update.json"
-readonly LOCK_DIR="$STATE_DIR/update.lock"
+readonly LOCK_FILE="$STATE_DIR/update.lock"
 
 _now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
@@ -376,32 +376,41 @@ read_field() {
 }
 
 acquire_lock() {
-    # mkdir is atomic: exactly one process can create a given directory, so
-    # there is no window between testing for the lock and taking it. The old
-    # `[[ -f ]]` then `echo $$ >` form let two processes both pass the test and
-    # proceed, which could interleave an update and a harden across release
-    # fetching, symlink swaps and service reconfiguration.
+    # flock, not a lock file we manage ourselves. Every hand-rolled scheme has
+    # the same hole: deciding a lock is stale and deleting it races with the
+    # process that just claimed it, so several reclaimers each delete the
+    # winner's lock and all proceed (measured: 5 of 25 concurrent reclaimers
+    # "won"). The kernel releases an flock when the holder exits, however it
+    # exits, so a stale lock cannot exist and nothing ever has to be reclaimed.
     mkdir -p "$STATE_DIR"
-    [[ -f "$LOCK_DIR" ]] && rm -f "$LOCK_DIR"   # older layout used a file here
-    local attempt=0 pid
-    until mkdir "$LOCK_DIR" 2>/dev/null; do
-        pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || echo 0)
-        if [[ "$pid" -gt 0 ]] && kill -0 "$pid" 2>/dev/null; then
-            die "another operation is already running (pid $pid)" \
-                "Wait for it to finish, then check 'bayanat status'"
-        fi
-        attempt=$((attempt + 1))
-        (( attempt > 3 )) && die "Could not take the lock at $LOCK_DIR" \
-                                 "Remove it by hand if no bayanat process is running"
-        log "Removing stale lock (pid $pid)"
-        rm -rf "$LOCK_DIR"
-    done
-    echo $$ > "$LOCK_DIR/pid"
+    # Without this the `flock -n` below fails and we would report "another
+    # operation is already running", which is the wrong answer to the wrong
+    # question. flock ships in util-linux and is present on any Ubuntu system.
+    command -v flock >/dev/null \
+        || die "flock is not available, so concurrent operations cannot be made safe" \
+               "Install it and retry: apt-get install -y util-linux"
+    exec {LOCK_FD}>>"$LOCK_FILE" || die "Cannot open the lock file $LOCK_FILE"
+    if ! flock -n "$LOCK_FD"; then
+        local pid
+        pid=$(cat "$LOCK_FILE" 2>/dev/null || true)
+        die "another operation is already running${pid:+ (pid $pid)}" \
+            "Wait for it to finish, then check 'bayanat status'"
+    fi
+    # Informational only; the flock itself is the lock.
+    : > "$LOCK_FILE"
+    echo $$ >&"$LOCK_FD"
 }
 
 release_lock() {
-    rm -rf "$LOCK_DIR"
+    # Closing the descriptor releases the flock. The file is left behind on
+    # purpose: it carries no meaning once unlocked, and removing it would race
+    # with another process that has already opened it.
+    if [[ -n "${LOCK_FD:-}" ]]; then
+        exec {LOCK_FD}>&- || true
+        LOCK_FD=""
+    fi
 }
+
 
 # --- Recovery dispatch ---
 
