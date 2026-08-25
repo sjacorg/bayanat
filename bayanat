@@ -1093,13 +1093,28 @@ _link_shared() {
             # instead of being silently dropped, which is what a copy-then-
             # delete would do: `cp -n` skips the collision and reports success,
             # and the delete then takes the only remaining copy with it.
-            if [[ -z "$(ls -A "$release/enferno/$d" 2>/dev/null)" ]]; then
-                rmdir "$release/enferno/$d" 2>/dev/null || rm -rf "$release/enferno/$d"
-            else
+            # rmdir is the emptiness test, not `ls`: it succeeds only if the
+            # directory is genuinely empty at that instant, and it can never
+            # remove a file. There is deliberately no `rm -rf` fallback -- an
+            # `ls`-then-delete would race, and any failure here means there is
+            # something to preserve, so fall through to the quarantine path.
+            if ! rmdir "$release/enferno/$d" 2>/dev/null; then
+                # Claim a name that does not exist yet. A second-resolution
+                # stamp collides when harden runs twice inside one second, and
+                # `mv` into an existing directory would nest the legacy tree
+                # inside it instead of renaming it.
                 local quarantine="$SHARED_DIR/${d}.pre-harden-$(_now_stamp)"
+                local suffix=1
+                while [[ -e "$quarantine" ]]; do
+                    quarantine="$SHARED_DIR/${d}.pre-harden-$(_now_stamp)-$suffix"
+                    suffix=$((suffix + 1))
+                done
                 mv "$release/enferno/$d" "$quarantine" \
                     || die "Could not move $release/enferno/$d aside" \
                            "Move it by hand and re-run"
+                [[ -d "$quarantine" ]] \
+                    || die "Quarantine $quarantine is missing after the move" \
+                           "Check $release/enferno/$d and $SHARED_DIR before re-running"
                 mkdir -p "$SHARED_DIR/$d"
                 cp -an "$quarantine/." "$SHARED_DIR/$d/" 2>/dev/null \
                     || die "Could not copy $quarantine into $SHARED_DIR/$d" \
