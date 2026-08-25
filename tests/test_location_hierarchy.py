@@ -223,7 +223,11 @@ class TestHierarchyEndpoints:
         session.commit()
         id = h.id
 
-        assert admin_client.delete(f"/admin/api/location-hierarchy/{id}").status_code == 200
+        # Keep the request outside the assert: `python -O` strips assert
+        # statements, which would skip the delete and leave the next check
+        # asserting against a row that was never removed.
+        resp = admin_client.delete(f"/admin/api/location-hierarchy/{id}")
+        assert resp.status_code == 200
         assert LocationHierarchy.query.filter_by(id=id).count() == 0
 
     def test_cannot_delete_a_hierarchy_that_still_has_levels(self, admin_client, hierarchy):
