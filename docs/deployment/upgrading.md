@@ -265,6 +265,23 @@ docker compose up -d
 docker compose logs -f bayanat
 ```
 
+`pg_restore` prints a few errors during step 6 and they are expected:
+
+```
+pg_restore: error: could not execute query: ERROR:  schema "tiger" already exists
+pg_restore: error: could not execute query: ERROR:  schema "tiger_data" already exists
+pg_restore: error: could not execute query: ERROR:  schema "topology" already exists
+```
+
+The PostGIS image creates those schemas when it initializes the empty cluster,
+so the dump cannot create them again. Your data is unaffected. Confirm the
+restore worked by checking a table you recognise rather than by the absence of
+errors:
+
+```bash
+docker compose exec -T postgres psql -U "$POSTGRES_USER" -d bayanat -c "SELECT count(*) FROM bulletin;"
+```
+
 Also note:
 
 - The Redis data volume path changes. Redis holds sessions and queued tasks
