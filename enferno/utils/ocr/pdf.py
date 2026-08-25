@@ -1,6 +1,6 @@
 """PDF-to-images conversion for OCR pre-processing."""
 
-import fitz  # PyMuPDF
+import pymupdf
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger()
@@ -18,7 +18,7 @@ def pdf_to_images(file_bytes: bytes, max_pages: int | None = None) -> list[bytes
     (BAY-01-023).
     """
     try:
-        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        doc = pymupdf.open(stream=file_bytes, filetype="pdf")
         result = []
         for i, page in enumerate(doc):
             if max_pages is not None and i >= max_pages:
@@ -28,7 +28,7 @@ def pdf_to_images(file_bytes: bytes, max_pages: int | None = None) -> list[bytes
             longest = max(pix.width, pix.height)
             if longest > MAX_DIMENSION:
                 scale = MAX_DIMENSION / longest
-                pix = page.get_pixmap(matrix=fitz.Matrix(scale * DPI / 72, scale * DPI / 72))
+                pix = page.get_pixmap(matrix=pymupdf.Matrix(scale * DPI / 72, scale * DPI / 72))
             result.append(pix.tobytes("jpeg"))
         doc.close()
         logger.info(f"PDF split into {len(result)} page(s)")
