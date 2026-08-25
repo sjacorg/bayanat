@@ -621,10 +621,13 @@ do_prepare() {
     [[ "$target" != "$current" ]] || die "already on $target"
     log "PREPARE: fetching $target"
     update_preflight
+    # Before the first mutation, not after it: _fetch_release onwards writes to
+    # $RELEASES_DIR, so taking the lock later leaves a window in which a second
+    # update (or a harden) can interleave with this one.
+    acquire_lock
     _fetch_release "$target"
     _install_deps "$target"
     _link_shared "$target"
-    acquire_lock
     export STATE_TARGET="$target"
     export STATE_PREVIOUS="$current"
     export STATE_STARTED_AT
@@ -1071,7 +1074,13 @@ EOF
 _now_stamp() { date -u +%Y%m%d-%H%M%S; }
 
 _link_shared() {
+    # $2 = "preserve" when the release directory is LIVE and may hold the
+    # operator's files (harden). Omitted for a freshly extracted release
+    # (install/update), whose enferno/ dirs contain only packaged scaffolding
+    # such as .gitignore -- quarantining that would litter shared/ on every
+    # single update and bury a real quarantine in noise.
     local tag="$1"
+    local mode="${2:-replace}"
     local release="$RELEASES_DIR/$tag"
 
     [[ -f "$SHARED_DIR/.env" ]] && ln -sfn "$SHARED_DIR/.env" "$release/.env"
@@ -1098,23 +1107,36 @@ _link_shared() {
             # remove a file. There is deliberately no `rm -rf` fallback -- an
             # `ls`-then-delete would race, and any failure here means there is
             # something to preserve, so fall through to the quarantine path.
-            if ! rmdir "$release/enferno/$d" 2>/dev/null; then
+            if [[ "$mode" != "preserve" ]]; then
+                # Freshly extracted release: this is packaged scaffolding.
+                rm -rf "$release/enferno/$d"
+            elif ! rmdir "$release/enferno/$d" 2>/dev/null; then
                 # Claim a name that does not exist yet. A second-resolution
                 # stamp collides when harden runs twice inside one second, and
                 # `mv` into an existing directory would nest the legacy tree
                 # inside it instead of renaming it.
-                local quarantine="$SHARED_DIR/${d}.pre-harden-$(_now_stamp)"
-                local suffix=1
-                while [[ -e "$quarantine" ]]; do
-                    quarantine="$SHARED_DIR/${d}.pre-harden-$(_now_stamp)-$suffix"
+                # Claim the destination with mkdir, which is atomic: only one
+                # process can create a given path, so two concurrent runs cannot
+                # both select the same name and have the second nest its tree
+                # inside the first. Probing with [[ -e ]] would be a race.
+                local quarantine suffix=0
+                while :; do
+                    quarantine="$SHARED_DIR/${d}.pre-harden-$(_now_stamp)"
+                    (( suffix > 0 )) && quarantine="$quarantine-$suffix"
+                    mkdir "$quarantine" 2>/dev/null && break
                     suffix=$((suffix + 1))
+                    (( suffix > 100 )) && die "Could not claim a quarantine directory in $SHARED_DIR"
                 done
-                mv "$release/enferno/$d" "$quarantine" \
-                    || die "Could not move $release/enferno/$d aside" \
-                           "Move it by hand and re-run"
-                [[ -d "$quarantine" ]] \
-                    || die "Quarantine $quarantine is missing after the move" \
-                           "Check $release/enferno/$d and $SHARED_DIR before re-running"
+                # Move the CONTENTS into the directory we own, so nothing is
+                # ever renamed into a path another process created.
+                if ! ( shopt -s dotglob nullglob
+                       mv "$release/enferno/$d"/* "$quarantine"/ ); then
+                    die "Could not move $release/enferno/$d into $quarantine" \
+                        "Your files are intact; move them by hand and re-run"
+                fi
+                rmdir "$release/enferno/$d" \
+                    || die "$release/enferno/$d is not empty after the move" \
+                           "Check it and $quarantine before re-running"
                 mkdir -p "$SHARED_DIR/$d"
                 cp -an "$quarantine/." "$SHARED_DIR/$d/" 2>/dev/null \
                     || die "Could not copy $quarantine into $SHARED_DIR/$d" \
@@ -1901,7 +1923,7 @@ cmd_harden() {
     # tightening at the end of this function, or imports and exports break.
     local tag
     tag=$(current_version) || die "Cannot determine the active release"
-    _link_shared "$tag"
+    _link_shared "$tag" preserve
 
     _install_uwsgi_config
     _install_systemd
