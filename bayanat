@@ -1676,7 +1676,22 @@ cmd_harden() {
     backup_dir=$(_harden_backup)
 
     # Any failure from here on puts the original configuration back.
-    trap 'trap - ERR; _harden_restore "$backup_dir" || true; die "Hardening failed; configuration restored"' ERR
+    #
+    # This is an EXIT trap, not an ERR trap, because die() exits rather than
+    # returning: an ERR trap would miss every `|| die` inside the functions
+    # below (a missing pg_hba.conf, a service user outside the group) and leave
+    # the box half-reconfigured with its services stopped and no restore. EXIT
+    # catches all of it -- a failing command under `set -e`, an explicit die,
+    # and an interrupted run. The globals are deliberate: locals are out of
+    # scope by the time an EXIT trap runs.
+    HARDEN_OK=0
+    HARDEN_BACKUP_DIR="$backup_dir"
+    trap 'trap - EXIT INT TERM
+          if (( HARDEN_OK == 0 )); then
+              warn "Hardening did not complete; restoring the previous configuration"
+              _harden_restore "$HARDEN_BACKUP_DIR" || true
+              warn "Configuration restored from $HARDEN_BACKUP_DIR"
+          fi' EXIT INT TERM
 
     # Must be verified, not attempted: Redis gets a password and PostgreSQL
     # changes authentication below, and a service still running through that
@@ -1719,13 +1734,16 @@ cmd_harden() {
     systemctl restart caddy
 
     if ! _wait_healthy 60; then
-        trap - ERR
-        _harden_restore "$backup_dir"
+        # The EXIT trap performs the restore.
         die "Hardened layout failed its health check; configuration restored" \
             "Check: journalctl -u bayanat -n 50"
     fi
 
-    trap - ERR
+    # Past the point where a restore is the right answer: the layout is applied
+    # and the application is serving. Anything below reports a problem without
+    # tearing down a working install.
+    HARDEN_OK=1
+    trap - EXIT INT TERM
 
     # Only now, past the point where a restore could be needed. The legacy
     # release binds its uWSGI socket inside its own release directory, so a
