@@ -283,15 +283,34 @@ restore_pg() {
                 sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
                 die "Restore into the staging database failed; the live database is untouched"
             fi
-            # Swap: the live database is only dropped once a complete restored
-            # copy exists alongside it.
-            sudo -u postgres dropdb --force "$db" \
-                && sudo -u postgres psql -qc "ALTER DATABASE \"$staging\" RENAME TO \"$db\";"
+            # Swap by renaming, never by dropping first. Dropping the live
+            # database and then renaming leaves a window in which a failed
+            # rename means no database at all. Renaming the live one aside
+            # keeps a recoverable copy under a known name at every instant,
+            # and it is only dropped once the new one is in place.
+            local retired="${db}_old_$$"
+            sudo -u postgres psql -qc "ALTER DATABASE \"$db\" RENAME TO \"$retired\";" \
+                || { sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+                     die "Could not rename the live database aside; nothing was changed"; }
+            if ! sudo -u postgres psql -qc "ALTER DATABASE \"$staging\" RENAME TO \"$db\";"; then
+                # Put the original back before giving up.
+                sudo -u postgres psql -qc "ALTER DATABASE \"$retired\" RENAME TO \"$db\";" >/dev/null 2>&1
+                sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+                die "Could not swap in the restored database; the original was put back"
+            fi
+            sudo -u postgres dropdb --if-exists --force "$retired" >/dev/null 2>&1
         else
             # No local superuser, so extensions in the dump cannot be
             # recreated. Say so rather than reporting a clean restore.
             warn "No local PostgreSQL superuser; restoring as $user over TCP"
             warn "Extensions in the dump (postgis, pg_trgm) may not be restored"
+            # The app role is NOCREATEDB, so the staging-and-swap dance above is
+            # not available here. At least refuse an archive that cannot be read
+            # rather than letting --clean drop half the schema and then fail.
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" pg_restore --list < "$path" >/dev/null 2>&1 \
+                || die "Snapshot $name is not a readable pg_dump archive" \
+                       "Nothing was changed. Check the file and try another snapshot."
+            warn "A remote restore writes directly into the live database; it cannot be staged"
             PGPASSWORD="${POSTGRES_PASSWORD:-}" \
                 pg_restore --clean --if-exists \
                     -h "$host" \
