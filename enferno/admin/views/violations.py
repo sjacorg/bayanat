@@ -13,6 +13,7 @@ from enferno.admin.validation.models import (
     ClaimedViolationRequestModel,
 )
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE
@@ -36,8 +37,8 @@ def api_potentialviolations(page: int) -> Response:
     if q is not None:
         query.append(
             or_(
-                PotentialViolation.title.ilike(f"%{q}%"),
-                PotentialViolation.title_ar.ilike(f"%{q}%"),
+                like_contains(PotentialViolation.title, q),
+                like_contains(PotentialViolation.title_ar, q),
             )
         )
     result = (
@@ -187,8 +188,8 @@ def api_claimedviolations(page: int) -> Response:
     if q is not None:
         query.append(
             or_(
-                ClaimedViolation.title.ilike(f"%{q}%"),
-                ClaimedViolation.title_ar.ilike(f"%{q}%"),
+                like_contains(ClaimedViolation.title, q),
+                like_contains(ClaimedViolation.title_ar, q),
             )
         )
     result = (

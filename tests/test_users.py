@@ -769,6 +769,18 @@ class TestUserSearch:
         assert resp.json["data"]["items"] == []
         assert resp.json["data"]["total"] == 0
 
+    @pytest.mark.parametrize("probe", ["zainab%", "z_addad", "zainab@example.org%"])
+    def test_wildcards_are_matched_literally(self, admin_client, searchable, probe):
+        """% and _ are literal characters, on every searched column.
+
+        The name column is covered by tests/test_search_like_escape.py; this
+        guards the username and email columns added alongside it, which would
+        silently lose escaping if the query is ever rewritten with a bare ilike.
+        """
+        resp = admin_client.get(f"/admin/api/users/?q={probe}", headers=HEADERS)
+        assert resp.status_code == 200
+        assert resp.json["data"]["items"] == [], f"{probe} was treated as a wildcard"
+
     def test_blank_query_does_not_filter(self, admin_client, searchable):
         resp = admin_client.get("/admin/api/users/?q=", headers=HEADERS)
         assert resp.status_code == 200

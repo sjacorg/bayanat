@@ -24,6 +24,7 @@ from enferno.extensions import db
 from enferno.user.models import User, Role, Session, can_view_usernames
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE, fresh_auth
@@ -49,15 +50,14 @@ def api_users() -> Response:
     if q:
         # name, username and email are all masked by to_compact() for callers
         # without this permission. Filtering on a masked field turns the list
-        # into an oracle: ilike is a substring match and the response carries a
+        # into an oracle: the match is a substring and the response carries a
         # total, so a caller could reconstruct the values a row at a time.
         if can_view_usernames():
-            term = f"%{q}%"
             query.append(
                 or_(
-                    User.name.ilike(term),
-                    User.username.ilike(term),
-                    User.email.ilike(term),
+                    like_contains(User.name, q),
+                    like_contains(User.username, q),
+                    like_contains(User.email, q),
                 )
             )
         else:
@@ -561,7 +561,7 @@ def api_roles() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
     if q is not None:
-        query.append(Role.name.ilike("%" + q + "%"))
+        query.append(like_contains(Role.name, q))
     result = (
         Role.query.filter(*query)
         .order_by(Role.id)
