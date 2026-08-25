@@ -331,7 +331,7 @@ restore_pg() {
 
 readonly STATE_DIR="$BAYANAT_ROOT/state"
 readonly STATE_FILE="$STATE_DIR/update.json"
-readonly LOCK_FILE="$STATE_DIR/update.lock"
+readonly LOCK_DIR="$STATE_DIR/update.lock"
 
 _now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
@@ -376,21 +376,31 @@ read_field() {
 }
 
 acquire_lock() {
+    # mkdir is atomic: exactly one process can create a given directory, so
+    # there is no window between testing for the lock and taking it. The old
+    # `[[ -f ]]` then `echo $$ >` form let two processes both pass the test and
+    # proceed, which could interleave an update and a harden across release
+    # fetching, symlink swaps and service reconfiguration.
     mkdir -p "$STATE_DIR"
-    if [[ -f "$LOCK_FILE" ]]; then
-        local pid
-        pid=$(cat "$LOCK_FILE" 2>/dev/null || echo 0)
+    [[ -f "$LOCK_DIR" ]] && rm -f "$LOCK_DIR"   # older layout used a file here
+    local attempt=0 pid
+    until mkdir "$LOCK_DIR" 2>/dev/null; do
+        pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || echo 0)
         if [[ "$pid" -gt 0 ]] && kill -0 "$pid" 2>/dev/null; then
-            die "another update is running (pid $pid)"
+            die "another operation is already running (pid $pid)" \
+                "Wait for it to finish, then check 'bayanat status'"
         fi
+        attempt=$((attempt + 1))
+        (( attempt > 3 )) && die "Could not take the lock at $LOCK_DIR" \
+                                 "Remove it by hand if no bayanat process is running"
         log "Removing stale lock (pid $pid)"
-        rm -f "$LOCK_FILE"
-    fi
-    echo $$ > "$LOCK_FILE"
+        rm -rf "$LOCK_DIR"
+    done
+    echo $$ > "$LOCK_DIR/pid"
 }
 
 release_lock() {
-    rm -f "$LOCK_FILE"
+    rm -rf "$LOCK_DIR"
 }
 
 # --- Recovery dispatch ---
@@ -620,11 +630,9 @@ do_prepare() {
     current=$(current_version || echo 0)
     [[ "$target" != "$current" ]] || die "already on $target"
     log "PREPARE: fetching $target"
+    # The lock is already held: cmd_update takes it before anything mutates,
+    # including update_preflight, which installs minisign on a pre-v5 host.
     update_preflight
-    # Before the first mutation, not after it: _fetch_release onwards writes to
-    # $RELEASES_DIR, so taking the lock later leaves a window in which a second
-    # update (or a harden) can interleave with this one.
-    acquire_lock
     _fetch_release "$target"
     _install_deps "$target"
     _link_shared "$target"
@@ -2004,6 +2012,10 @@ cmd_update() {
     [[ -L "$CURRENT_LINK" ]] || die "No installer-managed Bayanat install found at $BAYANAT_ROOT" \
         "'bayanat update' only manages installs created by 'bayanat install'. For a manual or Docker deployment, follow the Upgrading page in the Bayanat documentation."
     recover_state
+    # Everything below mutates the box: _ensure_runtime_layout creates
+    # directories, update_preflight can install packages, do_prepare writes
+    # releases. recover_state runs first because it is what clears a stale lock.
+    acquire_lock
     _ensure_runtime_layout
     local target="${1:-}"
     if [[ -z "$target" ]]; then
