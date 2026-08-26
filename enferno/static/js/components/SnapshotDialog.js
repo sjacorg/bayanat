@@ -29,12 +29,12 @@ const SnapshotDialog = Vue.defineComponent({
           v-bind="dialogProps"
       >
         <v-toolbar color="dark-primary">
-          <v-toolbar-title>Snapshot</v-toolbar-title>
+          <v-toolbar-title>{{ translations.snapshot_ }}</v-toolbar-title>
           <v-spacer></v-spacer>
   
           <template #append>
             <v-btn @click="$root.attachSnapshot(form)" variant="elevated" class="mx-2">
-                Attach snapshot
+                {{ translations.attachSnapshot_ }}
             </v-btn>
             <v-btn @click="$emit('update:modelValue', false)" icon="mdi-close"></v-btn>
           </template>
@@ -67,4 +67,3 @@ const SnapshotDialog = Vue.defineComponent({
       </v-dialog>
       `,
   });
-  
