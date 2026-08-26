@@ -295,7 +295,7 @@
                                                           density="compact" :label="'{{ _('Box title') }}'"></v-text-field>
                                             <v-select
                                                     v-model="block.config.field"
-                                                    :items="[{title: '{{ _('Empty (manual fill)') }}', value: null}, {title: '{{ _('Profile description') }}', value: 'description'}{% for name, label in narrative_fields.items() %}, {title: {{ label|tojson }}, value: {{ name|tojson }}}{% endfor %}]"
+                                                    :items="narrativeSources"
                                                     variant="outlined" density="compact"
                                                     :label="'{{ _('Content source') }}'"
                                             ></v-select>
@@ -389,6 +389,11 @@
             templates: [],
             template: null,
             meta: {fields: [], relation_types: [], columns: {}},
+            narrativeSources: [
+                {title: "{{ _('Empty (manual fill)') }}", value: null},
+                {title: "{{ _('Profile description') }}", value: 'description'},
+                ...{{ narrative_fields|tojson }}.map(([value, title]) => ({title, value})),
+            ],
             blockMeta: {
                 heading: {label: "{{ _('Heading') }}", icon: 'mdi-format-header-2'},
                 rich_text: {label: "{{ _('Text') }}", icon: 'mdi-text'},
