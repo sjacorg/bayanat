@@ -604,6 +604,7 @@ class PartialActorProfileModel(BaseValidationModel):
     dental_habits: Optional[str] = None
     case_status: Optional[str] = None
     reporters: Optional[list[ReporterModel]] = Field(default_factory=list)
+    known_relatives: Optional[list[ReporterModel]] = Field(default_factory=list)
     identified_by: Optional[str] = None
     family_notified: Optional[bool] = None
     hypothesis_based: Optional[str] = None
