@@ -2,6 +2,20 @@
 # Compose reads ./.env for both variable substitution here and the app's
 # own configuration, so there is a single file to generate and back up.
 
+# The app and both workers must see identical application data. Declared once
+# here rather than with volumes_from, which is deprecated in the Compose spec
+# and silently inherits every mount of the service it copies.
+x-app-volumes: &app-volumes
+  - './backups:/app/backups/:rw'
+  - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media/:rw'
+  - './enferno/imports:/app/enferno/imports/:rw'
+  - './logs/:/app/logs/:rw'
+  - './config.json:/app/config.json:rw'
+  # Deliberately not configurable. Compose substitutes the variables in this
+  # file from ./.env, so pointing the app at a different file would let the two
+  # diverge and hand the app credentials the database was never created with.
+  - './.env:/app/.env:ro'
+
 x-logging: &logging
   # json-file grows without bound by default; a long-running deployment
   # will fill the host disk with container logs otherwise.
@@ -12,7 +26,6 @@ x-logging: &logging
 
 services:
   postgres:
-    container_name: postgres
     # PG major upgrades (15 -> 16) require a dump/restore of postgres_data
     image: 'postgis/postgis:16-3.5@sha256:a780ff6331b384e4c6d1033d5c42f4fe1270721b3e19260448241fa1b64a7637'
     # postgis/postgis publishes amd64 only; runs emulated on ARM hosts
@@ -39,7 +52,6 @@ services:
       retries: 10
 
   redis:
-    container_name: redis
     image: 'redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99'
     user: redis
     restart: unless-stopped
@@ -63,7 +75,6 @@ services:
       retries: 10
 
   bayanat:
-    container_name: bayanat
     build:
       context: .
       dockerfile: ./flask/Dockerfile
@@ -75,17 +86,7 @@ services:
       - UWSGI_PROCESSES=${UWSGI_PROCESSES:-4}
       - UWSGI_THREADS=${UWSGI_THREADS:-2}
       - UWSGI_HARAKIRI=${UWSGI_HARAKIRI:-300}
-    volumes:
-      - './backups:/app/backups/:rw'
-      - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media/:rw'
-      - './enferno/imports:/app/enferno/imports/:rw'
-      - './logs/:/app/logs/:rw'
-      - './config.json:/app/config.json:rw'
-      # Deliberately not configurable. Compose substitutes the variables above
-      # from ./.env, so pointing the app at a different file would let the two
-      # diverge and hand the app credentials the database was never created
-      # with. To run a second stack, use a second checkout.
-      - './.env:/app/.env:ro'
+    volumes: *app-volumes
     depends_on:
       postgres:
         condition: service_healthy
@@ -112,7 +113,6 @@ services:
       start_period: 120s
 
   celery:
-    container_name: celery
     build:
       context: .
       dockerfile: ./flask/Dockerfile
@@ -120,8 +120,7 @@ services:
         - ROLE=celery
     restart: unless-stopped
     logging: *logging
-    volumes_from:
-      - bayanat
+    volumes: *app-volumes
     read_only: true
     tmpfs:
       - /tmp
@@ -134,7 +133,6 @@ services:
         condition: service_healthy
 
   celery-ocr:
-    container_name: celery-ocr
     build:
       context: .
       dockerfile: ./flask/Dockerfile
@@ -142,8 +140,7 @@ services:
         - ROLE=celery-ocr
     restart: unless-stopped
     logging: *logging
-    volumes_from:
-      - bayanat
+    volumes: *app-volumes
     read_only: true
     tmpfs:
       - /tmp
@@ -156,7 +153,6 @@ services:
         condition: service_healthy
 
   caddy:
-    container_name: caddy
     image: 'caddy:2.10-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d'
     restart: unless-stopped
     logging: *logging
@@ -179,6 +175,11 @@ services:
     read_only: true
     security_opt:
       - no-new-privileges:true
+    # Only capability Caddy needs: binding 80/443 as a non-root process.
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
     tmpfs:
       - /tmp
     healthcheck:

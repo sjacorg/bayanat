@@ -1,6 +1,15 @@
+# Shared by the app and the worker. Declared once rather than with
+# volumes_from, which is deprecated in the Compose spec.
+x-app-volumes: &app-volumes
+  - 'bayanat_dev_backups:/app/backups/:rw'
+  - 'bayanat_dev_media:/app/enferno/media/:rw'
+  - 'bayanat_dev_imports:/app/enferno/imports/:rw'
+  - 'bayanat_dev_logs:/app/logs/:rw'
+  - '${PWD}/config.json:/app/config.json:rw'
+  - '${PWD}/${ENV_FILE:-.env.dev}:/app/.env:ro'
+
 services:
   postgres:
-    container_name: postgres
     image: 'postgis/postgis:16-3.5@sha256:a780ff6331b384e4c6d1033d5c42f4fe1270721b3e19260448241fa1b64a7637'
     # postgis/postgis publishes amd64 only; runs emulated on ARM hosts
     platform: linux/amd64
@@ -24,7 +33,6 @@ services:
       retries: 10
 
   redis:
-    container_name: redis
     image: 'redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99'
     user: redis
     expose:
@@ -46,19 +54,12 @@ services:
       retries: 10
 
   bayanat:
-    container_name: bayanat
     build:
       context: .
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=flask
-    volumes:
-      - 'bayanat_dev_backups:/app/backups/:rw'
-      - 'bayanat_dev_media:/app/enferno/media/:rw'
-      - 'bayanat_dev_imports:/app/enferno/imports/:rw'
-      - 'bayanat_dev_logs:/app/logs/:rw'
-      - '${PWD}/config.json:/app/config.json:rw'
-      - '${PWD}/${ENV_FILE:-.env.dev}:/app/.env:ro'
+    volumes: *app-volumes
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,14 +70,12 @@ services:
     restart: always
 
   celery:
-    container_name: celery
     build:
       context: .
       dockerfile: ./flask/Dockerfile
       args:
         - ROLE=celery
-    volumes_from:
-      - bayanat
+    volumes: *app-volumes
     read_only: true
     tmpfs:
       - /tmp

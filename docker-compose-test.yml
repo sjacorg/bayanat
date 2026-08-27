@@ -1,6 +1,5 @@
 services:
   postgres:
-    container_name: postgres
     image: 'postgis/postgis:16-3.5@sha256:a780ff6331b384e4c6d1033d5c42f4fe1270721b3e19260448241fa1b64a7637'
     # postgis/postgis publishes amd64 only; runs emulated on ARM hosts
     platform: linux/amd64
@@ -24,7 +23,6 @@ services:
       retries: 10
 
   redis:
-    container_name: redis
     image: 'redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99'
     user: redis
     expose:
@@ -46,7 +44,6 @@ services:
       retries: 10
 
   bayanat:
-    container_name: bayanat
     build:
       context: .
       dockerfile: ./flask/Dockerfile.test
