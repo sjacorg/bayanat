@@ -344,7 +344,14 @@ PostgreSQL major version.
 
 ---
 
-## Upgrading to v4
+## Upgrading to v4 (legacy)
+
+::: warning Legacy path, kept for 4.x installations
+This section is retained because the 4.x series is still supported. If you are
+upgrading a current installation, use [Upgrading to v5](#upgrading-to-v5)
+above instead. Do not follow the steps below to reach v5.
+:::
+
 
 ### Before you start
 

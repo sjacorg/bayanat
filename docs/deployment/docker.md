@@ -117,8 +117,19 @@ Compose network only.
 
 ## Upgrading
 
+::: danger Upgrading from v4 is a different procedure
+This section covers routine upgrades between v5 releases. **The v4 to v5 hop is
+not a routine upgrade:** PostgreSQL moves from 15 to 16, and a PostgreSQL data
+directory is not compatible across major versions. Following the steps below
+from a v4 stack leaves PostgreSQL 16 starting against a version 15 data
+directory, and it will not come up.
+
+Use the migration in [Upgrading](/deployment/upgrading) instead, which dumps the
+database, removes the old volume, and restores into a freshly initialized one.
+:::
+
 The container entrypoint runs `flask db upgrade` on every start, so upgrading
-is: back up, pull, rebuild, restart.
+between v5 releases is: back up, pull, rebuild, restart.
 
 **Always take a database dump first.** Migrations are not reversible.
 
@@ -133,7 +144,7 @@ cp .env ~/bayanat-env-$(date +%F).bak
 
 # 2. Fetch the release you want
 git fetch --tags
-git checkout v4.0.1
+git checkout v5.0.1
 
 # 3. Rebuild the images
 docker compose build
@@ -185,7 +196,7 @@ docker compose exec -T postgres createdb -U bayanat bayanat
 docker compose exec -T postgres pg_restore -U bayanat -d bayanat < "$BACKUP"
 
 # 3. Go back to the previous release and start again
-git checkout v4.0.0
+git checkout v5.0.0
 docker compose build
 docker compose up -d
 ```

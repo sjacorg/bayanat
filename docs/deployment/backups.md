@@ -35,6 +35,14 @@ For encrypted backups uploaded to S3, use a script with `aws-cli` and GPG:
 0 3 * * * /home/bayanat/backup.sh >> /home/bayanat/backup.log 2>&1
 ```
 
+::: tip Paths differ by deployment
+The paths below are relative to the application directory, which is what a
+manual installation uses. An installer-managed v5 install keeps this data in
+`/opt/bayanat/shared/` (`media`, `imports`, `exports`, `backups`), and Docker
+keeps it in the project directory next to `docker-compose.yml`. Translate the
+paths to your layout; `bayanat status` reports which one you are on.
+:::
+
 ### Media Files
 
 Main directory: `enferno/media/` (unless using S3).

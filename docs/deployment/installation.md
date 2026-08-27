@@ -56,10 +56,13 @@ You can install Bayanat by following these steps exactly without changes. Adjust
 
 ### Install System Packages
 
+`uv` provisions its own Python 3.12 during `uv sync`, so the system Python
+version does not matter. The packages below are the build and runtime libraries.
+
 **Ubuntu 22.04:**
 
 ```bash
-sudo apt install build-essential python3-dev python3.10-venv libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools postgresql postgresql-contrib python3-pip libpq-dev git redis-server libimage-exiftool-perl postgis ffmpeg libpango-1.0-0 libpangoft2-1.0-0 libglib2.0-0
+sudo apt install build-essential python3-dev libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools postgresql postgresql-contrib python3-pip libpq-dev git redis-server libimage-exiftool-perl postgis ffmpeg libpango-1.0-0 libpangoft2-1.0-0 libglib2.0-0
 ```
 
 **Ubuntu 24.04:**
