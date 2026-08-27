@@ -4,6 +4,8 @@ echo "Bayanat Environment Generation Script"
 deployment=""
 env_file=.env
 domain=""
+conf=""
+media_path=""
 
 while getopts "dne:oD:" option; do
     case $option in
@@ -29,6 +31,23 @@ while getopts "dne:oD:" option; do
         ;;
     esac
 done
+
+# Fail loudly rather than writing a partial secrets file. Every line below is a
+# redirect, and without this the script reports success after writing nothing.
+# No -u: the prompt loops read $conf before it is ever assigned.
+set -eo pipefail
+
+# Compose mounts ./.env into the container, so `docker compose up` before this
+# script runs makes Docker create it as a directory. The -f test below is false
+# for a directory, so without this guard the run "succeeds" having written none
+# of the secrets.
+if [ -e "$env_file" ] && [ ! -f "$env_file" ]
+then
+    echo "ERROR: $env_file exists and is not a regular file." >&2
+    echo "Docker creates it as a directory when 'docker compose up' runs before" >&2
+    echo "this script. Remove it and re-run:  rmdir $env_file" >&2
+    exit 1
+fi
 
 if [ -f $env_file ]
 then
