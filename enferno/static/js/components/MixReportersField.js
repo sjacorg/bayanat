@@ -54,7 +54,7 @@ const MixReportersField = Vue.defineComponent({
     <v-card class="pa-3">
       <v-toolbar>
         <v-toolbar-title class="d-flex">
-        {{ translations.reportingPersons_ }}
+        {{ title || translations.reportingPersons_ }}
         </v-toolbar-title>
         <template #append>
           <v-btn icon="mdi-plus-circle" @click="addReporter" color="primary"></v-btn>
