@@ -65,6 +65,15 @@ def _location_string(location) -> Optional[str]:
     return location.title_ar or location.full_location or location.title
 
 
+def _issued_by(bulletin) -> Optional[str]:
+    """Location and date of the bulletin's "Document Issued" event."""
+    for e in bulletin.events:
+        if e.eventtype and (e.eventtype.title or "").lower() == ISSUED_EVENT_TYPE:
+            parts = [_location_string(e.location), _fmt_date(e.from_date)]
+            return ", ".join(p for p in parts if p) or None
+    return None
+
+
 def _id_numbers(actor) -> Optional[str]:
     """Format the id_number JSONB list, resolving type ids to their titles."""
     from enferno.admin.models import IDNumberType
@@ -236,8 +245,13 @@ RELATED_BULLETIN_COLUMNS = {
         "label_ar": "تاريخ توثيق الدليل",
         "ltr": True,
     },
+    "issued_by": {"label": "Issued by", "label_ar": "جهة الإصدار"},
     "comment": {"label": "Notes", "label_ar": "ملاحظات"},
 }
+
+# ponytail: issuer lives on the bulletin's "Document Issued" event, matched by
+# type title; make the type configurable if an install names it differently.
+ISSUED_EVENT_TYPE = "document issued"
 
 EVENT_COLUMNS = {
     "date": {"label": "Date", "label_ar": "التاريخ", "ltr": True},
@@ -308,6 +322,8 @@ class DossierData:
                         "sources": ", ".join(s.title for s in bulletin.sources) or None,
                         "publish_date": _fmt_date(bulletin.publish_date),
                         "documentation_date": _fmt_date(bulletin.documentation_date),
+                        "issued_by": _issued_by(bulletin),
+                        "relation_ids": relation.related_as or [],
                         "comment": relation.comment,
                     }
                 )
@@ -447,8 +463,12 @@ def _v_events_timeline(config: dict) -> dict:
 
 
 def _v_related_items(config: dict) -> dict:
+    relation_ids = config.get("relation_ids") or []
+    if not isinstance(relation_ids, list) or not all(isinstance(i, int) for i in relation_ids):
+        raise ValueError("'relation_ids' must be a list of integers")
     return {
         "title": _require_str(config, "title", MAX_TITLE),
+        "relation_ids": relation_ids,
         "columns": _validate_columns(
             config,
             RELATED_BULLETIN_COLUMNS,
@@ -551,7 +571,12 @@ def _b_events_timeline(data: DossierData, config: dict) -> dict:
 
 def _b_related_items(data: DossierData, config: dict) -> dict:
     columns = _labeled_columns(config["columns"], RELATED_BULLETIN_COLUMNS, data.locale)
-    rows = data.related_bulletins
+    relation_ids = set(config["relation_ids"])
+    rows = [
+        r
+        for r in data.related_bulletins
+        if not relation_ids or relation_ids & set(r["relation_ids"])
+    ]
     missing = [] if rows else ["No related items"]
     return {"title": config.get("title"), "columns": columns, "rows": rows, "missing": missing}
 

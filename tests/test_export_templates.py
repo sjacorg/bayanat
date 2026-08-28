@@ -238,3 +238,41 @@ def test_narrative_box_rejects_workflow_fields(monkeypatch):
         [{"type": "narrative_box", "config": {"title": "x", "field": "dossier_notes"}}]
     )
     assert ok[0]["config"]["field"] == "dossier_notes"
+
+
+def test_related_items_filters_by_relation_type_and_reads_issuer():
+    from types import SimpleNamespace as NS
+    from datetime import datetime
+
+    issued = NS(
+        eventtype=NS(title="Document Issued"),
+        location=NS(title_ar=None, full_location=None, title="Branch 235"),
+        from_date=datetime(2013, 5, 1),
+    )
+    doc = NS(
+        id=1,
+        deleted=False,
+        title="Detention record",
+        originid=None,
+        sources=[],
+        publish_date=None,
+        documentation_date=None,
+        events=[issued],
+    )
+    post = NS(**{**vars(doc), "id": 2, "title": "Facebook post", "events": []})
+    actor = FakeActor()
+    actor.related_bulletins = [
+        NS(bulletin=doc, related_as=[1], comment=None),
+        NS(bulletin=post, related_as=[14], comment=None),
+    ]
+    template = FakeTemplate(
+        [
+            {
+                "type": "related_items_table",
+                "config": {"relation_ids": [1], "columns": ["id", "issued_by"]},
+            }
+        ]
+    )
+    rows = build_dossier(template, actor, FakeUser())["blocks"][0]["rows"]
+    assert [r["id"] for r in rows] == [1]
+    assert rows[0]["issued_by"] == "Branch 235, 2013-05-01"

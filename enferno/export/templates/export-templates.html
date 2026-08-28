@@ -278,6 +278,15 @@
                                         <template v-else-if="block.type === 'related_items_table'">
                                             <v-text-field v-model="block.config.title" variant="outlined"
                                                           density="compact" :label="'{{ _('Table title (optional)') }}'"></v-text-field>
+                                            <v-autocomplete
+                                                    v-model="block.config.relation_ids"
+                                                    :items="meta.bulletin_relation_types"
+                                                    item-title="title"
+                                                    item-value="id"
+                                                    multiple chips closable-chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Relation types (empty = all)') }}'"
+                                            ></v-autocomplete>
                                             <v-select
                                                     v-model="block.config.columns"
                                                     :items="meta.columns.related_items_table"
@@ -388,7 +397,7 @@
             tinyConfig,
             templates: [],
             template: null,
-            meta: {fields: [], relation_types: [], columns: {}},
+            meta: {fields: [], relation_types: [], bulletin_relation_types: [], columns: {}},
             narrativeSources: [
                 {title: "{{ _('Empty (manual fill)') }}", value: null},
                 {title: "{{ _('Profile description') }}", value: 'description'},
@@ -455,7 +464,7 @@
                     field_table: {title: '', fields: []},
                     family_members_table: {title: '', relation_ids: [], columns: ['id', 'name', 'relation', 'comment']},
                     events_timeline: {title: '', order: 'asc', columns: ['date', 'title', 'comments']},
-                    related_items_table: {title: '', columns: ['id', 'title', 'documentation_date', 'comment']},
+                    related_items_table: {title: '', relation_ids: [], columns: ['id', 'title', 'documentation_date', 'comment']},
                     narrative_box: {title: '', field: null},
                     media_appendix: {title: ''},
                     page_break: {},

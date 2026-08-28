@@ -370,7 +370,7 @@ def templates_editor() -> str:
 @roles_required("Admin")
 def api_templates_meta() -> Response:
     """Editor metadata: field whitelist, relation types, and column choices."""
-    from enferno.admin.models import AtoaInfo
+    from enferno.admin.models import AtoaInfo, AtobInfo
     from enferno.admin.models.DynamicField import DynamicField
     from enferno.export.blocks import (
         ACTOR_FIELDS,
@@ -393,6 +393,12 @@ def api_templates_meta() -> Response:
             AtoaInfo.id
         )  # noqa: E712
     ]
+    bulletin_relation_types = [
+        {"id": info.id, "title": info.title_tr or info.title}
+        for info in AtobInfo.query.filter(AtobInfo.deleted == False).order_by(
+            AtobInfo.id
+        )  # noqa: E712
+    ]
     columns = {
         "family_members_table": [
             {"key": k, "label": v["label"]} for k, v in RELATED_ACTOR_COLUMNS.items()
@@ -403,7 +409,12 @@ def api_templates_meta() -> Response:
         "events_timeline": [{"key": k, "label": v["label"]} for k, v in EVENT_COLUMNS.items()],
     }
     return HTTPResponse.success(
-        data={"fields": fields, "relation_types": relation_types, "columns": columns}
+        data={
+            "fields": fields,
+            "relation_types": relation_types,
+            "bulletin_relation_types": bulletin_relation_types,
+            "columns": columns,
+        }
     )
 
 
