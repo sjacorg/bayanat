@@ -388,13 +388,13 @@ def api_templates_meta() -> Response:
         for field in DynamicField.query.filter_by(entity_type="actor", active=True, core=False)
     ]
     relation_types = [
-        {"id": info.id, "title": info.title_tr or info.title}
+        {"id": info.id, "title": info.title}
         for info in AtoaInfo.query.filter(AtoaInfo.deleted == False).order_by(
             AtoaInfo.id
         )  # noqa: E712
     ]
     bulletin_relation_types = [
-        {"id": info.id, "title": info.title_tr or info.title}
+        {"id": info.id, "title": info.title}
         for info in AtobInfo.query.filter(AtobInfo.deleted == False).order_by(
             AtobInfo.id
         )  # noqa: E712
