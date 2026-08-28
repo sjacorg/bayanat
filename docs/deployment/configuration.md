@@ -80,7 +80,9 @@ Changing this secret invalidates all 2FA configurations.
 
 ### Local
 
-Media files stored in `enferno/media/`.
+Media files stored in `enferno/media/` relative to the application directory. An
+installer-managed v5 host keeps them in `/opt/bayanat/shared/media`, which the
+release symlinks into place, so the application path is the same either way.
 
 ### Amazon S3
 

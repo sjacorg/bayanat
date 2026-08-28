@@ -142,9 +142,10 @@ docker compose exec -T postgres pg_dump -Fc -U bayanat bayanat \
   > ~/bayanat-$(date +%F).dump
 cp .env ~/bayanat-env-$(date +%F).bak
 
-# 2. Fetch the release you want
+# 2. Fetch the release you want. Pick a tag from the releases page;
+#    the value below is an example.
 git fetch --tags
-git checkout v5.0.1
+git checkout v5.0.0
 
 # 3. Rebuild the images
 docker compose build

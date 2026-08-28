@@ -40,7 +40,9 @@ The paths below are relative to the application directory, which is what a
 manual installation uses. An installer-managed v5 install keeps this data in
 `/opt/bayanat/shared/` (`media`, `imports`, `exports`, `backups`), and Docker
 keeps it in the project directory next to `docker-compose.yml`. Translate the
-paths to your layout; `bayanat status` reports which one you are on.
+paths to your layout. On an installer-managed host `bayanat status` confirms it;
+on a manual install that command reports "Bayanat is not installed", which is
+itself the answer.
 :::
 
 ### Media Files
