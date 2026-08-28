@@ -45,6 +45,13 @@ on a manual install that command reports "Bayanat is not installed", which is
 itself the answer.
 :::
 
+::: warning Pre-update snapshots are not backups
+`bayanat update` takes a database snapshot before it migrates, and keeps a small
+number of them. That exists so a failed upgrade can be rolled back, not so you
+have a backup. It is local to the machine, short-lived, and covers the database
+only. Keep the offsite backup below regardless.
+:::
+
 ### Media Files
 
 Main directory: `enferno/media/` (unless using S3).

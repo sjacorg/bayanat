@@ -88,6 +88,15 @@ release symlinks into place, so the application path is the same either way.
 
 Configure the S3 bucket with correct policies, block public access, and set up CORS.
 
+::: warning S3 does not hold everything
+Uploads made through the interface go straight to the bucket, but **inline images**
+in descriptions do not. They are always written to `enferno/media/inline/` on the
+server, with no S3 path, so bucket versioning and replication do not cover them.
+
+Back up that directory as well as the bucket. Imported files are staged locally
+and removed once uploaded, so they need no separate handling.
+:::
+
 ## Search
 
 Interactive searches run under a database statement timeout. When a search exceeds it, the query is cancelled and re-run by a background worker instead of failing, and the user is notified when the results are ready. See [Search](/guide/search) for what this looks like in the interface.
