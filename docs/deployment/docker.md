@@ -2,26 +2,20 @@
 
 Docker Compose stands up the whole stack (PostgreSQL with PostGIS, Redis, the
 Flask app, two Celery workers, and a Caddy edge with automatic HTTPS) from one
-command, and upgrades with another. It is the quickest way to evaluate
-Bayanat, and it is a reasonable choice for an organisation that already runs
-containers in production.
+command. It is the quickest way to evaluate Bayanat and the cleanest to remove
+afterwards.
 
-::: tip Recommended path
-For most deployments we recommend the
-[native installation](/deployment/installation).
-`bayanat install yourdomain.com` is a single command, it is the configuration
-the project runs and tests in production, and it has operational tooling the
-Docker path does not: `bayanat update` takes an automatic pre-upgrade database
-snapshot, with `bayanat snapshots` and `bayanat restore` to roll back, plus
-`bayanat status`.
+::: warning Not the recommended path for production
+Use the [native installation](/deployment/installation) for any deployment you
+intend to keep. `bayanat install yourdomain.com` is a single command and it is
+the supported and tested deployment path. It is also the only
+path with update tooling: `bayanat update` verifies a signed release, snapshots
+the database, health-checks the result and reverts if that check fails.
+`bayanat snapshots`, `bayanat restore` and `bayanat status` go with it.
 
-Under Docker your rollback point is the dump you take yourself before an
-upgrade, as described below.
+Under Docker there is no `bayanat update`. Every upgrade and every rollback is
+manual, and your only rollback point is the dump you take beforehand.
 :::
-
-Docker is the better fit when your organisation standardises on containers,
-when you want PostgreSQL and Redis managed for you, or when you are trying
-Bayanat out and want to remove it cleanly afterwards.
 
 ## Requirements
 
@@ -185,9 +179,20 @@ The schema must match the code, so restoring the database alone is not enough.
 The application and workers must be stopped for the restore, or the old code
 runs migrations against the database while it is being replaced.
 
-Rolling back from v5 also moves PostgreSQL **back from 16 to 15**, and a
-PostgreSQL 16 data directory cannot be read by PostgreSQL 15. The old volume
-has to go, and the pre-upgrade dump is restored into a freshly initialised
+::: danger Rolling back to v4 requires images you already have
+The v4 images can no longer be rebuilt. v4's stack builds its edge proxy from
+`bitnami/nginx:1.24`, and that tag has been removed from Docker Hub, so
+`docker compose build` on a v4 tag fails outright.
+
+If you may want to roll back, do not prune Docker images before upgrading.
+The rollback below reuses the images already on the host and never rebuilds. If
+they are gone, rolling back to v4 on Docker is not possible and your route is a
+fresh [native install](/deployment/installation) restored from your dump.
+:::
+
+Rolling back from v5 also moves PostgreSQL back from 16 to 15, and a
+PostgreSQL 16 data directory cannot be read by PostgreSQL 15. The old volume has
+to go and the pre-upgrade dump is restored into a freshly initialised
 PostgreSQL 15. Restoring before switching tags does not work.
 
 ```bash
@@ -199,32 +204,33 @@ docker compose down
 git checkout v4.0.2
 
 # 3. Remove the PostgreSQL 16 volume. PostgreSQL 15 cannot start against it.
-#    You need the dump from step 1 of the upgrade to get your data back.
+#    Your data comes back from the dump, so do not do this without one.
 docker volume rm <project>_postgres_data
 
-# 4. Bring up PostgreSQL 15 ON ITS OWN so it initialises an empty database.
-#    Do not start the application yet: it would create its own schema and the
-#    restore would then collide with it.
-docker compose build
+# 4. Bring up PostgreSQL 15 alone so it initialises an empty database. Do not
+#    start the application yet: it would create its own schema and the restore
+#    would collide with it. No build: v4 images cannot be rebuilt.
 docker compose up -d postgres
 
-# 5. Restore the pre-upgrade dump into the empty database
+# 5. Wait until it is actually accepting connections
+until docker compose exec -T postgres pg_isready -q; do sleep 2; done
+
+# 6. Restore the pre-upgrade dump into the empty database
 BACKUP=~/bayanat-2026-08-16.dump
 docker compose exec -T postgres pg_restore -U bayanat -d bayanat --no-owner < "$BACKUP"
 
-# 6. Start the rest of the stack
+# 7. Start the rest of the stack
 docker compose up -d
 ```
 
-::: warning
-This works only with a dump taken **before** the upgrade, while the stack was
-still on PostgreSQL 15. A dump taken after upgrading is PostgreSQL 16 and will
-not restore cleanly into 15.
-:::
+The dump must be the one taken before the upgrade. It carries the v4 schema,
+which is what the v4 code expects. A dump taken after upgrading carries the v5
+schema and will not work with v4.
+
 
 Unlike the native installer, the Docker path does not take automatic
-pre-upgrade snapshots. The dump in step 1 above is your only rollback point,
-so do not skip it.
+pre-upgrade snapshots. The dump you take before upgrading is your only rollback
+point, so do not skip it.
 
 ## Backups
 

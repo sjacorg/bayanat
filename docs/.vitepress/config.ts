@@ -3,8 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
 
-// Single source of truth for the version is pyproject.toml, so the nav badge
-// cannot go stale between releases.
+// Version comes from pyproject.toml so the nav badge cannot go stale.
 const pyproject = readFileSync(
   fileURLToPath(new URL("../../pyproject.toml", import.meta.url)),
   "utf-8",
