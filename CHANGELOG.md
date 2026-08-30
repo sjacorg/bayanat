@@ -77,6 +77,8 @@ maintenance window, not a routine pull.
 - Fixed advanced search refine and extend combination logic (#361).
 - Fixed a stale typeahead debounce race (#387).
 - Lookup typeahead endpoints search translated titles (#365).
+- `%` and `_` typed into search are treated as literal characters rather than
+  SQL wildcards (#403).
 
 ### Import and Export
 
@@ -86,6 +88,8 @@ maintenance window, not a routine pull.
   alive across chunked uploads (#334).
 - Exports include every media file per item rather than only the first (#362).
 - Public archive export with a `public_description` field (#345).
+- A file whose type cannot be identified fails the import cleanly instead of
+  crashing the worker and leaving a bulletin with no media attached (#408).
 
 ### Documents and Media
 
@@ -109,6 +113,9 @@ maintenance window, not a routine pull.
 - Independent incident scope for event types (#355).
 - Actor relations are mirrored and type-converted on create and update (#359).
 - Secondary-language actor names shown in lists when the primary is empty (#363).
+- Role save and CSV import report failures instead of failing silently. The
+  session-replay queue is removed: after reauthenticating, the original form is
+  still open and the action can simply be repeated (#407).
 
 ### Fixed
 
@@ -127,6 +134,8 @@ maintenance window, not a routine pull.
   upgraded (#347); `flask-security-too` pinned below 5.8 for
   [GHSA-f66q-9rf6-8795](https://github.com/advisories/GHSA-f66q-9rf6-8795)
   (#360).
+- PyMuPDF is imported under its `pymupdf` name rather than the deprecated
+  `fitz` alias (#405).
 
 ## v4.0.2
 

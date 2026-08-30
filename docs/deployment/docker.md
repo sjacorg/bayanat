@@ -196,8 +196,9 @@ docker compose exec -T postgres dropdb -U bayanat bayanat
 docker compose exec -T postgres createdb -U bayanat bayanat
 docker compose exec -T postgres pg_restore -U bayanat -d bayanat < "$BACKUP"
 
-# 3. Go back to the previous release and start again
-git checkout v5.0.0
+# 3. Go back to the previous release and start again. Use the tag you were on
+#    before the upgrade, not the one you were upgrading to.
+git checkout v4.0.2
 docker compose build
 docker compose up -d
 ```

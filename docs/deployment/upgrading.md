@@ -241,7 +241,7 @@ migrating the volume leaves the container failing to start. Dump before you pull
 
 ```bash
 # 1. With the old stack still running, dump the database
-docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -Fc bayanat > bayanat-pre-v5.dump
+docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -Fc bayanat' > bayanat-pre-v5.dump
 
 # 2. Stop the stack
 docker compose down
@@ -258,7 +258,7 @@ docker compose up -d postgres
 docker compose exec postgres pg_isready
 
 # 6. Restore
-docker compose exec -T postgres pg_restore -U "$POSTGRES_USER" -d bayanat --no-owner < bayanat-pre-v5.dump
+docker compose exec -T postgres sh -c 'pg_restore -U "$POSTGRES_USER" -d bayanat --no-owner' < bayanat-pre-v5.dump
 
 # 7. Bring up the rest; the entrypoint runs migrations
 docker compose up -d
@@ -279,7 +279,7 @@ restore worked by checking a table you recognise rather than by the absence of
 errors:
 
 ```bash
-docker compose exec -T postgres psql -U "$POSTGRES_USER" -d bayanat -c "SELECT count(*) FROM bulletin;"
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d bayanat -c "SELECT count(*) FROM bulletin;"'
 ```
 
 Also note:

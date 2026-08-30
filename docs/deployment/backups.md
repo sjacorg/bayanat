@@ -7,7 +7,7 @@
 Contains all data except media files.
 
 ```bash
-pg_dump bayanat > bayanat_backup.sql
+pg_dump -Fc bayanat > bayanat_backup.dump
 ```
 
 #### Automatic Backups (Built-in)
