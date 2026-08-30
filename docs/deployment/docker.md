@@ -182,26 +182,45 @@ site offline for the whole rebuild rather than just the restart.
 If an upgrade goes wrong, return to the previous tag and restore the dump.
 The schema must match the code, so restoring the database alone is not enough.
 
-The application and workers must be stopped for the restore. If they are
-running, they hold connections that make `dropdb` fail, and the old code would
-run migrations against the database while it is being replaced.
+The application and workers must be stopped for the restore, or the old code
+runs migrations against the database while it is being replaced.
+
+Rolling back from v5 also moves PostgreSQL **back from 16 to 15**, and a
+PostgreSQL 16 data directory cannot be read by PostgreSQL 15. The old volume
+has to go, and the pre-upgrade dump is restored into a freshly initialised
+PostgreSQL 15. Restoring before switching tags does not work.
 
 ```bash
-# 1. Stop everything that touches the database. Leave postgres running.
-docker compose stop bayanat celery celery-ocr
+# 1. Stop the whole stack
+docker compose down
 
-# 2. Restore into a clean database. Use the dump you took before the upgrade.
-BACKUP=~/bayanat-2026-08-16.dump
-docker compose exec -T postgres dropdb -U bayanat bayanat
-docker compose exec -T postgres createdb -U bayanat bayanat
-docker compose exec -T postgres pg_restore -U bayanat -d bayanat < "$BACKUP"
-
-# 3. Go back to the previous release and start again. Use the tag you were on
-#    before the upgrade, not the one you were upgrading to.
+# 2. Go back to the tag you were on before the upgrade, not the one you were
+#    upgrading to
 git checkout v4.0.2
+
+# 3. Remove the PostgreSQL 16 volume. PostgreSQL 15 cannot start against it.
+#    You need the dump from step 1 of the upgrade to get your data back.
+docker volume rm <project>_postgres_data
+
+# 4. Bring up PostgreSQL 15 ON ITS OWN so it initialises an empty database.
+#    Do not start the application yet: it would create its own schema and the
+#    restore would then collide with it.
 docker compose build
+docker compose up -d postgres
+
+# 5. Restore the pre-upgrade dump into the empty database
+BACKUP=~/bayanat-2026-08-16.dump
+docker compose exec -T postgres pg_restore -U bayanat -d bayanat --no-owner < "$BACKUP"
+
+# 6. Start the rest of the stack
 docker compose up -d
 ```
+
+::: warning
+This works only with a dump taken **before** the upgrade, while the stack was
+still on PostgreSQL 15. A dump taken after upgrading is PostgreSQL 16 and will
+not restore cleanly into 15.
+:::
 
 Unlike the native installer, the Docker path does not take automatic
 pre-upgrade snapshots. The dump in step 1 above is your only rollback point,
