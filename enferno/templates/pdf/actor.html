@@ -571,6 +571,14 @@
                                                             <dt>{{ key|replace('_', ' ')|title }}</dt>
                                                             <dd>{{ value|string or '-' }}</dd>
                                                         {% endif %}
+                                                    {% endfor %}
+                                                </dl>
+                                                {% if not loop.last %}<hr class="reporter-separator">{% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
                                 {% if profile.known_relatives %}
                                     <h6>Known Relatives</h6>
                                     <div class="known-relatives-section">
