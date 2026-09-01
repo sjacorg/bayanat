@@ -1,7 +1,13 @@
 import io
 
 import pymupdf
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageFile, ImageOps
+
+# Field-captured photos regularly arrive with a truncated scan (upload cut short at the
+# source). Browsers render whatever decoded, so the redaction UI shows the image and the
+# user draws boxes on it; PIL alone refuses the same bytes with "broken data stream".
+# Decode what is there so the burn succeeds on exactly the pixels the user saw.
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class RedactionError(ValueError):
@@ -86,7 +92,10 @@ def redact_image_bytes(src: bytes, rects: list[dict]) -> bytes:
     # (browsers honor EXIF; PIL does not). Otherwise boxes land in the wrong place and
     # the saved copy comes back at 0deg. The DB orientation axis is handled separately
     # by rotate_rect_to_original in the caller.
-    img = ImageOps.exif_transpose(Image.open(io.BytesIO(src))).convert("RGB")
+    try:
+        img = ImageOps.exif_transpose(Image.open(io.BytesIO(src))).convert("RGB")
+    except OSError as e:
+        raise RedactionError("This image file is damaged and cannot be redacted") from e
     draw = ImageDraw.Draw(img)
     width, height = img.size
     for rect in rects:
