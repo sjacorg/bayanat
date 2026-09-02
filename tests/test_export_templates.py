@@ -276,3 +276,22 @@ def test_related_items_filters_by_relation_type_and_reads_issuer():
     rows = build_dossier(template, actor, FakeUser())["blocks"][0]["rows"]
     assert [r["id"] for r in rows] == [1]
     assert rows[0]["issued_by"] == "Branch 235, 2013-05-01"
+
+
+def test_field_table_formats_known_relatives():
+    class Profile:
+        known_relatives = [
+            {"name": "Sara Doe", "relationship": "Sister", "contact": "0100"},
+            {"name": "Ali Doe"},
+            {},
+        ]
+
+    actor = FakeActor()
+    actor.actor_profiles = [Profile()]
+    dossier = build_dossier(
+        FakeTemplate([{"type": "field_table", "config": {"fields": ["known_relatives"]}}]),
+        actor,
+        FakeUser(),
+    )
+    (table,) = dossier["blocks"]
+    assert table["rows"][0]["value"] == "Sara Doe - Sister - 0100; Ali Doe"

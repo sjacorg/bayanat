@@ -88,6 +88,16 @@ def _id_numbers(actor) -> Optional[str]:
     )
 
 
+def _known_relatives(actor) -> Optional[str]:
+    """Format the profile's known_relatives JSONB list of name/relationship/contact."""
+    entries = [d for d in (_profile_attr("known_relatives")(actor) or []) if isinstance(d, dict)]
+    rows = [
+        " - ".join(p for p in (d.get("name"), d.get("relationship"), d.get("contact")) if p)
+        for d in entries
+    ]
+    return "; ".join(r for r in rows if r) or None
+
+
 # ---------------------------------------------------------------------------
 # Field whitelist: the only actor data a field_table block can surface.
 # Each entry: label (en), label_ar, getter(actor) -> display value.
@@ -224,6 +234,11 @@ ACTOR_FIELDS: dict[str, dict] = {
         "label": "Last address",
         "label_ar": "آخر عنوان معروف",
         "get": _profile_attr("last_address"),
+    },
+    "known_relatives": {
+        "label": "Known relatives",
+        "label_ar": "الأقارب المعروفون",
+        "get": _known_relatives,
     },
 }
 
