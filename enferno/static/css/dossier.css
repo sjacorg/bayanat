@@ -214,6 +214,7 @@ tr { page-break-inside: avoid; }
 .detail-item + .detail-item { margin-top: 4px; }
 
 .nested-table td { overflow-wrap: anywhere; }
+.nested-table td.sub-label { width: 22%; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .nested-table + .nested-table { margin-top: 10px; }
 
 .estimated {

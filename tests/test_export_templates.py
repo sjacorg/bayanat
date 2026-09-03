@@ -281,7 +281,11 @@ def test_related_items_filters_by_relation_type_and_reads_issuer():
 def test_field_table_formats_known_relatives():
     class Profile:
         known_relatives = [
-            {"name": "Sara Doe", "relationship": "Sister", "contact": "0100"},
+            {
+                "name": "Sara Doe",
+                "relationship": "Sister",
+                "contact": "0100; Facebook: https://fb.com/sara",
+            },
             {"name": "Ali Doe"},
             {},
         ]
@@ -297,6 +301,13 @@ def test_field_table_formats_known_relatives():
     value = table["rows"][0]["value"]
     assert [c["key"] for c in value["columns"]] == ["name", "relationship", "contact"]
     assert value["rows"] == [
-        {"name": "Sara Doe", "relationship": "Sister", "contact": "0100"},
+        {
+            "name": "Sara Doe",
+            "relationship": "Sister",
+            "contact": [
+                {"label": None, "value": "0100"},
+                {"label": "Facebook", "value": "https://fb.com/sara"},
+            ],
+        },
         {"name": "Ali Doe", "relationship": None, "contact": None},
     ]

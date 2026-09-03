@@ -11,6 +11,7 @@ is sanitized with a strict dossier profile and nothing is ever evaluated as a
 Jinja template.
 """
 
+import re
 from datetime import datetime
 from typing import Any, Callable, Optional
 
@@ -95,6 +96,30 @@ RELATIVE_FIELDS = {
 }
 
 
+_CONTACT_PART = re.compile(r"^(?P<label>.*?):\s*(?P<value>(?:https?://|www\.|\+?\d)\S*)$")
+
+
+def _split_contact(text: str) -> list[dict]:
+    """Break a free-text contact blob into (label, value) parts, one per line.
+
+    Users type things like "0962821087; Facebook: https://..." into a single
+    field; each ';' or newline separated piece becomes its own row, and a
+    trailing URL or number is split from whatever label precedes it.
+    """
+    parts = []
+    for piece in re.split(r"[;\n]+", text):
+        piece = piece.strip()
+        if not piece:
+            continue
+        m = _CONTACT_PART.match(piece)
+        parts.append(
+            {"label": m["label"].strip(), "value": m["value"]}
+            if m
+            else {"label": None, "value": piece}
+        )
+    return parts
+
+
 def _known_relatives(actor) -> Optional[list[dict]]:
     """The profile's known_relatives JSONB list, keeping only populated name/relationship/contact.
 
@@ -102,6 +127,8 @@ def _known_relatives(actor) -> Optional[list[dict]]:
     """
     entries = [d for d in (_profile_attr("known_relatives")(actor) or []) if isinstance(d, dict)]
     rows = [{k: d.get(k) or None for k in RELATIVE_FIELDS} for d in entries]
+    for r in rows:
+        r["contact"] = _split_contact(r["contact"]) if r["contact"] else None
     return [r for r in rows if any(r.values())] or None
 
 
