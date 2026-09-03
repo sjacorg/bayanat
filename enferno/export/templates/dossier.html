@@ -72,7 +72,7 @@
             {% endif %}
             {% for row in block.rows | selectattr('value', 'mapping') %}
                 {% if scalar_rows or not block.title %}<h3 class="table-title">{{ row.label }}</h3>{% endif %}
-                <table class="data-table">
+                <table class="data-table nested-table">
                     <thead>
                     <tr>
                         {% for column in row.value.columns %}<th>{{ column.label }}</th>{% endfor %}

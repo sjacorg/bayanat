@@ -213,6 +213,10 @@ tr { page-break-inside: avoid; }
 
 .detail-item + .detail-item { margin-top: 4px; }
 
+.nested-table { table-layout: fixed; }
+.nested-table th:nth-child(1), .nested-table th:nth-child(2) { width: 22%; }
+.nested-table td { overflow-wrap: anywhere; }
+
 .estimated {
     color: var(--muted);
     font-size: 0.8rem;
