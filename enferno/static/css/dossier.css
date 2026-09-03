@@ -213,6 +213,18 @@ tr { page-break-inside: avoid; }
 
 .detail-item + .detail-item { margin-top: 4px; }
 
+.stacked-entry + .stacked-entry {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+}
+
+.estimated {
+    color: var(--muted);
+    font-size: 0.8rem;
+    unicode-bidi: isolate;
+}
+
 .detail-label {
     color: var(--accent-ink);
     font-weight: 700;

@@ -62,7 +62,16 @@
                 {% for row in block.rows %}
                     <tr>
                         <th>{{ row.label }}</th>
-                        <td>{{ row.value if row.value is not none else '' }}</td>
+                        <td>
+                            {% if row.value is string %}{{ row.value }}
+                            {% elif row.value %}
+                                {% for entry in row.value %}
+                                    <div class="stacked-entry">
+                                        {% for line in entry %}<div>{{ line }}</div>{% endfor %}
+                                    </div>
+                                {% endfor %}
+                            {% elif row.value is not none %}{{ row.value }}{% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -94,7 +103,7 @@
                 {% for row in block.rows %}
                     <tr>
                         {% for column in table_columns %}
-                            <td {% if column.ltr %}class="ltr-cell"{% endif %}>{{ row[column.key] if row[column.key] is not none else '' }}</td>
+                            <td {% if column.ltr %}class="ltr-cell"{% endif %}>{{ row[column.key] if row[column.key] is not none else '' }}{% if column.key == 'date' and row.estimated %} <span class="estimated">({{ row.estimated }})</span>{% endif %}</td>
                         {% endfor %}
                     </tr>
                     {% if detail_columns %}

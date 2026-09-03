@@ -88,14 +88,22 @@ def _id_numbers(actor) -> Optional[str]:
     )
 
 
-def _known_relatives(actor) -> Optional[str]:
-    """Format the profile's known_relatives JSONB list of name/relationship/contact."""
+RELATIVE_FIELDS = {
+    "name": {"label": "Name", "label_ar": "الاسم"},
+    "relationship": {"label": "Relationship", "label_ar": "صلة القرابة"},
+    "contact": {"label": "Contact", "label_ar": "معلومات التواصل"},
+}
+
+
+def _known_relatives(actor) -> Optional[list[dict]]:
+    """The profile's known_relatives JSONB list, keeping only populated name/relationship/contact.
+
+    Returned as a list of dicts so the field table can stack each relative's
+    fields vertically instead of joining them into one line.
+    """
     entries = [d for d in (_profile_attr("known_relatives")(actor) or []) if isinstance(d, dict)]
-    rows = [
-        " - ".join(p for p in (d.get("name"), d.get("relationship"), d.get("contact")) if p)
-        for d in entries
-    ]
-    return "; ".join(r for r in rows if r) or None
+    rows = [{k: d[k] for k in RELATIVE_FIELDS if d.get(k)} for d in entries]
+    return [r for r in rows if r] or None
 
 
 # ---------------------------------------------------------------------------
@@ -260,13 +268,16 @@ RELATED_BULLETIN_COLUMNS = {
         "label_ar": "تاريخ توثيق الدليل",
         "ltr": True,
     },
-    "issued_by": {"label": "Issued by", "label_ar": "جهة الإصدار"},
+    "issued_by": {"label": "Issued by", "label_ar": "جهة وتاريخ الإصدار"},
     "comment": {"label": "Notes", "label_ar": "ملاحظات"},
 }
 
 # ponytail: issuer lives on the bulletin's "Document Issued" event, matched by
 # type title; make the type configurable if an install names it differently.
 ISSUED_EVENT_TYPE = "document issued"
+
+# rendered next to the date when the event's timing is flagged as estimated
+ESTIMATED_NOTE = {False: "estimated", True: "تقديري"}
 
 EVENT_COLUMNS = {
     "date": {"label": "Date", "label_ar": "التاريخ", "ltr": True},
@@ -549,6 +560,10 @@ def _b_field_table(data: DossierData, config: dict) -> dict:
             value = spec["get"](actor)
         if value in (None, ""):
             missing.append(label)
+        if isinstance(value, list):
+            # structured value (known relatives): one labeled line per field
+            lang = "label_ar" if data.locale == "ar" else "label"
+            value = [[f"{RELATIVE_FIELDS[k][lang]}: {v}" for k, v in d.items()] for d in value]
         rows.append({"label": label, "value": value})
     return {"title": config.get("title"), "rows": rows, "missing": missing}
 
@@ -570,6 +585,7 @@ def _b_events_timeline(data: DossierData, config: dict) -> dict:
     rows = [
         {
             "date": _fmt_date(e.from_date) or _fmt_date(e.to_date),
+            "estimated": ESTIMATED_NOTE[data.locale == "ar"] if e.estimated else None,
             "title": (e.title_ar if data.locale == "ar" else e.title) or e.title or e.title_ar,
             "type": e.eventtype.title if e.eventtype else None,
             "location": _location_string(e.location),
