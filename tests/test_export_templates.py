@@ -284,7 +284,7 @@ def test_field_table_formats_known_relatives():
             {
                 "name": "Sara Doe",
                 "relationship": "Sister",
-                "contact": "0100; Facebook: https://fb.com/sara",
+                "contact": "0100 200 300; Facebook: https://fb.com/sara",
             },
             {"name": "Ali Doe"},
             {},
@@ -305,8 +305,8 @@ def test_field_table_formats_known_relatives():
             "name": "Sara Doe",
             "relationship": "Sister",
             "contact": [
-                {"label": None, "value": "0100", "ltr": True},
-                {"label": "Facebook", "value": "https://fb.com/sara", "ltr": True},
+                {"label": "هاتف", "value": "0100 200 300", "kind": "phone", "ltr": True},
+                {"label": "Facebook", "value": "https://fb.com/sara", "kind": "url", "ltr": True},
             ],
         },
         {"name": "Ali Doe", "relationship": None, "contact": None},

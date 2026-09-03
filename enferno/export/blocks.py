@@ -110,9 +110,22 @@ def _split_contact(text: str) -> list[dict]:
         if segments:
             label = segments[-2] if len(segments) > 1 else None
             value = segments[-1]
-            ltr = bool(re.match(r"[+\d]|https?://|www\.", value)) or "@" in value
-            parts.append({"label": label, "value": value, "ltr": ltr})
+            kind = next((k for k, pat in CONTACT_KINDS.items() if pat.search(value)), None)
+            parts.append({"label": label, "value": value, "kind": kind, "ltr": kind is not None})
     return parts
+
+
+# value shape -> generic label used when the user typed no label of their own
+CONTACT_KINDS = {
+    "url": re.compile(r"^(https?://|www\.)"),
+    "email": re.compile(r"^\S+@\S+$"),
+    "phone": re.compile(r"^\+?[\d\s().-]{6,}$"),
+}
+CONTACT_KIND_LABELS = {
+    "url": {"label": "Link", "label_ar": "رابط"},
+    "email": {"label": "Email", "label_ar": "بريد إلكتروني"},
+    "phone": {"label": "Phone", "label_ar": "هاتف"},
+}
 
 
 def _known_relatives(actor) -> Optional[list[dict]]:
@@ -583,6 +596,10 @@ def _b_field_table(data: DossierData, config: dict) -> dict:
             missing.append(label)
         if isinstance(value, list):
             # structured value (known relatives): rendered as its own table
+            lang = "label_ar" if data.locale == "ar" else "label"
+            for part in (p for d in value for p in d.get("contact") or []):
+                if not part["label"] and part["kind"]:
+                    part["label"] = CONTACT_KIND_LABELS[part["kind"]][lang]
             value = {
                 "columns": _labeled_columns(list(RELATIVE_FIELDS), RELATIVE_FIELDS, data.locale),
                 "rows": value,
