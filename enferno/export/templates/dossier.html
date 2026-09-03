@@ -63,8 +63,7 @@
                     <tr>
                         <th>{{ row.label }}</th>
                         <td>
-                            {% if row.value is string %}{{ row.value }}
-                            {% elif row.value %}
+                            {% if row.value is sequence and row.value is not string %}
                                 {% for entry in row.value %}
                                     <div class="stacked-entry">
                                         {% for line in entry %}<div>{{ line }}</div>{% endfor %}
