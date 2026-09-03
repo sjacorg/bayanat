@@ -82,9 +82,9 @@
                                         {% if loop.first %}<th rowspan="{{ entry.contact|length }}">{{ column.label }}</th>{% endif %}
                                         {% if part.label %}
                                             <td class="sub-label" dir="auto">{{ part.label }}</td>
-                                            <td><bdi class="ltr">{{ part.value }}</bdi></td>
+                                            <td {% if part.ltr %}class="ltr-cell"{% else %}dir="auto"{% endif %}>{{ part.value }}</td>
                                         {% else %}
-                                            <td colspan="2" dir="auto">{{ part.value }}</td>
+                                            <td colspan="2" {% if part.ltr %}class="ltr-cell"{% else %}dir="auto"{% endif %}>{{ part.value }}</td>
                                         {% endif %}
                                     </tr>
                                 {% endfor %}

@@ -96,27 +96,22 @@ RELATIVE_FIELDS = {
 }
 
 
-_CONTACT_PART = re.compile(r"^(?P<label>.*?):\s*(?P<value>(?:https?://|www\.|\+?\d)\S*)$")
-
-
 def _split_contact(text: str) -> list[dict]:
     """Break a free-text contact blob into (label, value) parts, one per line.
 
     Users type things like "0962821087; Facebook: https://..." into a single
-    field; each ';' or newline separated piece becomes its own row, and a
-    trailing URL or number is split from whatever label precedes it.
+    field: each ';' or newline separated piece becomes its own row, and when a
+    piece reads "label: value" the segment right before the value is its
+    label (earlier dangling labels such as "Phone number:" are dropped).
     """
     parts = []
     for piece in re.split(r"[;\n]+", text):
-        piece = piece.strip()
-        if not piece:
-            continue
-        m = _CONTACT_PART.match(piece)
-        parts.append(
-            {"label": m["label"].strip(), "value": m["value"]}
-            if m
-            else {"label": None, "value": piece}
-        )
+        segments = [seg.strip() for seg in re.split(r":\s+", piece.strip()) if seg.strip()]
+        if segments:
+            label = segments[-2] if len(segments) > 1 else None
+            value = segments[-1]
+            ltr = bool(re.match(r"[+\d]|https?://|www\.", value)) or "@" in value
+            parts.append({"label": label, "value": value, "ltr": ltr})
     return parts
 
 
