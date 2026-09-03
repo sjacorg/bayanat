@@ -98,12 +98,11 @@ RELATIVE_FIELDS = {
 def _known_relatives(actor) -> Optional[list[dict]]:
     """The profile's known_relatives JSONB list, keeping only populated name/relationship/contact.
 
-    Returned as a list of dicts so the field table can stack each relative's
-    fields vertically instead of joining them into one line.
+    Returned as a list of dicts so the field table can render one row per relative.
     """
     entries = [d for d in (_profile_attr("known_relatives")(actor) or []) if isinstance(d, dict)]
-    rows = [{k: d[k] for k in RELATIVE_FIELDS if d.get(k)} for d in entries]
-    return [r for r in rows if r] or None
+    rows = [{k: d.get(k) or None for k in RELATIVE_FIELDS} for d in entries]
+    return [r for r in rows if any(r.values())] or None
 
 
 # ---------------------------------------------------------------------------
@@ -561,9 +560,11 @@ def _b_field_table(data: DossierData, config: dict) -> dict:
         if value in (None, ""):
             missing.append(label)
         if isinstance(value, list):
-            # structured value (known relatives): one labeled line per field
-            lang = "label_ar" if data.locale == "ar" else "label"
-            value = [[f"{RELATIVE_FIELDS[k][lang]}: {v}" for k, v in d.items()] for d in value]
+            # structured value (known relatives): rendered as its own table
+            value = {
+                "columns": _labeled_columns(list(RELATIVE_FIELDS), RELATIVE_FIELDS, data.locale),
+                "rows": value,
+            }
         rows.append({"label": label, "value": value})
     return {"title": config.get("title"), "rows": rows, "missing": missing}
 

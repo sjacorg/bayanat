@@ -57,24 +57,38 @@
 
         {% elif block.type == 'field_table' %}
             {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
+            {% set scalar_rows = block.rows | rejectattr('value', 'mapping') | list %}
+            {% if scalar_rows %}
             <table class="kv-table">
                 <tbody>
-                {% for row in block.rows %}
+                {% for row in scalar_rows %}
                     <tr>
                         <th>{{ row.label }}</th>
-                        <td>
-                            {% if row.value is sequence and row.value is not string %}
-                                {% for entry in row.value %}
-                                    <div class="stacked-entry">
-                                        {% for line in entry %}<div>{{ line }}</div>{% endfor %}
-                                    </div>
-                                {% endfor %}
-                            {% elif row.value is not none %}{{ row.value }}{% endif %}
-                        </td>
+                        <td>{{ row.value if row.value is not none else '' }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+            {% endif %}
+            {% for row in block.rows | selectattr('value', 'mapping') %}
+                {% if scalar_rows or not block.title %}<h3 class="table-title">{{ row.label }}</h3>{% endif %}
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        {% for column in row.value.columns %}<th>{{ column.label }}</th>{% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for entry in row.value.rows %}
+                        <tr>
+                            {% for column in row.value.columns %}
+                                <td dir="auto">{{ entry[column.key] if entry[column.key] is not none else '' }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endfor %}
 
         {% elif block.type in ('family_members_table', 'related_items_table', 'events_timeline') %}
             {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}

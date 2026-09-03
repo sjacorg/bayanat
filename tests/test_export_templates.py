@@ -294,7 +294,9 @@ def test_field_table_formats_known_relatives():
         FakeUser(),
     )
     (table,) = dossier["blocks"]
-    assert table["rows"][0]["value"] == [
-        ["الاسم: Sara Doe", "صلة القرابة: Sister", "معلومات التواصل: 0100"],
-        ["الاسم: Ali Doe"],
+    value = table["rows"][0]["value"]
+    assert [c["key"] for c in value["columns"]] == ["name", "relationship", "contact"]
+    assert value["rows"] == [
+        {"name": "Sara Doe", "relationship": "Sister", "contact": "0100"},
+        {"name": "Ali Doe", "relationship": None, "contact": None},
     ]
