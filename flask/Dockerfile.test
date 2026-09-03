@@ -16,9 +16,10 @@ ENV LANG=C.UTF-8
 ENV PYTHONDONTWRITEBYTECODE=1
 # Seems to speed things up
 ENV PYTHONUNBUFFERED=1
-# Install UV
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
+# Copy uv from its official digest-pinned image rather than piping an
+# installer from the network, matching flask/Dockerfile. Keep the version in
+# step with the builder stage there.
+COPY --from=ghcr.io/astral-sh/uv:0.5.11-python3.12-bookworm-slim@sha256:096c3761e41782bdb2818381a8202153d39e0618a9e12c757a2c46327c1aa83c /usr/local/bin/uv /usr/local/bin/uv
 
 COPY . /app
 RUN echo "Building Bayanat container."

@@ -28,7 +28,7 @@ This will:
 - Install system packages (PostgreSQL, Redis, Caddy, ffmpeg, etc.)
 - Create the `bayanat` system user
 - Set up the database
-- Clone the latest release into `/opt/bayanat/releases/`
+- Download the latest release as a signed tarball, verify its signature, and unpack it into `/opt/bayanat/releases/`
 - Install Python dependencies via `uv`
 - Configure Caddy as a reverse proxy with automatic SSL
 - Set up systemd services for Bayanat and Celery
@@ -56,10 +56,13 @@ You can install Bayanat by following these steps exactly without changes. Adjust
 
 ### Install System Packages
 
+`uv` provisions its own Python 3.12 during `uv sync`, so the system Python
+version does not matter. The packages below are the build and runtime libraries.
+
 **Ubuntu 22.04:**
 
 ```bash
-sudo apt install build-essential python3-dev python3.10-venv libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools postgresql postgresql-contrib python3-pip libpq-dev git redis-server libimage-exiftool-perl postgis ffmpeg libpango-1.0-0 libpangoft2-1.0-0 libglib2.0-0
+sudo apt install build-essential python3-dev libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools postgresql postgresql-contrib python3-pip libpq-dev git redis-server libimage-exiftool-perl postgis ffmpeg libpango-1.0-0 libpangoft2-1.0-0 libglib2.0-0
 ```
 
 **Ubuntu 24.04:**
@@ -240,23 +243,26 @@ sudo systemctl enable --now bayanat-celery
 
 ## Docker
 
-::: warning Beta
-Docker deployment is still in beta. For production, native deployment is recommended.
+::: tip
+Native installation, above, is the recommended path for most deployments.
+Docker is a good way to evaluate Bayanat, and a reasonable choice if your
+organisation already runs containers.
 :::
 
-After [configuring](/deployment/configuration) and generating a `.env.docker` file:
+Docker Compose brings up the whole stack, including PostgreSQL, Redis and a
+Caddy edge with automatic HTTPS:
 
 ```bash
-docker compose --env-file .env.docker up -d
+./gen-env.sh -d
+docker compose up -d
 ```
 
 The first startup creates an `admin` user and prints a generated
 password to the container logs. Retrieve it with:
 
 ```bash
-docker compose --env-file .env.docker logs bayanat | grep -A4 "Generated password"
+docker compose logs bayanat | grep "Generated password"
 ```
 
-If the auto-bootstrap was missed or the admin was deleted, run
-`docker compose --env-file .env.docker exec bayanat uv run flask install -u admin`
-to mint a fresh credential.
+See [Docker Deployment](/deployment/docker) for the full guide, including
+upgrades, backups and rollback.

@@ -3,7 +3,7 @@
 # bayanat - CLI for installing and managing Bayanat
 # Usage: bayanat <command> [options]
 #
-set -euo pipefail
+set -Eeuo pipefail
 
 readonly SCRIPT_VERSION="1.3.0"
 readonly BAYANAT_ROOT="/opt/bayanat"
@@ -83,6 +83,13 @@ preflight_checks() {
 latest_remote_tag() {
     git ls-remote --tags --refs --sort=-version:refname "$GIT_URL" \
         | head -1 | sed 's/.*refs\/tags\///'
+}
+
+_release_major() {
+    # Major version of a release tag, or 0 when it cannot be parsed.
+    local v="${1#v}"
+    v="${v%%.*}"
+    if [[ "$v" =~ ^[0-9]+$ ]]; then echo "$v"; else echo 0; fi
 }
 
 current_version() {
@@ -229,14 +236,81 @@ restore_pg() {
         local user="${POSTGRES_USER:-$APP_USER}"
         local db="${POSTGRES_DB:-$APP_USER}"
         local host="${POSTGRES_HOST:-localhost}"
-        if [[ "$host" == "localhost" && -z "${POSTGRES_PASSWORD:-}" ]]; then
-            # Restore as postgres (superuser): --clean drops/recreates the PostGIS and pg_trgm
-            # extensions and rewrites spatial_ref_sys, which the unprivileged app role
-            # (BAY-01-031, NOSUPERUSER) does not own and cannot restore. This is an explicit
-            # admin op (root -> postgres via the CLI), not the app runtime, so it does not
-            # weaken the hardened runtime role. Object ownership is preserved from the dump.
-            sudo -u postgres pg_restore --clean --if-exists -d "$db" < "$path"
+        # Branch on whether a LOCAL superuser is reachable, not on whether a
+        # password is configured. A pre-v5 install sets POSTGRES_PASSWORD even
+        # though its cluster is on the same host, and the password branch
+        # restores as the unprivileged app role, which cannot run CREATE
+        # EXTENSION. The restore then "succeeds" into a database with no
+        # PostGIS in it, which is worse than failing outright.
+        if sudo -u postgres psql -tAc 'SELECT 1' >/dev/null 2>&1; then
+            # Drop and recreate the database rather than pg_restore --clean.
+            # --clean only drops the objects the dump is about to recreate, so
+            # anything the dump does not know about SURVIVES. After a failed
+            # upgrade that is exactly the wrong outcome: the migrations have
+            # already created new tables, restoring rewinds alembic_version to
+            # the old revision, the new tables remain, and the retried upgrade
+            # dies on "relation ... already exists" with no way forward. A
+            # snapshot restore has to put the database back as it was.
+            #
+            # Runs as postgres (superuser) because recreating the PostGIS and
+            # pg_trgm extensions and spatial_ref_sys is beyond the unprivileged
+            # app role (BAY-01-031, NOSUPERUSER). This is an explicit admin
+            # operation via the CLI, not the app runtime.
+            # No --role/--no-owner here: the restore must run with the
+            # superuser's own rights so CREATE EXTENSION (postgis, pg_trgm)
+            # succeeds, and object ownership must come from the dump. Passing
+            # --role switches to the unprivileged app role, which cannot create
+            # extensions, and the restore then silently completes a database
+            # with no PostGIS in it.
+            # Restore into a scratch database and only swap it in once that
+            # has fully succeeded. Dropping the live database first would mean
+            # a corrupt or truncated dump leaves the box with NO database at
+            # all and nothing to restore from, which is strictly worse than
+            # the state we were asked to recover.
+            local staging="${db}_restore_$$"
+            # Redirect rather than passing the path: the backups directory is
+            # root:$APP_GROUP 2770 and the postgres user is not in that group,
+            # so handing it the filename fails with a permission error that
+            # looks exactly like a corrupt archive. Root opens the file here,
+            # the same way the restore below does.
+            sudo -u postgres pg_restore --list < "$path" >/dev/null 2>&1 \
+                || die "Snapshot $name is not a readable pg_dump archive" \
+                       "Nothing was changed. Check the file and try another snapshot."
+            sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+            sudo -u postgres createdb "$staging" -O "$user" \
+                || die "Could not create the staging database; nothing was changed"
+            if ! sudo -u postgres pg_restore -d "$staging" < "$path"; then
+                sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+                die "Restore into the staging database failed; the live database is untouched"
+            fi
+            # Swap by renaming, never by dropping first. Dropping the live
+            # database and then renaming leaves a window in which a failed
+            # rename means no database at all. Renaming the live one aside
+            # keeps a recoverable copy under a known name at every instant,
+            # and it is only dropped once the new one is in place.
+            local retired="${db}_old_$$"
+            sudo -u postgres psql -qc "ALTER DATABASE \"$db\" RENAME TO \"$retired\";" \
+                || { sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+                     die "Could not rename the live database aside; nothing was changed"; }
+            if ! sudo -u postgres psql -qc "ALTER DATABASE \"$staging\" RENAME TO \"$db\";"; then
+                # Put the original back before giving up.
+                sudo -u postgres psql -qc "ALTER DATABASE \"$retired\" RENAME TO \"$db\";" >/dev/null 2>&1
+                sudo -u postgres dropdb --if-exists --force "$staging" >/dev/null 2>&1
+                die "Could not swap in the restored database; the original was put back"
+            fi
+            sudo -u postgres dropdb --if-exists --force "$retired" >/dev/null 2>&1
         else
+            # No local superuser, so extensions in the dump cannot be
+            # recreated. Say so rather than reporting a clean restore.
+            warn "No local PostgreSQL superuser; restoring as $user over TCP"
+            warn "Extensions in the dump (postgis, pg_trgm) may not be restored"
+            # The app role is NOCREATEDB, so the staging-and-swap dance above is
+            # not available here. At least refuse an archive that cannot be read
+            # rather than letting --clean drop half the schema and then fail.
+            PGPASSWORD="${POSTGRES_PASSWORD:-}" pg_restore --list < "$path" >/dev/null 2>&1 \
+                || die "Snapshot $name is not a readable pg_dump archive" \
+                       "Nothing was changed. Check the file and try another snapshot."
+            warn "A remote restore writes directly into the live database; it cannot be staged"
             PGPASSWORD="${POSTGRES_PASSWORD:-}" \
                 pg_restore --clean --if-exists \
                     -h "$host" \
@@ -279,8 +353,7 @@ write_state() {
   "updated_at": "$(_now_iso)",
   "progress_text": "${STATE_PROGRESS:-}",
   "error": ${STATE_ERROR_JSON:-null},
-  "pid": $$,
-  "unit": "${BAYANAT_UPDATE_UNIT:-bayanat-update.service}"
+  "pid": $$
 }
 EOF
     mv -Tf "$tmp" "$STATE_FILE"
@@ -303,26 +376,49 @@ read_field() {
 }
 
 acquire_lock() {
+    # flock, not a lock file we manage ourselves. Every hand-rolled scheme has
+    # the same hole: deciding a lock is stale and deleting it races with the
+    # process that just claimed it, so several reclaimers each delete the
+    # winner's lock and all proceed (measured: 5 of 25 concurrent reclaimers
+    # "won"). The kernel releases an flock when the holder exits, however it
+    # exits, so a stale lock cannot exist and nothing ever has to be reclaimed.
     mkdir -p "$STATE_DIR"
-    if [[ -f "$LOCK_FILE" ]]; then
+    # Without this the `flock -n` below fails and we would report "another
+    # operation is already running", which is the wrong answer to the wrong
+    # question. flock ships in util-linux and is present on any Ubuntu system.
+    command -v flock >/dev/null \
+        || die "flock is not available, so concurrent operations cannot be made safe" \
+               "Install it and retry: apt-get install -y util-linux"
+    exec {LOCK_FD}>>"$LOCK_FILE" || die "Cannot open the lock file $LOCK_FILE"
+    if ! flock -n "$LOCK_FD"; then
         local pid
-        pid=$(cat "$LOCK_FILE" 2>/dev/null || echo 0)
-        if [[ "$pid" -gt 0 ]] && kill -0 "$pid" 2>/dev/null; then
-            die "another update is running (pid $pid)"
-        fi
-        log "Removing stale lock (pid $pid)"
-        rm -f "$LOCK_FILE"
+        pid=$(cat "$LOCK_FILE" 2>/dev/null || true)
+        die "another operation is already running${pid:+ (pid $pid)}" \
+            "Wait for it to finish, then check 'bayanat status'"
     fi
-    echo $$ > "$LOCK_FILE"
+    # Informational only; the flock itself is the lock.
+    : > "$LOCK_FILE"
+    echo $$ >&"$LOCK_FD"
 }
 
 release_lock() {
-    rm -f "$LOCK_FILE"
+    # Closing the descriptor releases the flock. The file is left behind on
+    # purpose: it carries no meaning once unlocked, and removing it would race
+    # with another process that has already opened it.
+    if [[ -n "${LOCK_FD:-}" ]]; then
+        exec {LOCK_FD}>&- || true
+        LOCK_FD=""
+    fi
 }
+
 
 # --- Recovery dispatch ---
 
 recover_state() {
+    # The caller holds the lock for the whole command, so this function no
+    # longer takes or releases it. It used to release the lock on its way out,
+    # which under the flock scheme would hand the box to a second process
+    # mid-recovery.
     local phase
     phase=$(read_phase)
     case "$phase" in
@@ -337,15 +433,34 @@ recover_state() {
                 rm -rf "$RELEASES_DIR/$target.partial" "$RELEASES_DIR/$target"
             fi
             clear_state
-            release_lock
             ;;
         MIGRATE_DONE)
+            # The database is already on the new schema; only the symlink swap
+            # is outstanding. A pre-v5 release cannot serve against that schema
+            # and has no /health endpoint to probe, so leave it stopped and let
+            # the caller re-run the update, which resumes at the swap.
+            local prev_tag snap_name
+            prev_tag=$(read_field previous || true)
+            snap_name=$(read_field snapshot || true)
+            if (( $(_release_major "$prev_tag") < 5 )); then
+                # The database is already on the new schema and $prev_tag cannot
+                # serve it, so the services stay stopped. Do NOT clear the state
+                # and claim recovery: update_preflight refuses to run while a
+                # service is inactive, so a "re-run the update" instruction would
+                # be a dead end. Restoring the snapshot is the only route that
+                # actually works, so say exactly that and keep the metadata.
+                export STATE_ERROR_JSON='"migrated to the new schema but not switched; '"$prev_tag"' cannot serve it"'
+                write_state NEEDS_INTERVENTION "Restore the pre-update snapshot, then re-run the update"
+                warn "Database is on the new schema and $prev_tag cannot run against it."
+                warn "Recover with: bayanat restore ${snap_name:-<snapshot>}"
+                warn "Then: bayanat update --recover, and run the update again."
+                exit 2
+            fi
             log "Recovery: MIGRATE_DONE — starting services on previous release"
             systemctl start bayanat bayanat-celery
             if _wait_healthy 60; then
                 log "Recovery OK; operator should re-run update to finish"
                 clear_state
-                release_lock
             else
                 STATE_ERROR_JSON='"MIGRATE_DONE recovery: previous release unhealthy"'
                 write_state NEEDS_INTERVENTION "Services unhealthy after recovery; restore snapshot manually"
@@ -358,12 +473,22 @@ recover_state() {
             ;;
         SUCCESS|ROLLED_BACK)
             clear_state
-            release_lock
             ;;
         NEEDS_INTERVENTION)
             local snap prev
             snap=$(read_field snapshot || true)
             prev=$(read_field previous || true)
+            # An implicit call (from `update`) must refuse: the box needs a
+            # human. An explicit `update --recover` IS that human saying they
+            # have dealt with it, so let it clear the flag. Without this the
+            # only way out is deleting state/update.json by hand, which no
+            # documentation tells anyone to do.
+            if [[ "${RECOVER_EXPLICIT:-0}" == "1" ]]; then
+                warn "Clearing NEEDS_INTERVENTION (snapshot: ${snap:-none}, previous: ${prev:-unknown})"
+                warn "Confirm the database and the active release agree before updating again."
+                clear_state
+                return 0
+            fi
             die "Operator intervention required. Snapshot: $snap  Previous tag: $prev  See: bayanat snapshots"
             ;;
         MIGRATE|SWITCH|ROLLBACK)
@@ -373,7 +498,6 @@ recover_state() {
                 warn "Services healthy but update was interrupted mid-$phase"
                 warn "DB schema state is uncertain; re-run 'bayanat update' to finish"
                 clear_state
-                release_lock
             else
                 export STATE_ERROR_JSON="\"interrupted during $phase; services unhealthy\""
                 write_state NEEDS_INTERVENTION "Update interrupted mid-$phase; manual recovery required"
@@ -383,7 +507,6 @@ recover_state() {
         *)
             warn "Unknown phase '$phase' — clearing and starting fresh"
             clear_state
-            release_lock
             ;;
     esac
 }
@@ -454,6 +577,22 @@ _wait_healthy() {
 update_preflight() {
     preflight_checks
     _verify_service_health
+
+    # Releases before v5 were installed by a CLI that did not verify
+    # signatures, so those boxes have no minisign. Without this, the first
+    # update on every pre-v5 install dies inside _fetch_release reporting that
+    # the signature FAILED, which tells the operator their release was tampered
+    # with when the tool is simply missing. Install it before anything is
+    # touched; a failure here still aborts with an accurate message.
+    if ! command -v minisign >/dev/null; then
+        log "minisign not present (pre-v5 install); installing it"
+        DEBIAN_FRONTEND=noninteractive apt-get update -qq \
+            && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq minisign \
+            || die "Could not install minisign, which is required to verify the release signature" \
+                   "Install it manually and retry: apt-get install -y minisign"
+        command -v minisign >/dev/null \
+            || die "minisign is still not on PATH after installation"
+    fi
     command -v pg_dump >/dev/null || die "pg_dump not in PATH"
     command -v pg_restore >/dev/null || die "pg_restore not in PATH"
     # pg_dump major version must match Postgres server major version
@@ -497,11 +636,12 @@ do_prepare() {
     current=$(current_version || echo 0)
     [[ "$target" != "$current" ]] || die "already on $target"
     log "PREPARE: fetching $target"
+    # The lock is already held: cmd_update takes it before anything mutates,
+    # including update_preflight, which installs minisign on a pre-v5 host.
     update_preflight
     _fetch_release "$target"
     _install_deps "$target"
     _link_shared "$target"
-    acquire_lock
     export STATE_TARGET="$target"
     export STATE_PREVIOUS="$current"
     export STATE_STARTED_AT
@@ -517,6 +657,15 @@ do_migrate() {
     export STATE_PROGRESS="Stopping services"
     write_state MIGRATE "Stopping services for maintenance window"
     systemctl stop bayanat bayanat-celery
+
+    # Only now, with the application stopped. A pre-v5 release keeps
+    # enferno/imports and enferno/exports inside its own tree, and copying them
+    # while the app is still serving races with it: a file written during the
+    # copy can be missed, and `cp -an` would then skip it on any retry because
+    # a same-named file already exists in shared/. The maintenance window is
+    # the only point at which the outgoing release's data is quiescent.
+    export STATE_PROGRESS="Migrating app directories into shared"
+    _migrate_legacy_app_dirs "$prev"
     log "MIGRATE: pruning old snapshots"
     prune_snapshots
     export STATE_PROGRESS="Taking pre-update snapshot"
@@ -548,7 +697,16 @@ do_switch_verify() {
     export STATE_PROGRESS="Swapping to $target"
     write_state SWITCH "Swapping current -> $target"
     swap_symlink "$RELEASES_DIR/$target"
-    systemctl start bayanat bayanat-celery
+    # Not `systemctl start ...` bare: under `set -e` a failed start aborts the
+    # script outright, skipping the rollback below and leaving the state file
+    # on SWITCH with the lock still held. A release that cannot even start is
+    # exactly when the rollback is needed.
+    if ! systemctl start bayanat bayanat-celery; then
+        warn "Services failed to start on $target"
+        journalctl -u bayanat -n 20 --no-pager >&2 || true
+        rollback_code
+        return 1
+    fi
     write_state SWITCH_DONE "Verifying new release"
     export STATE_PROGRESS="Waiting for health probe"
     if _wait_healthy 60; then
@@ -579,6 +737,22 @@ rollback_code() {
     write_state ROLLBACK "Reverting symlink to $prev"
     systemctl stop bayanat bayanat-celery || true
     swap_symlink "$RELEASES_DIR/$prev"
+
+    # Releases before v5.0.0 have no /health endpoint, so _wait_healthy can
+    # never pass against one and a rollback that worked would be reported as a
+    # failure. Reverting the code is also not a complete recovery by itself:
+    # the database has already been migrated to the new schema and migrations
+    # are not reversible, so starting the old release against it would be
+    # worse than staying down. Stop with the one correct next step instead.
+    if (( $(_release_major "$prev") < 5 )); then
+        export STATE_ERROR_JSON='"code reverted to a pre-v5 release; the database still holds the new schema"'
+        write_state NEEDS_INTERVENTION \
+            "Code reverted to $prev; services left stopped. Restore the pre-update snapshot to finish: bayanat restore ${STATE_SNAPSHOT:-<snapshot>}"
+        warn "Rolled back to $prev but left services stopped: the database is on the new schema."
+        warn "Finish the recovery with: bayanat restore ${STATE_SNAPSHOT:-<snapshot>}"
+        exit 2
+    fi
+
     systemctl start bayanat bayanat-celery
     if _wait_healthy 60; then
         export STATE_PROGRESS="Rolled back to $prev"
@@ -850,6 +1024,9 @@ _fetch_release() {
                "Refusing to install unverified code. Update manually only if you trust this release."
 
     log "Verifying signature against the SJAC release key..."
+    command -v minisign >/dev/null \
+        || die "minisign is not installed, so the release signature cannot be verified" \
+               "Install it and retry: apt-get install -y minisign"
     minisign -Vm "$tmp/$asset" -P "$RELEASE_PUBKEY" \
         || die "Signature verification FAILED for $tag" \
                "The tarball does not match SJAC's signing key. Refusing to install."
@@ -867,8 +1044,20 @@ _fetch_release() {
     # Releases are root-owned and read-only for the service accounts
     # (BAY-01-030/032): group gets read+exec via $APP_GROUP, no write, and
     # "other" is locked out.
-    chown -R root:"$APP_GROUP" "$dest"
-    chmod -R o-rwx,g-w "$dest"
+    if [[ ! -L "$CURRENT_LINK" ]] || _is_hardened; then
+        chown -R root:"$APP_GROUP" "$dest"
+        chmod -R o-rwx,g-w "$dest"
+    else
+        # Updating a still-legacy install. A pre-v5 layout binds its uWSGI
+        # socket at $CURRENT_LINK/bayanat.sock, INSIDE the release directory,
+        # so a root-owned release leaves uwsgi dying with "bind(): Permission
+        # denied" and the box down between `update` and `harden`. Reproduce
+        # the ownership such a box already uses; `_harden_release_tree` takes
+        # the tree back to root once the socket has moved to /run/bayanat.
+        chown -R "$APP_USER":"$APP_GROUP" "$dest"
+        chmod -R o-rwx "$dest"
+        log "Legacy layout: $tag stays owned by $APP_USER until 'bayanat harden' runs"
+    fi
 }
 
 _generate_env() {
@@ -905,8 +1094,42 @@ REDIS_PASSWORD='$REDIS_PW'
 EOF
 }
 
+_now_stamp() { date -u +%Y%m%d-%H%M%S; }
+
+_migrate_legacy_app_dirs() {
+    # A pre-v5 release keeps enferno/imports and enferno/exports as REAL
+    # directories inside the release (only media was symlinked into shared/).
+    # The v5 release symlinks all three, so without this step an upgraded box
+    # points at an empty shared/imports and shared/exports while the operator's
+    # files sit orphaned in the outgoing release directory: not deleted, but
+    # invisible to the application.
+    #
+    # Copies, never moves: the outgoing release keeps its copy, so a rollback
+    # to it still finds its files. `cp -an` never overwrites anything already
+    # in shared/.
+    local prev="$1"
+    [[ -n "$prev" && -d "$RELEASES_DIR/$prev" ]] || return 0
+    local d src
+    for d in media imports exports; do
+        src="$RELEASES_DIR/$prev/enferno/$d"
+        [[ -d "$src" && ! -L "$src" ]] || continue
+        [[ -n "$(ls -A "$src" 2>/dev/null)" ]] || continue
+        mkdir -p "$SHARED_DIR/$d"
+        log "Migrating $prev/enferno/$d into $SHARED_DIR/$d"
+        cp -an "$src/." "$SHARED_DIR/$d/" 2>/dev/null \
+            || die "Could not migrate $src into $SHARED_DIR/$d" \
+                   "Your files are intact at $src; copy them across and re-run"
+    done
+}
+
 _link_shared() {
+    # $2 = "preserve" when the release directory is LIVE and may hold the
+    # operator's files (harden). Omitted for a freshly extracted release
+    # (install/update), whose enferno/ dirs contain only packaged scaffolding
+    # such as .gitignore -- quarantining that would litter shared/ on every
+    # single update and bury a real quarantine in noise.
     local tag="$1"
+    local mode="${2:-replace}"
     local release="$RELEASES_DIR/$tag"
 
     [[ -f "$SHARED_DIR/.env" ]] && ln -sfn "$SHARED_DIR/.env" "$release/.env"
@@ -916,7 +1139,60 @@ _link_shared() {
     local d
     for d in media exports imports; do
         if [[ -d "$release/enferno/$d" ]] && [[ ! -L "$release/enferno/$d" ]]; then
-            rm -rf "$release/enferno/$d"
+            # A real directory here means a pre-v5 release that kept this path
+            # inside the tree, and on a live box it holds the operator's files.
+            # `harden` calls this against the ACTIVE release, so deleting it
+            # destroys data that no backup covers.
+            #
+            # Nothing is deleted. The directory is MOVED aside first (a rename,
+            # so it costs nothing and cannot half-fail), then its contents are
+            # copied into shared/ without overwriting anything already there.
+            # A file that collides therefore survives in the quarantine copy
+            # instead of being silently dropped, which is what a copy-then-
+            # delete would do: `cp -n` skips the collision and reports success,
+            # and the delete then takes the only remaining copy with it.
+            # rmdir is the emptiness test, not `ls`: it succeeds only if the
+            # directory is genuinely empty at that instant, and it can never
+            # remove a file. There is deliberately no `rm -rf` fallback -- an
+            # `ls`-then-delete would race, and any failure here means there is
+            # something to preserve, so fall through to the quarantine path.
+            if [[ "$mode" != "preserve" ]]; then
+                # Freshly extracted release: this is packaged scaffolding.
+                rm -rf "$release/enferno/$d"
+            elif ! rmdir "$release/enferno/$d" 2>/dev/null; then
+                # Claim a name that does not exist yet. A second-resolution
+                # stamp collides when harden runs twice inside one second, and
+                # `mv` into an existing directory would nest the legacy tree
+                # inside it instead of renaming it.
+                # Claim the destination with mkdir, which is atomic: only one
+                # process can create a given path, so two concurrent runs cannot
+                # both select the same name and have the second nest its tree
+                # inside the first. Probing with [[ -e ]] would be a race.
+                local quarantine suffix=0
+                while :; do
+                    quarantine="$SHARED_DIR/${d}.pre-harden-$(_now_stamp)"
+                    (( suffix > 0 )) && quarantine="$quarantine-$suffix"
+                    mkdir "$quarantine" 2>/dev/null && break
+                    suffix=$((suffix + 1))
+                    (( suffix > 100 )) && die "Could not claim a quarantine directory in $SHARED_DIR"
+                done
+                # Move the CONTENTS into the directory we own, so nothing is
+                # ever renamed into a path another process created.
+                if ! ( shopt -s dotglob nullglob
+                       mv "$release/enferno/$d"/* "$quarantine"/ ); then
+                    die "Could not move $release/enferno/$d into $quarantine" \
+                        "Your files are intact; move them by hand and re-run"
+                fi
+                rmdir "$release/enferno/$d" \
+                    || die "$release/enferno/$d is not empty after the move" \
+                           "Check it and $quarantine before re-running"
+                mkdir -p "$SHARED_DIR/$d"
+                cp -an "$quarantine/." "$SHARED_DIR/$d/" 2>/dev/null \
+                    || die "Could not copy $quarantine into $SHARED_DIR/$d" \
+                           "Your files are intact at $quarantine; copy them across and re-run"
+                log "Previous enferno/$d preserved at $quarantine"
+                log "  (anything already in $SHARED_DIR/$d was kept; delete the copy once verified)"
+            fi
         fi
         ln -sfn "$SHARED_DIR/$d" "$release/enferno/$d"
     done
@@ -947,8 +1223,52 @@ _install_deps() {
     chmod -R o-rwx,g-w "$RELEASES_DIR/$tag/.venv"
 }
 
+_db_is_fresh() {
+    # True only when we can PROVE this is a fresh install: no bayanat database,
+    # or one holding none of Bayanat's own tables. Deliberately keyed on named
+    # application tables rather than "any table": _setup_database creates the
+    # PostGIS extension first, and PostGIS brings its own spatial_ref_sys, so
+    # a genuinely fresh database is never empty by the time we look.
+    # A PostgreSQL that will not answer is a hard error, never a "fresh"
+    # verdict - the caller stamps Alembic head on the strength of this answer,
+    # and a wrong "fresh" marks every unapplied migration as applied.
+    local out rc
+    out=$(sudo -u postgres psql -tAd postgres -c \
+        "SELECT 1 FROM pg_database WHERE datname='bayanat';" 2>&1)
+    rc=$?
+    if (( rc != 0 )); then
+        die "Cannot query PostgreSQL: ${out}" \
+            "Fix PostgreSQL access and re-run; refusing to guess whether this is a fresh install"
+    fi
+    [[ "${out//[[:space:]]/}" == "1" ]] || return 0
+
+    out=$(sudo -u postgres psql -tAd bayanat -c \
+        "SELECT count(*) FROM information_schema.tables
+          WHERE table_name IN ('bulletin','actor','incident','user','alembic_version');" 2>&1)
+    rc=$?
+    if (( rc != 0 )); then
+        die "Cannot inspect the bayanat database: ${out}" \
+            "Fix PostgreSQL access and re-run; refusing to guess whether this is a fresh install"
+    fi
+    out="${out//[[:space:]]/}"
+    [[ "$out" =~ ^[0-9]+$ ]] || die "Unexpected table count from PostgreSQL: '$out'"
+    (( out == 0 ))
+}
+
 _init_database() {
     local tag="$1"
+
+    # Never stamp a database that is already under migration control. Stamping
+    # head on a database sitting on an older revision marks every unapplied
+    # migration as done without running it, drifting the schema silently and
+    # permanently. Guards against re-running `install` on an existing box to
+    # pick up layout changes; `update` is the supported path for that.
+    if ! _db_is_fresh; then
+        warn "Database already exists and is not empty; skipping create-db/import-data/stamp"
+        warn "To upgrade an existing install run: bayanat update [<tag>]"
+        return 0
+    fi
+
     log "Initializing database..."
     flask_run "$tag" create-db --create-exts
     flask_run "$tag" import-data
@@ -1166,6 +1486,19 @@ _install_self() {
 cmd_install() {
     local domain="${1:-localhost}"
     require_root
+
+    # `install` provisions a new box and nothing else. Re-running it over a
+    # working install is not a repair or an upgrade: it fetches the latest
+    # release and swaps `current` to it WITHOUT running migrations (database
+    # init is skipped once the schema exists), and it rewrites the Caddyfile
+    # from $domain, which defaults to localhost and would take a production
+    # site down. Keyed on the `current` symlink, so an install that died before
+    # activating a release can still be re-run.
+    if [[ -L "$CURRENT_LINK" ]]; then
+        die "Bayanat is already installed at $BAYANAT_ROOT (running $(current_version))" \
+            "Use 'bayanat update [<tag>]' to change version, or 'bayanat harden' to apply the current layout."
+    fi
+
     preflight_checks
 
     log "Installing Bayanat for: $domain"
@@ -1224,6 +1557,19 @@ cmd_install() {
     systemctl restart caddy
 
     _verify_service_health
+
+    # A fresh install is provisioned hardened; record it so `harden` is a
+    # no-op and `status` reports the layout correctly. Gated on the app
+    # actually answering: _verify_service_health only warns when the socket
+    # probe never goes green, and a marker written over an install that never
+    # came up would suppress the very `harden` run that could fix it.
+    if _socket_health; then
+        printf '%s\n' "$LAYOUT_VERSION" > "$LAYOUT_MARKER"
+        chmod 644 "$LAYOUT_MARKER"
+    else
+        warn "Application never answered; not recording the hardened-layout marker"
+        warn "Once it is up, confirm with: bayanat status"
+    fi
 
     local access_url
     if [[ "$domain" == "localhost" ]]; then
@@ -1301,6 +1647,380 @@ _ensure_runtime_layout() {
     fi
 }
 
+# --- Layout hardening ---
+
+# Bumped when the hardened layout changes in a way that needs re-applying.
+readonly LAYOUT_VERSION="1"
+readonly LAYOUT_MARKER="$STATE_DIR/layout"
+
+_is_hardened() {
+    [[ -f "$LAYOUT_MARKER" ]] && [[ "$(cat "$LAYOUT_MARKER" 2>/dev/null)" == "$LAYOUT_VERSION" ]]
+}
+
+# Every file the hardening rewrites. Restoring all of these returns the box to
+# its pre-harden configuration.
+_harden_files() {
+    local pg_hba pg_ident
+    pg_hba=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1)
+    pg_ident=$(find /etc/postgresql -name pg_ident.conf 2>/dev/null | head -1)
+    printf '%s\n' \
+        /etc/systemd/system/bayanat.service \
+        /etc/systemd/system/bayanat-celery.service \
+        /etc/systemd/system/bayanat-celery-restart.path \
+        /etc/systemd/system/bayanat-celery-restart.service \
+        /etc/caddy/Caddyfile \
+        /etc/redis/redis.conf \
+        /etc/sudoers.d/bayanat \
+        "$SHARED_DIR/.env" \
+        "$SHARED_DIR/uwsgi-prod.ini" \
+        "$pg_hba" \
+        "$pg_ident" \
+        | grep -v '^$'
+}
+
+_harden_backup() {
+    # Copies every target file into a timestamped dir with a manifest mapping
+    # the copy back to its original path. Files that do NOT exist are recorded
+    # as ABSENT so a restore removes anything the hardening created. Echoes
+    # the dir on stdout.
+    local dir
+    dir="$STATE_DIR/harden-backup-$(date -u +%Y%m%d-%H%M%S)-$$"
+    mkdir -p "$dir"
+    chmod 700 "$dir"
+    local f i=0 n=0
+    while IFS= read -r f; do
+        i=$((i + 1))
+        if [[ -f "$f" ]]; then
+            cp -p "$f" "$dir/$i.file"
+            printf '%s\t%s\t%s\t%s\n' "$i.file" "$f" \
+                "$(stat -c '%U:%G' "$f")" "$(stat -c '%a' "$f")" >> "$dir/manifest"
+            n=$((n + 1))
+        else
+            printf 'ABSENT\t%s\t-\t-\n' "$f" >> "$dir/manifest"
+        fi
+    done < <(_harden_files)
+
+    # Unit enablement is state the hardening changes (systemctl enable) and
+    # copying unit files back does not restore it.
+    local unit
+    local state
+    for unit in bayanat bayanat-celery bayanat-celery-restart.path; do
+        state=$(systemctl is-enabled "$unit" 2>/dev/null) || state="unknown"
+        [[ "$state" == "unknown" ]] && \
+            warn "Could not read enablement state of $unit; a restore will leave it as-is"
+        printf '%s\t%s\n' "$unit" "$state" >> "$dir/enablement"
+    done
+
+    # PostgreSQL grants are not file state. Capture the CURRENT attributes and
+    # write the exact statements that put them back, so a revert does not rely
+    # on remembering what they were.
+    local attrs pub_connect
+    attrs=$(sudo -u postgres psql -tA -c \
+        "SELECT rolsuper, rolcreatedb, rolcreaterole, rolreplication
+           FROM pg_roles WHERE rolname='$APP_USER';" 2>/dev/null) || attrs=""
+    pub_connect=$(sudo -u postgres psql -tA -c \
+        "SELECT has_database_privilege('public','bayanat','CONNECT');" 2>/dev/null) || pub_connect=""
+    {
+        echo "Pre-harden database state for role '$APP_USER'."
+        if [[ -n "$attrs" ]]; then
+            IFS='|' read -r r_super r_createdb r_createrole r_repl <<< "$attrs"
+            printf 'To restore role attributes:\n'
+            printf "  sudo -u postgres psql -c 'ALTER ROLE \"%s\" %s %s %s %s;'\n" \
+                "$APP_USER" \
+                "$([[ $r_super == t ]] && echo SUPERUSER || echo NOSUPERUSER)" \
+                "$([[ $r_createdb == t ]] && echo CREATEDB || echo NOCREATEDB)" \
+                "$([[ $r_createrole == t ]] && echo CREATEROLE || echo NOCREATEROLE)" \
+                "$([[ $r_repl == t ]] && echo REPLICATION || echo NOREPLICATION)"
+        else
+            echo "WARNING: could not read role attributes before hardening."
+        fi
+        if [[ "$pub_connect" == "t" ]]; then
+            echo "PUBLIC held CONNECT on the bayanat database. To restore:"
+            echo "  sudo -u postgres psql -c 'GRANT CONNECT ON DATABASE bayanat TO PUBLIC;'"
+        elif [[ "$pub_connect" == "f" ]]; then
+            echo "PUBLIC did not hold CONNECT before hardening; nothing to restore."
+        else
+            echo "WARNING: could not read the PUBLIC CONNECT grant before hardening."
+        fi
+    } > "$dir/REVERT-DB.txt"
+
+    log "Backed up $n config files to $dir" >&2
+    echo "$dir"
+}
+
+_harden_restore() {
+    # Puts every backed-up file back and restarts what reads them. Runs with
+    # errexit OFF and collects failures: a restore that stops on its first
+    # error is worse than no restore at all, so every entry is attempted and
+    # anything that could not be put back is reported by path.
+    local dir="$1"
+    [[ -f "$dir/manifest" ]] || { warn "No manifest in $dir; cannot restore"; return 1; }
+    warn "Restoring pre-harden configuration from $dir"
+
+    set +e
+    local copy orig owner mode failed=0
+    while IFS=$'\t' read -r copy orig owner mode; do
+        if [[ "$copy" == "ABSENT" ]]; then
+            # The hardening may have created this file; it did not exist before.
+            if [[ -f "$orig" ]]; then
+                rm -f "$orig" || { warn "RESTORE FAILED to remove: $orig"; failed=1; }
+            fi
+        elif ! cp "$dir/$copy" "$orig"; then
+            warn "RESTORE FAILED for: $orig (copy kept at $dir/$copy)"
+            failed=1
+        else
+            # Ownership comes from the manifest, not the copy: the backup dir
+            # sits under $STATE_DIR and is chowned to root by _secure_state_dir.
+            chown "$owner" "$orig" || { warn "RESTORE FAILED to chown $orig to $owner"; failed=1; }
+            chmod "$mode" "$orig" || { warn "RESTORE FAILED to chmod $orig to $mode"; failed=1; }
+        fi
+    done < "$dir/manifest"
+
+    # Unit files the hardening introduced are also enabled by it; drop the
+    # enablement symlinks for any unit that is no longer on disk.
+    local unit state
+    for unit in bayanat-celery-restart.path bayanat-celery-restart.service; do
+        if [[ ! -f "/etc/systemd/system/$unit" ]]; then
+            # systemctl disable needs the unit file, which the restore above
+            # has already removed; drop the wants/ symlinks directly.
+            rm -f /etc/systemd/system/*.wants/"$unit" \
+                || { warn "RESTORE FAILED to unlink: $unit"; failed=1; }
+        fi
+    done
+
+    # Put recorded enablement back for units that still exist.
+    if [[ -f "$dir/enablement" ]]; then
+        while IFS=$'\t' read -r unit state; do
+            [[ -f "/etc/systemd/system/$unit" ]] || continue
+            case "$state" in
+                enabled)  systemctl enable "$unit" 2>/dev/null \
+                              || { warn "RESTORE FAILED to enable: $unit"; failed=1; } ;;
+                disabled) systemctl disable "$unit" 2>/dev/null \
+                              || { warn "RESTORE FAILED to disable: $unit"; failed=1; } ;;
+                *)        warn "Enablement of $unit was unreadable at backup time; left as-is" ;;
+            esac
+        done < "$dir/enablement"
+    fi
+
+    local unit_cmd
+    for unit_cmd in "daemon-reload" "reload postgresql" "restart redis-server" \
+                    "restart caddy" "start bayanat" "start bayanat-celery"; do
+        # shellcheck disable=SC2086
+        if ! systemctl $unit_cmd; then
+            warn "RESTORE FAILED: systemctl $unit_cmd"
+            failed=1
+        fi
+    done
+    set -e
+
+    if (( failed )); then
+        warn "Restore completed with errors; inspect the items listed above against $dir"
+        return 1
+    fi
+    # Restored: config files, unit files, unit enablement. NOT restored: the
+    # service accounts (additive), the shared/runtime dirs (additive), and the
+    # database role/grant tightening, which IS subtractive - $dir/REVERT-DB.txt
+    # carries the exact statements to undo it.
+    warn "Config files and unit state restored. Service accounts and shared dirs are left in place."
+    warn "Database grants were tightened and are NOT reverted; see $dir/REVERT-DB.txt"
+    return 0
+}
+
+_caddy_domain() {
+    # Recover the site address from the existing Caddyfile so hardening does
+    # not need the domain passed again. ':80' means the localhost install.
+    local addr
+    addr=$(grep -m1 -E '^[^[:space:]#].*\{[[:space:]]*$' /etc/caddy/Caddyfile 2>/dev/null \
+        | sed 's/[[:space:]]*{[[:space:]]*$//' | tr -d ' ')
+    if [[ -z "$addr" || "$addr" == ":80" ]]; then
+        echo localhost
+    else
+        echo "${addr#https://}"
+    fi
+}
+
+_harden_release_tree() {
+    # Existing releases were created app-writable. Make them root-owned and
+    # non-writable by the group so a compromised service cannot alter code.
+    # -h so the symlinks into shared/ are retargeted, not followed.
+    chown -Rh root:"$APP_GROUP" "$RELEASES_DIR" || return 1
+    chmod -R g-w,o-rwx "$RELEASES_DIR" || return 1
+}
+
+_verify_service_users() {
+    # A pre-existing account with the wrong group or a login shell would pass
+    # a naive existence check and then fail to read the root-owned tree.
+    local u
+    for u in "$WEB_USER" "$CELERY_USER"; do
+        id -nG "$u" | tr ' ' '\n' | grep -qx "$APP_GROUP" \
+            || die "$u is not in the $APP_GROUP group" "usermod -aG $APP_GROUP $u"
+        [[ "$(getent passwd "$u" | cut -d: -f7)" == "/usr/sbin/nologin" ]] \
+            || warn "$u has a login shell; expected /usr/sbin/nologin"
+    done
+}
+
+_ensure_env_db_identity() {
+    # Older installs left POSTGRES_* out of .env entirely: the app ran as the
+    # same OS user as the database role, so libpq's default was correct. Under
+    # the split service accounts that default resolves to bayanat-web, which is
+    # not a role, and every query fails. Write the identity explicitly.
+    # POSTGRES_PASSWORD is deliberately NOT set: an empty password is what
+    # selects the socket + peer-auth branch in settings.py.
+    local env_file="$SHARED_DIR/.env" key val kv
+    for kv in "POSTGRES_USER=$APP_USER" "POSTGRES_DB=bayanat" "POSTGRES_HOST=localhost"; do
+        key="${kv%%=*}"; val="${kv#*=}"
+        if ! grep -qE "^${key}=" "$env_file"; then
+            printf "%s='%s'\n" "$key" "$val" >> "$env_file"
+            log "Added $key to .env"
+        fi
+    done
+}
+
+cmd_harden() {
+    # Migrates an install provisioned before the least-privilege layout
+    # (BAY-01-027/030/031/032/033) onto it. Deliberately NOT part of `update`:
+    # this rewrites pg_hba.conf, redis.conf, the systemd units and the
+    # Caddyfile, and a code update should never be able to leave those
+    # half-written. Runs with the services stopped, verifies health, and
+    # restores every file it touched if the verification fails.
+    require_root
+    [[ -L "$CURRENT_LINK" ]] || die "Bayanat is not installed"
+
+    if _is_hardened && [[ "${1:-}" != "--force" ]]; then
+        log "Already on hardened layout (version $LAYOUT_VERSION)"
+        return 0
+    fi
+
+    # The hardened layout runs the app as bayanat-web/bayanat-celery over the
+    # local PostgreSQL socket. Only a release whose settings put the role in
+    # the connection URI survives that: an older release omits it, libpq then
+    # defaults to the OS user, and every query fails with
+    # 'role "bayanat-web" does not exist'. Capability check, not a version
+    # comparison, so it stays true regardless of tag naming.
+    if ! grep -q 'postgresql://{quote(POSTGRES_USER' "$CURRENT_LINK/enferno/settings.py" 2>/dev/null; then
+        die "The active release ($(current_version)) does not support the hardened layout" \
+            "It connects to PostgreSQL as the OS user. Run 'bayanat update' first, then re-run harden."
+    fi
+
+    # Redis auth is asserted from shared/.env. Without a readable .env the run
+    # would generate a password, apply it to Redis and have nowhere to record
+    # it, leaving the app unable to reach its broker.
+    [[ -f "$SHARED_DIR/.env" ]] || die "Missing $SHARED_DIR/.env" \
+        "Hardening asserts the Redis password from .env; restore it first"
+
+    # An update swaps the `current` symlink and may be part-way through a
+    # migration; hardening rewrites the service units and both authentication
+    # backends underneath it. Refuse rather than interleave two root operations
+    # on the same install. The phase check also catches an update that died
+    # part-way and left no live process behind.
+    local update_phase
+    update_phase=$(read_phase)
+    [[ "$update_phase" == "IDLE" ]] || die "An update is in progress or needs attention (state: $update_phase)" \
+        "Check 'bayanat status'; recover with 'bayanat update --recover' before hardening"
+    # Same lock the updater takes, so the refusal works in both directions.
+    acquire_lock
+
+    local domain backup_dir
+    domain=$(_caddy_domain)
+    log "Hardening layout for: $domain"
+
+    mkdir -p "$STATE_DIR"
+    _secure_state_dir
+    backup_dir=$(_harden_backup)
+
+    # Any failure from here on puts the original configuration back.
+    #
+    # This is an EXIT trap, not an ERR trap, because die() exits rather than
+    # returning: an ERR trap would miss every `|| die` inside the functions
+    # below (a missing pg_hba.conf, a service user outside the group) and leave
+    # the box half-reconfigured with its services stopped and no restore. EXIT
+    # catches all of it -- a failing command under `set -e`, an explicit die,
+    # and an interrupted run. The globals are deliberate: locals are out of
+    # scope by the time an EXIT trap runs.
+    HARDEN_OK=0
+    HARDEN_BACKUP_DIR="$backup_dir"
+    trap 'trap - EXIT INT TERM
+          if (( HARDEN_OK == 0 )); then
+              warn "Hardening did not complete; restoring the previous configuration"
+              _harden_restore "$HARDEN_BACKUP_DIR" || true
+              warn "Configuration restored from $HARDEN_BACKUP_DIR"
+          fi
+          release_lock' EXIT INT TERM
+
+    # Must be verified, not attempted: Redis gets a password and PostgreSQL
+    # changes authentication below, and a service still running through that
+    # loses its broker and its database connection.
+    log "Stopping services"
+    systemctl stop bayanat bayanat-celery || true
+    local svc
+    for svc in bayanat bayanat-celery; do
+        systemctl is-active --quiet "$svc" \
+            && die "$svc is still running; refusing to reconfigure underneath it" \
+                "Stop it by hand (systemctl stop $svc) and re-run"
+    done
+
+    _setup_app_user
+    _verify_service_users
+    _setup_database
+    _setup_redis
+    _ensure_env_db_identity
+    _ensure_runtime_layout
+
+    # Legacy releases keep some app-written dirs (imports, exports) as real
+    # directories inside the release. The hardened tree is read-only for the
+    # services, so they have to become symlinks into shared/ before the
+    # tightening at the end of this function, or imports and exports break.
+    local tag
+    tag=$(current_version) || die "Cannot determine the active release"
+    _link_shared "$tag" preserve
+
+    _install_uwsgi_config
+    _install_systemd
+    _configure_caddy "$domain"
+
+    # Services no longer get any sudo grant (BAY-01-032); drop the file a
+    # previous install may have written.
+    rm -f /etc/sudoers.d/bayanat
+
+    _set_permissions
+    systemctl daemon-reload
+    systemctl enable --now bayanat bayanat-celery bayanat-celery-restart.path
+    systemctl restart caddy
+
+    if ! _wait_healthy 60; then
+        # The EXIT trap performs the restore.
+        die "Hardened layout failed its health check; configuration restored" \
+            "Check: journalctl -u bayanat -n 50"
+    fi
+
+    # Past the point where a restore is the right answer: the layout is applied
+    # and the application is serving. Anything below reports a problem without
+    # tearing down a working install.
+    HARDEN_OK=1
+    trap - EXIT INT TERM
+    release_lock
+
+    # Only now, past the point where a restore could be needed. The legacy
+    # release binds its uWSGI socket inside its own release directory, so a
+    # tree tightened before the probe would leave a restored old release
+    # unable to start.
+    if ! _harden_release_tree; then
+        # The layout is otherwise applied and the app is healthy, but the marker
+        # is deliberately withheld so the next run re-applies and this does not
+        # read as a clean success.
+        die "Layout applied but release tree could not be tightened" \
+            "Re-run: bayanat harden --force"
+    fi
+
+    # The layout IS applied at this point; a marker write failure must not be
+    # reported as a hardening failure, only as lost idempotency.
+    if ! printf '%s\n' "$LAYOUT_VERSION" > "$LAYOUT_MARKER" || ! chmod 644 "$LAYOUT_MARKER"; then
+        warn "Could not write $LAYOUT_MARKER; the layout is applied but 'harden' will run again"
+    fi
+    log "SUCCESS: hardened layout applied"
+    log "Backup of the previous configuration: $backup_dir"
+}
+
 cmd_update() {
     local flag="${1:-}"
     case "$flag" in
@@ -1319,11 +2039,28 @@ cmd_update() {
             ;;
         --recover)
             require_root
-            recover_state
+            # Recovery mutates state exactly like an update does, so it takes
+            # the same lock. Without this it could run against a live update.
+            acquire_lock
+            RECOVER_EXPLICIT=1 recover_state
+            release_lock
             return 0
             ;;
     esac
     require_root
+    # `update` manages installs created by `bayanat install` and nothing else.
+    # Without this, a manual or Docker deployment that reasonably tries the CLI
+    # gets /opt/bayanat directories and a stray .env created by
+    # _ensure_runtime_layout, then dies at the service check with "Service
+    # bayanat is not running", which reads as a crashed service rather than the
+    # wrong tool. Mirrors the same guard in cmd_harden.
+    [[ -L "$CURRENT_LINK" ]] || die "No installer-managed Bayanat install found at $BAYANAT_ROOT" \
+        "'bayanat update' only manages installs created by 'bayanat install'. For a manual or Docker deployment, follow the Upgrading page in the Bayanat documentation."
+    # Before recover_state, not after: recovery itself rewrites update.json,
+    # deletes partial releases and starts and stops services. Nothing has to
+    # run first any more -- the old ordering existed so recover_state could
+    # clear a stale lock, and under flock a stale lock cannot exist.
+    acquire_lock
     recover_state
     _ensure_runtime_layout
     local target="${1:-}"
@@ -1336,6 +2073,18 @@ cmd_update() {
     do_prepare "$target"
     do_migrate
     do_switch_verify
+
+    # Code-only by design: `update` never rewrites system configuration.
+    # Surface the legacy layout loudly so an install cannot drift along
+    # unhardened without anyone noticing.
+    if ! _is_hardened; then
+        warn ""
+        warn "This install is NOT on the hardened layout."
+        warn "The web and worker still share one account, the release tree is"
+        warn "app-writable, and Redis may be unauthenticated (BAY-01-027/030/031/032)."
+        warn "Migrate with:  bayanat harden"
+        warn ""
+    fi
 }
 
 # --- Status ---
@@ -1357,6 +2106,12 @@ cmd_status() {
         echo "Status: up to date"
     else
         echo "Status: update available"
+    fi
+
+    if _is_hardened; then
+        echo "Layout: hardened (v$LAYOUT_VERSION)"
+    else
+        echo "Layout: legacy - run 'bayanat harden' to migrate"
     fi
 
     echo ""
@@ -1390,6 +2145,8 @@ Commands:
   update [<tag>]      Update Bayanat to <tag> (default: latest release)
   update --check      Show current vs latest; no changes
   update --recover    Recover from a stuck update state file
+  harden              Migrate an older install onto the hardened layout
+  harden --force      Re-apply the hardened layout
   snapshots           List pre-update snapshots
   restore <name>      Restore a pre-update snapshot (prompts confirmation)
   status              Show version, services, and update state
@@ -1405,6 +2162,7 @@ EOF
 case "${1:-}" in
     install)    shift; cmd_install "$@" ;;
     update)     shift; cmd_update "$@" ;;
+    harden)     shift; cmd_harden "$@" ;;
     snapshots)  require_root; list_snapshots ;;
     restore)    require_root; [[ -n "${2:-}" ]] || die "usage: bayanat restore <snapshot-name>"; restore_pg "$2" ;;
     status)     cmd_status ;;

@@ -64,6 +64,24 @@ def test_redact_image_bytes_burns_black_box():
     assert result.getpixel((90, 90)) == (255, 255, 255)
 
 
+def test_redact_image_bytes_survives_truncated_jpeg():
+    # Real uploads arrive with the scan cut short: browsers render the partial image and
+    # the user redacts it, so the burn must not hard-fail on the same bytes.
+    img = Image.new("RGB", (400, 400), "white")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    truncated = buf.getvalue()[: len(buf.getvalue()) // 2]
+
+    out = redact_image_bytes(truncated, [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
+
+    assert Image.open(io.BytesIO(out)).convert("RGB").getpixel((10, 10)) == (0, 0, 0)
+
+
+def test_redact_image_bytes_rejects_undecodable_file():
+    with pytest.raises(RedactionError):
+        redact_image_bytes(b"not an image", [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
+
+
 def test_redact_image_bytes_honors_exif_orientation():
     # Raw pixels are landscape (200x100) but EXIF says rotate 90 CW, so the browser
     # (and the redaction UI) show it portrait (100x200). Boxes are drawn in that
