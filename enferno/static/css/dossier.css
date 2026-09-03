@@ -213,9 +213,8 @@ tr { page-break-inside: avoid; }
 
 .detail-item + .detail-item { margin-top: 4px; }
 
-.nested-table { table-layout: fixed; }
-.nested-table th:nth-child(1), .nested-table th:nth-child(2) { width: 22%; }
 .nested-table td { overflow-wrap: anywhere; }
+.nested-table + .nested-table { margin-top: 10px; }
 
 .estimated {
     color: var(--muted);

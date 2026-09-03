@@ -72,22 +72,18 @@
             {% endif %}
             {% for row in block.rows | selectattr('value', 'mapping') %}
                 {% if scalar_rows or not block.title %}<h3 class="table-title">{{ row.label }}</h3>{% endif %}
-                <table class="data-table nested-table">
-                    <thead>
-                    <tr>
-                        {% for column in row.value.columns %}<th>{{ column.label }}</th>{% endfor %}
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for entry in row.value.rows %}
-                        <tr>
-                            {% for column in row.value.columns %}
-                                <td dir="auto">{{ entry[column.key] if entry[column.key] is not none else '' }}</td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                {% for entry in row.value.rows %}
+                    <table class="kv-table nested-table">
+                        <tbody>
+                        {% for column in row.value.columns if entry[column.key] %}
+                            <tr>
+                                <th>{{ column.label }}</th>
+                                <td dir="auto">{{ entry[column.key] }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endfor %}
             {% endfor %}
 
         {% elif block.type in ('family_members_table', 'related_items_table', 'events_timeline') %}
