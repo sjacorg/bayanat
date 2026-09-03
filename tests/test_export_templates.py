@@ -304,10 +304,7 @@ def test_field_table_formats_known_relatives():
         {
             "name": "Sara Doe",
             "relationship": "Sister",
-            "contact": [
-                {"label": "هاتف", "value": "0100 200 300", "kind": "phone", "ltr": True},
-                {"label": "Facebook", "value": "https://fb.com/sara", "kind": "url", "ltr": True},
-            ],
+            "contact": "0100 200 300; Facebook: https://fb.com/sara",
         },
         {"name": "Ali Doe", "relationship": None, "contact": None},
     ]

@@ -76,24 +76,10 @@
                     <table class="kv-table nested-table">
                         <tbody>
                         {% for column in row.value.columns if entry[column.key] %}
-                            {% if column.key == 'contact' %}
-                                {% for part in entry.contact %}
-                                    <tr>
-                                        {% if loop.first %}<th rowspan="{{ entry.contact|length }}">{{ column.label }}</th>{% endif %}
-                                        {% if part.label %}
-                                            <td class="sub-label" dir="auto">{{ part.label }}</td>
-                                            <td {% if part.ltr %}class="ltr-cell"{% else %}dir="auto"{% endif %}>{{ part.value }}</td>
-                                        {% else %}
-                                            <td colspan="2" {% if part.ltr %}class="ltr-cell"{% else %}dir="auto"{% endif %}>{{ part.value }}</td>
-                                        {% endif %}
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <th>{{ column.label }}</th>
-                                    <td colspan="2" dir="auto">{{ entry[column.key] }}</td>
-                                </tr>
-                            {% endif %}
+                            <tr>
+                                <th>{{ column.label }}</th>
+                                <td dir="auto">{{ entry[column.key] }}</td>
+                            </tr>
                         {% endfor %}
                         </tbody>
                     </table>

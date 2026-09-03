@@ -11,7 +11,6 @@ is sanitized with a strict dossier profile and nothing is ever evaluated as a
 Jinja template.
 """
 
-import re
 from datetime import datetime
 from typing import Any, Callable, Optional
 
@@ -96,47 +95,10 @@ RELATIVE_FIELDS = {
 }
 
 
-def _split_contact(text: str) -> list[dict]:
-    """Break a free-text contact blob into (label, value) parts, one per line.
-
-    Users type things like "0962821087; Facebook: https://..." into a single
-    field: each ';' or newline separated piece becomes its own row, and when a
-    piece reads "label: value" the segment right before the value is its
-    label (earlier dangling labels such as "Phone number:" are dropped).
-    """
-    parts = []
-    for piece in re.split(r"[;\n]+", text):
-        segments = [seg.strip() for seg in re.split(r":\s+", piece.strip()) if seg.strip()]
-        if segments:
-            label = segments[-2] if len(segments) > 1 else None
-            value = segments[-1]
-            kind = next((k for k, pat in CONTACT_KINDS.items() if pat.search(value)), None)
-            parts.append({"label": label, "value": value, "kind": kind, "ltr": kind is not None})
-    return parts
-
-
-# value shape -> generic label used when the user typed no label of their own
-CONTACT_KINDS = {
-    "url": re.compile(r"^(https?://|www\.)"),
-    "email": re.compile(r"^\S+@\S+$"),
-    "phone": re.compile(r"^\+?[\d\s().-]{6,}$"),
-}
-CONTACT_KIND_LABELS = {
-    "url": {"label": "Link", "label_ar": "رابط"},
-    "email": {"label": "Email", "label_ar": "بريد إلكتروني"},
-    "phone": {"label": "Phone", "label_ar": "هاتف"},
-}
-
-
 def _known_relatives(actor) -> Optional[list[dict]]:
-    """The profile's known_relatives JSONB list, keeping only populated name/relationship/contact.
-
-    Returned as a list of dicts so the field table can render one row per relative.
-    """
+    """The profile's known_relatives JSONB list, values verbatim, empty entries dropped."""
     entries = [d for d in (_profile_attr("known_relatives")(actor) or []) if isinstance(d, dict)]
     rows = [{k: d.get(k) or None for k in RELATIVE_FIELDS} for d in entries]
-    for r in rows:
-        r["contact"] = _split_contact(r["contact"]) if r["contact"] else None
     return [r for r in rows if any(r.values())] or None
 
 
@@ -595,11 +557,7 @@ def _b_field_table(data: DossierData, config: dict) -> dict:
         if value in (None, ""):
             missing.append(label)
         if isinstance(value, list):
-            # structured value (known relatives): rendered as its own table
-            lang = "label_ar" if data.locale == "ar" else "label"
-            for part in (p for d in value for p in d.get("contact") or []):
-                if not part["label"] and part["kind"]:
-                    part["label"] = CONTACT_KIND_LABELS[part["kind"]][lang]
+            # structured value (known relatives): one key/value table per entry
             value = {
                 "columns": _labeled_columns(list(RELATIVE_FIELDS), RELATIVE_FIELDS, data.locale),
                 "rows": value,
