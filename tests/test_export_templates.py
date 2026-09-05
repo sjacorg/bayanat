@@ -7,6 +7,7 @@ import pytest
 
 from enferno.export.blocks import (
     MAX_BLOCKS,
+    RELATIVE_FIELDS,
     build_dossier,
     sanitize_dossier_html,
     validate_blocks,
@@ -281,12 +282,9 @@ def test_related_items_filters_by_relation_type_and_reads_issuer():
 def test_field_table_formats_known_relatives():
     class Profile:
         known_relatives = [
-            {
-                "name": "Sara Doe",
-                "relationship": "Sister",
-                "contact": "0100 200 300; Facebook: https://fb.com/sara",
-            },
-            {"name": "Ali Doe"},
+            {"name": "Sara Doe", "relationship": "Sister", "phone": "0100 200 300"},
+            # legacy entry written before the split fields existed
+            {"name": "Ali Doe", "contact": "0100 200 300; Facebook: https://fb.com/ali"},
             {},
         ]
 
@@ -299,12 +297,8 @@ def test_field_table_formats_known_relatives():
     )
     (table,) = dossier["blocks"]
     value = table["rows"][0]["value"]
-    assert [c["key"] for c in value["columns"]] == ["name", "relationship", "contact"]
-    assert value["rows"] == [
-        {
-            "name": "Sara Doe",
-            "relationship": "Sister",
-            "contact": "0100 200 300; Facebook: https://fb.com/sara",
-        },
-        {"name": "Ali Doe", "relationship": None, "contact": None},
+    assert [c["key"] for c in value["columns"]] == list(RELATIVE_FIELDS)
+    assert [{k: v for k, v in r.items() if v} for r in value["rows"]] == [
+        {"name": "Sara Doe", "relationship": "Sister", "phone": "0100 200 300"},
+        {"name": "Ali Doe", "contact": "0100 200 300; Facebook: https://fb.com/ali"},
     ]

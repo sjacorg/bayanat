@@ -539,6 +539,10 @@ class SkinMarkingsModel(BaseValidationModel):
 
 class ReporterModel(BaseValidationModel):
     name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    social_media: Optional[str] = None
+    # free text kept for address and legacy entries written before the split fields existed
     contact: Optional[str] = None
     relationship: Optional[str] = None
 

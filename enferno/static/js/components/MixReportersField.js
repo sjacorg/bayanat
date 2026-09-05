@@ -75,6 +75,15 @@ const MixReportersField = Vue.defineComponent({
             <v-text-field :label="translations.name_" v-model="reporter.name"
               v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.name')"
             ></v-text-field>
+            <v-text-field :label="translations.phone_" v-model="reporter.phone"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.phone')"
+            ></v-text-field>
+            <v-text-field :label="translations.email_" v-model="reporter.email"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.email')"
+            ></v-text-field>
+            <v-text-field :label="translations.socialMedia_" v-model="reporter.social_media"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.social_media')"
+            ></v-text-field>
             <v-textarea rows="1" :label="translations.contactInfo_" v-model="reporter.contact"
               v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.contact')"
             ></v-textarea>

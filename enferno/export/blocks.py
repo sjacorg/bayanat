@@ -91,7 +91,10 @@ def _id_numbers(actor) -> Optional[str]:
 RELATIVE_FIELDS = {
     "name": {"label": "Name", "label_ar": "الاسم"},
     "relationship": {"label": "Relationship", "label_ar": "صلة القرابة"},
-    "contact": {"label": "Contact", "label_ar": "معلومات التواصل"},
+    "phone": {"label": "Phone", "label_ar": "رقم الهاتف"},
+    "email": {"label": "Email", "label_ar": "البريد الإلكتروني"},
+    "social_media": {"label": "Social media", "label_ar": "حساب التواصل الاجتماعي"},
+    "contact": {"label": "Other contact", "label_ar": "معلومات تواصل أخرى"},
 }
 
 
