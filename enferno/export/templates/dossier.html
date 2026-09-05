@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="{{ locale }}" {% if rtl %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>{{ template.title }} - {{ actor.name_ar or actor.name }}</title>
+    {% if not pdf_mode %}
+        <link rel="stylesheet" href="/static/css/dossier.css?v={{ config.VERSION }}"/>
+    {% endif %}
+</head>
+<body>
+
+{% if show_toolbar %}
+<div class="toolbar no-print">
+    <span class="toolbar-title">{{ template.title }} &middot; #{{ actor.id }}</span>
+    <span class="toolbar-actions">
+        <a href="/export/dossier/{{ template.id }}/{{ actor.id }}?format=pdf">{{ _('Download PDF') }}</a>
+        <button type="button" id="print-dossier">{{ _('Print') }}</button>
+    </span>
+</div>
+
+{% if missing %}
+<div class="completeness no-print">
+    <strong>{{ _('Missing information') }} ({{ missing|length }})</strong>
+    <ul>
+        {% for item in missing %}
+            <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endif %}
+
+<main class="dossier">
+    <header class="brand-band">
+        <span class="band-note">{{ template.title }}</span>
+        <img src="{{ logo_src }}" alt=""/>
+    </header>
+
+    {% set ns = namespace(subtitle_done=false) %}
+    {% for block in blocks %}
+        {% if block.type == 'heading' %}
+            {% if block.level == 1 %}
+                <h1 class="doc-title">{{ block.text }}</h1>
+                {% if not ns.subtitle_done %}
+                    <div class="doc-subtitle">
+                        {{ actor.name_ar or actor.name }} &middot; <bdi class="ltr">#{{ actor.id }}</bdi>
+                    </div>
+                    {% set ns.subtitle_done = true %}
+                {% endif %}
+            {% else %}
+                <h2 class="section"><span class="section-number">{{ block.number }}.</span> {{ block.text }}</h2>
+            {% endif %}
+
+        {% elif block.type == 'rich_text' %}
+            <div class="rich-text">{{ block.html | safe }}</div>
+
+        {% elif block.type == 'field_table' %}
+            {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
+            {% set scalar_rows = block.rows | rejectattr('value', 'mapping') | list %}
+            {% if scalar_rows %}
+            <table class="kv-table">
+                <tbody>
+                {% for row in scalar_rows %}
+                    <tr>
+                        <th>{{ row.label }}</th>
+                        <td>{{ row.value if row.value is not none else '' }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% for row in block.rows | selectattr('value', 'mapping') %}
+                {% if scalar_rows or not block.title %}<h3 class="table-title">{{ row.label }}</h3>{% endif %}
+                {% for entry in row.value.rows %}
+                    <table class="kv-table nested-table">
+                        <tbody>
+                        {% for column in row.value.columns if entry[column.key] %}
+                            <tr>
+                                <th>{{ column.label }}</th>
+                                <td dir="auto">{{ entry[column.key] }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endfor %}
+            {% endfor %}
+
+        {% elif block.type in ('family_members_table', 'related_items_table', 'events_timeline') %}
+            {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
+            {% if block.type == 'related_items_table' %}
+                {% set detail_keys = ['notes', 'comment', 'comments', 'description', 'sources'] %}
+                {% set table_columns = block.columns | rejectattr('key', 'in', detail_keys) | list %}
+                {% set detail_columns = block.columns | selectattr('key', 'in', detail_keys) | list %}
+                {% if not table_columns %}
+                    {% set table_columns = block.columns %}
+                    {% set detail_columns = [] %}
+                {% endif %}
+            {% else %}
+                {% set table_columns = block.columns %}
+                {% set detail_columns = [] %}
+            {% endif %}
+            <table class="data-table">
+                <thead>
+                <tr>
+                    {% for column in table_columns %}
+                        <th>{{ column.label }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in block.rows %}
+                    <tr>
+                        {% for column in table_columns %}
+                            <td {% if column.ltr %}class="ltr-cell"{% endif %}>{{ row[column.key] if row[column.key] is not none else '' }}{% if column.key == 'date' and row.estimated %} <span class="estimated">({{ row.estimated }})</span>{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+                    {% if detail_columns %}
+                        {% set details = namespace(count=0) %}
+                        {% for column in detail_columns %}
+                            {% if row[column.key] %}
+                                {% set details.count = details.count + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if details.count %}
+                            <tr class="detail-row">
+                                <td colspan="{{ table_columns|length }}">
+                                    {% for column in detail_columns %}
+                                        {% if row[column.key] %}
+                                            <div class="detail-item">
+                                                <span class="detail-label">{{ column.label }}</span>
+                                                <span class="detail-value">{{ row[column.key] }}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <tr>
+                        <td colspan="{{ table_columns|length }}" class="empty-row"></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+        {% elif block.type == 'narrative_box' %}
+            <div class="narrative">
+                {% if block.title %}<div class="narrative-title">{{ block.title }}</div>{% endif %}
+                <div class="narrative-body">
+                    {% if block.html %}
+                        {% if block.is_html %}{{ block.html | safe }}{% else %}{{ block.html }}{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+        {% elif block.type == 'media_appendix' %}
+            {% if block.title %}<h3 class="table-title">{{ block.title }}</h3>{% endif %}
+            <div class="media-grid">
+                {% for item in block.media %}
+                    <figure class="media-item">
+                        {% if item.is_image %}
+                            <img src="{{ media_base }}{{ item.file }}" alt="{{ item.title or '' }}">
+                        {% else %}
+                            <div class="media-doc"><bdi class="ltr">{{ item.file }}</bdi></div>
+                        {% endif %}
+                        <figcaption>{% if item.title %}{{ item.title }} &middot; {% endif %}{{ item.ref }}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+
+        {% elif block.type == 'page_break' %}
+            <div class="page-break"></div>
+        {% endif %}
+    {% endfor %}
+</main>
+
+{% if show_toolbar %}
+<script nonce="{{ csp_nonce() }}">
+    document.getElementById('print-dossier')?.addEventListener('click', () => {
+        window.print();
+    });
+</script>
+{% endif %}
+</body>
+</html>

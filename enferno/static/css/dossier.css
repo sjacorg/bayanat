@@ -1,0 +1,339 @@
+/* Dossier export: shared screen + print stylesheet.
+   Rendered by enferno/export/templates/dossier.html for both browser
+   Save-as-PDF and server-side WeasyPrint output.
+
+   IBM Plex Sans Arabic is bundled under static/fonts (SIL OFL 1.1). */
+
+@font-face {
+    font-family: "IBM Plex Sans Arabic";
+    src: url("../fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "IBM Plex Sans Arabic";
+    src: url("../fonts/IBMPlexSansArabic-SemiBold.ttf") format("truetype");
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "IBM Plex Sans Arabic";
+    src: url("../fonts/IBMPlexSansArabic-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+}
+
+:root {
+    --paper: #fdfcf9;
+    --ink: #26231f;
+    --muted: #6f6a60;
+    --line: #d9d6cc;
+    --accent: #2f6e5e;        /* SJAC deep green */
+    --accent-ink: #1f4437;
+    --soft: #eef4f0;          /* callout / header fills */
+    --head-fill: #dde9e2;
+    --zebra: #f6f8f6;
+    --warn: #8a3e2d;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { font-size: 15px; }
+
+body {
+    font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+    color: var(--ink);
+    line-height: 1.7;
+    background: #e8e6e1;
+}
+
+/* Arabic script reads smaller than Latin at equal size and needs taller leading */
+html[dir="rtl"] body { line-height: 1.9; }
+
+/* Screen: emulate an A4 sheet */
+main.dossier {
+    max-width: 21cm;
+    min-height: 29.7cm;
+    margin: 20px auto 56px;
+    background: var(--paper);
+    padding: 1.7cm 2cm 2cm;
+    box-shadow: 0 2px 14px rgba(38, 35, 31, 0.16);
+}
+
+/* Brand band: logo + program line, mirrors the SJAC partial-results header */
+.brand-band {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1.5px solid var(--accent);
+    margin-bottom: 26px;
+}
+
+.brand-band img { height: 44px; }
+
+.brand-band .band-note {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+/* Toolbar (screen only) */
+.toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #26231f;
+    color: #fdfcf9;
+    padding: 10px 20px;
+}
+
+.toolbar-title { font-size: 0.9rem; color: #cfcabf; }
+
+.toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar a,
+.toolbar button {
+    font: inherit;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 22px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.toolbar a:hover,
+.toolbar button:hover { background: #275c4f; }
+
+.completeness {
+    max-width: 21cm;
+    margin: 16px auto 0;
+    background: #fbf4ee;
+    border-left: 3px solid var(--warn);
+    border-radius: 4px;
+    padding: 12px 20px;
+}
+
+html[dir="rtl"] .completeness {
+    border-left: none;
+    border-right: 3px solid var(--warn);
+}
+
+.completeness strong { color: var(--warn); }
+.completeness ul { margin: 6px 22px 0; }
+
+/* Typography */
+h1.doc-title {
+    text-align: center;
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.45;
+    margin: 0 0 4px;
+}
+
+.doc-subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 24px;
+}
+
+h2.section {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 30px 0 12px;
+}
+
+h3.table-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--accent-ink);
+    margin: 18px 0 8px;
+}
+
+.rich-text { margin: 10px 0; }
+.rich-text p { margin-bottom: 8px; }
+.rich-text ul, .rich-text ol { margin: 0 22px 8px; }
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 20px;
+    page-break-inside: auto;
+    font-size: 0.93rem;
+}
+
+th, td {
+    border: 0.5pt solid var(--line);
+    padding: 7px 12px;
+    text-align: start;
+    vertical-align: top;
+}
+
+tr { page-break-inside: avoid; }
+
+/* label/value table */
+.kv-table th {
+    background: var(--head-fill);
+    color: var(--accent-ink);
+    width: 34%;
+    font-weight: 600;
+}
+
+.data-table thead th {
+    background: var(--head-fill);
+    color: var(--accent-ink);
+    font-weight: 700;
+    text-align: center;
+}
+
+.data-table tbody tr:nth-child(even) td { background: var(--zebra); }
+.data-table td.empty-row { height: 30px; }
+
+.data-table .detail-row td {
+    background: #fafbf9;
+    color: var(--muted);
+    font-size: 0.84rem;
+    padding: 8px 12px;
+}
+
+.detail-item + .detail-item { margin-top: 4px; }
+
+.nested-table td { white-space: pre-wrap; overflow-wrap: anywhere; }
+.nested-table + .nested-table { margin-top: 10px; }
+
+.estimated {
+    color: var(--muted);
+    font-size: 0.8rem;
+    unicode-bidi: isolate;
+}
+
+.detail-label {
+    color: var(--accent-ink);
+    font-weight: 700;
+}
+
+.detail-label::after { content: ": "; }
+
+/* narrative callout: soft fill + accent side border
+   (physical borders per direction: WeasyPrint lacks border-inline-start) */
+.narrative {
+    background: var(--soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin: 10px 0 20px;
+    page-break-inside: avoid;
+}
+
+html[dir="rtl"] .narrative {
+    border-left: none;
+    border-right: 3px solid var(--accent);
+}
+
+.narrative .narrative-title {
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.narrative .narrative-body { min-height: 56px; }
+
+/* LTR islands inside RTL text (dates, IDs, phone numbers) */
+.ltr-cell, bdi.ltr {
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: start;
+}
+
+.page-break { break-after: page; }
+
+/* Media appendix: redacted evidence renditions only */
+.media-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 0.75rem 0 1.5rem;
+}
+
+.media-item { margin: 0; break-inside: avoid; }
+
+.media-item img {
+    width: 100%;
+    border: 1px solid var(--line);
+}
+
+.media-item figcaption {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.media-doc {
+    border: 1px dashed var(--line);
+    padding: 1.2rem 0.8rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+/* Print. Every margin-box slot is claimed explicitly: author-defined boxes
+   take precedence over the browser's default print headers/footers (date,
+   page title, URL), which otherwise stamp raw text on every page. */
+@page {
+    size: A4;
+    margin: 1.9cm 1.8cm 2.1cm;
+
+    @top-left { content: ""; }
+    @top-center { content: ""; }
+    @top-right { content: ""; }
+    @bottom-left { content: ""; }
+    @bottom-right { content: ""; }
+
+    @bottom-center {
+        content: counter(page) " / " counter(pages);
+        font-family: "IBM Plex Sans Arabic", sans-serif;
+        font-size: 8.5px;
+        color: #6f6a60;
+    }
+}
+
+h1.doc-title { string-set: doctitle content(); }
+
+@media print {
+    body { background: var(--paper); }
+
+    main.dossier {
+        max-width: none;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+    }
+
+    .no-print { display: none !important; }
+
+    /* dev-only flask-debugtoolbar overlay: position:fixed elements are
+       re-stamped on every printed page, showing as an empty box top-right */
+    #flDebug { display: none !important; }
+
+    .kv-table th, .data-table thead th, .narrative,
+    .data-table tbody tr:nth-child(even) td {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
