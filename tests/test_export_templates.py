@@ -302,3 +302,36 @@ def test_field_table_formats_known_relatives():
         {"name": "Sara Doe", "relationship": "Sister", "phone": "0100 200 300"},
         {"name": "Ali Doe", "contact": "0100 200 300; Facebook: https://fb.com/ali"},
     ]
+
+
+def test_media_appendix_rasterizes_pdf_renditions(monkeypatch):
+    """A redacted PDF is embedded page by page as images, not listed by filename."""
+    from types import SimpleNamespace as NS
+
+    import pymupdf
+
+    doc = pymupdf.open()
+    doc.new_page()
+    doc.new_page()
+    pdf_bytes = doc.tobytes()
+    monkeypatch.setattr("enferno.admin.views.media._read_media_bytes", lambda media: pdf_bytes)
+
+    original = _fake_media(id=1)
+    redacted = _fake_media(
+        id=2,
+        redaction=NS(original_media_id=1, source_media_id=1),
+        media_file="doc-redacted.pdf",
+        media_file_type="application/pdf",
+        title="doc",
+        title_ar="وثيقة",
+    )
+    bulletin = NS(id=75, deleted=False, medias=[original, redacted])
+
+    actor = FakeActor()
+    actor.related_bulletins = [NS(bulletin=bulletin)]
+    template = FakeTemplate([{"type": "media_appendix", "config": {}}])
+    context = build_dossier(template, actor, FakeUser())
+
+    pages = context["blocks"][0]["media"][0]["pages"]
+    assert len(pages) == 2
+    assert all(p.startswith("data:image/png;base64,") for p in pages)

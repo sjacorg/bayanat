@@ -11,6 +11,7 @@ is sanitized with a strict dossier profile and nothing is ever evaluated as a
 Jinja template.
 """
 
+import base64
 from datetime import datetime
 from typing import Any, Callable, Optional
 
@@ -406,9 +407,26 @@ class DossierData:
         return {
             "file": media.media_file,
             "is_image": (media.media_file_type or "").startswith("image/"),
+            "pages": self._pdf_pages(media),
             "title": title,
             "ref": ref,
         }
+
+    @staticmethod
+    def _pdf_pages(media) -> list[str]:
+        """Rasterized pages of a PDF rendition as data URIs, so redacted
+        documents print inline like images instead of as a filename."""
+        if media.media_file_type != "application/pdf":
+            return []
+        from enferno.admin.views.media import _read_media_bytes
+        from enferno.utils.redaction_utils import pdf_page_images
+
+        try:
+            pages = pdf_page_images(_read_media_bytes(media))
+        except Exception:
+            logger.warning("Dossier: could not render PDF media %s", media.id, exc_info=True)
+            return []
+        return [f"data:image/png;base64,{base64.b64encode(p).decode()}" for p in pages]
 
 
 # ---------------------------------------------------------------------------
