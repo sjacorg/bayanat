@@ -271,8 +271,8 @@ html[dir="rtl"] .narrative {
 }
 
 .media-item { margin: 0; break-inside: avoid; }
-.media-item--pages { grid-column: 1 / -1; break-inside: auto; }
-.media-item--pages img { margin-bottom: 0.5rem; break-inside: avoid; }
+.media-pages { break-inside: auto; margin-bottom: 1.5rem; }
+.media-pages img { display: block; width: auto; max-width: 100%; max-height: 230mm; margin-bottom: 0.5rem; }
 
 .media-item img {
     width: 100%;
