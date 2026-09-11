@@ -12,25 +12,6 @@
     {% include   'admin/partials/export_drawer.html' %}
     <v-main>
         <v-container fluid>
-            <v-tooltip text="{{ _('Visualize Results') }}">
-                <template #activator="{ props }">
-                    <v-btn
-                            elevation="16"
-                            color="primary"
-                            v-bind="props"
-                            @click.stop="visualizeResults"
-                            v-if="showVisualize"
-                            :loading="visualizeLoading"
-                            class="mb-5 me-5 position-absolute "
-                            style="inset-inline-end: 30px; bottom: 90px; z-index: 1000;"
-                            icon="mdi-graph"
-                    >
-
-
-                    </v-btn>
-                </template>
-            </v-tooltip>
-
             <v-card>
                 <v-card-title>
                     <div class="flex-grow-1"></div>
@@ -172,6 +153,20 @@
                         <template #bottom>
                             <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
                                 <div class="d-flex align-center ga-4">
+                                    <v-tooltip text="{{ _('Visualize Results') }}" location="top">
+                                        <template #activator="{props}">
+                                            <v-btn
+                                                    v-if="showVisualize"
+                                                    v-bind="props"
+                                                    @click.stop="visualizeResults"
+                                                    :loading="visualizeLoading"
+                                                    color="primary"
+                                                    variant="tonal"
+                                                    density="comfortable"
+                                                    icon="mdi-graph"
+                                            ></v-btn>
+                                        </template>
+                                    </v-tooltip>
                                     <div>{{ _('Search time: ') }}
                                         ${searchTime} {{ _('seconds') }}</div>
                                     {% if current_user.has_role("Admin") %}
