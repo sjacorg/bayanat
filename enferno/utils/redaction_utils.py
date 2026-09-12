@@ -1,6 +1,6 @@
 import io
 
-import fitz
+import pymupdf
 from PIL import Image, ImageDraw, ImageOps
 
 
@@ -23,9 +23,9 @@ def _validate_rect(rect: dict) -> None:
         raise RedactionError("Redaction coordinates must be normalized within the page")
 
 
-def _absolute_rect(rect: dict, width: float, height: float) -> fitz.Rect:
+def _absolute_rect(rect: dict, width: float, height: float) -> pymupdf.Rect:
     _validate_rect(rect)
-    return fitz.Rect(
+    return pymupdf.Rect(
         rect["x"] * width,
         rect["y"] * height,
         (rect["x"] + rect["w"]) * width,
@@ -33,7 +33,7 @@ def _absolute_rect(rect: dict, width: float, height: float) -> fitz.Rect:
     )
 
 
-def _page_specs_by_index(doc: fitz.Document, pages: list[dict]) -> dict[int, list[dict]]:
+def _page_specs_by_index(doc: pymupdf.Document, pages: list[dict]) -> dict[int, list[dict]]:
     specs = {}
     for spec in pages:
         page_index = spec.get("page")
@@ -49,7 +49,7 @@ def _page_specs_by_index(doc: fitz.Document, pages: list[dict]) -> dict[int, lis
 
 
 def redact_pdf_bytes(src: bytes, pages: list[dict]) -> bytes:
-    doc = fitz.open(stream=src, filetype="pdf")
+    doc = pymupdf.open(stream=src, filetype="pdf")
     try:
         for page_index, rects in _page_specs_by_index(doc, pages).items():
             page = doc[page_index]

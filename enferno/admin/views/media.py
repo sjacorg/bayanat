@@ -39,6 +39,7 @@ from enferno.utils.redaction_utils import (
     rotate_rect_to_original,
 )
 from enferno.utils.text_utils import normalize_arabic
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 from enferno.admin.validation.models import MediaRequestModel
 import enferno.utils.typing as t
@@ -866,7 +867,7 @@ def api_media_dashboard():
     # Text search in normalized extraction text
     if search:
         search = normalize_arabic(search)
-        query = query.filter(Extraction.search_text.ilike(f"%{search}%"))
+        query = query.filter(like_contains(Extraction.search_text, search))
 
     # Date range filter on extraction created_at
     if date_from:

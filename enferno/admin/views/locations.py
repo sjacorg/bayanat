@@ -21,7 +21,7 @@ from enferno.extensions import db, rds
 from enferno.tasks import regenerate_locations
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.search_utils import SearchUtils
+from enferno.utils.search_utils import SearchUtils, like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE
@@ -269,8 +269,8 @@ def api_location_admin_levels() -> Response:
         result = (
             LocationAdminLevel.query.filter(
                 or_(
-                    LocationAdminLevel.title.ilike(f"%{query}%"),
-                    LocationAdminLevel.title_tr.ilike(f"%{query}%"),
+                    like_contains(LocationAdminLevel.title, query),
+                    like_contains(LocationAdminLevel.title_tr, query),
                 )
             )
             .order_by(-LocationAdminLevel.id)
@@ -445,8 +445,8 @@ def api_location_types() -> Response:
         result = (
             LocationType.query.filter(
                 or_(
-                    LocationType.title.ilike(f"%{query}%"),
-                    LocationType.title_tr.ilike(f"%{query}%"),
+                    like_contains(LocationType.title, query),
+                    like_contains(LocationType.title_tr, query),
                 )
             )
             .order_by(-LocationType.id)

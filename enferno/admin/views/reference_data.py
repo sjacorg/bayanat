@@ -13,6 +13,7 @@ from enferno.admin.validation.models import (
     ComponentDataMixinRequestModel,
 )
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE
@@ -33,7 +34,7 @@ def api_countries() -> Response:
     if q:
         result = (
             Country.query.filter(
-                or_(Country.title.ilike(f"%{q}%"), Country.title_tr.ilike(f"%{q}%"))
+                or_(like_contains(Country.title, q), like_contains(Country.title_tr, q))
             )
             .order_by(-Country.id)
             .paginate(page=page, per_page=per_page, count=True)
@@ -170,7 +171,7 @@ def api_ethnographies() -> Response:
     if q:
         result = (
             Ethnography.query.filter(
-                or_(Ethnography.title.ilike(f"%{q}%"), Ethnography.title_tr.ilike(f"%{q}%"))
+                or_(like_contains(Ethnography.title, q), like_contains(Ethnography.title_tr, q))
             )
             .order_by(-Ethnography.id)
             .paginate(page=page, per_page=per_page, count=True)
@@ -304,7 +305,7 @@ def api_dialects() -> Response:
     if q:
         result = (
             Dialect.query.filter(
-                or_(Dialect.title.ilike(f"%{q}%"), Dialect.title_tr.ilike(f"%{q}%"))
+                or_(like_contains(Dialect.title, q), like_contains(Dialect.title_tr, q))
             )
             .order_by(-Dialect.id)
             .paginate(page=page, per_page=per_page, count=True)
@@ -437,7 +438,7 @@ def api_id_number_types() -> Response:
     if q:
         result = (
             IDNumberType.query.filter(
-                or_(IDNumberType.title.ilike(f"%{q}%"), IDNumberType.title_tr.ilike(f"%{q}%"))
+                or_(like_contains(IDNumberType.title, q), like_contains(IDNumberType.title_tr, q))
             )
             .order_by(-IDNumberType.id)
             .paginate(page=page, per_page=per_page, count=True)

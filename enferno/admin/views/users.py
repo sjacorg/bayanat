@@ -24,6 +24,7 @@ from enferno.extensions import db
 from enferno.user.models import User, Role, Session
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE, fresh_auth
@@ -47,7 +48,7 @@ def api_users() -> Response:
     q = request.args.get("q")
     query = []
     if q is not None:
-        query.append(User.name.ilike("%" + q + "%"))
+        query.append(like_contains(User.name, q))
     result = (
         User.query.filter(*query)
         .order_by(User.username)
@@ -547,7 +548,7 @@ def api_roles() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
     if q is not None:
-        query.append(Role.name.ilike("%" + q + "%"))
+        query.append(like_contains(Role.name, q))
     result = (
         Role.query.filter(*query)
         .order_by(Role.id)

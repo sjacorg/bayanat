@@ -11,6 +11,7 @@ from enferno.admin.models import Eventtype, Activity
 from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.models import EventtypeRequestModel
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.search_utils import like_contains
 from enferno.utils.validation_utils import validate_with
 import enferno.utils.typing as t
 from . import admin, PER_PAGE
@@ -43,7 +44,7 @@ def api_eventtypes() -> Response:
     per_page = request.args.get("per_page", PER_PAGE, int)
 
     if q is not None:
-        query.append(or_(Eventtype.title.ilike(f"%{q}%"), Eventtype.title_ar.ilike(f"%{q}%")))
+        query.append(or_(like_contains(Eventtype.title, q), like_contains(Eventtype.title_ar, q)))
 
     typ = request.args.get("typ", None)
     if typ and typ in ["for_bulletin", "for_actor", "for_incident"]:

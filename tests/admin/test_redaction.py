@@ -1,6 +1,6 @@
 import io
 
-import fitz
+import pymupdf
 import pytest
 from PIL import Image
 
@@ -9,7 +9,7 @@ from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, re
 
 
 def _one_page_pdf_with_text(text="SECRET NAME"):
-    doc = fitz.open()
+    doc = pymupdf.open()
     page = doc.new_page(width=200, height=200)
     page.insert_text((10, 100), text, fontsize=12)
     data = doc.tobytes()
@@ -23,7 +23,7 @@ def test_redact_pdf_removes_text_under_box():
 
     out = redact_pdf_bytes(src, pages)
 
-    doc = fitz.open(stream=out, filetype="pdf")
+    doc = pymupdf.open(stream=out, filetype="pdf")
     remaining = doc[0].get_text()
     doc.close()
     assert "SECRET" not in remaining
@@ -34,7 +34,7 @@ def test_redact_pdf_blanks_image_pixels_not_whole_page():
     img = Image.new("RGB", (200, 200), "white")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    doc = fitz.open()
+    doc = pymupdf.open()
     page = doc.new_page(width=200, height=200)
     page.insert_image(page.rect, stream=buf.getvalue())
     src = doc.tobytes()
@@ -43,7 +43,7 @@ def test_redact_pdf_blanks_image_pixels_not_whole_page():
     pages = [{"page": 0, "rects": [{"x": 0.25, "y": 0.25, "w": 0.5, "h": 0.5}]}]
     out = redact_pdf_bytes(src, pages)
 
-    doc = fitz.open(stream=out, filetype="pdf")
+    doc = pymupdf.open(stream=out, filetype="pdf")
     pix = doc[0].get_pixmap()
     center = pix.pixel(100, 100)
     corner = pix.pixel(5, 5)
