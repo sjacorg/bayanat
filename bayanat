@@ -743,6 +743,15 @@ do_switch_verify() {
 }
 
 rollback_code() {
+    # An interrupted update is recovered by a NEW process: `update --recover`
+    # reads the phase out of update.json and reaches SWITCH_DONE here with none
+    # of the in-process STATE_* variables set. Without loading them back off
+    # disk, `set -u` kills the script on an unbound STATE_PREVIOUS before
+    # anything is rolled back, and write_state would blank the fields it does
+    # default.
+    export STATE_TARGET="${STATE_TARGET:-$(read_field target || true)}"
+    export STATE_PREVIOUS="${STATE_PREVIOUS:-$(read_field previous || true)}"
+    export STATE_SNAPSHOT="${STATE_SNAPSHOT:-$(read_field snapshot || true)}"
     local prev="$STATE_PREVIOUS"
     if [[ -z "$prev" ]]; then
         export STATE_ERROR_JSON='"cannot roll back: no previous tag recorded"'
