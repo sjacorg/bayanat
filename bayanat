@@ -162,7 +162,12 @@ snapshot_pg_dump() {
     # Log goes to stderr so `$(snapshot_pg_dump ...)` captures only the
     # basename from the trailing `echo "$name"`.
     log "Taking pre-update snapshot: $name" >&2
-    (
+    # The subshell status must be tested explicitly. This function runs inside
+    # an `if !` condition, which disables errexit for everything it calls, so a
+    # pg_dump that dies part-way (full disk, a lock, an unreadable table) would
+    # otherwise fall through to the rename and publish a truncated dump as a
+    # valid snapshot.
+    if ! (
         _pg_load
         local user="${POSTGRES_USER:-$APP_USER}"
         local db="${POSTGRES_DB:-$APP_USER}"
@@ -178,8 +183,18 @@ snapshot_pg_dump() {
                     -f "$partial" \
                     "$db"
         fi
-    )
-    mv -Tf "$partial" "$final"
+    ); then
+        warn "pg_dump failed; discarding the partial snapshot $name"
+        rm -f "$partial"
+        return 1
+    fi
+    # A dump that exits 0 but wrote nothing is not a snapshot either.
+    [[ -s "$partial" ]] || {
+        warn "pg_dump produced an empty snapshot $name"
+        rm -f "$partial"
+        return 1
+    }
+    mv -Tf "$partial" "$final" || return 1
     echo "$name"
 }
 
