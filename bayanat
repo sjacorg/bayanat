@@ -1660,6 +1660,16 @@ _ensure_runtime_layout() {
         fi
         echo "BAYANAT_CONFIG_FILE=$RUNTIME_DIR/config.json" >> "$SHARED_DIR/.env"
     fi
+    # config.json is written by the app itself (the settings UI opens it with
+    # "w"). `cp -p` above carries over the legacy owner and mode, typically the
+    # old single account at 644, which leaves the hardened web user with read
+    # access only: settings silently stop saving and no health probe notices.
+    # Applied on every run, not just the migrating one, so an install already
+    # moved across with the old permissions is repaired as well.
+    if [[ -f "$RUNTIME_DIR/config.json" ]]; then
+        chown root:"$APP_GROUP" "$RUNTIME_DIR/config.json"
+        chmod 660 "$RUNTIME_DIR/config.json"
+    fi
 }
 
 # --- Layout hardening ---
