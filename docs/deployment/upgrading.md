@@ -54,7 +54,7 @@ maintenance window, not a routine pull.
 | v4.x installed with the `bayanat` installer at `/opt/bayanat` | [Path A](#path-a-installer-managed-install) |
 | v4.x installed manually, in your own directory with your own service units | [Path B](#path-b-manual-install) |
 | v4.x on Docker Compose | [Path C](#path-c-docker) |
-| v3.x, any deployment | [Upgrade to v4 first](#upgrading-to-v4), then return here |
+| v3.x, any deployment | [Upgrade to v4 first](#upgrading-to-v4-legacy), then return here |
 
 Upgrading straight from v3 to v5 is not supported. The v4 upgrade moves you to
 Alembic migrations, and v5 builds on that baseline.
