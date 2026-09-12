@@ -1676,17 +1676,30 @@ _ensure_runtime_layout() {
     # Applied on every run, not just the migrating one, so an install already
     # moved across with the old permissions is repaired as well.
     # $RUNTIME_DIR is group-writable by design, so this path is one the service
-    # accounts control. Refuse anything that is not a regular file rather than
-    # chown/chmod through it: a symlink planted there would otherwise hand
-    # root:$APP_GROUP 660 to whatever it points at. `chown -h` never follows,
-    # and the type check runs immediately before it.
+    # accounts control. A test followed by chown/chmod is not enough: the
+    # account can swap the file for a symlink between the two, and root would
+    # then hand root:$APP_GROUP 660 to whatever it points at. Open the file
+    # once with O_NOFOLLOW and act on the descriptor, so there is no window and
+    # no name to swap. `chown`/`chmod` have no equivalent.
     local cfg="$RUNTIME_DIR/config.json"
-    if [[ -L "$cfg" ]]; then
-        die "$cfg is a symlink; refusing to change ownership through it" \
-            "Replace it with a regular file and re-run"
-    elif [[ -f "$cfg" ]]; then
-        chown -h root:"$APP_GROUP" "$cfg" || die "Could not set the owner of $cfg"
-        chmod 660 "$cfg" || die "Could not set the mode of $cfg"
+    if [[ -e "$cfg" || -L "$cfg" ]]; then
+        python3 - "$cfg" "$APP_GROUP" <<'PYEOF' || die "Could not set the owner and mode of the runtime config.json" \
+            "It must be a regular file owned by root; replace it and re-run"
+import grp, os, stat, sys
+
+path, group = sys.argv[1], sys.argv[2]
+try:
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+except OSError as e:
+    sys.exit(f"{path}: {e.strerror} (a symlink here is refused)")
+try:
+    if not stat.S_ISREG(os.fstat(fd).st_mode):
+        sys.exit(f"{path}: not a regular file")
+    os.fchown(fd, 0, grp.getgrnam(group).gr_gid)
+    os.fchmod(fd, 0o660)
+finally:
+    os.close(fd)
+PYEOF
     fi
 }
 
@@ -1781,29 +1794,33 @@ _harden_backup() {
            FROM pg_roles WHERE rolname='$APP_USER';" 2>/dev/null) || attrs=""
     pub_connect=$(sudo -u postgres psql -tA -c \
         "SELECT has_database_privilege('public','bayanat','CONNECT');" 2>/dev/null) || pub_connect=""
-    {
-        echo "Pre-harden database state for role '$APP_USER'."
-        if [[ -n "$attrs" ]]; then
-            IFS='|' read -r r_super r_createdb r_createrole r_repl <<< "$attrs"
-            printf 'To restore role attributes:\n'
-            printf "  sudo -u postgres psql -c 'ALTER ROLE \"%s\" %s %s %s %s;'\n" \
-                "$APP_USER" \
-                "$([[ $r_super == t ]] && echo SUPERUSER || echo NOSUPERUSER)" \
-                "$([[ $r_createdb == t ]] && echo CREATEDB || echo NOCREATEDB)" \
-                "$([[ $r_createrole == t ]] && echo CREATEROLE || echo NOCREATEROLE)" \
-                "$([[ $r_repl == t ]] && echo REPLICATION || echo NOREPLICATION)"
-        else
-            echo "WARNING: could not read role attributes before hardening."
-        fi
-        if [[ "$pub_connect" == "t" ]]; then
-            echo "PUBLIC held CONNECT on the bayanat database. To restore:"
-            echo "  sudo -u postgres psql -c 'GRANT CONNECT ON DATABASE bayanat TO PUBLIC;'"
-        elif [[ "$pub_connect" == "f" ]]; then
-            echo "PUBLIC did not hold CONNECT before hardening; nothing to restore."
-        else
-            echo "WARNING: could not read the PUBLIC CONNECT grant before hardening."
-        fi
-    } > "$dir/REVERT-DB.txt" || die "Could not write $dir/REVERT-DB.txt"
+    # Assembled in memory and written once. A redirected brace group reports
+    # only its LAST command's status, so a disk that fills part-way through
+    # would drop the role statements and still look like a successful write.
+    local revert
+    revert="Pre-harden database state for role '$APP_USER'."$'\n'
+    if [[ -n "$attrs" ]]; then
+        IFS='|' read -r r_super r_createdb r_createrole r_repl <<< "$attrs"
+        revert+="To restore role attributes:"$'\n'
+        revert+=$(printf "  sudo -u postgres psql -c 'ALTER ROLE \"%s\" %s %s %s %s;'" \
+            "$APP_USER" \
+            "$([[ $r_super == t ]] && echo SUPERUSER || echo NOSUPERUSER)" \
+            "$([[ $r_createdb == t ]] && echo CREATEDB || echo NOCREATEDB)" \
+            "$([[ $r_createrole == t ]] && echo CREATEROLE || echo NOCREATEROLE)" \
+            "$([[ $r_repl == t ]] && echo REPLICATION || echo NOREPLICATION)")$'\n'
+    else
+        revert+="WARNING: could not read role attributes before hardening."$'\n'
+    fi
+    if [[ "$pub_connect" == "t" ]]; then
+        revert+="PUBLIC held CONNECT on the bayanat database. To restore:"$'\n'
+        revert+="  sudo -u postgres psql -c 'GRANT CONNECT ON DATABASE bayanat TO PUBLIC;'"$'\n'
+    elif [[ "$pub_connect" == "f" ]]; then
+        revert+="PUBLIC did not hold CONNECT before hardening; nothing to restore."$'\n'
+    else
+        revert+="WARNING: could not read the PUBLIC CONNECT grant before hardening."$'\n'
+    fi
+    printf '%s' "$revert" > "$dir/REVERT-DB.txt" \
+        || die "Could not write $dir/REVERT-DB.txt"
 
     log "Backed up $n config files to $dir" >&2
     echo "$dir"
