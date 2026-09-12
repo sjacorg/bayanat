@@ -1938,6 +1938,13 @@ cmd_harden() {
     [[ -L "$CURRENT_LINK" ]] || die "Bayanat is not installed"
 
     if _is_hardened && [[ "${1:-}" != "--force" ]]; then
+        # Cheap and idempotent, and the one thing worth doing on an install
+        # that is already hardened: an install migrated by an earlier CLI can
+        # be carrying a config.json the service accounts cannot write, and the
+        # operator who notices that settings do not save runs exactly this
+        # command. Reporting "already hardened" and changing nothing would send
+        # them away with the problem intact.
+        _ensure_runtime_layout
         log "Already on hardened layout (version $LAYOUT_VERSION)"
         return 0
     fi
