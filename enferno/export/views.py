@@ -3,6 +3,7 @@ from typing import Optional
 
 from flask import request, Response, Blueprint, send_from_directory
 from flask.templating import render_template
+from flask_babel import gettext
 from flask_security.decorators import auth_required, current_user, roles_required
 from enferno.extensions import db
 from enferno.admin.constants import Constants
@@ -34,7 +35,7 @@ def export_before_request() -> Optional[Response]:
     """Check user's permissions."""
     # check user's permissions
     if not (current_user.has_role("Admin") or current_user.can_export):
-        return HTTPResponse.forbidden("Forbidden")
+        return HTTPResponse.forbidden(gettext("Forbidden"))
 
 
 @export.route("/dashboard/")
@@ -171,7 +172,9 @@ def api_export_get(id: t.id) -> Response:
     # Same ownership guard as the list/download routes (BAY-01-015).
     if not current_user.has_role("Admin") and current_user.id != export.requester_id:
         return HTTPResponse.forbidden("Forbidden")
-    return HTTPResponse.success(data=export.to_dict(), message="Export retrieved successfully")
+    return HTTPResponse.success(
+        data=export.to_dict(), message=gettext("Export retrieved successfully")
+    )
 
 
 @export.post("/api/exports/")

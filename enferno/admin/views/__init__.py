@@ -4,6 +4,7 @@ import os
 from functools import wraps
 
 from flask import Blueprint, current_app, g, request
+from flask_babel import gettext
 from flask_security.decorators import auth_required, current_user
 
 from enferno.admin.models import Activity
@@ -135,7 +136,7 @@ def reject_if_review_locked(item, entity: str, item_id):
             entity,
             details=f"Attempt to edit {entity} {item_id} locked for peer review.",
         )
-        return HTTPResponse.forbidden("Item is locked for peer review")
+        return HTTPResponse.forbidden(gettext("Item is locked for peer review"))
     return None
 
 

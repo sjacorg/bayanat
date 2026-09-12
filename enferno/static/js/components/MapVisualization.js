@@ -197,7 +197,7 @@ const MapVisualization = Vue.defineComponent({
     async initMapFlow() {
       this.loading = true;
       this.errorMessage = '';
-      this.loadingMessage = this.translations.preparingMap_ ?? 'Preparing map...';
+      this.loadingMessage = this.translations.preparingMap_;
 
       const result = await this.fetchData();
 
@@ -240,7 +240,7 @@ const MapVisualization = Vue.defineComponent({
         );
 
         if (statusResult.status === 'error') {
-          throw new Error(statusResult.error || 'Map generation error.');
+          throw new Error(statusResult.error || this.translations.mapGenerationFailed_);
         }
 
         this.loadingMessage = this.translations.fetchingVisualizationData_;
@@ -256,7 +256,7 @@ const MapVisualization = Vue.defineComponent({
         };
       } catch (err) {
         console.error(err);
-        this.errorMessage = err.message || 'Something went wrong';
+        this.errorMessage = err.message || this.translations.mapGenerationFailed_;
         this.$root.showSnack(handleRequestError(err));
         return { locations: [], flows: [] };
       } finally {
@@ -668,7 +668,7 @@ const MapVisualization = Vue.defineComponent({
                   @click="fetchActorsForNode('all')"
                 >
                   <v-icon start size="16">mdi-account-group</v-icon>
-                  {{ translations.all_ ?? 'All' }}
+                  {{ translations.all_ }}
                 </v-btn>
                 <v-btn
                   variant="tonal"
@@ -678,7 +678,7 @@ const MapVisualization = Vue.defineComponent({
                   @click="fetchActorsForNode('in')"
                 >
                   <v-icon start size="16">mdi-arrow-down</v-icon>
-                  {{ translations.totalIn_ ?? 'Total In' }}: {{ locationActors.nodeInfo.totalIn }}
+                  {{ translations.totalIn_ }}: {{ locationActors.nodeInfo.totalIn }}
                 </v-btn>
                 <v-btn
                   variant="tonal"
@@ -688,7 +688,7 @@ const MapVisualization = Vue.defineComponent({
                   @click="fetchActorsForNode('out')"
                 >
                   <v-icon start size="16">mdi-arrow-up</v-icon>
-                  {{ translations.totalOut_ ?? 'Total Out' }}: {{ locationActors.nodeInfo.totalOut }}
+                  {{ translations.totalOut_ }}: {{ locationActors.nodeInfo.totalOut }}
                 </v-btn>
               </div>
 
@@ -702,7 +702,7 @@ const MapVisualization = Vue.defineComponent({
               <!-- Actor list -->
               <template v-if="!locationActors.loading">
                 <div v-if="!locationActors.items.length" class="text-center text-medium-emphasis py-4">
-                  {{ translations.noActorsFound_ ?? 'No actors found.' }}
+                  {{ translations.noActorsFound_ }}
                 </div>
 
                 <v-card
@@ -725,17 +725,17 @@ const MapVisualization = Vue.defineComponent({
                   <!-- ========================= -->
                   <template v-if="actor.current_event">
                     <div v-if="actor.prev_event" class="text-caption text-medium-emphasis">
-                      <strong>Previous:</strong>
+                      <strong>{{ translations.previous_ }}:</strong>
                       {{ actor.prev_event.type }} — {{ actor.prev_event.location }}
                     </div>
 
                     <div class="text-caption mt-1 font-weight-medium text-primary">
-                      <strong>Here:</strong>
+                      <strong>{{ translations.here_ }}:</strong>
                       {{ actor.current_event.type }} — {{ actor.current_event.location }}
                     </div>
 
                     <div v-if="actor.next_event" class="text-caption text-medium-emphasis mt-1">
-                      <strong>Next:</strong>
+                      <strong>{{ translations.next_ }}:</strong>
                       {{ actor.next_event.type }} — {{ actor.next_event.location }}
                     </div>
                   </template>
@@ -745,12 +745,12 @@ const MapVisualization = Vue.defineComponent({
                   <!-- ========================= -->
                   <template v-else-if="actor.origin_event || actor.dest_event">
                     <div v-if="actor.origin_event" class="text-caption text-medium-emphasis">
-                      <strong>From:</strong>
+                      <strong>{{ translations.from_ }}:</strong>
                       {{ actor.origin_event.type }} — {{ actor.origin_event.location }}
                     </div>
 
                     <div v-if="actor.dest_event" class="text-caption mt-1 font-weight-medium text-primary">
-                      <strong>To:</strong>
+                      <strong>{{ translations.to_ }}:</strong>
                       {{ actor.dest_event.type }} — {{ actor.dest_event.location }}
                     </div>
                   </template>
@@ -760,7 +760,7 @@ const MapVisualization = Vue.defineComponent({
                   <!-- ========================= -->
                   <template v-else>
                     <div class="text-caption text-medium-emphasis">
-                      Actor has events, but no contextual data available.
+                      {{ translations.noContextualEventData_ }}
                     </div>
                   </template>
 
@@ -774,10 +774,10 @@ const MapVisualization = Vue.defineComponent({
                 <v-icon class="me-2">mdi-account-group</v-icon>
                 <div>
                   <div class="text-subtitle-1 font-weight-bold">
-                    {{ translations.actors_ ?? 'Actors' }}
+                    {{ translations.actors_ }}
                   </div>
                   <div v-if="entities.total != null" class="text-caption text-medium-emphasis">
-                    {{ entities.total }} {{ translations.total_ ?? 'total' }}
+                    {{ entities.total }} {{ translations.total_ }}
                   </div>
                 </div>
               </div>

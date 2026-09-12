@@ -50,8 +50,8 @@ const toolbarContent = `
             </div>
           </template>
           <div class="d-flex flex-column align-center">
-            <span class="font-weight-bold">Redact document</span>
-            <span class="text-caption opacity-80">Draw black boxes to censor sensitive areas,<br>then save a new redacted copy</span>
+            <span class="font-weight-bold">{{ translations.redactDocument_ }}</span>
+            <span class="text-caption opacity-80">{{ translations.drawBlackBoxesAndSaveACopy_ }}</span>
           </div>
         </v-tooltip>
       </div>
@@ -333,7 +333,7 @@ const MediaCard = Vue.defineComponent({
         >
           <div class="d-flex align-center ga-2">
             <v-icon icon="mdi-marker" size="18" color="warning"></v-icon>
-            <span class="text-caption font-weight-medium">{{ redactions.length }} redacted cop{{ redactions.length > 1 ? 'ies' : 'y' }}</span>
+            <span class="text-caption font-weight-medium">{{ redactions.length }} {{ redactions.length > 1 ? translations.redactedCopies_ : translations.redactedCopy_ }}</span>
           </div>
           <v-icon :icon="showRedactions ? 'mdi-chevron-up' : 'mdi-chevron-down'" size="18" class="opacity-60"></v-icon>
         </div>
