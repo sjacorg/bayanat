@@ -763,6 +763,143 @@ div.jsondiffpatch-child-node-type-array:after {
     max-height: calc(100vh - 80px - 0.75rem);
 }
 
+.label-structure-panel {
+    width: min(720px, calc(100vw - 24px));
+    font-size: 13px;
+}
+
+.label-structure-panel .v-card-title {
+    min-height: 36px;
+    font-size: 0.95rem;
+}
+
+.label-structure-panel .v-field,
+.label-structure-panel .v-btn {
+    font-size: 13px;
+}
+
+.label-structure-tree {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+/* both sit above Vuetify's overlay layer (2400) so they survive a fullscreen dialog */
+/* position comes from the component so it can be dragged. the app sets global
+   v-btn defaults (text variant, no elevation), so the shadow is restated here
+   rather than relying on the elevation prop */
+.label-structure-fab {
+    position: fixed;
+    z-index: 2600;
+    cursor: move;
+    box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14);
+}
+
+.label-structure-dock {
+    position: fixed;
+    z-index: 2600;
+    max-height: min(80vh, 720px);
+    display: flex;
+    flex-direction: column;
+    /* native resize handle rather than a hand-rolled one, for the rare label that
+       still runs long */
+    resize: horizontal;
+    overflow: hidden;
+    min-width: 360px;
+    max-width: calc(100vw - 24px);
+}
+
+.label-structure-handle {
+    cursor: move;
+    user-select: none;
+}
+
+.label-structure-tree .v-list-item {
+    min-height: 26px;
+    padding-inline-end: 6px;
+}
+
+/* every level costs one indent step plus the width Vuetify reserves for the
+   prepend slot; both are trimmed so a six level path still fits */
+.label-structure-tree .v-list-group {
+    --list-indent-size: 12px;
+    --prepend-width: 24px;
+}
+
+.label-structure-tree .v-list-item__spacer {
+    width: 4px;
+}
+
+.label-structure-tree .v-list-item__prepend > .v-list-item-action {
+    margin-inline-end: 2px;
+}
+
+/* the selected row's full path, pinned under the search box. this is the one
+   line he reads, so it outranks the tree rows in size and colour */
+.label-structure-path {
+    flex: 0 0 auto;
+    /* small enough that a six level path fits without scrolling sideways, which
+       is the point of showing it at all */
+    font-size: 11.5px;
+    line-height: 1.05rem;
+    color: rgb(var(--v-theme-primary));
+    background: rgba(var(--v-theme-primary), 0.1);
+    border-block: thin solid rgba(var(--v-theme-primary), 0.25);
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.label-structure-path-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* dir=rtl orders the segments right to left; the line itself stays left aligned
+   so it reads as a second line under the English one */
+.label-structure-path-ar {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.label-structure-scope .v-btn {
+    height: 24px;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.label-structure-crumb-sep {
+    opacity: 0.5;
+}
+
+.label-structure-crumb-leaf {
+    font-weight: 600;
+}
+
+.label-structure-tree .v-list-item-title,
+.label-structure-title {
+    font-size: 12.5px;
+    line-height: 1.05rem;
+}
+
+.label-structure-title-ar {
+    font-size: 10.5px;
+    line-height: 0.95rem;
+    /* dir=rtl keeps the bidi order correct; alignment follows the English line above */
+    text-align: left;
+}
+
+.label-structure-tree .v-chip {
+    height: 16px;
+    padding-inline: 4px;
+    font-size: 9px;
+}
+
+.label-structure-panel .v-card-actions {
+    min-height: 32px;
+    padding: 2px 8px;
+}
+
 
 /* steppers enhancements */
 .v-stepper > .v-window {
