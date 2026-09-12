@@ -74,7 +74,8 @@ def test_redact_image_bytes_survives_truncated_jpeg():
 
     out = redact_image_bytes(truncated, [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
 
-    assert Image.open(io.BytesIO(out)).convert("RGB").getpixel((10, 10)) == (0, 0, 0)
+    pixel = Image.open(io.BytesIO(out)).convert("RGB").getpixel((10, 10))
+    assert pixel == (0, 0, 0)
 
 
 def test_redact_image_bytes_rejects_undecodable_file():
