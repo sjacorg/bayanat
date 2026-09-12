@@ -618,10 +618,18 @@ class Incident(db.Model, BaseMixin):
 
     def get_modified_date(self) -> datetime:
         """Return the last modified date of the incident."""
-        if self.history:
-            return self.history[-1].updated_at
-        else:
-            return self.updated_at
+        from enferno.admin.models import IncidentHistory
+
+        # Query the latest timestamp directly: loading the history collection
+        # would fetch every revision's `data` blob just to read one date.
+        latest = (
+            db.session.query(IncidentHistory.updated_at)
+            .filter(IncidentHistory.incident_id == self.id)
+            .order_by(IncidentHistory.updated_at.desc())
+            .limit(1)
+            .scalar()
+        )
+        return latest or self.updated_at
 
 
 # ----------------------------------- History Tables (Versioning) ------------------------------------
