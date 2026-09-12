@@ -1717,20 +1717,37 @@ _harden_backup() {
     # the copy back to its original path. Files that do NOT exist are recorded
     # as ABSENT so a restore removes anything the hardening created. Echoes
     # the dir on stdout.
+    #
+    # Every step is checked explicitly. The caller runs this as
+    # `backup_dir=$(_harden_backup)`, and bash does not carry errexit into a
+    # command substitution unless `inherit_errexit` is set, so a failed `cp`
+    # here would otherwise be skipped over and the trailing echo would hand the
+    # caller a directory that is missing the file it claims to hold. Hardening
+    # would then rewrite system configuration with no way back. Nothing has
+    # been modified at this point, so dying is the safe outcome.
     local dir
     dir="$STATE_DIR/harden-backup-$(date -u +%Y%m%d-%H%M%S)-$$"
-    mkdir -p "$dir"
-    chmod 700 "$dir"
-    local f i=0 n=0
+    mkdir -p "$dir" || die "Could not create the pre-harden backup directory $dir"
+    chmod 700 "$dir" || die "Could not restrict the pre-harden backup directory $dir"
+    local f i=0 n=0 owner mode
     while IFS= read -r f; do
         i=$((i + 1))
         if [[ -f "$f" ]]; then
-            cp -p "$f" "$dir/$i.file"
-            printf '%s\t%s\t%s\t%s\n' "$i.file" "$f" \
-                "$(stat -c '%U:%G' "$f")" "$(stat -c '%a' "$f")" >> "$dir/manifest"
+            cp -p "$f" "$dir/$i.file" \
+                || die "Could not back up $f before hardening" \
+                       "Fix the copy error above and re-run; nothing has been changed"
+            # Ownership and mode are what a restore puts back, so an unreadable
+            # stat is as disqualifying as a failed copy.
+            owner=$(stat -c '%U:%G' "$f") \
+                || die "Could not read the owner of $f before hardening"
+            mode=$(stat -c '%a' "$f") \
+                || die "Could not read the mode of $f before hardening"
+            printf '%s\t%s\t%s\t%s\n' "$i.file" "$f" "$owner" "$mode" >> "$dir/manifest" \
+                || die "Could not write the pre-harden manifest in $dir"
             n=$((n + 1))
         else
-            printf 'ABSENT\t%s\t-\t-\n' "$f" >> "$dir/manifest"
+            printf 'ABSENT\t%s\t-\t-\n' "$f" >> "$dir/manifest" \
+                || die "Could not write the pre-harden manifest in $dir"
         fi
     done < <(_harden_files)
 
