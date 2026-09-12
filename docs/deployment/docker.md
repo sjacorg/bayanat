@@ -136,15 +136,24 @@ docker compose exec -T postgres pg_dump -Fc -U bayanat bayanat \
   > ~/bayanat-$(date +%F).dump
 cp .env ~/bayanat-env-$(date +%F).bak
 
-# 2. Fetch the release you want. Pick a tag from the releases page;
+# 2. If you may want to roll back, keep the images you are running. Compose
+#    names built images after the project, so the workers rebuild onto the very
+#    same tags and the current ones become unreachable. Give them names of
+#    their own first; the rollback steps below tag them back.
+docker image tag "$(docker compose config --images | grep -- '-celery$')" \
+  bayanat-rollback-celery
+docker image tag "$(docker compose config --images | grep -- '-celery-ocr$')" \
+  bayanat-rollback-celery-ocr
+
+# 3. Fetch the release you want. Pick a tag from the releases page;
 #    the value below is an example.
 git fetch --tags
 git checkout v5.0.0
 
-# 3. Rebuild the images
+# 4. Rebuild the images
 docker compose build
 
-# 4. Restart. Migrations run automatically as the app container starts.
+# 5. Restart. Migrations run automatically as the app container starts.
 docker compose up -d
 ```
 
@@ -179,15 +188,19 @@ The schema must match the code, so restoring the database alone is not enough.
 The application and workers must be stopped for the restore, or the old code
 runs migrations against the database while it is being replaced.
 
-::: danger Rolling back to v4 requires images you already have
+::: danger Rolling back to v4 requires images you saved before upgrading
 The v4 images can no longer be rebuilt. v4's stack builds its edge proxy from
 `bitnami/nginx:1.24`, and that tag has been removed from Docker Hub, so
 `docker compose build` on a v4 tag fails outright.
 
-If you may want to roll back, do not prune Docker images before upgrading.
-The rollback below reuses the images already on the host and never rebuilds. If
-they are gone, rolling back to v4 on Docker is not possible and your route is a
-fresh [native install](/deployment/installation) restored from your dump.
+Not pruning is not enough on its own. Both stacks build the workers without an
+explicit image name, so Compose names them after the project and the v5 build
+replaces those tags in place. Checking out v4 afterwards and starting the stack
+would run v5 workers against a v4 database. Only the images you tagged
+separately before upgrading, as step 2 of the upgrade above does, survive that.
+
+If they are gone, rolling back to v4 on Docker is not possible and your route is
+a fresh [native install](/deployment/installation) restored from your dump.
 :::
 
 Rolling back from v5 also moves PostgreSQL back from 16 to 15, and a
@@ -219,7 +232,14 @@ until docker compose exec -T postgres pg_isready -q; do sleep 2; done
 BACKUP=~/bayanat-2026-08-16.dump
 docker compose exec -T postgres pg_restore -U bayanat -d bayanat --no-owner < "$BACKUP"
 
-# 7. Start the rest of the stack
+# 7. Put the saved v4 worker images back on the tags Compose is about to start.
+#    Without this the v5 workers built during the upgrade still hold those tags.
+docker image tag bayanat-rollback-celery \
+  "$(docker compose config --images | grep -- '-celery$')"
+docker image tag bayanat-rollback-celery-ocr \
+  "$(docker compose config --images | grep -- '-celery-ocr$')"
+
+# 8. Start the rest of the stack
 docker compose up -d
 ```
 

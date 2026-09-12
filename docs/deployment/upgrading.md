@@ -322,10 +322,12 @@ most likely to matter after this upgrade are `SEARCH_TIMEOUT` and
 ## Rolling back
 
 Rolling back is manual on every path, because migrations cannot be reversed.
-Restore the backup taken before the upgrade and return the code to the previous
-tag.
+The database and the code have to move together: restore the backup taken
+before the upgrade and return the code to the tag that backup came from.
 
-**Installer-managed:**
+### Between v5 releases
+
+Supported by the CLI, on an installer-managed install:
 
 ```bash
 sudo bayanat snapshots                 # find the pre-update snapshot
@@ -333,14 +335,46 @@ sudo bayanat restore <snapshot-name>   # restores the database
 sudo bayanat update <previous-tag>     # returns the code
 ```
 
-For a rollback off v5 to an older major version, restore the snapshot and then
-put the previous release back by hand: the older CLI has no `update` command.
+### From v5 back to v4
 
-**Manual install:** check out the previous tag, run `uv sync --frozen`, and
-restore your dump with `pg_restore`.
+Not a CLI operation. `bayanat update v4.x` cannot do it, and neither can
+`bayanat restore` on its own. Three things are in the way, and all three have to
+be dealt with by hand:
 
-**Docker:** check out the previous tag and restore your dump into a matching
-PostgreSQL major version.
+- **The CLI cannot fetch a v4 release.** Since v5 the updater installs a signed
+  tarball and refuses anything it cannot verify. No 4.x release carries one, so
+  the download fails.
+- **`bayanat restore` starts the release that is currently linked.** Run it
+  before the code goes back and it brings v5 up against a restored v4 schema.
+  The code has to be in place first, with both services stopped across the whole
+  operation.
+- **The hardened layout locks v4 out of the database.** After `bayanat harden`
+  the units run as `bayanat-web` and `bayanat-celery`, while a 4.x release
+  authenticates to PostgreSQL as its own OS user. Those accounts are not the
+  `bayanat` database role, so v4 cannot connect until the service identities and
+  the PostgreSQL authentication configuration are put back.
+
+What a return to v4 therefore involves, in one stopped maintenance window:
+reinstall the 4.x release and its service units by hand, undo the hardening from
+the backup directory that `bayanat harden` reported (its `REVERT-DB.txt` carries
+the exact statements for the database role and grants, which the config restore
+does not cover), restore the pre-upgrade dump, and only then start the services.
+
+Plan for this before upgrading rather than after. If reverting is a realistic
+possibility for your deployment, keep the pre-upgrade dump and the previous
+release directory, and treat the move to v5 as one-way otherwise.
+
+### Manual install
+
+Check out the previous tag, run `uv sync --frozen`, and restore your dump with
+`pg_restore`, with the application and workers stopped throughout.
+
+### Docker
+
+See [Rolling Back](/deployment/docker#rolling-back) on the Docker page. It is
+not a tag checkout on its own: v5 moves PostgreSQL from 15 to 16, so the volume
+has to be recreated, and the images the rollback needs must exist on the host
+already.
 
 ---
 
