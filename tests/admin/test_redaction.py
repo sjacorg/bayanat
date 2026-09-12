@@ -2,7 +2,7 @@ import io
 
 import pymupdf
 import pytest
-from PIL import Image
+from PIL import Image, ImageFile
 
 from enferno.admin.models import Bulletin, Media
 from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, redact_pdf_bytes
@@ -76,6 +76,11 @@ def test_redact_image_bytes_survives_truncated_jpeg():
 
     pixel = Image.open(io.BytesIO(out)).convert("RGB").getpixel((10, 10))
     assert pixel == (0, 0, 0)
+    # The decoder policy is process-global: redaction must hand it back so OCR,
+    # thumbnails and imports keep rejecting incomplete images.
+    assert ImageFile.LOAD_TRUNCATED_IMAGES is False
+    with pytest.raises(OSError):
+        Image.open(io.BytesIO(truncated)).convert("RGB")
 
 
 def test_redact_image_bytes_rejects_undecodable_file():

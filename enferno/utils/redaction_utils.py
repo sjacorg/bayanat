@@ -1,13 +1,31 @@
 import io
+from contextlib import contextmanager
 
 import pymupdf
 from PIL import Image, ImageDraw, ImageFile, ImageOps
 
-# Field-captured photos regularly arrive with a truncated scan (upload cut short at the
-# source). Browsers render whatever decoded, so the redaction UI shows the image and the
-# user draws boxes on it; PIL alone refuses the same bytes with "broken data stream".
-# Decode what is there so the burn succeeds on exactly the pixels the user saw.
-ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+@contextmanager
+def _allow_truncated_images():
+    """Accept a truncated scan for the duration of one redaction decode.
+
+    Field-captured photos regularly arrive with the upload cut short at the source.
+    Browsers render whatever decoded, so the redaction UI shows the image and the user
+    draws boxes on it; PIL alone refuses the same bytes with "broken data stream". Decode
+    what is there so the burn covers exactly the pixels the user saw.
+
+    Pillow reads this flag at decode time and it is process-global, so it is set around
+    the one decode that needs it rather than at import, where it would also let every
+    other consumer in the process (OCR, thumbnails, imports) silently accept incomplete
+    images. It is not thread-local, so a concurrent decode in the same worker can still
+    observe it; that window is now a single call rather than the process lifetime.
+    """
+    previous = ImageFile.LOAD_TRUNCATED_IMAGES
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+    try:
+        yield
+    finally:
+        ImageFile.LOAD_TRUNCATED_IMAGES = previous
 
 
 class RedactionError(ValueError):
@@ -93,7 +111,8 @@ def redact_image_bytes(src: bytes, rects: list[dict]) -> bytes:
     # the saved copy comes back at 0deg. The DB orientation axis is handled separately
     # by rotate_rect_to_original in the caller.
     try:
-        img = ImageOps.exif_transpose(Image.open(io.BytesIO(src))).convert("RGB")
+        with _allow_truncated_images():
+            img = ImageOps.exif_transpose(Image.open(io.BytesIO(src))).convert("RGB")
     except OSError as e:
         raise RedactionError("This image file is damaged and cannot be redacted") from e
     draw = ImageDraw.Draw(img)
