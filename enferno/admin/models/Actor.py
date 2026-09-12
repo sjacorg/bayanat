@@ -986,6 +986,7 @@ class Actor(db.Model, BaseMixin):
             "dental_habits",
             "case_status",
             "reporters",
+            "known_relatives",
             "identified_by",
             "family_notified",
             "hypothesis_based",

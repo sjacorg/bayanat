@@ -851,6 +851,16 @@
                                                                             </v-col>
                                                                         </v-row>
                                                                         <v-row>
+                                                                            <v-col>
+                                                                                <mix-reporters-field
+                                                                                        v-model="profile.known_relatives"
+                                                                                        :title="translations.knownRelatives_"
+                                                                                        :server-errors="serverErrors"
+                                                                                        :error-key="`item.actor_profiles.${index}.known_relatives`"
+                                                                                ></mix-reporters-field>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row>
                                                                             <v-col md="4">
                                                                                 <v-text-field
                                                                                         label="{{ _('Identified by (responsible institution)') }}"

@@ -571,6 +571,17 @@
                                                             <dt>{{ key|replace('_', ' ')|title }}</dt>
                                                             <dd>{{ value|string or '-' }}</dd>
                                                         {% endif %}
+                                {% if profile.known_relatives %}
+                                    <h6>Known Relatives</h6>
+                                    <div class="known-relatives-section">
+                                        {% for reporter in profile.known_relatives %}
+                                            {% if reporter is mapping %}
+                                                <dl class="reporter-details">
+                                                    {% for key, value in reporter.items() %}
+                                                        {% if value %}
+                                                            <dt>{{ key|replace('_', ' ')|title }}</dt>
+                                                            <dd>{{ value|string or '-' }}</dd>
+                                                        {% endif %}
                                                     {% endfor %}
                                                 </dl>
                                                 {% if not loop.last %}<hr class="reporter-separator">{% endif %}

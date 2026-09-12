@@ -96,3 +96,12 @@ def redact_image_bytes(src: bytes, rects: list[dict]) -> bytes:
     out = io.BytesIO()
     img.save(out, format="JPEG", quality=90)
     return out.getvalue()
+
+
+def pdf_page_images(src: bytes, dpi: int = 110, max_pages: int = 20) -> list[bytes]:
+    """Rasterize a PDF's pages to PNG bytes, capped at ``max_pages``."""
+    doc = pymupdf.open(stream=src, filetype="pdf")
+    try:
+        return [page.get_pixmap(dpi=dpi).tobytes("png") for page in list(doc)[:max_pages]]
+    finally:
+        doc.close()

@@ -113,6 +113,7 @@ const MissingPersonCard = Vue.defineComponent({
               <missing-person-field :field="this.mp.dental_habits" :title="translations.dentalHabits_"></missing-person-field>
               <missing-person-field :field="this.mp._case_status" :title="translations.caseStatus_"></missing-person-field>
               <missing-person-field :type="2" :field="this.mp.reporters" :title="translations.reporters_"></missing-person-field>
+              <missing-person-field :type="2" :field="this.mp.known_relatives" :title="translations.knownRelatives_"></missing-person-field>
               <missing-person-field :field="this.mp.identified_by" :title="translations.identifiedBy"></missing-person-field>
               <missing-person-field :field="this.mp.family_notified" :title="translations.familyNotified_"></missing-person-field>
               <missing-person-field :field="this.mp.reburial_location" :title="translations.reburialLocation_"></missing-person-field>

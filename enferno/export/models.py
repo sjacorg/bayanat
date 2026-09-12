@@ -4,6 +4,7 @@ from typing import Any, Union
 
 import arrow
 from sqlalchemy import ARRAY
+from sqlalchemy.dialects.postgresql import JSONB
 from flask_security.decorators import current_user
 
 from enferno.extensions import db
@@ -194,3 +195,54 @@ class Export(db.Model, BaseMixin):
         # Create unique directory
         dir_id = Export.generate_export_dir()
         return Export.export_dir / dir_id / Export.export_file_name, dir_id
+
+
+class ExportTemplate(db.Model, BaseMixin):
+    """
+    Analyst-defined dossier template: an ordered list of smart-block configs
+    rendered server-side by the block registry (enferno/export/blocks.py).
+    Block content is data, never evaluated as a template.
+    """
+
+    __tablename__ = "export_template"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    entity_type = db.Column(db.String(32), nullable=False, default="actor", server_default="actor")
+    blocks = db.Column(JSONB, nullable=False, default=list)
+    # Inactive templates are usable by admins only (drafts); active ones are
+    # open to anyone with export access. Saving is always live.
+    active = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"), index=True)
+    user = db.relationship("User", backref="export_templates", foreign_keys=[user_id])
+
+    def from_json(self, json: dict) -> "ExportTemplate":
+        from enferno.export.blocks import validate_blocks
+
+        self.title = (json.get("title") or "").strip()
+        if not self.title:
+            raise ValueError("Template title is required")
+        entity_type = json.get("entity_type", "actor")
+        if entity_type != "actor":
+            raise ValueError("Only actor templates are supported")
+        self.entity_type = entity_type
+        self.blocks = validate_blocks(json.get("blocks"))
+        self.active = bool(json.get("active", False))
+        return self
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "class": self.__tablename__,
+            "title": self.title,
+            "entity_type": self.entity_type,
+            "blocks": self.blocks or [],
+            "active": self.active,
+            "user": self.user.to_compact() if self.user else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
+            "created_at": (
+                DateHelper.serialize_datetime(self.created_at) if self.created_at else None
+            ),
+        }
