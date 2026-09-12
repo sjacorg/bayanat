@@ -1,8 +1,12 @@
 import io
+import threading
 from contextlib import contextmanager
 
 import pymupdf
 from PIL import Image, ImageDraw, ImageFile, ImageOps
+
+# Held across the decode, not just the flag flip: the flag is what the decode reads.
+_TRUNCATED_LOCK = threading.Lock()
 
 
 @contextmanager
@@ -17,15 +21,17 @@ def _allow_truncated_images():
     Pillow reads this flag at decode time and it is process-global, so it is set around
     the one decode that needs it rather than at import, where it would also let every
     other consumer in the process (OCR, thumbnails, imports) silently accept incomplete
-    images. It is not thread-local, so a concurrent decode in the same worker can still
-    observe it; that window is now a single call rather than the process lifetime.
+    images. The lock is what keeps that scoping true: the workers are threaded, and two
+    overlapping redactions restoring each other's saved value can otherwise leave the
+    flag on for the life of the process.
     """
-    previous = ImageFile.LOAD_TRUNCATED_IMAGES
-    ImageFile.LOAD_TRUNCATED_IMAGES = True
-    try:
-        yield
-    finally:
-        ImageFile.LOAD_TRUNCATED_IMAGES = previous
+    with _TRUNCATED_LOCK:
+        previous = ImageFile.LOAD_TRUNCATED_IMAGES
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        try:
+            yield
+        finally:
+            ImageFile.LOAD_TRUNCATED_IMAGES = previous
 
 
 class RedactionError(ValueError):
