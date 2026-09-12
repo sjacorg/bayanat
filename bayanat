@@ -1689,7 +1689,10 @@ import grp, os, stat, sys
 
 path, group = sys.argv[1], sys.argv[2]
 try:
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    # O_NONBLOCK so a FIFO planted here returns instead of blocking the whole
+    # run (with the services stopped) waiting for a writer that never comes.
+    # It changes nothing for a regular file, which is all S_ISREG accepts.
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
 except OSError as e:
     sys.exit(f"{path}: {e.strerror} (a symlink here is refused)")
 try:
