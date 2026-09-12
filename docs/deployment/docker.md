@@ -197,7 +197,9 @@ Not pruning is not enough on its own. Both stacks build the workers without an
 explicit image name, so Compose names them after the project and the v5 build
 replaces those tags in place. Checking out v4 afterwards and starting the stack
 would run v5 workers against a v4 database. Only the images you tagged
-separately before upgrading, as step 2 of the upgrade above does, survive that.
+separately before upgrading survive that, which is step 2 of both the routine
+upgrade above and [Path C](/deployment/upgrading#path-c-docker), the v4 to v5
+migration.
 
 If they are gone, rolling back to v4 on Docker is not possible and your route is
 a fresh [native install](/deployment/installation) restored from your dump.

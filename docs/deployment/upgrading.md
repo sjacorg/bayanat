@@ -243,29 +243,37 @@ migrating the volume leaves the container failing to start. Dump before you pull
 # 1. With the old stack still running, dump the database
 docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -Fc bayanat' > bayanat-pre-v5.dump
 
-# 2. Stop the stack
+# 2. Keep the v4 worker images. Compose names built images after the project, so
+#    the v5 build in step 5 rebuilds onto the same tags and the v4 ones become
+#    unreachable. Without this, rolling back is not possible on Docker.
+docker image tag "$(docker compose config --images | grep -- '-celery$')" \
+  bayanat-rollback-celery
+docker image tag "$(docker compose config --images | grep -- '-celery-ocr$')" \
+  bayanat-rollback-celery-ocr
+
+# 3. Stop the stack
 docker compose down
 
-# 3. Remove the old database volume (you have the dump; do not skip step 1)
+# 4. Remove the old database volume (you have the dump; do not skip step 1)
 docker volume rm <project>_postgres_data
 
-# 4. Pull the new code and images
+# 5. Pull the new code and images
 git fetch --tags && git checkout v5.0.0
 docker compose pull && docker compose build
 
-# 5. Start PostgreSQL alone and let it initialize an empty cluster
+# 6. Start PostgreSQL alone and let it initialize an empty cluster
 docker compose up -d postgres
 docker compose exec postgres pg_isready
 
-# 6. Restore
+# 7. Restore
 docker compose exec -T postgres sh -c 'pg_restore -U "$POSTGRES_USER" -d bayanat --no-owner' < bayanat-pre-v5.dump
 
-# 7. Bring up the rest; the entrypoint runs migrations
+# 8. Bring up the rest; the entrypoint runs migrations
 docker compose up -d
 docker compose logs -f bayanat
 ```
 
-`pg_restore` prints a few errors during step 6 and they are expected:
+`pg_restore` prints a few errors during step 7 and they are expected:
 
 ```
 pg_restore: error: could not execute query: ERROR:  schema "tiger" already exists
