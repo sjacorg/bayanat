@@ -1675,9 +1675,18 @@ _ensure_runtime_layout() {
     # access only: settings silently stop saving and no health probe notices.
     # Applied on every run, not just the migrating one, so an install already
     # moved across with the old permissions is repaired as well.
-    if [[ -f "$RUNTIME_DIR/config.json" ]]; then
-        chown root:"$APP_GROUP" "$RUNTIME_DIR/config.json"
-        chmod 660 "$RUNTIME_DIR/config.json"
+    # $RUNTIME_DIR is group-writable by design, so this path is one the service
+    # accounts control. Refuse anything that is not a regular file rather than
+    # chown/chmod through it: a symlink planted there would otherwise hand
+    # root:$APP_GROUP 660 to whatever it points at. `chown -h` never follows,
+    # and the type check runs immediately before it.
+    local cfg="$RUNTIME_DIR/config.json"
+    if [[ -L "$cfg" ]]; then
+        die "$cfg is a symlink; refusing to change ownership through it" \
+            "Replace it with a regular file and re-run"
+    elif [[ -f "$cfg" ]]; then
+        chown -h root:"$APP_GROUP" "$cfg" || die "Could not set the owner of $cfg"
+        chmod 660 "$cfg" || die "Could not set the mode of $cfg"
     fi
 }
 
@@ -1759,7 +1768,8 @@ _harden_backup() {
         state=$(systemctl is-enabled "$unit" 2>/dev/null) || state="unknown"
         [[ "$state" == "unknown" ]] && \
             warn "Could not read enablement state of $unit; a restore will leave it as-is"
-        printf '%s\t%s\n' "$unit" "$state" >> "$dir/enablement"
+        printf '%s\t%s\n' "$unit" "$state" >> "$dir/enablement" \
+            || die "Could not record unit enablement in $dir"
     done
 
     # PostgreSQL grants are not file state. Capture the CURRENT attributes and
@@ -1793,7 +1803,7 @@ _harden_backup() {
         else
             echo "WARNING: could not read the PUBLIC CONNECT grant before hardening."
         fi
-    } > "$dir/REVERT-DB.txt"
+    } > "$dir/REVERT-DB.txt" || die "Could not write $dir/REVERT-DB.txt"
 
     log "Backed up $n config files to $dir" >&2
     echo "$dir"
