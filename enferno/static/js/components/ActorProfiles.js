@@ -53,15 +53,15 @@ const ActorProfiles = Vue.defineComponent({
                     <v-chip
                       v-bind="props"
                       prepend-icon="mdi-identifier" 
-                      :href="profile.source_link" 
+                      :href="$root.externalLink(profile.source_link)" 
                       target="_blank" 
                       label
                       append-icon="mdi-open-in-new"
-                      class="ml-2">
+                      class="ml-2 flex-shrink-0">
                       {{ profile.originid }}
                     </v-chip>
                 </template>
-                {{ translations.originid_ }}
+                {{ translations.originid_ }}: {{ profile.originid }}
               </v-tooltip>
 
               <v-card class="ma-2" v-if="profile.sources?.length">

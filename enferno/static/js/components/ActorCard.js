@@ -148,16 +148,16 @@ const ActorCard = Vue.defineComponent({
                     <v-chip 
                         v-bind="props"
                         prepend-icon="mdi-identifier" 
-                        :href="actor.source_link" 
+                        :href="$root.externalLink(actor.source_link)" 
                         target="_blank" 
                         label
                         append-icon="mdi-open-in-new"
-                        class="ms-2">
+                        class="ms-2 flex-shrink-0">
                         {{ actor.originid }}
 
                     </v-chip>
                 </template>
-                {{ translations.originid_ }}
+                {{ translations.originid_ }}: {{ actor.originid }}
             </v-tooltip>
 
             <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ms-2"
