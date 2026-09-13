@@ -1198,6 +1198,9 @@ class SearchUtils:
         if assigned := q.get("assigned", []):
             conditions.append(Actor.assigned_to_id.in_(assigned))
 
+        if q.get("unassigned"):
+            conditions.append(Actor.assigned_to == None)
+
         # First peer reviewer
         if fpr := q.get("reviewer", []):
             conditions.append(Actor.first_peer_reviewer_id.in_(fpr))
@@ -1476,6 +1479,9 @@ class SearchUtils:
         if assigned := q.get("assigned", []):
             conditions.append(Incident.assigned_to_id.in_(assigned))
 
+        if q.get("unassigned"):
+            conditions.append(Incident.assigned_to == None)
+
         # First peer reviewer
         if fpr := q.get("reviewer", []):
             conditions.append(Incident.first_peer_reviewer_id.in_(fpr))
@@ -1605,7 +1611,7 @@ class SearchUtils:
             # get search operator
             op = q.get("optags", False)
             tag_conditions = (
-                like_contains(func.array_to_string(Location.tags, ""), r) for r in tags
+                like_contains(func.array_to_string(Location.tags, " "), r) for r in tags
             )
             if op:
                 query.append(or_(*tag_conditions))

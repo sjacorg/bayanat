@@ -990,7 +990,7 @@ class LocationQueryValidationModel(StrictValidationModel):
     location_type: Optional[PartialLocationTypeModel] = None
     admin_level: Optional[PartialAdminLevelModel] = None
     country: Optional[PartialCountryModel] = None
-    tags: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
     optags: Optional[bool] = None
 
 
@@ -1575,8 +1575,8 @@ class RoleRequestModel(BaseValidationModel):
 
 class IncidentQueryModel(QueryBaseModel):
     ids: list[int] = Field(default_factory=list)
-    potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
-    claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
+    potentialVCats: list[int] = Field(default_factory=list)
+    claimedVCats: list[int] = Field(default_factory=list)
     # Chips-based multi-term text search
     searchTerms: Optional[list[str]] = Field(default_factory=list)
     opTerms: Optional[bool] = False
