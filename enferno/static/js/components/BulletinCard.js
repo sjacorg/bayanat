@@ -144,7 +144,7 @@ const BulletinCard = Vue.defineComponent({
                       target="_blank" 
                       label
                       append-icon="mdi-open-in-new"
-                      class="ms-2 flex-shrink-0">
+                      class="ms-2">
                       {{ bulletin.originid }}
 
                   </v-chip>
@@ -232,7 +232,7 @@ const BulletinCard = Vue.defineComponent({
                   
                 v-bind="props"
                 prepend-icon="mdi-link-variant"
-                :href="bulletin.source_link" 
+                :href="$root.externalLink(bulletin.source_link)" 
                 target="_blank" 
                 variant="text"
                 append-icon="mdi-open-in-new"

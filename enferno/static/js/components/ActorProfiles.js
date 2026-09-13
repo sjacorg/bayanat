@@ -57,7 +57,7 @@ const ActorProfiles = Vue.defineComponent({
                       target="_blank" 
                       label
                       append-icon="mdi-open-in-new"
-                      class="ml-2 flex-shrink-0">
+                      class="ml-2">
                       {{ profile.originid }}
                     </v-chip>
                 </template>

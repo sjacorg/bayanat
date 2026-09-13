@@ -45,7 +45,7 @@
                             <v-chip 
                                 v-bind="props"
                                 prepend-icon="mdi-link-variant"
-                                :href="editedItem.source_link" 
+                                :href="$root.externalLink(editedItem.source_link)" 
                                 target="_blank" 
                                 pill 
                                 label

@@ -152,7 +152,7 @@ const ActorCard = Vue.defineComponent({
                         target="_blank" 
                         label
                         append-icon="mdi-open-in-new"
-                        class="ms-2 flex-shrink-0">
+                        class="ms-2">
                         {{ actor.originid }}
 
                     </v-chip>
@@ -239,7 +239,7 @@ const ActorCard = Vue.defineComponent({
                     
                   v-bind="props"
                   prepend-icon="mdi-link-variant"
-                  :href="actor.source_link" 
+                  :href="$root.externalLink(actor.source_link)" 
                   target="_blank" 
                   variant="text"
                   append-icon="mdi-open-in-new"
