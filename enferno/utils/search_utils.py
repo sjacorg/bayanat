@@ -1199,7 +1199,7 @@ class SearchUtils:
             conditions.append(Actor.assigned_to_id.in_(assigned))
 
         if q.get("unassigned"):
-            conditions.append(Actor.assigned_to == None)
+            conditions.append(Actor.assigned_to.is_(None))
 
         # First peer reviewer
         if fpr := q.get("reviewer", []):
@@ -1480,7 +1480,7 @@ class SearchUtils:
             conditions.append(Incident.assigned_to_id.in_(assigned))
 
         if q.get("unassigned"):
-            conditions.append(Incident.assigned_to == None)
+            conditions.append(Incident.assigned_to.is_(None))
 
         # First peer reviewer
         if fpr := q.get("reviewer", []):
