@@ -536,7 +536,14 @@ class Actor(db.Model, BaseMixin):
     @check_roles
     def to_compact(self) -> dict[str, Any]:
         """Return a compact dictionary representation of the actor."""
-        return {"id": self.id, "name": self.name, "sources": self.sources}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "name_ar": self.name_ar,
+            "nickname": self.nickname,
+            "nickname_ar": self.nickname_ar,
+            "sources": self.sources,
+        }
 
     def to_csv_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the actor for CSV export."""
