@@ -64,6 +64,7 @@ const BulletinSearchBox = Vue.defineComponent({
     modelValue: {
       handler(newVal, oldVal) {
         this.q = newVal;
+        if (this.q) this.q.locTypes = this.q.locTypes || this.translations.bulletinLocTypes_.map((x) => x.code);
 
         // Reset dyn if data cleared
         if (!newVal || !Object.keys(newVal).length) {
@@ -484,6 +485,7 @@ const BulletinSearchBox = Vue.defineComponent({
                         item-title="title"
                         item-value="id"
                         :multiple="true"
+                        :retain-search="true"
                         :label="translations.includeSources_"
                   ></search-field>
                   <div class="d-flex align-center flex-wrap mt-n1">
@@ -496,6 +498,7 @@ const BulletinSearchBox = Vue.defineComponent({
                       item-title="title"
                       item-value="id"
                       :multiple="true"
+                      :retain-search="true"
                       :label="translations.excludeSources_"
                   ></search-field>
                   <v-switch density="compact" color="primary" v-model="q.childsources" :label="translations.includeChildSources_" hide-details></v-switch>
