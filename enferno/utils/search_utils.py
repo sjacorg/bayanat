@@ -682,12 +682,22 @@ class SearchUtils:
         event_type = q.get("etype", None)
         event_location = q.get("elocation", None)
 
-        if event_dates or event_type or event_location:
+        loc_types = q.get("locTypes")
+        latlng = q.get("latlng")
+        radius = latlng.get("radius") if latlng else None
+        # with Single Event on, the geo circle constrains the same event as the other event filters
+        geo_on_event = bool(single_event and loc_types and radius and "events" in loc_types)
+
+        if event_dates or event_type or event_location or geo_on_event:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
                 dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
             )
+            if geo_on_event:
+                event_conditions.append(
+                    Event.location.has(Location.geo_query_location(latlng, radius))
+                )
             if single_event:
                 conditions.append(Bulletin.events.any(and_(*event_conditions)))
             else:
@@ -743,19 +753,17 @@ class SearchUtils:
                 conditions.append(Bulletin.id.in_(ids))
 
         # Geospatial search
-        loc_types = q.get("locTypes")
-        latlng = q.get("latlng")
-
-        if loc_types and latlng and (radius := latlng.get("radius")):
+        if loc_types and radius:
             geo_conditions = []
             if "locations" in loc_types:
                 geo_conditions.append(Bulletin.geo_query_location(latlng, radius))
             if "geomarkers" in loc_types:
                 geo_conditions.append(Bulletin.geo_query_geo_location(latlng, radius))
-            if "events" in loc_types:
+            if "events" in loc_types and not geo_on_event:
                 geo_conditions.append(Bulletin.geo_query_event_location(latlng, radius))
 
-            conditions.append(or_(*geo_conditions))
+            if geo_conditions:
+                conditions.append(or_(*geo_conditions))
 
         return select(Bulletin), conditions
 
@@ -1177,12 +1185,22 @@ class SearchUtils:
         event_type = q.get("etype", None)
         event_location = q.get("elocation", None)
 
-        if event_dates or event_type or event_location:
+        loc_types = q.get("locTypes")
+        latlng = q.get("latlng")
+        radius = latlng.get("radius") if latlng else None
+        # with Single Event on, the geo circle constrains the same event as the other event filters
+        geo_on_event = bool(single_event and loc_types and radius and "events" in loc_types)
+
+        if event_dates or event_type or event_location or geo_on_event:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
                 dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
             )
+            if geo_on_event:
+                event_conditions.append(
+                    Event.location.has(Location.geo_query_location(latlng, radius))
+                )
             if single_event:
                 conditions.append(Actor.events.any(and_(*event_conditions)))
             else:
@@ -1214,17 +1232,15 @@ class SearchUtils:
             conditions.append(Actor.review_action == review_action)
 
         # Geospatial search
-        loc_types = q.get("locTypes")
-        latlng = q.get("latlng")
-
-        if loc_types and latlng and (radius := latlng.get("radius")):
+        if loc_types and radius:
             geo_conditions = []
             if "originplace" in loc_types:
                 geo_conditions.append(Actor.geo_query_origin_place(latlng, radius))
-            if "events" in loc_types:
+            if "events" in loc_types and not geo_on_event:
                 geo_conditions.append(Actor.geo_query_event_location(latlng, radius))
 
-            conditions.append(or_(*geo_conditions))
+            if geo_conditions:
+                conditions.append(or_(*geo_conditions))
 
         # ---------- Extra fields -------------
 
