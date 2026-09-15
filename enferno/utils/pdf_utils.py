@@ -3,9 +3,10 @@ from typing import Optional
 from urllib.parse import urlparse, unquote
 
 from flask import render_template, current_app
+from weasyprint import HTML, URLFetcher
 
 
-def _safe_url_fetcher(url: str):
+class _SafeURLFetcher(URLFetcher):
     """Block external/arbitrary-file resource fetching during PDF rendering
     (BAY-01-025). Untrusted rich-text img[src] would otherwise let WeasyPrint
     make outbound requests (SSRF) or read local files (file:// disclosure).
@@ -13,27 +14,31 @@ def _safe_url_fetcher(url: str):
     Allow only: data: URIs, the app's own static assets (BASE_URL), and local
     files under the app root (the logo and rewritten inline media). Everything
     else is refused, the resource is skipped and PDF generation continues.
+    Redirects are not followed, so an allowed host cannot bounce us elsewhere.
     """
-    from weasyprint import default_url_fetcher
 
-    parsed = urlparse(url)
-    if parsed.scheme == "data":
-        return default_url_fetcher(url)
-    if parsed.scheme == "file":
-        root = os.path.realpath(current_app.root_path)
-        path = os.path.realpath(unquote(parsed.path))
-        if path == root or path.startswith(root + os.sep):
-            return default_url_fetcher(url)
-        raise ValueError(f"PDF export: blocked file URL outside app root: {url}")
-    if parsed.scheme in ("http", "https"):
-        # Match scheme + host exactly. A startswith() prefix check would let
-        # https://<base-host>.evil/ through when BASE_URL has no trailing
-        # slash (BAY-01-025).
-        base = urlparse(current_app.config.get("BASE_URL") or "")
-        if base.netloc and parsed.scheme == base.scheme and parsed.netloc == base.netloc:
-            return default_url_fetcher(url)
-        raise ValueError(f"PDF export: blocked external URL: {url}")
-    raise ValueError(f"PDF export: blocked URL scheme: {url}")
+    def __init__(self):
+        super().__init__(allowed_protocols=("data", "file", "http", "https"), allow_redirects=False)
+
+    def fetch(self, url, headers=None):
+        parsed = urlparse(url)
+        if parsed.scheme == "data":
+            return super().fetch(url, headers)
+        if parsed.scheme == "file":
+            root = os.path.realpath(current_app.root_path)
+            path = os.path.realpath(unquote(parsed.path))
+            if path == root or path.startswith(root + os.sep):
+                return super().fetch(url, headers)
+            raise ValueError(f"PDF export: blocked file URL outside app root: {url}")
+        if parsed.scheme in ("http", "https"):
+            # Match scheme + host exactly. A startswith() prefix check would let
+            # https://<base-host>.evil/ through when BASE_URL has no trailing
+            # slash (BAY-01-025).
+            base = urlparse(current_app.config.get("BASE_URL") or "")
+            if base.netloc and parsed.scheme == base.scheme and parsed.netloc == base.netloc:
+                return super().fetch(url, headers)
+            raise ValueError(f"PDF export: blocked external URL: {url}")
+        raise ValueError(f"PDF export: blocked URL scheme: {url}")
 
 
 class PDFUtil:
@@ -65,9 +70,7 @@ class PDFUtil:
             )
 
         if output:
-            from weasyprint import HTML
-
-            HTML(string=html, url_fetcher=_safe_url_fetcher).write_pdf(output)
+            HTML(string=html, url_fetcher=_SafeURLFetcher()).write_pdf(output)
 
     @property
     def filename(self):
