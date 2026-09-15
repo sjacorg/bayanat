@@ -1667,6 +1667,9 @@
                     close() {
                         this.dialog = false;
                         this.actorDialog = false;
+                        this.$refs.relateBulletins?.close();
+                        this.$refs.relateActors?.close();
+                        this.$refs.relateIncidents?.close();
                         this.closeExpandedMedia();
                         this.closeMediaDialog();
                         this.closeSnapshotDialog();

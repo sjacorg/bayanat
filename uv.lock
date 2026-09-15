@@ -175,7 +175,7 @@ wheels = [
 
 [[package]]
 name = "bayanat"
-version = "4.0.2"
+version = "5.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "amqp" },

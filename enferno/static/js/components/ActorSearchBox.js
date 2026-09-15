@@ -51,6 +51,7 @@ const ActorSearchBox = Vue.defineComponent({
     modelValue: {
       handler(newVal, oldVal) {
         this.q = newVal;
+        if (this.q) this.q.locTypes = this.q.locTypes || this.translations.actorLocTypes_.map((x) => x.code);
         this.id_number = {
           type: this.q?.id_number?.type || null,
           number: this.q?.id_number?.number || null,
@@ -813,6 +814,7 @@ const ActorSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.includeSources_"
                 ></search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
@@ -825,6 +827,7 @@ const ActorSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.excludeSources_"
                 ></search-field>
                 <v-switch density="compact" color="primary" v-model="q.childsources" :label="translations.includeChildSources_" hide-details></v-switch>

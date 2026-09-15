@@ -9,7 +9,9 @@
   <v-spacer></v-spacer>
 
   <template v-slot:append>
+    {% if current_user.has_role('Admin') %}
     <update-banner></update-banner>
+    {% endif %}
     {% if config.OCR_PROVIDER == 'google_vision' %}
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">

@@ -1457,6 +1457,9 @@
                 },
                 close() {
                     this.dialog = false;
+                    this.$refs.relateBulletins?.close();
+                    this.$refs.relateActors?.close();
+                    this.$refs.relateIncidents?.close();
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.unrestricted = false;

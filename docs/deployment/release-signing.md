@@ -3,7 +3,7 @@
 Bayanat releases are signed with [minisign](https://jedisct1.github.io/minisign/).
 The `bayanat` CLI verifies every release tarball against a pinned public key
 before installing it, so `sudo bayanat update` (and the installer) will refuse
-an unsigned or tampered release. This is the BAY-01-017 control.
+an unsigned or tampered release.
 
 ## What the updater expects
 

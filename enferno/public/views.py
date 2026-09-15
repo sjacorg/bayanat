@@ -4,7 +4,7 @@ from flask import Blueprint, Response, jsonify, redirect, request, send_from_dir
 from flask_wtf.csrf import generate_csrf
 from sqlalchemy import text
 
-from enferno.extensions import db, limiter, rds
+from enferno.extensions import db, limiter, rds, talisman
 from enferno.settings import Config
 from enferno.utils.logging_utils import get_logger
 
@@ -35,6 +35,7 @@ def get_csrf_token() -> Response:
 
 @bp_public.route("/health")
 @limiter.exempt
+@talisman(force_https=False)
 def health() -> Response:
     """Readiness probe used by the bayanat updater. Touches DB and Redis."""
     try:

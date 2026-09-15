@@ -72,7 +72,15 @@ class Event(db.Model, BaseMixin):
             conditions.append(date_condition)
 
         if event_location_id:
-            conditions.append(Event.location_id == event_location_id)
+            from enferno.admin.models.Location import Location
+
+            # the location itself or any location under it in the hierarchy
+            conditions.append(
+                or_(
+                    Event.location_id == event_location_id,
+                    Event.location.has(Location.id_tree.like(f"%[{event_location_id}]%")),
+                )
+            )
         if eventtype_id:
             conditions.append(Event.eventtype_id == eventtype_id)
 
