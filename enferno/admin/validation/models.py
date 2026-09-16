@@ -1184,6 +1184,7 @@ class QueryBaseModel(StrictValidationModel):
     edate: Optional[list[str]] = Field(default_factory=list)
     etype: Optional[PartialEventTypeModel] = None
     elocation: Optional[PartialLocationModel] = None
+    elocationSub: Optional[bool] = None
     roles: Optional[list[int]] = Field(default_factory=list)
     norole: Optional[bool] = None
     assigned: Optional[list[int]] = Field(default_factory=list)

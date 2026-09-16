@@ -692,7 +692,10 @@ class SearchUtils:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
-                dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
+                dates=event_dates,
+                eventtype_id=eventtype_id,
+                event_location_id=event_location_id,
+                include_sub_locations=bool(q.get("elocationSub")),
             )
             if geo_on_event:
                 event_conditions.append(
@@ -1195,7 +1198,10 @@ class SearchUtils:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
-                dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
+                dates=event_dates,
+                eventtype_id=eventtype_id,
+                event_location_id=event_location_id,
+                include_sub_locations=bool(q.get("elocationSub")),
             )
             if geo_on_event:
                 event_conditions.append(
@@ -1476,7 +1482,10 @@ class SearchUtils:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
-                dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
+                dates=event_dates,
+                eventtype_id=eventtype_id,
+                event_location_id=event_location_id,
+                include_sub_locations=bool(q.get("elocationSub")),
             )
             if single_event:
                 conditions.append(Incident.events.any(and_(*event_conditions)))

@@ -41,6 +41,7 @@ class Event(db.Model, BaseMixin):
         dates: Optional[list] = None,
         eventtype_id: Optional[t.id] = None,
         event_location_id: Optional[t.id] = None,
+        include_sub_locations: bool = False,
     ) -> list:
         """
         Get the filters for querying events based on the given parameters.
@@ -49,6 +50,7 @@ class Event(db.Model, BaseMixin):
             - dates: list of dates to filter by.
             - eventtype_id: the event type id to filter by.
             - event_location_id: the event location id to filter by.
+            - include_sub_locations: also match locations under it in the hierarchy.
 
         Returns:
             - list of conditions to filter by.
@@ -71,16 +73,17 @@ class Event(db.Model, BaseMixin):
             )
             conditions.append(date_condition)
 
-        if event_location_id:
+        if event_location_id and include_sub_locations:
             from enferno.admin.models.Location import Location
 
-            # the location itself or any location under it in the hierarchy
             conditions.append(
                 or_(
                     Event.location_id == event_location_id,
                     Event.location.has(Location.id_tree.like(f"%[{event_location_id}]%")),
                 )
             )
+        elif event_location_id:
+            conditions.append(Event.location_id == event_location_id)
         if eventtype_id:
             conditions.append(Event.eventtype_id == eventtype_id)
 

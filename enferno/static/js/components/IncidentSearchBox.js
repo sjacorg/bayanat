@@ -370,6 +370,7 @@ const IncidentSearchBox = Vue.defineComponent({
                       :multiple="false"
                       :label="translations.includeEventLocations_"
                   ></location-search-field>
+                  <v-checkbox :label="translations.includeSubLocations_" density="compact" v-model="q.elocationSub" color="primary" hide-details :disabled="!q.elocation"></v-checkbox>
                 </v-col>
               </v-row>
             </v-expansion-panel-text>
