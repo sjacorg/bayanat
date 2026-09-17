@@ -40,6 +40,7 @@ def api_labels() -> Response:
         - json response of label objects.
     """
     query = []
+    restrictions = []
     q = request.args.get("q", None)
 
     if q:
@@ -53,22 +54,22 @@ def api_labels() -> Response:
 
     typ = request.args.get("typ", None)
     if typ and typ in ["for_bulletin", "for_actor", "for_incident", "for_offline"]:
-        query.append(getattr(Label, typ) == True)
+        restrictions.append(getattr(Label, typ) == True)
     fltr = request.args.get("fltr", None)
 
     if fltr == "verified":
-        query.append(Label.verified == True)
+        restrictions.append(Label.verified == True)
     elif fltr == "all":
         pass
     else:
-        query.append(or_(Label.verified == False, Label.verified.is_(None)))
+        restrictions.append(or_(Label.verified == False, Label.verified.is_(None)))
 
     # Exclude specific label IDs (useful for parent picker)
     exclude = request.args.get("exclude", None)
     if exclude:
         try:
             exclude_ids = [int(x) for x in exclude.split(",")]
-            query.append(~Label.id.in_(exclude_ids))
+            restrictions.append(~Label.id.in_(exclude_ids))
         except ValueError:
             # If exclude contains non-integer values, ignore the filter and proceed.
             pass
@@ -83,19 +84,15 @@ def api_labels() -> Response:
         base_query = base_query.options(joinedload(Label.parent))
 
     if q:
-        result = base_query.filter(*query).all()
-        labels = [label for label in result]
-        ids = []
-        children = Label.get_children(labels)
-        for label in labels + children:
-            ids.append(label.id)
-        ids = list(set(ids))
-        result = base_query.filter(Label.id.in_(ids)).paginate(
+        labels = base_query.filter(*query, *restrictions).all()
+        ids = {label.id for label in labels + Label.get_children(labels)}
+        # children inherit the match but must still satisfy the type/verified/exclude restrictions
+        result = base_query.filter(Label.id.in_(ids), *restrictions).paginate(
             page=page, per_page=per_page, count=True
         )
     else:
         result = (
-            base_query.filter(*query)
+            base_query.filter(*query, *restrictions)
             .order_by(Label.id.desc())
             .paginate(page=page, per_page=per_page, count=True)
         )

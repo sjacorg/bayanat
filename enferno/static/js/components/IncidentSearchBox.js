@@ -474,7 +474,7 @@ const IncidentSearchBox = Vue.defineComponent({
               <v-row dense>
                 <v-col cols="12" md="9">
                   <v-chip-group column multiple v-model="q.roles" selected-class="text-primary">
-                    <v-chip v-if="roles" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
+                    <v-chip v-if="roles?.length" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
                   </v-chip-group>
                 </v-col>
                 <v-col cols="12" md="3">
@@ -546,7 +546,7 @@ const IncidentSearchBox = Vue.defineComponent({
               <v-row dense>
                 <v-col cols="12" md="9">
                   <v-chip-group column multiple v-model="q.roles" selected-class="text-primary">
-                    <v-chip v-if="roles" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
+                    <v-chip v-if="roles?.length" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
                   </v-chip-group>
                 </v-col>
                 <v-col cols="12" md="3">
