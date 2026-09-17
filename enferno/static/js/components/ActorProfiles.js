@@ -96,7 +96,7 @@ const ActorProfiles = Vue.defineComponent({
                 </v-toolbar>
 
                 <v-card-text class="text-body-2 ">
-                  <read-more><div v-html="profile.description"></div></read-more>
+                  <read-more><div class="rich-description" v-html="profile.description"></div></read-more>
                 </v-card-text>
               </v-card>
 

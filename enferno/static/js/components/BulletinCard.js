@@ -291,7 +291,7 @@ const BulletinCard = Vue.defineComponent({
                   <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
                 </v-toolbar>
                 <v-card-text class="text-body-2 pt-0">
-                  <read-more><div v-html="bulletin.description"></div></read-more>
+                  <read-more><div class="rich-description" v-html="bulletin.description"></div></read-more>
                 </v-card-text>
               </v-card>
             </div>
@@ -302,7 +302,7 @@ const BulletinCard = Vue.defineComponent({
                   <v-toolbar-title class="text-subtitle-1">{{ translations.publicDescription_ }}</v-toolbar-title>
                 </v-toolbar>
                 <v-card-text class="text-body-2 pt-0">
-                  <read-more><div v-html="bulletin.public_description"></div></read-more>
+                  <read-more><div class="rich-description" v-html="bulletin.public_description"></div></read-more>
                 </v-card-text>
               </v-card>
             </div>
