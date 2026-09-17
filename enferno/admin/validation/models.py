@@ -234,6 +234,7 @@ class PartialMediaModel(BaseValidationModel):
     etag: Optional[str] = None
     time: Optional[Any] = None
     category: Optional[PartialMediaCategoryModel] = None
+    dossier: Optional[bool] = None
 
 
 class BulletinValidationModel(StrictValidationModel):
@@ -538,6 +539,10 @@ class SkinMarkingsModel(BaseValidationModel):
 
 class ReporterModel(BaseValidationModel):
     name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    social_media: Optional[str] = None
+    # free text kept for address and legacy entries written before the split fields existed
     contact: Optional[str] = None
     relationship: Optional[str] = None
 
@@ -604,6 +609,7 @@ class PartialActorProfileModel(BaseValidationModel):
     dental_habits: Optional[str] = None
     case_status: Optional[str] = None
     reporters: Optional[list[ReporterModel]] = Field(default_factory=list)
+    known_relatives: Optional[list[ReporterModel]] = Field(default_factory=list)
     identified_by: Optional[str] = None
     family_notified: Optional[bool] = None
     hypothesis_based: Optional[str] = None
