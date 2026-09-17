@@ -1,0 +1,36 @@
+# Edge for the Docker deployment. Mirrors the Caddyfile the native installer
+# writes, so both deployment paths terminate TLS the same way.
+#
+# DOMAIN comes from .env:
+#   DOMAIN=example.org  -> automatic HTTPS via Let's Encrypt
+#   DOMAIN=:80          -> plain HTTP, for local use or an existing proxy in front
+{$DOMAIN} {
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Match the app's upload limit.
+	request_body {
+		max_size 1024MB
+	}
+
+	handle_path /static/* {
+		root * /app/static
+		file_server
+		header Cache-Control "public, max-age=3600"
+	}
+
+	handle /healthz {
+		respond 200
+	}
+
+	handle {
+		reverse_proxy bayanat:5000
+	}
+}

@@ -40,7 +40,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
       return !!this.media?.extraction?.text?.trim();
     },
     canEdit() {
-      return ['processed', 'manual'].includes(this.media?.ocr_status);
+      return this.media?.editable !== false && ['processed', 'manual', 'cant_read'].includes(this.media?.ocr_status);
     },
     isProcessing() {
       return this.media?.ocr_status === 'processing';
@@ -319,7 +319,7 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                       <v-card-text class="d-flex ga-6">
                         <!-- Bulletin Info -->
                         <div class="flex-0-0">
-                          <div class="text-subtitle-2">{{ translations.bulletin_ }}</div>
+                          <div class="text-subtitle-2">{{ media?.actor ? translations.actor_ : translations.bulletin_ }}</div>
                           <v-skeleton-loader v-if="loading" width="75" height="20"></v-skeleton-loader>
                           <v-btn
                             v-else-if="media?.bulletin"
@@ -331,6 +331,18 @@ const MediaTranscriptionDialog = Vue.defineComponent({
                             class="px-1"
                           >
                             #{{ media.bulletin.id }}
+                            <v-icon size="small" class="ms-1">mdi-open-in-new</v-icon>
+                          </v-btn>
+                          <v-btn
+                            v-else-if="media?.actor"
+                            density="compact"
+                            color="primary"
+                            variant="text"
+                            :href="'/admin/actors/' + media.actor.id"
+                            target="_blank"
+                            class="px-1"
+                          >
+                            #{{ media.actor.id }}
                             <v-icon size="small" class="ms-1">mdi-open-in-new</v-icon>
                           </v-btn>
                         </div>

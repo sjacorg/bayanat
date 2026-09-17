@@ -4,6 +4,8 @@ from flask_babel import gettext
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm.attributes import flag_modified
 
+from sqlalchemy import text
+
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
@@ -131,6 +133,11 @@ class ActorProfile(db.Model, BaseMixin):
             "search",
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+        db.Index(
+            "ix_actor_profile_search_normalized",
+            text("normalize_arabic_text(search) gin_trgm_ops"),
+            postgresql_using="gin",
         ),
         db.Index(
             "ix_actor_profile_originid_gin",
