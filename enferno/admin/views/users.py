@@ -8,7 +8,7 @@ from flask.templating import render_template
 from flask_security import logout_user
 from flask_security.decorators import current_user, roles_accepted, roles_required
 from flask_security.twofactor import tf_disable
-from sqlalchemy import or_
+from sqlalchemy import false, or_
 
 from enferno.admin.constants import Constants
 from enferno.admin.models import Activity
@@ -21,7 +21,7 @@ from enferno.admin.validation.models import (
     RoleRequestModel,
 )
 from enferno.extensions import db
-from enferno.user.models import User, Role, Session
+from enferno.user.models import User, Role, Session, can_view_usernames
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.search_utils import like_contains
@@ -47,8 +47,21 @@ def api_users() -> Response:
     per_page = request.args.get("per_page", PER_PAGE, int)
     q = request.args.get("q")
     query = []
-    if q is not None:
-        query.append(like_contains(User.name, q))
+    if q:
+        # name, username and email are all masked by to_compact() for callers
+        # without this permission. Filtering on a masked field turns the list
+        # into an oracle: the match is a substring and the response carries a
+        # total, so a caller could reconstruct the values a row at a time.
+        if can_view_usernames():
+            query.append(
+                or_(
+                    like_contains(User.name, q),
+                    like_contains(User.username, q),
+                    like_contains(User.email, q),
+                )
+            )
+        else:
+            query.append(false())
     result = (
         User.query.filter(*query)
         .order_by(User.username)
