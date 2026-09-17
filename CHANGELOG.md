@@ -119,6 +119,20 @@ maintenance window, not a routine pull.
 
 ### Fixed
 
+- Search: incident violation filters, the Unassigned toggle for actors and
+  incidents, location tag search, geospatial reset, and Search Terms and
+  Exclude Terms now normalize Arabic letter variants on both sides, backed by
+  new indexes. Event location filters can include sub-locations, and the
+  geospatial circle applies to the same event in single-event mode.
+- Media dashboard: search by media, bulletin or actor ID, date range on the
+  date shown, actor media shows its parent, and "cannot read" is reversible.
+- Forms: sources autocompletes keep the typed search after a pick, events need
+  only a type, an actor created from a bulletin inherits its ID as origin ID,
+  and the date picker closes the previous calendar.
+- Data integrity: a source with sub-sources or in use can no longer be deleted;
+  label restrictions apply when a parent match expands to its children.
+- Non-admin users no longer see a permission error on every page from the
+  update-check banner.
 - Password resets performed outside the web flow now clear the force-reset flag,
   which previously left the account stuck in a redirect loop (#337).
 - Orphan actors are no longer left behind by interrupted create requests (#371).
