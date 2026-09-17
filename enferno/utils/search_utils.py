@@ -706,11 +706,15 @@ class SearchUtils:
                 event_location_id=event_location_id,
                 include_sub_locations=bool(q.get("elocationSub")),
             )
+            event_geo_condition = None
             if geo_on_event:
-                event_conditions.append(
-                    Event.location.has(Location.geo_query_location(latlng, radius))
+                event_geo_condition = Bulletin.events.any(
+                    and_(
+                        *event_conditions,
+                        Event.location.has(Location.geo_query_location(latlng, radius)),
+                    )
                 )
-            if single_event:
+            if single_event and event_conditions:
                 conditions.append(Bulletin.events.any(and_(*event_conditions)))
             else:
                 conditions.extend(
@@ -771,8 +775,12 @@ class SearchUtils:
                 geo_conditions.append(Bulletin.geo_query_location(latlng, radius))
             if "geomarkers" in loc_types:
                 geo_conditions.append(Bulletin.geo_query_geo_location(latlng, radius))
-            if "events" in loc_types and not geo_on_event:
-                geo_conditions.append(Bulletin.geo_query_event_location(latlng, radius))
+            if "events" in loc_types:
+                geo_conditions.append(
+                    event_geo_condition
+                    if geo_on_event
+                    else Bulletin.geo_query_event_location(latlng, radius)
+                )
 
             if geo_conditions:
                 conditions.append(or_(*geo_conditions))
@@ -1186,11 +1194,15 @@ class SearchUtils:
                 event_location_id=event_location_id,
                 include_sub_locations=bool(q.get("elocationSub")),
             )
+            event_geo_condition = None
             if geo_on_event:
-                event_conditions.append(
-                    Event.location.has(Location.geo_query_location(latlng, radius))
+                event_geo_condition = Actor.events.any(
+                    and_(
+                        *event_conditions,
+                        Event.location.has(Location.geo_query_location(latlng, radius)),
+                    )
                 )
-            if single_event:
+            if single_event and event_conditions:
                 conditions.append(Actor.events.any(and_(*event_conditions)))
             else:
                 conditions.extend([Actor.events.any(condition) for condition in event_conditions])
@@ -1206,7 +1218,7 @@ class SearchUtils:
             conditions.append(Actor.assigned_to_id.in_(assigned))
 
         if q.get("unassigned"):
-            conditions.append(Actor.assigned_to.is_(None))
+            conditions.append(Actor.assigned_to_id.is_(None))
 
         # First peer reviewer
         if fpr := q.get("reviewer", []):
@@ -1225,8 +1237,12 @@ class SearchUtils:
             geo_conditions = []
             if "originplace" in loc_types:
                 geo_conditions.append(Actor.geo_query_origin_place(latlng, radius))
-            if "events" in loc_types and not geo_on_event:
-                geo_conditions.append(Actor.geo_query_event_location(latlng, radius))
+            if "events" in loc_types:
+                geo_conditions.append(
+                    event_geo_condition
+                    if geo_on_event
+                    else Actor.geo_query_event_location(latlng, radius)
+                )
 
             if geo_conditions:
                 conditions.append(or_(*geo_conditions))
@@ -1492,7 +1508,7 @@ class SearchUtils:
             conditions.append(Incident.assigned_to_id.in_(assigned))
 
         if q.get("unassigned"):
-            conditions.append(Incident.assigned_to.is_(None))
+            conditions.append(Incident.assigned_to_id.is_(None))
 
         # First peer reviewer
         if fpr := q.get("reviewer", []):

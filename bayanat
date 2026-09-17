@@ -257,7 +257,11 @@ restore_pg() {
         # restores as the unprivileged app role, which cannot run CREATE
         # EXTENSION. The restore then "succeeds" into a database with no
         # PostGIS in it, which is worse than failing outright.
-        if sudo -u postgres psql -tAc 'SELECT 1' >/dev/null 2>&1; then
+        # Only restore through the local superuser when .env actually points at
+        # this host; a reachable local cluster must not shadow a remote database.
+        local host_is_local=0
+        case "$host" in localhost|127.0.0.1|::1|/*) host_is_local=1 ;; esac
+        if [[ "$host_is_local" == 1 ]] && sudo -u postgres psql -tAc 'SELECT 1' >/dev/null 2>&1; then
             # Drop and recreate the database rather than pg_restore --clean.
             # --clean only drops the objects the dump is about to recreate, so
             # anything the dump does not know about SURVIVES. After a failed
@@ -340,6 +344,9 @@ restore_pg() {
     fi
     systemctl start bayanat bayanat-celery
     log "Restore complete"
+    if [[ "$(read_phase)" == "NEEDS_INTERVENTION" ]]; then
+        warn "The update state still needs attention. Once the restored database and the active release agree, run: bayanat update --recover"
+    fi
 }
 
 # --- Update state + lock ---

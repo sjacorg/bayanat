@@ -17,16 +17,16 @@ TABLES = ("bulletin", "actor", "actor_profile", "incident")
 
 
 def upgrade():
-    # CONCURRENTLY keeps writes flowing on large tables; it cannot run inside a transaction.
-    with op.get_context().autocommit_block():
-        for table in TABLES:
-            op.execute(
-                f"CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_{table}_search_normalized "
-                f"ON {table} USING gin (normalize_arabic_text(search) gin_trgm_ops)"
-            )
+    # Plain (transactional) index builds: a failure rolls the whole upgrade back,
+    # so a partially migrated schema is never left behind. Large live databases
+    # can pre-create these indexes CONCURRENTLY by hand; IF NOT EXISTS then skips them.
+    for table in TABLES:
+        op.execute(
+            f"CREATE INDEX IF NOT EXISTS ix_{table}_search_normalized "
+            f"ON {table} USING gin (normalize_arabic_text(search) gin_trgm_ops)"
+        )
 
 
 def downgrade():
-    with op.get_context().autocommit_block():
-        for table in TABLES:
-            op.execute(f"DROP INDEX CONCURRENTLY IF EXISTS ix_{table}_search_normalized")
+    for table in TABLES:
+        op.execute(f"DROP INDEX IF EXISTS ix_{table}_search_normalized")
