@@ -35,6 +35,10 @@ const ReadMore = Vue.defineComponent({
   mounted() {
     this.checkTruncation();
     window.addEventListener('resize', this.checkTruncation);
+    this.mutationObserver = new MutationObserver(() => {
+      this.checkTruncation();
+    });
+    this.mutationObserver.observe(this.$refs.content, { childList: true, subtree: true, characterData: true });
     // ResizeObserver also fires when images finish loading or a hidden tab becomes visible
     this.resizeObserver = new ResizeObserver(() => {
       this.checkTruncation();
@@ -43,6 +47,8 @@ const ReadMore = Vue.defineComponent({
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkTruncation);
+    this.mutationObserver.disconnect();
+    this.mutationObserver = null;
     this.resizeObserver.disconnect();
     this.resizeObserver = null;
   },
