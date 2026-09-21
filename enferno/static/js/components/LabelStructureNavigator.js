@@ -1,5 +1,31 @@
 const PANEL_WIDTH = 720;
 const FAB_SIZE = 48;
+// fallback only -- the real default is measured off the app bar's own icon
+// cluster at mount time, so it stays correct as icons are added or removed there
+const FAB_DEFAULT_RIGHT = 260;
+
+// rejects anything that isn't today's {fromLeft, dx, fromTop, dy} anchor shape --
+// both the pre-anchor {x, y} format and anything with non-finite numbers (which
+// resolveAnchor would silently turn into NaN) fall through to the computed default
+// instead of leaving the fab or panel stuck off-screen
+function readAnchor(key) {
+  let value;
+  try {
+    value = JSON.parse(localStorage.getItem(key) || 'null');
+  } catch {
+    return null;
+  }
+  if (
+    !value ||
+    typeof value.fromLeft !== 'boolean' ||
+    typeof value.fromTop !== 'boolean' ||
+    !Number.isFinite(value.dx) ||
+    !Number.isFinite(value.dy)
+  ) {
+    return null;
+  }
+  return value;
+}
 
 const LabelStructureNavigator = Vue.defineComponent({
   props: {
@@ -9,18 +35,23 @@ const LabelStructureNavigator = Vue.defineComponent({
     },
   },
   data() {
-    const saved = JSON.parse(localStorage.getItem('labelTreePos') || 'null');
-    const savedFab = JSON.parse(localStorage.getItem('labelTreeFabPos') || 'null');
+    // positions are stored as offsets from the nearest edge (not raw x/y from the
+    // top-left), so a saved spot stays visually put -- e.g. "80px from the right" --
+    // when the viewport is resized instead of just getting clamped into a corner
+    const saved = readAnchor('labelTreePos');
+    const savedFab = readAnchor('labelTreeFabPos');
     return {
       translations: window.labelTreeTranslations,
       open: localStorage.getItem('labelTreeOpen') === '1',
-      x: saved?.x ?? 24,
-      y: saved?.y ?? Math.max(72, window.innerHeight - 640),
+      x: 24,
+      y: 72,
+      panelAnchor: saved ?? {fromLeft: true, dx: 24, fromTop: false, dy: 640},
       dragOffset: null,
       // sits in the app bar, left of the existing toolbar icons, and floats
       // above dialogs so it stays reachable while editing. draggable anywhere.
-      fabX: savedFab?.x ?? window.innerWidth - 300,
-      fabY: savedFab?.y ?? 8,
+      fabX: 0,
+      fabY: 8,
+      fabAnchor: savedFab,
       fabDragged: false,
       fabOffset: null,
       fabPointer: null,
@@ -69,7 +100,7 @@ const LabelStructureNavigator = Vue.defineComponent({
     open(open) {
       localStorage.setItem('labelTreeOpen', open ? '1' : '0');
       if (open) {
-        this.clampToViewport();
+        this.applyPanelAnchor();
         this.loadTree();
       }
     },
@@ -86,9 +117,9 @@ const LabelStructureNavigator = Vue.defineComponent({
   },
   mounted() {
     window.addEventListener('resize', this.clampToViewport);
-    this.clampFab();
+    this.applyFabAnchor();
     if (this.open) {
-      this.clampToViewport();
+      this.applyPanelAnchor();
       this.loadTree();
     }
   },
@@ -147,16 +178,78 @@ const LabelStructureNavigator = Vue.defineComponent({
       if (this.isAssignable(item)) return '';
       return item.children?.length ? this.translations.groupingOnly : this.translations.retired;
     },
-    // keep at least a corner of the panel on screen after drags and window resizes
-    clampToViewport() {
-      const edge = 80;
-      this.x = Math.min(Math.max(this.x, edge - PANEL_WIDTH), window.innerWidth - edge);
-      this.y = Math.min(Math.max(this.y, 0), window.innerHeight - 48);
-      this.clampFab();
+    // turn an edge-relative anchor into a clamped x/y for the current viewport,
+    // so a spot saved as "80px from the right" stays 80px from the right after
+    // a resize instead of keeping a stale absolute coordinate. minEdge lets the
+    // panel hang mostly off the left edge (a sliver stays grabbable) instead of
+    // being forced fully on-screen like the fab is
+    resolveAnchor(anchor, size, viewport, minEdge = 0) {
+      const raw = anchor.fromLeft ? anchor.dx : viewport - anchor.dx - size;
+      return Math.min(Math.max(raw, minEdge - size), Math.max(minEdge - size, viewport - minEdge));
     },
-    clampFab() {
-      this.fabX = Math.min(Math.max(this.fabX, 0), window.innerWidth - FAB_SIZE);
-      this.fabY = Math.min(Math.max(this.fabY, 0), window.innerHeight - FAB_SIZE);
+    anchorFromPosition(x, y, width, height) {
+      const fromLeft = x + width / 2 <= window.innerWidth / 2;
+      const fromTop = y + height / 2 <= window.innerHeight / 2;
+      return {
+        fromLeft,
+        dx: fromLeft ? x : window.innerWidth - x - width,
+        fromTop,
+        dy: fromTop ? y : window.innerHeight - y - height,
+      };
+    },
+    // as long as the user has never dragged the button, dock it just outside the
+    // app bar's own icon cluster (help/translate/notifications/avatar, plus
+    // whichever OCR badge happens to be enabled) by measuring it directly, so
+    // it never overlaps siblings there even as they're added or removed. the
+    // cluster sits on the visual right in LTR and the visual left in RTL (the
+    // toolbar is a flex container, so dir=rtl mirrors it); anchor from whichever
+    // side is nearer to the cluster so the fab docks just outside it either way
+    defaultFabAnchor() {
+      const append = document.querySelector('#main-app-bar .v-toolbar__append');
+      const rect = append?.getBoundingClientRect();
+      if (!rect?.width) return {fromLeft: false, dx: FAB_DEFAULT_RIGHT, fromTop: true, dy: 8};
+      const distanceFromLeft = rect.left;
+      const distanceFromRight = window.innerWidth - rect.right;
+      // cluster is on the left (RTL): dock right of its right edge, anchored from the left
+      // cluster is on the right (LTR): dock left of its left edge, anchored from the right
+      const fromLeft = distanceFromLeft < distanceFromRight;
+      return {
+        fromLeft,
+        dx: fromLeft ? rect.right + 8 : window.innerWidth - rect.left + 8,
+        fromTop: true,
+        dy: 8,
+      };
+    },
+    applyFabAnchor() {
+      const anchor = this.fabAnchor ?? this.defaultFabAnchor();
+      this.fabX = this.resolveAnchor(
+        {fromLeft: anchor.fromLeft, dx: anchor.dx},
+        FAB_SIZE,
+        window.innerWidth,
+      );
+      this.fabY = this.resolveAnchor(
+        {fromLeft: anchor.fromTop, dx: anchor.dy},
+        FAB_SIZE,
+        window.innerHeight,
+      );
+    },
+    applyPanelAnchor() {
+      const width = Math.min(PANEL_WIDTH, window.innerWidth - 24);
+      this.x = this.resolveAnchor(
+        {fromLeft: this.panelAnchor.fromLeft, dx: this.panelAnchor.dx},
+        width,
+        window.innerWidth,
+        80,
+      );
+      this.y = this.resolveAnchor(
+        {fromLeft: this.panelAnchor.fromTop, dx: this.panelAnchor.dy},
+        48,
+        window.innerHeight,
+      );
+    },
+    clampToViewport() {
+      this.applyFabAnchor();
+      if (this.open) this.applyPanelAnchor();
     },
     startFabDrag(event) {
       this.fabDragged = false;
@@ -170,9 +263,8 @@ const LabelStructureNavigator = Vue.defineComponent({
       // ignore jitter so a plain click is never read as a drag
       if (Math.abs(next.x - this.fabX) + Math.abs(next.y - this.fabY) < 4) return;
       this.fabDragged = true;
-      this.fabX = next.x;
-      this.fabY = next.y;
-      this.clampFab();
+      this.fabX = Math.min(Math.max(next.x, 0), window.innerWidth - FAB_SIZE);
+      this.fabY = Math.min(Math.max(next.y, 0), window.innerHeight - FAB_SIZE);
     },
     stopFabDrag(event) {
       if (this.fabPointer !== event?.pointerId) return;
@@ -182,7 +274,8 @@ const LabelStructureNavigator = Vue.defineComponent({
       this.fabPointer = null;
       this.fabOffset = null;
       if (this.fabDragged) {
-        localStorage.setItem('labelTreeFabPos', JSON.stringify({x: this.fabX, y: this.fabY}));
+        this.fabAnchor = this.anchorFromPosition(this.fabX, this.fabY, FAB_SIZE, FAB_SIZE);
+        localStorage.setItem('labelTreeFabPos', JSON.stringify(this.fabAnchor));
       }
     },
     // a drag ends in a click event too, so swallow that one
@@ -199,15 +292,21 @@ const LabelStructureNavigator = Vue.defineComponent({
       window.addEventListener('pointerup', this.stopDrag);
     },
     onDrag(event) {
-      this.x = event.clientX - this.dragOffset.x;
-      this.y = event.clientY - this.dragOffset.y;
-      this.clampToViewport();
+      const width = Math.min(PANEL_WIDTH, window.innerWidth - 24);
+      const edge = 80;
+      this.x = Math.min(
+        Math.max(event.clientX - this.dragOffset.x, edge - width),
+        window.innerWidth - edge,
+      );
+      this.y = Math.min(Math.max(event.clientY - this.dragOffset.y, 0), window.innerHeight - 48);
     },
     stopDrag() {
       window.removeEventListener('pointermove', this.onDrag);
       window.removeEventListener('pointerup', this.stopDrag);
       if (this.dragOffset) {
-        localStorage.setItem('labelTreePos', JSON.stringify({x: this.x, y: this.y}));
+        const width = Math.min(PANEL_WIDTH, window.innerWidth - 24);
+        this.panelAnchor = this.anchorFromPosition(this.x, this.y, width, 48);
+        localStorage.setItem('labelTreePos', JSON.stringify(this.panelAnchor));
         this.dragOffset = null;
       }
     },
@@ -368,7 +467,7 @@ const LabelStructureNavigator = Vue.defineComponent({
 
         <v-card-actions v-if="canManage" class="border-t-sm">
           <v-spacer></v-spacer>
-          <v-btn href="/admin/labels/" prepend-icon="mdi-cog-outline" variant="text">
+          <v-btn href="/admin/labels/" prepend-icon="mdi-cog-outline" variant="text" @click="open = false">
             {{ translations.manageLabels }}
           </v-btn>
         </v-card-actions>
