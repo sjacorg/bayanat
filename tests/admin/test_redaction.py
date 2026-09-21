@@ -1,15 +1,15 @@
 import io
 
-import fitz
+import pymupdf
 import pytest
-from PIL import Image
+from PIL import Image, ImageFile
 
 from enferno.admin.models import Bulletin, Media
 from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, redact_pdf_bytes
 
 
 def _one_page_pdf_with_text(text="SECRET NAME"):
-    doc = fitz.open()
+    doc = pymupdf.open()
     page = doc.new_page(width=200, height=200)
     page.insert_text((10, 100), text, fontsize=12)
     data = doc.tobytes()
@@ -23,7 +23,7 @@ def test_redact_pdf_removes_text_under_box():
 
     out = redact_pdf_bytes(src, pages)
 
-    doc = fitz.open(stream=out, filetype="pdf")
+    doc = pymupdf.open(stream=out, filetype="pdf")
     remaining = doc[0].get_text()
     doc.close()
     assert "SECRET" not in remaining
@@ -34,7 +34,7 @@ def test_redact_pdf_blanks_image_pixels_not_whole_page():
     img = Image.new("RGB", (200, 200), "white")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    doc = fitz.open()
+    doc = pymupdf.open()
     page = doc.new_page(width=200, height=200)
     page.insert_image(page.rect, stream=buf.getvalue())
     src = doc.tobytes()
@@ -43,7 +43,7 @@ def test_redact_pdf_blanks_image_pixels_not_whole_page():
     pages = [{"page": 0, "rects": [{"x": 0.25, "y": 0.25, "w": 0.5, "h": 0.5}]}]
     out = redact_pdf_bytes(src, pages)
 
-    doc = fitz.open(stream=out, filetype="pdf")
+    doc = pymupdf.open(stream=out, filetype="pdf")
     pix = doc[0].get_pixmap()
     center = pix.pixel(100, 100)
     corner = pix.pixel(5, 5)
@@ -62,6 +62,30 @@ def test_redact_image_bytes_burns_black_box():
     result = Image.open(io.BytesIO(out)).convert("RGB")
     assert result.getpixel((10, 10)) == (0, 0, 0)
     assert result.getpixel((90, 90)) == (255, 255, 255)
+
+
+def test_redact_image_bytes_survives_truncated_jpeg():
+    # Real uploads arrive with the scan cut short: browsers render the partial image and
+    # the user redacts it, so the burn must not hard-fail on the same bytes.
+    img = Image.new("RGB", (400, 400), "white")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    truncated = buf.getvalue()[: len(buf.getvalue()) // 2]
+
+    out = redact_image_bytes(truncated, [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
+
+    pixel = Image.open(io.BytesIO(out)).convert("RGB").getpixel((10, 10))
+    assert pixel == (0, 0, 0)
+    # The decoder policy is process-global: redaction must hand it back so OCR,
+    # thumbnails and imports keep rejecting incomplete images.
+    assert ImageFile.LOAD_TRUNCATED_IMAGES is False
+    with pytest.raises(OSError):
+        Image.open(io.BytesIO(truncated)).convert("RGB")
+
+
+def test_redact_image_bytes_rejects_undecodable_file():
+    with pytest.raises(RedactionError):
+        redact_image_bytes(b"not an image", [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
 
 
 def test_redact_image_bytes_honors_exif_orientation():

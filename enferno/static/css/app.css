@@ -96,10 +96,9 @@ button.swh {
 }
 
 .rich-description img {
-    max-width: 99%;
+    max-width: 100%;
     margin: 2px;
-    height: auto;
-    object-fit: cover;
+    height: auto !important;
 }
 
 #bulletins-dt tr, #export-dt tr, #log-dt tr, #users-dt tr {

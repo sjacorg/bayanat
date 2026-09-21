@@ -12,10 +12,11 @@
     {% if current_user.roles_in(['Admin', 'Mod', 'DA']) %}
     <label-structure-navigator
       :can-manage="{{ current_user.roles_in(['Admin', 'Mod'])|tojson }}"
-     
     ></label-structure-navigator>
     {% endif %}
+    {% if current_user.has_role('Admin') %}
     <update-banner></update-banner>
+    {% endif %}
     {% if config.OCR_PROVIDER == 'google_vision' %}
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">

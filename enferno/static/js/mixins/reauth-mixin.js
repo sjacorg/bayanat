@@ -13,8 +13,7 @@ const reauthMixin = {
     },
     twoFaSelectForm: null,
     verificationCode: null,
-    signInStep: 'sign-in',
-    callbackQueue: []
+    signInStep: 'sign-in'
   }),
   created () {
     document.addEventListener('authentication-required', this.showLoginDialog);
@@ -32,7 +31,7 @@ const reauthMixin = {
       if (event.key !== SESSION_RESTORED_STORAGE_KEY || !event.newValue) return;
       if (!(this.isSignInDialogVisible || this.isReauthDialogVisible)) return;
 
-      this.resetState();
+      this.closeAuthDialogsAfterSuccess();
     },
     async onVisibilityChange() {
       if (document.visibilityState !== 'visible') return; // only run when tab becomes active
@@ -42,15 +41,18 @@ const reauthMixin = {
       
       try {
         await axios.get('/admin/api/session-check', { suppressGlobalErrorHandler: true });
-        this.resetState(); // Session restored - close dialog
+        this.closeAuthDialogsAfterSuccess(); // Session restored - close dialog
       } catch (error) {
         // Still expired - keep dialog open
       }
     },
     showLoginDialog(event) {
       if (this.isReauthRequired(event?.detail)) {
+        this.isSignInDialogVisible = false;
         this.isReauthDialogVisible = true;
       } else {
+        if (this.isSignInDialogVisible) return;
+        this.isReauthDialogVisible = false;
         this.isSignInDialogVisible = true;
       }
 
@@ -74,10 +76,18 @@ const reauthMixin = {
       this.verificationCode = null;
       this.signInStep = 'sign-in';
     },
+    closeAuthDialogsAfterSuccess() {
+      this.resetState();
+
+      if (typeof this.recordSessionRefresh === 'function') {
+        this.recordSessionRefresh();
+      }
+    },
     async signIn() {
       try {
         if (this.isSignInDialogLoading) return;
         this.isSignInDialogLoading = true;
+        this.signInErrorMessage = null;
 
         if (!this.signInForm.username || !this.signInForm.password) {
           return this.signInErrorMessage = "Username and password are required.";
@@ -89,7 +99,9 @@ const reauthMixin = {
         this.signInForm.csrf_token = csrfToken;
 
         // Submit login request
-        const signInResponse = await axios.post('/login', this.signInForm);
+        const signInResponse = await axios.post('/login', this.signInForm, {
+          suppressGlobalErrorHandler: true
+        });
 
         // Handle success
         this.handleLoginResponse(signInResponse?.data?.response);
@@ -103,27 +115,16 @@ const reauthMixin = {
       try {
         if (this.isSignInDialogLoading) return;
         this.isSignInDialogLoading = true;
+        this.signInErrorMessage = null;
 
         if (!this.signInForm.password) {
           return this.signInErrorMessage = "Password is required.";
         }
 
-        // Fetch the CSRF token
-        const csrfToken = await this.getCsrfToken();
-        if (!csrfToken) return;
-        this.signInForm.csrf_token = csrfToken;
-
-        // Submit login request
-        await axios.post('/verify', {
-          csrf_token: csrfToken,
-          password: this.signInForm.password
-        });
+        await this.verifyCurrentSession();
 
         // Handle success
         this.handleLoginResponse();
-
-        // Run callbacks in queue
-        await this.executeCallbackQueue();
       } catch (err) {
         this.signInErrorMessage = handleRequestError(err);
       } finally {
@@ -195,9 +196,9 @@ const reauthMixin = {
         return this.signInStep = loginResponse?.tf_setup_methods?.find(Boolean)
       }
 
-      this.showSnack('Authentication successful');
+      this.closeAuthDialogsAfterSuccess();
       this.broadcastSessionRestored();
-      this.resetState();
+      this.showSnack('Authentication successful');
     },
     broadcastSessionRestored() {
       try {
@@ -274,20 +275,15 @@ const reauthMixin = {
 
       return csrfToken;
     },
-    addToCallbackQueueIfReauthRequired(error, callbacks) {
-      if (!this.isReauthRequired(error)) return;
+    async verifyCurrentSession() {
+      const csrfToken = await this.getCsrfToken();
+      if (!csrfToken) throw new Error("Failed to retrieve CSRF token.");
+      this.signInForm.csrf_token = csrfToken;
 
-      if (Array.isArray(callbacks)) {
-          callbacks.forEach(callback => this.callbackQueue.push(callback));
-      } else {
-          this.callbackQueue.push(callbacks);
-      }
-    },
-    async executeCallbackQueue() {
-      for (const callback of this.callbackQueue) {
-        await callback();
-      }
-      this.callbackQueue = [];
+      await axios.post('/verify', {
+        csrf_token: csrfToken,
+        password: this.signInForm.password
+      }, { suppressGlobalErrorHandler: true });
     },
     isReauthRequired(evt) {
       const reauthRequired = Boolean(evt?.response?.data?.response?.reauth_required);

@@ -193,6 +193,7 @@ class SearchUtils:
         exact: bool = False,
         negate: bool = False,
         normalize: bool = False,
+        normalize_column: bool = False,
     ) -> list:
         """
         Build search conditions for multi-term text search.
@@ -203,11 +204,15 @@ class SearchUtils:
             exact: If True, word boundary match; if False, substring match with wildcards
             negate: If True, negate conditions (for exclude)
             normalize: If True, apply Arabic text normalization to terms
+            normalize_column: If True, compare against normalize_arabic_text(column); use for
+                columns stored raw (an expression index backs it), not for Extraction.search_text
 
         Returns:
             List of SQLAlchemy conditions
         """
         result = []
+        if normalize_column:
+            column = func.normalize_arabic_text(column)
         for term in terms:
             if not term or not term.strip():
                 continue
@@ -531,7 +536,9 @@ class SearchUtils:
         # Uses pre-fetched OCR IDs to avoid OR-subquery killing the GIN index
         if search_terms := q.get("searchTerms"):
             exact = q.get("termsExact", False)
-            bulletin_conds = self._build_term_conditions(Bulletin.search, search_terms, exact)
+            bulletin_conds = self._build_term_conditions(
+                Bulletin.search, search_terms, exact, normalize=True, normalize_column=True
+            )
             ocr_conds = self._build_term_conditions(
                 Extraction.search_text, search_terms, exact, normalize=True
             )
@@ -562,7 +569,9 @@ class SearchUtils:
         # Exclude Search Terms
         if ex_terms := q.get("exTerms"):
             exact = q.get("exTermsExact", False)
-            ex_conds = self._build_term_conditions(Bulletin.search, ex_terms, exact, negate=True)
+            ex_conds = self._build_term_conditions(
+                Bulletin.search, ex_terms, exact, negate=True, normalize=True, normalize_column=True
+            )
             if ex_conds:
                 if q.get("opExTerms", False):
                     conditions.append(or_(*ex_conds))
@@ -682,13 +691,30 @@ class SearchUtils:
         event_type = q.get("etype", None)
         event_location = q.get("elocation", None)
 
-        if event_dates or event_type or event_location:
+        loc_types = q.get("locTypes")
+        latlng = q.get("latlng")
+        radius = latlng.get("radius") if latlng else None
+        # with Single Event on, the geo circle constrains the same event as the other event filters
+        geo_on_event = bool(single_event and loc_types and radius and "events" in loc_types)
+
+        if event_dates or event_type or event_location or geo_on_event:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
-                dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
+                dates=event_dates,
+                eventtype_id=eventtype_id,
+                event_location_id=event_location_id,
+                include_sub_locations=bool(q.get("elocationSub")),
             )
-            if single_event:
+            event_geo_condition = None
+            if geo_on_event:
+                event_geo_condition = Bulletin.events.any(
+                    and_(
+                        *event_conditions,
+                        Event.location.has(Location.geo_query_location(latlng, radius)),
+                    )
+                )
+            if single_event and event_conditions:
                 conditions.append(Bulletin.events.any(and_(*event_conditions)))
             else:
                 conditions.extend(
@@ -743,19 +769,21 @@ class SearchUtils:
                 conditions.append(Bulletin.id.in_(ids))
 
         # Geospatial search
-        loc_types = q.get("locTypes")
-        latlng = q.get("latlng")
-
-        if loc_types and latlng and (radius := latlng.get("radius")):
+        if loc_types and radius:
             geo_conditions = []
             if "locations" in loc_types:
                 geo_conditions.append(Bulletin.geo_query_location(latlng, radius))
             if "geomarkers" in loc_types:
                 geo_conditions.append(Bulletin.geo_query_geo_location(latlng, radius))
             if "events" in loc_types:
-                geo_conditions.append(Bulletin.geo_query_event_location(latlng, radius))
+                geo_conditions.append(
+                    event_geo_condition
+                    if geo_on_event
+                    else Bulletin.geo_query_event_location(latlng, radius)
+                )
 
-            conditions.append(or_(*geo_conditions))
+            if geo_conditions:
+                conditions.append(or_(*geo_conditions))
 
         return select(Bulletin), conditions
 
@@ -833,26 +861,13 @@ class SearchUtils:
         # Search Terms - chips-based multi-term text search (searches both Actor and ActorProfile)
         if search_terms := q.get("searchTerms"):
             exact = q.get("termsExact", False)
-            term_conds = []
-            for term in search_terms:
-                if not term or not term.strip():
-                    continue
-                term = term.strip()
-                if exact:
-                    escaped = re.escape(term)
-                    term_conds.append(
-                        or_(
-                            Actor.search.op("~*")(f"\\y{escaped}\\y"),
-                            ActorProfile.search.op("~*")(f"\\y{escaped}\\y"),
-                        )
-                    )
-                else:
-                    term_conds.append(
-                        or_(
-                            like_contains(Actor.search, term),
-                            like_contains(ActorProfile.search, term),
-                        )
-                    )
+            actor_conds = self._build_term_conditions(
+                Actor.search, search_terms, exact, normalize=True, normalize_column=True
+            )
+            profile_conds = self._build_term_conditions(
+                ActorProfile.search, search_terms, exact, normalize=True, normalize_column=True
+            )
+            term_conds = [or_(a, p) for a, p in zip(actor_conds, profile_conds)]
             if term_conds:
                 if q.get("opTerms", False):
                     # OR: match any term
@@ -865,26 +880,13 @@ class SearchUtils:
         # Exclude Search Terms (searches both Actor and ActorProfile)
         if ex_terms := q.get("exTerms"):
             exact = q.get("exTermsExact", False)
-            ex_conds = []
-            for term in ex_terms:
-                if not term or not term.strip():
-                    continue
-                term = term.strip()
-                if exact:
-                    escaped = re.escape(term)
-                    ex_conds.append(
-                        or_(
-                            Actor.search.op("~*")(f"\\y{escaped}\\y"),
-                            ActorProfile.search.op("~*")(f"\\y{escaped}\\y"),
-                        )
-                    )
-                else:
-                    ex_conds.append(
-                        or_(
-                            like_contains(Actor.search, term),
-                            like_contains(ActorProfile.search, term),
-                        )
-                    )
+            actor_conds = self._build_term_conditions(
+                Actor.search, ex_terms, exact, normalize=True, normalize_column=True
+            )
+            profile_conds = self._build_term_conditions(
+                ActorProfile.search, ex_terms, exact, normalize=True, normalize_column=True
+            )
+            ex_conds = [or_(a, p) for a, p in zip(actor_conds, profile_conds)]
             if ex_conds:
                 if q.get("opExTerms", False):
                     # OR: exclude if matches any term
@@ -1177,13 +1179,30 @@ class SearchUtils:
         event_type = q.get("etype", None)
         event_location = q.get("elocation", None)
 
-        if event_dates or event_type or event_location:
+        loc_types = q.get("locTypes")
+        latlng = q.get("latlng")
+        radius = latlng.get("radius") if latlng else None
+        # with Single Event on, the geo circle constrains the same event as the other event filters
+        geo_on_event = bool(single_event and loc_types and radius and "events" in loc_types)
+
+        if event_dates or event_type or event_location or geo_on_event:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
-                dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
+                dates=event_dates,
+                eventtype_id=eventtype_id,
+                event_location_id=event_location_id,
+                include_sub_locations=bool(q.get("elocationSub")),
             )
-            if single_event:
+            event_geo_condition = None
+            if geo_on_event:
+                event_geo_condition = Actor.events.any(
+                    and_(
+                        *event_conditions,
+                        Event.location.has(Location.geo_query_location(latlng, radius)),
+                    )
+                )
+            if single_event and event_conditions:
                 conditions.append(Actor.events.any(and_(*event_conditions)))
             else:
                 conditions.extend([Actor.events.any(condition) for condition in event_conditions])
@@ -1198,6 +1217,9 @@ class SearchUtils:
         if assigned := q.get("assigned", []):
             conditions.append(Actor.assigned_to_id.in_(assigned))
 
+        if q.get("unassigned"):
+            conditions.append(Actor.assigned_to_id.is_(None))
+
         # First peer reviewer
         if fpr := q.get("reviewer", []):
             conditions.append(Actor.first_peer_reviewer_id.in_(fpr))
@@ -1211,17 +1233,19 @@ class SearchUtils:
             conditions.append(Actor.review_action == review_action)
 
         # Geospatial search
-        loc_types = q.get("locTypes")
-        latlng = q.get("latlng")
-
-        if loc_types and latlng and (radius := latlng.get("radius")):
+        if loc_types and radius:
             geo_conditions = []
             if "originplace" in loc_types:
                 geo_conditions.append(Actor.geo_query_origin_place(latlng, radius))
             if "events" in loc_types:
-                geo_conditions.append(Actor.geo_query_event_location(latlng, radius))
+                geo_conditions.append(
+                    event_geo_condition
+                    if geo_on_event
+                    else Actor.geo_query_event_location(latlng, radius)
+                )
 
-            conditions.append(or_(*geo_conditions))
+            if geo_conditions:
+                conditions.append(or_(*geo_conditions))
 
         # ---------- Extra fields -------------
 
@@ -1354,7 +1378,9 @@ class SearchUtils:
         # Search Terms - chips-based multi-term text search
         if search_terms := q.get("searchTerms"):
             exact = q.get("termsExact", False)
-            term_conds = self._build_term_conditions(Incident.search, search_terms, exact)
+            term_conds = self._build_term_conditions(
+                Incident.search, search_terms, exact, normalize=True, normalize_column=True
+            )
             if term_conds:
                 if q.get("opTerms", False):
                     conditions.append(or_(*term_conds))
@@ -1364,7 +1390,9 @@ class SearchUtils:
         # Exclude Search Terms
         if ex_terms := q.get("exTerms"):
             exact = q.get("exTermsExact", False)
-            ex_conds = self._build_term_conditions(Incident.search, ex_terms, exact, negate=True)
+            ex_conds = self._build_term_conditions(
+                Incident.search, ex_terms, exact, negate=True, normalize=True, normalize_column=True
+            )
             if ex_conds:
                 if q.get("opExTerms", False):
                     conditions.append(or_(*ex_conds))
@@ -1457,7 +1485,10 @@ class SearchUtils:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
             event_conditions = Event.get_event_filters(
-                dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
+                dates=event_dates,
+                eventtype_id=eventtype_id,
+                event_location_id=event_location_id,
+                include_sub_locations=bool(q.get("elocationSub")),
             )
             if single_event:
                 conditions.append(Incident.events.any(and_(*event_conditions)))
@@ -1475,6 +1506,9 @@ class SearchUtils:
         # Assignments
         if assigned := q.get("assigned", []):
             conditions.append(Incident.assigned_to_id.in_(assigned))
+
+        if q.get("unassigned"):
+            conditions.append(Incident.assigned_to_id.is_(None))
 
         # First peer reviewer
         if fpr := q.get("reviewer", []):
@@ -1605,7 +1639,7 @@ class SearchUtils:
             # get search operator
             op = q.get("optags", False)
             tag_conditions = (
-                like_contains(func.array_to_string(Location.tags, ""), r) for r in tags
+                like_contains(func.array_to_string(Location.tags, " "), r) for r in tags
             )
             if op:
                 query.append(or_(*tag_conditions))

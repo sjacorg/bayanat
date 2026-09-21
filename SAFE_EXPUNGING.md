@@ -4,7 +4,7 @@ This document describes when and how history-altering operations are permitted o
 
 ## Scope
 
-Applies to the public repository `sjacorg/bayanat` and the private release repository `sjacorg/bayanat.prod`, specifically to operations that remove or rewrite committed history on protected references (`main`, release tags matching `v*`).
+Applies to this repository, specifically to operations that remove or rewrite committed history on protected references (`main`, release tags matching `v*`).
 
 ## Default
 
