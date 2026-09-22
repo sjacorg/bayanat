@@ -1,5 +1,15 @@
 # Changelog
 
+## v5.1.0
+
+### Added
+
+- Label structure navigator: a searchable, read-only tree of the label hierarchy, opened from the app bar by Admin, Mod and DA users. It shows each label's English and Arabic path, which entity types it applies to, and marks grouping-only and retired labels. Labels and verified labels are browsed as separate trees. Managing labels remains restricted to Admin and Mod.
+
+### Upgrading
+
+No database migrations. Installer-managed installs on v5.0.0 update with `sudo bayanat update`.
+
 ## v5.0.0
 
 v5 changes how Bayanat is deployed as well as what it runs. Read
