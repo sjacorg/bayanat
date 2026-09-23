@@ -1,13 +1,15 @@
 <v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
-    <v-sheet>
-    <v-card class="rounded-0">
-        <v-toolbar>
-            <v-spacer></v-spacer>
-            <v-btn icon="mdi-close"  @click="advSearchExpand=false">
-            </v-btn>
+    <v-sheet class="d-flex flex-column">
+    <v-card class="rounded-0 overflow-hidden d-flex flex-column flex-shrink-1" style="min-height: 0;">
+        <v-toolbar color="primary" class="card-header flex-shrink-0">
+            <v-toolbar-title>{{ _('Advanced Search') }}</v-toolbar-title>
+
+            <template #append>
+                <v-btn icon="mdi-close" @click="advSearchExpand=false"></v-btn>
+            </template>
         </v-toolbar>
 
-        <v-card-text>
+        <v-card-text class="overflow-y-auto">
             <v-select ref="savedSearchDropdown"
                       small
                       :label="translations.loadExistingSearch_"
@@ -50,7 +52,7 @@
         </v-card-text>
 
     </v-card>
-      <v-card  class="text-center pa-4 sticky-bottom-bar  rounded-0">
+      <v-card  class="text-center pa-4 sticky-bottom-bar flex-shrink-0 rounded-0">
         <v-card-actions class="justify-end">
             <v-btn @click="search={}" text>{{ _('Clear Search') }}</v-btn>
             <v-btn v-if="!savedSearchSelection" @click="saveQueryDialog=true" class="mx-2" color="grey lighten-2" depressed>{{ _('Save Search') }}</v-btn>

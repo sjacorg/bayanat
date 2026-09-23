@@ -1,13 +1,16 @@
 <v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
 
-    <v-sheet>
-        <v-card class="rounded-0">
+    <v-sheet class="d-flex flex-column">
+        <v-card class="rounded-0 overflow-hidden d-flex flex-column flex-shrink-1" style="min-height: 0;">
+            <v-toolbar color="primary" class="card-header flex-shrink-0">
+                <v-toolbar-title>{{ _('Advanced Search') }}</v-toolbar-title>
 
-            <v-card-title>
-                <v-btn icon="mdi-close" variant="text" class="float-right" @click="advSearchExpand=false"></v-btn>
-            </v-card-title>
+                <template #append>
+                    <v-btn icon="mdi-close" @click="advSearchExpand=false"></v-btn>
+                </template>
+            </v-toolbar>
 
-            <v-card-text>
+            <v-card-text class="overflow-y-auto">
                 <v-select ref="savedSearchDropdown"
 
                           :label="translations.loadExistingSearch_"
@@ -61,7 +64,7 @@
         </v-card>
 
 
-        <v-card  class="text-center rounded-0 sticky-bottom-bar">
+        <v-card  class="text-center rounded-0 sticky-bottom-bar flex-shrink-0">
             <v-divider></v-divider>
 
             <v-card-actions class="pa-4 ga-2">
