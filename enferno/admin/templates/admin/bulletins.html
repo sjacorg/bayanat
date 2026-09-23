@@ -44,15 +44,24 @@
                     >
                         <template #top>
                             <v-sheet class="ma-3 d-flex align-center">
-                                <v-btn variant="text" class="hidden-sm-and-down" @click="allBulletins"
+                                <v-btn variant="text"
+                                       :active="activeQuickFilter === 'all'"
+                                       :color="activeQuickFilter === 'all' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="allBulletins"
                                 >{{ _('All Bulletins') }}</v-btn
                                 >
                                 <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn variant="text" class="hidden-sm-and-down" @click="myAssigned"
+                                <v-btn variant="text"
+                                       :active="activeQuickFilter === 'assigned'"
+                                       :color="activeQuickFilter === 'assigned' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="myAssigned"
                                 >{{ _('Assigned to me') }}</v-btn
                                 >
                                 <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn variant="text" @click="myReview" class="mr-2 hidden-sm-and-down"
+                                <v-btn variant="text"
+                                       :active="activeQuickFilter === 'review'"
+                                       :color="activeQuickFilter === 'review' ? 'primary' : undefined"
+                                       @click="myReview" class="mr-2 hidden-sm-and-down"
                                 >{{ _('My Review List') }}</v-btn
                                 >
 
@@ -778,6 +787,11 @@
                             Object.values(search).every(value => !value)
                         );
 
+                    },
+                    activeQuickFilter() {
+                        if (this.search.length !== 1) return null;
+
+                        return this.quickFilterFromQuery(this.search[0], this.searchEmpty);
                     },
                     bulletinRelationTypes() {
                         return this.btobInfo;

@@ -198,5 +198,27 @@ const globalMixin = {
 
       return [...new Set(clean)];
     },
+    // Identifies which "quick filter" (All / Assigned to me / My Review List) a
+    // single search query object corresponds to, so list toolbars can highlight
+    // the active one. `q` is one flat query object (e.g. `this.search[0]` for
+    // bulletins/actors, or `this.search` for incidents); `isEmpty` is that
+    // page's own `searchEmpty` value.
+    quickFilterFromQuery(q, isEmpty) {
+      if (isEmpty) return 'all';
+
+      if (
+        q.assigned?.length === 1 && q.assigned[0] === this.currentUser.id &&
+        q.statuses?.length === 1 && q.statuses[0] === 'Assigned' &&
+        Object.keys(q).length === 2
+      ) return 'assigned';
+
+      if (
+        q.reviewer?.length === 1 && q.reviewer[0] === this.currentUser.id &&
+        q.statuses?.length === 1 && q.statuses[0] === 'Peer Review Assigned' &&
+        Object.keys(q).length === 2
+      ) return 'review';
+
+      return null;
+    },
   },
 };

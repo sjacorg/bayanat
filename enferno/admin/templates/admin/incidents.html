@@ -39,14 +39,23 @@
 
                         <template v-slot:top>
                             <v-sheet class="ma-3 d-flex align-center ">
-                                <v-btn class="hidden-sm-and-down" @click="allIncidents"
-                                variant="text">{{ _('All Incidents') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="activeQuickFilter === 'all'"
+                                       :color="activeQuickFilter === 'all' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="allIncidents"
+                                >{{ _('All Incidents') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn class="hidden-sm-and-down" @click="myAssigned"
-                                variant="text">{{ _('Assigned to me') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="activeQuickFilter === 'assigned'"
+                                       :color="activeQuickFilter === 'assigned' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="myAssigned"
+                                >{{ _('Assigned to me') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn @click="myReview" class="mr-2 hidden-sm-and-down"
-                                       variant="text">{{ _('My Review List') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="activeQuickFilter === 'review'"
+                                       :color="activeQuickFilter === 'review' ? 'primary' : undefined"
+                                       @click="myReview" class="mr-2 hidden-sm-and-down"
+                                >{{ _('My Review List') }}</v-btn>
 
 
                                 <v-text-field
@@ -634,6 +643,10 @@
                 },
                 searchBg() {
                     return Object.values(this.search).some(Boolean) ? 'yellow-lighten-5' : '';
+                },
+
+                activeQuickFilter() {
+                    return this.quickFilterFromQuery(this.search, this.searchEmpty);
                 },
 
                 bulletinRelationTypes() {
