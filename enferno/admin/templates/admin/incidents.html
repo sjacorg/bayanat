@@ -233,14 +233,13 @@
 
                             <v-tooltip text="{{ _('Edit') }}" location="top">
                                 <template #activator="{ props }">
-                                    <v-icon
-                                            v-bind="props"
-                                            color="ov"
-                                            class="mr-2"
-                                            @click.stop="editItem(item)"
-                                            v-if="editAllowed(item)">
-                                        mdi-pencil
-                                    </v-icon>
+                                    <v-btn icon="mdi-pencil"
+                                           v-bind="props"
+                                           density="compact"
+                                           class="mr-2"
+                                           @click.stop="editItem(item)"
+                                           v-if="editAllowed(item)"
+                                    ></v-btn>
                                 </template>
                             </v-tooltip>
 
