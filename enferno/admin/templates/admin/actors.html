@@ -296,7 +296,6 @@
                                     color="primary"
                                     class="mr-2"
                                     @click.stop="openSelfAssign(item)"
-                                    v-if="selfAssignAllowed(item)"
                             >
                                 mdi-arrow-left-thin-circle-outline
                             </v-icon>
@@ -339,7 +338,8 @@
                                 <v-textarea v-model="assignActor.comments" label="{{ _('Comments') }}"></v-textarea>
                             </v-card-text>
                             <v-card-actions>
-                                <v-btn :disabled="!assignActor.comments" class="ma-auto" @click="selfAssign"
+                                <v-btn @click="selfAssignDialog=false" text>{{ _('Cancel') }}</v-btn>
+                                <v-btn :disabled="!assignActor.comments" @click="selfAssign"
                                        color="primary">{{ _('Assign to self') }}
                                 </v-btn>
                             </v-card-actions>
