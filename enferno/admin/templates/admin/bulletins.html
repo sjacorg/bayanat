@@ -100,8 +100,7 @@
                                     {% if config.WEB_IMPORT and (current_user.can_import_web or current_user.has_role("Admin")) %}
                                     <v-btn
                                             @click="webImportDlg = true"
-                                            color="primary"
-                                            variant="elevated"
+                                            variant="outlined"
                                             prepend-icon="mdi-web"
                                             class="ma-2"
                                     >
