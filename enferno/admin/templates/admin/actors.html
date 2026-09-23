@@ -295,6 +295,7 @@
                                     color="primary"
                                     class="mr-2"
                                     @click.stop="openSelfAssign(item)"
+                                    v-if="selfAssignAllowed(item)"
                             >
                                 mdi-arrow-left-thin-circle-outline
                             </v-icon>
