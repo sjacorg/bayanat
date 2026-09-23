@@ -56,10 +56,10 @@
                                                 {% if current_user.has_role('Admin') %}
                                                         <v-btn
                                                             @click="imDialog=true"
-                                                            variant="elevated"
-
+                                                            variant="outlined"
+                                                            prepend-icon="mdi-arrow-up"
                                                             class="ma-2"
-                                                            >
+                                                        >
                                                             {{ _('Import CSV') }}
                                                         </v-btn>
                                                     {% endif %}
