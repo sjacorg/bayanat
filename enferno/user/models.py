@@ -35,6 +35,18 @@ EDITABLE_STATUSES = frozenset(
 logger = get_logger()
 
 
+def can_view_usernames() -> bool:
+    """Whether the current actor may see user identifiers (name, username, email).
+
+    Single source of truth: every mask over those fields and every query that
+    filters on them must use this, or a filter becomes an existence oracle over
+    a value the caller cannot read. CLI/Celery (no request context) are trusted.
+    """
+    if not has_request_context():
+        return True
+    return current_user.view_usernames or current_user.has_role("Admin")
+
+
 class MutableList(Mutable, list):
     """Custom Mutable List class to track changes in the list."""
 
@@ -288,25 +300,19 @@ class User(UserMixin, db.Model, BaseMixin):
 
     @property
     def secure_email(self):
-        if not has_request_context():
-            return self.email
-        if current_user.view_usernames or current_user.has_role("Admin"):
+        if can_view_usernames():
             return self.email
         return f"user-{self.id}"
 
     @property
     def secure_name(self):
-        if not has_request_context():
-            return self.name
-        if current_user.view_usernames or current_user.has_role("Admin"):
+        if can_view_usernames():
             return self.name
         return f"user-{self.id}"
 
     @property
     def secure_username(self):
-        if not has_request_context():
-            return self.username
-        if current_user.view_usernames or current_user.has_role("Admin"):
+        if can_view_usernames():
             return self.username
         return f"user-{self.id}"
 
