@@ -1,13 +1,16 @@
 <v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
-    <v-sheet>
-        <v-card class="rounded-0">
-            <v-card-title>
-                <v-btn class="float-right" variant="text" icon="mdi-close" @click="advSearchExpand=false"></v-btn>
-            </v-card-title>
+    <v-sheet class="d-flex flex-column">
+        <v-card class="rounded-0 overflow-hidden d-flex flex-column flex-shrink-1" style="min-height: 0;">
+            <v-toolbar color="primary" class="card-header flex-shrink-0">
+                <v-toolbar-title>{{ _('Advanced Search') }}</v-toolbar-title>
 
-            <v-card-text>
+                <template #append>
+                    <v-btn icon="mdi-close" @click="advSearchExpand=false"></v-btn>
+                </template>
+            </v-toolbar>
+
+            <v-card-text class="overflow-y-auto">
                 <v-select ref="savedSearchDropdown"
-                          small
                           :label="translations.loadExistingSearch_"
                           :items="searches"
                           item-title="name"
@@ -15,7 +18,6 @@
                           return-object
                           @click="loadSearchesFromAPI"
                           @click:clear="resetQuery"
-                          outlined
                           clearable
                           v-model="savedSearchSelection"
                 >
@@ -58,9 +60,9 @@
         </v-card>
 
 
-        <v-card  class="text-center rounded-0 sticky-bottom-bar">
+        <v-card  class="text-center rounded-0 sticky-bottom-bar flex-shrink-0">
             <v-divider></v-divider>
-            <v-card-text>
+            <v-card-actions class="pa-4 ga-2">
                 <v-btn prepend-icon="mdi-link-plus" class="ma-3"  @click="addQuery">
 
                     ${translations.refineExtendSearch_}
@@ -81,8 +83,8 @@
                         color="warning"
                         depressed
                 >{{ _('Save As New') }}</v-btn>
-                <v-btn @click="doSearch" color="primary">{{ _('Search') }}</v-btn>
-            </v-card-text>
+                <v-btn @click="doSearch" color="primary" variant="elevated">{{ _('Search') }}</v-btn>
+            </v-card-actions>
         </v-card>
 
         <v-dialog width="300" v-model="saveQueryDialog">

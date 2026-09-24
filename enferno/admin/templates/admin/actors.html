@@ -56,14 +56,23 @@
 
                         <template v-slot:top>
                             <v-sheet class="ma-3 d-flex align-center">
-                                <v-btn variant="text" class="hidden-sm-and-down" @click="allActors"
-                                       text>{{ _('All Actors') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="quickFilter === 'all'"
+                                       :color="quickFilter === 'all' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="allActors"
+                                >{{ _('All Actors') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn variant="text" class="hidden-sm-and-down" @click="myAssigned"
-                                       text>{{ _('Assigned to me') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="quickFilter === 'assigned'"
+                                       :color="quickFilter === 'assigned' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="myAssigned"
+                                >{{ _('Assigned to me') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn variant="text" @click="myReview" class="mr-2 hidden-sm-and-down"
-                                       text>{{ _('My Review List') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="quickFilter === 'review'"
+                                       :color="quickFilter === 'review' ? 'primary' : undefined"
+                                       @click="myReview" class="mr-2 hidden-sm-and-down"
+                                >{{ _('My Review List') }}</v-btn>
 
                                 <v-text-field
                                         variant="outlined"
@@ -330,7 +339,8 @@
                                 <v-textarea v-model="assignActor.comments" label="{{ _('Comments') }}"></v-textarea>
                             </v-card-text>
                             <v-card-actions>
-                                <v-btn :disabled="!assignActor.comments" class="ma-auto" @click="selfAssign"
+                                <v-btn @click="selfAssignDialog=false" text>{{ _('Cancel') }}</v-btn>
+                                <v-btn :disabled="!assignActor.comments" @click="selfAssign"
                                        color="primary">{{ _('Assign to self') }}
                                 </v-btn>
                             </v-card-actions>
@@ -526,6 +536,7 @@
                 pitem: null,
 
                 search: [{}],
+                quickFilter: 'all',
                 queryName: null,
                 saveQueryDialog: false,
                 searchPanels: 0,
@@ -814,6 +825,7 @@
                         const applyBgs = () => {
                             if (this.loading) return setTimeout(applyBgs, 300);
                             this.search = [{ ids: res.data.ids }];
+                            this.quickFilter = null;
                             this.refresh();
                         };
                         applyBgs();
@@ -1101,18 +1113,21 @@
                 filter_related_to_bulletin(id) {
                     this.actorDrawer = false;
                     this.search = [{rel_to_bulletin: id}];
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
                     this.actorDrawer = false;
                     this.search = [{rel_to_actor: id}];
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
                     this.actorDrawer = false;
                     this.search = [{rel_to_incident: id}];
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
@@ -1180,6 +1195,14 @@
                 },
 
                 doSearch() {
+                    if (this.quickFilter === 'all' && !this.searchEmpty) {
+                        this.quickFilter = null;
+                    } else if (
+                        (this.quickFilter === 'assigned' || this.quickFilter === 'review') &&
+                        !(this.search.length === 1 && this.queryMatchesQuickFilter(this.quickFilter, this.search[0]))
+                    ) {
+                        this.quickFilter = null;
+                    }
                     this.advSearchExpand = this.advSearchExpand && false;
                     this.goToFirstPage();
                 },
@@ -1283,6 +1306,7 @@
                 resetQuery() {
                     this.savedSearchSelection = null;
                     this.search = [{}];
+                    this.quickFilter = 'all';
                 },
 
 
@@ -1307,6 +1331,7 @@
                     if (item) {
                         this.savedSearchSelection = Object.assign([], item);
                         this.search = Object.assign([], item.data);
+                        this.quickFilter = null;
                     }
                     this.$refs.savedSearchDropdown?.blur?.()
                 },
@@ -1367,6 +1392,7 @@
                             if (this.savedSearchSelection?.id == id) {
                                 this.savedSearchSelection = null;
                                 this.search = [{}];
+                                this.quickFilter = 'all';
                             }
                         });
                 },
@@ -1378,6 +1404,7 @@
 
                 allActors() {
                     this.search = [{}];
+                    this.quickFilter = 'all';
                     this.goToFirstPage();
 
                 },
@@ -1386,6 +1413,7 @@
                     q.assigned = [this.currentUser.id];
                     q.statuses = ["Assigned"];
                     this.search = [q];
+                    this.quickFilter = 'assigned';
                     this.goToFirstPage();
                 },
 
@@ -1394,6 +1422,7 @@
                     q.reviewer = [this.currentUser.id];
                     q.statuses = ["Peer Review Assigned"];
                     this.search = [q]
+                    this.quickFilter = 'review';
                     this.goToFirstPage();
                 },
 
