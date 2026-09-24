@@ -257,12 +257,14 @@
                         </template>
                         <template #item.action="{ item }">
 
-                            <v-btn icon="mdi-pencil"
-                                   density="compact"
-                                   class="mr-2"
-                                   @click.stop="editItem(item)"
-                                   v-if="editAllowed(item)"
-                            ></v-btn>
+                            <v-icon
+                                    small
+                                    class="mr-2"
+                                    @click.stop="editItem(item)"
+                                    v-if="editAllowed(item)"
+                            >
+                                mdi-pencil
+                            </v-icon>
 
 
                             <v-icon
