@@ -44,7 +44,8 @@
                                         {% if current_user.roles_in(['Admin']) %}
                                         <v-btn
                                             variant="outlined"
-                                            class="ma-2 border-thin"
+                                            prepend-icon="mdi-arrow-up"
+                                            class="ma-2"
                                             @click="imDialog = true">
                                             {{ _('Import CSV') }}
                                         </v-btn>
@@ -62,14 +63,22 @@
                                         :items="items"
                                         :loading="loading"
                                         :items-length="itemsLength"
-                                        class="elevation-1"
+                                        class="elevation-1 fixed-layout-table"
                                     >
+                                        <template v-slot:item.title="{ item }">
+                                            <div class="text-truncate" :title="item.title">${item.title}</div>
+                                        </template>
+
+                                        <template v-slot:item.title_ar="{ item }">
+                                            <div class="text-truncate" :title="item.title_ar">${item.title_ar}</div>
+                                        </template>
+
                                         <template v-slot:item.parent="{ item }">
-                                            ${ item.parent ? item.parent.title : '' }
+                                            <div class="text-truncate" :title="item.parent ? item.parent.title : ''">${ item.parent ? item.parent.title : '' }</div>
                                         </template>
 
                                         <template v-slot:item.available_in="{ item }">
-                                            <div class="d-flex ga-2">
+                                            <div class="d-flex flex-wrap ga-2">
                                                 <v-chip v-if="item.for_bulletin" size="default">{{ _('Bulletin') }}</v-chip>
                                                 <v-chip v-if="item.for_actor" size="default">{{ _('Actor') }}</v-chip>
                                                 <v-chip v-if="item.for_incident" size="default">{{ _('Incident') }}</v-chip>
@@ -244,13 +253,13 @@
                 ],
 
                 headers: [
-                    {title: "{{_('ID')}}", value: "id", width: 80},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (AR)')}}", value: "title_ar"},
-                    {title: "{{_('Parent')}}", value: "parent", sortable: false},
-                    {title: "{{_('Available In')}}", value: "available_in"},
+                    {title: "{{_('ID')}}", value: "id", width: "6%"},
+                    {title: "{{_('Title')}}", value: "title", width: "24%"},
+                    {title: "{{_('Title (AR)')}}", value: "title_ar", width: "24%"},
+                    {title: "{{_('Parent')}}", value: "parent", sortable: false, width: "18%"},
+                    {title: "{{_('Available In')}}", value: "available_in", sortable: false, width: "28%"},
                     {% if current_user.roles_in(['Admin','Mod']) %}
-                        {title: "{{_('Actions')}}", value: "action", sortable: false}
+                        {title: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
                     {% endif %}
                 ],
 

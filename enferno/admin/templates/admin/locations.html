@@ -23,7 +23,7 @@
                                             @update:options="refresh"
                                             :page="options.page"
                                             :items-length="itemsLength"
-                                            class="elevation-1"
+                                            class="elevation-1 fixed-layout-table"
                                     >
                                         <template v-slot:top>
                                             <v-toolbar color="white" >
@@ -56,10 +56,10 @@
                                                 {% if current_user.has_role('Admin') %}
                                                         <v-btn
                                                             @click="imDialog=true"
-                                                            variant="elevated"
-
+                                                            variant="outlined"
+                                                            prepend-icon="mdi-arrow-up"
                                                             class="ma-2"
-                                                            >
+                                                        >
                                                             {{ _('Import CSV') }}
                                                         </v-btn>
                                                     {% endif %}
@@ -107,12 +107,18 @@
                                             </v-toolbar>
                                         </template>
 
+                                        <template v-slot:item.title="{ item }">
+                                            <div class="text-truncate" :title="item.title">${item.title}</div>
+                                        </template>
+                                        <template v-slot:item.full_string="{ item }">
+                                            <div class="text-truncate" :title="item.full_string">${item.full_string}</div>
+                                        </template>
                                         <template v-slot:item.parent.title="{ item }">
-                                            <div v-if="item.parent">
+                                            <div v-if="item.parent" class="d-flex align-center" style="min-width: 0;" :title="item.parent.title">
                                                 <v-btn  size="x-small" variant="plain">
                                                     ${item.parent.id}
                                                 </v-btn>
-                                                ${item.parent.title}
+                                                <span class="text-truncate">${item.parent.title}</span>
                                             </div>
 
 
@@ -203,15 +209,15 @@
                 options: {},
 
                 headers: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Full Location')}}", value: "full_string"},
-                    {title: "{{_('Parent')}}", value: "parent.title"},
-                    {title: "{{_('Location Type')}}", value: "location_type.title"},
-                    {title: "{{_('Admin Level')}}", value: "admin_level.title"},
+                    {title: "{{_('ID')}}", value: "id", width: "6%"},
+                    {title: "{{_('Title')}}", value: "title", width: "18%"},
+                    {title: "{{_('Full Location')}}", value: "full_string", width: "34%", sortable: false},
+                    {title: "{{_('Parent')}}", value: "parent.title", width: "16%", sortable: false},
+                    {title: "{{_('Location Type')}}", value: "location_type.title", width: "14%"},
+                    {title: "{{_('Admin Level')}}", value: "admin_level.title", width: "12%"},
 
                     {% if current_user.roles_in(['Admin','Mod']) or current_user.can_edit_locations %}
-                        {title: "{{_('Actions')}}", value: "action", sortable: false}
+                        {title: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
                     {% endif %}
                 ],
 

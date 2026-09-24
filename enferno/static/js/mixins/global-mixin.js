@@ -198,5 +198,25 @@ const globalMixin = {
 
       return [...new Set(clean)];
     },
+    // Checks whether a query object still matches the "assigned to me" /
+    // "my review list" shape a quick-filter button produces (ignoring
+    // free-text fields like tsv). Used on search submit to decide whether an
+    // active quick filter should stay highlighted or be cleared because the
+    // user edited it away in Advanced Search.
+    queryMatchesQuickFilter(filter, q) {
+      if (filter === 'assigned') {
+        return (
+          q.assigned?.length === 1 && q.assigned[0] === this.currentUser.id &&
+          q.statuses?.length === 1 && q.statuses[0] === 'Assigned'
+        );
+      }
+      if (filter === 'review') {
+        return (
+          q.reviewer?.length === 1 && q.reviewer[0] === this.currentUser.id &&
+          q.statuses?.length === 1 && q.statuses[0] === 'Peer Review Assigned'
+        );
+      }
+      return true;
+    },
   },
 };

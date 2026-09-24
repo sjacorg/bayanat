@@ -926,6 +926,16 @@ div.jsondiffpatch-child-node-type-array:after {
     padding: 8px 0;
 }
 
+/* Fixed table layout so column widths are respected and empty space isn't
+   left unused on wide screens. Apply via class="fixed-layout-table" on any
+   v-data-table(-server) that sets explicit header widths. min-width keeps
+   columns from being crushed on narrow screens; the wrapper's own overflow
+   (Vuetify's .v-table__wrapper) then scrolls horizontally instead. */
+.fixed-layout-table table {
+    table-layout: fixed;
+    min-width: 900px;
+}
+
 .search-box-redesign .search-panels .v-expansion-panel-title {
     min-height: 48px;
     padding: 12px 16px;

@@ -39,14 +39,23 @@
 
                         <template v-slot:top>
                             <v-sheet class="ma-3 d-flex align-center ">
-                                <v-btn class="hidden-sm-and-down" @click="allIncidents"
-                                variant="text">{{ _('All Incidents') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="quickFilter === 'all'"
+                                       :color="quickFilter === 'all' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="allIncidents"
+                                >{{ _('All Incidents') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn class="hidden-sm-and-down" @click="myAssigned"
-                                variant="text">{{ _('Assigned to me') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="quickFilter === 'assigned'"
+                                       :color="quickFilter === 'assigned' ? 'primary' : undefined"
+                                       class="hidden-sm-and-down" @click="myAssigned"
+                                >{{ _('Assigned to me') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn @click="myReview" class="mr-2 hidden-sm-and-down"
-                                       variant="text">{{ _('My Review List') }}</v-btn>
+                                <v-btn variant="text"
+                                       :active="quickFilter === 'review'"
+                                       :color="quickFilter === 'review' ? 'primary' : undefined"
+                                       @click="myReview" class="mr-2 hidden-sm-and-down"
+                                >{{ _('My Review List') }}</v-btn>
 
 
                                 <v-text-field
@@ -226,7 +235,6 @@
                                 <template #activator="{ props }">
                                     <v-icon
                                             v-bind="props"
-                                            color="ov"
                                             class="mr-2"
                                             @click.stop="editItem(item)"
                                             v-if="editAllowed(item)">
@@ -292,7 +300,8 @@
                                 <v-textarea v-model="assignIncident.comments" label="{{ _('Comments') }}"></v-textarea>
                             </v-card-text>
                             <v-card-actions>
-                                <v-btn :disabled="!assignIncident.comments" class="ma-auto"
+                                <v-btn @click="selfAssignDialog=false" text>{{ _('Cancel') }}</v-btn>
+                                <v-btn :disabled="!assignIncident.comments"
                                        @click="selfAssign"
                                        color="primary">{{ _('Assign to self') }}
                                 </v-btn>
@@ -441,6 +450,7 @@
 
                 advSearchExpand: false,
                 search: {},
+                quickFilter: 'all',
 
 
                 showVisualize: false,
@@ -719,6 +729,7 @@
                         const applyBgs = () => {
                             if (this.loading) return setTimeout(applyBgs, 300);
                             this.search = { ids: res.data.ids };
+                            this.quickFilter = null;
                             this.refresh();
                         };
                         applyBgs();
@@ -859,18 +870,21 @@
                 filter_related_to_bulletin(id) {
                     this.incidentDrawer = false;
                     this.search = {rel_to_bulletin: id};
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
                     this.incidentDrawer = false;
                     this.search = {rel_to_actor: id};
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
                     this.incidentDrawer = false;
                     this.search = {rel_to_incident: id};
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
@@ -936,6 +950,14 @@
                 },
 
                 doSearch() {
+                    if (this.quickFilter === 'all' && !this.searchEmpty) {
+                        this.quickFilter = null;
+                    } else if (
+                        (this.quickFilter === 'assigned' || this.quickFilter === 'review') &&
+                        !this.queryMatchesQuickFilter(this.quickFilter, this.search)
+                    ) {
+                        this.quickFilter = null;
+                    }
                     this.advSearchExpand = this.advSearchExpand && false;
                     this.goToFirstPage();
                 },
@@ -943,6 +965,7 @@
                 resetQuery() {
                     this.savedSearchSelection = null;
                     this.search = {};
+                    this.quickFilter = 'all';
                 },
 
 
@@ -1045,6 +1068,7 @@
                     if (item) {
                         this.savedSearchSelection = Object.assign([], item);
                         this.search = item.data;
+                        this.quickFilter = null;
                     }
                     this.$refs.savedSearchDropdown?.blur?.()
                 },
@@ -1106,6 +1130,7 @@
                             if (this.savedSearchSelection?.id == id) {
                                 this.savedSearchSelection = null;
                                 this.search = {};
+                                this.quickFilter = 'all';
                             }
                         });
                 },
@@ -1117,6 +1142,7 @@
 
                 allIncidents() {
                     this.search = {};
+                    this.quickFilter = 'all';
                     this.goToFirstPage();
 
                 },
@@ -1124,6 +1150,7 @@
                     this.search = {};
                     this.search.assigned = [this.currentUser.id];
                     this.search.statuses = ["Assigned"];
+                    this.quickFilter = 'assigned';
                     this.goToFirstPage();
                 },
 
@@ -1131,6 +1158,7 @@
                     this.search = {};
                     this.search.reviewer = [this.currentUser.id];
                     this.search.statuses = ["Peer Review Assigned"];
+                    this.quickFilter = 'review';
                     this.goToFirstPage();
                 },
 
