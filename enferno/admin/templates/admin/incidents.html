@@ -40,20 +40,20 @@
                         <template v-slot:top>
                             <v-sheet class="ma-3 d-flex align-center ">
                                 <v-btn variant="text"
-                                       :active="activeQuickFilter === 'all'"
-                                       :color="activeQuickFilter === 'all' ? 'primary' : undefined"
+                                       :active="quickFilter === 'all'"
+                                       :color="quickFilter === 'all' ? 'primary' : undefined"
                                        class="hidden-sm-and-down" @click="allIncidents"
                                 >{{ _('All Incidents') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
                                 <v-btn variant="text"
-                                       :active="activeQuickFilter === 'assigned'"
-                                       :color="activeQuickFilter === 'assigned' ? 'primary' : undefined"
+                                       :active="quickFilter === 'assigned'"
+                                       :color="quickFilter === 'assigned' ? 'primary' : undefined"
                                        class="hidden-sm-and-down" @click="myAssigned"
                                 >{{ _('Assigned to me') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
                                 <v-btn variant="text"
-                                       :active="activeQuickFilter === 'review'"
-                                       :color="activeQuickFilter === 'review' ? 'primary' : undefined"
+                                       :active="quickFilter === 'review'"
+                                       :color="quickFilter === 'review' ? 'primary' : undefined"
                                        @click="myReview" class="mr-2 hidden-sm-and-down"
                                 >{{ _('My Review List') }}</v-btn>
 
@@ -450,6 +450,7 @@
 
                 advSearchExpand: false,
                 search: {},
+                quickFilter: 'all',
 
 
                 showVisualize: false,
@@ -645,10 +646,6 @@
                     return Object.values(this.search).some(Boolean) ? 'yellow-lighten-5' : '';
                 },
 
-                activeQuickFilter() {
-                    return this.quickFilterFromQuery(this.search, this.searchEmpty);
-                },
-
                 bulletinRelationTypes() {
                     return this.itobInfo;
                 },
@@ -732,6 +729,7 @@
                         const applyBgs = () => {
                             if (this.loading) return setTimeout(applyBgs, 300);
                             this.search = { ids: res.data.ids };
+                            this.quickFilter = null;
                             this.refresh();
                         };
                         applyBgs();
@@ -872,18 +870,21 @@
                 filter_related_to_bulletin(id) {
                     this.incidentDrawer = false;
                     this.search = {rel_to_bulletin: id};
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
                     this.incidentDrawer = false;
                     this.search = {rel_to_actor: id};
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
                     this.incidentDrawer = false;
                     this.search = {rel_to_incident: id};
+                    this.quickFilter = null;
                     this.goToFirstPage();
                 },
 
@@ -949,6 +950,14 @@
                 },
 
                 doSearch() {
+                    if (this.quickFilter === 'all' && !this.searchEmpty) {
+                        this.quickFilter = null;
+                    } else if (
+                        (this.quickFilter === 'assigned' || this.quickFilter === 'review') &&
+                        !this.queryMatchesQuickFilter(this.quickFilter, this.search)
+                    ) {
+                        this.quickFilter = null;
+                    }
                     this.advSearchExpand = this.advSearchExpand && false;
                     this.goToFirstPage();
                 },
@@ -956,6 +965,7 @@
                 resetQuery() {
                     this.savedSearchSelection = null;
                     this.search = {};
+                    this.quickFilter = 'all';
                 },
 
 
@@ -1058,6 +1068,7 @@
                     if (item) {
                         this.savedSearchSelection = Object.assign([], item);
                         this.search = item.data;
+                        this.quickFilter = null;
                     }
                     this.$refs.savedSearchDropdown?.blur?.()
                 },
@@ -1119,6 +1130,7 @@
                             if (this.savedSearchSelection?.id == id) {
                                 this.savedSearchSelection = null;
                                 this.search = {};
+                                this.quickFilter = 'all';
                             }
                         });
                 },
@@ -1130,6 +1142,7 @@
 
                 allIncidents() {
                     this.search = {};
+                    this.quickFilter = 'all';
                     this.goToFirstPage();
 
                 },
@@ -1137,6 +1150,7 @@
                     this.search = {};
                     this.search.assigned = [this.currentUser.id];
                     this.search.statuses = ["Assigned"];
+                    this.quickFilter = 'assigned';
                     this.goToFirstPage();
                 },
 
@@ -1144,6 +1158,7 @@
                     this.search = {};
                     this.search.reviewer = [this.currentUser.id];
                     this.search.statuses = ["Peer Review Assigned"];
+                    this.quickFilter = 'review';
                     this.goToFirstPage();
                 },
 
