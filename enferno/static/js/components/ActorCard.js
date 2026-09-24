@@ -23,6 +23,9 @@ const ActorCard = Vue.defineComponent({
   },
 
   methods: {
+    localizedTitle(item) {
+      return localizedLookupTitle(item);
+    },
     fetchData() {
       this.mapLocations = aggregateActorLocations(this.actor);
     },
@@ -148,7 +151,7 @@ const ActorCard = Vue.defineComponent({
                     <v-chip 
                         v-bind="props"
                         prepend-icon="mdi-identifier" 
-                        :href="actor.source_link" 
+                        :href="$root.externalLink(actor.source_link)" 
                         target="_blank" 
                         label
                         append-icon="mdi-open-in-new"
@@ -157,7 +160,7 @@ const ActorCard = Vue.defineComponent({
 
                     </v-chip>
                 </template>
-                {{ translations.originid_ }}
+                {{ translations.originid_ }}: {{ actor.originid }}
             </v-tooltip>
 
             <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ms-2"
@@ -239,7 +242,7 @@ const ActorCard = Vue.defineComponent({
                     
                   v-bind="props"
                   prepend-icon="mdi-link-variant"
-                  :href="actor.source_link" 
+                  :href="$root.externalLink(actor.source_link)" 
                   target="_blank" 
                   variant="text"
                   append-icon="mdi-open-in-new"
@@ -338,9 +341,12 @@ const ActorCard = Vue.defineComponent({
             v-else-if="$root.isFieldActiveAndHasContent(field, 'dialects', actor.dialects)"
             :class="$root.fieldClassDrawer(field)"
           >
-            <v-card :subtitle="translations.spokenDialects_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
-              <div class="flex-chips">
-                <v-chip size="small" v-for="e in actor.dialects" class="flex-chip">{{ e.title }}</v-chip>
+            <v-card variant="flat" class="mx-8 my-2">
+              <div class="d-flex flex-column">
+                <div class="text-subtitle-2 text-medium-emphasis">{{ translations.spokenDialects_ }}</div>
+                <div class="flex-chips">
+                  <v-chip size="small" v-for="e in actor.dialects" :key="e.id" class="flex-chip mr-1 mb-1" variant="outlined"><bdi>{{ localizedTitle(e) }}</bdi></v-chip>
+                </div>
               </div>
             </v-card>
           </div>
@@ -349,9 +355,12 @@ const ActorCard = Vue.defineComponent({
             v-else-if="$root.isFieldActiveAndHasContent(field, 'ethnographies', actor.ethnographies)"
             :class="$root.fieldClassDrawer(field)"
           >
-            <v-card :subtitle="translations.ethnographicInformation_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
-              <div class="flex-chips">
-                <v-chip size="small" v-for="e in actor.ethnographies" class="flex-chip">{{ e.title }}</v-chip>
+            <v-card variant="flat" class="mx-8 my-2">
+              <div class="d-flex flex-column">
+                <div class="text-subtitle-2 text-medium-emphasis">{{ translations.ethnographicInformation_ }}</div>
+                <div class="flex-chips">
+                  <v-chip size="small" v-for="e in actor.ethnographies" :key="e.id" class="flex-chip mr-1 mb-1" variant="outlined"><bdi>{{ localizedTitle(e) }}</bdi></v-chip>
+                </div>
               </div>
             </v-card>
           </div>
@@ -360,9 +369,12 @@ const ActorCard = Vue.defineComponent({
             v-else-if="$root.isFieldActiveAndHasContent(field, 'nationalities', actor.nationalities)"
             :class="$root.fieldClassDrawer(field)"
           >
-            <v-card :subtitle="translations.nationalities_" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
-              <div class="flex-chips">
-                <v-chip size="small" v-for="n in actor.nationalities" class="flex-chip">{{ n.title }}</v-chip>
+            <v-card variant="flat" class="mx-8 my-2">
+              <div class="d-flex flex-column">
+                <div class="text-subtitle-2 text-medium-emphasis">{{ translations.nationalities_ }}</div>
+                <div class="flex-chips">
+                  <v-chip size="small" v-for="n in actor.nationalities" :key="n.id" class="flex-chip mr-1 mb-1" variant="outlined"><bdi>{{ localizedTitle(n) }}</bdi></v-chip>
+                </div>
               </div>
             </v-card>
           </div>

@@ -5,6 +5,7 @@ const globalMixin = {
     'Toast': Toast,
     'ProfileDropdown': ProfileDropdown,
     'UpdateBanner': UpdateBanner,
+    'LabelStructureNavigator': LabelStructureNavigator,
   },
   data: () => ({
     snackbar: false,
@@ -76,6 +77,11 @@ const globalMixin = {
     },
   },
   methods: {
+    // Absolute href for a user-entered source link; relative values would resolve under /admin/...
+    externalLink(link) {
+      if (!link || link === 'NA') return null;
+      return /^[a-z][a-z0-9+.-]*:/i.test(link) ? link : `https://${link}`;
+    },
     /**
      * Format a date with Day.js supporting timezone, locale, and special formats.
      * @param {string|number|Date|dayjs.Dayjs} date - Date to format.

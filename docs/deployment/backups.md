@@ -7,7 +7,7 @@
 Contains all data except media files.
 
 ```bash
-pg_dump bayanat > bayanat_backup.sql
+pg_dump -Fc bayanat > bayanat_backup.dump
 ```
 
 #### Automatic Backups (Built-in)
@@ -34,6 +34,23 @@ For encrypted backups uploaded to S3, use a script with `aws-cli` and GPG:
 ```bash
 0 3 * * * /home/bayanat/backup.sh >> /home/bayanat/backup.log 2>&1
 ```
+
+::: tip Paths differ by deployment
+The paths below are relative to the application directory, which is what a
+manual installation uses. An installer-managed v5 install keeps this data in
+`/opt/bayanat/shared/` (`media`, `imports`, `exports`, `backups`), and Docker
+keeps it in the project directory next to `docker-compose.yml`. Translate the
+paths to your layout. On an installer-managed host `bayanat status` confirms it;
+on a manual install that command reports "Bayanat is not installed", which is
+itself the answer.
+:::
+
+::: warning Pre-update snapshots are not backups
+`bayanat update` takes a database snapshot before it migrates, and keeps a small
+number of them. That exists so a failed upgrade can be rolled back, not so you
+have a backup. It is local to the machine, short-lived, and covers the database
+only. Keep the offsite backup below regardless.
+:::
 
 ### Media Files
 

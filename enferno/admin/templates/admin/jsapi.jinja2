@@ -62,7 +62,7 @@ SOURCES_ : "{{ _('SOURCES') }}",
 workflowAndAccess_ : "{{ _('Workflow & Access') }}",
 customFields_ : "{{ _('Custom Fields') }}",
 accessAndReview_ : "{{ _('Access & Review') }}",
-separateWordsWithSpaceUseQuotesForExactMatch_ : "{{ _('Separate words with space, use quotes for exact match') }}",
+separateWordsWithSpaceUseQuotesForExactMatch_ : "{{ _('Separate words with space, all words must match') }}",
 activeFiltersCount_: (count) => "{{ _('{count} active filter(s)') }}".replace("{count}", count),
 googleVisionApiHasNotBeenConfigured_ : "{{ _('Google Vision API is not configured. Please contact your administrator.') }}",
 apiNotConfigured_ : "{{ _('API is not configured.') }}",
@@ -194,8 +194,7 @@ transcriptionAvailableAfterSaving_: "{{ _('Transcription available after saving'
 cancel_ : "{{ _('Cancel') }}",
 titleOrTitleArRequired_ : "{{ _('Title or Title (Ar) is required') }}",
 review_ : "{{ _('Review') }}",
-locationOrDateRequired_: "{{ _('Location or Date is required') }}",
-titleOrTypeRequired_: "{{ _('Title or Event Type is required') }}",
+eventTypeRequired_: "{{ _('Event Type is required') }}",
 preview_ : "{{ _('Preview') }}",
 pleaseReviewFormForErrors_ : "{{ _('Please review the form for errors.') }}",
 accessGroupsRequired_ : "{{ _('Access Group(s) are required unless unrestricted.') }}",
@@ -277,6 +276,7 @@ eventDate_: "{{ _('Event Date') }}",
 event_: "{{ _('Event') }}",
 timingForThisEventIsEstimated_: "{{ _('Timing for this event is estimated') }}",
 singleEvent_: "{{ _('Search in a single event') }}",
+includeSubLocations_: "{{ _('Include sub-locations') }}",
 ASSIGNEDUSER_: "{{ _('ASSIGNED USER') }}",
 assignedUser_: "{{ _('Assigned User') }}",
 unassigned_: "{{ _('Unassigned') }}",
@@ -774,6 +774,26 @@ thisFieldIsRequired_: "{{ _('This field is required.') }}",
 pleaseEnterAValidNumber_: "{{ _('Please enter a valid number.') }}",
 
 
+}
+
+// shared by the label tree in the app bar and inside the entity dialogs
+var labelTreeTranslations = {
+    labelStructure: "{{ _('Label Structure') }}",
+    readOnly: "{{ _('Read only') }}",
+    search: "{{ _('Search labels') }}",
+    close: "{{ _('Close') }}",
+    loadError: "{{ _('Could not load labels') }}",
+    retry: "{{ _('Retry') }}",
+    noLabels: "{{ _('No labels found') }}",
+    manageLabels: "{{ _('Manage Labels') }}",
+    bulletins: "{{ _('Bulletins') }}",
+    actors: "{{ _('Actors') }}",
+    incidents: "{{ _('Incidents') }}",
+    offline: "{{ _('Offline') }}",
+    labels: "{{ _('Labels') }}",
+    verifiedLabels: "{{ _('Verified Labels') }}",
+    groupingOnly: "{{ _('Grouping only, cannot be assigned') }}",
+    retired: "{{ _('Retired, kept for existing records only') }}",
 }
 
     // add localized configurations for lists with static values
