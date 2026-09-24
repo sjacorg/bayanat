@@ -220,12 +220,12 @@
 
                 headers: [
                     {title: "{{_('ID')}}", value: "id", width: "6%"},
-                    {title: "{{_('Title')}}", value: "title", width: "18%"},
-                    {title: "{{_('Title (ar)')}}", value: "title_ar", width: "18%"},
+                    {title: "{{_('Title')}}", value: "title", width: "20%"},
+                    {title: "{{_('Title (ar)')}}", value: "title_ar", width: "20%"},
                     {title: "{{_('For Actors')}}", value: "for_actor", width: "10%"},
                     {title: "{{_('For Bulletins')}}", value: "for_bulletin", width: "10%"},
                     {title: "{{_('For Incidents')}}", value: "for_incident", width: "10%"},
-                    {title: "{{_('Comments')}}", value: "comments", width: "22%", sortable: false},
+                    {title: "{{_('Comments')}}", value: "comments", width: "24%", sortable: false},
                     {% if current_user.roles_in(['Admin','Mod']) %}
                         {title: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
                     {% endif %}
