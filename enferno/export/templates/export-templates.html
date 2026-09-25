@@ -1,0 +1,671 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<v-main class="bg-background">
+    <v-container fluid class="pb-0">
+        <v-row>
+
+            <!-- Templates list -->
+            <v-col cols="12" md="3">
+                <v-card class="export-template-card d-flex flex-column">
+                    <v-toolbar flat density="compact">
+                        <div class="text-h6 font-weight-regular text-truncate ml-4">{{ _('Dossier Templates') }}</div>
+                        <v-spacer></v-spacer>
+                        <v-btn icon="mdi-plus" color="primary" @click="newTemplate"></v-btn>
+                    </v-toolbar>
+                    <v-list v-if="templates.length" density="compact" nav class="flex-grow-1 min-h-0 overflow-y-auto">
+                        <v-list-item
+                                v-for="t in templates"
+                                :key="t.id"
+                                :active="template && template.id === t.id"
+                                @click="editTemplate(t)"
+                        >
+                            <v-list-item-title>${ t.title }</v-list-item-title>
+                            <template v-slot:append>
+                                <v-chip
+                                        v-if="t.active"
+                                        color="success"
+                                        variant="tonal"
+                                        density="compact"
+                                >
+                                    {{ _('Active') }}
+                                </v-chip>
+                            </template>
+                        </v-list-item>
+                    </v-list>
+                    <v-sheet v-else-if="!template" border rounded class="flex-grow-1 min-h-0 overflow-y-auto pa-6 text-center">
+                        <v-icon color="medium-emphasis" size="36">mdi-file-document-plus-outline</v-icon>
+                        <div class="text-body-2 mt-2">{{ _('No templates yet') }}</div>
+                        <div class="text-caption text-medium-emphasis mt-1">
+                            {{ _('Create a template to start building reusable dossier exports.') }}
+                        </div>
+                        <v-btn color="primary" variant="tonal" size="small" class="mt-4" @click="newTemplate">
+                            {{ _('New Template') }}
+                        </v-btn>
+                    </v-sheet>
+                    <v-list v-else density="compact" nav class="flex-grow-1 min-h-0 overflow-y-auto">
+                        <v-list-item disabled>
+                            <v-list-item-title class="text-medium-emphasis">
+                                {{ _('Unsaved template') }}
+                            </v-list-item-title>
+                        </v-list-item>
+                    </v-list>
+                </v-card>
+            </v-col>
+
+            <!-- Editor -->
+            <v-col cols="12" md="7" lg="6" v-if="template">
+                <v-card class="export-template-card d-flex flex-column">
+                    <v-toolbar flat density="compact">
+                        <v-toolbar-title>
+                            ${ template.id ? '{{ _('Edit Template') }} #' + template.id : '{{ _('New Template') }}' }
+                        </v-toolbar-title>
+                    </v-toolbar>
+
+                    <v-card-actions class="bg-surface border-b">
+                        <v-switch
+                                v-model="template.active"
+                                color="success"
+                                density="compact"
+                                hide-details
+                                class="flex-grow-0 mx-2"
+                                :label="'{{ _('Active') }}'"
+                        ></v-switch>
+                        <v-spacer></v-spacer>
+                        <v-text-field
+                                ref="previewEntityInput"
+                                v-model="previewEntityId"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                                class="export-template-preview-id"
+                                :label="'{{ _('Actor ID') }}'"
+                                :error="!!validationErrors.previewEntityId"
+                                @update:model-value="clearFieldError('previewEntityId')"
+                        ></v-text-field>
+                        <v-btn
+                                prepend-icon="mdi-open-in-new"
+                                variant="tonal"
+                                :loading="saving"
+                                @click="previewInTab"
+                        >
+                            {{ _('Preview') }}
+                        </v-btn>
+                        <v-btn color="primary" variant="flat" :loading="saving" @click="saveTemplate">
+                            {{ _('Save') }}
+                        </v-btn>
+                        <v-menu v-if="template.id">
+                            <template v-slot:activator="{ props }">
+                                <v-btn
+                                        v-bind="props"
+                                        icon="mdi-dots-vertical"
+                                        variant="text"
+                                ></v-btn>
+                            </template>
+                            <v-list density="compact">
+                                <v-list-item
+                                        prepend-icon="mdi-delete"
+                                        base-color="error"
+                                        @click="deleteDialog = true"
+                                >
+                                    <v-list-item-title>{{ _('Delete') }}</v-list-item-title>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
+                    </v-card-actions>
+
+                    <v-card-text class="flex-grow-1 min-h-0 overflow-y-auto">
+                        <v-text-field
+                                ref="titleInput"
+                                v-model="template.title"
+                                variant="outlined"
+                                density="compact"
+                                :label="'{{ _('Title') }} *'"
+                                :error-messages="fieldError('title')"
+                                @update:model-value="clearFieldError('title')"
+                        ></v-text-field>
+
+                        <!-- Blocks -->
+                        <div class="d-flex align-center mb-2">
+                            <div class="text-subtitle-2">{{ _('Blocks') }}</div>
+                            <v-spacer></v-spacer>
+                            <v-btn
+                                    v-if="template.blocks.length"
+                                    size="small"
+                                    variant="text"
+                                    :prepend-icon="allBlocksCollapsed ? 'mdi-expand-all-outline' : 'mdi-collapse-all-outline'"
+                                    @click="toggleAllBlocks"
+                            >
+                                ${ allBlocksCollapsed ? "{{ _('Expand all') }}" : "{{ _('Collapse all') }}" }
+                            </v-btn>
+                        </div>
+
+                        <v-sheet v-if="!template.blocks.length" border rounded class="my-3 pa-5 text-center">
+                            <v-icon color="medium-emphasis" size="40">mdi-view-list-outline</v-icon>
+                            <div class="text-body-2 mt-2">{{ _('No blocks added') }}</div>
+                            <div class="text-caption text-medium-emphasis mt-1">
+                                {{ _('Add headings, tables, narrative text, and media sections to shape this dossier.') }}
+                            </div>
+                        </v-sheet>
+
+                        <draggable v-model="template.blocks" item-key="id" handle=".drag-handle">
+                            <template #item="{element: block, index}">
+                                <v-card
+                                        :ref="`blockCard-${block.id}`"
+                                        variant="outlined"
+                                        class="mb-2 export-block-card"
+                                        :class="{'export-block-card--error': blockHasErrors(block)}"
+                                >
+                                    <v-card-title
+                                            class="cursor-pointer d-flex align-center py-1 text-body-2"
+                                            @click="block._open = !block._open"
+                                    >
+                                        <v-icon class="drag-handle cursor-grab mr-2" @click.stop>mdi-drag</v-icon>
+                                        <v-icon class="mr-2" size="small">${ blockMeta[block.type].icon }</v-icon>
+                                        ${ blockMeta[block.type].label }
+                                        <v-chip
+                                                v-if="blockHasErrors(block)"
+                                                color="error"
+                                                variant="tonal"
+                                                density="compact"
+                                                size="x-small"
+                                                class="ml-2"
+                                        >
+                                            {{ _('Required') }}
+                                        </v-chip>
+                                        <v-spacer></v-spacer>
+                                        <v-btn
+                                                :icon="block._open ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                                                variant="text"
+                                                size="x-small"
+                                                @click.stop="block._open = !block._open"
+                                        ></v-btn>
+                                        <v-btn
+                                                icon="mdi-close"
+                                                variant="text"
+                                                size="x-small"
+                                                @click.stop="template.blocks.splice(index, 1)"
+                                        ></v-btn>
+                                    </v-card-title>
+
+                                    <v-card-text v-if="block._open" class="pt-2">
+
+                                        <template v-if="block.type === 'heading'">
+                                            <v-text-field v-model="block.config.text" variant="outlined"
+                                                          density="compact" :label="'{{ _('Text') }} *'"
+                                                          :error-messages="blockFieldError(block, 'text')"
+                                                          @update:model-value="clearBlockFieldError(block, 'text')"></v-text-field>
+                                            <v-select v-model="block.config.level"
+                                                      :items="[{title: '{{ _('Document title') }}', value: 1}, {title: '{{ _('Numbered section') }}', value: 2}]"
+                                                      variant="outlined" density="compact"
+                                                      :label="'{{ _('Level') }}'"></v-select>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'rich_text'">
+                                            <div
+                                                    v-if="blockFieldError(block, 'html').length"
+                                                    class="text-error text-caption mb-2"
+                                                    :data-field-key="`${block.id}.html`"
+                                            >
+                                                ${ blockFieldError(block, 'html')[0] }
+                                            </div>
+                                            <tinymce-editor
+                                                    :init="$root.tinyConfig"
+                                                    v-model="block.config.html"
+                                                    @update:model-value="clearBlockFieldError(block, 'html')"
+                                            ></tinymce-editor>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'field_table'">
+                                            <v-text-field v-model="block.config.title" variant="outlined"
+                                                          density="compact" :label="'{{ _('Table title (optional)') }}'"></v-text-field>
+                                            <v-autocomplete
+                                                    v-model="block.config.fields"
+                                                    :items="meta.fields"
+                                                    item-title="label"
+                                                    item-value="key"
+                                                    multiple chips closable-chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Fields') }} *'"
+                                                    :error-messages="blockFieldError(block, 'fields')"
+                                                    @update:model-value="clearBlockFieldError(block, 'fields')"
+                                            ></v-autocomplete>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'family_members_table'">
+                                            <v-text-field v-model="block.config.title" variant="outlined"
+                                                          density="compact" :label="'{{ _('Table title (optional)') }}'"></v-text-field>
+                                            <v-autocomplete
+                                                    v-model="block.config.relation_ids"
+                                                    :items="meta.relation_types"
+                                                    item-title="title"
+                                                    item-value="id"
+                                                    multiple chips closable-chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Relation types (empty = all)') }}'"
+                                            ></v-autocomplete>
+                                            <v-select
+                                                    v-model="block.config.columns"
+                                                    :items="meta.columns.family_members_table"
+                                                    item-title="label" item-value="key"
+                                                    multiple chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Columns') }} *'"
+                                                    :error-messages="blockFieldError(block, 'columns')"
+                                                    @update:model-value="clearBlockFieldError(block, 'columns')"
+                                            ></v-select>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'events_timeline'">
+                                            <v-text-field v-model="block.config.title" variant="outlined"
+                                                          density="compact" :label="'{{ _('Table title (optional)') }}'"></v-text-field>
+                                            <v-select v-model="block.config.order"
+                                                      :items="[{title: '{{ _('Oldest first') }}', value: 'asc'}, {title: '{{ _('Newest first') }}', value: 'desc'}]"
+                                                      variant="outlined" density="compact"
+                                                      :label="'{{ _('Order') }}'"></v-select>
+                                            <v-select
+                                                    v-model="block.config.columns"
+                                                    :items="meta.columns.events_timeline"
+                                                    item-title="label" item-value="key"
+                                                    multiple chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Columns') }} *'"
+                                                    :error-messages="blockFieldError(block, 'columns')"
+                                                    @update:model-value="clearBlockFieldError(block, 'columns')"
+                                            ></v-select>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'related_items_table'">
+                                            <v-text-field v-model="block.config.title" variant="outlined"
+                                                          density="compact" :label="'{{ _('Table title (optional)') }}'"></v-text-field>
+                                            <v-autocomplete
+                                                    v-model="block.config.relation_ids"
+                                                    :items="meta.bulletin_relation_types"
+                                                    item-title="title"
+                                                    item-value="id"
+                                                    multiple chips closable-chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Relation types (empty = all)') }}'"
+                                            ></v-autocomplete>
+                                            <v-select
+                                                    v-model="block.config.columns"
+                                                    :items="meta.columns.related_items_table"
+                                                    item-title="label" item-value="key"
+                                                    multiple chips
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Columns') }} *'"
+                                                    :error-messages="blockFieldError(block, 'columns')"
+                                                    @update:model-value="clearBlockFieldError(block, 'columns')"
+                                            ></v-select>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'narrative_box'">
+                                            <v-text-field v-model="block.config.title" variant="outlined"
+                                                          density="compact" :label="'{{ _('Box title') }}'"></v-text-field>
+                                            <v-select
+                                                    v-model="block.config.field"
+                                                    :items="narrativeSources"
+                                                    variant="outlined" density="compact"
+                                                    :label="'{{ _('Content source') }}'"
+                                            ></v-select>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'media_appendix'">
+                                            <v-text-field v-model="block.config.title" variant="outlined"
+                                                          density="compact" :label="'{{ _('Section title (optional)') }}'"></v-text-field>
+                                            <span class="text-caption">{{ _('Only evidence media marked for dossier inclusion is exported.') }}</span>
+                                        </template>
+
+                                        <template v-else-if="block.type === 'page_break'">
+                                            <span class="text-caption">{{ _('Forces a new page when printed.') }}</span>
+                                        </template>
+
+                                    </v-card-text>
+                                </v-card>
+                            </template>
+                        </draggable>
+
+                        <v-menu>
+                            <template v-slot:activator="{ props }">
+                                <v-btn v-bind="props" prepend-icon="mdi-plus" variant="tonal" block class="mt-2">
+                                    {{ _('Add Block') }}
+                                </v-btn>
+                            </template>
+                            <v-list density="compact">
+                                <v-list-item
+                                        v-for="(spec, type) in blockMeta"
+                                        :key="type"
+                                        :prepend-icon="spec.icon"
+                                        @click="addBlock(type)"
+                                >
+                                    <v-list-item-title>${ spec.label }</v-list-item-title>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
+                    </v-card-text>
+
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="7" lg="6" v-else-if="templates.length">
+                <v-sheet border rounded class="pa-8 text-center">
+                    <v-icon color="medium-emphasis" size="48">mdi-file-document-edit-outline</v-icon>
+                    <div class="text-h6 mt-3">{{ _('Select a template') }}</div>
+                    <div class="text-body-2 text-medium-emphasis mt-1">
+                        {{ _('Choose a dossier template from the list to edit it.') }}
+                    </div>
+                </v-sheet>
+            </v-col>
+
+        </v-row>
+    </v-container>
+
+    <!-- Delete confirmation -->
+    <v-dialog v-model="deleteDialog" max-width="420">
+        <v-card rounded="12">
+            <v-card-title class="px-6 pt-6 pb-0">{{ _('Delete template?') }}</v-card-title>
+            <v-card-text class="px-6 pt-2 pb-6 text-body-2 text-medium-emphasis">
+                {{ _('This template will be removed from the dossier template list.') }}
+            </v-card-text>
+            <v-card-actions class="px-6 pb-6 pt-0">
+                <v-spacer></v-spacer>
+                <v-btn variant="outlined" @click="deleteDialog = false">{{ _('Cancel') }}</v-btn>
+                <v-btn color="error" variant="flat" @click="deleteTemplate">{{ _('Delete') }}</v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+
+</v-main>
+
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/Sortable.min.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/vuedraggable.umd.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/tinymce/tinymce.min.js?v={{ config.VERSION }}"></script>
+<script src="/static/js/tinymce-vue.min.js?v={{ config.VERSION }}"></script>
+
+<script nonce="{{ csp_nonce() }}">
+    const {createApp} = Vue;
+    const {createVuetify} = Vuetify;
+    const vuetify = createVuetify(vuetifyConfig);
+
+    const app = createApp({
+        delimiters: delimiters,
+        mixins: [globalMixin],
+        data: () => ({
+            drawer,
+            tinyConfig,
+            templates: [],
+            template: null,
+            meta: {fields: [], relation_types: [], bulletin_relation_types: [], columns: {}},
+            narrativeSources: [
+                {title: "{{ _('Empty (manual fill)') }}", value: null},
+                {title: "{{ _('Profile description') }}", value: 'description'},
+                ...{{ narrative_fields|tojson }}.map(([value, title]) => ({title, value})),
+            ],
+            blockMeta: {
+                heading: {label: "{{ _('Heading') }}", icon: 'mdi-format-header-2'},
+                rich_text: {label: "{{ _('Text') }}", icon: 'mdi-text'},
+                field_table: {label: "{{ _('Field Table') }}", icon: 'mdi-table-column'},
+                family_members_table: {label: "{{ _('Family Members') }}", icon: 'mdi-account-group'},
+                events_timeline: {label: "{{ _('Events Timeline') }}", icon: 'mdi-timeline-clock'},
+                related_items_table: {label: "{{ _('Related Items') }}", icon: 'mdi-file-link'},
+                narrative_box: {label: "{{ _('Narrative Box') }}", icon: 'mdi-card-text'},
+                media_appendix: {label: "{{ _('Media Appendix') }}", icon: 'mdi-image-multiple'},
+                page_break: {label: "{{ _('Page Break') }}", icon: 'mdi-format-page-break'},
+            },
+            saving: false,
+            deleteDialog: false,
+            previewEntityId: null,
+            validationErrors: {},
+            savedSnapshot: null,
+        }),
+        computed: {
+            isDirty() {
+                if (!this.template || this.savedSnapshot === null) return false;
+                return this.templateSnapshot() !== this.savedSnapshot;
+            },
+            allBlocksCollapsed() {
+                return !!this.template?.blocks?.length && this.template.blocks.every((block) => !block._open);
+            },
+        },
+        async mounted() {
+            const meta = await axios.get('/export/api/templates/meta');
+            this.meta = meta.data;
+            await this.refreshTemplates();
+            window.addEventListener('beforeunload', this.beforeUnload);
+        },
+        beforeUnmount() {
+            window.removeEventListener('beforeunload', this.beforeUnload);
+        },
+        methods: {
+            async refreshTemplates() {
+                const res = await axios.post('/export/api/templates/', {page: 1, per_page: 100});
+                this.templates = res.data.items;
+            },
+            async newTemplate() {
+                if (!(await this.confirmDiscardChanges())) return;
+                this.template = {id: null, title: '', active: false, blocks: []};
+                this.validationErrors = {};
+                this.savedSnapshot = this.templateSnapshot();
+            },
+            async editTemplate(t) {
+                if (this.template && this.template.id === t.id && !this.isDirty) return;
+                if (!(await this.confirmDiscardChanges())) return;
+                this.template = JSON.parse(JSON.stringify(t));
+                this.template.blocks.forEach((b) => (b._open = false));
+                this.validationErrors = {};
+                this.savedSnapshot = this.templateSnapshot();
+            },
+            addBlock(type) {
+                const defaults = {
+                    heading: {text: '', level: 2},
+                    rich_text: {html: ''},
+                    field_table: {title: '', fields: []},
+                    family_members_table: {title: '', relation_ids: [], columns: ['id', 'name', 'relation', 'comment']},
+                    events_timeline: {title: '', order: 'asc', columns: ['date', 'title', 'comments']},
+                    related_items_table: {title: '', relation_ids: [], columns: ['id', 'title', 'documentation_date', 'comment']},
+                    narrative_box: {title: '', field: null},
+                    media_appendix: {title: ''},
+                    page_break: {},
+                };
+                const id = Date.now().toString(36);
+                this.template.blocks.push({
+                    id,
+                    type,
+                    config: JSON.parse(JSON.stringify(defaults[type])),
+                    _open: true,
+                });
+                this.$nextTick(() => {
+                    this.scrollToRef(this.$refs[`blockCard-${id}`]);
+                });
+            },
+            toggleAllBlocks() {
+                const open = this.allBlocksCollapsed;
+                this.template.blocks.forEach((block) => (block._open = open));
+            },
+            cleanBlocks() {
+                return this.template.blocks.map(({_open, ...block}) => block);
+            },
+            templatePayload() {
+                if (!this.template) return null;
+                return {
+                    title: this.template.title || '',
+                    entity_type: 'actor',
+                    active: !!this.template.active,
+                    blocks: this.cleanBlocks(),
+                };
+            },
+            templateSnapshot() {
+                return JSON.stringify(this.templatePayload());
+            },
+            fieldError(key) {
+                return this.validationErrors[key] ? [this.validationErrors[key]] : [];
+            },
+            blockFieldKey(block, field) {
+                return `${block.id}.${field}`;
+            },
+            blockFieldError(block, field) {
+                return this.fieldError(this.blockFieldKey(block, field));
+            },
+            clearFieldError(key) {
+                if (!this.validationErrors[key]) return;
+                const errors = {...this.validationErrors};
+                delete errors[key];
+                this.validationErrors = errors;
+            },
+            clearBlockFieldError(block, field) {
+                this.clearFieldError(this.blockFieldKey(block, field));
+            },
+            blockHasErrors(block) {
+                return Object.keys(this.validationErrors).some((key) => key.startsWith(`${block.id}.`));
+            },
+            validateTemplate() {
+                const errors = {};
+                if (!this.template.title || !this.template.title.trim()) {
+                    errors.title = "{{ _('Title is required') }}";
+                }
+
+                this.template.blocks.forEach((block) => {
+                    const config = block.config || {};
+                    const required = "{{ _('This field is required.') }}";
+                    if (block.type === 'heading' && !String(config.text || '').trim()) {
+                        errors[this.blockFieldKey(block, 'text')] = required;
+                    }
+                    if (block.type === 'rich_text') {
+                        const richTextContainer = document.createElement('div');
+                        richTextContainer.innerHTML = String(config.html || '');
+                        const richTextContent = String(richTextContainer.textContent || '').trim();
+                        if (!richTextContent) {
+                            errors[this.blockFieldKey(block, 'html')] = required;
+                        }
+                    }
+                    if (block.type === 'field_table' && (!Array.isArray(config.fields) || !config.fields.length)) {
+                        errors[this.blockFieldKey(block, 'fields')] = required;
+                    }
+                    if (['family_members_table', 'events_timeline', 'related_items_table'].includes(block.type)
+                            && (!Array.isArray(config.columns) || !config.columns.length)) {
+                        errors[this.blockFieldKey(block, 'columns')] = required;
+                    }
+                });
+
+                this.validationErrors = errors;
+                if (Object.keys(errors).length) {
+                    this.showSnack("{{ _('Please review the required fields.') }}");
+                    this.scrollToFirstError();
+                    return false;
+                }
+                return true;
+            },
+            scrollToRef(ref) {
+                (ref?.$el || ref)?.scrollIntoView({behavior: 'smooth', block: 'center'});
+            },
+            scrollToFirstError() {
+                this.$nextTick(() => {
+                    const firstKey = Object.keys(this.validationErrors)[0];
+                    if (!firstKey) return;
+                    if (firstKey === 'previewEntityId') {
+                        this.scrollToRef(this.$refs.previewEntityInput);
+                        this.$refs.previewEntityInput?.focus?.();
+                        return;
+                    }
+                    if (firstKey === 'title') {
+                        this.scrollToRef(this.$refs.titleInput);
+                        this.$refs.titleInput?.focus?.();
+                        return;
+                    }
+                    const [blockId] = firstKey.split('.');
+                    const block = this.template.blocks.find((b) => b.id === blockId);
+                    if (block) block._open = true;
+                    this.$nextTick(() => {
+                        this.scrollToRef(this.$refs[`blockCard-${blockId}`]);
+                    });
+                });
+            },
+            validatePreviewEntity() {
+                if (this.previewEntityId) return true;
+                this.validationErrors = {
+                    ...this.validationErrors,
+                    previewEntityId: true,
+                };
+                this.showSnack("{{ _('Enter an actor ID to preview') }}");
+                this.scrollToFirstError();
+                return false;
+            },
+            async confirmDiscardChanges() {
+                if (!this.isDirty) return true;
+                return await this.$confirm({
+                    title: "{{ _('Discard unsaved changes?') }}",
+                    message: "{{ _('It looks like you have been editing something. If you leave before saving, your changes will be lost.') }}",
+                    dialogProps: {maxWidth: 520},
+                    acceptProps: {text: "{{ _('Discard changes') }}", color: 'error', variant: 'flat'},
+                    cancelProps: {text: "{{ _('Keep editing') }}", variant: 'outlined'},
+                });
+            },
+            beforeUnload(e) {
+                if (!this.isDirty) return;
+                const confirmationMessage = "{{ _('It looks like you have been editing something. If you leave before saving, your changes will be lost.') }}";
+                (e || window.event).returnValue = confirmationMessage;
+                return confirmationMessage;
+            },
+            async saveTemplate() {
+                if (!this.validateTemplate()) return false;
+                this.saving = true;
+                const item = this.templatePayload();
+                try {
+                    let res;
+                    if (this.template.id) {
+                        res = await axios.put(`/export/api/template/${this.template.id}`, {item});
+                    } else {
+                        res = await axios.post('/export/api/template/', {item});
+                    }
+                    this.showSnack(res.data.message || "{{ _('Saved') }}");
+                    const saved = res.data.item;
+                    this.template.id = saved.id;
+                    this.template.active = saved.active;
+                    this.template.blocks = saved.blocks || [];
+                    this.template.blocks.forEach((b) => (b._open = false));
+                    this.savedSnapshot = this.templateSnapshot();
+                    this.validationErrors = {};
+                    await this.refreshTemplates();
+                    return true;
+                } catch (err) {
+                    this.showSnack(err?.response?.data || err);
+                    return false;
+                } finally {
+                    this.saving = false;
+                }
+            },
+            async deleteTemplate() {
+                await axios.delete(`/export/api/template/${this.template.id}`);
+                this.deleteDialog = false;
+                this.template = null;
+                this.savedSnapshot = null;
+                this.validationErrors = {};
+                await this.refreshTemplates();
+            },
+            async previewInTab() {
+                if (!this.validatePreviewEntity()) return;
+                if (!this.validateTemplate()) return;
+                // open synchronously to survive popup blockers, then save and point it
+                const win = window.open('', '_blank');
+                const saved = await this.saveTemplate();
+                if (!saved) {
+                    win.close();
+                    return;
+                }
+                win.location = `/export/dossier/${this.template.id}/${parseInt(this.previewEntityId)}`;
+            },
+        },
+    });
+
+    app.component('Draggable', vuedraggable);
+    app.component('TinymceEditor', Editor);
+
+    app.use(router).use(vuetify);
+    router.isReady().then(() => {
+        app.mount('#app');
+        window.app = app;
+    });
+</script>
+{% endblock %}

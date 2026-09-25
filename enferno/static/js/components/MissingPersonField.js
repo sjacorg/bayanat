@@ -52,6 +52,9 @@ const MissingPersonField = Vue.defineComponent({
           class="elevation-1 my-3 pa-2 yellow lighten-5"
         >
           <div v-if="rep.name">{{ translations.name_ }}: {{ rep.name }}</div>
+          <div v-if="rep.phone">{{ translations.phone_ }}: {{ rep.phone }}</div>
+          <div v-if="rep.email">{{ translations.email_ }}: {{ rep.email }}</div>
+          <div v-if="rep.social_media">{{ translations.socialMedia_ }}: {{ rep.social_media }}</div>
           <div v-if="rep.contact">{{ translations.contact_ }}: {{ rep.contact }}</div>
           <div v-if="rep.relationship">{{ translations.relationship_ }}: {{ rep.relationship }}</div>
         </div>

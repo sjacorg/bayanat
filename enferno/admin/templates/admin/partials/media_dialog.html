@@ -99,6 +99,17 @@
             </v-card>
           </v-col>
         </v-row>
+        <v-row>
+          <v-col cols="12">
+            <v-switch
+              v-model="editedMedia.dossier"
+              color="primary"
+              density="compact"
+              hide-details
+              :label="`{{ _('Include in dossier') }}`"
+            ></v-switch>
+          </v-col>
+        </v-row>
       </v-container>
     </v-card-text>
   </v-card>
