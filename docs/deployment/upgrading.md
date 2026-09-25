@@ -141,7 +141,7 @@ itself from the deployed release.
 
 ```bash
 sudo bayanat update --check     # confirm what you are moving to
-sudo bayanat update v5.0.0
+sudo bayanat update             # latest release
 ```
 
 This takes a database snapshot, fetches and verifies the release, installs
@@ -211,7 +211,8 @@ units and web server.
 ```bash
 # From your installation directory, as the user that owns it
 git fetch --tags
-git checkout v5.0.0
+TAG=$(git tag -l 'v5.*' --sort=-v:refname | head -1)   # latest v5 release
+git checkout "$TAG"
 uv sync --frozen
 uv run flask db upgrade
 ```
@@ -258,7 +259,9 @@ docker compose down
 docker volume rm <project>_postgres_data
 
 # 5. Pull the new code and images
-git fetch --tags && git checkout v5.0.0
+git fetch --tags
+TAG=$(git tag -l 'v5.*' --sort=-v:refname | head -1)   # latest v5 release
+git checkout "$TAG"
 docker compose pull && docker compose build
 
 # 6. Start PostgreSQL alone and let it initialize an empty cluster

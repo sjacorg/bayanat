@@ -1,5 +1,20 @@
 # Changelog
 
+## v5.1.0
+
+### Added
+
+- Label structure navigator: a searchable, read-only tree of the label hierarchy, opened from the app bar by Admin, Mod and DA users. It shows each label's English and Arabic path, which entity types it applies to, and marks grouping-only and retired labels. Labels and verified labels are browsed as separate trees. Managing labels remains restricted to Admin and Mod.
+- System users list search: Admins, and Mods with permission to view usernames, can search users by name, username or email. For Mods without that permission, the search returns no results, so it cannot be used to discover identities they cannot see.
+
+### Changed
+
+- Interface consistency pass across the Bulletins, Actors, Incidents, Sources, Labels, Locations and Event Types pages: the active quick filter is highlighted, the Advanced Search and Location Search dialogs keep their header visible while scrolling, Self-Assign dialogs gain a Cancel button, edit icons and Import CSV buttons are uniform, and table columns on the settings pages are rebalanced, with long text truncated and shown in full on hover. The Import from Web button is now visually secondary to New Bulletin.
+
+### Upgrading
+
+No database migrations. Installer-managed installs on v5.0.0 update with `sudo bayanat update`.
+
 ## v5.0.0
 
 v5 changes how Bayanat is deployed as well as what it runs. Read
