@@ -333,9 +333,9 @@
                                             label="{{ _('Comments') }}"></v-textarea>
                             </v-card-text>
                             <v-card-actions>
-                                <v-btn @click="selfAssignDialog=false" text>{{ _('Cancel') }}</v-btn>
+                                <v-btn @click="selfAssignDialog=false" variant="outlined">{{ _('Cancel') }}</v-btn>
                                 <v-btn :disabled="!assignBulletin.comments" @click="selfAssign"
-                                       color="primary">{{ _('Assign to self') }}
+                                       variant="elevated" color="primary">{{ _('Assign to self') }}
                                 </v-btn>
                             </v-card-actions>
                         </v-card>
