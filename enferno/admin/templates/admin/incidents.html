@@ -300,7 +300,7 @@
                                 <v-textarea v-model="assignIncident.comments" label="{{ _('Comments') }}"></v-textarea>
                             </v-card-text>
                             <v-card-actions>
-                                <v-btn @click="selfAssignDialog=false" text>{{ _('Cancel') }}</v-btn>
+                                <v-btn @click="selfAssignDialog=false" variant="text">{{ _('Cancel') }}</v-btn>
                                 <v-btn :disabled="!assignIncident.comments"
                                        @click="selfAssign"
                                        color="primary">{{ _('Assign to self') }}
