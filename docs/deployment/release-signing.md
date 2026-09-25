@@ -58,14 +58,6 @@ GitHub release for `$TAG`.
 exact bytes you upload, so there is no cross-machine reproducibility
 requirement: the updater verifies the same file you signed.
 
-## Key custody
-
-- Working copy: `~/.config/minisign/bayanat-release.key` (chmod 600).
-- Password: stored in a password manager. minisign cannot regenerate the key
-  from the password alone, so the key file **and** the password must both
-  survive. Keep an encrypted backup.
-- More than one maintainer should hold the key file and password (bus factor).
-
 ## Rotation
 
 minisign has no revocation. If the key is lost or compromised, generate a new
