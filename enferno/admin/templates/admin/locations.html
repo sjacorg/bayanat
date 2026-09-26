@@ -93,12 +93,13 @@
 
                                                         <v-card-actions>
                                                             <v-spacer></v-spacer>
-                                                            <v-btn
-                                                                    @click="imDialog=false">
+                                                            <v-btn @click="imDialog=false" variant="outlined">
                                                                 {{ _('Cancel') }}
                                                             </v-btn>
                                                             <v-btn
-                                                                    @click="importCSV">
+                                                                    @click="importCSV"
+                                                                    variant="elevated"
+                                                                    color="primary">
                                                                 {{ _('Save') }}
                                                             </v-btn>
                                                         </v-card-actions>
