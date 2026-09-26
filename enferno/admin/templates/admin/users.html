@@ -22,6 +22,17 @@
                             <v-toolbar flat color="white">
                                 <v-toolbar-title>{{ _('System Users') }}</v-toolbar-title>
 
+                                <v-text-field
+                                        variant="outlined"
+                                        class="mt-6"
+                                        density="compact"
+                                        clearable
+                                        @click:clear="resetSearch"
+                                        v-model.trim="q"
+                                        label="{{ _('Search') }}"
+                                        @keydown.enter="refresh()"
+                                ></v-text-field>
+
                                 <v-spacer></v-spacer>
 
                                 <v-btn @click.once="forceGlobalReset" class="ma-2" color="error" variant="elevated">
@@ -350,6 +361,7 @@
                 translations: window.translations,
                 validationRules: validationRules,
                 options: {},
+                q: '',
 
                 headers: [
                     {title: "{{_('ID')}}", value: "id"},
@@ -611,7 +623,13 @@
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
-                    api.get(`/admin/api/users/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
+                    api.get('/admin/api/users/', {
+                        params: {
+                            page: this.options.page,
+                            per_page: this.options.itemsPerPage,
+                            q: this.q || undefined,
+                        }
+                    }).then(res => {
                         this.items = res.data.items;
                         this.itemsLength = res.data.total;
                     }).catch(err => {
@@ -619,6 +637,11 @@
                     }).finally(() => {
                         this.loading = false;
                     });
+                },
+
+                resetSearch() {
+                    this.q = '';
+                    this.refresh();
                 },
 
                 createItem() {

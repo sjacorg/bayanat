@@ -22,10 +22,19 @@ from flask import (
 )
 from flask_security import auth_required
 from flask_security.decorators import current_user, roles_accepted
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, or_
+from sqlalchemy.orm import selectinload
 from werkzeug.utils import safe_join, secure_filename
 
-from enferno.admin.models import Media, Activity, Extraction, MediaRedaction, MediaCategory
+from enferno.admin.models import (
+    Media,
+    Activity,
+    Extraction,
+    MediaRedaction,
+    MediaCategory,
+    Bulletin,
+    Actor,
+)
 from enferno.admin.models.tables import bulletin_roles, actor_roles
 from enferno.extensions import db, rds
 from enferno.utils.date_helper import DateHelper
@@ -624,10 +633,11 @@ def api_media_get(id: int):
     ext_dict = ext.to_dict() if ext else None
     item["extraction"] = ext_dict
     item["ocr_status"] = ext.status if ext else "pending"
-    if media.bulletin:
-        item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
-    else:
-        item["bulletin"] = None
+    item["bulletin"] = (
+        {"id": media.bulletin.id, "title": media.bulletin.title} if media.bulletin else None
+    )
+    item["actor"] = {"id": media.actor.id, "name": media.actor.name} if media.actor else None
+    item["editable"] = current_user.can_edit(media)
     media_url = _media_url(media.media_file)
     item["media_url"] = media_url
     item["thumbnail_url"] = media_url
@@ -851,12 +861,22 @@ def api_media_dashboard():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    query = Media.query.outerjoin(Extraction)
+    # parents and their roles feed can_edit() per row; load them in two queries, not per item
+    query = Media.query.outerjoin(Extraction).options(
+        selectinload(Media.bulletin).selectinload(Bulletin.roles),
+        selectinload(Media.actor).selectinload(Actor.roles),
+    )
     query = _apply_media_access_filter(query)
 
-    # Filter by bulletin
+    # Numeric search: media, bulletin or actor id
     if bulletin_id:
-        query = query.filter(Media.bulletin_id == bulletin_id)
+        query = query.filter(
+            or_(
+                Media.id == bulletin_id,
+                Media.bulletin_id == bulletin_id,
+                Media.actor_id == bulletin_id,
+            )
+        )
 
     # Filter by OCR status
     if ocr_status == "pending":
@@ -869,11 +889,11 @@ def api_media_dashboard():
         search = normalize_arabic(search)
         query = query.filter(like_contains(Extraction.search_text, search))
 
-    # Date range filter on extraction created_at
+    # Date range on the media updated date (the column the table shows), inclusive
     if date_from:
-        query = query.filter(Extraction.created_at >= date_from)
+        query = query.filter(func.date(Media.updated_at) >= date_from)
     if date_to:
-        query = query.filter(Extraction.created_at <= date_to)
+        query = query.filter(func.date(Media.updated_at) <= date_to)
 
     query = query.order_by(desc(Media.id))
     paginated = query.paginate(page=page, per_page=per_page, count=True)
@@ -909,10 +929,11 @@ def _media_dashboard_item(media):
     }
     item["extraction"] = media.extraction.to_dict() if media.extraction else None
     item["ocr_status"] = media.extraction.status if media.extraction else "pending"
-    if media.bulletin:
-        item["bulletin"] = {"id": media.bulletin.id, "title": media.bulletin.title}
-    else:
-        item["bulletin"] = None
+    item["bulletin"] = (
+        {"id": media.bulletin.id, "title": media.bulletin.title} if media.bulletin else None
+    )
+    item["actor"] = {"id": media.actor.id, "name": media.actor.name} if media.actor else None
+    item["editable"] = current_user.can_edit(media)
     media_url = _media_url(media.media_file)
     item["media_url"] = media_url
     item["thumbnail_url"] = media_url

@@ -6,6 +6,8 @@ from flask_login import current_user
 from sqlalchemy.dialects.postgresql import TSVECTOR
 
 import enferno.utils.typing as t
+from sqlalchemy import text
+
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
@@ -133,6 +135,11 @@ class Incident(db.Model, BaseMixin):
             "search",
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+        db.Index(
+            "ix_incident_search_normalized",
+            text("normalize_arabic_text(search) gin_trgm_ops"),
+            postgresql_using="gin",
         ),
     )
 

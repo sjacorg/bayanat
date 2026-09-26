@@ -41,15 +41,8 @@ const EventsSection = Vue.defineComponent({
     checkEventFormRules() {
       const e = this.editedEvent;
 
-      const hasDateOrLocation = !!(e.location || e.from_date || e.to_date);
-      const hasTitleOrType = !!(e.title || e.title_ar || e.eventtype);
-
-      const missing = [];
-      if (!hasDateOrLocation) missing.push(this.translations.locationOrDateRequired_);
-      if (!hasTitleOrType) missing.push(this.translations.titleOrTypeRequired_);
-
-      if (missing.length > 0) {
-        this.$root.showSnack(missing.join('\n'));
+      if (!e.eventtype) {
+        this.$root.showSnack(this.translations.eventTypeRequired_);
         return false;
       }
 

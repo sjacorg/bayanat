@@ -1,5 +1,17 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
+
+// Version comes from pyproject.toml so the nav badge cannot go stale.
+const pyproject = readFileSync(
+  fileURLToPath(new URL("../../pyproject.toml", import.meta.url)),
+  "utf-8",
+);
+const version = pyproject.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
+if (!version) {
+  throw new Error("Could not read version from pyproject.toml");
+}
 
 export default withMermaid(
   defineConfig({
@@ -19,7 +31,7 @@ export default withMermaid(
         { text: "Methodology", link: "/methodology/analysis" },
         { text: "Security", link: "/security/threat-model" },
         {
-          text: "v3.0.0",
+          text: `v${version}`,
           link: "https://github.com/sjacorg/bayanat/releases",
         },
       ],
@@ -81,6 +93,8 @@ export default withMermaid(
               { text: "Database Migrations", link: "/deployment/migrations" },
               { text: "Docker", link: "/deployment/docker" },
               { text: "Backups", link: "/deployment/backups" },
+              { text: "Auto-Update Runbook", link: "/deployment/auto-update-runbook" },
+              { text: "Release Signing", link: "/deployment/release-signing" },
             ],
           },
         ],

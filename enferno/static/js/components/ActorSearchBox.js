@@ -51,6 +51,7 @@ const ActorSearchBox = Vue.defineComponent({
     modelValue: {
       handler(newVal, oldVal) {
         this.q = newVal;
+        if (this.q) this.q.locTypes = this.q.locTypes || this.translations.actorLocTypes_.map((x) => x.code);
         this.id_number = {
           type: this.q?.id_number?.type || null,
           number: this.q?.id_number?.number || null,
@@ -530,6 +531,7 @@ const ActorSearchBox = Vue.defineComponent({
                     :multiple="false"
                     :label="translations.includeEventLocations_"
                   ></location-search-field>
+                  <v-checkbox :label="translations.includeSubLocations_" density="compact" v-model="q.elocationSub" color="primary" hide-details :disabled="!q.elocation"></v-checkbox>
                 </v-col>
               </v-row>
             </v-expansion-panel-text>
@@ -813,6 +815,7 @@ const ActorSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.includeSources_"
                 ></search-field>
                 <div class="d-flex align-center flex-wrap mt-n1">
@@ -825,6 +828,7 @@ const ActorSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
+                    :retain-search="true"
                     :label="translations.excludeSources_"
                 ></search-field>
                 <v-switch density="compact" color="primary" v-model="q.childsources" :label="translations.includeChildSources_" hide-details></v-switch>
@@ -902,7 +906,7 @@ const ActorSearchBox = Vue.defineComponent({
               <v-row dense>
                 <v-col cols="12" md="9">
                   <v-chip-group column multiple v-model="q.roles" selected-class="text-primary">
-                    <v-chip v-if="roles" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
+                    <v-chip v-if="roles?.length" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
                   </v-chip-group>
                 </v-col>
                 <v-col cols="12" md="3">
@@ -974,7 +978,7 @@ const ActorSearchBox = Vue.defineComponent({
               <v-row dense>
                 <v-col cols="12" md="9">
                   <v-chip-group column multiple v-model="q.roles" selected-class="text-primary">
-                    <v-chip v-if="roles" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
+                    <v-chip v-if="roles?.length" :value="role.id" size="small" v-for="role in roles" filter variant="outlined" :key="role.id">{{ role.name }}</v-chip>
                   </v-chip-group>
                 </v-col>
                 <v-col cols="12" md="3">

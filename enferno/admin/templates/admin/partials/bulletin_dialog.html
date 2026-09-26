@@ -28,7 +28,7 @@
                             <v-chip 
                                 v-bind="props"
                                 prepend-icon="mdi-identifier" 
-                                :href="editedItem.source_link" 
+                                :href="$root.externalLink(editedItem.source_link)" 
                                 target="_blank" 
                                 pill 
                                 label
@@ -37,7 +37,7 @@
                                 <v-icon v-if="editedItem.source_link" size="x-small" class="white--text ml-1">mdi-open-in-new</v-icon>
                             </v-chip>
                         </template>
-                        {{ _('Origin ID') }}
+                        {{ _('Origin ID') }}: ${editedItem.originid}
                     </v-tooltip>
 
                     <v-tooltip v-else-if="editedItem.source_link && editedItem.source_link != 'NA'" location="bottom">
@@ -45,7 +45,7 @@
                             <v-chip 
                                 v-bind="props"
                                 prepend-icon="mdi-link-variant"
-                                :href="editedItem.source_link" 
+                                :href="$root.externalLink(editedItem.source_link)" 
                                 target="_blank" 
                                 pill 
                                 label
@@ -101,7 +101,7 @@
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'sources')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <search-field v-model="editedItem.sources" api="/admin/api/sources/" item-title="title" item-value="id"
-                                            :multiple="true" label="{{ _('Sources') }}"></search-field>
+                                            :multiple="true" :retain-search="true" label="{{ _('Sources') }}"></search-field>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'description')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <div class="text-subtitle-2 mb-2">{{ _('Description') }}</div>

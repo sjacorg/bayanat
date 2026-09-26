@@ -19,7 +19,7 @@
                                             :page="options.page"
                                             :loading="loading"
                                             :items-length="itemsLength"
-                                            class="elevation-1"
+                                            class="elevation-1 fixed-layout-table"
                                     >
                                         <template v-slot:top>
                                             <v-toolbar flat color="white">
@@ -106,15 +106,14 @@
                                                         <v-card-actions>
                                                             <v-spacer></v-spacer>
                                                             <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
+                                                                    variant="outlined"
                                                                     @click="close"
                                                             >{{ _('Cancel') }}
                                                             </v-btn
                                                             >
                                                             <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
+                                                                    variant="elevated"
+                                                                    color="primary"
                                                                     @click="save"
                                                             >{{ _('Save') }}
                                                             </v-btn
@@ -128,8 +127,8 @@
                                                     {% if current_user.roles_in(['Admin']) %}
                                                     <template v-slot:activator="{ props }">
                                                         <v-btn
-                                                            color="secondary"
-                                                            variant="elevated"
+                                                            variant="outlined"
+                                                            prepend-icon="mdi-arrow-up"
                                                             class="ma-2"
                                                             v-bind="props">
                                                             {{ _('Import CSV') }}
@@ -158,15 +157,14 @@
                                                         <v-card-actions>
                                                             <v-spacer></v-spacer>
                                                             <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
+                                                                    variant="outlined"
                                                                     @click="imDialog=false"
                                                             >{{ _('Cancel') }}
                                                             </v-btn
                                                             >
                                                             <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
+                                                                    variant="elevated"
+                                                                    color="primary"
                                                                     @click="importCSV"
                                                             >{{ _('Save') }}
                                                             </v-btn
@@ -178,8 +176,17 @@
 
                                             </v-toolbar>
                                         </template>
+                                        <template v-slot:item.title="{ item }">
+                                            <div class="text-truncate" :title="item.title">${item.title}</div>
+                                        </template>
+                                        <template v-slot:item.title_ar="{ item }">
+                                            <div class="text-truncate" :title="item.title_ar">${item.title_ar}</div>
+                                        </template>
                                         <template #['item.comments']="{ item }">
-                                            <div class="line-clamp-1">${item.comments}</div>
+                                            <div class="text-truncate" :title="item.comments">${item.comments}</div>
+                                        </template>
+                                        <template #['item.parent.title']="{ item }">
+                                            <div class="text-truncate" :title="item.parent?.title">${item.parent?.title}</div>
                                         </template>
                                         <template v-slot:item.action="{ item }">
                                             <v-icon small class="mr-2" @click="editItem(item)">
@@ -223,16 +230,16 @@
                 options: {},
 
                 headers: [
-                    {title: "{{('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (AR)')}}", value: "title_ar"},
-                    {title: "{{_('Origin ID')}}", value: "etl_id"},
+                    {title: "{{('ID')}}", value: "id", width: "6%"},
+                    {title: "{{_('Title')}}", value: "title", width: "20%"},
+                    {title: "{{_('Title (AR)')}}", value: "title_ar", width: "20%"},
+                    {title: "{{_('Origin ID')}}", value: "etl_id", width: "10%"},
 
-                    {title: "{{_('Comments')}}", value: "comments"},
-                    {title: "{{_('Parent')}}", value: "parent.title"},
+                    {title: "{{_('Comments')}}", value: "comments", width: "26%", sortable: false},
+                    {title: "{{_('Parent')}}", value: "parent.title", width: "18%", sortable: false},
 
                     {% if current_user.roles_in(['Admin','Mod']) %}
-                        {title: "{{_('Actions')}}", value: "action", sortable: false}
+                        {title: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
                     {% endif %}
                 ],
 

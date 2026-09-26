@@ -308,6 +308,10 @@ const GeoMap = Vue.defineComponent({
     },
 
     emitValue() {
+      if (this.lat == null && this.lng == null) {
+        if (this.modelValue) this.$emit('update:modelValue', null);
+        return;
+      }
       if (this.lat == null || this.lng == null) return;
     
       const newValue = { lat: this.lat, lng: this.lng, radius: this.radius ?? 1000 };

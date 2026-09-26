@@ -22,7 +22,7 @@ const UpdateBanner = Vue.defineComponent({
   methods: {
     async fetchAvailable() {
       try {
-        const resp = await axios.get('/admin/api/updates/available');
+        const resp = await axios.get('/admin/api/updates/available', { suppressGlobalErrorHandler: true });
         const data = resp?.data?.data ?? {};
         this.current = data.current ?? null;
         this.latest = data.latest ?? null;

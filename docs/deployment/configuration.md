@@ -80,11 +80,22 @@ Changing this secret invalidates all 2FA configurations.
 
 ### Local
 
-Media files stored in `enferno/media/`.
+Media files stored in `enferno/media/` relative to the application directory. An
+installer-managed v5 host keeps them in `/opt/bayanat/shared/media`, which the
+release symlinks into place, so the application path is the same either way.
 
 ### Amazon S3
 
 Configure the S3 bucket with correct policies, block public access, and set up CORS.
+
+::: warning S3 does not hold everything
+Uploads made through the interface go straight to the bucket, but **inline images**
+in descriptions do not. They are always written to `enferno/media/inline/` on the
+server, with no S3 path, so bucket versioning and replication do not cover them.
+
+Back up that directory as well as the bucket. Imported files are staged locally
+and removed once uploaded, so they need no separate handling.
+:::
 
 ## Search
 
@@ -100,6 +111,30 @@ Background searches require a running Celery worker. Without one, users receive 
 ::: warning
 Lowering `SEARCH_TIMEOUT` far below the default sends ordinary searches to the background, including the initial page load of a list view. Raise it instead if legitimate searches are being deferred.
 :::
+
+## Sessions and Login Throttling
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SESSION_LIFETIME` | `3600` | Seconds of inactivity before a session expires and the user must sign in again. |
+| `LOGIN_RATE_LIMIT_PER_USERNAME` | `10 per 15 minutes` | Failed-login throttle applied per account, so one targeted account cannot be brute-forced from many addresses. |
+| `LOGIN_RATE_LIMIT_PER_IP` | `30 per 15 minutes` | Failed-login throttle applied per source address, so one address cannot spray many accounts. |
+
+Both throttles use the `limits` string syntax, for example `5 per minute` or
+`100 per hour`. They apply to the login endpoint only. Lowering
+`SESSION_LIFETIME` too far is a common cause of complaints about constant
+re-authentication.
+
+## Configuration File Location
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `BAYANAT_CONFIG_FILE` | `config.json` | Path to the feature-toggle configuration file. |
+
+Installer-managed deployments set this to a path outside the release directory,
+because releases are read-only to the services and `config.json` is written at
+runtime from the admin interface. Set it explicitly if you deploy releases as
+read-only trees.
 
 ## Data Import
 
