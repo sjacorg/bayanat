@@ -205,6 +205,7 @@ const ShortActorDialog = Vue.defineComponent({
       
         if (actorProfile) {
           actorProfile.sources = newParentItem?.sources ?? [];
+          if (!actorProfile.originid && newParentItem?.id) actorProfile.originid = String(newParentItem.id);
         }
       },
       deep: true,
@@ -438,7 +439,7 @@ const ShortActorDialog = Vue.defineComponent({
 
                                           <v-card-text>
                                               <!-- Sources -->
-                                              <search-field v-model="profile.sources" api="/admin/api/sources/" item-title="title" item-value="id" :multiple="true" :label="translations.sources_"></search-field>
+                                              <search-field v-model="profile.sources" api="/admin/api/sources/" item-title="title" item-value="id" :multiple="true" :retain-search="true" :label="translations.sources_"></search-field>
                                           </v-card-text>
 
                                           <v-card-text>

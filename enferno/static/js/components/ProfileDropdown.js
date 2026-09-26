@@ -97,7 +97,7 @@ const ProfileDropdown = Vue.defineComponent({
             <v-radio-group class="ms-5" hide-details v-model="$root.settings.dark" @update:model-value="$root.saveSettings" row>
                 <v-radio :value="0" true-icon="mdi-check-circle">
                     <template #label>
-                        <v-icon size="small" class="me-2">mdi-weather-sunny</v-icon>
+                        <v-icon size="small" class="me-2">mdi-white-balance-sunny</v-icon>
                         <span class="text-body-2">{{ translations.light_ }}</span>
                     </template>
                 </v-radio>

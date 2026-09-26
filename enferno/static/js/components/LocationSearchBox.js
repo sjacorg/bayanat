@@ -56,15 +56,15 @@ const LocationSearchBox = Vue.defineComponent({
   },
 
   template: /* html */ `
-    <v-sheet>
-      <v-card>
-        <v-toolbar :title="translations.searchLocations_">
+    <v-sheet class="d-flex flex-column">
+      <v-card class="overflow-hidden d-flex flex-column flex-shrink-1" style="min-height: 0;">
+        <v-toolbar :title="translations.searchLocations_" color="primary" class="flex-shrink-0">
           <template #append>
             <v-btn icon="mdi-close" @click="$emit('close')"></v-btn>
           </template>
         </v-toolbar>
 
-        <div class="search-box-redesign">
+        <div class="search-box-redesign overflow-y-auto">
           <!-- Active filters summary -->
           <v-sheet v-if="totalActiveFilters > 0" class="mx-4 mt-3 pa-3 rounded-lg d-flex align-center" color="primary" variant="tonal">
             <v-icon size="small" class="me-2">mdi-filter-check</v-icon>
@@ -176,11 +176,11 @@ const LocationSearchBox = Vue.defineComponent({
       </v-card>
 
       <!-- Action buttons -->
-      <v-card tile elevation="10" color="grey-lighten-5">
-        <v-card-text class="d-flex justify-center ga-3">
+      <v-card tile elevation="10" color="grey-lighten-5" class="flex-shrink-0">
+        <v-card-actions class="justify-end">
           <v-btn @click="q = {}" variant="text">{{ translations.clearSearch_ }}</v-btn>
           <v-btn @click="$emit('search', q)" color="primary" variant="elevated" prepend-icon="mdi-magnify">{{ translations.search_ }}</v-btn>
-        </v-card-text>
+        </v-card-actions>
       </v-card>
 
     </v-sheet>

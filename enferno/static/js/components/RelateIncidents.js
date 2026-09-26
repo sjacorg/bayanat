@@ -26,6 +26,7 @@ const RelateIncidents = Vue.defineComponent({
           @search="reSearch"
           :extra-filters="false"
           :show-op="false"
+          :roles="$root.allowedRoles"
         ></incident-search-box>
       </template>
       <template #results-list>

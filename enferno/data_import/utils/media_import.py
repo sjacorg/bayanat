@@ -513,7 +513,7 @@ class MediaImport:
         mime_type = info.get("File:MIMEType")
 
         # get duration and optimize if video
-        if mime_type.startswith("video/") or mime_type.startswith("audio/"):
+        if mime_type and (mime_type.startswith("video/") or mime_type.startswith("audio/")):
             info["vduration"] = self.get_duration(info["filepath"])
 
             if self.meta.get("optimize"):
@@ -545,9 +545,10 @@ class MediaImport:
             if parsed_text:
                 text_content = parsed_text
 
-        if self.meta.get("transcription") and (
-            info.get("File:MIMEType").startswith("video")
-            or info.get("File:MIMEType").startswith("audio")
+        if (
+            self.meta.get("transcription")
+            and mime_type
+            and (mime_type.startswith("video") or mime_type.startswith("audio"))
         ):
             language = self.meta.get("transcription_language")
             transcription = self.transcribe_video(info["filepath"], language)
@@ -578,7 +579,6 @@ class MediaImport:
             - None
         """
         bulletin = Bulletin()
-        db.session.add(bulletin)
 
         def update_description(description):
             description = sanitize_string(description or "")

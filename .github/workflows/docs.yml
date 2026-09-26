@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "docs/**"
+      - "pyproject.toml"
       - ".github/workflows/docs.yml"
   push:
     branches: [main]
     paths:
       - "docs/**"
+      - "pyproject.toml"
   workflow_dispatch:
 
 permissions:

@@ -7,7 +7,7 @@ from flask import g, has_app_context
 from flask_babel import gettext
 from flask_login import current_user
 from geoalchemy2 import Geography
-from sqlalchemy import ARRAY, func, event, DDL
+from sqlalchemy import ARRAY, func, event, DDL, text
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -172,6 +172,11 @@ class Actor(db.Model, BaseMixin):
             "search",
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+        db.Index(
+            "ix_actor_search_normalized",
+            text("normalize_arabic_text(search) gin_trgm_ops"),
+            postgresql_using="gin",
         ),
         db.Index(
             "ix_actor_tags",
@@ -536,7 +541,14 @@ class Actor(db.Model, BaseMixin):
     @check_roles
     def to_compact(self) -> dict[str, Any]:
         """Return a compact dictionary representation of the actor."""
-        return {"id": self.id, "name": self.name, "sources": self.sources}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "name_ar": self.name_ar,
+            "nickname": self.nickname,
+            "nickname_ar": self.nickname_ar,
+            "sources": self.sources,
+        }
 
     def to_csv_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the actor for CSV export."""

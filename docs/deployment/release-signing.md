@@ -3,7 +3,7 @@
 Bayanat releases are signed with [minisign](https://jedisct1.github.io/minisign/).
 The `bayanat` CLI verifies every release tarball against a pinned public key
 before installing it, so `sudo bayanat update` (and the installer) will refuse
-an unsigned or tampered release. This is the BAY-01-017 control.
+an unsigned or tampered release.
 
 ## What the updater expects
 
@@ -57,14 +57,6 @@ GitHub release for `$TAG`.
 `git archive` is deterministic for a given tree, and the signature covers the
 exact bytes you upload, so there is no cross-machine reproducibility
 requirement: the updater verifies the same file you signed.
-
-## Key custody
-
-- Working copy: `~/.config/minisign/bayanat-release.key` (chmod 600).
-- Password: stored in a password manager. minisign cannot regenerate the key
-  from the password alone, so the key file **and** the password must both
-  survive. Keep an encrypted backup.
-- More than one maintainer should hold the key file and password (bus factor).
 
 ## Rotation
 

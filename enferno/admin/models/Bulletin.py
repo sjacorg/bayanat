@@ -5,7 +5,7 @@ from typing import Any, Optional
 import sqlalchemy
 from flask_login import current_user
 from geoalchemy2 import Geography
-from sqlalchemy import ARRAY, func
+from sqlalchemy import ARRAY, func, text
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 
 import enferno.utils.typing as t
@@ -172,6 +172,11 @@ class Bulletin(db.Model, BaseMixin):
             "search",
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+        db.Index(
+            "ix_bulletin_search_normalized",
+            text("normalize_arabic_text(search) gin_trgm_ops"),
+            postgresql_using="gin",
         ),
         db.Index(
             "ix_bulletin_tags_gin",

@@ -26,6 +26,7 @@ const RelateBulletins = Vue.defineComponent({
           @search="reSearch"
           :extra-filters="false"
           :show-op="false"
+          :roles="$root.allowedRoles"
         ></bulletin-search-box>
       </template>
       <template #results-list>

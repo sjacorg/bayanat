@@ -5,6 +5,7 @@ const globalMixin = {
     'Toast': Toast,
     'ProfileDropdown': ProfileDropdown,
     'UpdateBanner': UpdateBanner,
+    'LabelStructureNavigator': LabelStructureNavigator,
   },
   data: () => ({
     snackbar: false,
@@ -76,6 +77,11 @@ const globalMixin = {
     },
   },
   methods: {
+    // Absolute href for a user-entered source link; relative values would resolve under /admin/...
+    externalLink(link) {
+      if (!link || link === 'NA') return null;
+      return /^[a-z][a-z0-9+.-]*:/i.test(link) ? link : `https://${link}`;
+    },
     /**
      * Format a date with Day.js supporting timezone, locale, and special formats.
      * @param {string|number|Date|dayjs.Dayjs} date - Date to format.
@@ -191,6 +197,26 @@ const globalMixin = {
         .filter(v => v);
 
       return [...new Set(clean)];
+    },
+    // Checks whether a query object still matches the "assigned to me" /
+    // "my review list" shape a quick-filter button produces (ignoring
+    // free-text fields like tsv). Used on search submit to decide whether an
+    // active quick filter should stay highlighted or be cleared because the
+    // user edited it away in Advanced Search.
+    queryMatchesQuickFilter(filter, q) {
+      if (filter === 'assigned') {
+        return (
+          q.assigned?.length === 1 && q.assigned[0] === this.currentUser.id &&
+          q.statuses?.length === 1 && q.statuses[0] === 'Assigned'
+        );
+      }
+      if (filter === 'review') {
+        return (
+          q.reviewer?.length === 1 && q.reviewer[0] === this.currentUser.id &&
+          q.statuses?.length === 1 && q.statuses[0] === 'Peer Review Assigned'
+        );
+      }
+      return true;
     },
   },
 };

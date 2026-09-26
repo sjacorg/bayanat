@@ -56,7 +56,15 @@ Help translate Bayanat on [POEditor](https://poeditor.com/join/project/XRamVw2AD
 
 ## Updates
 
-Stable releases are pushed every few weeks. Critical updates are pushed sooner. Always **backup before pulling updates**. Check [releases](https://github.com/sjacorg/bayanat/releases) for migration instructions when needed.
+Stable releases are pushed every few weeks. Critical updates are pushed sooner.
+
+From v5.0.0 an installer-managed host updates with `bayanat update`, which takes a
+database snapshot, verifies the release signature and reverts automatically if the
+new release fails its health check. Docker deployments follow
+[Docker Deployment](https://docs.bayanat.org/deployment/docker). Either way, **take
+a backup first**: migrations are not reversible. See
+[Upgrading](https://docs.bayanat.org/deployment/upgrading) for the v4 to v5 hop,
+which is a migration with a maintenance window rather than a routine update.
 
 ## Support
 

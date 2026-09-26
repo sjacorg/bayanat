@@ -1,16 +1,27 @@
-.git
-node_modules
-.venv
-env
-__pycache__
-*.pyc
-*.pyo
+# Allowlist, not a denylist. The build context is everything the images need
+# and nothing else, so a build from a working checkout cannot copy stray local
+# files into an image (and from there into any registry it is pushed to).
+# Add a new "!path" line when the application genuinely needs a new file.
+*
+
+!enferno
+!migrations
+!flask
+!tests
+!run.py
+!pyproject.toml
+!uv.lock
+!pytest.ini
+!uwsgi.ini
+!reload.ini
+!config.sample.json
+!LICENSE
+
+# Re-exclude generated and runtime data living inside the paths above.
+# `tests/` is required by flask/Dockerfile.test, so it stays included.
+**/__pycache__
+**/*.py[co]
+**/node_modules
+**/.DS_Store
 enferno/media
 enferno/imports
-logs
-backups
-.env
-.env.*
-.DS_Store
-*.md
-docs/node_modules
