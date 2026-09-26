@@ -18,7 +18,21 @@ if [ "$ROLE" = "flask" ]; then
     flask db upgrade
   fi
   echo ":: Starting Bayanat ::"
-  exec uwsgi --http 0.0.0.0:5000 --protocol uwsgi --master --processes 1 --wsgi run:app
+  # harakiri stops a stuck request from pinning a worker forever; max-requests
+  # recycles workers to bound leaks. The default is deliberately generous: the
+  # request body is streamed, not buffered, so a large media upload over a slow
+  # link occupies a worker for its whole duration and harakiri must outlast it.
+  # Post-buffering would fix that but spools big bodies to /tmp, which is tmpfs.
+  exec uwsgi --http 0.0.0.0:5000 --master --wsgi run:app \
+    --processes "${UWSGI_PROCESSES:-4}" \
+    --threads "${UWSGI_THREADS:-2}" \
+    --harakiri "${UWSGI_HARAKIRI:-300}" \
+    --harakiri-verbose \
+    --max-requests 1000 \
+    --max-worker-lifetime 3600 \
+    --need-app \
+    --die-on-term \
+    --buffer-size 32768
 
 elif [ "$ROLE" = "celery" ]; then
   echo ":: Starting Celery for Bayanat ::"

@@ -92,7 +92,7 @@
                                     
                                     <v-text-field
                                         v-model="filters.q"
-                                        label="{{ _('Search extraction text or by ID') }}"
+                                        label="{{ _('Search extraction text, or a media, bulletin or actor ID') }}"
                                         variant="outlined"
                                         density="compact"
                                         clearable
@@ -184,6 +184,17 @@
                                 @click.stop
                             >
                                 #${item.bulletin.id}
+                                <v-icon size="small" class="ml-1">mdi-open-in-new</v-icon>
+                            </v-btn>
+                            <v-btn
+                                v-else-if="item.actor"
+                                color="primary"
+                                variant="text"
+                                :href="`/admin/actors/${item.actor.id}`"
+                                target="_blank"
+                                @click.stop
+                            >
+                                <v-icon size="small" class="mr-1">mdi-account</v-icon>#${item.actor.id}
                                 <v-icon size="small" class="ml-1">mdi-open-in-new</v-icon>
                             </v-btn>
                         </template>
@@ -293,7 +304,7 @@
                 headers: [
                     { title: "{{_('Thumbnail')}}", value: "thumbnail", sortable: false },
                     { title: "{{_('Filename')}}", value: "filename" },
-                    { title: "{{_('Bulletin')}}", value: "bulletin", sortable: false },
+                    { title: "{{_('Parent')}}", value: "bulletin", sortable: false },
                     { title: "{{_('OCR Status')}}", value: "ocr_status" },
                     { title: "{{_('Date')}}", value: "updated_at" },
                     { title: "{{_('Actions')}}", value: "actions", sortable: false, align: "end" }
@@ -471,9 +482,8 @@
                     // Parse the search query
                     const searchValue = this.filters.q?.trim();
                     
-                    // Check if it's a number (bulletin ID)
+                    // A number matches a media, bulletin or actor id
                     if (searchValue && /^\d+$/.test(searchValue)) {
-                        // It's a bulletin ID
                         this.filters.bulletin_id = searchValue;
                         this.filters.q = '';
                     } else {

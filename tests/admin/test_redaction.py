@@ -2,7 +2,7 @@ import io
 
 import pymupdf
 import pytest
-from PIL import Image
+from PIL import Image, ImageFile
 
 from enferno.admin.models import Bulletin, Media
 from enferno.utils.redaction_utils import RedactionError, redact_image_bytes, redact_pdf_bytes
@@ -62,6 +62,30 @@ def test_redact_image_bytes_burns_black_box():
     result = Image.open(io.BytesIO(out)).convert("RGB")
     assert result.getpixel((10, 10)) == (0, 0, 0)
     assert result.getpixel((90, 90)) == (255, 255, 255)
+
+
+def test_redact_image_bytes_survives_truncated_jpeg():
+    # Real uploads arrive with the scan cut short: browsers render the partial image and
+    # the user redacts it, so the burn must not hard-fail on the same bytes.
+    img = Image.new("RGB", (400, 400), "white")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    truncated = buf.getvalue()[: len(buf.getvalue()) // 2]
+
+    out = redact_image_bytes(truncated, [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
+
+    pixel = Image.open(io.BytesIO(out)).convert("RGB").getpixel((10, 10))
+    assert pixel == (0, 0, 0)
+    # The decoder policy is process-global: redaction must hand it back so OCR,
+    # thumbnails and imports keep rejecting incomplete images.
+    assert ImageFile.LOAD_TRUNCATED_IMAGES is False
+    with pytest.raises(OSError):
+        Image.open(io.BytesIO(truncated)).convert("RGB")
+
+
+def test_redact_image_bytes_rejects_undecodable_file():
+    with pytest.raises(RedactionError):
+        redact_image_bytes(b"not an image", [{"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}])
 
 
 def test_redact_image_bytes_honors_exif_orientation():

@@ -150,6 +150,11 @@ def api_source_delete(
     if source is None:
         return HTTPResponse.not_found("Source not found")
 
+    if source.sub_source:
+        return HTTPResponse.error("Cannot delete a source that has sub-sources", 409)
+    if source.bulletins.first() or source.actor_profiles.first():
+        return HTTPResponse.error("Cannot delete a source that is in use", 409)
+
     if source.delete():
         Activity.create(
             current_user,

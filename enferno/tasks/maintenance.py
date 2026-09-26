@@ -35,7 +35,7 @@ def _redis_get_str(key: str):
 
 @celery.task
 def check_for_updates():
-    """Poll GitHub releases. Cache latest. Notify admins on new tag. Optionally auto-apply patch."""
+    """Poll GitHub releases, cache the latest tag, and notify admins once per new tag."""
     try:
         resp = requests.get(GITHUB_LATEST_URL, timeout=10)
         resp.raise_for_status()

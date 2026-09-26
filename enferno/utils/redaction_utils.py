@@ -1,7 +1,37 @@
 import io
+import threading
+from contextlib import contextmanager
 
 import pymupdf
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageFile, ImageOps
+
+# Held across the decode, not just the flag flip: the flag is what the decode reads.
+_TRUNCATED_LOCK = threading.Lock()
+
+
+@contextmanager
+def _allow_truncated_images():
+    """Accept a truncated scan for the duration of one redaction decode.
+
+    Field-captured photos regularly arrive with the upload cut short at the source.
+    Browsers render whatever decoded, so the redaction UI shows the image and the user
+    draws boxes on it; PIL alone refuses the same bytes with "broken data stream". Decode
+    what is there so the burn covers exactly the pixels the user saw.
+
+    Pillow reads this flag at decode time and it is process-global, so it is set around
+    the one decode that needs it rather than at import, where it would also let every
+    other consumer in the process (OCR, thumbnails, imports) silently accept incomplete
+    images. The lock is what keeps that scoping true: the workers are threaded, and two
+    overlapping redactions restoring each other's saved value can otherwise leave the
+    flag on for the life of the process.
+    """
+    with _TRUNCATED_LOCK:
+        previous = ImageFile.LOAD_TRUNCATED_IMAGES
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        try:
+            yield
+        finally:
+            ImageFile.LOAD_TRUNCATED_IMAGES = previous
 
 
 class RedactionError(ValueError):
@@ -86,7 +116,11 @@ def redact_image_bytes(src: bytes, rects: list[dict]) -> bytes:
     # (browsers honor EXIF; PIL does not). Otherwise boxes land in the wrong place and
     # the saved copy comes back at 0deg. The DB orientation axis is handled separately
     # by rotate_rect_to_original in the caller.
-    img = ImageOps.exif_transpose(Image.open(io.BytesIO(src))).convert("RGB")
+    try:
+        with _allow_truncated_images():
+            img = ImageOps.exif_transpose(Image.open(io.BytesIO(src))).convert("RGB")
+    except OSError as e:
+        raise RedactionError("This image file is damaged and cannot be redacted") from e
     draw = ImageDraw.Draw(img)
     width, height = img.size
     for rect in rects:

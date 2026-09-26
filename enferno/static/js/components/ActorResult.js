@@ -20,6 +20,9 @@ const ActorResult = Vue.defineComponent({
         <v-card-title class="text-wrap text-break pt-0">
           <uni-field class="pa-0" disable-spacing :english="actor.name" :arabic="actor.name_ar"></uni-field>
         </v-card-title>
+        <v-card-subtitle v-if="actor.nickname || actor.nickname_ar" class="pt-0">
+          <uni-field class="pa-0" disable-spacing :english="actor.nickname" :arabic="actor.nickname_ar"></uni-field>
+        </v-card-subtitle>
         <v-divider></v-divider>
         <slot name="header"></slot>
 
