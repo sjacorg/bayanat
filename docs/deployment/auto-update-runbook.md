@@ -23,6 +23,10 @@ snapshots. To see what an update would move you to without changing anything:
 bayanat update --check
 ```
 
+The installed CLI fetches and verifies the release, then hands the rest of the
+update to the CLI shipped inside that release, so the code that stops services,
+migrates and switches is always the target version's own.
+
 The update runs in the foreground and prints each phase as it goes. It is not
 backgrounded, so run it inside `tmux` or `screen` on a connection you do not
 trust to stay up. Service logs during the window:

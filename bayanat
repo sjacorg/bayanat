@@ -92,6 +92,11 @@ _release_major() {
     if [[ "$v" =~ ^[0-9]+$ ]]; then echo "$v"; else echo 0; fi
 }
 
+_root_readonly() {
+    # $1 exists, is owned by root and has no group or other write bit.
+    [[ -n "$(find "$1" -maxdepth 0 -user root ! -perm /022 2>/dev/null)" ]]
+}
+
 current_version() {
     [[ -L "$CURRENT_LINK" ]] || return 1
     basename "$(readlink "$CURRENT_LINK")"
@@ -678,7 +683,22 @@ do_migrate() {
     log "MIGRATE: stopping services"
     export STATE_PROGRESS="Stopping services"
     write_state MIGRATE "Stopping services for maintenance window"
-    systemctl stop bayanat bayanat-celery
+    # A restart request landing on bayanat-celery-restart.path in the same
+    # instant cancels the stop job, and under set -e a bare `systemctl stop`
+    # would then abort the script with the web down. Retry, and if the units
+    # still will not stop, bring everything back and leave the box untouched.
+    local attempt
+    for attempt in 1 2 3; do
+        systemctl stop bayanat bayanat-celery && break
+        (( attempt < 3 )) || {
+            export STATE_ERROR_JSON='"services did not stop"'
+            write_state NEEDS_INTERVENTION "Services did not stop for the maintenance window; nothing was changed"
+            systemctl start bayanat bayanat-celery || true
+            release_lock
+            exit 2
+        }
+        sleep 2
+    done
 
     # Only now, with the application stopped. A pre-v5 release keeps
     # enferno/imports and enferno/exports inside its own tree, and copying them
@@ -1231,12 +1251,18 @@ _link_shared() {
     # Sentinels the app touches to request a web reload / worker restart.
     # uWSGI watches reload.ini (touch-reload); a systemd path unit watches
     # restart-celery. Both live in the app-writable runtime dir.
+    # Never touch or re-chown an existing sentinel: the path unit fires on any
+    # metadata change (IN_ATTRIB included), so doing that here queued a worker
+    # restart right before the update stopped services, and the two systemd
+    # jobs cancelled each other ("Job for bayanat-celery.service canceled").
     mkdir -p "$RUNTIME_DIR"
     local s
     for s in reload.ini restart-celery; do
-        touch "$RUNTIME_DIR/$s"
-        chown root:"$APP_GROUP" "$RUNTIME_DIR/$s"
-        chmod 660 "$RUNTIME_DIR/$s"
+        [[ -e "$RUNTIME_DIR/$s" ]] || touch "$RUNTIME_DIR/$s"
+        if [[ "$(stat -c '%U:%G %a' "$RUNTIME_DIR/$s")" != "root:$APP_GROUP 660" ]]; then
+            chown root:"$APP_GROUP" "$RUNTIME_DIR/$s"
+            chmod 660 "$RUNTIME_DIR/$s"
+        fi
         ln -sfn "$RUNTIME_DIR/$s" "$release/$s"
     done
 }
@@ -2165,6 +2191,34 @@ cmd_update() {
     # Keep $target verbatim. Tags and release dir names use the v-prefix form
     # (e.g. v4.0.0), matching the installer's convention in _fetch_release and
     # _link_shared. Stripping is only for display / comparison.
+
+    local current
+    current=$(current_version)
+    # Before anything fetches: _fetch_release wipes a release dir that lacks
+    # its completion marker, and the active one must never be that dir.
+    [[ "$target" != "$current" ]] || die "already on $target"
+
+    # The installed CLI only fetches and verifies the release, then hands the
+    # rest of the update to the CLI shipped inside it (the WordPress
+    # core-updater pattern). Otherwise every update runs the previous
+    # release's installer code, and an updater fix only protects the hop
+    # after the one that ships it. Only when moving forward: an older
+    # release's CLI would bring its own bugs back. Only on the hardened
+    # layout, where releases are root-owned and read-only for the services,
+    # so what root executes is exactly what the signature covered. The lock
+    # is released first because a second flock on the same file from the
+    # same process would fail; the exec'd process re-acquires it at once.
+    if [[ -z "${BAYANAT_UPDATE_HANDOFF:-}" ]] && _is_hardened \
+        && [[ "$(printf '%s\n' "$current" "$target" | sort -V | tail -1)" == "$target" ]]; then
+        update_preflight
+        _fetch_release "$target"
+        local next_cli="$RELEASES_DIR/$target/bayanat"
+        _root_readonly "$RELEASES_DIR/$target" && _root_readonly "$next_cli" \
+            || die "Release $target is not root-owned and read-only; refusing to run its CLI" \
+                   "Check ownership under $RELEASES_DIR/$target and re-run"
+        release_lock
+        BAYANAT_UPDATE_HANDOFF=1 exec bash "$next_cli" update "$target"
+    fi
     do_prepare "$target"
     do_migrate
     do_switch_verify
