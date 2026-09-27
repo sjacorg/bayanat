@@ -1251,18 +1251,16 @@ _link_shared() {
     # Sentinels the app touches to request a web reload / worker restart.
     # uWSGI watches reload.ini (touch-reload); a systemd path unit watches
     # restart-celery. Both live in the app-writable runtime dir.
-    # Never touch or re-chown an existing sentinel: the path unit fires on any
+    # Never touch or re-chown a correct sentinel: the path unit fires on any
     # metadata change (IN_ATTRIB included), so doing that here queued a worker
     # restart right before the update stopped services, and the two systemd
     # jobs cancelled each other ("Job for bayanat-celery.service canceled").
     mkdir -p "$RUNTIME_DIR"
     local s
     for s in reload.ini restart-celery; do
-        [[ -e "$RUNTIME_DIR/$s" ]] || touch "$RUNTIME_DIR/$s"
-        if [[ "$(stat -c '%U:%G %a' "$RUNTIME_DIR/$s")" != "root:$APP_GROUP 660" ]]; then
-            chown root:"$APP_GROUP" "$RUNTIME_DIR/$s"
-            chmod 660 "$RUNTIME_DIR/$s"
-        fi
+        _own_runtime_file "$RUNTIME_DIR/$s" create \
+            || die "Could not set up the runtime sentinel $RUNTIME_DIR/$s" \
+                   "It must be a regular file owned by root; remove it and re-run"
         ln -sfn "$RUNTIME_DIR/$s" "$release/$s"
     done
 }
@@ -1716,27 +1714,45 @@ _ensure_runtime_layout() {
     # no name to swap. `chown`/`chmod` have no equivalent.
     local cfg="$RUNTIME_DIR/config.json"
     if [[ -e "$cfg" || -L "$cfg" ]]; then
-        python3 - "$cfg" "$APP_GROUP" <<'PYEOF' || die "Could not set the owner and mode of the runtime config.json" \
-            "It must be a regular file owned by root; replace it and re-run"
+        _own_runtime_file "$cfg" \
+            || die "Could not set the owner and mode of the runtime config.json" \
+                   "It must be a regular file owned by root; replace it and re-run"
+    fi
+}
+
+_own_runtime_file() {
+    # $1 = path under the app-writable $RUNTIME_DIR, $2 = "create" to make it
+    # when missing. Ends with a regular file owned root:$APP_GROUP mode 660,
+    # touching owner and mode only when they differ so a watched sentinel
+    # (bayanat-celery-restart.path) is not tripped by a no-op repair.
+    python3 - "$1" "$APP_GROUP" "${2:-}" <<'PYEOF'
 import grp, os, stat, sys
 
-path, group = sys.argv[1], sys.argv[2]
+path, group, create = sys.argv[1], sys.argv[2], sys.argv[3] == "create"
+# O_NOFOLLOW refuses a planted symlink; with O_CREAT it also refuses a dangling
+# one instead of creating its target. O_NONBLOCK so a FIFO planted here
+# returns instead of blocking the whole run (with the services stopped) waiting
+# for a writer that never comes. Neither changes anything for a regular file,
+# which is all S_ISREG accepts.
+flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+if create:
+    flags |= os.O_CREAT
 try:
-    # O_NONBLOCK so a FIFO planted here returns instead of blocking the whole
-    # run (with the services stopped) waiting for a writer that never comes.
-    # It changes nothing for a regular file, which is all S_ISREG accepts.
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    fd = os.open(path, flags, 0o660)
 except OSError as e:
     sys.exit(f"{path}: {e.strerror} (a symlink here is refused)")
 try:
-    if not stat.S_ISREG(os.fstat(fd).st_mode):
+    st = os.fstat(fd)
+    if not stat.S_ISREG(st.st_mode):
         sys.exit(f"{path}: not a regular file")
-    os.fchown(fd, 0, grp.getgrnam(group).gr_gid)
-    os.fchmod(fd, 0o660)
+    gid = grp.getgrnam(group).gr_gid
+    if (st.st_uid, st.st_gid) != (0, gid):
+        os.fchown(fd, 0, gid)
+    if stat.S_IMODE(st.st_mode) != 0o660:
+        os.fchmod(fd, 0o660)
 finally:
     os.close(fd)
 PYEOF
-    fi
 }
 
 # --- Layout hardening ---
