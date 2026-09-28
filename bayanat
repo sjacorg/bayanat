@@ -691,9 +691,16 @@ do_migrate() {
     for attempt in 1 2 3; do
         systemctl stop bayanat bayanat-celery && break
         (( attempt < 3 )) || {
-            export STATE_ERROR_JSON='"services did not stop"'
-            write_state NEEDS_INTERVENTION "Services did not stop for the maintenance window; nothing was changed"
-            systemctl start bayanat bayanat-celery || true
+            # Nothing has been touched yet, so a clean restart leaves no state
+            # to recover and the next plain `bayanat update` simply retries.
+            if systemctl start bayanat bayanat-celery; then
+                clear_state
+                release_lock
+                die "Services did not stop for the maintenance window; nothing was changed" \
+                    "Re-run 'sudo bayanat update'"
+            fi
+            export STATE_ERROR_JSON='"services did not stop or restart"'
+            write_state NEEDS_INTERVENTION "Services did not stop for the maintenance window and did not come back; nothing was changed"
             release_lock
             exit 2
         }
