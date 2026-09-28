@@ -131,7 +131,7 @@ dependencies = [
     "zxcvbn>=4.5.0",
     "flask-talisman>=1.1.0",
     "tinycss2>=1.5.1",
-    "weasyprint>=65.0",
+    "weasyprint>=70.0",
 ]
 
 [project.optional-dependencies]
