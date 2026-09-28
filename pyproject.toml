@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bayanat"
-version = "5.1.0"
+version = "5.1.1"
 description = "Open source data management solution for processing human rights violations and war crimes data"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -131,7 +131,7 @@ dependencies = [
     "zxcvbn>=4.5.0",
     "flask-talisman>=1.1.0",
     "tinycss2>=1.5.1",
-    "weasyprint>=65.0",
+    "weasyprint>=70.0",
 ]
 
 [project.optional-dependencies]
