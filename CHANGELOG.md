@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `bayanat update` could abort at "MIGRATE: stopping services" with `Job for bayanat-celery.service canceled.`, leaving the web service stopped until the command was re-run. The updater no longer touches the worker-restart sentinel on every run, and the stop is retried and rolled back if the services will not stop.
+
+### Changed
+
+- `bayanat update` now hands over to the CLI shipped inside the verified release right after the signature check, so updater fixes apply to the update that installs them. Installs on v5.0.0 or v5.1.0 run the old updater once more for this hop; if that hop stops with the error above, re-run `sudo bayanat update`.
+
 ## v5.1.0
 
 ### Added
