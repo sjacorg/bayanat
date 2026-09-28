@@ -79,12 +79,12 @@
                         v-if="savedSearchSelection"
                         @click="updateSearch"
                         color="warning"
-                        variant="flat"
+                        variant="outlined"
                 >{{ _('Update Search') }}</v-btn>
                 <v-btn
                         v-if="savedSearchSelection"
                         @click="openSaveQueryDialog"
-                        color="warning"
+                        variant="outlined"
                 >{{ _('Save As New') }}</v-btn>
                 <v-btn @click="doSearch" color="primary" variant="elevated">{{ _('Search') }}</v-btn>
             </v-card-actions>
