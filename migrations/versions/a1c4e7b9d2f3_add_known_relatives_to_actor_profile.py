@@ -1,7 +1,7 @@
 """add known_relatives to actor_profile
 
 Revision ID: a1c4e7b9d2f3
-Revises: d4f7a2c9b310
+Revises: f0a3d6c1e8b2
 Create Date: 2026-08-27 00:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "a1c4e7b9d2f3"
-down_revision = "d4f7a2c9b310"
+down_revision = "f0a3d6c1e8b2"
 branch_labels = None
 depends_on = None
 
