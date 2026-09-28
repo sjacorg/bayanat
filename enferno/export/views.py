@@ -567,7 +567,7 @@ def dossier(template_id: t.id, actor_id: t.id) -> Response:
         string="@page { @bottom-left { content: string(doctitle); "
         'font-family: "IBM Plex Sans Arabic", sans-serif; font-size: 8.5px; color: #6f6a60; } }'
     )
-    pdf = HTML(string=html, url_fetcher=_safe_url_fetcher).write_pdf(
+    pdf = HTML(string=html, url_fetcher=_safe_url_fetcher()).write_pdf(
         stylesheets=[stylesheet, running_title]
     )
     return Response(
