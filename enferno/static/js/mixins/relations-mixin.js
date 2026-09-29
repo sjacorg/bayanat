@@ -14,6 +14,16 @@ const relationsMixin = {
     atoaInfo: [],
     btobInfo: [],
     itoiInfo: [],
+    // Related-items search opens as a panel on the end side, like the Bulletins split view
+    relateDialogProps: {
+      'retain-focus': false,
+      'content-props': { style: { width: '60%' } },
+      'content-class': 'absolute inset-inline-end-0 inset-inline-start-auto',
+      fullscreen: true,
+      persistent: true,
+      'no-click-animation': true,
+      scrim: false,
+    },
   }),
   created() {
     this.fetchRelationInfo();
