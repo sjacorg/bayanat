@@ -89,3 +89,15 @@ def test_map_drawer_and_controls_follow_text_direction():
     assert "drawerToggleStyle" in source
     assert "drawerToggleIcon" in source
     assert ':viewport-padding="viewportPadding"' in source
+
+
+def test_null_saved_language_falls_back_to_default(app, monkeypatch):
+    from types import SimpleNamespace
+
+    from enferno.app import get_locale
+
+    user = SimpleNamespace(is_authenticated=True, settings={"language": None})
+    monkeypatch.setattr("enferno.app.current_user", user)
+
+    with app.test_request_context("/"):
+        assert get_locale() == app.config.get("BABEL_DEFAULT_LOCALE", "en")
