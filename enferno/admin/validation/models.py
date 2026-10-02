@@ -1809,8 +1809,8 @@ class ConfigValidationModel(StrictValidationModel):
         return v
 
     def validate_aws_region(v):
-        # Format check only: S3-compatible providers use their own names (OVH "gra", Hetzner "fsn1")
-        if not isinstance(v, str) or not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", v) or len(v) > 32:
+        # Format check only: providers name regions their own way (OVH "EU-WEST-PAR", R2 "auto", MinIO custom)
+        if not isinstance(v, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", v):
             return None
         return v
 

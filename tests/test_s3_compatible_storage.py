@@ -4,13 +4,16 @@ from enferno.admin.validation.models import ConfigValidationModel
 from enferno.app import s3_csp_origins
 
 
-@pytest.mark.parametrize("region", ["us-east-1", "eu-west-par", "gra", "fsn1", "ca-east-tor"])
+@pytest.mark.parametrize(
+    "region",
+    ["us-east-1", "eu-west-par", "EU-WEST-PAR", "gra", "fsn1", "auto", "us-east1", "my_region"],
+)
 def test_s3_compatible_region_names_are_accepted(region):
     assert ConfigValidationModel.validate_aws_region(region) == region
 
 
 @pytest.mark.parametrize(
-    "region", ["", "EU-WEST-PAR", "eu west", "-gra", "gra-", "eu--west", "a" * 33, None]
+    "region", ["", "eu west", "eu-west/par", "https://s3.example.com", "a" * 65, None]
 )
 def test_malformed_region_names_are_rejected(region):
     assert ConfigValidationModel.validate_aws_region(region) is None
