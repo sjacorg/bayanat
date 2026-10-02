@@ -71,11 +71,20 @@ def test_split_dialogs_use_logical_edges():
     styles = Path("enferno/static/css/app.css").read_text()
 
     assert "'content-class': 'absolute inset-inline-start-0'" in bulletins
-    assert "'content-class': 'absolute inset-inline-end-0'" in bulletins
+    relations = Path("enferno/static/js/mixins/relations-mixin.js").read_text()
+    end_panel = "'content-class': 'absolute inset-inline-end-0 inset-inline-start-auto'"
+
+    # Vuetify fullscreen dialogs set left: 0, so the end panel must release the start edge or LTR pins it left
+    assert end_panel in bulletins
+    assert end_panel in relations
+    for page in ("actors", "incidents"):
+        source = Path(f"enferno/admin/templates/admin/{page}.html").read_text()
+        assert source.count(':dialog-props="relateDialogProps"') == 3
     assert "position-fixed h-screen inset-inline-end-0 top-0 z-100" in events
     assert "position-absolute inset-inline-end-0 bottom-0" in transcription
     assert ".inset-inline-start-0" in styles
     assert ".inset-inline-end-0" in styles
+    assert ".inset-inline-start-auto" in styles
     assert "'absolute left-0'" not in bulletins
     assert "'absolute right-0 left-auto'" not in bulletins
 

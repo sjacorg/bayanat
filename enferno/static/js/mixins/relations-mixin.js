@@ -14,6 +14,16 @@ const relationsMixin = {
     atoaInfo: [],
     btobInfo: [],
     itoiInfo: [],
+    // Vuetify fullscreen dialogs set left: 0, so the start edge must be released or LTR pins the panel left
+    relateDialogProps: {
+      'retain-focus': false,
+      'content-props': { style: { width: '60%', contain: 'none' } },
+      'content-class': 'absolute inset-inline-end-0 inset-inline-start-auto',
+      fullscreen: true,
+      persistent: true,
+      'no-click-animation': true,
+      scrim: false,
+    },
   }),
   created() {
     this.fetchRelationInfo();
