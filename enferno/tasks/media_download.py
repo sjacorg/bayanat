@@ -70,7 +70,7 @@ def _get_ytdl_options(with_cookies: bool = False) -> dict:
         "merge_output_format": "mp4",
         "noplaylist": True,
         "proxy": cfg.YTDLP_PROXY if cfg.YTDLP_PROXY else None,
-        # ffmpeg cannot use a SOCKS proxy, so HLS downloads through yt-dlp itself
+        # Keep HLS on yt-dlp's own downloader, which honours any proxy (ffmpeg ignores SOCKS)
         "external_downloader": {"m3u8": "native"},
     }
 
@@ -83,13 +83,7 @@ def _get_ytdl_options(with_cookies: bool = False) -> dict:
 
 def _run_download(url: str, options: dict) -> tuple[dict, Path]:
     with yt_dlp.YoutubeDL(options) as ydl:
-        info = ydl.extract_info(url, download=False)
-        # Live HLS can only be recorded by ffmpeg, which connects directly when the proxy is SOCKS
-        if info.get("is_live") and str(options.get("proxy") or "").startswith("socks"):
-            raise ValueError(
-                "Live streams cannot be downloaded through a SOCKS proxy. Use an HTTP proxy."
-            )
-        info = ydl.process_ie_result(info, download=True)
+        info = ydl.extract_info(url, download=True)
         info["requested_downloads"][0].pop("__postprocessors", None)
         return info, Path(ydl.prepare_filename(info))
 

@@ -60,30 +60,6 @@ def test_generic_errors_mentioning_age_do_not_retry_with_cookies(monkeypatch):
     assert attempts == [False]
 
 
-def test_live_stream_over_socks_proxy_is_refused(monkeypatch):
-    class LiveYDL:
-        def __init__(self, options):
-            pass
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *exc):
-            return False
-
-        def extract_info(self, url, download):
-            return {"is_live": True}
-
-        def process_ie_result(self, info, download):
-            raise AssertionError("must not download")
-
-    monkeypatch.setattr(media_download.yt_dlp, "YoutubeDL", LiveYDL)
-    with pytest.raises(ValueError, match="SOCKS proxy"):
-        media_download._run_download(
-            "https://example.com/live", {"proxy": "socks5://127.0.0.1:9050"}
-        )
-
-
 @pytest.mark.parametrize("error", [ValueError("cookies may be expired"), RuntimeError("disk full")])
 def test_failure_notification_includes_reason(monkeypatch, error):
     sent = []
