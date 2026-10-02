@@ -250,24 +250,16 @@ def save_settings() -> Response:
     incoming = body.get("settings") if isinstance(body, dict) else None
     if not isinstance(incoming, dict):
         return HTTPResponse.error("Invalid settings", status=400)
-    lang = incoming.get("language")
-    if lang is not None and (
-        not isinstance(lang, str) or lang not in current_app.config["LANGUAGES"]
-    ):
-        return HTTPResponse.error("Invalid language", status=400)
-    for key in ("dark", "setupCompleted"):
-        if incoming.get(key) is not None and not isinstance(incoming[key], (bool, int)):
-            return HTTPResponse.error(f"Invalid {key}", status=400)
-    user_id = current_user.id
-    user = User.query.get(user_id)
+    user = User.query.get(current_user.id)
     if not user:
         return HTTPResponse.error("Problem loading user", status=417)
-    # Merge, so a partial or null payload never wipes a saved value (a null language broke every page)
+    # Merge instead of rebuild: a missing or null field must never wipe a saved value
     updates = {
-        key: incoming[key]
-        for key in ("dark", "language", "setupCompleted")
-        if incoming.get(key) is not None
+        k: bool(incoming[k]) for k in ("dark", "setupCompleted") if incoming.get(k) is not None
     }
+    lang = incoming.get("language")
+    if isinstance(lang, str) and lang in current_app.config["LANGUAGES"]:
+        updates["language"] = lang
     user.settings = {**(user.settings or {}), **updates}
     flag_modified(user, "settings")
     user.save()
@@ -285,11 +277,7 @@ def load_settings() -> Response:
     if not user:
         return HTTPResponse.error("Problem loading user ", status=417)
 
-    settings = dict(user.settings or {})
-    # The UI saves the whole loaded object back, so an unsupported stored language must not round-trip
-    lang = settings.get("language")
-    if not isinstance(lang, str) or lang not in current_app.config["LANGUAGES"]:
-        settings.pop("language", None)
+    settings = user.settings or {}
 
     return HTTPResponse.success(data=settings)
 
