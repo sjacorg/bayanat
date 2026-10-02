@@ -254,9 +254,7 @@ def save_settings() -> Response:
     if not user:
         return HTTPResponse.error("Problem loading user", status=417)
     # Merge instead of rebuild: a missing or null field must never wipe a saved value
-    updates = {
-        k: bool(incoming[k]) for k in ("dark", "setupCompleted") if incoming.get(k) is not None
-    }
+    updates = {k: incoming[k] for k in ("dark", "setupCompleted") if incoming.get(k) is not None}
     lang = incoming.get("language")
     if isinstance(lang, str) and lang in current_app.config["LANGUAGES"]:
         updates["language"] = lang

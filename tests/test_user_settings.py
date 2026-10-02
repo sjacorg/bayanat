@@ -15,9 +15,9 @@ def _saved(session, user):
 
 def test_partial_save_keeps_saved_language(admin_client, session, users):
     _seed(session, users[0], {"language": "ar"})
-    resp = admin_client.put("/settings/save", json={"settings": {"dark": True, "language": None}})
+    resp = admin_client.put("/settings/save", json={"settings": {"dark": 1, "language": None}})
     assert resp.status_code == 200
-    assert _saved(session, users[0]) == {"language": "ar", "dark": True}
+    assert _saved(session, users[0]) == {"language": "ar", "dark": 1}
 
 
 @pytest.mark.parametrize("language", ["xx", ["ar"]])
