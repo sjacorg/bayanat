@@ -37,3 +37,8 @@ def test_csp_follows_custom_endpoint(monkeypatch, var):
         "https://s3.eu-west-par.io.cloud.ovh.net",
         "https://media.s3.eu-west-par.io.cloud.ovh.net",
     ]
+
+
+def test_malformed_region_gets_its_own_error():
+    with pytest.raises(ValueError, match="AWS_REGION must contain only"):
+        ConfigValidationModel.validate_rules({"FILESYSTEM_LOCAL": False, "AWS_REGION": "eu west"})

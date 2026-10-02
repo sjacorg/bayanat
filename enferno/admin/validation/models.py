@@ -1846,6 +1846,12 @@ class ConfigValidationModel(StrictValidationModel):
                 "GOOGLE_CLIENT_SECRET must be provided and valid if GOOGLE_OAUTH_ENABLED is True"
             )
 
+        if (
+            not bool(values.get("FILESYSTEM_LOCAL"))
+            and values.get("AWS_REGION")
+            and not cls.validate_aws_region(values.get("AWS_REGION"))
+        ):
+            raise ValueError("AWS_REGION must contain only letters, digits, hyphens or underscores")
         if not bool(values.get("FILESYSTEM_LOCAL")) and not (
             values.get("AWS_ACCESS_KEY_ID")
             and cls.validate_aws_access_key(values.get("AWS_ACCESS_KEY_ID"))

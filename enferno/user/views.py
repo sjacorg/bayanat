@@ -246,16 +246,21 @@ def account_security() -> str:
 @auth_required("session")
 def save_settings() -> Response:
     """API Endpoint to save user settings."""
-    json = request.json.get("settings")
-    dark = json.get("dark")
+    incoming = request.json.get("settings") or {}
+    lang = incoming.get("language")
+    if lang is not None and lang not in current_app.config["LANGUAGES"]:
+        return HTTPResponse.error("Invalid language", status=400)
     user_id = current_user.id
     user = User.query.get(user_id)
     if not user:
         return HTTPResponse.error("Problem loading user", status=417)
-    user.settings = {"dark": dark}
-    lang = json.get("language")
-    user.settings["language"] = lang
-    user.settings["setupCompleted"] = json.get("setupCompleted")
+    # Merge, so a partial or null payload never wipes a saved value (a null language broke every page)
+    updates = {
+        key: incoming[key]
+        for key in ("dark", "language", "setupCompleted")
+        if incoming.get(key) is not None
+    }
+    user.settings = {**(user.settings or {}), **updates}
     flag_modified(user, "settings")
     user.save()
     return HTTPResponse.success(message="Settings Saved")
