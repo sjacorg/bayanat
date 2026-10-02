@@ -45,3 +45,14 @@ def test_unknown_stored_language_falls_back_to_default(app, monkeypatch):
     monkeypatch.setattr("enferno.app.current_user", user)
     with app.test_request_context("/"):
         assert get_locale() == app.config.get("BABEL_DEFAULT_LOCALE", "en")
+
+
+@pytest.mark.parametrize("stored", ["xx", ["ar"]])
+def test_unknown_stored_language_does_not_block_saving(admin_client, session, users, stored):
+    admin = users[0]
+    User.query.get(admin.id).settings = {"language": stored, "dark": False}
+    session.commit()
+    loaded = admin_client.get("/settings/load").json["data"]
+    assert "language" not in loaded
+    loaded["dark"] = True
+    assert admin_client.put("/settings/save", json={"settings": loaded}).status_code == 200

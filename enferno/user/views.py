@@ -285,7 +285,11 @@ def load_settings() -> Response:
     if not user:
         return HTTPResponse.error("Problem loading user ", status=417)
 
-    settings = user.settings or {}
+    settings = dict(user.settings or {})
+    # The UI saves the whole loaded object back, so an unsupported stored language must not round-trip
+    lang = settings.get("language")
+    if not isinstance(lang, str) or lang not in current_app.config["LANGUAGES"]:
+        settings.pop("language", None)
 
     return HTTPResponse.success(data=settings)
 
