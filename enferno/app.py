@@ -86,7 +86,11 @@ def get_locale():
     default = current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
 
     if getattr(current_user, "is_authenticated", False) and current_user.settings:
-        return current_user.settings.get("language") or default
+        lang = current_user.settings.get("language")
+        # Stored values predate validation, and LANGUAGES can shrink: never hand Babel an unknown locale
+        return (
+            lang if isinstance(lang, str) and lang in current_app.config["LANGUAGES"] else default
+        )
 
     return default
 

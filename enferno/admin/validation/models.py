@@ -1846,6 +1846,14 @@ class ConfigValidationModel(StrictValidationModel):
                 "GOOGLE_CLIENT_SECRET must be provided and valid if GOOGLE_OAUTH_ENABLED is True"
             )
 
+        if (
+            not bool(values.get("FILESYSTEM_LOCAL"))
+            and values.get("AWS_REGION")
+            and not cls.validate_aws_region(values.get("AWS_REGION"))
+        ):
+            raise ValueError(
+                "AWS_REGION must be a region name: up to 64 letters, digits, hyphens or underscores"
+            )
         if not bool(values.get("FILESYSTEM_LOCAL")) and not (
             values.get("AWS_ACCESS_KEY_ID")
             and cls.validate_aws_access_key(values.get("AWS_ACCESS_KEY_ID"))
@@ -1854,7 +1862,6 @@ class ConfigValidationModel(StrictValidationModel):
             and values.get("S3_BUCKET")
             and cls.validate_s3_bucket(values.get("S3_BUCKET"))
             and values.get("AWS_REGION")
-            and cls.validate_aws_region(values.get("AWS_REGION"))
         ):
             raise ValueError(
                 "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET and AWS_REGION must be provided if FILESYSTEM_LOCAL is False"
