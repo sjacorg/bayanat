@@ -74,7 +74,7 @@ def get_locale():
     default = current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
 
     if getattr(current_user, "is_authenticated", False) and current_user.settings:
-        return current_user.settings.get("language", default)
+        return current_user.settings.get("language") or default
 
     return default
 

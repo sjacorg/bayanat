@@ -1,5 +1,24 @@
 # Changelog
 
+## v5.1.1
+
+### Fixed
+
+- `bayanat update` could abort at "MIGRATE: stopping services" with `Job for bayanat-celery.service canceled.`, leaving the web service stopped until the command was re-run. The updater no longer touches the worker-restart sentinel on every run, and the stop is retried and rolled back if the services will not stop.
+
+### Changed
+
+- `bayanat update` now hands over to the CLI shipped inside the verified release right after the signature check, so updater fixes apply to the update that installs them. Installs on v5.0.0 or v5.1.0 run the old updater once more for this hop; if that hop stops with the error above, re-run `sudo bayanat update`.
+
+### Security
+
+- WeasyPrint upgraded to 70.0 (GHSA-jf6q-chmf-3h3v, SSRF). The PDF export resource guard is ported to WeasyPrint's new fetcher API with the same allow rules, and now also refuses redirects, so an allowed host cannot bounce a fetch to another origin.
+- DOMPurify in the documentation site upgraded to 3.4.13 (GHSA-55q2-fjhq-7xh7, XSS).
+
+### Upgrading
+
+No database migrations. Installer-managed installs on v5.0.0 or v5.1.0 update with `sudo bayanat update`; re-run it once if the first attempt stops at "MIGRATE: stopping services".
+
 ## v5.1.0
 
 ### Added
