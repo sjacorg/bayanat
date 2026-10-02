@@ -300,6 +300,16 @@
                                                     ${modeName(profile.mode).getInitials()}
                                                 </v-avatar>
                                                 ${profile.sources?.length? profile.sources[0].title + " " + (index + 1) : "{{ _('Profile') }} " + (index + 1)}
+                                                <v-tooltip location="top" text="{{ _('Use this profile in dossier exports') }}">
+                                                    <template #activator="{props}">
+                                                        <v-icon @click.stop="toggleDossierProfile(index)"
+                                                                v-bind="props"
+                                                                size="small" class="ms-2"
+                                                                :color="profile.dossier ? 'primary' : 'grey lighten-1'">
+                                                            ${profile.dossier ? 'mdi-file-check' : 'mdi-file-check-outline'}
+                                                        </v-icon>
+                                                    </template>
+                                                </v-tooltip>
                                                 <v-tooltip location="top" text="{{ _('Duplicate Profile') }}">
                                                     <template #activator="{props}">
                                                         <v-icon @click.stop="duplicateProfile(index)"

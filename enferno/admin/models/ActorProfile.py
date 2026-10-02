@@ -33,6 +33,8 @@ class ActorProfile(db.Model, BaseMixin):
     source_link_type = db.Column(db.Boolean, default=False)
     publish_date = db.Column(db.DateTime)
     documentation_date = db.Column(db.DateTime)
+    # the profile dossier exports read from when an actor has several
+    dossier = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
 
     search = db.Column(
         db.Text,
@@ -173,6 +175,8 @@ class ActorProfile(db.Model, BaseMixin):
         self.source_link_type = json.get("source_link_type", self.source_link_type)
         self.publish_date = json.get("publish_date", self.publish_date)
         self.documentation_date = json.get("documentation_date", self.documentation_date)
+        if json.get("dossier") is not None:
+            self.dossier = bool(json["dossier"])
 
         # Handling Sources
         if "sources" in json:
@@ -345,6 +349,7 @@ class ActorProfile(db.Model, BaseMixin):
         actor_profile_dict = {
             "id": self.id,
             "mode": self.mode,
+            "dossier": self.dossier,
             "originid": self.originid or None,
             "description": self.description or None,
             "source_link": self.source_link or None,

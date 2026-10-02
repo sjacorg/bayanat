@@ -112,15 +112,27 @@ def _known_relatives(actor) -> Optional[list[dict]]:
 # ---------------------------------------------------------------------------
 
 
-def _profile(actor) -> Optional[Any]:
-    profiles = actor.actor_profiles
-    return profiles[0] if profiles else None
+# profile modes in the order a dossier prefers them: missing person, main, normal
+PROFILE_MODE_RANK = {3: 0, 2: 1, 1: 2}
+
+
+def _profiles(actor) -> list:
+    """Profiles in dossier order: the one marked for dossiers, then by mode."""
+    return sorted(
+        actor.actor_profiles,
+        key=lambda p: (not p.dossier, PROFILE_MODE_RANK.get(p.mode, 3)),
+    )
 
 
 def _profile_attr(name: str) -> Callable:
+    """First non-empty value across the actor's profiles, in dossier order."""
+
     def getter(actor):
-        profile = _profile(actor)
-        return getattr(profile, name, None) if profile else None
+        for profile in _profiles(actor):
+            value = getattr(profile, name, None)
+            if value not in (None, "", []):
+                return value
+        return None
 
     return getter
 
@@ -358,59 +370,77 @@ class DossierData:
 
     @property
     def redacted_media(self) -> dict:
-        """Redacted renditions of evidence media, latest per original.
+        """Evidence media for the appendix, chosen per bulletin.
 
-        Media flagged "include in dossier" (``media.dossier``) is authoritative:
-        whoever created the redaction marked the correct rendition at that
-        moment, so the flagged set is used as-is, redacted or not. With no
-        flags anywhere, falls back to the fail-closed heuristic: only media
-        produced by the redaction tool is surfaced (latest per original), and
-        originals without a redacted rendition are counted as gaps, never
-        embedded.
+        Media flagged "include in dossier" (``media.dossier``) is authoritative
+        for its bulletin and used as-is. A bulletin with no flags falls back to
+        the fail-closed heuristic: only media produced by the redaction tool is
+        surfaced (latest per original), and originals without a redacted
+        rendition are counted as gaps, never embedded.
         """
         if self._redacted_media is None:
-            flagged = []
-            heuristic = []
+            items = []
             unredacted = 0
+            ambiguous = []
             for relation in self.actor.bulletin_relations:
                 bulletin = relation.bulletin
                 if bulletin is None or bulletin.deleted or not self.user.can_access(bulletin):
                     continue
+                medias = sorted(bulletin.medias, key=lambda m: m.id)
+                flagged = [m for m in medias if m.dossier]
+                if flagged:
+                    items.extend(self._media_item(m, bulletin) for m in flagged)
+                    continue
                 latest = {}
+                versions = {}
                 original_ids = []
-                for media in sorted(bulletin.medias, key=lambda m: m.id):
-                    if media.dossier:
-                        flagged.append(self._media_item(media, bulletin))
+                for media in medias:
                     redaction = media.redaction
                     if redaction is None:
                         original_ids.append(media.id)
                         continue
                     key = redaction.original_media_id or redaction.source_media_id
+                    versions[key] = versions.get(key, 0) + 1
                     if key not in latest or media.id > latest[key].id:
                         latest[key] = media
+                if any(n > 1 for n in versions.values()):
+                    ambiguous.append(bulletin.id)
                 unredacted += sum(1 for mid in original_ids if mid not in latest)
-                for media in sorted(latest.values(), key=lambda m: m.id):
-                    heuristic.append(self._media_item(media, bulletin))
-            if flagged:
-                self._redacted_media = {"media": flagged, "unredacted": 0, "curated": True}
-            else:
-                self._redacted_media = {
-                    "media": heuristic,
-                    "unredacted": unredacted,
-                    "curated": False,
-                }
+                items.extend(
+                    self._media_item(m, bulletin)
+                    for m in sorted(latest.values(), key=lambda m: m.id)
+                )
+            self._redacted_media = {
+                "media": items,
+                "unredacted": unredacted,
+                "ambiguous": ambiguous,
+            }
         return self._redacted_media
 
     def _media_item(self, media, bulletin) -> dict:
         title = (media.title_ar if self.locale == "ar" else media.title) or media.title_ar
         ref = f"الدليل رقم {bulletin.id}" if self.locale == "ar" else f"Evidence #{bulletin.id}"
+        is_image = (media.media_file_type or "").startswith("image/")
         return {
             "file": media.media_file,
-            "is_image": (media.media_file_type or "").startswith("image/"),
+            "src": self._image_src(media) if is_image else None,
             "pages": self._pdf_pages(media),
             "title": title,
             "ref": ref,
         }
+
+    @staticmethod
+    def _image_src(media) -> Optional[str]:
+        """Image as a data URI, so the PDF renderer never fetches from storage
+        (media may live on S3, which WeasyPrint cannot reach)."""
+        from enferno.admin.views.media import _read_media_bytes
+
+        try:
+            data = _read_media_bytes(media)
+        except Exception:
+            logger.warning("Dossier: could not read image media %s", media.id, exc_info=True)
+            return None
+        return f"data:{media.media_file_type};base64,{base64.b64encode(data).decode()}"
 
     @staticmethod
     def _pdf_pages(media) -> list[str]:
@@ -634,8 +664,7 @@ def _b_related_items(data: DossierData, config: dict) -> dict:
 def _b_narrative_box(data: DossierData, config: dict) -> dict:
     text = None
     if config["field"] == "description":
-        profile = _profile(data.actor)
-        text = profile.description if profile else None
+        text = _profile_attr("description")(data.actor)
         # description is rich text authored in the app; keep it but re-sanitize
         # with the dossier profile.
         text = sanitize_dossier_html(text) if text else None
@@ -659,14 +688,18 @@ def _b_narrative_box(data: DossierData, config: dict) -> dict:
 def _b_media_appendix(data: DossierData, config: dict) -> dict:
     bundle = data.redacted_media
     missing = []
-    if not bundle["curated"]:
-        if not bundle["media"]:
-            missing.append("No redacted evidence media to attach")
-        if bundle["unredacted"]:
-            missing.append(
-                f"{bundle['unredacted']} evidence media item(s) have no redacted rendition "
-                "and were excluded"
-            )
+    if not bundle["media"]:
+        missing.append("No redacted evidence media to attach")
+    if bundle["unredacted"]:
+        missing.append(
+            f"{bundle['unredacted']} evidence media item(s) have no redacted rendition "
+            "and were excluded"
+        )
+    for bulletin_id in bundle["ambiguous"]:
+        missing.append(
+            f"Evidence #{bulletin_id} has several redacted versions and the newest was used; "
+            "mark the right one with the Dossier toggle in the bulletin's media to choose"
+        )
     return {"title": config["title"], "media": bundle["media"], "missing": missing}
 
 
@@ -727,6 +760,11 @@ def build_dossier(template, actor, user) -> dict:
     blocks = validate_blocks(template.blocks or [])
     data = DossierData(actor, user)
     built, missing, section = [], [], 0
+    if len(actor.actor_profiles) > 1 and not any(p.dossier for p in actor.actor_profiles):
+        missing.append(
+            f"Actor has {len(actor.actor_profiles)} profiles and none is marked for the dossier; "
+            "profile fields were taken from the first profile that has them"
+        )
     for block in blocks:
         context = BLOCK_TYPES[block["type"]]["build"](data, block["config"])
         if block["type"] == "heading" and context["level"] == 2:

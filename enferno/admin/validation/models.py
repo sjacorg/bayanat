@@ -551,6 +551,7 @@ class PartialActorProfileModel(BaseValidationModel):
     id: Optional[int] = None
     actor_id: Optional[int] = None
     mode: int = 1
+    dossier: Optional[bool] = None
     originid: Optional[str] = None
     description: Optional[SanitizedField] = None
     source_link: Optional[str] = DEFAULT_STRING_FIELD

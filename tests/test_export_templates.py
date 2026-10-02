@@ -159,6 +159,11 @@ def test_build_dossier_revalidates_stored_blocks():
         build_dossier(template, FakeActor(), FakeUser())
 
 
+@pytest.fixture(autouse=True)
+def _media_bytes(monkeypatch):
+    monkeypatch.setattr("enferno.admin.views.media._read_media_bytes", lambda media: b"img")
+
+
 def _fake_media(**kwargs):
     from types import SimpleNamespace as NS
 
@@ -190,6 +195,7 @@ def test_media_appendix_fails_closed():
     block = context["blocks"][0]
     assert [m["file"] for m in block["media"]] == ["doc-redacted.jpg"]
     assert block["media"][0]["title"] == "وثيقة"
+    assert block["media"][0]["src"] == "data:image/jpeg;base64,aW1n"
     assert any("no redacted rendition" in m for m in context["missing"])
 
 
@@ -281,6 +287,8 @@ def test_related_items_filters_by_relation_type_and_reads_issuer():
 
 def test_field_table_formats_known_relatives():
     class Profile:
+        mode = 3
+        dossier = False
         known_relatives = [
             {"name": "Sara Doe", "relationship": "Sister", "phone": "0100 200 300"},
             # legacy entry written before the split fields existed
@@ -335,3 +343,91 @@ def test_media_appendix_rasterizes_pdf_renditions(monkeypatch):
     pages = context["blocks"][0]["media"][0]["pages"]
     assert len(pages) == 2
     assert all(p.startswith("data:image/png;base64,") for p in pages)
+
+
+def test_media_appendix_flag_only_overrides_its_own_bulletin():
+    from types import SimpleNamespace as NS
+
+    flagged = _fake_media(
+        id=1,
+        dossier=True,
+        media_file="a.jpg",
+        media_file_type="image/jpeg",
+        title="a",
+        title_ar="a",
+    )
+    redacted = _fake_media(
+        id=3,
+        redaction=NS(original_media_id=2, source_media_id=2),
+        media_file="b-redacted.jpg",
+        media_file_type="image/jpeg",
+        title="b",
+        title_ar="b",
+    )
+    actor = FakeActor()
+    actor.related_bulletins = [
+        NS(bulletin=NS(id=75, deleted=False, medias=[flagged])),
+        NS(bulletin=NS(id=76, deleted=False, medias=[_fake_media(id=2), redacted])),
+    ]
+    context = build_dossier(
+        FakeTemplate([{"type": "media_appendix", "config": {}}]), actor, FakeUser()
+    )
+    assert [m["file"] for m in context["blocks"][0]["media"]] == ["a.jpg", "b-redacted.jpg"]
+
+
+def test_profile_fields_prefer_dossier_profile_then_fill_gaps():
+    from types import SimpleNamespace as NS
+
+    def profile(**kw):
+        return NS(**{"mode": 1, "dossier": False, "description": None, "last_address": None, **kw})
+
+    normal = profile(description="<p>normal</p>", last_address="Normal St")
+    mp_short = profile(mode=3, description="<p>short</p>", last_address="MP St")
+    mp_full = profile(mode=3, description="<p>full narrative</p>")
+    template = FakeTemplate(
+        [
+            {"type": "field_table", "config": {"fields": ["last_address"]}},
+            {"type": "narrative_box", "config": {"field": "description"}},
+        ]
+    )
+    actor = FakeActor()
+
+    # unmarked: missing person profiles first, gap flagged
+    actor.actor_profiles = [normal, mp_short, mp_full]
+    context = build_dossier(template, actor, FakeUser())
+    table, narrative = context["blocks"]
+    assert table["rows"][0]["value"] == "MP St"
+    assert narrative["html"] == "<p>short</p>"
+    assert any("none is marked for the dossier" in m for m in context["missing"])
+
+    # marked profile wins; its empty fields fall back to the next profile
+    mp_full.dossier = True
+    context = build_dossier(template, actor, FakeUser())
+    table, narrative = context["blocks"]
+    assert narrative["html"] == "<p>full narrative</p>"
+    assert table["rows"][0]["value"] == "MP St"
+    assert context["missing"] == []
+
+
+def test_media_appendix_flags_bulletins_with_several_redacted_versions():
+    from types import SimpleNamespace as NS
+
+    def version(id):
+        return _fake_media(
+            id=id,
+            redaction=NS(original_media_id=1, source_media_id=1),
+            media_file=f"v{id}.jpg",
+            media_file_type="image/jpeg",
+            title="v",
+            title_ar="v",
+        )
+
+    actor = FakeActor()
+    actor.related_bulletins = [
+        NS(bulletin=NS(id=75, deleted=False, medias=[_fake_media(id=1), version(2), version(3)]))
+    ]
+    context = build_dossier(
+        FakeTemplate([{"type": "media_appendix", "config": {}}]), actor, FakeUser()
+    )
+    assert [m["file"] for m in context["blocks"][0]["media"]] == ["v3.jpg"]
+    assert any("Evidence #75 has several redacted versions" in m for m in context["missing"])

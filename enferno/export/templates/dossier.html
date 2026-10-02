@@ -160,8 +160,8 @@
             <div class="media-grid">
                 {% for item in block.media if not item.pages %}
                     <figure class="media-item">
-                        {% if item.is_image %}
-                            <img src="{{ media_base }}{{ item.file }}" alt="{{ item.title or '' }}">
+                        {% if item.src %}
+                            <img src="{{ item.src }}" alt="{{ item.title or '' }}">
                         {% else %}
                             <div class="media-doc"><bdi class="ltr">{{ item.file }}</bdi></div>
                         {% endif %}
