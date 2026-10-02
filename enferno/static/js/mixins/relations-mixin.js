@@ -14,10 +14,10 @@ const relationsMixin = {
     atoaInfo: [],
     btobInfo: [],
     itoiInfo: [],
-    // Related-items search opens as a panel on the end side, like the Bulletins split view
+    // Vuetify fullscreen dialogs set left: 0, so the start edge must be released or LTR pins the panel left
     relateDialogProps: {
       'retain-focus': false,
-      'content-props': { style: { width: '60%' } },
+      'content-props': { style: { width: '60%', contain: 'none' } },
       'content-class': 'absolute inset-inline-end-0 inset-inline-start-auto',
       fullscreen: true,
       persistent: true,

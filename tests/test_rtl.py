@@ -77,6 +77,9 @@ def test_split_dialogs_use_logical_edges():
     # Vuetify fullscreen dialogs set left: 0, so the end panel must release the start edge or LTR pins it left
     assert end_panel in bulletins
     assert end_panel in relations
+    for page in ("actors", "incidents"):
+        source = Path(f"enferno/admin/templates/admin/{page}.html").read_text()
+        assert source.count(':dialog-props="relateDialogProps"') == 3
     assert "position-fixed h-screen inset-inline-end-0 top-0 z-100" in events
     assert "position-absolute inset-inline-end-0 bottom-0" in transcription
     assert ".inset-inline-start-0" in styles
