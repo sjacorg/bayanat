@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import pandas as pd
 from babel import Locale
 from urllib.parse import urlparse
@@ -62,6 +64,16 @@ from enferno.utils.logging_utils import get_logger
 from enferno.utils.rate_limit_utils import get_real_ip, ratelimit_handler
 
 logger = get_logger()
+
+
+def s3_csp_origins(bucket, region):
+    """Origins the browser loads media from: presigned URLs follow boto3's endpoint."""
+    # boto3 reads a custom S3-compatible endpoint (OVH, MinIO, Wasabi) from the environment
+    endpoint = os.environ.get("AWS_ENDPOINT_URL_S3") or os.environ.get("AWS_ENDPOINT_URL")
+    if endpoint:
+        url = urlparse(endpoint)
+        return [f"{url.scheme}://{url.netloc}", f"{url.scheme}://{bucket}.{url.netloc}"]
+    return [f"https://{bucket}.s3.amazonaws.com", f"https://{bucket}.s3.{region}.amazonaws.com"]
 
 
 def get_locale():
@@ -276,12 +288,9 @@ def register_talisman(app):
 
     # Add S3 bucket to CSP when using S3 storage
     if not app.config.get("FILESYSTEM_LOCAL"):
-        s3_region = app.config.get("AWS_REGION", "us-east-1")
-        s3_bucket = app.config.get("S3_BUCKET", "")
-        s3_origins = [
-            f"https://{s3_bucket}.s3.amazonaws.com",
-            f"https://{s3_bucket}.s3.{s3_region}.amazonaws.com",
-        ]
+        s3_origins = s3_csp_origins(
+            app.config.get("S3_BUCKET", ""), app.config.get("AWS_REGION", "us-east-1")
+        )
         for origin in s3_origins:
             csp["img-src"].append(origin)
             csp["media-src"].append(origin)
