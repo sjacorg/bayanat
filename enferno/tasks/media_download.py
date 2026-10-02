@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import tempfile
+import io
 from datetime import datetime
 from pathlib import Path
 
@@ -59,7 +59,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             db.session.get(User, user_id),
             "Web Import Status",
-            f"Web import of {url} has failed.",
+            f"Web import of {url} has failed: {e}",
         )
 
     except Exception as e:
@@ -84,13 +84,13 @@ def _get_ytdl_options(with_cookies: bool = False) -> dict:
         "merge_output_format": "mp4",
         "noplaylist": True,
         "proxy": cfg.YTDLP_PROXY if cfg.YTDLP_PROXY else None,
+        # ffmpeg ignores the proxy, so HLS must download through yt-dlp itself
+        "external_downloader": {"m3u8": "native"},
     }
 
-    if with_cookies and hasattr(cfg, "YTDLP_COOKIES"):
-        cookie_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        cookie_file.write(cfg.YTDLP_COOKIES)
-        cookie_file.close()
-        options["cookiefile"] = cookie_file.name
+    if with_cookies and cfg.YTDLP_COOKIES:
+        # In memory only: a temp file would leave session cookies on disk
+        options["cookiefile"] = io.StringIO(cfg.YTDLP_COOKIES)
 
     return options
 
@@ -116,7 +116,6 @@ def _download_media(url: str) -> tuple[dict, Path]:
         if any(
             msg in error_msg.lower()
             for msg in [
-                "age",
                 "confirm your age",
                 "inappropriate",
                 "need to log in",

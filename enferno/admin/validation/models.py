@@ -2018,6 +2018,9 @@ class FullConfigValidationModel(ConfigValidationModel):
         """Validates the cookies data format."""
         if not v:
             return None
+        # Saved cookies come back masked from the settings page; write_config restores them
+        if v == ConfigManager.MASK_STRING:
+            return v
 
         # Basic validation that it looks like cookie data
         lines = v.splitlines()
