@@ -1,6 +1,7 @@
 import io
 
 import pytest
+import yt_dlp
 from yt_dlp.utils import DownloadError
 
 from enferno.admin.validation.models import FullConfigValidationModel
@@ -21,7 +22,12 @@ def test_no_cookies_configured_means_no_cookiefile(monkeypatch):
 
 
 def test_hls_downloads_bypass_ffmpeg():
-    assert media_download._get_ytdl_options()["external_downloader"] == {"m3u8": "native"}
+    from yt_dlp.downloader import get_suitable_downloader
+
+    params = yt_dlp.YoutubeDL(media_download._get_ytdl_options()).params
+    for protocol in ("m3u8", "m3u8_native"):
+        info = {"protocol": protocol, "url": "https://x/y.m3u8", "ext": "mp4"}
+        assert get_suitable_downloader(info, params).__name__ == "HlsFD"
 
 
 def test_masked_cookies_pass_validation():
@@ -52,3 +58,52 @@ def test_generic_errors_mentioning_age_do_not_retry_with_cookies(monkeypatch):
     with pytest.raises(ValueError, match="Download failed"):
         media_download._download_media("https://example.com/video")
     assert attempts == [False]
+
+
+def test_live_stream_over_socks_proxy_is_refused(monkeypatch):
+    class LiveYDL:
+        def __init__(self, options):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def extract_info(self, url, download):
+            return {"is_live": True}
+
+        def process_ie_result(self, info, download):
+            raise AssertionError("must not download")
+
+    monkeypatch.setattr(media_download.yt_dlp, "YoutubeDL", LiveYDL)
+    with pytest.raises(ValueError, match="SOCKS proxy"):
+        media_download._run_download(
+            "https://example.com/live", {"proxy": "socks5://127.0.0.1:9050"}
+        )
+
+
+@pytest.mark.parametrize("error", [ValueError("cookies may be expired"), RuntimeError("disk full")])
+def test_failure_notification_includes_reason(monkeypatch, error):
+    sent = []
+
+    class FakeImport:
+        def add_to_log(self, msg):
+            pass
+
+        def fail(self):
+            pass
+
+    def boom(url):
+        raise error
+
+    monkeypatch.setattr(media_download.db.session, "get", lambda model, ident: FakeImport())
+    monkeypatch.setattr(media_download, "_download_media", boom)
+    monkeypatch.setattr(
+        media_download.Notification,
+        "send_notification_for_event",
+        lambda *args: sent.append(args[-1]),
+    )
+    media_download.download_media_from_web.run("https://example.com/v", 1, "batch", 1)
+    assert sent == [f"Web import of https://example.com/v has failed: {error}"]

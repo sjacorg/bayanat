@@ -49,30 +49,16 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             f"Web import of {url} has been completed successfully.",
         )
 
-    except ValueError as e:
-        # Handle specific error messages without traceback
-        logger.error(f"Download failed: {str(e)}")
-        data_import.add_to_log(f"Download failed: {str(e)}")
+    except Exception as e:
+        # Expected failures are raised as ValueError and need no traceback
+        logger.error(f"Download failed: {e}", exc_info=not isinstance(e, ValueError))
+        data_import.add_to_log(f"Download failed: {e}")
         data_import.fail()
-        # Notify user
         Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             db.session.get(User, user_id),
             "Web Import Status",
             f"Web import of {url} has failed: {e}",
-        )
-
-    except Exception as e:
-        # Handle other errors with traceback
-        logger.error(f"Download failed: {str(e)}", exc_info=True)
-        data_import.add_to_log(f"Download failed: {str(e)}")
-        data_import.fail()
-        # Notify user
-        Notification.send_notification_for_event(
-            Constants.NotificationEvent.WEB_IMPORT_STATUS,
-            db.session.get(User, user_id),
-            "Web Import Status",
-            f"Web import of {url} has failed.",
         )
 
 
@@ -84,7 +70,7 @@ def _get_ytdl_options(with_cookies: bool = False) -> dict:
         "merge_output_format": "mp4",
         "noplaylist": True,
         "proxy": cfg.YTDLP_PROXY if cfg.YTDLP_PROXY else None,
-        # ffmpeg ignores the proxy, so HLS must download through yt-dlp itself
+        # ffmpeg cannot use a SOCKS proxy, so HLS downloads through yt-dlp itself
         "external_downloader": {"m3u8": "native"},
     }
 
@@ -95,15 +81,24 @@ def _get_ytdl_options(with_cookies: bool = False) -> dict:
     return options
 
 
+def _run_download(url: str, options: dict) -> tuple[dict, Path]:
+    with yt_dlp.YoutubeDL(options) as ydl:
+        info = ydl.extract_info(url, download=False)
+        # Live HLS can only be recorded by ffmpeg, which connects directly when the proxy is SOCKS
+        if info.get("is_live") and str(options.get("proxy") or "").startswith("socks"):
+            raise ValueError(
+                "Live streams cannot be downloaded through a SOCKS proxy. Use an HTTP proxy."
+            )
+        info = ydl.process_ie_result(info, download=True)
+        info["requested_downloads"][0].pop("__postprocessors", None)
+        return info, Path(ydl.prepare_filename(info))
+
+
 def _download_media(url: str) -> tuple[dict, Path]:
     """Download media using yt-dlp."""
     try:
         # First attempt without cookies
-        with yt_dlp.YoutubeDL(_get_ytdl_options()) as ydl:
-            info = ydl.extract_info(url, download=True)
-            temp_file = Path(ydl.prepare_filename(info))
-            info["requested_downloads"][0].pop("__postprocessors")
-            return info, temp_file
+        return _run_download(url, _get_ytdl_options())
 
     except DownloadError as e:
         error_msg = str(e)
@@ -126,10 +121,7 @@ def _download_media(url: str) -> tuple[dict, Path]:
             logger.info("Authentication required, retrying with cookies...")
             try:
                 # Second attempt with cookies
-                with yt_dlp.YoutubeDL(_get_ytdl_options(with_cookies=True)) as ydl:
-                    info = ydl.extract_info(url, download=True)
-                    temp_file = Path(ydl.prepare_filename(info))
-                    return info, temp_file
+                return _run_download(url, _get_ytdl_options(with_cookies=True))
             except DownloadError:
                 # Don't chain the exception, just raise a new ValueError
                 raise ValueError(
