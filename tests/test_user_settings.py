@@ -1,3 +1,5 @@
+import pytest
+
 from enferno.user.models import User
 
 
@@ -19,3 +21,27 @@ def test_unknown_language_is_rejected(admin_client, session, users):
     resp = admin_client.put("/settings/save", json={"settings": {"language": "xx"}})
     assert resp.status_code == 400
     assert (_saved(session, users[0]) or {}).get("language") != "xx"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"settings": "x"},
+        {"settings": {"language": ["ar"]}},
+        {"settings": {"dark": {"nested": "blob"}}},
+        ["settings"],
+    ],
+)
+def test_malformed_payload_is_rejected(admin_client, payload):
+    assert admin_client.put("/settings/save", json=payload).status_code == 400
+
+
+def test_unknown_stored_language_falls_back_to_default(app, monkeypatch):
+    from types import SimpleNamespace
+
+    from enferno.app import get_locale
+
+    user = SimpleNamespace(is_authenticated=True, settings={"language": "xx"})
+    monkeypatch.setattr("enferno.app.current_user", user)
+    with app.test_request_context("/"):
+        assert get_locale() == app.config.get("BABEL_DEFAULT_LOCALE", "en")

@@ -40,5 +40,5 @@ def test_csp_follows_custom_endpoint(monkeypatch, var):
 
 
 def test_malformed_region_gets_its_own_error():
-    with pytest.raises(ValueError, match="AWS_REGION must contain only"):
+    with pytest.raises(ValueError, match="AWS_REGION must be a region name"):
         ConfigValidationModel.validate_rules({"FILESYSTEM_LOCAL": False, "AWS_REGION": "eu west"})

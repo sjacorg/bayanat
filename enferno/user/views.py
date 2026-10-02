@@ -246,10 +246,18 @@ def account_security() -> str:
 @auth_required("session")
 def save_settings() -> Response:
     """API Endpoint to save user settings."""
-    incoming = request.json.get("settings") or {}
+    body = request.get_json(silent=True)
+    incoming = body.get("settings") if isinstance(body, dict) else None
+    if not isinstance(incoming, dict):
+        return HTTPResponse.error("Invalid settings", status=400)
     lang = incoming.get("language")
-    if lang is not None and lang not in current_app.config["LANGUAGES"]:
+    if lang is not None and (
+        not isinstance(lang, str) or lang not in current_app.config["LANGUAGES"]
+    ):
         return HTTPResponse.error("Invalid language", status=400)
+    for key in ("dark", "setupCompleted"):
+        if incoming.get(key) is not None and not isinstance(incoming[key], (bool, int)):
+            return HTTPResponse.error(f"Invalid {key}", status=400)
     user_id = current_user.id
     user = User.query.get(user_id)
     if not user:
