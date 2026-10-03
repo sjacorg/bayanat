@@ -1,4 +1,5 @@
 import shutil
+from importlib.util import find_spec
 
 
 class DependencyUtils:
@@ -15,20 +16,8 @@ class DependencyUtils:
 
     def _check_dependencies(self):
         """Check for optional dependencies once during initialization."""
-        try:
-            import whisper  # noqa: F401 (availability probe)
-            import torch  # noqa: F401 (availability probe)
-
-            self.has_whisper = True
-        except ImportError:
-            self.has_whisper = False
-
-        try:
-            import pytesseract  # noqa: F401 (availability probe)
-
-            self.has_tesseract = True
-        except ImportError:
-            self.has_tesseract = False
+        self.has_whisper = bool(find_spec("whisper") and find_spec("torch"))
+        self.has_tesseract = find_spec("pytesseract") is not None
 
 
 # Create singleton instance
