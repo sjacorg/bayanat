@@ -122,8 +122,8 @@ def _download_media(url: str) -> tuple[dict, Path]:
                     "Failed to download content. Authentication cookies may be expired or invalid."
                 )
 
-        # For other download errors, wrap in ValueError without chaining
-        raise ValueError(f"Download failed: {error_msg}")
+        # The task handler adds the "Download failed" prefix
+        raise ValueError(error_msg)
 
 
 def _process_downloaded_file(temp_file: Path, info: dict) -> str:

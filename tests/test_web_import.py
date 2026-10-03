@@ -55,7 +55,7 @@ def test_generic_errors_mentioning_age_do_not_retry_with_cookies(monkeypatch):
 
     monkeypatch.setattr(media_download.yt_dlp, "YoutubeDL", FakeYDL)
     monkeypatch.setattr(media_download.cfg, "YTDLP_COOKIES", "cookie-data", raising=False)
-    with pytest.raises(ValueError, match="Download failed"):
+    with pytest.raises(ValueError, match="HTTP Error 404"):
         media_download._download_media("https://example.com/video")
     assert attempts == [False]
 
