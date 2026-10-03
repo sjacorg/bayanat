@@ -48,19 +48,18 @@
     </v-card>
       <v-card  class="text-center pa-4 sticky-bottom-bar flex-shrink-0 rounded-0">
         <v-card-actions class="justify-end">
-            <v-btn @click="search={}" text>{{ _('Clear Search') }}</v-btn>
-            <v-btn v-if="!savedSearchSelection" @click="saveQueryDialog=true" class="mx-2" color="grey lighten-2" depressed>{{ _('Save Search') }}</v-btn>
+            <v-btn @click="search={}">{{ _('Clear Search') }}</v-btn>
+            <v-btn v-if="!savedSearchSelection" @click="saveQueryDialog=true" class="mx-2">{{ _('Save Search') }}</v-btn>
              <v-btn
                 v-if="savedSearchSelection"
                 @click="updateSearch"
                 color="warning"
-                depressed
+                variant="outlined"
             >{{ _('Update Search') }}</v-btn>
             <v-btn
                 v-if="savedSearchSelection"
                 @click="openSaveQueryDialog"
-                color="warning"
-                depressed
+                variant="outlined"
             >{{ _('Save As New') }}</v-btn>
             <v-btn variant="elevated" @click="doSearch" color="primary">{{ _('Search') }}</v-btn>
         </v-card-actions>
@@ -80,8 +79,8 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn @click="saveQueryDialog=false" text>{{ _('Cancel') }}</v-btn>
-                    <v-btn @click="saveSearch" color="primary" >{{ _('Save') }}</v-btn>
+                    <v-btn @click="saveQueryDialog=false" variant="outlined">{{ _('Cancel') }}</v-btn>
+                    <v-btn @click="saveSearch" color="primary" variant="elevated">{{ _('Save') }}</v-btn>
                 </v-card-actions>
         </v-card>
     </v-dialog>
