@@ -653,12 +653,14 @@ def doctor() -> None:
     else:
         fail(".env file missing")
 
-    # Without them media imports save unplayable files (e.g. raw MPEG-TS named .mp4)
-    missing = [tool for tool in ("ffmpeg", "ffprobe") if not shutil.which(tool)]
-    if missing:
-        fail(f"{', '.join(missing)} not found: video imports will be broken")
-    else:
-        ok("ffmpeg and ffprobe available")
+    # Web and media imports (incl. transcription) shell out to them; without them
+    # imports still "succeed" but store unplayable files (e.g. raw MPEG-TS as .mp4)
+    if current_app.config.get("WEB_IMPORT") or current_app.config.get("ETL_TOOL"):
+        missing = [tool for tool in ("ffmpeg", "ffprobe") if not shutil.which(tool)]
+        if missing:
+            fail(f"{', '.join(missing)} not found on PATH: web and media imports will break video")
+        else:
+            ok("ffmpeg and ffprobe found on PATH")
 
     # --- Config ---
     click.echo("\nConfig:")
