@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import tempfile
+import io
 from datetime import datetime
 from pathlib import Path
 
@@ -49,30 +49,16 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             f"Web import of {url} has been completed successfully.",
         )
 
-    except ValueError as e:
-        # Handle specific error messages without traceback
-        logger.error(f"Download failed: {str(e)}")
-        data_import.add_to_log(f"Download failed: {str(e)}")
-        data_import.fail()
-        # Notify user
-        Notification.send_notification_for_event(
-            Constants.NotificationEvent.WEB_IMPORT_STATUS,
-            db.session.get(User, user_id),
-            "Web Import Status",
-            f"Web import of {url} has failed.",
-        )
-
     except Exception as e:
-        # Handle other errors with traceback
-        logger.error(f"Download failed: {str(e)}", exc_info=True)
-        data_import.add_to_log(f"Download failed: {str(e)}")
+        # Expected failures are raised as ValueError and need no traceback
+        logger.error(f"Download failed: {e}", exc_info=not isinstance(e, ValueError))
+        data_import.add_to_log(f"Download failed: {e}")
         data_import.fail()
-        # Notify user
         Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             db.session.get(User, user_id),
             "Web Import Status",
-            f"Web import of {url} has failed.",
+            f"Web import of {url} has failed: {e}",
         )
 
 
@@ -84,26 +70,29 @@ def _get_ytdl_options(with_cookies: bool = False) -> dict:
         "merge_output_format": "mp4",
         "noplaylist": True,
         "proxy": cfg.YTDLP_PROXY if cfg.YTDLP_PROXY else None,
+        # Keep HLS on yt-dlp's own downloader, which honours any proxy (ffmpeg ignores SOCKS)
+        "external_downloader": {"m3u8": "native"},
     }
 
-    if with_cookies and hasattr(cfg, "YTDLP_COOKIES"):
-        cookie_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        cookie_file.write(cfg.YTDLP_COOKIES)
-        cookie_file.close()
-        options["cookiefile"] = cookie_file.name
+    if with_cookies and cfg.YTDLP_COOKIES:
+        # In memory only: a temp file would leave session cookies on disk
+        options["cookiefile"] = io.StringIO(cfg.YTDLP_COOKIES)
 
     return options
+
+
+def _run_download(url: str, options: dict) -> tuple[dict, Path]:
+    with yt_dlp.YoutubeDL(options) as ydl:
+        info = ydl.extract_info(url, download=True)
+        info["requested_downloads"][0].pop("__postprocessors", None)
+        return info, Path(ydl.prepare_filename(info))
 
 
 def _download_media(url: str) -> tuple[dict, Path]:
     """Download media using yt-dlp."""
     try:
         # First attempt without cookies
-        with yt_dlp.YoutubeDL(_get_ytdl_options()) as ydl:
-            info = ydl.extract_info(url, download=True)
-            temp_file = Path(ydl.prepare_filename(info))
-            info["requested_downloads"][0].pop("__postprocessors")
-            return info, temp_file
+        return _run_download(url, _get_ytdl_options())
 
     except DownloadError as e:
         error_msg = str(e)
@@ -112,11 +101,10 @@ def _download_media(url: str) -> tuple[dict, Path]:
                 f"This URL is not supported or contains no downloadable video content: {url}"
             )
 
-        # Check for any authentication/login related errors
-        if any(
+        # Retry with cookies only when some are configured; otherwise report the real error
+        if cfg.YTDLP_COOKIES and any(
             msg in error_msg.lower()
             for msg in [
-                "age",
                 "confirm your age",
                 "inappropriate",
                 "need to log in",
@@ -127,18 +115,15 @@ def _download_media(url: str) -> tuple[dict, Path]:
             logger.info("Authentication required, retrying with cookies...")
             try:
                 # Second attempt with cookies
-                with yt_dlp.YoutubeDL(_get_ytdl_options(with_cookies=True)) as ydl:
-                    info = ydl.extract_info(url, download=True)
-                    temp_file = Path(ydl.prepare_filename(info))
-                    return info, temp_file
+                return _run_download(url, _get_ytdl_options(with_cookies=True))
             except DownloadError:
                 # Don't chain the exception, just raise a new ValueError
                 raise ValueError(
                     "Failed to download content. Authentication cookies may be expired or invalid."
                 )
 
-        # For other download errors, wrap in ValueError without chaining
-        raise ValueError(f"Download failed: {error_msg}")
+        # The task handler adds the "Download failed" prefix
+        raise ValueError(error_msg)
 
 
 def _process_downloaded_file(temp_file: Path, info: dict) -> str:
