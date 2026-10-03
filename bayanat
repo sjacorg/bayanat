@@ -1425,7 +1425,7 @@ SystemCallArchitectures=native
 SystemCallFilter=@system-service
 CapabilityBoundingSet="
 
-    cat > "$unit_dir/bayanat.service" << EOF
+    cat > "$unit_dir/bayanat.service" << EOF || return 1
 [Unit]
 Description=Bayanat web application
 After=network.target postgresql.service redis.service
@@ -1454,7 +1454,7 @@ $hardening
 WantedBy=multi-user.target
 EOF
 
-    cat > "$unit_dir/bayanat-celery.service" << EOF
+    cat > "$unit_dir/bayanat-celery.service" << EOF || return 1
 [Unit]
 Description=Bayanat Celery worker
 After=network.target postgresql.service redis.service
@@ -1479,7 +1479,7 @@ EOF
     # Celery restart requests (BAY-01-032): the web app cannot (and must not)
     # sudo; it touches the runtime sentinel instead and this path unit
     # performs the restart as root.
-    cat > "$unit_dir/bayanat-celery-restart.path" << EOF
+    cat > "$unit_dir/bayanat-celery-restart.path" << EOF || return 1
 [Unit]
 Description=Watch for Bayanat Celery restart requests
 
@@ -1490,7 +1490,7 @@ PathChanged=$RUNTIME_DIR/restart-celery
 WantedBy=multi-user.target
 EOF
 
-    cat > "$unit_dir/bayanat-celery-restart.service" << 'EOF'
+    cat > "$unit_dir/bayanat-celery-restart.service" << 'EOF' || return 1
 [Unit]
 Description=Restart Bayanat Celery worker on request
 
@@ -1776,10 +1776,11 @@ readonly LAYOUT_MARKER="$STATE_DIR/layout"
 _units_current() (
     tmp=$(mktemp -d) || exit 2
     trap 'rm -rf "$tmp"' EXIT
-    _install_systemd "$tmp"
-    for u in bayanat.service bayanat-celery.service \
-             bayanat-celery-restart.path bayanat-celery-restart.service; do
-        [[ -s "$tmp/$u" ]] || exit 2
+    local units=(bayanat.service bayanat-celery.service
+                 bayanat-celery-restart.path bayanat-celery-restart.service)
+    _install_systemd "$tmp" || exit 2
+    for u in "${units[@]}"; do [[ -s "$tmp/$u" ]] || exit 2; done
+    for u in "${units[@]}"; do
         [[ -f "/etc/systemd/system/$u" ]] || exit 1
         cmp -s "$tmp/$u" "/etc/systemd/system/$u"
         case $? in 0) ;; 1) exit 1 ;; *) exit 2 ;; esac
