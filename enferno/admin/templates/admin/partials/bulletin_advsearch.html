@@ -74,7 +74,7 @@
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn @click="search=[{}]">{{ _('Clear Search') }}</v-btn>
-                <v-btn v-if="!savedSearchSelection" @click="openSaveQueryDialog">{{ _('Save Search') }}</v-btn>
+                <v-btn v-if="!savedSearchSelection" @click="openSaveQueryDialog" color="grey">{{ _('Save Search') }}</v-btn>
                 <v-btn
                         v-if="savedSearchSelection"
                         @click="updateSearch"
@@ -84,6 +84,7 @@
                 <v-btn
                         v-if="savedSearchSelection"
                         @click="openSaveQueryDialog"
+                        color="warning"
                         variant="outlined"
                 >{{ _('Save As New') }}</v-btn>
                 <v-btn @click="doSearch" color="primary" variant="elevated">{{ _('Search') }}</v-btn>
