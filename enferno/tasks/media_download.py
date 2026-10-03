@@ -101,8 +101,8 @@ def _download_media(url: str) -> tuple[dict, Path]:
                 f"This URL is not supported or contains no downloadable video content: {url}"
             )
 
-        # Check for any authentication/login related errors
-        if any(
+        # Retry with cookies only when some are configured; otherwise report the real error
+        if cfg.YTDLP_COOKIES and any(
             msg in error_msg.lower()
             for msg in [
                 "confirm your age",

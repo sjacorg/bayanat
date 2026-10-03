@@ -83,3 +83,23 @@ def test_failure_notification_includes_reason(monkeypatch, error):
     )
     media_download.download_media_from_web.run("https://example.com/v", 1, "batch", 1)
     assert sent == [f"Web import of https://example.com/v has failed: {error}"]
+
+
+def test_auth_error_without_cookies_reports_the_real_error(monkeypatch):
+    class BotCheckYDL:
+        def __init__(self, options):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def extract_info(self, url, download):
+            raise DownloadError("ERROR: Sign in to confirm you're not a bot. Use --cookies")
+
+    monkeypatch.setattr(media_download.yt_dlp, "YoutubeDL", BotCheckYDL)
+    monkeypatch.setattr(media_download.cfg, "YTDLP_COOKIES", "", raising=False)
+    with pytest.raises(ValueError, match="not a bot"):
+        media_download._download_media("https://www.youtube.com/watch?v=x")
