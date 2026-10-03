@@ -1466,6 +1466,8 @@ WorkingDirectory=$CURRENT_LINK
 EnvironmentFile=$SHARED_DIR/.env
 Environment=HOME=/var/cache/bayanat-celery
 CacheDirectory=bayanat-celery
+# Web import runs yt-dlp's JavaScript challenge solver on Deno; V8 needs memory protection keys at startup
+SystemCallFilter=pkey_alloc pkey_free pkey_mprotect
 ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B -Q celery,ocr -s $RUNTIME_DIR/celerybeat-schedule
 Restart=always
 RestartSec=3
