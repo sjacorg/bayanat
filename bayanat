@@ -1771,16 +1771,20 @@ readonly LAYOUT_MARKER="$STATE_DIR/layout"
 
 # Units are written only by install and harden, never by update, so a release
 # that changes them leaves existing boxes on the old ones until harden --force.
-_units_current() {
-    local tmp f rc=0
-    tmp=$(mktemp -d) || return 1
+# Exit status: 0 current, 1 out of date, 2 could not check. Runs in a subshell
+# so the temp dir is removed on every exit path.
+_units_current() (
+    tmp=$(mktemp -d) || exit 2
+    trap 'rm -rf "$tmp"' EXIT
     _install_systemd "$tmp"
-    for f in "$tmp"/*; do
-        cmp -s "$f" "/etc/systemd/system/${f##*/}" || { rc=1; break; }
+    for u in bayanat.service bayanat-celery.service \
+             bayanat-celery-restart.path bayanat-celery-restart.service; do
+        [[ -s "$tmp/$u" ]] || exit 2
+        [[ -f "/etc/systemd/system/$u" ]] || exit 1
+        cmp -s "$tmp/$u" "/etc/systemd/system/$u"
+        case $? in 0) ;; 1) exit 1 ;; *) exit 2 ;; esac
     done
-    rm -rf "$tmp"
-    return "$rc"
-}
+)
 
 _is_hardened() {
     [[ -f "$LAYOUT_MARKER" ]] && [[ "$(cat "$LAYOUT_MARKER" 2>/dev/null)" == "$LAYOUT_VERSION" ]]
@@ -2270,11 +2274,17 @@ cmd_update() {
         warn "app-writable, and Redis may be unauthenticated (BAY-01-027/030/031/032)."
         warn "Migrate with:  bayanat harden"
         warn ""
-    elif ! _units_current; then
-        warn ""
-        warn "This release changes the systemd units, and update never rewrites them."
-        warn "Apply them with:  bayanat harden --force"
-        warn ""
+    else
+        local units_rc=0
+        _units_current || units_rc=$?
+        if (( units_rc == 1 )); then
+            warn ""
+            warn "This release changes the systemd units, and update never rewrites them."
+            warn "Apply them with:  bayanat harden --force"
+            warn ""
+        elif (( units_rc != 0 )); then
+            warn "Could not verify the systemd units; check with:  bayanat status"
+        fi
     fi
 }
 
@@ -2301,11 +2311,13 @@ cmd_status() {
 
     if _is_hardened; then
         echo "Layout: hardened (v$LAYOUT_VERSION)"
-        if _units_current; then
-            echo "Units:  current"
-        else
-            echo "Units:  out of date - run 'bayanat harden --force'"
-        fi
+        local units_rc=0
+        _units_current || units_rc=$?
+        case $units_rc in
+            0) echo "Units:  current" ;;
+            1) echo "Units:  out of date - run 'bayanat harden --force'" ;;
+            *) echo "Units:  could not check" ;;
+        esac
     else
         echo "Layout: legacy - run 'bayanat harden' to migrate"
     fi
