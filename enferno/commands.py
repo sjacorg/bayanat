@@ -653,6 +653,13 @@ def doctor() -> None:
     else:
         fail(".env file missing")
 
+    # Without them media imports save unplayable files (e.g. raw MPEG-TS named .mp4)
+    missing = [tool for tool in ("ffmpeg", "ffprobe") if not shutil.which(tool)]
+    if missing:
+        fail(f"{', '.join(missing)} not found: video imports will be broken")
+    else:
+        ok("ffmpeg and ffprobe available")
+
     # --- Config ---
     click.echo("\nConfig:")
 
