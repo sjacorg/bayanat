@@ -1396,6 +1396,7 @@ EOF
 }
 
 _install_systemd() {
+    local unit_dir="${1:-/etc/systemd/system}"
     # Sandboxing directives (BAY-01-033): no privilege escalation, read-only
     # host filesystem outside the explicit shared/log paths, isolated tmp and
     # devices, restricted /proc and kernel interfaces, no retained
@@ -1424,7 +1425,7 @@ SystemCallArchitectures=native
 SystemCallFilter=@system-service
 CapabilityBoundingSet="
 
-    cat > /etc/systemd/system/bayanat.service << EOF
+    cat > "$unit_dir/bayanat.service" << EOF
 [Unit]
 Description=Bayanat web application
 After=network.target postgresql.service redis.service
@@ -1453,7 +1454,7 @@ $hardening
 WantedBy=multi-user.target
 EOF
 
-    cat > /etc/systemd/system/bayanat-celery.service << EOF
+    cat > "$unit_dir/bayanat-celery.service" << EOF
 [Unit]
 Description=Bayanat Celery worker
 After=network.target postgresql.service redis.service
@@ -1478,7 +1479,7 @@ EOF
     # Celery restart requests (BAY-01-032): the web app cannot (and must not)
     # sudo; it touches the runtime sentinel instead and this path unit
     # performs the restart as root.
-    cat > /etc/systemd/system/bayanat-celery-restart.path << EOF
+    cat > "$unit_dir/bayanat-celery-restart.path" << EOF
 [Unit]
 Description=Watch for Bayanat Celery restart requests
 
@@ -1489,7 +1490,7 @@ PathChanged=$RUNTIME_DIR/restart-celery
 WantedBy=multi-user.target
 EOF
 
-    cat > /etc/systemd/system/bayanat-celery-restart.service << 'EOF'
+    cat > "$unit_dir/bayanat-celery-restart.service" << 'EOF'
 [Unit]
 Description=Restart Bayanat Celery worker on request
 
@@ -1767,6 +1768,19 @@ PYEOF
 # Bumped when the hardened layout changes in a way that needs re-applying.
 readonly LAYOUT_VERSION="1"
 readonly LAYOUT_MARKER="$STATE_DIR/layout"
+
+# Units are written only by install and harden, never by update, so a release
+# that changes them leaves existing boxes on the old ones until harden --force.
+_units_current() {
+    local tmp f rc=0
+    tmp=$(mktemp -d) || return 1
+    _install_systemd "$tmp"
+    for f in "$tmp"/*; do
+        cmp -s "$f" "/etc/systemd/system/${f##*/}" || { rc=1; break; }
+    done
+    rm -rf "$tmp"
+    return "$rc"
+}
 
 _is_hardened() {
     [[ -f "$LAYOUT_MARKER" ]] && [[ "$(cat "$LAYOUT_MARKER" 2>/dev/null)" == "$LAYOUT_VERSION" ]]
@@ -2256,6 +2270,11 @@ cmd_update() {
         warn "app-writable, and Redis may be unauthenticated (BAY-01-027/030/031/032)."
         warn "Migrate with:  bayanat harden"
         warn ""
+    elif ! _units_current; then
+        warn ""
+        warn "This release changes the systemd units, and update never rewrites them."
+        warn "Apply them with:  bayanat harden --force"
+        warn ""
     fi
 }
 
@@ -2282,6 +2301,11 @@ cmd_status() {
 
     if _is_hardened; then
         echo "Layout: hardened (v$LAYOUT_VERSION)"
+        if _units_current; then
+            echo "Units:  current"
+        else
+            echo "Units:  out of date - run 'bayanat harden --force'"
+        fi
     else
         echo "Layout: legacy - run 'bayanat harden' to migrate"
     fi
