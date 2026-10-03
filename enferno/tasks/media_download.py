@@ -15,6 +15,7 @@ from enferno.data_import.models import DataImport
 from enferno.tasks import celery, cfg
 from enferno.user.models import User
 from enferno.utils.data_helpers import get_file_hash
+from enferno.utils.dep_utils import require_tools
 from enferno.utils.logging_utils import get_logger
 
 logger = get_logger("celery.tasks.media_download")
@@ -90,6 +91,8 @@ def _run_download(url: str, options: dict) -> tuple[dict, Path]:
 
 def _download_media(url: str) -> tuple[dict, Path]:
     """Download media using yt-dlp."""
+    # Without them yt-dlp silently picks low-quality formats or saves raw HLS as .mp4
+    require_tools("ffmpeg", "ffprobe")
     try:
         # First attempt without cookies
         return _run_download(url, _get_ytdl_options())

@@ -1,3 +1,6 @@
+import shutil
+
+
 class DependencyUtils:
     """Simple singleton utility to check for optional dependencies."""
 
@@ -13,15 +16,15 @@ class DependencyUtils:
     def _check_dependencies(self):
         """Check for optional dependencies once during initialization."""
         try:
-            import whisper
-            import torch
+            import whisper  # noqa: F401 (availability probe)
+            import torch  # noqa: F401 (availability probe)
 
             self.has_whisper = True
         except ImportError:
             self.has_whisper = False
 
         try:
-            import pytesseract
+            import pytesseract  # noqa: F401 (availability probe)
 
             self.has_tesseract = True
         except ImportError:
@@ -30,3 +33,10 @@ class DependencyUtils:
 
 # Create singleton instance
 dep_utils = DependencyUtils()
+
+
+def require_tools(*names: str) -> None:
+    """Raise if any external binary is missing, so imports fail instead of degrading."""
+    missing = [name for name in names if not shutil.which(name)]
+    if missing:
+        raise ValueError(f"{', '.join(missing)} not installed on the server")

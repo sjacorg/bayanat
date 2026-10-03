@@ -18,6 +18,7 @@ from enferno.extensions import db
 from enferno.settings import Config
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
+from enferno.utils.dep_utils import require_tools
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import (
     import_default_data,
@@ -653,14 +654,12 @@ def doctor() -> None:
     else:
         fail(".env file missing")
 
-    # Web and media imports (incl. transcription) shell out to them; without them
-    # imports still "succeed" but store unplayable files (e.g. raw MPEG-TS as .mp4)
     if current_app.config.get("WEB_IMPORT") or current_app.config.get("ETL_TOOL"):
-        missing = [tool for tool in ("ffmpeg", "ffprobe") if not shutil.which(tool)]
-        if missing:
-            fail(f"{', '.join(missing)} not found on PATH: web and media imports will break video")
-        else:
+        try:
+            require_tools("ffmpeg", "ffprobe")
             ok("ffmpeg and ffprobe found on PATH")
+        except ValueError as e:
+            fail(f"{e}: web imports and audio/video media imports will fail")
 
     # --- Config ---
     click.echo("\nConfig:")
