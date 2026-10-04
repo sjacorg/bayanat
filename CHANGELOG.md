@@ -1,5 +1,17 @@
 # Changelog
 
+## v5.1.4
+
+### Fixed
+
+- Storage settings accept access keys and secrets in the formats used by S3-compatible providers (for example OVHcloud), not only AWS-shaped keys.
+- Screenshot uploads pass the configured region to S3, so providers that require a region no longer fail there.
+- `flask db upgrade` completes on a database with no migration stamp that already has the v5 schema, instead of failing with "already exists".
+
+### Upgrading
+
+No new database migrations. Installer-managed installs update with `sudo bayanat update`.
+
 ## v5.1.3
 
 ### Added
