@@ -232,26 +232,17 @@ The v4 installation guide did not tell manual installs to run
 not run `flask db stamp head` first: it marks the v5 migrations as applied
 without running them, and `flask doctor` then reports a schema mismatch.
 
-If you already stamped, clear the stamp and run the full chain:
+If you stamped head before running the migrations, clear the stamp and run the
+full chain:
 
 ```bash
 uv run flask db stamp base
 uv run flask db upgrade
 ```
 
-If `flask db upgrade` instead stops because a column or table already exists,
-the upgrade rolled back its changes (sequence counters can still advance). Do
-not stamp unless you know how the database was built:
-
-- Created with `flask create-db` from the release you are installing, and never
-  stamped: it already has the complete schema, indexes included. Run
-  `uv run flask db stamp head`, then confirm `flask doctor` reports
-  "Migrations up to date" and "Schema aligned with models".
-- Migrated partly by hand, or you are not sure: do not stamp, because stamping
-  would skip whatever is still missing. Open an issue with the full
-  `flask doctor` output. Doctor's schema check compares tables and columns
-  only, so "Schema aligned with models" alone does not prove the database is
-  complete.
+Since v5.1.4, `flask db upgrade` also succeeds on an unstamped database that
+already has the v5 schema, so there is no need to work out which state yours is
+in first.
 
 One migration in this chain marks orphaned media, and duplicate media within
 the same bulletin or actor, as deleted. Rows and files are kept; they are only

@@ -69,7 +69,7 @@ uv run flask db downgrade -1 # roll back last migration
 For new deployments, `flask create-db` builds the full schema from models. Then run:
 
 ```bash
-uv run flask db upgrade
+uv run flask db stamp head
 ```
 
-This stamps the baseline as applied without running it (the schema already exists).
+This records every migration as applied without running it, since `create-db` already built the current schema.
