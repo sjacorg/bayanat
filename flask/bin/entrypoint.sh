@@ -23,6 +23,8 @@ if [ "$ROLE" = "flask" ]; then
   # request body is streamed, not buffered, so a large media upload over a slow
   # link occupies a worker for its whole duration and harakiri must outlast it.
   # Post-buffering would fix that but spools big bodies to /tmp, which is tmpfs.
+  # The app root is read-only, so the reload sentinel lives on the /tmp tmpfs.
+  touch /tmp/reload.ini
   exec uwsgi --http 0.0.0.0:5000 --master --wsgi run:app \
     --processes "${UWSGI_PROCESSES:-4}" \
     --threads "${UWSGI_THREADS:-2}" \
@@ -32,7 +34,8 @@ if [ "$ROLE" = "flask" ]; then
     --max-worker-lifetime 3600 \
     --need-app \
     --die-on-term \
-    --buffer-size 32768
+    --buffer-size 32768 \
+    --touch-reload /tmp/reload.ini
 
 elif [ "$ROLE" = "celery" ]; then
   echo ":: Starting Celery for Bayanat ::"

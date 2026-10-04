@@ -1396,6 +1396,7 @@ EOF
 }
 
 _install_systemd() {
+    local unit_dir="${1:-/etc/systemd/system}"
     # Sandboxing directives (BAY-01-033): no privilege escalation, read-only
     # host filesystem outside the explicit shared/log paths, isolated tmp and
     # devices, restricted /proc and kernel interfaces, no retained
@@ -1424,7 +1425,7 @@ SystemCallArchitectures=native
 SystemCallFilter=@system-service
 CapabilityBoundingSet="
 
-    cat > /etc/systemd/system/bayanat.service << EOF
+    cat > "$unit_dir/bayanat.service" << EOF || return 1
 [Unit]
 Description=Bayanat web application
 After=network.target postgresql.service redis.service
@@ -1453,7 +1454,7 @@ $hardening
 WantedBy=multi-user.target
 EOF
 
-    cat > /etc/systemd/system/bayanat-celery.service << EOF
+    cat > "$unit_dir/bayanat-celery.service" << EOF || return 1
 [Unit]
 Description=Bayanat Celery worker
 After=network.target postgresql.service redis.service
@@ -1466,6 +1467,8 @@ WorkingDirectory=$CURRENT_LINK
 EnvironmentFile=$SHARED_DIR/.env
 Environment=HOME=/var/cache/bayanat-celery
 CacheDirectory=bayanat-celery
+# Web import runs yt-dlp's JavaScript challenge solver on Deno; V8 needs memory protection keys at startup
+SystemCallFilter=pkey_alloc pkey_free pkey_mprotect
 ExecStart=$CURRENT_LINK/.venv/bin/celery -A enferno.tasks worker --autoscale 2,5 -B -Q celery,ocr -s $RUNTIME_DIR/celerybeat-schedule
 Restart=always
 RestartSec=3
@@ -1478,7 +1481,7 @@ EOF
     # Celery restart requests (BAY-01-032): the web app cannot (and must not)
     # sudo; it touches the runtime sentinel instead and this path unit
     # performs the restart as root.
-    cat > /etc/systemd/system/bayanat-celery-restart.path << EOF
+    cat > "$unit_dir/bayanat-celery-restart.path" << EOF || return 1
 [Unit]
 Description=Watch for Bayanat Celery restart requests
 
@@ -1489,7 +1492,7 @@ PathChanged=$RUNTIME_DIR/restart-celery
 WantedBy=multi-user.target
 EOF
 
-    cat > /etc/systemd/system/bayanat-celery-restart.service << 'EOF'
+    cat > "$unit_dir/bayanat-celery-restart.service" << 'EOF' || return 1
 [Unit]
 Description=Restart Bayanat Celery worker on request
 
@@ -1767,6 +1770,24 @@ PYEOF
 # Bumped when the hardened layout changes in a way that needs re-applying.
 readonly LAYOUT_VERSION="1"
 readonly LAYOUT_MARKER="$STATE_DIR/layout"
+
+# Units are written only by install and harden, never by update, so a release
+# that changes them leaves existing boxes on the old ones until harden --force.
+# Exit status: 0 current, 1 out of date, 2 could not check. Runs in a subshell
+# so the temp dir is removed on every exit path.
+_units_current() (
+    tmp=$(mktemp -d) || exit 2
+    trap 'rm -rf "$tmp"' EXIT
+    local units=(bayanat.service bayanat-celery.service
+                 bayanat-celery-restart.path bayanat-celery-restart.service)
+    _install_systemd "$tmp" || exit 2
+    for u in "${units[@]}"; do [[ -s "$tmp/$u" ]] || exit 2; done
+    for u in "${units[@]}"; do
+        [[ -f "/etc/systemd/system/$u" ]] || exit 1
+        cmp -s "$tmp/$u" "/etc/systemd/system/$u"
+        case $? in 0) ;; 1) exit 1 ;; *) exit 2 ;; esac
+    done
+)
 
 _is_hardened() {
     [[ -f "$LAYOUT_MARKER" ]] && [[ "$(cat "$LAYOUT_MARKER" 2>/dev/null)" == "$LAYOUT_VERSION" ]]
@@ -2256,6 +2277,17 @@ cmd_update() {
         warn "app-writable, and Redis may be unauthenticated (BAY-01-027/030/031/032)."
         warn "Migrate with:  bayanat harden"
         warn ""
+    else
+        local units_rc=0
+        _units_current || units_rc=$?
+        if (( units_rc == 1 )); then
+            warn ""
+            warn "This release changes the systemd units, and update never rewrites them."
+            warn "Apply them with:  bayanat harden --force"
+            warn ""
+        elif (( units_rc != 0 )); then
+            warn "Could not verify the systemd units; check with:  bayanat status"
+        fi
     fi
 }
 
@@ -2282,6 +2314,13 @@ cmd_status() {
 
     if _is_hardened; then
         echo "Layout: hardened (v$LAYOUT_VERSION)"
+        local units_rc=0
+        _units_current || units_rc=$?
+        case $units_rc in
+            0) echo "Units:  current" ;;
+            1) echo "Units:  out of date - run 'bayanat harden --force'" ;;
+            *) echo "Units:  could not check" ;;
+        esac
     else
         echo "Layout: legacy - run 'bayanat harden' to migrate"
     fi

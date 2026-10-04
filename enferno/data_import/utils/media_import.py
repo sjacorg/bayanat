@@ -20,6 +20,7 @@ from enferno.utils.base import DatabaseException
 from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
 from enferno.extensions import db
+from enferno.utils.dep_utils import require_tools
 from sqlalchemy import any_
 
 logger = get_logger()
@@ -514,6 +515,11 @@ class MediaImport:
 
         # get duration and optimize if video
         if mime_type and (mime_type.startswith("video/") or mime_type.startswith("audio/")):
+            # Fail the import rather than store media with missing metadata or skipped processing
+            tools = ["ffprobe"]
+            if self.meta.get("optimize") or self.meta.get("transcription"):
+                tools.append("ffmpeg")
+            require_tools(*tools)
             info["vduration"] = self.get_duration(info["filepath"])
 
             if self.meta.get("optimize"):

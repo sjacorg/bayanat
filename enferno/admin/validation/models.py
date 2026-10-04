@@ -1809,46 +1809,9 @@ class ConfigValidationModel(StrictValidationModel):
         return v
 
     def validate_aws_region(v):
-        if not isinstance(v, str):
+        # Format check only: providers name regions their own way (OVH "EU-WEST-PAR", R2 "auto", MinIO custom)
+        if not isinstance(v, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", v):
             return None
-
-        valid_regions = {
-            "us-east-2",
-            "us-east-1",
-            "us-west-1",
-            "us-west-2",
-            "af-south-1",
-            "ap-east-1",
-            "ap-south-2",
-            "ap-southeast-3",
-            "ap-southeast-4",
-            "ap-south-1",
-            "ap-northeast-3",
-            "ap-northeast-2",
-            "ap-southeast-1",
-            "ap-southeast-2",
-            "ap-northeast-1",
-            "ca-central-1",
-            "ca-west-1",
-            "eu-central-1",
-            "eu-west-1",
-            "eu-west-2",
-            "eu-south-1",
-            "eu-west-3",
-            "eu-south-2",
-            "eu-north-1",
-            "eu-central-2",
-            "il-central-1",
-            "me-south-1",
-            "me-central-1",
-            "sa-east-1",
-            "us-gov-east-1",
-            "us-gov-west-1",
-        }
-
-        if v not in valid_regions:
-            return None
-
         return v
 
     @model_validator(mode="before")
@@ -1883,6 +1846,14 @@ class ConfigValidationModel(StrictValidationModel):
                 "GOOGLE_CLIENT_SECRET must be provided and valid if GOOGLE_OAUTH_ENABLED is True"
             )
 
+        if (
+            not bool(values.get("FILESYSTEM_LOCAL"))
+            and values.get("AWS_REGION")
+            and not cls.validate_aws_region(values.get("AWS_REGION"))
+        ):
+            raise ValueError(
+                "AWS_REGION must be a region name: up to 64 letters, digits, hyphens or underscores"
+            )
         if not bool(values.get("FILESYSTEM_LOCAL")) and not (
             values.get("AWS_ACCESS_KEY_ID")
             and cls.validate_aws_access_key(values.get("AWS_ACCESS_KEY_ID"))
@@ -1891,7 +1862,6 @@ class ConfigValidationModel(StrictValidationModel):
             and values.get("S3_BUCKET")
             and cls.validate_s3_bucket(values.get("S3_BUCKET"))
             and values.get("AWS_REGION")
-            and cls.validate_aws_region(values.get("AWS_REGION"))
         ):
             raise ValueError(
                 "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET and AWS_REGION must be provided if FILESYSTEM_LOCAL is False"
@@ -2048,6 +2018,9 @@ class FullConfigValidationModel(ConfigValidationModel):
         """Validates the cookies data format."""
         if not v:
             return None
+        # Saved cookies come back masked from the settings page; write_config restores them
+        if v == ConfigManager.MASK_STRING:
+            return v
 
         # Basic validation that it looks like cookie data
         lines = v.splitlines()

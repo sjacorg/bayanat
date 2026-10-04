@@ -81,6 +81,8 @@ def test_split_dialogs_use_logical_edges():
         source = Path(f"enferno/admin/templates/admin/{page}.html").read_text()
         assert source.count(':dialog-props="relateDialogProps"') == 3
     assert "position-fixed h-screen inset-inline-end-0 top-0 z-100" in events
+    geo = Path("enferno/static/js/components/GeoLocations.js").read_text()
+    assert "position-fixed h-screen inset-inline-end-0 top-0 z-100" in geo
     assert "position-absolute inset-inline-end-0 bottom-0" in transcription
     assert ".inset-inline-start-0" in styles
     assert ".inset-inline-end-0" in styles

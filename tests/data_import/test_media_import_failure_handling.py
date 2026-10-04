@@ -117,3 +117,17 @@ def test_process_tolerates_a_terminated_import():
     importer.web_import = lambda file: None
 
     assert MediaImport.process(importer, {"filename": "video.mp4"}) is None
+
+
+@pytest.mark.parametrize("meta, missing", [({}, "ffprobe"), ({"optimize": True}, "ffmpeg")])
+def test_audio_video_import_requires_ffmpeg_tools(monkeypatch, meta, missing):
+    monkeypatch.setattr(
+        "enferno.utils.dep_utils.shutil.which",
+        lambda name: None if name == missing else f"/usr/bin/{name}",
+    )
+    importer = _StubImporter()
+    importer.meta = {"mode": MediaImport.MODE_WEB, **meta}
+    importer.web_import = lambda file: {"File:MIMEType": "video/mp4", "filepath": "/tmp/v.mp4"}
+
+    with pytest.raises(ValueError, match=missing):
+        MediaImport.process(importer, {"filename": "video.mp4"})

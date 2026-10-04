@@ -1,5 +1,20 @@
 # Changelog
 
+## v5.1.2
+
+### Fixed
+
+- Users whose saved language setting was empty got an error on every page after signing in. They now get the default language.
+- In the English interface, the related bulletins, actors and incidents search in the bulletin editor opened over the wrong side of the screen. It now opens as a side panel on the right (on the left in Arabic), and the actor and incident editors use the same side panel instead of a centred dialog.
+
+### Security
+
+- Vendored axios upgraded to 1.20.0 (GHSA-9fr6-4gfg-395g, GHSA-x97p-jq2g-jp4f and related advisories).
+
+### Upgrading
+
+No database migrations. Installer-managed installs update with `sudo bayanat update`. Installs on v5.0.0 or v5.1.0 run the old updater for this hop; if it stops at "MIGRATE: stopping services", re-run `sudo bayanat update`.
+
 ## v5.1.1
 
 ### Fixed

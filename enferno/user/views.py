@@ -246,16 +246,19 @@ def account_security() -> str:
 @auth_required("session")
 def save_settings() -> Response:
     """API Endpoint to save user settings."""
-    json = request.json.get("settings")
-    dark = json.get("dark")
-    user_id = current_user.id
-    user = User.query.get(user_id)
+    body = request.get_json(silent=True)
+    incoming = body.get("settings") if isinstance(body, dict) else None
+    if not isinstance(incoming, dict):
+        return HTTPResponse.error("Invalid settings", status=400)
+    user = User.query.get(current_user.id)
     if not user:
         return HTTPResponse.error("Problem loading user", status=417)
-    user.settings = {"dark": dark}
-    lang = json.get("language")
-    user.settings["language"] = lang
-    user.settings["setupCompleted"] = json.get("setupCompleted")
+    # Merge instead of rebuild: a missing or null field must never wipe a saved value
+    updates = {k: incoming[k] for k in ("dark", "setupCompleted") if incoming.get(k) is not None}
+    lang = incoming.get("language")
+    if isinstance(lang, str) and lang in current_app.config["LANGUAGES"]:
+        updates["language"] = lang
+    user.settings = {**(user.settings or {}), **updates}
     flag_modified(user, "settings")
     user.save()
     return HTTPResponse.success(message="Settings Saved")
