@@ -37,6 +37,11 @@ pinned key before installing anything, takes a database snapshot, runs
 migrations, swaps to the new release and health-checks it. If the health check
 fails it reverts to the previous release on its own.
 
+`bayanat update` does not rewrite the installed systemd service files. On a
+hardened install, when a release changes them, `update` says so at the end and
+`bayanat status` shows `Units: out of date` until you apply them with
+`sudo bayanat harden --force`.
+
 See the [Auto-Update Runbook](/deployment/auto-update-runbook) for phases,
 expected downtime, recovery states and snapshot handling, and
 [Release Signing](/deployment/release-signing) for how verification works.
@@ -219,6 +224,29 @@ uv run flask db upgrade
 
 Restart the application and worker as you normally do, then verify with
 `flask doctor` and `flask db current`.
+
+::: warning If your database has no migration stamp
+The v4 installation guide did not tell manual installs to run
+`flask db stamp head`, so a v4 database may have no Alembic stamp
+(`flask db current` prints no revision). Run `flask db upgrade` as above. Do
+not run `flask db stamp head` first: it marks the v5 migrations as applied
+without running them, and `flask doctor` then reports a schema mismatch.
+
+If you already stamped, clear the stamp and run the full chain:
+
+```bash
+uv run flask db stamp base
+uv run flask db upgrade
+```
+
+`flask db stamp head` is only right for a database that already has the
+current schema. On such a database `flask db upgrade` stops with an error and
+rolls back its changes (sequence counters can still advance).
+
+One migration in this chain marks orphaned media, and duplicate media within
+the same bulletin or actor, as deleted. Rows and files are kept; they are only
+hidden from the interface.
+:::
 
 `bayanat harden` assumes the installer's layout, so it does not apply here. What
 it does is the reference for doing the equivalent by hand: separate web and
