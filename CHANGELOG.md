@@ -8,6 +8,10 @@
 - Screenshot uploads pass the configured region to S3, so providers that require a region no longer fail there.
 - `flask db upgrade` completes on a database with no migration stamp that already has the v5 schema, instead of failing with "already exists".
 
+### Security
+
+- pypdf upgraded to 6.19.0 (excessive CPU and memory use on crafted PDFs, GHSA-5jq2-8x83-x246 and related advisories) and urllib3 to 2.8.0 (GHSA-gh4c-6fx4-qh6g, GHSA-vxq7-64xx-v4gw, GHSA-8988-9cw3-xx77).
+
 ### Upgrading
 
 No new database migrations. Installer-managed installs update with `sudo bayanat update`.
