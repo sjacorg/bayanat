@@ -239,9 +239,19 @@ uv run flask db stamp base
 uv run flask db upgrade
 ```
 
-`flask db stamp head` is only right for a database that already has the
-current schema. On such a database `flask db upgrade` stops with an error and
-rolls back its changes (sequence counters can still advance).
+If `flask db upgrade` instead stops because a column or table already exists,
+the upgrade rolled back its changes (sequence counters can still advance). Do
+not stamp unless you know how the database was built:
+
+- Created with `flask create-db` from the release you are installing, and never
+  stamped: it already has the complete schema, indexes included. Run
+  `uv run flask db stamp head`, then confirm `flask doctor` reports
+  "Migrations up to date" and "Schema aligned with models".
+- Migrated partly by hand, or you are not sure: do not stamp, because stamping
+  would skip whatever is still missing. Open an issue with the full
+  `flask doctor` output. Doctor's schema check compares tables and columns
+  only, so "Schema aligned with models" alone does not prove the database is
+  complete.
 
 One migration in this chain marks orphaned media, and duplicate media within
 the same bulletin or actor, as deleted. Rows and files are kept; they are only
