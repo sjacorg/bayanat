@@ -151,8 +151,8 @@ as the app user via `sudo -u bayanat bayanat ...`.
 bayanat update [<tag>]       (root)  default: latest GitHub release
 bayanat update --check               show current vs latest; no changes
 bayanat update --recover     (root)  recover a stuck state file
-bayanat harden               (root)  migrate an older install onto the hardened layout
+bayanat harden [--force]     (root)  migrate onto the hardened layout; --force re-applies it (updated units)
 bayanat snapshots            (root)  list pre-update snapshots
 bayanat restore <name>       (root)  interactive restore from a snapshot
-bayanat status                       version + services + update state
+bayanat status                       version + services + unit drift + update state
 ```

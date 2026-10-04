@@ -88,6 +88,19 @@ release symlinks into place, so the application path is the same either way.
 
 Configure the S3 bucket with correct policies, block public access, and set up CORS.
 
+### S3-compatible providers
+
+Other S3-compatible services (for example OVHcloud, Cloudflare R2, MinIO, Wasabi or Backblaze B2) work the same way. Add the provider's endpoint to `.env` and restart Bayanat:
+
+```bash
+AWS_ENDPOINT_URL=https://s3.eu-west-par.io.cloud.ovh.net
+```
+
+- Enter the bucket, access keys and region in the storage settings as usual. Use the region name exactly as your provider writes it, for example `eu-west-par` or `auto`.
+- When the Content Security Policy is enabled, media from this endpoint is allowed automatically.
+- If your provider rejects uploads because of checksums, also set `AWS_REQUEST_CHECKSUM_CALCULATION=when_required` in `.env`.
+- The endpoint applies to every S3 connection Bayanat makes, including S3 backups.
+
 ::: warning S3 does not hold everything
 Uploads made through the interface go straight to the bucket, but **inline images**
 in descriptions do not. They are always written to `enferno/media/inline/` on the

@@ -10,20 +10,14 @@ Hundreds of sites are supported, including YouTube, Twitter/X, Facebook, and Tel
 
 ## JavaScript Runtime
 
-YouTube serves media behind a JavaScript challenge. yt-dlp needs a JavaScript runtime installed on the server to solve it. Without one it warns that extraction is deprecated and downloads fail with `HTTP Error 403: Forbidden` even when the proxy and cookies are correct.
+YouTube serves media behind a JavaScript challenge, which yt-dlp solves with a JavaScript runtime. Since v5.1.3, Bayanat ships the runtime (Deno) and yt-dlp's challenge solver with its Python dependencies, so there is nothing to install.
 
-Install Deno, the runtime yt-dlp looks for by default:
+On hardened installer-managed installs, run `sudo bayanat harden --force` once after updating to v5.1.3 or later. It applies the worker setting Deno needs to start; `bayanat status` shows `Units: out of date` until you do.
 
-```bash
-curl -fsSL https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip -o /tmp/deno.zip
-sudo unzip -o /tmp/deno.zip -d /usr/local/bin
-sudo chmod 755 /usr/local/bin/deno
-```
+Manual installs get both through `uv sync --frozen`. If your own Celery service unit sets `SystemCallFilter=@system-service`, also allow `pkey_alloc pkey_free pkey_mprotect`, or Deno is stopped at startup.
 
-Restart the Celery worker afterwards so it picks up the new binary.
-
-::: tip Keep yt-dlp current
-Large platforms change their extraction logic often, and a yt-dlp release more than a few weeks old is a common cause of sudden download failures. Upgrading yt-dlp is the first thing to try when imports that used to work start failing.
+::: tip Keep Bayanat current
+Large platforms change their extraction logic, and an outdated yt-dlp can make imports that used to work start failing. A Bayanat release can update the yt-dlp version it ships, so check for a newer Bayanat release first.
 :::
 
 ## Enabling Web Import
@@ -68,6 +62,10 @@ socks5h://127.0.0.1:9050
 Prefer `socks5h://` for Tor: the proxy resolves the destination hostname, rather than your server doing the lookup first.
 :::
 
+::: warning SOCKS and downloads that need ffmpeg
+Downloads handled by yt-dlp itself, including regular HLS streams, use the proxy. Some are handed to ffmpeg instead: live streams, some encrypted streams, and clipped sections of a video. ffmpeg cannot use a SOCKS proxy, and yt-dlp warns that these downloads are likely to fail. If you need them, use an HTTP proxy (for example Privoxy in front of Tor). If every connection must go through the proxy, also block direct outbound traffic from the worker with a firewall.
+:::
+
 ::: warning
 Tor exit nodes are themselves often blocked by large platforms (YouTube may show CAPTCHAs), and Tor is slower than a direct connection. It is excellent for censored or geo-blocked material and for hiding the server's IP, but it is not a universal fix. A commercial residential proxy is the alternative when a platform blocks Tor.
 :::
@@ -80,7 +78,14 @@ Some media is private, age-restricted, or members-only, and the source serves it
 Cookies grant access to whatever account they came from. Always export them from a dedicated, disposable archiving account, never a personal or organisational primary account.
 :::
 
-Cookies must be in **Netscape format** (the classic `cookies.txt` layout, tab-separated). Export them with a "Get cookies.txt" browser extension while logged in to the source site, then paste the file contents into the **Web import cookies** field.
+Cookies must be in **Netscape format** (the classic `cookies.txt` layout, tab-separated). To export them:
+
+1. Open a private or incognito window and sign in to the source site with the archiving account. Keep this the only private tab open.
+2. For YouTube, which rotates the cookies of open sessions, go to `https://www.youtube.com/robots.txt` in the same tab before exporting.
+3. Export the cookies for that site only, for example with the open-source [Get cookies.txt LOCALLY](https://github.com/kairi003/Get-cookies.txt-LOCALLY) extension (allow it in private windows). Do not use an "export all" option: that file includes cookies from every other site, which can include login sessions.
+4. Close the private window so the session is never used in the browser again, then paste the file contents into the **Web import cookies** field and save.
+
+See yt-dlp's [YouTube cookie guide](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies) for details.
 
 ```
 # domain        flag  path  secure  expiry      name                value
@@ -95,8 +100,10 @@ The `expiry` column is a date. If logins that worked before start failing, your 
 
 1. You submit a URL; Bayanat checks its domain against **Allowed domains**.
 2. A background worker downloads the media via yt-dlp, applying the proxy if set.
-3. If the download is rejected for authentication, it retries using your cookies.
-4. On success the media is stored and attached to a new Bulletin, and you receive a notification.
+3. If cookies are configured and the error looks like an authentication problem (sign-in or age checks), it retries using your cookies.
+4. When the download finishes you receive a notification, and the media is then imported into a new Bulletin in the background. If the download fails, the notification includes the reason, for example that the site requires sign-in or that the cookies may have expired.
+
+Web import needs `ffmpeg` and `ffprobe` on the server. The installer installs both; if either is missing, imports fail with a message naming it, and `flask doctor` reports it.
 
 ## Configuration
 

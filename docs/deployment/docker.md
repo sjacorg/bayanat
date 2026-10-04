@@ -291,8 +291,12 @@ docker compose ps
 docker compose logs -f bayanat
 docker compose logs -f celery
 
-# Restart after a config.json change
+# Settings saved in the admin interface reload the app and restart the workers
+# on their own. After editing config.json by hand, restart:
 docker compose restart bayanat celery celery-ocr
+
+# After editing .env, recreate the containers so every process re-reads it:
+docker compose up -d --force-recreate
 
 # Flask CLI
 docker compose exec bayanat flask doctor
