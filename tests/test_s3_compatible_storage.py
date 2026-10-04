@@ -42,3 +42,32 @@ def test_csp_follows_custom_endpoint(monkeypatch, var):
 def test_malformed_region_gets_its_own_error():
     with pytest.raises(ValueError, match="AWS_REGION must be a region name"):
         ConfigValidationModel.validate_rules({"FILESYSTEM_LOCAL": False, "AWS_REGION": "eu west"})
+
+
+@pytest.mark.parametrize(
+    "access, secret",
+    [
+        (
+            "XXXXXXXXXXXXXXXXXXXX",
+            "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+        ),  # AWS lengths (20 / 40)
+        (
+            "00000000aaaaaaaa00000000aaaaaaaa",
+            "11111111bbbbbbbb11111111bbbbbbbb",
+        ),  # OVH-shaped (32 hex)
+        ("minio", "minio-secret"),  # MinIO-style short keys
+    ],
+)
+def test_s3_compatible_credentials_are_accepted(access, secret):
+    assert ConfigValidationModel.validate_aws_access_key(access) == access
+    assert ConfigValidationModel.validate_aws_secret_key(secret) == secret
+
+
+@pytest.mark.parametrize("value", ["", "ab", "has space", "x" * 129, None])
+def test_malformed_credentials_are_rejected(value):
+    assert ConfigValidationModel.validate_aws_access_key(value) is None
+    assert ConfigValidationModel.validate_aws_secret_key(value) is None
+
+
+def test_masked_secret_still_passes():
+    assert ConfigValidationModel.validate_aws_secret_key("**********") == "**********"
