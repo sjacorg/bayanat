@@ -1,5 +1,29 @@
 # Changelog
 
+## v5.1.3
+
+### Added
+
+- S3-compatible storage providers (OVH, Cloudflare R2, MinIO, Wasabi, Backblaze and others) are supported: set `AWS_ENDPOINT_URL` in `.env`. Region names in the provider's own format are accepted, and with the Content Security Policy enabled, media served from the custom endpoint is allowed.
+- `bayanat status` reports whether the installed systemd units match the current release, and `bayanat update` warns when a release changes them.
+
+### Fixed
+
+- Web import of YouTube now uses the JavaScript runtime and challenge solver that yt-dlp requires (shipped with the release), so downloads that worked from the yt-dlp command line no longer fail or lose formats in Bayanat.
+- Web import keeps cookies in memory instead of leaving them in temporary files, saving settings no longer fails when cookies are configured, HLS downloads honour the configured proxy, and a failed import tells the user why.
+- Saving user settings no longer erases other saved settings, and an unsupported language falls back to the default instead of breaking pages.
+- In the Arabic interface, the add location dialog opens on the correct side.
+- Docker: finishing the setup wizard and saving settings reload the application and restart the Celery workers, no manual container restart needed.
+- The Event Types "Save" button is translated, and several dialog buttons use consistent styles.
+
+### Changed
+
+- Web imports and audio or video media imports fail with a clear message when ffmpeg or ffprobe is missing, instead of storing degraded files. The installer installs both; `flask doctor` reports when they are missing.
+
+### Upgrading
+
+No database migrations. Installer-managed installs update with `sudo bayanat update`. On hardened installs, then run `sudo bayanat harden --force` once to apply the updated Celery service unit; `bayanat status` shows "Units: out of date" until you do. Manual installs: older versions could leave web-import cookie files (`tmp*`) in the system temporary directory; they can be deleted.
+
 ## v5.1.2
 
 ### Fixed
