@@ -1759,10 +1759,10 @@ class ConfigValidationModel(StrictValidationModel):
             return None
         return v
 
+    # S3-compatible providers use their own key formats (an OVH secret is 32
+    # characters, an AWS one 40), so only reject values that cannot be keys
     def validate_aws_access_key(v):
-        if not isinstance(v, str):
-            return None
-        if len(v) < 16 or len(v) > 64:
+        if not isinstance(v, str) or not re.fullmatch(r"\S{3,128}", v):
             return None
         return v
 
@@ -1772,7 +1772,7 @@ class ConfigValidationModel(StrictValidationModel):
         # Allow MASK String as a valid value
         if v == "**********":
             return v
-        if len(v) < 40 or len(v) > 64:
+        if not re.fullmatch(r"\S{8,128}", v):
             return None
         return v
 
