@@ -17,8 +17,10 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("location_admin_level", sa.Column("title_tr", sa.String(), nullable=True))
-    op.add_column("location_type", sa.Column("title_tr", sa.String(), nullable=True))
+    # Idempotent: an unstamped database can already have this (see the upgrading guide)
+    for table in ("location_admin_level", "location_type"):
+        if "title_tr" not in {c["name"] for c in sa.inspect(op.get_bind()).get_columns(table)}:
+            op.add_column(table, sa.Column("title_tr", sa.String(), nullable=True))
 
 
 def downgrade():

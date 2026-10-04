@@ -22,7 +22,11 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("bulletin", sa.Column("public_description", sa.Text(), nullable=True))
+    # Idempotent: an unstamped database can already have this (see the upgrading guide)
+    if "public_description" not in {
+        c["name"] for c in sa.inspect(op.get_bind()).get_columns("bulletin")
+    }:
+        op.add_column("bulletin", sa.Column("public_description", sa.Text(), nullable=True))
 
     # Register the core dynamic field (idempotent). exec_driver_sql avoids
     # text() colon parsing clashing with JSON values like {"width":"w-50"}.
