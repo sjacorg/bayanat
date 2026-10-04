@@ -86,6 +86,9 @@ services:
       - UWSGI_PROCESSES=${UWSGI_PROCESSES:-4}
       - UWSGI_THREADS=${UWSGI_THREADS:-2}
       - UWSGI_HARAKIRI=${UWSGI_HARAKIRI:-300}
+      # No systemd here: the app restarts workers by asking them to shut down,
+      # and their restart policy below brings them back with the new config.
+      - CELERY_RESTART_VIA_SHUTDOWN=1
     volumes: *app-volumes
     depends_on:
       postgres:
