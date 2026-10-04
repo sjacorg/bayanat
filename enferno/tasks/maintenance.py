@@ -149,20 +149,31 @@ def regenerate_locations() -> None:
 
 
 def reload_app():
-    """Touch reload.ini to trigger uWSGI graceful reload.
-    Returns True if uWSGI reload was triggered, False in dev mode.
+    """Touch the file uWSGI watches (touch-reload) to trigger a graceful reload.
+    Returns True if the reload was triggered, False when it cannot be (dev mode,
+    no touch-reload configured, or the file is not writable).
     """
     import pathlib
 
-    reload_file = pathlib.Path(__file__).resolve().parents[2] / "reload.ini"
     try:
-        import uwsgi  # noqa: F401
-
-        reload_file.touch()
-        return True
+        import uwsgi
     except ImportError:
         # Dev mode (flask run), no uWSGI available
         return False
+
+    # Ask uWSGI which file it watches instead of assuming one: native installs and Docker differ
+    target = uwsgi.opt.get("touch-reload")
+    if not target:
+        logger.warning("uWSGI has no touch-reload configured; restart Bayanat manually")
+        return False
+    if isinstance(target, list):
+        target = target[0]
+    try:
+        pathlib.Path(target.decode() if isinstance(target, bytes) else target).touch()
+    except OSError:
+        logger.error("Could not touch the uWSGI reload file %s", target, exc_info=True)
+        return False
+    return True
 
 
 def restart_celery():
