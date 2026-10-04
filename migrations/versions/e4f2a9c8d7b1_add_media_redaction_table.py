@@ -16,38 +16,43 @@ depends_on = None
 
 
 def upgrade():
-    op.create_table(
-        "media_redaction",
-        sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("updated_at", sa.DateTime(), nullable=True),
-        sa.Column("deleted", sa.Boolean(), server_default="false", nullable=False),
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("source_media_id", sa.Integer(), nullable=False),
-        sa.Column("result_media_id", sa.Integer(), nullable=False),
-        sa.Column("regions", sa.JSON(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(["result_media_id"], ["media.id"]),
-        sa.ForeignKeyConstraint(["source_media_id"], ["media.id"]),
-        sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="SET NULL"),
-        sa.PrimaryKeyConstraint("id"),
-    )
+    # Idempotent: an unstamped database can already have this (see the upgrading guide)
+    if not sa.inspect(op.get_bind()).has_table("media_redaction"):
+        op.create_table(
+            "media_redaction",
+            sa.Column("created_at", sa.DateTime(), nullable=True),
+            sa.Column("updated_at", sa.DateTime(), nullable=True),
+            sa.Column("deleted", sa.Boolean(), server_default="false", nullable=False),
+            sa.Column("id", sa.Integer(), nullable=False),
+            sa.Column("source_media_id", sa.Integer(), nullable=False),
+            sa.Column("result_media_id", sa.Integer(), nullable=False),
+            sa.Column("regions", sa.JSON(), nullable=False),
+            sa.Column("user_id", sa.Integer(), nullable=True),
+            sa.ForeignKeyConstraint(["result_media_id"], ["media.id"]),
+            sa.ForeignKeyConstraint(["source_media_id"], ["media.id"]),
+            sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="SET NULL"),
+            sa.PrimaryKeyConstraint("id"),
+        )
     op.create_index(
         op.f("ix_media_redaction_result_media_id"),
         "media_redaction",
         ["result_media_id"],
         unique=False,
+        if_not_exists=True,
     )
     op.create_index(
         op.f("ix_media_redaction_source_media_id"),
         "media_redaction",
         ["source_media_id"],
         unique=False,
+        if_not_exists=True,
     )
     op.create_index(
         op.f("ix_media_redaction_user_id"),
         "media_redaction",
         ["user_id"],
         unique=False,
+        if_not_exists=True,
     )
 
 

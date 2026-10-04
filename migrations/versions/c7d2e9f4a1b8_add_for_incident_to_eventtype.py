@@ -23,6 +23,11 @@ depends_on = None
 
 
 def upgrade():
+    # Idempotent: an unstamped database can already have this (see the upgrading guide)
+    # If the column already exists, its values cannot be told apart from settings an
+    # admin chose, so the one-time copy is skipped rather than risk overwriting them
+    if "for_incident" in {c["name"] for c in sa.inspect(op.get_bind()).get_columns("eventtype")}:
+        return
     op.add_column(
         "eventtype",
         sa.Column("for_incident", sa.Boolean(), server_default=sa.false(), nullable=True),

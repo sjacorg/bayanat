@@ -17,6 +17,9 @@ depends_on = None
 
 
 def upgrade():
+    # Idempotent: an unstamped database can already have this (see the upgrading guide)
+    if "link" in {c["name"] for c in sa.inspect(op.get_bind()).get_columns("notification")}:
+        return
     op.add_column("notification", sa.Column("link", sa.String(), nullable=True))
 
 
