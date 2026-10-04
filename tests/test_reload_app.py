@@ -42,3 +42,25 @@ def test_unwritable_reload_file_reports_failure(fake_uwsgi, tmp_path):
 
 def test_no_touch_reload_configured(fake_uwsgi):
     assert reload_app() is False
+
+
+def test_docker_restarts_celery_by_shutdown(monkeypatch):
+    from enferno.tasks import maintenance
+
+    calls = []
+    monkeypatch.setenv("CELERY_RESTART_VIA_SHUTDOWN", "1")
+    monkeypatch.setattr(maintenance.celery.control, "shutdown", lambda: calls.append(1))
+    monkeypatch.setattr("subprocess.Popen", lambda *a, **k: calls.append("sudo"))
+    maintenance.restart_celery()
+    assert calls == [1]
+
+
+def test_without_marker_celery_is_not_shut_down(monkeypatch):
+    from enferno.tasks import maintenance
+
+    monkeypatch.delenv("CELERY_RESTART_VIA_SHUTDOWN", raising=False)
+    monkeypatch.setattr(
+        maintenance.celery.control, "shutdown", lambda: pytest.fail("shutdown sent")
+    )
+    monkeypatch.setattr("subprocess.Popen", lambda *a, **k: None)
+    maintenance.restart_celery()

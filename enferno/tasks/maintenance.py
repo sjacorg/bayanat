@@ -182,10 +182,21 @@ def restart_celery():
     Hardened deployments (BAY-01-032/033) run the services without any sudo
     grant: the app touches a deploy-layout sentinel and a systemd path unit
     watching it performs the restart as root. Legacy layouts without the
-    sentinel fall back to the old sudoers-based restart. Dev mode is a no-op.
+    sentinel fall back to the old sudoers-based restart. Docker has neither, so
+    the workers are told to shut down and the container restart policy brings
+    them back with the new config. Dev mode is a no-op.
     """
     import pathlib
     import subprocess
+
+    from kombu.exceptions import OperationalError
+
+    if os.environ.get("CELERY_RESTART_VIA_SHUTDOWN"):
+        try:
+            celery.control.shutdown()
+        except OperationalError:
+            logger.error("Could not reach the broker to restart Celery workers", exc_info=True)
+        return
 
     sentinel = pathlib.Path(__file__).resolve().parents[2] / "restart-celery"
     try:
