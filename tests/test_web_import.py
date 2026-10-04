@@ -9,6 +9,12 @@ from enferno.tasks import media_download
 from enferno.utils.config_utils import ConfigManager
 
 
+@pytest.fixture(autouse=True)
+def _ffmpeg_tools_present(monkeypatch):
+    # Keep these tests independent of whether the host has ffmpeg installed
+    monkeypatch.setattr("enferno.utils.dep_utils.shutil.which", lambda name: f"/usr/bin/{name}")
+
+
 def test_cookies_stay_in_memory(monkeypatch):
     monkeypatch.setattr(media_download.cfg, "YTDLP_COOKIES", "cookie-data", raising=False)
     options = media_download._get_ytdl_options(with_cookies=True)
@@ -103,3 +109,9 @@ def test_auth_error_without_cookies_reports_the_real_error(monkeypatch):
     monkeypatch.setattr(media_download.cfg, "YTDLP_COOKIES", "", raising=False)
     with pytest.raises(ValueError, match="not a bot"):
         media_download._download_media("https://www.youtube.com/watch?v=x")
+
+
+def test_web_import_requires_ffmpeg(monkeypatch):
+    monkeypatch.setattr("enferno.utils.dep_utils.shutil.which", lambda name: None)
+    with pytest.raises(ValueError, match="ffmpeg, ffprobe not installed"):
+        media_download._download_media("https://example.com/video")

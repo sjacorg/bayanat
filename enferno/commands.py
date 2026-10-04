@@ -18,6 +18,7 @@ from enferno.extensions import db
 from enferno.settings import Config
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
+from enferno.utils.dep_utils import require_tools
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.data_helpers import (
     import_default_data,
@@ -652,6 +653,13 @@ def doctor() -> None:
         ok(".env file exists")
     else:
         fail(".env file missing")
+
+    if current_app.config.get("WEB_IMPORT") or current_app.config.get("ETL_TOOL"):
+        try:
+            require_tools("ffmpeg", "ffprobe")
+            ok("ffmpeg and ffprobe found on PATH")
+        except ValueError as e:
+            fail(f"{e}: web imports and audio/video media imports will fail")
 
     # --- Config ---
     click.echo("\nConfig:")
