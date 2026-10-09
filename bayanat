@@ -877,13 +877,6 @@ _install_uv() {
 
 readonly CADDY_LIST="/etc/apt/sources.list.d/caddy-stable.list"
 readonly CADDY_KEYRING="/usr/share/keyrings/caddy-stable-archive-keyring.gpg"
-# Fallback for when Caddy's apt repo is down (quota and signing-key outages,
-# caddyserver/dist#142). The hashes travel inside this signed script; bump the
-# version and both hashes together from the release's checksums.txt.
-readonly CADDY_FALLBACK_VERSION="2.11.7"
-readonly CADDY_FALLBACK_SHA512_AMD64="47e8351c2317b427af14a103e763ca1118a3d2396a88b4c0669cdec9c4a68a957690194e2423a1633f53135741c33a41bdac2b55515b7d0f7adc8b733add50d9"
-readonly CADDY_FALLBACK_SHA512_ARM64="ac32f03f0eea04021f2d4e5d89bfd01b84ead115f2eba9d2a0d06447e86d4af932899e56f090993a566d0925dbd1063002929b395541a8c5f5e51d7039f7375a"
-
 # Refresh one source list on its own, failing on any fetch error instead of
 # succeeding on cached indexes.
 _apt_source_ok() {
@@ -914,19 +907,29 @@ _install_caddy_repo() (
         exit 0
     fi
 
-    local v="$CADDY_FALLBACK_VERSION" arch sha
-    warn "Caddy apt repo unavailable; installing Caddy $v from GitHub. It will not update through apt on this box."
-    if [[ -f "$CADDY_LIST" ]]; then mv "$CADDY_LIST" "$CADDY_LIST.disabled"; fi
+    # Fallback for repo outages (quota and signing-key incidents,
+    # caddyserver/dist#142): the same upstream .deb from Caddy's latest GitHub
+    # release, checked against that release's checksums.
+    local arch url v file rel sha
     case "$(uname -m)" in
-        x86_64) arch=amd64 sha="$CADDY_FALLBACK_SHA512_AMD64" ;;
-        aarch64) arch=arm64 sha="$CADDY_FALLBACK_SHA512_ARM64" ;;
+        x86_64) arch=amd64 ;;
+        aarch64) arch=arm64 ;;
         *) die "Unsupported architecture: $(uname -m)" ;;
     esac
-    curl -fsSL -o "$tmp/caddy.deb" \
-        "https://github.com/caddyserver/caddy/releases/download/v${v}/caddy_${v}_linux_${arch}.deb" \
-        || die "Could not download Caddy $v from GitHub"
+    url=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/caddyserver/caddy/releases/latest) \
+        || die "Could not resolve the latest Caddy release"
+    [[ "$url" =~ /releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)$ ]] || die "Unexpected Caddy release URL: $url"
+    v="${BASH_REMATCH[1]}"
+    file="caddy_${v}_linux_${arch}.deb"
+    rel="https://github.com/caddyserver/caddy/releases/download/v${v}"
+    warn "Caddy apt repo unavailable; installing Caddy $v from GitHub. It will not update through apt on this box."
+    if [[ -f "$CADDY_LIST" ]]; then mv "$CADDY_LIST" "$CADDY_LIST.disabled"; fi
+    curl -fsSL -o "$tmp/caddy.deb" "$rel/$file" || die "Could not download $file"
+    curl -fsSL -o "$tmp/checksums.txt" "$rel/caddy_${v}_checksums.txt" \
+        || die "Could not download Caddy $v checksums"
+    sha=$(awk -v f="$file" '$2 == f {print $1}' "$tmp/checksums.txt")
     echo "$sha  $tmp/caddy.deb" | sha512sum -c --quiet - \
-        || die "Caddy $v package does not match its pinned checksum"
+        || die "Caddy $v package does not match its published checksum"
     chmod 644 "$tmp/caddy.deb"
     apt-get update -qq
     apt-get install -y -qq "$tmp/caddy.deb"
