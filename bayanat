@@ -911,11 +911,7 @@ _install_caddy_repo() (
     # caddyserver/dist#142): the same upstream .deb from Caddy's latest GitHub
     # release, checked against that release's checksums.
     local arch url v file rel sha
-    case "$(uname -m)" in
-        x86_64) arch=amd64 ;;
-        aarch64) arch=arm64 ;;
-        *) die "Unsupported architecture: $(uname -m)" ;;
-    esac
+    arch=$(dpkg --print-architecture)
     url=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/caddyserver/caddy/releases/latest) \
         || die "Could not resolve the latest Caddy release"
     [[ "$url" =~ /releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)$ ]] || die "Unexpected Caddy release URL: $url"
@@ -931,7 +927,6 @@ _install_caddy_repo() (
     echo "$sha  $tmp/caddy.deb" | sha512sum -c --quiet - \
         || die "Caddy $v package does not match its published checksum"
     chmod 644 "$tmp/caddy.deb"
-    apt-get update -qq
     apt-get install -y -qq "$tmp/caddy.deb"
 )
 
