@@ -121,8 +121,6 @@ If you upload through the browser anyway, the file is sent in small chunks, so r
 - On Docker, raise `UWSGI_HARAKIRI` above your slowest upload. See [Docker](/deployment/docker).
 - Behind your own nginx, raise `proxy_read_timeout`, which defaults to 60 seconds.
 
-If an S3-compatible provider rejects large uploads over checksums, see [S3-compatible providers](#s3-compatible-providers).
-
 ## Search
 
 Interactive searches run under a database statement timeout. When a search exceeds it, the query is cancelled and re-run by a background worker instead of failing, and the user is notified when the results are ready. See [Search](/guide/search) for what this looks like in the interface.

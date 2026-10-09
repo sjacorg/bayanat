@@ -100,7 +100,7 @@ table inet bayanat_egress {
 }
 ```
 
-The table is `inet`, so the final drop applies to IPv6 as well as IPv4. Replace the sample addresses with your storage endpoint. Add the database and Redis addresses if they are not on loopback, and make sure name resolution works from loopback (for example through a local stub resolver).
+The table is `inet`, so the final drop applies to IPv6 as well as IPv4. `bayanat-celery` is the worker user on installer installs; use the user your Celery service runs as. Replace the sample addresses with your storage endpoint. Add the database and Redis addresses if they are not on loopback, and make sure name resolution works from loopback (for example through a local stub resolver).
 
 ## Cookies
 
