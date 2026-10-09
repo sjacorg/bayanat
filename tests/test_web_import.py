@@ -167,3 +167,21 @@ def test_downloaded_file_is_named_by_content(monkeypatch, tmp_path, name):
     final = media_download._process_downloaded_file(temp_file, {"id": "abc"})
     assert final.startswith("abc-") and final.endswith(".png")
     assert (tmp_path / final).exists()
+
+
+def test_cookie_domains_summarises_without_values():
+    from enferno.admin.views.system import cookie_domains
+
+    cookies = "\n".join(
+        [
+            "# Netscape HTTP Cookie File",
+            ".youtube.com\tTRUE\t/\tTRUE\t2000000000\tSID\tsecret",
+            "#HttpOnly_.youtube.com\tTRUE\t/\tTRUE\t1900000000\tHSID\tsecret",
+            "x.com\tFALSE\t/\tTRUE\t0\tauth\tsecret",
+        ]
+    )
+    assert cookie_domains(cookies) == [
+        {"domain": "x.com", "count": 1, "expires": None},
+        {"domain": "youtube.com", "count": 2, "expires": 1900000000},
+    ]
+    assert cookie_domains(None) == []
