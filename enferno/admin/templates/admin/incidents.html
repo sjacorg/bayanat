@@ -129,7 +129,6 @@
                                             variant="elevated"
                                             color="primary"
                                             class="mx-2"
-                                            depressed
                                             v-if="exportAllowed()"
                                     >
                                         <v-icon small left
@@ -285,11 +284,11 @@
                     </v-overlay>
 
                     <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
-                                      ref="relateBulletins" :dialog-props="commonDialogProps"></relate-bulletins>
+                                      ref="relateBulletins" :dialog-props="relateDialogProps"></relate-bulletins>
                     <relate-actors @relate="relateActor" :exids="exActors"
-                                   ref="relateActors" :dialog-props="commonDialogProps"></relate-actors>
+                                   ref="relateActors" :dialog-props="relateDialogProps"></relate-actors>
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
-                                      ref="relateIncidents" :dialog-props="commonDialogProps"></relate-incidents>
+                                      ref="relateIncidents" :dialog-props="relateDialogProps"></relate-incidents>
 
 
                     <v-dialog width="600" v-model="selfAssignDialog">

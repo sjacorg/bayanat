@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bayanat"
-version = "5.1.0"
+version = "5.1.4"
 description = "Open source data management solution for processing human rights violations and war crimes data"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -118,7 +118,7 @@ dependencies = [
     "tenacity>=8.0.0",
     "traitlets>=5.14.0",
     "Unidecode>=1.4.0",
-    "urllib3>=2.7.0",
+    "urllib3>=2.8.0",
     "uWSGI>=2.0.0",
     "vine>=5.1.0",
     "wcwidth>=0.2.13",
@@ -126,12 +126,12 @@ dependencies = [
     "webauthn>=2.5.0",
     "Werkzeug>=3.1.0",
     "WTForms>=3.2.0",
-    "yt-dlp>=2026.8.19",
+    "yt-dlp[default,deno]>=2026.8.19",
     "zipp>=3.22.0",
     "zxcvbn>=4.5.0",
     "flask-talisman>=1.1.0",
     "tinycss2>=1.5.1",
-    "weasyprint>=65.0",
+    "weasyprint>=70.0",
 ]
 
 [project.optional-dependencies]

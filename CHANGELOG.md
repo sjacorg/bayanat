@@ -1,5 +1,79 @@
 # Changelog
 
+## v5.1.4
+
+### Fixed
+
+- Storage settings accept access keys and secrets in the formats used by S3-compatible providers (for example OVHcloud), not only AWS-shaped keys.
+- Screenshot uploads pass the configured region to S3, so providers that require a region no longer fail there.
+- `flask db upgrade` completes on a database with no migration stamp that already has the v5 schema, instead of failing with "already exists".
+
+### Security
+
+- pypdf upgraded to 6.19.0 (excessive CPU and memory use on crafted PDFs, GHSA-5jq2-8x83-x246 and related advisories) and urllib3 to 2.8.0 (GHSA-gh4c-6fx4-qh6g, GHSA-vxq7-64xx-v4gw, GHSA-8988-9cw3-xx77).
+
+### Upgrading
+
+No new database migrations. Installer-managed installs update with `sudo bayanat update`.
+
+## v5.1.3
+
+### Added
+
+- S3-compatible storage providers (OVH, Cloudflare R2, MinIO, Wasabi, Backblaze and others) are supported: set `AWS_ENDPOINT_URL` in `.env`. Region names in the provider's own format are accepted, and with the Content Security Policy enabled, media served from the custom endpoint is allowed.
+- `bayanat status` reports whether the installed systemd units match the current release, and `bayanat update` warns when a release changes them.
+
+### Fixed
+
+- Web import of YouTube now uses the JavaScript runtime and challenge solver that yt-dlp requires (shipped with the release), so downloads that worked from the yt-dlp command line no longer fail or lose formats in Bayanat.
+- Web import keeps cookies in memory instead of leaving them in temporary files, saving settings no longer fails when cookies are configured, HLS downloads honour the configured proxy, and a failed import tells the user why.
+- Saving user settings no longer erases other saved settings, and an unsupported language falls back to the default instead of breaking pages.
+- In the Arabic interface, the add location dialog opens on the correct side.
+- Docker: finishing the setup wizard and saving settings reload the application and restart the Celery workers, no manual container restart needed.
+- The Event Types "Save" button is translated, and several dialog buttons use consistent styles.
+
+### Changed
+
+- Web imports and audio or video media imports fail with a clear message when ffmpeg or ffprobe is missing, instead of storing degraded files. The installer installs both; `flask doctor` reports when they are missing.
+
+### Upgrading
+
+No database migrations. Installer-managed installs update with `sudo bayanat update`. On hardened installs, then run `sudo bayanat harden --force` once to apply the updated Celery service unit; `bayanat status` shows "Units: out of date" until you do. Manual installs: older versions could leave web-import cookie files (`tmp*`) in the system temporary directory; they can be deleted.
+
+## v5.1.2
+
+### Fixed
+
+- Users whose saved language setting was empty got an error on every page after signing in. They now get the default language.
+- In the English interface, the related bulletins, actors and incidents search in the bulletin editor opened over the wrong side of the screen. It now opens as a side panel on the right (on the left in Arabic), and the actor and incident editors use the same side panel instead of a centred dialog.
+
+### Security
+
+- Vendored axios upgraded to 1.20.0 (GHSA-9fr6-4gfg-395g, GHSA-x97p-jq2g-jp4f and related advisories).
+
+### Upgrading
+
+No database migrations. Installer-managed installs update with `sudo bayanat update`. Installs on v5.0.0 or v5.1.0 run the old updater for this hop; if it stops at "MIGRATE: stopping services", re-run `sudo bayanat update`.
+
+## v5.1.1
+
+### Fixed
+
+- `bayanat update` could abort at "MIGRATE: stopping services" with `Job for bayanat-celery.service canceled.`, leaving the web service stopped until the command was re-run. The updater no longer touches the worker-restart sentinel on every run, and the stop is retried and rolled back if the services will not stop.
+
+### Changed
+
+- `bayanat update` now hands over to the CLI shipped inside the verified release right after the signature check, so updater fixes apply to the update that installs them. Installs on v5.0.0 or v5.1.0 run the old updater once more for this hop; if that hop stops with the error above, re-run `sudo bayanat update`.
+
+### Security
+
+- WeasyPrint upgraded to 70.0 (GHSA-jf6q-chmf-3h3v, SSRF). The PDF export resource guard is ported to WeasyPrint's new fetcher API with the same allow rules, and now also refuses redirects, so an allowed host cannot bounce a fetch to another origin.
+- DOMPurify in the documentation site upgraded to 3.4.13 (GHSA-55q2-fjhq-7xh7, XSS).
+
+### Upgrading
+
+No database migrations. Installer-managed installs on v5.0.0 or v5.1.0 update with `sudo bayanat update`; re-run it once if the first attempt stops at "MIGRATE: stopping services".
+
 ## v5.1.0
 
 ### Added

@@ -23,6 +23,10 @@ snapshots. To see what an update would move you to without changing anything:
 bayanat update --check
 ```
 
+The installed CLI fetches and verifies the release, then hands the rest of the
+update to the CLI shipped inside that release, so the code that stops services,
+migrates and switches is always the target version's own.
+
 The update runs in the foreground and prints each phase as it goes. It is not
 backgrounded, so run it inside `tmux` or `screen` on a connection you do not
 trust to stay up. Service logs during the window:
@@ -147,8 +151,8 @@ as the app user via `sudo -u bayanat bayanat ...`.
 bayanat update [<tag>]       (root)  default: latest GitHub release
 bayanat update --check               show current vs latest; no changes
 bayanat update --recover     (root)  recover a stuck state file
-bayanat harden               (root)  migrate an older install onto the hardened layout
+bayanat harden [--force]     (root)  migrate onto the hardened layout; --force re-applies it (updated units)
 bayanat snapshots            (root)  list pre-update snapshots
 bayanat restore <name>       (root)  interactive restore from a snapshot
-bayanat status                       version + services + update state
+bayanat status                       version + services + unit drift + update state
 ```
