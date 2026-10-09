@@ -960,10 +960,8 @@ class Bulletin(db.Model, BaseMixin):
         # Query the latest timestamp directly: loading the history collection
         # would fetch every revision's `data` blob just to read one date.
         latest = (
-            db.session.query(BulletinHistory.updated_at)
+            db.session.query(func.max(BulletinHistory.updated_at))
             .filter(BulletinHistory.bulletin_id == self.id)
-            .order_by(BulletinHistory.updated_at.desc())
-            .limit(1)
             .scalar()
         )
         return latest or self.updated_at

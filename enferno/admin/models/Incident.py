@@ -6,7 +6,7 @@ from flask_login import current_user
 from sqlalchemy.dialects.postgresql import TSVECTOR
 
 import enferno.utils.typing as t
-from sqlalchemy import text
+from sqlalchemy import func, text
 
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
@@ -630,10 +630,8 @@ class Incident(db.Model, BaseMixin):
         # Query the latest timestamp directly: loading the history collection
         # would fetch every revision's `data` blob just to read one date.
         latest = (
-            db.session.query(IncidentHistory.updated_at)
+            db.session.query(func.max(IncidentHistory.updated_at))
             .filter(IncidentHistory.incident_id == self.id)
-            .order_by(IncidentHistory.updated_at.desc())
-            .limit(1)
             .scalar()
         )
         return latest or self.updated_at

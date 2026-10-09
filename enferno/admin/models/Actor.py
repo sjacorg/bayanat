@@ -594,10 +594,8 @@ class Actor(db.Model, BaseMixin):
         # Query the latest timestamp directly: loading the history collection
         # would fetch every revision's `data` blob just to read one date.
         latest = (
-            db.session.query(ActorHistory.updated_at)
+            db.session.query(func.max(ActorHistory.updated_at))
             .filter(ActorHistory.actor_id == self.id)
-            .order_by(ActorHistory.updated_at.desc())
-            .limit(1)
             .scalar()
         )
         return latest or self.updated_at
