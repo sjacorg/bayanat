@@ -157,3 +157,13 @@ def test_web_import_requires_ffmpeg(monkeypatch):
     monkeypatch.setattr("enferno.utils.dep_utils.shutil.which", lambda name: None)
     with pytest.raises(ValueError, match="ffmpeg, ffprobe not installed"):
         media_download._download_media("https://example.com/video")
+
+
+@pytest.mark.parametrize("name", ["abc.unknown_video", "abc.mp4"])
+def test_downloaded_file_is_named_by_content(monkeypatch, tmp_path, name):
+    monkeypatch.setattr(media_download.Media, "media_dir", tmp_path)
+    temp_file = tmp_path / name
+    temp_file.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+    final = media_download._process_downloaded_file(temp_file, {"id": "abc"})
+    assert final.startswith("abc-") and final.endswith(".png")
+    assert (tmp_path / final).exists()
