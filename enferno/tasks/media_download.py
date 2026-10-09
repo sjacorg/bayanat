@@ -175,7 +175,7 @@ def _process_downloaded_file(temp_file: Path, info: dict) -> str:
     """Process downloaded file and return final filename."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     extension = info["ext"] if info.get("File:MIMEType", "").startswith("image/") else "mp4"
-    final_filename = f"{info.get('id', 'web')}-{timestamp}.{extension}"
+    final_filename = f"{info.get('id', temp_file.stem)}-{timestamp}.{extension}"
     final_path = Media.media_dir / final_filename
 
     temp_file.rename(final_path)
