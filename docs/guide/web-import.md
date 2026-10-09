@@ -72,12 +72,10 @@ Tor exit nodes are themselves often blocked by large platforms (YouTube may show
 
 ### Routing all downloads through Tor
 
-Install Privoxy and point it at the Tor relay. Add these lines to `/etc/privoxy/config`:
+Install Tor and Privoxy. Privoxy already listens on `127.0.0.1:8118`; adding a second `listen-address` line for that port stops it from starting. In `/etc/privoxy/config`, change `toggle  1` to `toggle  0` and add this line:
 
 ```
-listen-address 127.0.0.1:8118
 forward-socks5t / 127.0.0.1:9050 .
-toggle 0
 ```
 
 The trailing dot on the `forward-socks5t` line is required. `toggle 0` turns off Privoxy's content filtering so media reaches Bayanat unchanged.
