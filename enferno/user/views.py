@@ -46,7 +46,7 @@ def after_app_request(response) -> Response:
     """
     Record failed login attempts into the session
     """
-    if request.path == "/login" and request.method == "POST":
+    if request.endpoint == "security.login" and request.method == "POST":
         # failed login
         if not g.identity.id:
             session["failed"] = session.get("failed", 0) + 1
