@@ -54,7 +54,7 @@ def api_potentialviolations(page: int) -> Response:
     return HTTPResponse.success(data=response)
 
 
-@admin.post("/api/potentialviolation/")
+@admin.post("/api/potentialviolation/", strict_slashes=False)
 @roles_accepted("Admin", "Mod")
 @validate_with(PotentialViolationRequestModel)
 def api_potentialviolation_create(
@@ -205,7 +205,7 @@ def api_claimedviolations(page: int) -> Response:
     return HTTPResponse.success(data=response)
 
 
-@admin.post("/api/claimedviolation/")
+@admin.post("/api/claimedviolation/", strict_slashes=False)
 @roles_accepted("Admin", "Mod")
 @validate_with(ClaimedViolationRequestModel)
 def api_claimedviolation_create(

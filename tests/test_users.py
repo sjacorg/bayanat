@@ -823,3 +823,9 @@ class TestUserSearch:
         resp = blind_mod_client.get("/admin/api/users/", headers=HEADERS)
         assert resp.status_code == 200
         assert resp.json["data"]["total"] > 1
+
+
+def test_failed_login_increments_counter(anonymous_client):
+    anonymous_client.post("/login", data={"username": "nobody", "password": "wrong"})
+    with anonymous_client.session_transaction() as sess:
+        assert sess.get("failed") == 1
