@@ -56,7 +56,8 @@ preflight_checks() {
     os_id=$(grep '^ID=' /etc/os-release | cut -d= -f2)
     os_ver=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
     [[ "$os_id" == "ubuntu" ]] || die "Unsupported OS: $os_id (need Ubuntu)"
-    [[ "${os_ver%%.*}" -ge 22 ]] || die "Ubuntu $os_ver is too old (need 22.04+)"
+    # 22.04 does not package minisign, which verifies every release.
+    [[ "${os_ver%%.*}" -ge 24 ]] || die "Ubuntu $os_ver is too old (need 24.04+)"
 
     # Architecture
     local arch
