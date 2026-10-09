@@ -106,9 +106,6 @@ def create_app(config_object=Config):
         Flask application instance.
     """
     app = Flask(__name__)
-    # Serve "/x" and "/x/" alike: the default slash redirect is built from the Host
-    # the app receives, which a misconfigured proxy rewrites to an internal address.
-    app.url_map.strict_slashes = False
     register_errorhandlers(app)
     app.config.from_object(config_object)
 
