@@ -10,7 +10,7 @@ Although this guide follows best security practices, you still need to secure th
 
 The fastest way to get Bayanat running on a fresh Ubuntu server. One command installs all dependencies, sets up the database, configures HTTPS, and starts the services.
 
-**Requirements:** Ubuntu 22.04+ with root access and a domain pointing to the server's IP.
+**Requirements:** Ubuntu 24.04+ with root access and a domain pointing to the server's IP.
 
 **With a domain (recommended, automatic HTTPS):**
 
@@ -58,12 +58,6 @@ You can install Bayanat by following these steps exactly without changes. Adjust
 
 `uv` provisions its own Python 3.12 during `uv sync`, so the system Python
 version does not matter. The packages below are the build and runtime libraries.
-
-**Ubuntu 22.04:**
-
-```bash
-sudo apt install build-essential python3-dev libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools postgresql postgresql-contrib python3-pip libpq-dev git redis-server libimage-exiftool-perl postgis ffmpeg libpango-1.0-0 libpangoft2-1.0-0 libglib2.0-0
-```
 
 **Ubuntu 24.04:**
 

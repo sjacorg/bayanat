@@ -3,6 +3,7 @@ import io
 from datetime import datetime
 from pathlib import Path
 
+import pyexifinfo as exiflib
 import yt_dlp
 from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
@@ -132,7 +133,10 @@ def _download_media(url: str) -> tuple[dict, Path]:
 def _process_downloaded_file(temp_file: Path, info: dict) -> str:
     """Process downloaded file and return final filename."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    final_filename = f"{info.get('id', 'video')}-{timestamp}.mp4"
+    # Name the file by its content: yt-dlp guesses the extension from the URL, which
+    # mislabels direct image links (e.g. ".unknown_video").
+    ext = exiflib.get_json(str(temp_file))[0].get("File:FileTypeExtension", "mp4").lower()
+    final_filename = f"{info.get('id', 'video')}-{timestamp}.{ext}"
     final_path = Media.media_dir / final_filename
 
     temp_file.rename(final_path)
@@ -150,8 +154,9 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
     flag_modified(data_import, "data")
 
     data_import.add_to_log(f"Downloaded file: {filename}")
-    data_import.add_to_log("Format: mp4")
-    data_import.add_to_log(f"Duration: {info.get('duration')}s")
+    data_import.add_to_log(f"Format: {file_path.suffix[1:]}")
+    if info.get("duration") is not None:
+        data_import.add_to_log(f"Duration: {info.get('duration')}s")
     data_import.save()
 
 
