@@ -70,6 +70,38 @@ Downloads handled by yt-dlp itself, including regular HLS streams, use the proxy
 Tor exit nodes are themselves often blocked by large platforms (YouTube may show CAPTCHAs), and Tor is slower than a direct connection. It is excellent for censored or geo-blocked material and for hiding the server's IP, but it is not a universal fix. A commercial residential proxy is the alternative when a platform blocks Tor.
 :::
 
+### Routing all downloads through Tor
+
+Install Privoxy and point it at the Tor relay. Add these lines to `/etc/privoxy/config`:
+
+```
+listen-address 127.0.0.1:8118
+forward-socks5t / 127.0.0.1:9050 .
+toggle 0
+```
+
+The trailing dot on the `forward-socks5t` line is required. `toggle 0` turns off Privoxy's content filtering so media reaches Bayanat unchanged.
+
+Then set **Web import proxy** to `http://127.0.0.1:8118`. yt-dlp passes this to ffmpeg as `http_proxy`, and ffmpeg ignores SOCKS.
+
+An administrator can change the app setting, so enforce the route in the firewall too. This nftables rule set lets the Celery worker reach only loopback and the storage endpoint, and drops everything else. Tor and Privoxy run under their own users and are not affected.
+
+```nft
+table inet bayanat_egress {
+    set storage_v4 { type ipv4_addr; elements = { 203.0.113.10 } }
+    set storage_v6 { type ipv6_addr; elements = { 2001:db8::10 } }
+    chain output {
+        type filter hook output priority 0; policy accept;
+        meta skuid "bayanat-celery" oifname "lo" accept
+        meta skuid "bayanat-celery" ip daddr @storage_v4 accept
+        meta skuid "bayanat-celery" ip6 daddr @storage_v6 accept
+        meta skuid "bayanat-celery" drop
+    }
+}
+```
+
+The table is `inet`, so the final drop applies to IPv6 as well as IPv4. Replace the sample addresses with your storage endpoint. Add the database and Redis addresses if they are not on loopback, and make sure name resolution works from loopback (for example through a local stub resolver).
+
 ## Cookies
 
 Some media is private, age-restricted, or members-only, and the source serves it only to a logged-in session. Providing cookies lets Bayanat download as if it were that logged-in browser. Bayanat first tries without cookies and only retries with them if the download is rejected for authentication.

@@ -110,6 +110,19 @@ Back up that directory as well as the bucket. Imported files are staged locally
 and removed once uploaded, so they need no separate handling.
 :::
 
+### Large Files
+
+For files over a few gigabytes, use server path import rather than browser upload. The file is read from disk, so no upload request is held open and no chunks are reassembled. See [Media Import](/guide/media-import) for the `ETL_ALLOWED_PATH` setup.
+
+If you upload through the browser anyway, the file is sent in small chunks, so request body limits do not apply to the whole file. The last chunk assembles the file and moves it to storage in a single request, which must not time out:
+
+- Raise **Media Max Upload Size** in System Administration. The default is 1000 MB, and larger files are rejected.
+- Installs made with the installer need nothing else: Caddy and uWSGI set no request timeout there.
+- On Docker, raise `UWSGI_HARAKIRI` above your slowest upload. See [Docker](/deployment/docker).
+- Behind your own nginx, raise `proxy_read_timeout`, which defaults to 60 seconds.
+
+If an S3-compatible provider rejects large uploads over checksums, see [S3-compatible providers](#s3-compatible-providers).
+
 ## Search
 
 Interactive searches run under a database statement timeout. When a search exceeds it, the query is cancelled and re-run by a background worker instead of failing, and the user is notified when the results are ready. See [Search](/guide/search) for what this looks like in the interface.
