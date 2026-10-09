@@ -178,10 +178,12 @@ def test_cookie_domains_summarises_without_values():
             ".youtube.com\tTRUE\t/\tTRUE\t2000000000\tSID\tsecret",
             "#HttpOnly_.youtube.com\tTRUE\t/\tTRUE\t1900000000\tHSID\tsecret",
             "x.com\tFALSE\t/\tTRUE\t0\tauth\tsecret",
+            "x.com\tFALSE\t/\tTRUE\t1000000000.0\told\tsecret",
+            "x.com\tFALSE\t/\tTRUE\t\u00b2\tbad\tsecret",
         ]
     )
     assert cookie_domains(cookies) == [
-        {"domain": "x.com", "count": 1, "expires": None},
+        {"domain": "x.com", "count": 3, "expires": 1000000000},
         {"domain": "youtube.com", "count": 2, "expires": 1900000000},
     ]
     assert cookie_domains(None) == []

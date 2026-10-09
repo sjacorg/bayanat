@@ -77,7 +77,11 @@ def cookie_domains(cookies: str | None) -> list[dict]:
             continue
         entry = domains.setdefault(fields[0].lstrip("."), {"count": 0, "expires": None})
         entry["count"] += 1
-        expires = int(fields[4]) if fields[4].isdigit() else 0
+        try:
+            # yt-dlp accepts decimal expiries; anything unparseable counts as a session cookie
+            expires = int(float(fields[4]))
+        except (ValueError, OverflowError):
+            expires = 0
         if expires and (entry["expires"] is None or expires < entry["expires"]):
             entry["expires"] = expires
     return [{"domain": domain, **entry} for domain, entry in sorted(domains.items())]
