@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 import io
-import mimetypes
 from datetime import datetime
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 
-import requests
+import pyexifinfo as exiflib
 import yt_dlp
 from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
@@ -102,11 +100,10 @@ def _download_media(url: str) -> tuple[dict, Path]:
 
     except DownloadError as e:
         error_msg = str(e)
-        if any(
-            msg in error_msg.lower()
-            for msg in ["unsupported url", "no video", "no downloadable video"]
-        ):
-            return _download_image(url)
+        if "Unsupported URL:" in error_msg:
+            raise ValueError(
+                f"This URL is not supported or contains no downloadable video content: {url}"
+            )
 
         # Retry with cookies only when some are configured; otherwise report the real error
         if cfg.YTDLP_COOKIES and any(
@@ -133,48 +130,13 @@ def _download_media(url: str) -> tuple[dict, Path]:
         raise ValueError(error_msg)
 
 
-def _download_image(url: str) -> tuple[dict, Path]:
-    """Download a direct image URL that yt-dlp rejected."""
-    max_size = cfg.MEDIA_UPLOAD_MAX_FILE_SIZE * 1024 * 1024
-    session = requests.Session()
-    # The configured proxy is the only route: ignore environment proxies and NO_PROXY.
-    session.trust_env = False
-    if cfg.YTDLP_PROXY:
-        session.proxies = {"http": cfg.YTDLP_PROXY, "https": cfg.YTDLP_PROXY}
-    try:
-        # No redirects: the allowed-domains check only covers the submitted URL.
-        with session.get(url, stream=True, timeout=60, allow_redirects=False) as response:
-            response.raise_for_status()
-            mime_type = response.headers.get("Content-Type", "").split(";")[0].strip().lower()
-            extension = mime_type.startswith("image/") and mimetypes.guess_extension(mime_type)
-            if not extension or extension[1:] not in cfg.MEDIA_ALLOWED_EXTENSIONS:
-                raise ValueError(
-                    f"This URL is not supported or contains no downloadable video content: {url}"
-                )
-            with NamedTemporaryFile(dir=Media.media_dir, suffix=extension, delete=False) as file:
-                temp_file = Path(file.name)
-                try:
-                    for chunk in response.iter_content(chunk_size=1024 * 1024):
-                        if file.tell() + len(chunk) > max_size:
-                            raise ValueError(
-                                f"File exceeds maximum allowed size of {cfg.MEDIA_UPLOAD_MAX_FILE_SIZE} MB"
-                            )
-                        file.write(chunk)
-                except BaseException:
-                    temp_file.unlink()
-                    raise
-    except requests.RequestException as e:
-        raise ValueError(f"Failed to download image: {e}") from None
-
-    return {"title": url, "webpage_url": url}, temp_file
-
-
 def _process_downloaded_file(temp_file: Path, info: dict) -> str:
     """Process downloaded file and return final filename."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    # yt-dlp results (which carry an id) are merged to mp4; direct images keep their type.
-    suffix = ".mp4" if info.get("id") else temp_file.suffix
-    final_filename = f"{info.get('id', temp_file.stem)}-{timestamp}{suffix}"
+    # Name the file by its content: yt-dlp guesses the extension from the URL, which
+    # mislabels direct image links (e.g. ".unknown_video").
+    ext = exiflib.get_json(str(temp_file))[0].get("File:FileTypeExtension", "mp4").lower()
+    final_filename = f"{info.get('id', 'video')}-{timestamp}.{ext}"
     final_path = Media.media_dir / final_filename
 
     temp_file.rename(final_path)
