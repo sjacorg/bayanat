@@ -43,7 +43,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         _update_import_record(data_import, final_filename, info)
 
         # Start ETL process
-        _start_etl_process(final_filename, url, batch_id, user_id, import_id, info)
+        _start_etl_process(final_filename, url, batch_id, user_id, import_id)
 
         # Notify user
         Notification.send_notification_for_event(
@@ -166,16 +166,15 @@ def _download_image(url: str) -> tuple[dict, Path]:
     except requests.RequestException as e:
         raise ValueError(f"Failed to download image: {e}") from None
 
-    info = {"title": url, "webpage_url": url, "ext": extension[1:]}
-    info["File:MIMEType"] = mime_type
-    return info, temp_file
+    return {"title": url, "webpage_url": url}, temp_file
 
 
 def _process_downloaded_file(temp_file: Path, info: dict) -> str:
     """Process downloaded file and return final filename."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    extension = info["ext"] if info.get("File:MIMEType", "").startswith("image/") else "mp4"
-    final_filename = f"{info.get('id', temp_file.stem)}-{timestamp}.{extension}"
+    # yt-dlp results (which carry an id) are merged to mp4; direct images keep their type.
+    suffix = ".mp4" if info.get("id") else temp_file.suffix
+    final_filename = f"{info.get('id', temp_file.stem)}-{timestamp}{suffix}"
     final_path = Media.media_dir / final_filename
 
     temp_file.rename(final_path)
@@ -200,7 +199,7 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
 
 
 def _start_etl_process(
-    filename: str, url: str, batch_id: str, user_id: int, import_id: int, info: dict
+    filename: str, url: str, batch_id: str, user_id: int, import_id: int
 ) -> None:
     """Start ETL process for downloaded file."""
     from enferno.tasks.data_import import etl_process_file
@@ -219,7 +218,7 @@ def _start_etl_process(
         },
         meta={
             "mode": 3,
-            "File:MIMEType": info.get("File:MIMEType", "video/mp4"),
+            "File:MIMEType": "video/mp4",
         },
         user_id=user_id,
         data_import_id=import_id,

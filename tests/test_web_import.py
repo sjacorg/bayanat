@@ -1,6 +1,7 @@
 import io
 
 import pytest
+import requests
 import yt_dlp
 from yt_dlp.utils import DownloadError
 
@@ -117,22 +118,12 @@ def test_web_import_requires_ffmpeg(monkeypatch):
         media_download._download_media("https://example.com/video")
 
 
-class _FakeResponse:
-    def __init__(self, content_type, body=b"img"):
-        self.headers = {"Content-Type": content_type}
-        self._body = body
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-    def raise_for_status(self):
-        pass
-
-    def iter_content(self, chunk_size):
-        yield self._body
+def _response(content_type, body=b"img"):
+    response = requests.Response()
+    response.status_code = 200
+    response.headers["Content-Type"] = content_type
+    response.raw = io.BytesIO(body)
+    return response
 
 
 @pytest.fixture
@@ -157,25 +148,28 @@ def fake_get(monkeypatch, tmp_path):
 
 
 def test_direct_image_downloads_through_proxy_without_redirects(fake_get, tmp_path):
-    calls = fake_get(_FakeResponse("image/png; charset=binary"))
+    calls = fake_get(_response("image/png; charset=binary"))
     info, path = media_download._download_image("https://example.com/a.png")
     session, kwargs = calls[0]
     assert session.proxies == {"http": "http://127.0.0.1:8118", "https": "http://127.0.0.1:8118"}
     assert session.trust_env is False and kwargs["allow_redirects"] is False
     assert path.parent == tmp_path and path.suffix == ".png" and path.read_bytes() == b"img"
-    assert info["File:MIMEType"] == "image/png"
+    assert info == {
+        "title": "https://example.com/a.png",
+        "webpage_url": "https://example.com/a.png",
+    }
 
 
 @pytest.mark.parametrize("content_type", ["text/html", "image/svg+xml"])
 def test_non_image_or_disallowed_type_is_unsupported(fake_get, tmp_path, content_type):
-    fake_get(_FakeResponse(content_type))
+    fake_get(_response(content_type))
     with pytest.raises(ValueError, match="not supported"):
         media_download._download_image("https://example.com/page")
     assert not list(tmp_path.iterdir())
 
 
 def test_oversized_image_is_rejected_and_removed(fake_get, tmp_path):
-    fake_get(_FakeResponse("image/jpeg", body=b"x" * (1024 * 1024 + 1)))
+    fake_get(_response("image/jpeg", body=b"x" * (1024 * 1024 + 1)))
     with pytest.raises(ValueError, match="maximum allowed size"):
         media_download._download_image("https://example.com/big.jpg")
     assert not list(tmp_path.iterdir())
