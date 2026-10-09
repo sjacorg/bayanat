@@ -147,7 +147,7 @@ def _download_image(url: str) -> tuple[dict, Path]:
             response.raise_for_status()
             mime_type = response.headers.get("Content-Type", "").split(";")[0].strip().lower()
             extension = mime_type.startswith("image/") and mimetypes.guess_extension(mime_type)
-            if not extension:
+            if not extension or extension[1:] not in cfg.MEDIA_ALLOWED_EXTENSIONS:
                 raise ValueError(
                     f"This URL is not supported or contains no downloadable video content: {url}"
                 )
@@ -166,7 +166,7 @@ def _download_image(url: str) -> tuple[dict, Path]:
     except requests.RequestException as e:
         raise ValueError(f"Failed to download image: {e}") from None
 
-    info = {"id": temp_file.stem, "title": url, "webpage_url": url, "ext": extension[1:]}
+    info = {"title": url, "webpage_url": url, "ext": extension[1:]}
     info["File:MIMEType"] = mime_type
     return info, temp_file
 
@@ -175,7 +175,7 @@ def _process_downloaded_file(temp_file: Path, info: dict) -> str:
     """Process downloaded file and return final filename."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     extension = info["ext"] if info.get("File:MIMEType", "").startswith("image/") else "mp4"
-    final_filename = f"{info.get('id', 'video')}-{timestamp}.{extension}"
+    final_filename = f"{info.get('id', 'web')}-{timestamp}.{extension}"
     final_path = Media.media_dir / final_filename
 
     temp_file.rename(final_path)

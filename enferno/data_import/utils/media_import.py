@@ -614,6 +614,7 @@ class MediaImport:
             channel = info.get("channel")
 
             domain = info.get("extractor_key") or info.get("extractor")
+            main_source = None
             if not domain:
                 self.data_import.add_to_log(
                     "yt-dlp metadata missing extractor_key; skipping Source linkage."
@@ -653,7 +654,7 @@ class MediaImport:
                     source = Source.query.filter(Source.comments.ilike(any_(words))).first()
 
             # Create new source if none found
-            if not source:
+            if not source and (uploader or uploader_id):
                 source = Source()
                 source.title = uploader
                 source.etl_id = uploader_id

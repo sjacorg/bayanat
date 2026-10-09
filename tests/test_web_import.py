@@ -141,6 +141,9 @@ def fake_get(monkeypatch, tmp_path):
     monkeypatch.setattr(media_download.Media, "media_dir", tmp_path)
     monkeypatch.setattr(media_download.cfg, "MEDIA_UPLOAD_MAX_FILE_SIZE", 1, raising=False)
     monkeypatch.setattr(media_download.cfg, "YTDLP_PROXY", "http://127.0.0.1:8118", raising=False)
+    monkeypatch.setattr(
+        media_download.cfg, "MEDIA_ALLOWED_EXTENSIONS", ["png", "jpg"], raising=False
+    )
 
     def install(response):
         def get(session, url, **kwargs):
@@ -163,8 +166,9 @@ def test_direct_image_downloads_through_proxy_without_redirects(fake_get, tmp_pa
     assert info["File:MIMEType"] == "image/png"
 
 
-def test_non_image_response_is_unsupported(fake_get, tmp_path):
-    fake_get(_FakeResponse("text/html"))
+@pytest.mark.parametrize("content_type", ["text/html", "image/svg+xml"])
+def test_non_image_or_disallowed_type_is_unsupported(fake_get, tmp_path, content_type):
+    fake_get(_FakeResponse(content_type))
     with pytest.raises(ValueError, match="not supported"):
         media_download._download_image("https://example.com/page")
     assert not list(tmp_path.iterdir())
