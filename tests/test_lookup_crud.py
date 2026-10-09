@@ -143,14 +143,14 @@ LOOKUP_TABLES = {
     ),
     "claimed_violations": (
         "/admin/api/claimedviolation/",
-        "/admin/api/claimedviolation/",
+        "/admin/api/claimedviolation",
         {"item": {"title": "TestCV"}},
         {"item": {"title": "Updated"}},
         ADMIN_MOD_UPDATE,
     ),
     "potential_violations": (
         "/admin/api/potentialviolation/",
-        "/admin/api/potentialviolation/",
+        "/admin/api/potentialviolation",
         {"item": {"title": "TestPV"}},
         {"item": {"title": "Updated"}},
         ADMIN_MOD_UPDATE,
