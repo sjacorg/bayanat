@@ -115,3 +115,75 @@ def test_web_import_requires_ffmpeg(monkeypatch):
     monkeypatch.setattr("enferno.utils.dep_utils.shutil.which", lambda name: None)
     with pytest.raises(ValueError, match="ffmpeg, ffprobe not installed"):
         media_download._download_media("https://example.com/video")
+
+
+class _FakeResponse:
+    def __init__(self, content_type, body=b"img"):
+        self.headers = {"Content-Type": content_type}
+        self._body = body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def raise_for_status(self):
+        pass
+
+    def iter_content(self, chunk_size):
+        yield self._body
+
+
+@pytest.fixture
+def fake_get(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(media_download.Media, "media_dir", tmp_path)
+    monkeypatch.setattr(media_download.cfg, "MEDIA_UPLOAD_MAX_FILE_SIZE", 1, raising=False)
+    monkeypatch.setattr(media_download.cfg, "YTDLP_PROXY", "http://127.0.0.1:8118", raising=False)
+
+    def install(response):
+        def get(session, url, **kwargs):
+            calls.append((session, kwargs))
+            return response
+
+        monkeypatch.setattr(media_download.requests.Session, "get", get)
+        return calls
+
+    return install
+
+
+def test_direct_image_downloads_through_proxy_without_redirects(fake_get, tmp_path):
+    calls = fake_get(_FakeResponse("image/png; charset=binary"))
+    info, path = media_download._download_image("https://example.com/a.png")
+    session, kwargs = calls[0]
+    assert session.proxies == {"http": "http://127.0.0.1:8118", "https": "http://127.0.0.1:8118"}
+    assert session.trust_env is False and kwargs["allow_redirects"] is False
+    assert path.parent == tmp_path and path.suffix == ".png" and path.read_bytes() == b"img"
+    assert info["File:MIMEType"] == "image/png"
+
+
+def test_non_image_response_is_unsupported(fake_get, tmp_path):
+    fake_get(_FakeResponse("text/html"))
+    with pytest.raises(ValueError, match="not supported"):
+        media_download._download_image("https://example.com/page")
+    assert not list(tmp_path.iterdir())
+
+
+def test_oversized_image_is_rejected_and_removed(fake_get, tmp_path):
+    fake_get(_FakeResponse("image/jpeg", body=b"x" * (1024 * 1024 + 1)))
+    with pytest.raises(ValueError, match="maximum allowed size"):
+        media_download._download_image("https://example.com/big.jpg")
+    assert not list(tmp_path.iterdir())
+
+
+def test_unsupported_url_falls_back_to_image(monkeypatch):
+    def fail(*args, **kwargs):
+        raise DownloadError("ERROR: Unsupported URL: https://example.com/a.png")
+
+    monkeypatch.setattr(media_download.yt_dlp.YoutubeDL, "extract_info", fail)
+    monkeypatch.setattr(media_download, "_download_image", lambda url: ("info", url))
+    assert media_download._download_media("https://example.com/a.png") == (
+        "info",
+        "https://example.com/a.png",
+    )

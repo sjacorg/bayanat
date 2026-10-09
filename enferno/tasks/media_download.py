@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import io
+import mimetypes
 from datetime import datetime
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
+import requests
 import yt_dlp
 from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
@@ -40,7 +43,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         _update_import_record(data_import, final_filename, info)
 
         # Start ETL process
-        _start_etl_process(final_filename, url, batch_id, user_id, import_id)
+        _start_etl_process(final_filename, url, batch_id, user_id, import_id, info)
 
         # Notify user
         Notification.send_notification_for_event(
@@ -99,10 +102,11 @@ def _download_media(url: str) -> tuple[dict, Path]:
 
     except DownloadError as e:
         error_msg = str(e)
-        if "Unsupported URL:" in error_msg:
-            raise ValueError(
-                f"This URL is not supported or contains no downloadable video content: {url}"
-            )
+        if any(
+            msg in error_msg.lower()
+            for msg in ["unsupported url", "no video", "no downloadable video"]
+        ):
+            return _download_image(url)
 
         # Retry with cookies only when some are configured; otherwise report the real error
         if cfg.YTDLP_COOKIES and any(
@@ -129,10 +133,49 @@ def _download_media(url: str) -> tuple[dict, Path]:
         raise ValueError(error_msg)
 
 
+def _download_image(url: str) -> tuple[dict, Path]:
+    """Download a direct image URL that yt-dlp rejected."""
+    max_size = cfg.MEDIA_UPLOAD_MAX_FILE_SIZE * 1024 * 1024
+    session = requests.Session()
+    # The configured proxy is the only route: ignore environment proxies and NO_PROXY.
+    session.trust_env = False
+    if cfg.YTDLP_PROXY:
+        session.proxies = {"http": cfg.YTDLP_PROXY, "https": cfg.YTDLP_PROXY}
+    try:
+        # No redirects: the allowed-domains check only covers the submitted URL.
+        with session.get(url, stream=True, timeout=60, allow_redirects=False) as response:
+            response.raise_for_status()
+            mime_type = response.headers.get("Content-Type", "").split(";")[0].strip().lower()
+            extension = mime_type.startswith("image/") and mimetypes.guess_extension(mime_type)
+            if not extension:
+                raise ValueError(
+                    f"This URL is not supported or contains no downloadable video content: {url}"
+                )
+            with NamedTemporaryFile(dir=Media.media_dir, suffix=extension, delete=False) as file:
+                temp_file = Path(file.name)
+                try:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if file.tell() + len(chunk) > max_size:
+                            raise ValueError(
+                                f"File exceeds maximum allowed size of {cfg.MEDIA_UPLOAD_MAX_FILE_SIZE} MB"
+                            )
+                        file.write(chunk)
+                except BaseException:
+                    temp_file.unlink()
+                    raise
+    except requests.RequestException as e:
+        raise ValueError(f"Failed to download image: {e}") from None
+
+    info = {"id": temp_file.stem, "title": url, "webpage_url": url, "ext": extension[1:]}
+    info["File:MIMEType"] = mime_type
+    return info, temp_file
+
+
 def _process_downloaded_file(temp_file: Path, info: dict) -> str:
     """Process downloaded file and return final filename."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    final_filename = f"{info.get('id', 'video')}-{timestamp}.mp4"
+    extension = info["ext"] if info.get("File:MIMEType", "").startswith("image/") else "mp4"
+    final_filename = f"{info.get('id', 'video')}-{timestamp}.{extension}"
     final_path = Media.media_dir / final_filename
 
     temp_file.rename(final_path)
@@ -150,13 +193,14 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
     flag_modified(data_import, "data")
 
     data_import.add_to_log(f"Downloaded file: {filename}")
-    data_import.add_to_log("Format: mp4")
-    data_import.add_to_log(f"Duration: {info.get('duration')}s")
+    data_import.add_to_log(f"Format: {file_path.suffix[1:]}")
+    if info.get("duration") is not None:
+        data_import.add_to_log(f"Duration: {info.get('duration')}s")
     data_import.save()
 
 
 def _start_etl_process(
-    filename: str, url: str, batch_id: str, user_id: int, import_id: int
+    filename: str, url: str, batch_id: str, user_id: int, import_id: int, info: dict
 ) -> None:
     """Start ETL process for downloaded file."""
     from enferno.tasks.data_import import etl_process_file
@@ -175,7 +219,7 @@ def _start_etl_process(
         },
         meta={
             "mode": 3,
-            "File:MIMEType": "video/mp4",
+            "File:MIMEType": info.get("File:MIMEType", "video/mp4"),
         },
         user_id=user_id,
         data_import_id=import_id,
