@@ -20,6 +20,9 @@ const ActorProfiles = Vue.defineComponent({
   },
 
   methods: {
+    modeTitle(mode) {
+      return { 1: this.translations.normalProfile_, 2: this.translations.mainProfile_, 3: this.translations.missingPerson_ }[mode];
+    },
     localizedTitle(item) {
       return localizedLookupTitle(item);
     },
@@ -41,6 +44,8 @@ const ActorProfiles = Vue.defineComponent({
                 background-color="primary"
                 show-arrows>
           <v-tab v-for="(profile, index) in actorProfiles" :key="index">
+            <v-icon v-if="profile.dossier" size="small" color="primary" class="me-1" :title="translations.dossier_">mdi-file-check</v-icon>
+            <v-chip size="x-small" label class="me-2" :color="profile.mode === 2 ? 'warning' : 'primary'">{{ modeTitle(profile.mode) }}</v-chip>
             {{ profile.sources?.length? profile.sources[0].title : "Profile " + (index + 1) }}
           </v-tab>
         </v-tabs>

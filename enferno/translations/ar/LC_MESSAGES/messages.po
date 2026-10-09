@@ -2339,9 +2339,15 @@ msgstr "غير معروف"
 msgid "Reporting Persons"
 msgstr "الإبلاغ عن الأشخاص"
 
+msgid "Known Relatives"
+msgstr "الأقارب المعروفون"
+
 #: enferno/admin/templates/admin/jsapi.jinja2:305
-msgid "Contact info ( phone, email, address)"
-msgstr "معلومات الاتصال (هاتف، بريد إلكتروني، عنوان)"
+msgid "Address / other contact info"
+msgstr "العنوان / معلومات اتصال أخرى"
+
+msgid "Social media account"
+msgstr "حساب التواصل الاجتماعي"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:306
 #, fuzzy
