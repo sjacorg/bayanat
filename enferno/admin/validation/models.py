@@ -1924,6 +1924,7 @@ class FullConfigValidationModel(ConfigValidationModel):
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
+    YTDLP_COOKIES_UPDATED_AT: Optional[str] = None
     NOTIFICATIONS: dict[str, NotificationConfigModel] = Field(default_factory=dict)
 
     @model_validator(mode="before")

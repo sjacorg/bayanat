@@ -1,4 +1,8 @@
 import io
+import json
+from datetime import datetime
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 import yt_dlp
@@ -41,6 +45,44 @@ def test_masked_cookies_pass_validation():
         FullConfigValidationModel.validate_cookies(ConfigManager.MASK_STRING)
         == ConfigManager.MASK_STRING
     )
+
+
+@pytest.mark.parametrize(
+    "stored, submitted, previous_timestamp, expected",
+    [
+        ("", "new-cookies", None, "2026-10-10T12:30"),
+        ("old-cookies", "new-cookies", "2026-09-01T09:00", "2026-10-10T12:30"),
+        ("old-cookies", ConfigManager.MASK_STRING, "2026-09-01T09:00", "2026-09-01T09:00"),
+        ("old-cookies", "old-cookies", "2026-09-01T09:00", "2026-09-01T09:00"),
+        ("old-cookies", "", "2026-09-01T09:00", None),
+    ],
+)
+def test_cookie_timestamp_tracks_actual_changes(
+    monkeypatch, tmp_path, stored, submitted, previous_timestamp, expected
+):
+    from enferno.admin.models import Activity, AppConfig
+    from enferno.settings import Config
+    from enferno.utils.date_helper import DateHelper
+
+    config_path = tmp_path / "config.json"
+    monkeypatch.setattr(ConfigManager, "CONFIG_FILE_PATH", str(config_path))
+    monkeypatch.setattr(Config, "YTDLP_COOKIES", stored)
+    monkeypatch.setattr(Config, "YTDLP_COOKIES_UPDATED_AT", previous_timestamp)
+    monkeypatch.setattr(DateHelper, "utcnow", lambda: datetime(2026, 10, 10, 12, 30))
+    monkeypatch.setattr("enferno.utils.config_utils.current_user", SimpleNamespace(id=1))
+    revisions = []
+    monkeypatch.setattr(AppConfig, "save", lambda self: revisions.append(self.config))
+    monkeypatch.setattr(Activity, "create", Mock())
+    conf = {"YTDLP_COOKIES": submitted, "YTDLP_COOKIES_UPDATED_AT": "2000-01-01T00:00"}
+
+    assert ConfigManager.write_config(conf)
+
+    saved = json.loads(config_path.read_text())
+    assert saved["YTDLP_COOKIES"] == (
+        stored if submitted == ConfigManager.MASK_STRING else submitted
+    )
+    assert saved["YTDLP_COOKIES_UPDATED_AT"] == expected
+    assert revisions == [{"YTDLP_COOKIES_UPDATED_AT": saved["YTDLP_COOKIES_UPDATED_AT"]}]
 
 
 def test_generic_errors_mentioning_age_do_not_retry_with_cookies(monkeypatch):
