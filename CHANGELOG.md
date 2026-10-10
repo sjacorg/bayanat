@@ -9,9 +9,9 @@
 ### Fixed
 
 - Adding a potential or claimed violation category no longer fails with "No response from server" behind a reverse proxy that does not forward the original host.
-- Files from web import are named by their actual type: direct image links are stored as images instead of `.mp4` files.
-- Loading an actor, bulletin or incident no longer reads its full revision history to show the last modified date, which made records with long histories slow to open.
-- The installer no longer fails when Caddy's package repository is unavailable: it falls back to the package from Caddy's latest GitHub release, checked against the published checksums.
+- Files from web import are named by their actual type: direct image links are stored as images instead of `.mp4` files. Downloads without uploader information no longer create empty sources.
+- Loading or saving an actor, bulletin or incident no longer reads its full revision history to get the last modified date, which made records with long histories slow.
+- The installer no longer fails when Caddy's package repository is unavailable: it falls back to the package from Caddy's latest GitHub release, checked against the published checksums. Caddy installed this way does not receive updates through apt.
 - The installer refuses Ubuntu releases older than 24.04 up front, instead of failing partway through on Ubuntu 22.04.
 
 ### Security
