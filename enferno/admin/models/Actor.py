@@ -589,10 +589,16 @@ class Actor(db.Model, BaseMixin):
 
     def get_modified_date(self) -> datetime:
         """Return the last modified date of the actor."""
-        if self.history:
-            return self.history[-1].updated_at
-        else:
-            return self.updated_at
+        from enferno.admin.models import ActorHistory
+
+        # Query the latest timestamp directly: loading the history collection
+        # would fetch every revision's `data` blob just to read one date.
+        latest = (
+            db.session.query(func.max(ActorHistory.updated_at))
+            .filter(ActorHistory.actor_id == self.id)
+            .scalar()
+        )
+        return latest or self.updated_at
 
     # Helper method to handle logic of relating actors (from actor)
 
