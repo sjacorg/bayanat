@@ -16,16 +16,18 @@
 
 ### Security
 
+- When a release has no signature, the updater no longer suggests installing it by hand.
 - oauthlib upgraded to 4.0.0 (CVE-2026-49264, CVE-2026-49265) and werkzeug to 3.1.9 (CVE-2026-102598).
 
 ### Documentation
 
+- Auto-update runbook: what to do when `bayanat update` cannot complete; there is no manual upgrade procedure.
 - Web import: routing all downloads, including those handed to ffmpeg, through Tor with Privoxy, and an nftables rule set that keeps the Celery worker on that route.
 - Configuration: guidance for multi-gigabyte evidence files.
 
 ### Upgrading
 
-No database migrations. Installer-managed installs update with `sudo bayanat update`. Ubuntu 22.04 is no longer supported for new installs.
+No database migrations. Installer-managed installs update with `sudo bayanat update`. Ubuntu 24.04 or newer is now required for installs and updates: upgrade an Ubuntu 22.04 host before updating.
 
 ## v5.1.4
 

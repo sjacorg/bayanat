@@ -119,6 +119,15 @@ Then file a bug with the update output and `journalctl -u bayanat -u bayanat-cel
 sudo bayanat update --recover
 ```
 
+### When `bayanat update` cannot complete
+
+There is no manual upgrade procedure for installer-managed installs; the updater is the only supported path.
+
+- Fix the cause it reports, then run `sudo bayanat update <tag>` again.
+- If an update was interrupted, follow the recovery steps above, then retry.
+- If the `bayanat` command itself is broken, reinstall only the script from the verified release tarball, as in [step A1](/deployment/upgrading#a1-install-the-v5-cli) with `TAG` set to the target release, then retry the update.
+- Never install a release that fails signature verification, and do not run `bayanat install` over an existing installation.
+
 ## Snapshots
 
 - Location: `/opt/bayanat/shared/backups/pre-*.dump`
