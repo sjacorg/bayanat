@@ -90,5 +90,6 @@
     "xls",
     "xlsx"
   ],
-  "SHEET_IMPORT": true
+  "SHEET_IMPORT": true,
+  "YTDLP_COOKIES_UPDATED_AT": null
 }

@@ -366,6 +366,7 @@ class Config(object):
     YTDLP_PROXY = manager.get_config("YTDLP_PROXY")
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
+    YTDLP_COOKIES_UPDATED_AT = manager.get_config("YTDLP_COOKIES_UPDATED_AT")
 
     NOTIFICATIONS = manager.get_config("NOTIFICATIONS")
     # Dependency Flags
@@ -655,6 +656,7 @@ class TestConfig:
     YTDLP_PROXY = ""
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
+    YTDLP_COOKIES_UPDATED_AT = None
 
     # Notifications
     NOTIFICATIONS = NOTIFICATIONS_DEFAULT_CONFIG

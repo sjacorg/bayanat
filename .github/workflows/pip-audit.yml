@@ -30,4 +30,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
       - name: Run pip-audit
-        run: uv run pip-audit .
+        # Audit the locked versions; a project-path audit only sees pyproject.toml ranges.
+        run: |
+          uv export --frozen --no-hashes --no-emit-project > requirements-locked.txt
+          uv run pip-audit -r requirements-locked.txt --disable-pip --no-deps

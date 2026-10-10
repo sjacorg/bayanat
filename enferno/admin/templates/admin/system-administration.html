@@ -648,8 +648,16 @@
 
                                                 <v-col cols="12" lg="6">
                                                     <v-textarea v-bind="inputProps" label="{{ _('Web import cookies') }}" persistent-hint
-                                                        hint="{{ _('Cookie data for authenticated web imports (in Netscape/Mozilla format).') }}"
+                                                        :hint='{{ _("Cookie data for authenticated web imports (in Netscape/Mozilla format).")|tojson }} +
+                                                            (eitem.YTDLP_COOKIES_UPDATED_AT ? " " + {{ _("Last updated")|tojson }} + ": " +
+                                                            formatDate(eitem.YTDLP_COOKIES_UPDATED_AT, dateFormats.standardDatetime, dateOptions.local) : "")'
                                                         auto-grow rows="1" v-model="eitem.YTDLP_COOKIES"></v-textarea>
+                                                    <div v-if="cookieDomains.length" class="d-flex flex-wrap ga-2 mt-2">
+                                                        <v-chip v-for="c in cookieDomains" :key="c.domain" size="small" variant="tonal"
+                                                            :color="c.expires && c.expires * 1000 < Date.now() + 14 * 86400000 ? (c.expires * 1000 < Date.now() ? 'error' : 'warning') : undefined">
+                                                            ${c.domain} · ${c.count} · ${c.expires ? {{ _("expires")|tojson }} + ' ' + formatDate(c.expires * 1000, dateFormats.standardDate) : {{ _("session")|tojson }}}
+                                                        </v-chip>
+                                                    </div>
                                                 </v-col>
                                             </v-row>
                     
@@ -1260,6 +1268,7 @@
                     variant: 'filled',
                 },
                 tab: window.location.hash.replace('#', ''),
+                cookieDomains: [],
                 drawer: drawer,
                 eitem: {
                     ACTIVITIES:{},
@@ -1693,6 +1702,7 @@
                     api.get('/admin/api/configuration/').then(res => {
                         this.eitem = res?.data?.config;
                         this.configLabels = res.data.labels;
+                        this.cookieDomains = res.data.cookies;
                         // also store the configuration in a persistent var
                         this.exconfig = JSON.parse(JSON.stringify(this.eitem));
                     }).catch(e => {
