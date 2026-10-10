@@ -1125,7 +1125,7 @@ _fetch_release() {
                "Confirm the release exists and ships a signed tarball asset."
     curl -fsSL --max-time 60 -o "$tmp/$asset.minisig" "$url.minisig" \
         || die "Release $tag is unsigned (no $asset.minisig)" \
-               "Refusing to install unverified code. Update manually only if you trust this release."
+               "Refusing to install unverified code. Use a release that ships its signature."
 
     log "Verifying signature against the SJAC release key..."
     command -v minisign >/dev/null \
