@@ -526,6 +526,14 @@ class MediaImport:
                 optimized, new_filename, new_filepath, new_etag = self.optimize(
                     info["filename"], info["filepath"]
                 )
+                # Store the optimized copy like the original; skip it rather than
+                # attach a media record pointing at a file storage does not have.
+                if (
+                    optimized
+                    and not Config.get("FILESYSTEM_LOCAL")
+                    and not self.upload(new_filepath, new_filename)
+                ):
+                    optimized = False
 
         # ocr pictures
         elif (
