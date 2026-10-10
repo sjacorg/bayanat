@@ -1,5 +1,32 @@
 # Changelog
 
+## v5.1.5
+
+### Added
+
+- Web import settings show when the cookies were last updated and list each cookie domain with its number of cookies and earliest expiry, highlighting cookies that have expired or expire within 14 days. Cookie values are never shown.
+
+### Fixed
+
+- Adding a potential or claimed violation category no longer fails with "No response from server" behind a reverse proxy that does not forward the original host.
+- Files from web import are named by their actual type: direct image links are stored as images instead of `.mp4` files.
+- Loading an actor, bulletin or incident no longer reads its full revision history to show the last modified date, which made records with long histories slow to open.
+- The installer no longer fails when Caddy's package repository is unavailable: it falls back to the package from Caddy's latest GitHub release, checked against the published checksums.
+- The installer refuses Ubuntu releases older than 24.04 up front, instead of failing partway through on Ubuntu 22.04.
+
+### Security
+
+- oauthlib upgraded to 4.0.0 (CVE-2026-49264, CVE-2026-49265) and werkzeug to 3.1.9 (CVE-2026-102598).
+
+### Documentation
+
+- Web import: routing all downloads, including those handed to ffmpeg, through Tor with Privoxy, and an nftables rule set that keeps the Celery worker on that route.
+- Configuration: guidance for multi-gigabyte evidence files.
+
+### Upgrading
+
+No database migrations. Installer-managed installs update with `sudo bayanat update`. Ubuntu 22.04 is no longer supported for new installs.
+
 ## v5.1.4
 
 ### Fixed
