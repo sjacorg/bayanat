@@ -67,11 +67,35 @@ def api_config_defaults() -> Response:
     return HTTPResponse.success(data=response)
 
 
+def cookie_domains(cookies: str | None) -> list[dict]:
+    """Summarise Netscape-format cookies per domain (count, earliest expiry) without values."""
+    domains = {}
+    for line in (cookies or "").splitlines():
+        line = line.removeprefix("#HttpOnly_")
+        fields = line.split("\t")
+        if line.startswith("#") or len(fields) < 7:
+            continue
+        entry = domains.setdefault(fields[0].lstrip("."), {"count": 0, "expires": None})
+        entry["count"] += 1
+        try:
+            # yt-dlp accepts decimal expiries; anything unparseable counts as a session cookie
+            expires = int(float(fields[4]))
+        except (ValueError, OverflowError):
+            expires = 0
+        if expires and (entry["expires"] is None or expires < entry["expires"]):
+            entry["expires"] = expires
+    return [{"domain": domain, **entry} for domain, entry in sorted(domains.items())]
+
+
 @admin.get("/api/configuration/")
 @roles_required("Admin")
 def api_config() -> str:
     """Returns serialized app configurations."""
-    response = {"config": ConfigManager.serialize(), "labels": dict(ConfigManager.CONFIG_LABELS)}
+    response = {
+        "config": ConfigManager.serialize(),
+        "labels": dict(ConfigManager.CONFIG_LABELS),
+        "cookies": cookie_domains(current_app.config.get("YTDLP_COOKIES")),
+    }
     return HTTPResponse.success(data=response)
 
 

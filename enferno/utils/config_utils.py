@@ -166,6 +166,7 @@ class ConfigManager:
                 "twitter.com",
             ],
             "YTDLP_COOKIES": "",
+            "YTDLP_COOKIES_UPDATED_AT": None,
             "NOTIFICATIONS": NOTIFICATIONS_DEFAULT_CONFIG,  # Import from notification_config.py
         }
     )
@@ -240,6 +241,7 @@ class ConfigManager:
             "YTDLP_PROXY": "Proxy URL to use with Web Import",
             "YTDLP_ALLOWED_DOMAINS": "Allowed Domains for Web Import",
             "YTDLP_COOKIES": "Cookies to use with Web Import",
+            "YTDLP_COOKIES_UPDATED_AT": "Web Import Cookies Last Updated",
             "NOTIFICATIONS": "Notifications",
         }
     )
@@ -351,6 +353,7 @@ class ConfigManager:
             "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
             "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
             "YTDLP_COOKIES": ConfigManager.MASK_STRING if cfg.YTDLP_COOKIES else "",
+            "YTDLP_COOKIES_UPDATED_AT": cfg.YTDLP_COOKIES_UPDATED_AT,
             "NOTIFICATIONS": cfg.NOTIFICATIONS,
         }
         return conf
@@ -368,6 +371,16 @@ class ConfigManager:
         for secret_field in AppConfig.SECRET_FIELDS:
             if conf.get(secret_field) == ConfigManager.MASK_STRING:
                 conf[secret_field] = getattr(cfg, secret_field, "")
+
+        from enferno.utils.date_helper import DateHelper
+
+        conf["YTDLP_COOKIES_UPDATED_AT"] = cfg.YTDLP_COOKIES_UPDATED_AT
+        if "YTDLP_COOKIES" in conf and (conf["YTDLP_COOKIES"] or "") != (cfg.YTDLP_COOKIES or ""):
+            conf["YTDLP_COOKIES_UPDATED_AT"] = (
+                DateHelper.serialize_datetime(DateHelper.utcnow())
+                if conf["YTDLP_COOKIES"]
+                else None
+            )
 
         if ConfigManager.validate(conf):
             try:

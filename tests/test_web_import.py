@@ -1,4 +1,8 @@
 import io
+import json
+from datetime import datetime
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 import yt_dlp
@@ -41,6 +45,44 @@ def test_masked_cookies_pass_validation():
         FullConfigValidationModel.validate_cookies(ConfigManager.MASK_STRING)
         == ConfigManager.MASK_STRING
     )
+
+
+@pytest.mark.parametrize(
+    "stored, submitted, previous_timestamp, expected",
+    [
+        ("", "new-cookies", None, "2026-10-10T12:30"),
+        ("old-cookies", "new-cookies", "2026-09-01T09:00", "2026-10-10T12:30"),
+        ("old-cookies", ConfigManager.MASK_STRING, "2026-09-01T09:00", "2026-09-01T09:00"),
+        ("old-cookies", "old-cookies", "2026-09-01T09:00", "2026-09-01T09:00"),
+        ("old-cookies", "", "2026-09-01T09:00", None),
+    ],
+)
+def test_cookie_timestamp_tracks_actual_changes(
+    monkeypatch, tmp_path, stored, submitted, previous_timestamp, expected
+):
+    from enferno.admin.models import Activity, AppConfig
+    from enferno.settings import Config
+    from enferno.utils.date_helper import DateHelper
+
+    config_path = tmp_path / "config.json"
+    monkeypatch.setattr(ConfigManager, "CONFIG_FILE_PATH", str(config_path))
+    monkeypatch.setattr(Config, "YTDLP_COOKIES", stored)
+    monkeypatch.setattr(Config, "YTDLP_COOKIES_UPDATED_AT", previous_timestamp)
+    monkeypatch.setattr(DateHelper, "utcnow", lambda: datetime(2026, 10, 10, 12, 30))
+    monkeypatch.setattr("enferno.utils.config_utils.current_user", SimpleNamespace(id=1))
+    revisions = []
+    monkeypatch.setattr(AppConfig, "save", lambda self: revisions.append(self.config))
+    monkeypatch.setattr(Activity, "create", Mock())
+    conf = {"YTDLP_COOKIES": submitted, "YTDLP_COOKIES_UPDATED_AT": "2000-01-01T00:00"}
+
+    assert ConfigManager.write_config(conf)
+
+    saved = json.loads(config_path.read_text())
+    assert saved["YTDLP_COOKIES"] == (
+        stored if submitted == ConfigManager.MASK_STRING else submitted
+    )
+    assert saved["YTDLP_COOKIES_UPDATED_AT"] == expected
+    assert revisions == [{"YTDLP_COOKIES_UPDATED_AT": saved["YTDLP_COOKIES_UPDATED_AT"]}]
 
 
 def test_generic_errors_mentioning_age_do_not_retry_with_cookies(monkeypatch):
@@ -115,3 +157,33 @@ def test_web_import_requires_ffmpeg(monkeypatch):
     monkeypatch.setattr("enferno.utils.dep_utils.shutil.which", lambda name: None)
     with pytest.raises(ValueError, match="ffmpeg, ffprobe not installed"):
         media_download._download_media("https://example.com/video")
+
+
+@pytest.mark.parametrize("name", ["abc.unknown_video", "abc.mp4"])
+def test_downloaded_file_is_named_by_content(monkeypatch, tmp_path, name):
+    monkeypatch.setattr(media_download.Media, "media_dir", tmp_path)
+    temp_file = tmp_path / name
+    temp_file.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+    final = media_download._process_downloaded_file(temp_file, {"id": "abc"})
+    assert final.startswith("abc-") and final.endswith(".png")
+    assert (tmp_path / final).exists()
+
+
+def test_cookie_domains_summarises_without_values():
+    from enferno.admin.views.system import cookie_domains
+
+    cookies = "\n".join(
+        [
+            "# Netscape HTTP Cookie File",
+            ".youtube.com\tTRUE\t/\tTRUE\t2000000000\tSID\tsecret",
+            "#HttpOnly_.youtube.com\tTRUE\t/\tTRUE\t1900000000\tHSID\tsecret",
+            "x.com\tFALSE\t/\tTRUE\t0\tauth\tsecret",
+            "x.com\tFALSE\t/\tTRUE\t1000000000.0\told\tsecret",
+            "x.com\tFALSE\t/\tTRUE\t\u00b2\tbad\tsecret",
+        ]
+    )
+    assert cookie_domains(cookies) == [
+        {"domain": "x.com", "count": 3, "expires": 1000000000},
+        {"domain": "youtube.com", "count": 2, "expires": 1900000000},
+    ]
+    assert cookie_domains(None) == []
