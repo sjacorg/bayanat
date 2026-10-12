@@ -1014,12 +1014,19 @@
                     newProfile.originid = null;
                     newProfile.source_link = null;
                     newProfile.source_link_type = null; 
+                    newProfile.dossier = false;
 
                     // Append the new profile to the actor_profiles array
                     this.editedItem.actor_profiles.push(newProfile);
                     this.tab = this.editedItem.actor_profiles.length - 1;
                 },
 
+
+                // at most one profile per actor feeds dossier exports
+                toggleDossierProfile(index) {
+                    const marked = !this.editedItem.actor_profiles[index].dossier;
+                    this.editedItem.actor_profiles.forEach((p, i) => p.dossier = marked && i === index);
+                },
 
                 getValidationRules(profile) {
                     if (profile.source_link != null) {

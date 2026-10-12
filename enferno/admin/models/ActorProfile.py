@@ -33,6 +33,8 @@ class ActorProfile(db.Model, BaseMixin):
     source_link_type = db.Column(db.Boolean, default=False)
     publish_date = db.Column(db.DateTime)
     documentation_date = db.Column(db.DateTime)
+    # the profile dossier exports read from when an actor has several
+    dossier = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
 
     search = db.Column(
         db.Text,
@@ -120,6 +122,8 @@ class ActorProfile(db.Model, BaseMixin):
     case_status = db.Column(db.String, comment="MP")
     # array of objects: name, email,phone, email, address, relationship
     reporters = db.Column(JSONB, comment="MP")
+    # same shape as reporters, relatives found by researchers rather than people who reported
+    known_relatives = db.Column(JSONB, comment="MP")
     identified_by = db.Column(db.String, comment="MP")
     family_notified = db.Column(db.Boolean, comment="MP")
     hypothesis_based = db.Column(db.Text, comment="MP")
@@ -171,6 +175,8 @@ class ActorProfile(db.Model, BaseMixin):
         self.source_link_type = json.get("source_link_type", self.source_link_type)
         self.publish_date = json.get("publish_date", self.publish_date)
         self.documentation_date = json.get("documentation_date", self.documentation_date)
+        if json.get("dossier") is not None:
+            self.dossier = bool(json["dossier"])
 
         # Handling Sources
         if "sources" in json:
@@ -249,6 +255,8 @@ class ActorProfile(db.Model, BaseMixin):
             self.case_status = json.get("case_status")
             self.reporters = json.get("reporters")
             flag_modified(self, "reporters")
+            self.known_relatives = json.get("known_relatives")
+            flag_modified(self, "known_relatives")
             self.identified_by = json.get("identified_by")
             self.family_notified = json.get("family_notified")
             self.reburial_location = json.get("reburial_location")
@@ -328,6 +336,7 @@ class ActorProfile(db.Model, BaseMixin):
         mp["case_status"] = getattr(self, "case_status")
         mp["_case_status"] = gettext(self.case_status)
         mp["reporters"] = getattr(self, "reporters")
+        mp["known_relatives"] = getattr(self, "known_relatives")
         mp["identified_by"] = getattr(self, "identified_by")
         mp["family_notified"] = getattr(self, "family_notified")
         mp["reburial_location"] = getattr(self, "reburial_location")
@@ -340,6 +349,7 @@ class ActorProfile(db.Model, BaseMixin):
         actor_profile_dict = {
             "id": self.id,
             "mode": self.mode,
+            "dossier": self.dossier,
             "originid": self.originid or None,
             "description": self.description or None,
             "source_link": self.source_link or None,

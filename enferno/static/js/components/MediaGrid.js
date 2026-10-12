@@ -49,6 +49,7 @@ const MediaGrid = Vue.defineComponent({
           @remove-redaction="$emit('remove-redaction', $event)"
           :media="media"
           :mini-mode="miniMode"
+          :enable-dossier-toggle="enableDelete"
           :redactions="redactionsBySource[media.id] || []"
           class="flex-shrink-0"
         >

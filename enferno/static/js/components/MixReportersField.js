@@ -54,7 +54,7 @@ const MixReportersField = Vue.defineComponent({
     <v-card class="pa-3">
       <v-toolbar>
         <v-toolbar-title class="d-flex">
-        {{ translations.reportingPersons_ }}
+        {{ title || translations.reportingPersons_ }}
         </v-toolbar-title>
         <template #append>
           <v-btn icon="mdi-plus-circle" @click="addReporter" color="primary"></v-btn>
@@ -74,6 +74,15 @@ const MixReportersField = Vue.defineComponent({
           <v-card-text>
             <v-text-field :label="translations.name_" v-model="reporter.name"
               v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.name')"
+            ></v-text-field>
+            <v-text-field :label="translations.phone_" v-model="reporter.phone"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.phone')"
+            ></v-text-field>
+            <v-text-field :label="translations.email_" v-model="reporter.email"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.email')"
+            ></v-text-field>
+            <v-text-field :label="translations.socialMedia_" v-model="reporter.social_media"
+              v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.social_media')"
             ></v-text-field>
             <v-textarea rows="1" :label="translations.contactInfo_" v-model="reporter.contact"
               v-bind="$root.serverErrorPropsForField(serverErrors, errorKey+'.'+index+'.contact')"
