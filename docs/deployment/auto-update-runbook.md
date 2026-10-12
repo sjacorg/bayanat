@@ -121,7 +121,7 @@ sudo bayanat update --recover
 
 ### When `bayanat update` cannot complete
 
-There is no manual upgrade procedure for installer-managed installs; the updater is the only supported path.
+`bayanat update` is the recommended way to upgrade an installer-managed install. When it stops:
 
 - Fix the cause it reports, then run `sudo bayanat update <tag>` again.
 - If an update was interrupted, follow the recovery steps above, then retry.
