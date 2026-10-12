@@ -21,7 +21,7 @@
 
 ### Documentation
 
-- Auto-update runbook: what to do when `bayanat update` cannot complete; there is no manual upgrade procedure.
+- Auto-update runbook: what to do when `bayanat update` cannot complete on an installer-managed install.
 - Web import: routing all downloads, including those handed to ffmpeg, through Tor with Privoxy, and an nftables rule set that keeps the Celery worker on that route.
 - Configuration: guidance for multi-gigabyte evidence files.
 
