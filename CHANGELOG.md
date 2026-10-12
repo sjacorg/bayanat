@@ -4,16 +4,15 @@
 
 ### Added
 
-- Web import settings show when the cookies were last updated and list each cookie domain with its number of cookies and earliest expiry, highlighting cookies that have expired or expire within 14 days. Cookie values are never shown.
+- Web import settings show when the cookies were last updated and list each cookie domain with its number of cookies and earliest expiry, highlighting cookies that have expired or expire within 14 days.
 
 ### Fixed
 
 - Adding a potential or claimed violation category no longer fails with "No response from server" behind a reverse proxy that does not forward the original host.
-- Media import with "Optimize" enabled now uploads the converted copy to S3 storage; previously only the original reached the bucket and the copy's record pointed at a missing file.
+- Media import with "Optimize" enabled uploads the converted copy to S3 storage, not only the original.
 - Files from web import are named by their actual type: direct image links are stored as images instead of `.mp4` files. Downloads without uploader information no longer create empty sources.
-- Loading or saving an actor, bulletin or incident no longer reads its full revision history to get the last modified date, which made records with long histories slow.
+- Loading or saving an actor, bulletin or incident no longer reads its full revision history to get the last modified date, which was slow for records with long histories.
 - The installer no longer fails when Caddy's package repository is unavailable: it falls back to the package from Caddy's latest GitHub release, checked against the published checksums. Caddy installed this way does not receive updates through apt.
-- The installer refuses Ubuntu releases older than 24.04 up front, instead of failing partway through on Ubuntu 22.04.
 
 ### Security
 
