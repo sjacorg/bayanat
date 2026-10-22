@@ -20,6 +20,50 @@ from enferno.utils.logging_utils import get_logger
 logger = get_logger()
 
 
+def _walk(seed: str, seed_path: str) -> str:
+    """A recursive `tree` CTE from the seed rows down, each row carrying its path to the root."""
+    return f"""
+    tree AS (
+        SELECT id, title, postal_code, admin_level_id, parent_id, full_location, id_tree,
+               {seed_path} AS path
+        FROM location WHERE {seed}
+        UNION ALL
+        SELECT c.id, c.title, c.postal_code, c.admin_level_id, c.parent_id, c.full_location,
+               c.id_tree, c.id || t.path
+        FROM location c JOIN tree t ON c.parent_id = t.id
+        -- a pre-existing cycle would otherwise recurse until the statement times out
+        WHERE NOT c.id = ANY(t.path)
+    )"""
+
+
+# what full_location and id_tree should hold for every row of `tree`
+_EXPECTED_PATHS = """
+    expected AS (
+        SELECT t.id, t.full_location, t.id_tree,
+            CASE
+                WHEN t.parent_id IS NULL OR t.admin_level_id IS NULL THEN
+                    CASE WHEN :postal_code AND t.postal_code IS NOT NULL
+                         THEN t.title || ' ' || t.postal_code ELSE t.title END
+                ELSE (
+                    SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST)
+                    FROM unnest(t.path) WITH ORDINALITY AS ids(id, ord)
+                    JOIN location loc ON loc.id = ids.id
+                    LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
+                ) || CASE WHEN :postal_code AND t.postal_code IS NOT NULL
+                          THEN ' ' || t.postal_code ELSE '' END
+            END AS full_string,
+            (
+                SELECT string_agg('[' || ids.id || ']', ' ' ORDER BY ids.ord)
+                FROM unnest(t.path) WITH ORDINALITY AS ids(id, ord)
+            ) AS id_string
+        FROM tree t
+    )"""
+
+_APPLY_PATHS = """
+    UPDATE location l SET full_location = e.full_string, id_tree = e.id_string
+    FROM expected e WHERE l.id = e.id"""
+
+
 class Location(db.Model, BaseMixin):
     """
     SQL Alchemy model for locations
@@ -28,10 +72,13 @@ class Location(db.Model, BaseMixin):
     CELERY_FLAG = "tasks:locations:fullpath:status"
 
     COLOR = "#ff663366"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        db.CheckConstraint("parent_id != id", name="location_no_self_parent"),
+        {"extend_existing": True},
+    )
 
     id = db.Column(db.Integer, primary_key=True)
-    parent_id = db.Column(db.Integer, db.ForeignKey("location.id"))
+    parent_id = db.Column(db.Integer, db.ForeignKey("location.id"), index=True)
     parent = db.relationship("Location", remote_side=id, backref="child_locations")
     title = db.Column(db.String)
     title_ar = db.Column(db.String)
@@ -69,6 +116,78 @@ class Location(db.Model, BaseMixin):
             l.created_at = created
             l.updated_at = created
         l.save()
+
+    def placement_error(self) -> Optional[str]:
+        """
+        Why this location cannot sit where it has been put, or None if it can.
+
+        `full_location` orders a path by the display_order of its levels, so a path
+        that mixes ladders, doubles back on itself, or loops produces text that means
+        nothing. Legacy locations carry no hierarchy on either side, so the hierarchy
+        rules never fire on an installation that has not created one.
+
+        The parent is read by id rather than through the relationship: on create the
+        object is still transient, and the relationship would silently be None.
+        """
+
+        loops, above = self._walk_up()
+        if loops:
+            return "A location cannot be placed under itself or one of its own descendants"
+
+        if self.admin_level and above:
+            if self.admin_level.hierarchy_id != above.hierarchy_id:
+                return "Parent location belongs to a different hierarchy"
+            # code is the structural order and is immutable; display_order is the
+            # presentation order, which admins reorder to match an address format
+            if above.code >= self.admin_level.code:
+                return "Parent location must sit on a level above this one"
+
+        # the same two rules seen from above. Descends past unlevelled children for
+        # the same reason the upward walk climbs past unlevelled ancestors: a point
+        # of interest in between must not be able to hide a mixed or inverted ladder.
+        if self.id and self.admin_level:
+            for hierarchy_id, code in self._nearest_levelled_descendants():
+                if hierarchy_id != self.admin_level.hierarchy_id:
+                    return "Locations under this one belong to a different hierarchy"
+                if code <= self.admin_level.code:
+                    return "Locations under this one sit on a level at or above this one"
+
+        return None
+
+    def _nearest_levelled_descendants(self):
+        """The first levelled location on each branch below this one, as (hierarchy, code)."""
+        query = """
+        WITH RECURSIVE below AS (
+            SELECT id, admin_level_id, ARRAY[id] AS path
+            FROM location WHERE parent_id = :id
+            UNION ALL
+            SELECT c.id, c.admin_level_id, c.id || b.path
+            FROM location c JOIN below b ON c.parent_id = b.id
+            WHERE b.admin_level_id IS NULL AND NOT c.id = ANY(b.path)
+        )
+        SELECT la.hierarchy_id, la.code
+        FROM below b JOIN location_admin_level la ON la.id = b.admin_level_id;
+        """
+        return db.session.execute(text(query), {"id": self.id}).all()
+
+    def _walk_up(self):
+        """
+        Walk the ancestor chain once, answering both questions it can answer.
+
+        Returns (loops, nearest_levelled_ancestor_level). Ancestors without a level
+        are skipped rather than ending the walk, which is the plan's rule that a
+        non-administrative place takes its hierarchy from the nearest one that has it.
+        """
+        node = db.session.get(Location, self.parent_id) if self.parent_id else None
+        level, seen = None, set()
+        while node and node.id not in seen:
+            if node.id == self.id:
+                return True, level
+            if level is None and node.admin_level:
+                level = node.admin_level
+            seen.add(node.id)
+            node = db.session.get(Location, node.parent_id) if node.parent_id else None
+        return False, level
 
     def get_children_ids(self) -> list:
         """
@@ -264,172 +383,90 @@ class Location(db.Model, BaseMixin):
                 locations += [l] + l.get_sub_locations()
             return locations
 
-    # helper method to get full location hierarchy
-    def get_full_string(self) -> str:
-        """
-        Generates full string of location and parents using CTE.
-        Args:
-            - postal_code: whether to include postal code in result
-        Returns:
-            - formatted string of location hierarchy
-        """
-        if not has_app_context():
-            postal_code = False
-        else:
-            postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
+    @staticmethod
+    def _include_postal_code() -> bool:
+        return has_app_context() and current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
 
-        self_title = (
-            self.title
-            if not (postal_code and self.postal_code)
-            else self.title + " " + self.postal_code
-        )
-        if not self.parent_id or self.admin_level is None:
-            return self_title
-        with db.session.begin_nested():
-            try:
-                query = """
-            WITH RECURSIVE location_tree AS (
-                SELECT 
-                    l.id,
-                    l.title,
-                    l.postal_code,
-                    l.admin_level_id,
-                    l.parent_id,
-                    ARRAY[l.id] as path
-                FROM location l 
-                WHERE l.id = :id
-                
-                UNION ALL
-                
-                SELECT
-                    p.id,
-                    p.title,
-                    p.postal_code,
-                    p.admin_level_id,
-                    p.parent_id,
-                    p.id || t.path
-                FROM location p
-                JOIN location_tree t ON p.id = t.parent_id
+    @staticmethod
+    def _write_paths(query: str, **params) -> int:
+        """Run one path rewrite in its own transaction and return the rows touched."""
+        try:
+            result = db.session.execute(
+                text(query), {"postal_code": Location._include_postal_code(), **params}
             )
-            SELECT 
-                lt.id,
-                lt.title,
-                lt.postal_code,
-                lt.admin_level_id,
-                la.display_order
-            FROM location_tree lt
-            LEFT JOIN location_admin_level la ON lt.admin_level_id = la.id
-            ORDER BY la.display_order NULLS LAST;
-            """
-
-                with db.engine.connect() as connection:
-                    result = connection.execute(text(query), {"id": self.id})
-                locations = [{"title": row.title, "postal_code": row.postal_code} for row in result]
-
-                if not locations:
-                    return self_title
-
-                formatted = ", ".join(loc["title"] for loc in locations)
-                if postal_code and self.postal_code:
-                    formatted += " " + self.postal_code
-
-                return formatted
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Failed to regenerate location strings: {str(e)}", exc_info=e)
-                return self_title
+            db.session.commit()
+            return result.rowcount
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to rebuild location paths: {str(e)}", exc_info=e)
+            raise
 
     @staticmethod
     def regenerate_all_full_locations() -> None:
         """
-        Regenerates and saves full location strings for all locations using a single CTE query.
-        Args:
-            - postal_code: whether to include postal code in result
-        """
-        with db.session.begin_nested():
-            try:
-                query = """
-                BEGIN;
-                WITH RECURSIVE location_tree AS (
-                    SELECT 
-                        l.id,
-                        l.title,
-                        l.postal_code,
-                        l.admin_level_id,
-                        ARRAY[l.id] as path,
-                        CASE 
-                            WHEN l.parent_id IS NULL OR l.admin_level_id IS NULL THEN 
-                                CASE 
-                                    WHEN :postal_code AND l.postal_code IS NOT NULL 
-                                    THEN l.title || ' ' || l.postal_code
-                                    ELSE l.title
-                                END
-                            ELSE l.title
-                        END as full_string
-                    FROM location l 
-                    WHERE l.parent_id IS NULL
-                    
-                    UNION ALL
-                    
-                    SELECT
-                        child.id,
-                        child.title,
-                        child.postal_code,
-                        child.admin_level_id,
-                        child.id || t.path,
-                        CASE 
-                            WHEN child.parent_id IS NULL OR child.admin_level_id IS NULL THEN 
-                                CASE 
-                                    WHEN :postal_code AND child.postal_code IS NOT NULL 
-                                    THEN child.title || ' ' || child.postal_code
-                                    ELSE child.title
-                                END
-                            ELSE (
-                                SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST)
-                                FROM unnest(child.id || t.path) WITH ORDINALITY AS ids(id, ord)
-                                JOIN location loc ON loc.id = ids.id
-                                LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
-                            ) || CASE 
-                                    WHEN :postal_code AND child.postal_code IS NOT NULL 
-                                    THEN ' ' || child.postal_code 
-                                    ELSE '' 
-                                END
-                        END as full_string
-                    FROM location child
-                    JOIN location_tree t ON child.parent_id = t.id
-                )
-                UPDATE location l
-                SET full_location = lt.full_string
-                FROM location_tree lt
-                WHERE l.id = lt.id;
-                COMMIT;
-                """
-                if not has_app_context():
-                    postal_code = False
-                else:
-                    postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
-                with db.engine.connect() as connection:
-                    connection.execute(text(query), {"postal_code": postal_code})
-                    connection.commit()
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Failed to regenerate location strings: {str(e)}", exc_info=e)
+        Rebuild full_location and id_tree for every location, in one statement.
 
-    def get_id_tree(self) -> str:
-        """Use common table expressions to generate the full tree of ids, this is very useful to reduce
-        search complexity when using autocomplete locations."""
-        query = """
-        with recursive tree(id,depth) as (
-        select id, title, parent_id from location where id = :id
-        union all
-        select p.id, p.title, p.parent_id from location p, tree t
-        where p.id = t.parent_id
-        )
-        select * from tree;
+        Used by the Regenerate action in system administration. It used to rebuild
+        the text only, which is why an import that never generated an ancestor tree
+        could leave locations permanently unreachable by ancestor search with no way
+        to repair them from the interface.
+
+        Seeded from every root at once rather than looping subtrees: one recursive
+        pass over the table instead of one per root, and one transaction, so a
+        failure cannot leave half the paths on the old order and half on the new.
         """
-        with db.engine.connect() as connection:
-            result = connection.execute(text(query), {"id": self.id})
-            return " ".join(["[{}]".format(loc[0]) for loc in result])
+        query = f"WITH RECURSIVE {_walk('parent_id IS NULL', 'ARRAY[id]')}, {_EXPECTED_PATHS} {_APPLY_PATHS}"
+        count = Location._write_paths(query)
+        logger.info(f"Rebuilt location paths for {count} locations.")
+
+    def rebuild_subtree(self) -> None:
+        """
+        Rebuild full_location and id_tree for this location and every descendant.
+
+        Both columns are denormalized copies of the path from the root, so renaming
+        a location or moving it invalidates every row underneath it, not just itself.
+        Rebuilding only the edited row leaves descendants holding the old text and,
+        worse, the old ancestor chain, which drops them out of ancestor search.
+        """
+        query = f"""
+        WITH RECURSIVE ancestry AS (
+            SELECT id, parent_id, ARRAY[id] AS path
+            FROM location WHERE id = :id
+            UNION ALL
+            SELECT p.id, p.parent_id, a.path || p.id
+            FROM location p JOIN ancestry a ON p.id = a.parent_id
+            WHERE NOT p.id = ANY(a.path)
+        ),
+        root_path AS (
+            SELECT path FROM ancestry ORDER BY array_length(path, 1) DESC LIMIT 1
+        ),
+        {_walk('id = :id', '(SELECT path FROM root_path)')},
+        {_EXPECTED_PATHS}
+        {_APPLY_PATHS}
+        """
+        Location._write_paths(query, id=self.id)
+
+    @staticmethod
+    def count_stale_paths() -> int:
+        """
+        Locations whose stored full_location or id_tree disagrees with the tree.
+
+        Anything writing rows outside the app (imports, scripts, psql) leaves the
+        denormalized paths behind. This makes that drift visible instead of silent.
+        """
+        query = f"""
+        WITH RECURSIVE {_walk('parent_id IS NULL', 'ARRAY[id]')}, {_EXPECTED_PATHS}
+        SELECT
+            (SELECT count(*) FROM expected
+              WHERE full_location IS DISTINCT FROM full_string
+                 OR id_tree IS DISTINCT FROM id_string)
+            -- rows the walk never reached are unrooted or caught in a cycle, so
+            -- their stored path cannot be correct either
+          + (SELECT count(*) FROM location l
+              WHERE NOT EXISTS (SELECT 1 FROM tree t WHERE t.id = l.id));
+        """
+        params = {"postal_code": Location._include_postal_code()}
+        return db.session.execute(text(query), params).scalar() or 0
 
     @staticmethod
     def geo_query_location(target_point: dict[str, Any], radius_in_meters: int) -> Any:
@@ -450,15 +487,6 @@ class Location(db.Model, BaseMixin):
         return func.ST_DWithin(
             func.cast(Location.latlng, Geography), func.cast(point, Geography), radius_in_meters
         )
-
-    @staticmethod
-    def rebuild_id_trees():
-        """Rebuild the id tree for all locations."""
-        for l in Location.query.all():
-            l.id_tree = l.get_id_tree()
-            l.save()
-
-        logger.info("Locations ID tree generated successfuly.")
 
     # imports csv data into db
     @staticmethod
@@ -500,5 +528,10 @@ class Location(db.Model, BaseMixin):
         max_id = db.session.execute(text("select max(id)+1 from location")).scalar()
         db.session.execute(text("alter sequence location_id_seq restart with :m"), {"m": max_id})
         db.session.commit()
+
+        # bulk inserts bypass the per-edit rebuild, and an import that leaves id_tree
+        # empty makes every imported location invisible to ancestor search
+        Location.regenerate_all_full_locations()
+        logger.info("Location paths regenerated after import.")
 
         return ""
