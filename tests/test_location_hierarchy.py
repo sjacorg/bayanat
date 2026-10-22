@@ -376,7 +376,9 @@ class TestMixedHierarchyPaths:
             assert child.placement_error() == "Parent location belongs to a different hierarchy"
             # both rungs claim the same display_order, so the sort cannot separate them
             assert legacy.code == territory.code
-            assert set(child.get_full_string().split(", ")) == {"Damascus", "West Bank"}
+            child.rebuild_subtree()
+            session.refresh(child)
+            assert set(child.full_location.split(", ")) == {"Damascus", "West Bank"}
         finally:
             session.query(Location).filter(Location.id.in_([child.id, parent.id])).delete(
                 synchronize_session=False
