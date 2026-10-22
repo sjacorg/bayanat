@@ -32,7 +32,7 @@
             </template>
 
             <template v-slot:item.created_at="{ item }">
-              ${ formatDate(item.created_at) }
+              ${ formatDate(item.created_at, dateFormats.standardDatetime, dateOptions.local) }
             </template>
 
             <template v-slot:item.user_id="{ item }">
