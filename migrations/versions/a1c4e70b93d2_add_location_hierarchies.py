@@ -1,7 +1,7 @@
 """add location hierarchies and scope admin levels by hierarchy
 
 Revision ID: a1c4e70b93d2
-Revises: f0a3d6c1e8b2
+Revises: a7c3e5f9b2d1
 Create Date: 2026-07-27 00:00:00.000000
 
 """
@@ -10,39 +10,47 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "a1c4e70b93d2"
-down_revision = "f0a3d6c1e8b2"
+down_revision = "a7c3e5f9b2d1"
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
-    op.create_table(
-        "location_hierarchy",
-        sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("updated_at", sa.DateTime(), nullable=True),
-        sa.Column("deleted", sa.Boolean(), server_default="false", nullable=True),
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("title", sa.String(), nullable=False),
-        sa.Column("title_tr", sa.String(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("title"),
-    )
+    # Idempotent per step, like the v5 migrations: a drifted or partially upgraded
+    # install may already have some of this
+    inspector = sa.inspect(op.get_bind())
+    if not inspector.has_table("location_hierarchy"):
+        op.create_table(
+            "location_hierarchy",
+            sa.Column("created_at", sa.DateTime(), nullable=True),
+            sa.Column("updated_at", sa.DateTime(), nullable=True),
+            sa.Column("deleted", sa.Boolean(), server_default="false", nullable=True),
+            sa.Column("id", sa.Integer(), nullable=False),
+            sa.Column("title", sa.String(), nullable=False),
+            sa.Column("title_tr", sa.String(), nullable=True),
+            sa.PrimaryKeyConstraint("id"),
+            sa.UniqueConstraint("title"),
+        )
 
-    op.add_column("location_admin_level", sa.Column("hierarchy_id", sa.Integer(), nullable=True))
-    op.create_foreign_key(
-        "location_admin_level_hierarchy_id_fkey",
-        "location_admin_level",
-        "location_hierarchy",
-        ["hierarchy_id"],
-        ["id"],
-    )
+    if "hierarchy_id" not in {c["name"] for c in inspector.get_columns("location_admin_level")}:
+        op.add_column(
+            "location_admin_level", sa.Column("hierarchy_id", sa.Integer(), nullable=True)
+        )
+    fks = {fk["name"] for fk in inspector.get_foreign_keys("location_admin_level")}
+    if "location_admin_level_hierarchy_id_fkey" not in fks:
+        op.create_foreign_key(
+            "location_admin_level_hierarchy_id_fkey",
+            "location_admin_level",
+            "location_hierarchy",
+            ["hierarchy_id"],
+            ["id"],
+        )
 
     # existing levels stay global: code is unique per hierarchy, and a partial
     # index keeps the legacy (null hierarchy) codes unique on their own.
     # Drop whatever the global unique on code is actually called: a hard coded
     # name would no-op on an install that named it differently, silently leaving
     # the old constraint to reject a second hierarchy's codes.
-    inspector = sa.inspect(op.get_bind())
     for constraint in inspector.get_unique_constraints("location_admin_level"):
         if constraint["column_names"] == ["code"]:
             op.drop_constraint(constraint["name"], "location_admin_level", type_="unique")
@@ -52,12 +60,14 @@ def upgrade():
         ["code"],
         unique=True,
         postgresql_where=sa.text("hierarchy_id IS NULL"),
+        if_not_exists=True,
     )
     op.create_index(
         "ix_location_admin_level_hierarchy_code",
         "location_admin_level",
         ["hierarchy_id", "code"],
         unique=True,
+        if_not_exists=True,
     )
 
     # levels seeded before this point carry a null display_order, and full_location
@@ -70,13 +80,15 @@ def upgrade():
     )
 
     # every tree walk joins on parent_id and the table had no index on it at all
-    op.create_index("ix_location_parent_id", "location", ["parent_id"])
+    op.create_index("ix_location_parent_id", "location", ["parent_id"], if_not_exists=True)
 
     # a location cannot be its own parent. A full cycle cannot be expressed as a
     # check constraint, so the application guards that; this catches the simplest
     # case for writers that never go through the application.
     op.execute("UPDATE location SET parent_id = NULL WHERE parent_id = id")
-    op.create_check_constraint("location_no_self_parent", "location", "parent_id != id")
+    checks = {c["name"] for c in inspector.get_check_constraints("location")}
+    if "location_no_self_parent" not in checks:
+        op.create_check_constraint("location_no_self_parent", "location", "parent_id != id")
 
 
 def downgrade():

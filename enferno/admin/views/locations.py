@@ -479,7 +479,7 @@ def api_location_hierarchies() -> Response:
     hierarchies = LocationHierarchy.query
     query = request.args.get("q")
     if query:
-        hierarchies = hierarchies.filter(LocationHierarchy.title.ilike(f"%{query}%"))
+        hierarchies = hierarchies.filter(like_contains(LocationHierarchy.title, query))
 
     result = hierarchies.order_by(-LocationHierarchy.id).paginate(
         page=page, per_page=per_page, count=True
