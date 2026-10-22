@@ -3,7 +3,6 @@
 in app.py
 """
 
-from flask_limiter.util import get_remote_address
 from flask_limiter import Limiter
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate

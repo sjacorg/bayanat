@@ -1,6 +1,6 @@
 """Text extraction results from OCR processing."""
 
-from sqlalchemy import Index, text
+from sqlalchemy import Index
 
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin

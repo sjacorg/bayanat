@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-import json
 from multiprocessing import Pool, cpu_count
-from typing import Any, Generator, Literal
 
 import click
 import pandas as pd
-from flask import Blueprint, current_app, render_template, Response, request
+from flask import Blueprint, render_template, Response, request
 from flask.cli import with_appcontext
 from flask_security import auth_required
 from flask_security import roles_required, roles_accepted, current_user
