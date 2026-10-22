@@ -234,7 +234,7 @@
 
                         <!-- Date Column -->
                         <template #item.updated_at="{ item }">
-                            ${formatDate(item.updated_at)}
+                            ${formatDate(item.updated_at, dateFormats.standardDatetime, dateOptions.local)}
                         </template>
 
                         <template #item.actions="{ item }">
