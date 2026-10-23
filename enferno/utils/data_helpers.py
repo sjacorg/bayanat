@@ -16,20 +16,12 @@ from enferno.admin.models import (
     ItoaInfo,
     ItoiInfo,
     Country,
-    Ethnography,
+    Media,
     MediaCategory,
     GeoLocationType,
     WorkflowStatus,
 )
 from enferno.extensions import db
-from enferno.admin.models import (
-    Media,
-    ClaimedViolation,
-    Eventtype,
-    LocationAdminLevel,
-    LocationType,
-    PotentialViolation,
-)
 from enferno.data_import.models import DataImport
 from enferno.user.models import Role
 from enferno.utils.logging_utils import get_logger

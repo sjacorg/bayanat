@@ -3,7 +3,6 @@ import json
 import logging
 import sys
 from logging.handlers import TimedRotatingFileHandler
-from traceback import format_exception
 from enferno.settings import Config
 import re
 from datetime import datetime
