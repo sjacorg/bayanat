@@ -111,6 +111,11 @@
                                         <div class="text-subtitle-2 mb-2 mt-4">{{ _('Public Description') }}</div>
                                         <tinymce-editor :init="tinyConfig" :key="descKey + '-public-description'" v-model="editedItem.public_description"></tinymce-editor>
                                     </div>
+                                    <div v-else-if="isFieldActive(field, 'publication_link')" :class="[fieldClass(field), 'px-3 py-2']">
+                                        <v-text-field v-model="editedItem.publication_link" label="{{ _('Publication Link') }}"
+                                            prepend-inner-icon="mdi-link-variant" clearable
+                                            v-bind="serverErrorPropsForField(serverErrors, 'item.publication_link')"></v-text-field>
+                                    </div>
                                     <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <label-search-field v-model="editedItem.labels" :query-params="{ typ: 'for_bulletin', mode: 2 }" :multiple="true" :show-copy-icon="advFeatures" :retain-search="true" label="{{ _('Labels') }}"></label-search-field>
                                     </div>

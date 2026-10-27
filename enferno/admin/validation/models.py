@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import (
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     Field,
     field_validator,
@@ -8,7 +9,7 @@ from pydantic import (
     HttpUrl,
     ValidationInfo,
 )
-from typing import Optional, Any, List, Dict
+from typing import Annotated, Optional, Any, List, Dict
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
@@ -34,6 +35,18 @@ BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 PER_PAGE = int(Config.get("ITEMS_PER_PAGE_OPTIONS")[0])
+
+
+def _http_url_or_none(v: Optional[str]) -> Optional[str]:
+    # Rendered as a public link, so only http(s) is accepted (no javascript: and friends)
+    if v is None or not v.strip():
+        return None
+    v = v.strip()
+    HttpUrl(v)
+    return v
+
+
+HttpUrlField = Annotated[Optional[str], BeforeValidator(_http_url_or_none)]
 
 
 def validate_dynamic_fields(entity_type: str, model_instance) -> None:
@@ -247,6 +260,7 @@ class BulletinValidationModel(StrictValidationModel):
     first_peer_reviewer: Optional[PartialUserModel] = None
     description: Optional[SanitizedField] = None
     public_description: Optional[SanitizedField] = None
+    publication_link: HttpUrlField = None
     comments: str = Field(min_length=1)
     source_link: str = Field(min_length=1)
     source_link_type: Optional[bool] = None
@@ -1329,6 +1343,7 @@ class GenericBulkModel(BaseValidationModel):
 class BulletinBulkModel(GenericBulkModel):
     tags: list[str] = Field(default_factory=list)
     tagsReplace: Optional[bool] = None
+    publication_link: HttpUrlField = None
 
 
 class ActorBulkModel(GenericBulkModel):

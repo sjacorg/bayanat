@@ -77,6 +77,11 @@
 
             </v-card-text>
 
+            <v-card-text>
+                <v-text-field v-model="bulk.publication_link" label="{{ _('Publication Link') }}"
+                    prepend-inner-icon="mdi-link-variant" clearable></v-text-field>
+            </v-card-text>
+
             <v-card-text v-if="has_role(currentUser,'Admin')">
                 <div class="d-flex">
                     <search-field

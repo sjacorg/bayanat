@@ -91,6 +91,9 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
                     # merge refs / remove dups
                     bulletin.tags = list(set(bulletin.tags + tags))
 
+            if publication_link := bulk.get("publication_link"):
+                bulletin.publication_link = publication_link
+
             # Comment (required)
             bulletin.comments = bulk.get("comments", "")
 

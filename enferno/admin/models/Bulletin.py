@@ -62,6 +62,7 @@ class Bulletin(db.Model, BaseMixin):
     )
     description = db.Column(db.Text)
     public_description = db.Column(db.Text)
+    publication_link = db.Column(db.Text)
 
     reliability_score = db.Column(db.Integer, default=0)
 
@@ -320,6 +321,7 @@ class Bulletin(db.Model, BaseMixin):
         self.public_description = (
             json["public_description"] if "public_description" in json else None
         )
+        self.publication_link = json.get("publication_link")
         self.comments = json["comments"] if "comments" in json else None
         self.source_link = json["source_link"] if "source_link" in json else None
         self.source_link_type = json.get("source_link_type", False)
@@ -504,6 +506,7 @@ class Bulletin(db.Model, BaseMixin):
             "sources": sources_json,
             "description": self.description or None,
             "public_description": self.public_description or None,
+            "publication_link": self.publication_link or None,
             "source_link": self.source_link or None,
             "source_link_type": getattr(self, "source_link_type", False),
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
@@ -794,6 +797,7 @@ class Bulletin(db.Model, BaseMixin):
                 "incident_relations": incident_relations_dict,
                 "description": self.description or None,
                 "public_description": self.public_description or None,
+                "publication_link": self.publication_link or None,
                 "comments": self.comments or None,
                 "source_link": self.source_link or None,
                 "source_link_type": self.source_link_type or None,
@@ -848,6 +852,7 @@ class Bulletin(db.Model, BaseMixin):
             "sources": sources_json,
             "description": self.description or None,
             "public_description": self.public_description or None,
+            "publication_link": self.publication_link or None,
             "comments": self.comments or None,
             "source_link": self.source_link or None,
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
