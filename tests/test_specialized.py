@@ -1275,15 +1275,16 @@ class TestLocationRegenerate:
         session.commit()
         assert child.id_tree is None
 
-        with patch.object(maintenance, "rds", MagicMock()):
-            maintenance.regenerate_locations.run()
+        try:
+            with patch.object(maintenance, "rds", MagicMock()):
+                maintenance.regenerate_locations.run()
 
-        session.refresh(child)
-        assert child.id_tree == f"[{child.id}] [{parent.id}]"
-
-        session.delete(child)
-        session.delete(parent)
-        session.commit()
+            session.refresh(child)
+            assert child.id_tree == f"[{child.id}] [{parent.id}]"
+        finally:
+            session.delete(child)
+            session.delete(parent)
+            session.commit()
 
 
 # =========================================================================

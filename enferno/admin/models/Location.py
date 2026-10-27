@@ -342,7 +342,7 @@ class Location(db.Model, BaseMixin):
     @staticmethod
     def regenerate_all_full_locations() -> None:
         """
-        Regenerates and saves full location strings for all locations using a single CTE query.
+        Regenerates and saves full location strings and id trees for all locations using a single CTE query.
         Args:
             - postal_code: whether to include postal code in result
         """
@@ -399,7 +399,11 @@ class Location(db.Model, BaseMixin):
                     JOIN location_tree t ON child.parent_id = t.id
                 )
                 UPDATE location l
-                SET full_location = lt.full_string
+                SET full_location = lt.full_string,
+                    id_tree = (
+                        SELECT string_agg('[' || p || ']', ' ' ORDER BY o)
+                        FROM unnest(lt.path) WITH ORDINALITY AS u(p, o)
+                    )
                 FROM location_tree lt
                 WHERE l.id = lt.id;
                 COMMIT;

@@ -139,13 +139,11 @@ def daily_backup_cron():
 @celery.task
 def regenerate_locations() -> None:
     """
-    Regenerate full locations and id trees for all entities.
+    Regenerate full locations for all entities.
     """
     try:
         rds.set(Location.CELERY_FLAG, 1)
         Location.regenerate_all_full_locations()
-        # ponytail: one query + commit per location, switch to a single CTE update if large installs time out
-        Location.rebuild_id_trees()
     finally:
         rds.delete(Location.CELERY_FLAG)
 
