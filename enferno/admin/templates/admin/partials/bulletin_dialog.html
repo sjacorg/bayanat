@@ -109,7 +109,7 @@
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'public_description')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <div class="text-subtitle-2 mb-2 mt-4">{{ _('Public Description') }}</div>
-                                        <tinymce-editor :init="{ ...tinyConfig, placeholder: '{{ _('Shown on the public archive') }}' }" :key="descKey + '-public-description'" v-model="editedItem.public_description"></tinymce-editor>
+                                        <tinymce-editor :init="{ ...tinyConfig, directionality: $vuetify.locale.isRtl ? 'rtl' : 'ltr', placeholder: translations.shownOnPublicArchive_ }" :key="descKey + '-public-description'" v-model="editedItem.public_description"></tinymce-editor>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'publication_link')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <v-text-field v-model="editedItem.publication_link" label="{{ _('Publication Link') }}"

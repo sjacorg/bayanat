@@ -534,8 +534,6 @@ var tinyConfig = {
         {title: 'Paragraph', format: 'p'},
     ],
     cleanup: true,
-    // Start editors in the interface direction so Arabic text begins on the right
-    directionality: document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr',
 };
 
 

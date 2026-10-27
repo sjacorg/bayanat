@@ -21,25 +21,38 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    # Adding a nullable column is metadata-only but needs a brief exclusive lock on
-    # bulletin; fail fast rather than queue behind long reads and block everyone.
-    conn.exec_driver_sql("SET LOCAL lock_timeout = '10s'")
-    if "publication_link" not in {c["name"] for c in sa.inspect(conn).get_columns("bulletin")}:
-        op.add_column("bulletin", sa.Column("publication_link", sa.Text(), nullable=True))
 
-    # Register the core dynamic field right after public_description (idempotent).
-    # Later fields shift down one so the order stays deterministic and keeps any
-    # custom ordering an admin has set.
-    exists = conn.exec_driver_sql("""
-        SELECT 1 FROM dynamic_fields
-        WHERE name = 'publication_link' AND entity_type = 'bulletin' AND core = true
+    # A custom (non-core) field with this name owns the column already; refuse
+    # rather than silently adopt it.
+    core = conn.exec_driver_sql("""
+        SELECT core FROM dynamic_fields
+        WHERE name = 'publication_link' AND entity_type = 'bulletin'
         """).scalar()
-    if exists:
+    if core is False:
+        raise RuntimeError(
+            "A custom bulletin field named 'publication_link' already exists. "
+            "Rename or remove it, then rerun the upgrade."
+        )
+
+    if "publication_link" not in {c["name"] for c in sa.inspect(conn).get_columns("bulletin")}:
+        # Metadata-only, but needs a brief exclusive lock on bulletin: fail fast
+        # rather than queue behind long reads and block everyone. Reset after, as
+        # all pending migrations share one transaction.
+        conn.exec_driver_sql("SET LOCAL lock_timeout = '10s'")
+        op.add_column("bulletin", sa.Column("publication_link", sa.Text(), nullable=True))
+        conn.exec_driver_sql("SET LOCAL lock_timeout = DEFAULT")
+
+    if core:
         return
+
+    # Register the core dynamic field right after public_description. Later fields
+    # shift down one so the order stays deterministic and keeps any custom order.
     after = conn.exec_driver_sql("""
         SELECT sort_order FROM dynamic_fields
         WHERE name = 'public_description' AND entity_type = 'bulletin' AND core = true
-        """).scalar() or 6
+        """).scalar()
+    if after is None:
+        after = 6
     conn.exec_driver_sql(
         "UPDATE dynamic_fields SET sort_order = sort_order + 1 "
         "WHERE entity_type = 'bulletin' AND sort_order > %(after)s",
@@ -64,8 +77,15 @@ def upgrade():
 
 def downgrade():
     conn = op.get_bind()
-    conn.exec_driver_sql("""
+    removed = conn.exec_driver_sql("""
         DELETE FROM dynamic_fields
         WHERE name = 'publication_link' AND entity_type = 'bulletin' AND core = true
-        """)
-    op.drop_column("bulletin", "publication_link")
+        RETURNING sort_order
+        """).scalar()
+    if removed is not None:
+        conn.exec_driver_sql(
+            "UPDATE dynamic_fields SET sort_order = sort_order - 1 "
+            "WHERE entity_type = 'bulletin' AND sort_order > %(removed)s",
+            {"removed": removed},
+        )
+    op.execute("ALTER TABLE bulletin DROP COLUMN IF EXISTS publication_link")

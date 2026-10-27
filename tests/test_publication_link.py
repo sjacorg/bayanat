@@ -9,7 +9,12 @@ def test_publication_link_accepts_http_urls_only():
     url = "https://syriaaccountability.org/the-mechanics-of-foreign-surveillance/"
     assert BulletinBulkModel(publication_link=f"  {url} ").publication_link == url
     assert BulletinBulkModel(publication_link="").publication_link is None
-    for bad in ("javascript:alert(1)", "syriaaccountability.org/report", "ftp://example.org/x"):
+    for bad in (
+        "javascript:alert(1)",
+        "syriaaccountability.org/report",
+        "ftp://example.org/x",
+        123,
+    ):
         with pytest.raises(ValidationError):
             BulletinBulkModel(publication_link=bad)
 

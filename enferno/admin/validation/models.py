@@ -39,7 +39,11 @@ PER_PAGE = int(Config.get("ITEMS_PER_PAGE_OPTIONS")[0])
 
 def _http_url_or_none(v: Optional[str]) -> Optional[str]:
     # Rendered as a public link, so only http(s) is accepted (no javascript: and friends)
-    if v is None or not v.strip():
+    if v is None:
+        return None
+    if not isinstance(v, str):
+        raise ValueError("must be a URL string")
+    if not v.strip():
         return None
     v = v.strip()
     HttpUrl(v)
