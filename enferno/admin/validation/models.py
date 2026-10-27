@@ -45,9 +45,9 @@ def _http_url_or_none(v: Optional[str]) -> Optional[str]:
         raise ValueError("must be a URL string")
     if not v.strip():
         return None
-    v = v.strip()
-    HttpUrl(v)
-    return v
+    # Store the normalized form: shorthand like https:host/path parses but a browser
+    # would treat the raw text as a relative link
+    return str(HttpUrl(v.strip()))
 
 
 HttpUrlField = Annotated[Optional[str], BeforeValidator(_http_url_or_none)]

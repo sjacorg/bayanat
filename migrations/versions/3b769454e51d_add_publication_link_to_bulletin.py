@@ -77,6 +77,14 @@ def upgrade():
 
 def downgrade():
     conn = op.get_bind()
+    custom = conn.exec_driver_sql("""
+        SELECT 1 FROM dynamic_fields
+        WHERE name = 'publication_link' AND entity_type = 'bulletin' AND core = false
+        """).scalar()
+    if custom:
+        raise RuntimeError(
+            "bulletin.publication_link belongs to a custom field; refusing to drop it."
+        )
     removed = conn.exec_driver_sql("""
         DELETE FROM dynamic_fields
         WHERE name = 'publication_link' AND entity_type = 'bulletin' AND core = true
