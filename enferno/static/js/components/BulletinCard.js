@@ -307,6 +307,21 @@ const BulletinCard = Vue.defineComponent({
               </v-card>
             </div>
 
+            <div v-else-if="$root.isFieldActiveAndHasContent(field, 'publication_link', bulletin.publication_link)" :class="$root.fieldClassDrawer(field)">
+              <v-card variant="flat" class="pa-2 ma-1 d-flex align-center">
+                <v-chip
+                  prepend-icon="mdi-link-variant"
+                  :href="bulletin.publication_link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="text"
+                  append-icon="mdi-open-in-new"
+                  label>
+                  {{ translations.publicationLink_ }}: <bdi dir="ltr">{{ bulletin.publication_link }}</bdi>
+                </v-chip>
+              </v-card>
+            </div>
+
             <div v-else-if="$root.isFieldActive(field, 'global_map')" :class="$root.fieldClassDrawer(field)">
               <v-card variant="flat">
                 <global-map v-model="mapLocations"></global-map>

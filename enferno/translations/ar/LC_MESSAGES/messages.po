@@ -2518,6 +2518,15 @@ msgstr "تمثيل مرئي"
 msgid "Description"
 msgstr "التوصيف"
 
+msgid "Public Description"
+msgstr "التوصيف العام"
+
+msgid "Publication Link"
+msgstr "رابط المنشور"
+
+msgid "Shown on the public archive"
+msgstr "يظهر في الأرشيف العام"
+
 #: enferno/admin/templates/admin/jsapi.jinja2:352
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:85
 msgid "Original Title"
