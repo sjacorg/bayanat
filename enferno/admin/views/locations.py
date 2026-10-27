@@ -103,8 +103,8 @@ def api_location_create(
     location = location.from_json(validated_data["item"])
 
     if location.save():
-        location.full_location = location.get_full_string()
-        location.id_tree = location.get_id_tree()
+        Location.regenerate_all_full_locations(root_id=location.id)
+        db.session.refresh(location)
         location.create_revision()
         Activity.create(
             current_user,
