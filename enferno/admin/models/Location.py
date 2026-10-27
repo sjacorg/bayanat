@@ -400,10 +400,7 @@ class Location(db.Model, BaseMixin):
                 )
                 UPDATE location l
                 SET full_location = lt.full_string,
-                    id_tree = (
-                        SELECT string_agg('[' || p || ']', ' ' ORDER BY o)
-                        FROM unnest(lt.path) WITH ORDINALITY AS u(p, o)
-                    )
+                    id_tree = '[' || array_to_string(lt.path, '] [') || ']'
                 FROM location_tree lt
                 WHERE l.id = lt.id;
                 COMMIT;
