@@ -1286,6 +1286,64 @@ class TestLocationRegenerate:
             session.delete(parent)
             session.commit()
 
+    def _chain(self, session, n):
+        locs, parent_id = [], None
+        for _ in range(n):
+            loc = LocationFactory(parent_id=parent_id)
+            session.add(loc)
+            session.commit()
+            locs.append(loc)
+            parent_id = loc.id
+        return locs
+
+    def _cleanup(self, session, ids):
+        from enferno.admin.models import Location, LocationHistory
+
+        # requests end the scoped session, so delete by id, leaves first
+        session.query(LocationHistory).filter(LocationHistory.location_id.in_(ids)).delete()
+        for id in reversed(ids):
+            session.query(Location).filter(Location.id == id).delete()
+        session.commit()
+
+    def _put(self, client, session, loc, parent):
+        from enferno.admin.models import LocationType
+
+        loc_type = LocationType(title="Point of Interest")
+        session.add(loc_type)
+        session.commit()
+        item = loc.to_dict()
+        item["parent"] = parent and {"id": parent.id}
+        item["location_type"] = loc_type.to_dict()
+        return client.put(f"/admin/api/location/{loc.id}", json={"item": item}, headers=HEADERS)
+
+    def test_update_rebuilds_descendant_paths(self, session, admin_client):
+        from enferno.admin.models import Location
+
+        ids = [loc.id for loc in self._chain(session, 3)]
+        top, middle, leaf = ids
+        try:
+            assert (
+                self._put(admin_client, session, session.get(Location, middle), None).status_code
+                == 200
+            )
+            assert session.get(Location, leaf).id_tree == f"[{leaf}] [{middle}]"
+        finally:
+            self._cleanup(session, ids)
+
+    def test_update_rejects_moving_under_descendant(self, session, admin_client):
+        from enferno.admin.models import Location
+
+        ids = [loc.id for loc in self._chain(session, 2)]
+        top, leaf = ids
+        try:
+            for parent in (leaf, top):
+                loc = session.get(Location, top)
+                resp = self._put(admin_client, session, loc, session.get(Location, parent))
+                assert resp.status_code == 400
+            assert session.get(Location, top).parent_id is None
+        finally:
+            self._cleanup(session, ids)
+
 
 # =========================================================================
 # QUERY EXISTS

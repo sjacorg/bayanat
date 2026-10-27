@@ -340,11 +340,12 @@ class Location(db.Model, BaseMixin):
                 return self_title
 
     @staticmethod
-    def regenerate_all_full_locations() -> None:
+    def regenerate_all_full_locations(root_id: Optional[int] = None) -> None:
         """
-        Regenerates and saves full location strings and id trees for all locations using a single CTE query.
+        Regenerates and saves full location strings and id trees using a single CTE query.
+
         Args:
-            - postal_code: whether to include postal code in result
+            - root_id: limit the update to this location and its descendants.
         """
         with db.session.begin_nested():
             try:
@@ -402,7 +403,8 @@ class Location(db.Model, BaseMixin):
                 SET full_location = lt.full_string,
                     id_tree = '[' || array_to_string(lt.path, '] [') || ']'
                 FROM location_tree lt
-                WHERE l.id = lt.id;
+                WHERE l.id = lt.id
+                  AND (CAST(:root_id AS integer) IS NULL OR CAST(:root_id AS integer) = ANY(lt.path));
                 COMMIT;
                 """
                 if not has_app_context():
@@ -410,7 +412,9 @@ class Location(db.Model, BaseMixin):
                 else:
                     postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
                 with db.engine.connect() as connection:
-                    connection.execute(text(query), {"postal_code": postal_code})
+                    connection.execute(
+                        text(query), {"postal_code": postal_code, "root_id": root_id}
+                    )
                     connection.commit()
             except Exception as e:
                 db.session.rollback()
@@ -496,6 +500,9 @@ class Location(db.Model, BaseMixin):
         db.session.bulk_update_mappings(Location, df.to_dict(orient="records"))
         db.session.commit()
         logger.info("Locations parents updated successfully.")
+
+        # bulk inserts skip the per-edit path computation
+        Location.regenerate_all_full_locations()
 
         # reset id sequence counter
         max_id = db.session.execute(text("select max(id)+1 from location")).scalar()
