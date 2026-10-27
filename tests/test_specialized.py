@@ -11,7 +11,7 @@ import random
 import shutil
 import tempfile
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from flask import current_app
@@ -1261,6 +1261,29 @@ class TestLocationRegenerate:
                 mock_delay.assert_called_once()
             else:
                 mock_delay.assert_not_called()
+
+    def test_regenerate_rebuilds_id_tree(self, session):
+        """Imported locations arrive without id_tree; Regenerate must fill it,
+        since descendant search matches on it."""
+        from enferno.tasks import maintenance
+
+        parent = LocationFactory()
+        session.add(parent)
+        session.commit()
+        child = LocationFactory(parent_id=parent.id)
+        session.add(child)
+        session.commit()
+        assert child.id_tree is None
+
+        with patch.object(maintenance, "rds", MagicMock()):
+            maintenance.regenerate_locations.run()
+
+        session.refresh(child)
+        assert child.id_tree == f"[{child.id}] [{parent.id}]"
+
+        session.delete(child)
+        session.delete(parent)
+        session.commit()
 
 
 # =========================================================================
