@@ -16,7 +16,6 @@ from enferno.admin.models import (
     ItoaInfo,
     ItoiInfo,
     Country,
-    Ethnography,
     MediaCategory,
     GeoLocationType,
     WorkflowStatus,
@@ -24,11 +23,6 @@ from enferno.admin.models import (
 from enferno.extensions import db
 from enferno.admin.models import (
     Media,
-    ClaimedViolation,
-    Eventtype,
-    LocationAdminLevel,
-    LocationType,
-    PotentialViolation,
 )
 from enferno.data_import.models import DataImport
 from enferno.user.models import Role
@@ -165,11 +159,11 @@ def create_default_location_data() -> None:
     Generates default required location data.
     """
     if not LocationAdminLevel.query.all():
-        db.session.add(LocationAdminLevel(code=1, title="Governorate"))
-        db.session.add(LocationAdminLevel(code=2, title="District"))
-        db.session.add(LocationAdminLevel(code=3, title="Subdistrict"))
-        db.session.add(LocationAdminLevel(code=4, title="Community"))
-        db.session.add(LocationAdminLevel(code=5, title="Neighbourhood"))
+        db.session.add(LocationAdminLevel(code=1, title="Governorate", display_order=1))
+        db.session.add(LocationAdminLevel(code=2, title="District", display_order=2))
+        db.session.add(LocationAdminLevel(code=3, title="Subdistrict", display_order=3))
+        db.session.add(LocationAdminLevel(code=4, title="Community", display_order=4))
+        db.session.add(LocationAdminLevel(code=5, title="Neighbourhood", display_order=5))
         db.session.commit()
 
     if not LocationType.query.all():

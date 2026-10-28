@@ -11,7 +11,7 @@ import random
 import shutil
 import tempfile
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from flask import current_app
@@ -1261,6 +1261,79 @@ class TestLocationRegenerate:
                 mock_delay.assert_called_once()
             else:
                 mock_delay.assert_not_called()
+
+    def test_regenerate_rebuilds_id_tree(self, session):
+        """Imported locations arrive without id_tree; Regenerate must fill it,
+        since descendant search matches on it."""
+        from enferno.tasks import maintenance
+
+        parent = LocationFactory()
+        session.add(parent)
+        session.commit()
+        child = LocationFactory(parent_id=parent.id)
+        session.add(child)
+        session.commit()
+        assert child.id_tree is None
+
+        try:
+            with patch.object(maintenance, "rds", MagicMock()):
+                maintenance.regenerate_locations.run()
+
+            session.refresh(child)
+            assert child.id_tree == f"[{child.id}] [{parent.id}]"
+        finally:
+            session.delete(child)
+            session.delete(parent)
+            session.commit()
+
+    def _chain(self, session, n):
+        locs, parent_id = [], None
+        for _ in range(n):
+            loc = LocationFactory(parent_id=parent_id)
+            session.add(loc)
+            session.commit()
+            locs.append(loc)
+            parent_id = loc.id
+        return locs
+
+    def _cleanup(self, session, ids):
+        from enferno.admin.models import Location, LocationHistory
+
+        # requests end the scoped session, so delete by id, leaves first
+        session.query(LocationHistory).filter(LocationHistory.location_id.in_(ids)).delete()
+        for id in reversed(ids):
+            session.query(Location).filter(Location.id == id).delete()
+        session.commit()
+
+    def _put(self, client, loc, parent):
+        item = loc.to_dict()
+        item["parent"] = parent and {"id": parent.id}
+        return client.put(f"/admin/api/location/{loc.id}", json={"item": item}, headers=HEADERS)
+
+    def test_update_rebuilds_descendant_paths(self, session, admin_client):
+        from enferno.admin.models import Location
+
+        ids = [loc.id for loc in self._chain(session, 3)]
+        top, middle, leaf = ids
+        try:
+            assert self._put(admin_client, session.get(Location, middle), None).status_code == 200
+            assert session.get(Location, leaf).id_tree == f"[{leaf}] [{middle}]"
+        finally:
+            self._cleanup(session, ids)
+
+    def test_update_rejects_moving_under_descendant(self, session, admin_client):
+        from enferno.admin.models import Location
+
+        ids = [loc.id for loc in self._chain(session, 2)]
+        top, leaf = ids
+        try:
+            for parent in (leaf, top):
+                loc = session.get(Location, top)
+                resp = self._put(admin_client, loc, session.get(Location, parent))
+                assert resp.status_code == 400
+            assert session.get(Location, top).parent_id is None
+        finally:
+            self._cleanup(session, ids)
 
 
 # =========================================================================

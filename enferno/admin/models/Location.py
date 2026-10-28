@@ -264,87 +264,13 @@ class Location(db.Model, BaseMixin):
                 locations += [l] + l.get_sub_locations()
             return locations
 
-    # helper method to get full location hierarchy
-    def get_full_string(self) -> str:
-        """
-        Generates full string of location and parents using CTE.
-        Args:
-            - postal_code: whether to include postal code in result
-        Returns:
-            - formatted string of location hierarchy
-        """
-        if not has_app_context():
-            postal_code = False
-        else:
-            postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
-
-        self_title = (
-            self.title
-            if not (postal_code and self.postal_code)
-            else self.title + " " + self.postal_code
-        )
-        if not self.parent_id or self.admin_level is None:
-            return self_title
-        with db.session.begin_nested():
-            try:
-                query = """
-            WITH RECURSIVE location_tree AS (
-                SELECT 
-                    l.id,
-                    l.title,
-                    l.postal_code,
-                    l.admin_level_id,
-                    l.parent_id,
-                    ARRAY[l.id] as path
-                FROM location l 
-                WHERE l.id = :id
-                
-                UNION ALL
-                
-                SELECT
-                    p.id,
-                    p.title,
-                    p.postal_code,
-                    p.admin_level_id,
-                    p.parent_id,
-                    p.id || t.path
-                FROM location p
-                JOIN location_tree t ON p.id = t.parent_id
-            )
-            SELECT 
-                lt.id,
-                lt.title,
-                lt.postal_code,
-                lt.admin_level_id,
-                la.display_order
-            FROM location_tree lt
-            LEFT JOIN location_admin_level la ON lt.admin_level_id = la.id
-            ORDER BY la.display_order NULLS LAST;
-            """
-
-                with db.engine.connect() as connection:
-                    result = connection.execute(text(query), {"id": self.id})
-                locations = [{"title": row.title, "postal_code": row.postal_code} for row in result]
-
-                if not locations:
-                    return self_title
-
-                formatted = ", ".join(loc["title"] for loc in locations)
-                if postal_code and self.postal_code:
-                    formatted += " " + self.postal_code
-
-                return formatted
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Failed to regenerate location strings: {str(e)}", exc_info=e)
-                return self_title
-
     @staticmethod
-    def regenerate_all_full_locations() -> None:
+    def regenerate_all_full_locations(root_id: Optional[int] = None) -> None:
         """
-        Regenerates and saves full location strings for all locations using a single CTE query.
+        Regenerates and saves full location strings and id trees using a single CTE query.
+
         Args:
-            - postal_code: whether to include postal code in result
+            - root_id: limit the update to this location and its descendants.
         """
         with db.session.begin_nested():
             try:
@@ -385,7 +311,7 @@ class Location(db.Model, BaseMixin):
                                     ELSE child.title
                                 END
                             ELSE (
-                                SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST)
+                                SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST, ids.ord)
                                 FROM unnest(child.id || t.path) WITH ORDINALITY AS ids(id, ord)
                                 JOIN location loc ON loc.id = ids.id
                                 LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
@@ -399,9 +325,11 @@ class Location(db.Model, BaseMixin):
                     JOIN location_tree t ON child.parent_id = t.id
                 )
                 UPDATE location l
-                SET full_location = lt.full_string
+                SET full_location = lt.full_string,
+                    id_tree = '[' || array_to_string(lt.path, '] [') || ']'
                 FROM location_tree lt
-                WHERE l.id = lt.id;
+                WHERE l.id = lt.id
+                  AND (CAST(:root_id AS integer) IS NULL OR CAST(:root_id AS integer) = ANY(lt.path));
                 COMMIT;
                 """
                 if not has_app_context():
@@ -409,11 +337,14 @@ class Location(db.Model, BaseMixin):
                 else:
                     postal_code = current_app.config.get("LOCATIONS_INCLUDE_POSTAL_CODE", False)
                 with db.engine.connect() as connection:
-                    connection.execute(text(query), {"postal_code": postal_code})
+                    connection.execute(
+                        text(query), {"postal_code": postal_code, "root_id": root_id}
+                    )
                     connection.commit()
             except Exception as e:
                 db.session.rollback()
                 logger.error(f"Failed to regenerate location strings: {str(e)}", exc_info=e)
+                raise
 
     def get_id_tree(self) -> str:
         """Use common table expressions to generate the full tree of ids, this is very useful to reduce
@@ -495,6 +426,9 @@ class Location(db.Model, BaseMixin):
         db.session.bulk_update_mappings(Location, df.to_dict(orient="records"))
         db.session.commit()
         logger.info("Locations parents updated successfully.")
+
+        # bulk inserts skip the per-edit path computation
+        Location.regenerate_all_full_locations()
 
         # reset id sequence counter
         max_id = db.session.execute(text("select max(id)+1 from location")).scalar()

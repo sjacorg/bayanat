@@ -142,7 +142,8 @@ def regenerate_locations() -> None:
     Regenerate full locations for all entities.
     """
     try:
-        rds.set(Location.CELERY_FLAG, 1)
+        # expire so a killed worker can't lock Regenerate out
+        rds.set(Location.CELERY_FLAG, 1, ex=3600)
         Location.regenerate_all_full_locations()
     finally:
         rds.delete(Location.CELERY_FLAG)

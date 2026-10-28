@@ -103,8 +103,8 @@ def api_location_create(
     location = location.from_json(validated_data["item"])
 
     if location.save():
-        location.full_location = location.get_full_string()
-        location.id_tree = location.get_id_tree()
+        Location.regenerate_all_full_locations(root_id=location.id)
+        db.session.refresh(location)
         location.create_revision()
         Activity.create(
             current_user,
@@ -138,12 +138,16 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
 
     location = db.session.get(Location, id)
     if location is not None:
+        parent_id = (validated_data["item"].get("parent") or {}).get("id")
+        parent = parent_id and db.session.get(Location, parent_id)
+        if parent and f"[{id}]" in parent.get_id_tree().split():
+            return HTTPResponse.error("A location cannot be moved under itself or its descendants")
         location = location.from_json(validated_data["item"])
         # we need to commit this change to db first, to utilize CTE
         if location.save():
-            # then update the location full string
-            location.full_location = location.get_full_string()
-            location.id_tree = location.get_id_tree()
+            # descendants embed this location's title and ancestors in their paths
+            Location.regenerate_all_full_locations(root_id=location.id)
+            db.session.refresh(location)
             location.create_revision()
             Activity.create(
                 current_user,
