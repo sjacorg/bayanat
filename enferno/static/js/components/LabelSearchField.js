@@ -1,5 +1,9 @@
 const LabelSearchField = Vue.defineComponent({
   extends: SearchField,
+  components: { LabelPathTrail },
+  data: () => ({
+    translations: window.translations,
+  }),
   props: {
     api: { type: String, default: '/admin/api/labels/' },
     itemTitle: { type: String, default: 'title' },
@@ -33,6 +37,14 @@ const LabelSearchField = Vue.defineComponent({
     itemCollapsedPath(item) {
       return this.isLabelPathItem(item) ? window.LabelPathUtils.collapsedPath(item) : '';
     },
+    pathLangs(item) {
+      const utils = window.LabelPathUtils;
+      const primary = utils.primaryLang();
+      const secondary = primary === 'ar' ? 'en' : 'ar';
+      const primarySegments = utils.fullPathSegments(item, primary);
+      const secondarySegments = utils.fullPathSegments(item, secondary);
+      return utils.sameSegments(primarySegments, secondarySegments) ? [primary] : [primary, secondary];
+    },
     selectionParts(item = null) {
       if (!this.isLabelPathItem(item)) {
         return {
@@ -50,6 +62,7 @@ const LabelSearchField = Vue.defineComponent({
   template: `
     <v-autocomplete
       ref="autocomplete"
+      class="label-search-field"
       :disabled="disabled"
       :menu-props="{ offsetY: true }"
       :auto-select-first="true"
@@ -95,11 +108,36 @@ const LabelSearchField = Vue.defineComponent({
       <template v-slot:chip="{ item, props }">
         <!-- One-item loop keeps selectionParts readable and avoids recalculating it in this slot. -->
         <template v-for="parts in [selectionParts(item.raw)]">
-          <v-chip v-bind="props" size="small" class="text-no-wrap">
-            <template v-if="parts.hasPath">
-              <span class="text-medium-emphasis text-no-wrap">...</span>
-              <v-icon :icon="parts.markerIcon" size="14" class="text-medium-emphasis me-1"></v-icon>
-            </template>
+          <v-chip v-bind="props" size="small" class="flex-chip">
+            <v-menu v-if="parts.hasPath" location="bottom start" offset="6" :close-on-content-click="false">
+              <template #activator="{ props: menuProps }">
+                <span
+                  v-bind="menuProps"
+                  role="button"
+                  tabindex="0"
+                  class="d-inline-flex align-center text-medium-emphasis text-no-wrap cursor-pointer"
+                  @mousedown.stop
+                  @click.stop
+                >
+                  …<v-icon :icon="parts.markerIcon" size="14" class="me-1"></v-icon>
+                </span>
+              </template>
+              <v-card class="border rounded-lg" elevation="8" width="420" max-width="calc(100vw - 32px)">
+                <v-card-text class="pa-3">
+                  <div class="text-overline font-weight-bold text-medium-emphasis mb-2">
+                    {{ translations.labelPath_ }}
+                  </div>
+                  <div
+                    v-for="(lang, index) in pathLangs(item.raw)"
+                    :key="lang"
+                    :class="{ 'mt-3': index > 0 }"
+                    :dir="lang === 'ar' ? 'rtl' : 'ltr'"
+                  >
+                    <label-path-trail :label="item.raw" :lang="lang"></label-path-trail>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-menu>
             <template v-if="parts.showParent">
               <span v-if="parts.isRtl">{{ parts.leaf }}</span>
               <span v-else>{{ parts.parent }}</span>
