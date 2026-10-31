@@ -1039,6 +1039,11 @@ div.jsondiffpatch-child-node-type-array:after {
     overflow-wrap: anywhere;
     white-space: normal;
 }
+/* Vuetify pins selection slots to one line; let wrapped label chips grow */
+.label-search-field .v-autocomplete__selection {
+    height: auto;
+    margin-block: 2px;
+}
 
 /* Lightgallery.js place above all dialogs */
 .lg-backdrop,
