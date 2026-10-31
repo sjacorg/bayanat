@@ -111,16 +111,18 @@ const LabelSearchField = Vue.defineComponent({
           <v-chip v-bind="props" size="small" class="flex-chip">
             <v-menu v-if="parts.hasPath" location="bottom start" offset="6" :close-on-content-click="false">
               <template #activator="{ props: menuProps }">
-                <span
+                <button
                   v-bind="menuProps"
-                  role="button"
-                  tabindex="0"
-                  class="d-inline-flex align-center text-medium-emphasis text-no-wrap cursor-pointer"
+                  type="button"
+                  :aria-label="translations.labelPath_"
+                  class="d-inline-flex align-center text-medium-emphasis text-no-wrap"
                   @mousedown.stop
                   @click.stop
+                  @keydown.enter.stop
+                  @keydown.space.stop
                 >
                   …<v-icon :icon="parts.markerIcon" size="14" class="me-1"></v-icon>
-                </span>
+                </button>
               </template>
               <v-card class="border rounded-lg" elevation="8" width="420" max-width="calc(100vw - 32px)">
                 <v-card-text class="pa-3">
