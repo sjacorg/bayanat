@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from flask import Response, request
 from flask.templating import render_template
 from flask_security.decorators import current_user, roles_accepted, roles_required
@@ -85,11 +87,32 @@ def api_labels() -> Response:
 
     if q:
         labels = base_query.filter(*query, *restrictions).all()
-        ids = {label.id for label in labels + Label.get_children(labels)}
+        matched = {label.id for label in labels}
+        ids = matched | {label.id for label in Label.get_children(labels)}
         # children inherit the match but must still satisfy the type/verified/exclude restrictions
-        result = base_query.filter(Label.id.in_(ids), *restrictions).paginate(
-            page=page, per_page=per_page, count=True
-        )
+        candidates = base_query.filter(Label.id.in_(ids), *restrictions).all()
+        # rank so a parent is never buried under its own descendants
+        needle = q.strip().casefold()
+        depths = {}
+
+        def depth(label):
+            if label.id not in depths:
+                depths[label.id] = 0 if label.parent is None else depth(label.parent) + 1
+            return depths[label.id]
+
+        def rank(label):
+            titles = [t.casefold() for t in (label.title, label.title_ar) if t]
+            if needle in titles:
+                tier = 0
+            elif any(t.startswith(needle) for t in titles):
+                tier = 1
+            else:
+                tier = 2 if label.id in matched else 3
+            return tier, depth(label), (label.title or "").casefold()
+
+        candidates.sort(key=rank)
+        start = (page - 1) * per_page
+        result = SimpleNamespace(items=candidates[start : start + per_page], total=len(candidates))
     else:
         result = (
             base_query.filter(*query, *restrictions)

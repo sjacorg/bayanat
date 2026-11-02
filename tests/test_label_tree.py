@@ -62,3 +62,22 @@ def test_label_navigator_is_hidden_from_other_roles(roled_client):
 
     assert response.status_code == 200
     assert "<label-structure-navigator" not in response.get_data(as_text=True)
+
+
+def test_label_search_ranks_exact_match_before_descendants(admin_client, session):
+    arms = Label(title="Arms", verified=True)
+    session.add(arms)
+    session.flush()
+    session.add_all(
+        Label(title=f"Weapons type {i}", parent_label_id=arms.id, verified=True) for i in range(150)
+    )
+    session.flush()
+    weapons = Label(title="Weapons", verified=True)
+    session.add(weapons)
+    session.commit()
+
+    response = admin_client.get("/admin/api/labels/?q=weapons&fltr=verified&per_page=100")
+
+    assert response.status_code == 200
+    assert response.json["data"]["items"][0]["id"] == weapons.id
+    assert response.json["data"]["total"] == 151
