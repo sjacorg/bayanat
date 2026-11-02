@@ -12,7 +12,7 @@ BULLETIN_CORE_FIELDS = [
     ("sources", "Sources", "select", 4, {"schema_config": {"allow_multiple": True}}),
     ("description", "Description", "long_text", 5),
     ("public_description", "Public Description", "long_text", 6),
-    ("publication_link", "Publication Link", "text", 7),
+    ("publication_links", "Publication Links", "text", 7),
     (
         "labels",
         "Labels",

@@ -1048,7 +1048,7 @@ def serialize_bulletin(bulletin):
         "title": bulletin.title,
         "title_ar": bulletin.title_ar,
         "public_description": bulletin.public_description,
-        "publication_link": bulletin.publication_link,
+        "publication_links": bulletin.publication_links,
         "source_link": bulletin.source_link,
         "publish_date": DateHelper.serialize_datetime(bulletin.publish_date),
         "documentation_date": DateHelper.serialize_datetime(bulletin.documentation_date),
