@@ -2521,8 +2521,8 @@ msgstr "التوصيف"
 msgid "Public Description"
 msgstr "التوصيف العام"
 
-msgid "Publication Link"
-msgstr "رابط المنشور"
+msgid "Publication Links"
+msgstr "روابط المنشورات"
 
 msgid "Shown on the public archive"
 msgstr "يظهر في الأرشيف العام"

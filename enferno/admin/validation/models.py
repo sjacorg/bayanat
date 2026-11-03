@@ -37,20 +37,27 @@ STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
 PER_PAGE = int(Config.get("ITEMS_PER_PAGE_OPTIONS")[0])
 
 
-def _http_url_or_none(v: Optional[str]) -> Optional[str]:
-    # Rendered as a public link, so only http(s) is accepted (no javascript: and friends)
+def _http_urls(v: Optional[list]) -> list[str]:
+    # Rendered as public links, so only http(s) is accepted (no javascript: and friends)
     if v is None:
-        return None
-    if not isinstance(v, str):
-        raise ValueError("must be a URL string")
-    if not v.strip():
-        return None
-    # Store the normalized form: shorthand like https:host/path parses but a browser
-    # would treat the raw text as a relative link
-    return str(HttpUrl(v.strip()))
+        return []
+    if not isinstance(v, list):
+        raise ValueError("must be a list of URLs")
+    urls = []
+    for item in v:
+        # validate_with() turns empty strings into None before we see them
+        if item is None:
+            continue
+        if not isinstance(item, str):
+            raise ValueError("must be a URL string")
+        if item.strip():
+            # Store the normalized form: shorthand like https:host/path parses but a
+            # browser would treat the raw text as a relative link
+            urls.append(str(HttpUrl(item.strip())))
+    return list(dict.fromkeys(urls))
 
 
-HttpUrlField = Annotated[Optional[str], BeforeValidator(_http_url_or_none)]
+HttpUrlListField = Annotated[list[str], BeforeValidator(_http_urls)]
 
 
 def validate_dynamic_fields(entity_type: str, model_instance) -> None:
@@ -264,7 +271,7 @@ class BulletinValidationModel(StrictValidationModel):
     first_peer_reviewer: Optional[PartialUserModel] = None
     description: Optional[SanitizedField] = None
     public_description: Optional[SanitizedField] = None
-    publication_link: HttpUrlField = None
+    publication_links: HttpUrlListField = Field(default_factory=list)
     comments: str = Field(min_length=1)
     source_link: str = Field(min_length=1)
     source_link_type: Optional[bool] = None
@@ -1347,7 +1354,7 @@ class GenericBulkModel(BaseValidationModel):
 class BulletinBulkModel(GenericBulkModel):
     tags: list[str] = Field(default_factory=list)
     tagsReplace: Optional[bool] = None
-    publication_link: HttpUrlField = None
+    publication_links: HttpUrlListField = Field(default_factory=list)
 
 
 class ActorBulkModel(GenericBulkModel):
