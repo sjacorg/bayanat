@@ -62,17 +62,19 @@ def upgrade():
     # scan. Every step is guarded, so an interrupted run resumes cleanly.
     with op.get_context().autocommit_block():
         conn.exec_driver_sql("SET lock_timeout = '10s'")
-        if "publication_links" not in _columns(conn):
-            conn.exec_driver_sql(
-                "ALTER TABLE bulletin ADD COLUMN publication_links TEXT[] NOT NULL DEFAULT '{}'"
-            )
-        if "publication_link" in _columns(conn):
-            conn.exec_driver_sql("""
-                UPDATE bulletin SET publication_links = ARRAY[publication_link]
-                WHERE coalesce(publication_link, '') <> '' AND publication_links = '{}'
-                """)
-            conn.exec_driver_sql("ALTER TABLE bulletin DROP COLUMN publication_link")
-        conn.exec_driver_sql("RESET lock_timeout")
+        try:
+            if "publication_links" not in _columns(conn):
+                conn.exec_driver_sql(
+                    "ALTER TABLE bulletin ADD COLUMN publication_links TEXT[] NOT NULL DEFAULT '{}'"
+                )
+            if "publication_link" in _columns(conn):
+                conn.exec_driver_sql("""
+                    UPDATE bulletin SET publication_links = ARRAY[publication_link]
+                    WHERE coalesce(publication_link, '') <> '' AND publication_links = '{}'
+                    """)
+                conn.exec_driver_sql("ALTER TABLE bulletin DROP COLUMN publication_link")
+        finally:
+            conn.exec_driver_sql("RESET lock_timeout")
 
 
 def downgrade():
