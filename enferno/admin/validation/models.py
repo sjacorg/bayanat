@@ -45,6 +45,9 @@ def _http_urls(v: Optional[list]) -> list[str]:
         raise ValueError("must be a list of URLs")
     urls = []
     for item in v:
+        # validate_with() turns empty strings into None before we see them
+        if item is None:
+            continue
         if not isinstance(item, str):
             raise ValueError("must be a URL string")
         if item.strip():

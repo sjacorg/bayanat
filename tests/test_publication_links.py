@@ -7,7 +7,9 @@ from tests.factories import BulletinFactory
 
 def test_publication_links_accept_http_urls_only():
     url = "https://syriaaccountability.org/the-mechanics-of-foreign-surveillance/"
-    assert BulletinBulkModel(publication_links=[f"  {url} ", url, ""]).publication_links == [url]
+    assert BulletinBulkModel(publication_links=[f"  {url} ", url, "", None]).publication_links == [
+        url
+    ]
     assert BulletinBulkModel(publication_links=None).publication_links == []
     assert BulletinBulkModel(
         publication_links=["https:example.org/report", url]

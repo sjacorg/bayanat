@@ -36,26 +36,43 @@ def upgrade():
             "Rename or remove it, then rerun the upgrade."
         )
 
-    # Add, copy, drop instead of ALTER TYPE: a constant default and a column drop are
-    # metadata-only, so the large bulletin table is never rewritten. Only rows that
-    # carry a link are updated.
-    conn.exec_driver_sql("SET LOCAL lock_timeout = '10s'")
-    if "publication_links" not in _columns(conn):
+    # A database built from current models already has the new core field, and the
+    # previous migration may have added the old one next to it: keep the new one.
+    removed = conn.exec_driver_sql("""
+        DELETE FROM dynamic_fields
+        WHERE name = 'publication_link' AND entity_type = 'bulletin' AND core = true
+          AND EXISTS (SELECT 1 FROM dynamic_fields WHERE name = 'publication_links'
+                      AND entity_type = 'bulletin' AND core = true)
+        RETURNING sort_order
+        """).scalar()
+    if removed is not None:
         conn.exec_driver_sql(
-            "ALTER TABLE bulletin ADD COLUMN publication_links TEXT[] NOT NULL DEFAULT '{}'"
+            "UPDATE dynamic_fields SET sort_order = sort_order - 1 "
+            "WHERE entity_type = 'bulletin' AND sort_order > %(removed)s",
+            {"removed": removed},
         )
-    if "publication_link" in _columns(conn):
-        conn.exec_driver_sql("""
-            UPDATE bulletin SET publication_links = ARRAY[publication_link]
-            WHERE coalesce(publication_link, '') <> '' AND publication_links = '{}'
-            """)
-        conn.exec_driver_sql("ALTER TABLE bulletin DROP COLUMN publication_link")
-    conn.exec_driver_sql("SET LOCAL lock_timeout = DEFAULT")
-
     conn.exec_driver_sql("""
         UPDATE dynamic_fields SET name = 'publication_links', title = 'Publication Links'
         WHERE name = 'publication_link' AND entity_type = 'bulletin' AND core = true
         """)
+
+    # Add, copy, drop instead of ALTER TYPE: a constant default and a column drop are
+    # metadata-only, so the large bulletin table is never rewritten. Each step commits
+    # on its own so the exclusive lock from the DDL is not held through the backfill
+    # scan. Every step is guarded, so an interrupted run resumes cleanly.
+    with op.get_context().autocommit_block():
+        conn.exec_driver_sql("SET lock_timeout = '10s'")
+        if "publication_links" not in _columns(conn):
+            conn.exec_driver_sql(
+                "ALTER TABLE bulletin ADD COLUMN publication_links TEXT[] NOT NULL DEFAULT '{}'"
+            )
+        if "publication_link" in _columns(conn):
+            conn.exec_driver_sql("""
+                UPDATE bulletin SET publication_links = ARRAY[publication_link]
+                WHERE coalesce(publication_link, '') <> '' AND publication_links = '{}'
+                """)
+            conn.exec_driver_sql("ALTER TABLE bulletin DROP COLUMN publication_link")
+        conn.exec_driver_sql("RESET lock_timeout")
 
 
 def downgrade():
