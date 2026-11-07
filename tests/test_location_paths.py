@@ -101,12 +101,12 @@ def test_rebuild_terminates_on_a_pre_existing_cycle(session, tree):
 
 def test_unordered_levels_build_paths_root_first(session, tree):
     """Installs upgraded from before display_order was seeded have it unset on every level."""
-    _, _, sub_id = tree
+    gov_id, _, sub_id = tree
     saved = session.execute(text("select id, display_order from location_admin_level")).all()
     try:
         session.execute(text("update location_admin_level set display_order = null"))
         session.commit()
-        Location.regenerate_all_full_locations()
+        Location.regenerate_all_full_locations(root_id=gov_id)
         assert fetch(sub_id).full_location == "Aleppo, Afrin, Jandairis"
     finally:
         for id, order in saved:
