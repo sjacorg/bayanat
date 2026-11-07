@@ -311,7 +311,7 @@ class Location(db.Model, BaseMixin):
                                     ELSE child.title
                                 END
                             ELSE (
-                                SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST, ids.ord)
+                                SELECT string_agg(loc.title, ', ' ORDER BY la.display_order NULLS LAST, ids.ord DESC)
                                 FROM unnest(child.id || t.path) WITH ORDINALITY AS ids(id, ord)
                                 JOIN location loc ON loc.id = ids.id
                                 LEFT JOIN location_admin_level la ON loc.admin_level_id = la.id
