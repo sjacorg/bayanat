@@ -9,6 +9,7 @@ from werkzeug.utils import safe_join
 import enferno.utils.typing as t
 from enferno.extensions import db
 from enferno.admin.constants import Constants
+from enferno.admin.models import Media
 from enferno.admin.models.Notification import Notification
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
@@ -94,6 +95,12 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
         )
 
         if meta.get("mode") == 2:
+            # The path scan filters by extension, but this request is client-controlled
+            if not Media.validate_file_extension(f, cfg.ETL_VID_EXT):
+                data_import.add_to_log(f"File type not allowed: {f}.")
+                data_import.fail()
+                continue
+
             # Server-side import: copy files and generate hashes
             allowed_path = Path(cfg.ETL_ALLOWED_PATH)
             full_path = safe_join(allowed_path, f)

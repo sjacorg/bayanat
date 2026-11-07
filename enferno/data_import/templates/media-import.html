@@ -110,6 +110,11 @@
                                                     </v-btn>
                                                     
                                                 </v-toolbar>
+                                                <v-alert v-if="skippedSummary" type="warning" variant="tonal"
+                                                         density="compact" class="ma-2">
+                                                    {{ _('Skipped file types not in the allowed media import extensions:') }}
+                                                    ${ skippedSummary }
+                                                </v-alert>
 
                                             </template>
 
@@ -399,6 +404,7 @@
                 uploadDlg: null,
                 selectDlg: null,
                 selectedPath: '',
+                skipped: {},
                 recursive: false,
                 files: [],
                 options: {
@@ -437,7 +443,11 @@
                 }
             }),
 
-            computed: {},
+            computed: {
+                skippedSummary() {
+                    return Object.entries(this.skipped).map(([ext, count]) => `.${ext} (${count})`).join(', ');
+                },
+            },
 
 
             watch: {
@@ -506,14 +516,6 @@
                     }, []);
                 },
 
-                preprocessPath(files){
-                    files = files.filter(x => this.validFile(x.filename));
-                    for (let i = 0; i < files.length; i++){
-                        files[i].id = i + 1;
-                    }
-                    return files;
-                },
-
                 cancelAppend() {
                     this.uploadDlg = false;
                     this.files = [];
@@ -532,7 +534,9 @@
                     this.loading = true;
 
                     api.post('/import/media/path/', {path: this.selectedPath, recursive: this.recursive}).then(res => {
-                        this.items = this.preprocessPath(res.data);
+                        // the server filters by extension and reports what it skipped
+                        this.items = res.data.files.map((file, i) => ({...file, id: i + 1}));
+                        this.skipped = res.data.skipped;
                         this.mode = 2;
 
                     }).finally(() => {
