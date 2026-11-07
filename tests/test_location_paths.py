@@ -6,28 +6,38 @@ from enferno.admin.models import Location, LocationAdminLevel, LocationType
 
 
 @pytest.fixture
-def tree(session):
-    """Governorate > District > Subdistrict, three generations deep."""
-    admin_type = LocationType.query.filter_by(title="Administrative Location").first()
-    levels = {l.code: l for l in LocationAdminLevel.query.filter(LocationAdminLevel.code <= 3)}
+def make(session):
+    """Create committed locations and delete them on teardown, even when a test fails."""
+    created = []
 
-    gov = Location(title="Aleppo", location_type=admin_type, admin_level=levels[1])
-    session.add(gov)
-    session.commit()
-    dis = Location(title="Afrin", location_type=admin_type, admin_level=levels[2], parent_id=gov.id)
-    session.add(dis)
-    session.commit()
-    sub = Location(
-        title="Jandairis", location_type=admin_type, admin_level=levels[3], parent_id=dis.id
+    def _make(title, level=None, parent_id=None):
+        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
+        level = level and LocationAdminLevel.query.filter_by(code=level).first()
+        loc = Location(
+            title=title, location_type=admin_type, admin_level=level, parent_id=parent_id
+        )
+        session.add(loc)
+        session.commit()
+        created.append(loc.id)
+        return loc
+
+    yield _make
+    session.rollback()
+    session.execute(
+        text("update location set parent_id = null where id = any(:ids)"), {"ids": created}
     )
-    session.add(sub)
+    session.query(Location).filter(Location.id.in_(created)).delete(synchronize_session=False)
     session.commit()
-    Location.regenerate_all_full_locations(root_id=gov.id)
 
-    ids = [sub.id, dis.id, gov.id]
-    yield gov.id, dis.id, sub.id
-    session.query(Location).filter(Location.id.in_(ids)).delete(synchronize_session=False)
-    session.commit()
+
+@pytest.fixture
+def tree(make):
+    """Governorate > District > Subdistrict."""
+    gov = make("Aleppo", 1)
+    dis = make("Afrin", 2, gov.id)
+    sub = make("Jandairis", 3, dis.id)
+    Location.regenerate_all_full_locations(root_id=gov.id)
+    return gov.id, dis.id, sub.id
 
 
 def fetch(id):
@@ -35,96 +45,55 @@ def fetch(id):
     return db.session.get(Location, id)
 
 
-class TestSubtreeRebuild:
-    def test_builds_the_whole_path(self, tree):
-        gov_id, dis_id, sub_id = tree
-        assert fetch(sub_id).full_location == "Aleppo, Afrin, Jandairis"
-        assert fetch(sub_id).id_tree == f"[{sub_id}] [{dis_id}] [{gov_id}]"
-
-    def test_rename_cascades_to_descendants(self, session, tree):
-        gov_id, dis_id, sub_id = tree
-        gov = fetch(gov_id)
-        gov.title = "Aleppo Governorate"
-        gov.save()
-        Location.regenerate_all_full_locations(root_id=gov.id)
-
-        assert fetch(dis_id).full_location == "Aleppo Governorate, Afrin"
-        assert fetch(sub_id).full_location == "Aleppo Governorate, Afrin, Jandairis"
-
-    def test_reparent_cascades_to_grandchildren(self, session, tree):
-        """The serious case: descendants used to keep the old ancestor chain."""
-        gov_id, dis_id, sub_id = tree
-        admin_type = LocationType.query.filter_by(title="Administrative Location").first()
-        other = Location(
-            title="Idleb",
-            location_type=admin_type,
-            admin_level=LocationAdminLevel.query.filter_by(code=1).first(),
-        )
-        session.add(other)
-        session.commit()
-        Location.regenerate_all_full_locations(root_id=other.id)
-
-        dis = fetch(dis_id)
-        dis.parent_id = other.id
-        dis.save()
-        Location.regenerate_all_full_locations(root_id=dis.id)
-
-        assert fetch(sub_id).full_location == "Idleb, Afrin, Jandairis"
-        assert f"[{other.id}]" in fetch(sub_id).id_tree
-        # and the moved grandchild is reachable from its new ancestor
-        assert sub_id in Location.get_children_by_id(other.id)
-
-        # put the branch back before dropping the temporary parent
-        moved = fetch(dis_id)
-        moved.parent_id = gov_id
-        moved.save()
-        session.query(Location).filter_by(id=other.id).delete(synchronize_session=False)
-        session.commit()
-
-    def test_leaves_the_rest_of_the_table_alone(self, session, tree):
-        gov_id, _, _ = tree
-        untouched = Location(title="Unrelated")
-        session.add(untouched)
-        session.commit()
-        untouched.full_location = "Unrelated"
-        untouched.id_tree = f"[{untouched.id}]"
-        session.commit()
-
-        Location.regenerate_all_full_locations(root_id=fetch(gov_id).id)
-
-        assert fetch(untouched.id).full_location == "Unrelated"
-        session.query(Location).filter_by(id=untouched.id).delete(synchronize_session=False)
-        session.commit()
+def test_builds_the_whole_path(tree):
+    gov_id, dis_id, sub_id = tree
+    assert fetch(sub_id).full_location == "Aleppo, Afrin, Jandairis"
+    assert fetch(sub_id).id_tree == f"[{sub_id}] [{dis_id}] [{gov_id}]"
 
 
-class TestRegenerateAll:
-    def test_rebuilds_ancestor_trees_not_only_text(self, session, tree):
-        """Regenerate used to fix the text and leave id_tree broken, with no way to repair it."""
-        gov_id, dis_id, sub_id = tree
-        session.execute(
-            text("update location set id_tree = null, full_location = null where id = :id"),
-            {"id": sub_id},
-        )
-        session.commit()
+def test_rename_cascades_to_descendants(tree):
+    gov_id, dis_id, sub_id = tree
+    gov = fetch(gov_id)
+    gov.title = "Aleppo Governorate"
+    gov.save()
+    Location.regenerate_all_full_locations(root_id=gov_id)
 
-        Location.regenerate_all_full_locations()
-
-        assert fetch(sub_id).id_tree == f"[{sub_id}] [{dis_id}] [{gov_id}]"
-        assert fetch(sub_id).full_location == "Aleppo, Afrin, Jandairis"
+    assert fetch(dis_id).full_location == "Aleppo Governorate, Afrin"
+    assert fetch(sub_id).full_location == "Aleppo Governorate, Afrin, Jandairis"
 
 
-class TestPreExistingCycle:
-    def test_rebuilding_a_pre_existing_cycle_terminates(self, session, tree):
-        """Data that already contains a cycle must not hang the rebuild."""
-        gov_id, dis_id, sub_id = tree
-        session.execute(
-            text("update location set parent_id = :sub where id = :gov"),
-            {"sub": sub_id, "gov": gov_id},
-        )
-        session.commit()
-        Location.regenerate_all_full_locations(
-            root_id=fetch(gov_id).id
-        )  # returns rather than spinning
+def test_move_cascades_to_grandchildren(make, tree):
+    _, dis_id, sub_id = tree
+    other = make("Idleb", 1)
+    dis = fetch(dis_id)
+    dis.parent_id = other.id
+    dis.save()
+    Location.regenerate_all_full_locations(root_id=dis_id)
 
-        session.execute(text("update location set parent_id = null where id = :id"), {"id": gov_id})
-        session.commit()
+    assert fetch(sub_id).full_location == "Idleb, Afrin, Jandairis"
+    assert sub_id in Location.get_children_by_id(other.id)
+
+
+def test_scoped_rebuild_leaves_other_locations_alone(session, make, tree):
+    gov_id, _, _ = tree
+    untouched = make("Unrelated")
+    session.execute(
+        text("update location set full_location = 'sentinel', id_tree = 'sentinel' where id = :id"),
+        {"id": untouched.id},
+    )
+    session.commit()
+
+    Location.regenerate_all_full_locations(root_id=gov_id)
+
+    assert fetch(untouched.id).full_location == "sentinel"
+    assert fetch(untouched.id).id_tree == "sentinel"
+
+
+def test_rebuild_terminates_on_a_pre_existing_cycle(session, tree):
+    gov_id, _, sub_id = tree
+    session.execute(
+        text("update location set parent_id = :sub where id = :gov"), {"sub": sub_id, "gov": gov_id}
+    )
+    session.commit()
+
+    Location.regenerate_all_full_locations(root_id=gov_id)  # returns rather than spinning
