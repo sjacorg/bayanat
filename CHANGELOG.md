@@ -19,6 +19,7 @@
 
 - Path imports check file types on the server, not only in the browser.
 - pypdf upgraded to 6.21.4 (CVE-2026-119203 to CVE-2026-119209 and earlier advisories), pillow to 13.0.0, certifi to 2026.10.19, brotli to 1.2.1 (CVE-2026-111497), oauthlib to 4.0.1 (GHSA-3jp2-3mrg-2vxc), mako to 1.4.3 (GHSA-5639-2j2p-m4mx), pyasn1 to 0.6.5 (CVE-2026-119194 to CVE-2026-119197) and dnspython to 2.9.0. Development tools upgraded for their own advisories.
+- Documentation site: DOMPurify upgraded to 3.4.17 (GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr, GHSA-c6gr-qvv4-5v3f), Vite to 6.4.5 and KaTeX to 0.18.2 (GHSA-238p-pmpm-9mq7).
 
 ### Upgrading
 
