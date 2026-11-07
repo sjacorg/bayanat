@@ -1,5 +1,33 @@
 # Changelog
 
+## v5.2.0
+
+### Added
+
+- Bulletins have a Publication Links field for one or more http(s) links, editable in the bulletin form and through bulk update, which adds the links to each bulletin's existing list. Links are shown on the bulletin card and included in `flask export public`.
+
+### Fixed
+
+- Media Import "Process path" lists the scanned files again instead of an empty table. Files whose type is not in "Allowed Media Import Extensions" are skipped, and the page names the skipped types.
+- Location paths stay consistent: Regenerate rebuilds the ancestor trees used by sub-location search as well as the full location text, editing or moving a location updates all of its descendants, and CSV location import builds paths. Moving a location under itself or one of its descendants is refused, and the Regenerate lock expires after an hour, so a stopped worker no longer blocks Regenerate permanently.
+- Label fields show full label titles, and the path marker on a label chip opens the label's full path.
+- Label search lists exact and prefix matches before sublabels, so a label with many sublabels can be selected.
+- Activity log and media dashboard timestamps are shown in local time.
+- The public description editor follows the interface direction.
+
+### Security
+
+- Path imports check file types on the server, not only in the browser.
+- pypdf upgraded to 6.21.4 (CVE-2026-119203 to CVE-2026-119209 and earlier advisories), pillow to 13.0.0, certifi to 2026.10.19, brotli to 1.2.1 (CVE-2026-111497), oauthlib to 4.0.1 (GHSA-3jp2-3mrg-2vxc), mako to 1.4.3 (GHSA-5639-2j2p-m4mx), pyasn1 to 0.6.5 (CVE-2026-119194 to CVE-2026-119197) and dnspython to 2.9.0. Development tools upgraded for their own advisories.
+
+### Upgrading
+
+Two database migrations add publication links. Installer-managed installs update with `sudo bayanat update`; manual installs run `flask db upgrade`. The upgrade stops if a custom bulletin field named `publication_link` exists: rename or remove it first.
+
+Location paths that are missing or stale from earlier releases are repaired by running Regenerate once under Component Data (Full Location text format). Check the order of the administrative levels there first, since existing installs keep their current order. If Regenerate keeps reporting that a run is already in progress, check the Redis key `tasks:locations:fullpath:status`: a TTL of -1 means a lock left by an earlier release. Delete it only when no Regenerate task is running, then try again.
+
+Process path only lists file types in "Allowed Media Import Extensions": on older installs that list may contain only video types.
+
 ## v5.1.5
 
 ### Added
