@@ -1442,6 +1442,45 @@ class TestMediaPath:
             assert resp.status_code == expected
 
 
+def test_media_path_filters_by_extension(admin_client, tmp_path):
+    nested = tmp_path / "intake" / "CASE-1" / "upload-1"
+    nested.mkdir(parents=True)
+    for name in ["a.jpg", "b.JPEG", "c.heic", "notes"]:
+        (nested / name).write_bytes(b"x")
+    config = {"ETL_ALLOWED_PATH": str(tmp_path), "ETL_VID_EXT": ["jpg", "jpeg"]}
+    with patch.dict(current_app.config, config):
+        resp = admin_client.post(
+            "/import/media/path/", json={"recursive": True, "path": ""}, headers=HEADERS
+        )
+    assert resp.status_code == 200
+    data = resp.json["data"]
+    assert sorted(f["path"] for f in data["files"]) == [
+        "intake/CASE-1/upload-1/a.jpg",
+        "intake/CASE-1/upload-1/b.JPEG",
+    ]
+    assert data["skipped"] == {"heic": 1, "(none)": 1}
+
+
+def test_process_files_rejects_disallowed_extension_in_path_mode(session, users, tmp_path):
+    from enferno.data_import.models import DataImport
+    from enferno.tasks import data_import as tasks
+
+    (tmp_path / "evil.sh").write_bytes(b"x")
+    admin_user = users[0]
+    with (
+        patch.object(tasks.cfg, "ETL_ALLOWED_PATH", str(tmp_path)),
+        patch.object(tasks.cfg, "ETL_VID_EXT", ["jpg"]),
+        patch.object(tasks, "etl_process_file") as etl,
+        patch.object(tasks.Notification, "send_notification_for_event"),
+    ):
+        tasks.process_files.run(
+            [{"filename": "ok.jpg", "path": "evil.sh"}], {"mode": 2}, admin_user.id, "batch-ext"
+        )
+    etl.s.assert_not_called()
+    di = DataImport.query.filter_by(batch_id="batch-ext").one()
+    assert di.status == "Failed"
+
+
 class TestMediaProcess:
     @pytest.mark.parametrize(
         "client_fixture, expected",

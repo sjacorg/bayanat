@@ -1,6 +1,5 @@
+from collections import Counter
 from pathlib import Path
-
-import os
 from typing import Optional
 
 import shortuuid
@@ -161,12 +160,17 @@ def path_process() -> Response:
     else:
         items = import_path.glob("*")
 
-    # return relative path
-    files = [str(file.relative_to(allowed_path)) for file in items if file.is_file()]
+    allowed_ext = current_app.config.get("ETL_VID_EXT")
+    files, skipped = [], Counter()
+    for item in items:
+        if not item.is_file():
+            continue
+        if Media.validate_file_extension(item.name, allowed_ext):
+            files.append({"filename": item.name, "path": str(item.relative_to(allowed_path))})
+        else:
+            skipped[item.suffix.lower().lstrip(".") or "(none)"] += 1
 
-    output = [{"filename": os.path.basename(file), "path": file} for file in files]
-
-    return HTTPResponse.success(data=output)
+    return HTTPResponse.success(data={"files": files, "skipped": dict(skipped)})
 
 
 @imports.post("/media/process")
