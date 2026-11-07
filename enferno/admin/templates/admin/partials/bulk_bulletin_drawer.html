@@ -79,7 +79,11 @@
 
             <v-card-text>
                 <v-combobox v-model="bulk.publication_links" label="{{ _('Publication Links') }}"
-                    prepend-inner-icon="mdi-link-variant" chips closable-chips multiple></v-combobox>
+                    prepend-inner-icon="mdi-link-variant" chips closable-chips multiple>
+                    <template #chip="{ props, item }">
+                        <v-chip v-bind="props"><bdi dir="ltr">${item.title}</bdi></v-chip>
+                    </template>
+                </v-combobox>
             </v-card-text>
 
             <v-card-text v-if="has_role(currentUser,'Admin')">
