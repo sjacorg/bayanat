@@ -114,7 +114,11 @@
                                     <div v-else-if="isFieldActive(field, 'publication_links')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <v-combobox v-model="editedItem.publication_links" label="{{ _('Publication Links') }}"
                                             prepend-inner-icon="mdi-link-variant" chips closable-chips multiple
-                                            v-bind="serverErrorPropsForField(serverErrors, 'item.publication_links')"></v-combobox>
+                                            v-bind="serverErrorPropsForField(serverErrors, 'item.publication_links')">
+                                            <template #chip="{ props, item }">
+                                                <v-chip v-bind="props"><bdi dir="ltr">${item.title}</bdi></v-chip>
+                                            </template>
+                                        </v-combobox>
                                     </div>
                                     <div v-else-if="isFieldActive(field, 'labels')" :class="[fieldClass(field), 'px-3 py-2']">
                                         <label-search-field v-model="editedItem.labels" :query-params="{ typ: 'for_bulletin', mode: 2 }" :multiple="true" :show-copy-icon="advFeatures" :retain-search="true" label="{{ _('Labels') }}"></label-search-field>
