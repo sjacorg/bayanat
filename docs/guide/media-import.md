@@ -28,6 +28,8 @@ Imported Bulletins are marked as machine-created and tagged with a batch ID so y
 
 Common image, video, audio, PDF, and document formats are supported. The exact allowed extensions are configurable by an administrator under **System Administration**.
 
+A server path scan lists only files whose type is in **Allowed Media Import Extensions** and names the file types it skipped. The server checks file types too, not only the browser. On installs upgraded from older releases this list may contain only video types, so check it before a server path import.
+
 ## Deduplication
 
 Files are tracked so the same file is not imported twice, which makes it safe to re-run a batch that was interrupted.
@@ -36,7 +38,7 @@ Files are tracked so the same file is not imported twice, which makes it safe to
 
 Importing from a server path is disabled by default. To use it, an administrator must both enable it and restrict it to a specific folder:
 
-- Turn on **Media Import from a local path** in **System Administration**.
+- Turn on **Media Import path scanning** in **System Administration**.
 - Set the allowed folder on the server via the `ETL_ALLOWED_PATH` environment variable.
 
 ::: warning Restrict the import folder

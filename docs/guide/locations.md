@@ -22,7 +22,7 @@ Governorate, district, subdistrict, or center.
 
 ### Parent
 
-Direct parent of the location.
+Direct parent of the location. Changing a location's title or parent updates the paths of all its sub-locations. A location cannot be moved under itself or one of its sub-locations.
 
 ### Parent (G) / Parent (D) / Parent (S) / Parent (C)
 

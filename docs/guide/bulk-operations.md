@@ -11,6 +11,7 @@ Bayanat supports bulk actions on multiple items at once. Select items from any d
 | Clear assignee | Yes | Yes | Yes |
 | Assign first peer reviewer | Yes | No | No |
 | Add/replace tags | Yes | Yes | Yes |
+| Add publication links | Yes | No | No |
 | Set access roles | Yes | Yes | Yes |
 | Add comment | Yes | Yes | Yes |
 
@@ -29,6 +30,8 @@ When updating tags in bulk, you can choose:
 
 - **Append**: Add new tags while keeping existing ones
 - **Replace**: Replace all existing tags with the new set
+
+Publication links are always appended to each Bulletin's existing list, skipping links it already has.
 
 ## Permissions
 

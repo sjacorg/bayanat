@@ -76,6 +76,10 @@ Add one or more time and location entries from the information contained in the 
 
 URL to the original source. Validates the entry. "Not Available" checkbox for offline sources. "Private" option for unreachable URLs. Required unless "Not Available" is checked.
 
+### Publication Links
+
+Optional list of one or more http(s) links, shown on the Bulletin card.
+
 ### Publish Date
 
 Date and time of publishing.
