@@ -40,13 +40,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      - name: Cache apt archives
+        uses: actions/cache@v6
+        with:
+          path: ~/apt-archives/*.deb
+          key: apt-archives-ubuntu-22.04-${{ hashFiles('.github/workflows/checks.yml') }}
+
       - name: Install system dependencies
         run: |
+          mkdir -p ~/apt-archives
           sudo apt-get update -y
-          sudo apt-get install -yq libimage-exiftool-perl libgdal-dev ffmpeg
+          sudo apt-get install -yq -o Dir::Cache::Archives="$HOME/apt-archives" libimage-exiftool-perl libgdal-dev ffmpeg
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Install dependencies
         run: uv sync --extra dev
